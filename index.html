@@ -1,0 +1,705 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#ee6f3a">
+<title>Workout Hub — v0.1</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+  :root { --brand: #ee6f3a; --brand-dark: #c1542a; --rest: #1e3a8a; }
+  html, body { background: #0f172a; }
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; -webkit-font-smoothing: antialiased; margin: 0; }
+  .app { max-width: 430px; margin: 0 auto; min-height: 100dvh; background: #fff; position: relative; display: flex; flex-direction: column; }
+  @media (min-width: 480px) { .app { box-shadow: 0 0 0 1px rgba(255,255,255,.06), 0 30px 80px rgba(0,0,0,.5); } }
+  .brand { background: var(--brand); }
+  .brand-text { color: var(--brand); }
+  .safe-top { padding-top: max(env(safe-area-inset-top), 14px); }
+  .safe-bottom { padding-bottom: max(env(safe-area-inset-bottom), 12px); }
+  .tabbar { position: sticky; bottom: 0; background: rgba(255,255,255,.96); backdrop-filter: blur(8px); border-top: 1px solid #e2e8f0; }
+  .tab { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 8px 0; font-size: 11px; color: #64748b; }
+  .tab.active { color: var(--brand); }
+  .tab svg { width: 22px; height: 22px; }
+  .card { background: #fff; border: 1px solid #e2e8f0; border-radius: 16px; }
+  .chip { display: inline-flex; align-items: center; gap: 4px; padding: 3px 9px; border-radius: 999px; font-size: 11px; font-weight: 600; }
+  .thumb { width: 84px; height: 56px; border-radius: 10px; object-fit: cover; background: #e2e8f0; flex: none; }
+  .btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; border-radius: 14px; font-weight: 600; padding: 14px 18px; font-size: 16px; cursor: pointer; user-select: none; -webkit-tap-highlight-color: transparent; }
+  .btn-brand { background: var(--brand); color: #fff; }
+  .btn-brand:active { background: var(--brand-dark); }
+  .btn-ghost { background: #f1f5f9; color: #0f172a; }
+  .btn-ghost:active { background: #e2e8f0; }
+  .btn-dark { background: #0f172a; color: #fff; }
+  .btn-sm { padding: 9px 14px; font-size: 14px; border-radius: 11px; }
+  .stepper { display: inline-flex; align-items: center; border-radius: 12px; overflow: hidden; border: 1px solid #e2e8f0; background: #fff; }
+  .stepper button { width: 44px; height: 44px; font-size: 22px; font-weight: 600; color: #0f172a; background: #f8fafc; }
+  .stepper button:active { background: #e2e8f0; }
+  .stepper .val { min-width: 84px; text-align: center; font-weight: 700; font-size: 17px; font-variant-numeric: tabular-nums; }
+  .avatar { width: 36px; height: 36px; border-radius: 999px; background: linear-gradient(135deg,#f59e0b,#ee6f3a); color: #fff; display: inline-flex; align-items: center; justify-content: center; font-weight: 700; font-size: 14px; }
+  .sheet-backdrop { position: fixed; inset: 0; background: rgba(15,23,42,.55); z-index: 40; }
+  .sheet { position: fixed; left: 50%; transform: translateX(-50%); bottom: 0; width: 100%; max-width: 430px; background: #fff; border-radius: 22px 22px 0 0; z-index: 50; max-height: 92dvh; overflow: auto; }
+  .sheet-handle { width: 40px; height: 4px; border-radius: 4px; background: #cbd5e1; margin: 10px auto 4px; }
+  .video-wrap { position: relative; width: 100%; aspect-ratio: 16/9; background: #000; border-radius: 12px; overflow: hidden; }
+  .video-wrap iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
+  /* Do mode */
+  .run { min-height: 100dvh; display: flex; flex-direction: column; color: #fff; transition: background .35s ease; }
+  .run.phase-work { background: var(--brand); }
+  .run.phase-rest { background: var(--rest); }
+  .run.phase-ready { background: #0f172a; }
+  .run.phase-done { background: #065f46; }
+  .clock { font-size: 104px; line-height: 1; font-weight: 800; letter-spacing: -0.04em; font-variant-numeric: tabular-nums; }
+  .phase-label { font-size: 13px; letter-spacing: .2em; text-transform: uppercase; font-weight: 700; opacity: .85; }
+  .bar { height: 6px; background: rgba(255,255,255,.25); border-radius: 6px; overflow: hidden; }
+  .bar > div { height: 100%; background: #fff; transition: width .2s linear; }
+  .run .stepper { border-color: rgba(255,255,255,.3); background: rgba(255,255,255,.12); }
+  .run .stepper button { background: rgba(255,255,255,.12); color: #fff; }
+  .run .stepper button:active { background: rgba(255,255,255,.3); }
+  .run .stepper .val { color: #fff; }
+  .run .btn-ghost { background: rgba(255,255,255,.14); color: #fff; }
+  .run .btn-ghost:active { background: rgba(255,255,255,.28); }
+  .run .btn-brand { background: #fff; color: #0f172a; }
+  .round-dots { display: flex; gap: 5px; flex-wrap: wrap; }
+  .round-dots i { width: 9px; height: 9px; border-radius: 999px; background: rgba(255,255,255,.3); display: block; }
+  .round-dots i.on { background: #fff; }
+  textarea, input[type=text] { font-size: 16px; }
+  .log-pre { white-space: pre-wrap; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; line-height: 1.5; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 12px; color: #334155; }
+  .toast { position: fixed; left: 50%; bottom: 90px; transform: translateX(-50%); background: #0f172a; color: #fff; padding: 10px 16px; border-radius: 12px; font-size: 14px; z-index: 60; box-shadow: 0 10px 30px rgba(0,0,0,.3); }
+  .fade { animation: fade .25s ease; }
+  @keyframes fade { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+  .row-tap:active { background: #f8fafc; }
+</style>
+</head>
+<body>
+<div id="app" class="app"></div>
+<script src="./data.js"></script>
+<script>
+// ───────────────────────── store ─────────────────────────
+const LS_KEY = 'workout-hub:v1';
+const store = load();
+function load() {
+  try { return Object.assign({ sessions: [], name: 'Nick' }, JSON.parse(localStorage.getItem(LS_KEY) || '{}')); }
+  catch { return { sessions: [], name: 'Nick' }; }
+}
+function save() { try { localStorage.setItem(LS_KEY, JSON.stringify(store)); } catch {} }
+
+const GH_REPO = 'Holzherr/nick-prototypes';
+const $ = (s, r = document) => r.querySelector(s);
+const app = $('#app');
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const fmtNum = n => (Math.round(n * 100) / 100).toString();
+const pad = n => String(n).padStart(2, '0');
+const mmss = s => `${Math.floor(s / 60)}:${pad(Math.max(0, Math.ceil(s)) % 60)}`;
+const fmtDate = iso => new Date(iso).toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' });
+const fmtTime = iso => new Date(iso).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+const ytThumb = id => `https://i.ytimg.com/vi/${id}/mqdefault.jpg`;
+const wById = id => WORKOUTS.find(w => w.id === id);
+
+function blockMinutes(b) {
+  if (b.type === 'interval') return b.rounds * b.exercises.length * (b.work_s + b.rest_s) / 60;
+  return b.repeat * b.segments.reduce((a, s) => a + s.s, 0) / 60;
+}
+function workoutMinutes(w) { return Math.round(w.blocks.reduce((a, b) => a + blockMinutes(b), 0)); }
+function blockSummary(b) {
+  if (b.type === 'interval') return `${b.rounds} rounds · ${b.work_s}s on / ${b.rest_s}s off`;
+  const mins = Math.round(blockMinutes(b));
+  return `${mins} min · incline ${b.incline} · ${b.segments.map(s => s.speed).join('/')} kph`;
+}
+function lastSessionFor(workoutId) {
+  return [...store.sessions].reverse().find(s => s.workoutId === workoutId && s.completed);
+}
+
+// ───────────────────────── icons ─────────────────────────
+const I = {
+  discover: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"/></svg>',
+  me: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>',
+  play: '<svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20"><polygon points="6 4 20 12 6 20 6 4"/></svg>',
+  back: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" width="22" height="22"><polyline points="15 18 9 12 15 6"/></svg>',
+  x: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" width="22" height="22"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>',
+  clock: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" width="14" height="14"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>',
+  video: '<svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18"><path d="M10 8l6 4-6 4z"/><path d="M21 6.5A2.5 2.5 0 0 0 18.5 4h-13A2.5 2.5 0 0 0 3 6.5v11A2.5 2.5 0 0 0 5.5 20h13a2.5 2.5 0 0 0 2.5-2.5v-11zm-2 0v11a.5.5 0 0 1-.5.5h-13a.5.5 0 0 1-.5-.5v-11a.5.5 0 0 1 .5-.5h13a.5.5 0 0 1 .5.5z"/></svg>',
+  copy: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="18" height="18"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>',
+  github: '<svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18"><path d="M12 .5C5.7.5.5 5.7.5 12c0 5.1 3.3 9.4 7.9 10.9.6.1.8-.3.8-.6v-2c-3.2.7-3.9-1.4-3.9-1.4-.5-1.3-1.3-1.7-1.3-1.7-1-.7.1-.7.1-.7 1.2.1 1.8 1.2 1.8 1.2 1 1.8 2.7 1.3 3.4 1 .1-.8.4-1.3.7-1.6-2.6-.3-5.3-1.3-5.3-5.7 0-1.3.5-2.3 1.2-3.1-.1-.3-.5-1.5.1-3.1 0 0 1-.3 3.2 1.2.9-.3 1.9-.4 2.9-.4s2 .1 2.9.4c2.2-1.5 3.2-1.2 3.2-1.2.6 1.6.2 2.8.1 3.1.8.8 1.2 1.8 1.2 3.1 0 4.4-2.7 5.4-5.3 5.7.4.4.8 1.1.8 2.2v3.2c0 .3.2.7.8.6 4.6-1.5 7.9-5.8 7.9-10.9C23.5 5.7 18.3.5 12 .5z"/></svg>',
+  share: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="18" height="18"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>',
+  check: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" width="18" height="18"><polyline points="20 6 9 17 4 12"/></svg>',
+  trash: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>',
+};
+
+// ───────────────────────── router ─────────────────────────
+function route() {
+  const h = location.hash.replace(/^#\/?/, '');
+  const [seg, id, extra] = h.split('/');
+  runner.detach();
+  if (seg === 'w' && wById(id)) return renderWorkout(wById(id));
+  if (seg === 'do' && wById(id)) return renderRun(wById(id));
+  if (seg === 's' && store.sessions.find(s => s.id === id)) return renderSummary(store.sessions.find(s => s.id === id), extra === 'edit');
+  if (seg === 'me') return renderProfile();
+  return renderDiscover();
+}
+window.addEventListener('hashchange', route);
+const go = h => { location.hash = h; };
+
+function shell(inner, tab) {
+  app.innerHTML = `
+    <div class="flex-1 fade">${inner}</div>
+    <nav class="tabbar safe-bottom flex">
+      <a href="#/" class="tab ${tab === 'discover' ? 'active' : ''}">${I.discover}<span>Discover</span></a>
+      <a href="#/me" class="tab ${tab === 'me' ? 'active' : ''}">${I.me}<span>Profile</span></a>
+    </nav>`;
+  window.scrollTo(0, 0);
+}
+
+// ───────────────────────── discover ─────────────────────────
+function renderDiscover() {
+  const cards = WORKOUTS.map(w => {
+    const last = lastSessionFor(w.id);
+    return `
+    <a href="#/w/${w.id}" class="card block overflow-hidden row-tap">
+      <div class="brand text-white px-4 pt-4 pb-3">
+        <div class="flex items-center gap-2 mb-2">
+          <span class="avatar" style="background:rgba(255,255,255,.25)">${esc(w.creator[0])}</span>
+          <div class="leading-tight"><div class="text-[13px] font-semibold">${esc(w.creator)}</div><div class="text-[11px] opacity-80">${fmtDate(w.created)}</div></div>
+        </div>
+        <div class="text-[20px] font-bold leading-tight">${esc(w.title)}</div>
+      </div>
+      <div class="px-4 py-3">
+        <div class="flex flex-wrap gap-1.5 mb-2.5">
+          <span class="chip bg-slate-100 text-slate-700">${I.clock}${workoutMinutes(w)} min</span>
+          <span class="chip bg-orange-50 text-orange-700">${esc(w.level)}</span>
+          ${w.tags.map(t => `<span class="chip bg-slate-100 text-slate-600">${esc(t)}</span>`).join('')}
+        </div>
+        <div class="text-[13px] text-slate-600 leading-relaxed">${w.blocks.map(b => esc(b.name)).join(' · ')}</div>
+        ${last ? `<div class="text-[12px] text-emerald-700 mt-2 font-medium">✓ Done ${fmtDate(last.startedAt)}</div>` : ''}
+      </div>
+    </a>`;
+  }).join('');
+  shell(`
+    <header class="safe-top px-5 pb-3 pt-4">
+      <div class="text-[11px] uppercase tracking-widest text-slate-400 font-semibold">Discover</div>
+      <h1 class="text-[26px] font-bold text-slate-900">Workouts</h1>
+    </header>
+    <div class="px-4 space-y-3 pb-6">${cards}</div>
+    <p class="px-6 pb-6 text-[12px] text-slate-400">New workouts get added to <code>data.js</code>. Creator accounts and in-app builders come later once the gym flow proves itself.</p>
+  `, 'discover');
+}
+
+// ───────────────────────── workout detail ─────────────────────────
+function renderWorkout(w) {
+  const last = lastSessionFor(w.id);
+  const lastActual = (bi, ei) => last?.blocks?.[bi]?.exercises?.[ei]?.actual;
+  const blocks = w.blocks.map((b, bi) => {
+    const rows = b.type === 'interval'
+      ? b.exercises.map((e, ei) => exRow(e.ex, `${fmtNum(e.target)} ${EXERCISES[e.ex].unit}`, lastActual(bi, ei) != null ? `Last: ${fmtNum(lastActual(bi, ei))}` : '')).join('')
+      : exRow(b.ex, `${b.repeat} × (${b.segments.map(s => `${s.s / 60} min @ ${s.speed} kph`).join(' + ')}) · incline ${b.incline}`, '');
+    return `
+      <div class="card overflow-hidden">
+        <div class="px-4 pt-3 pb-2 flex items-baseline justify-between">
+          <div class="font-semibold text-slate-900">${bi + 1}. ${esc(b.name)}</div>
+          <div class="text-[12px] text-slate-500">${blockSummary(b)}</div>
+        </div>
+        <div class="divide-y divide-slate-100">${rows}</div>
+      </div>`;
+  }).join('');
+  shell(`
+    <header class="brand text-white safe-top px-4 pb-5 pt-3">
+      <a href="#/" class="inline-flex items-center gap-1 text-white/90 text-[14px] mb-3">${I.back}Discover</a>
+      <div class="flex items-center gap-2 mb-2">
+        <span class="avatar" style="background:rgba(255,255,255,.25)">${esc(w.creator[0])}</span>
+        <div class="text-[13px] font-semibold">${esc(w.creator)}</div>
+      </div>
+      <h1 class="text-[24px] font-bold leading-tight">${esc(w.title)}</h1>
+      <div class="flex flex-wrap gap-1.5 mt-3">
+        <span class="chip bg-white/20 text-white">${I.clock}${workoutMinutes(w)} min</span>
+        <span class="chip bg-white/20 text-white">${w.blocks.length} blocks</span>
+        <span class="chip bg-white/20 text-white">${esc(w.level)}</span>
+      </div>
+      ${last ? `<div class="text-[12px] mt-3 opacity-90">Last done ${fmtDate(last.startedAt)} · ${last.duration_min} min</div>` : ''}
+    </header>
+    <div class="px-4 py-4 space-y-3 pb-32">${blocks}
+      <p class="text-[12px] text-slate-400 px-1">Tap an exercise to watch the demo. In the timer, weights start at the target and you adjust with +/− as you go.</p>
+    </div>
+    <div class="fixed bottom-[68px] left-1/2 -translate-x-1/2 w-full max-w-[430px] px-4 pointer-events-none">
+      <div class="flex gap-2 pointer-events-auto">
+        <button class="btn btn-brand flex-1" onclick="go('do/${w.id}')">${I.play}Start workout</button>
+        <button class="btn btn-ghost" onclick="logWithoutTimer('${w.id}')">Log only</button>
+      </div>
+    </div>
+  `, 'discover');
+}
+function exRow(key, target, hint) {
+  const ex = EXERCISES[key];
+  return `
+    <button class="w-full text-left flex items-center gap-3 px-4 py-2.5 row-tap" onclick="openVideo('${key}')">
+      <img class="thumb" src="${ytThumb(ex.video)}" alt="">
+      <div class="flex-1 min-w-0">
+        <div class="font-medium text-slate-900 text-[15px]">${esc(ex.name)}</div>
+        <div class="text-[12px] text-slate-500">${esc(target)}${hint ? ` <span class="text-emerald-700">· ${esc(hint)}</span>` : ''}</div>
+      </div>
+      <span class="text-slate-400">${I.video}</span>
+    </button>`;
+}
+
+// ───────────────────────── video sheet ─────────────────────────
+function openVideo(key) {
+  const ex = EXERCISES[key];
+  closeSheet();
+  const el = document.createElement('div');
+  el.id = 'sheet';
+  el.innerHTML = `
+    <div class="sheet-backdrop" onclick="closeSheet()"></div>
+    <div class="sheet safe-bottom">
+      <div class="sheet-handle"></div>
+      <div class="px-4 pb-2 flex items-center justify-between">
+        <div class="font-semibold text-slate-900 text-[17px]">${esc(ex.name)}</div>
+        <button class="text-slate-400 p-1" onclick="closeSheet()">${I.x}</button>
+      </div>
+      <div class="px-4"><div class="video-wrap"><iframe src="https://www.youtube-nocookie.com/embed/${ex.video}?autoplay=1&playsinline=1&rel=0" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen></iframe></div></div>
+      <p class="px-4 pt-3 pb-4 text-[14px] text-slate-600 leading-relaxed">${esc(ex.cue)}</p>
+    </div>`;
+  document.body.appendChild(el);
+}
+function closeSheet() { $('#sheet')?.remove(); }
+
+// ───────────────────────── session model ─────────────────────────
+function newSession(w) {
+  return {
+    id: 's-' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
+    workoutId: w.id, title: w.title, creator: w.creator,
+    startedAt: new Date().toISOString(), endedAt: null, duration_min: 0, completed: false, notes: '',
+    blocks: w.blocks.map(b => b.type === 'interval'
+      ? { name: b.name, type: 'interval', work_s: b.work_s, rest_s: b.rest_s, rounds: b.rounds, rounds_done: 0,
+          exercises: b.exercises.map(e => ({ ex: e.ex, name: EXERCISES[e.ex].name, unit: EXERCISES[e.ex].unit, target: e.target, actual: e.target })) }
+      : { name: b.name, type: 'steady', ex: b.ex, minutes: Math.round(blockMinutes(b)), minutes_done: 0, incline: b.incline,
+          speeds: b.segments.map(s => s.speed), incline_actual: b.incline, speeds_actual: b.segments.map(s => s.speed) }),
+  };
+}
+function finishSession(s, completed) {
+  s.endedAt = new Date().toISOString();
+  s.duration_min = Math.max(1, Math.round((new Date(s.endedAt) - new Date(s.startedAt)) / 60000));
+  s.completed = completed;
+  if (!store.sessions.find(x => x.id === s.id)) store.sessions.push(s);
+  save();
+}
+function logWithoutTimer(id) {
+  const w = wById(id);
+  const s = newSession(w);
+  s.blocks.forEach(b => { if (b.type === 'interval') b.rounds_done = b.rounds; else b.minutes_done = b.minutes; });
+  s.endedAt = s.startedAt;
+  s.duration_min = workoutMinutes(w);
+  s.completed = true;
+  store.sessions.push(s); save();
+  go(`s/${s.id}/edit`);
+}
+
+// ───────────────────────── log text + export ─────────────────────────
+function sessionText(s) {
+  const lines = [];
+  lines.push(`${s.title} — by ${s.creator}`);
+  lines.push(`${fmtDate(s.startedAt)} ${fmtTime(s.startedAt)}${s.endedAt ? '–' + fmtTime(s.endedAt) : ''} · ${s.duration_min} min${s.completed ? '' : ' · stopped early'}`);
+  lines.push('');
+  s.blocks.forEach((b, i) => {
+    if (b.type === 'interval') {
+      lines.push(`${i + 1}. ${b.name} — ${b.rounds_done}/${b.rounds} rounds · ${b.work_s}s on / ${b.rest_s}s off`);
+      b.exercises.forEach(e => lines.push(`   ${e.name}: ${fmtNum(e.actual)} ${e.unit}${e.actual !== e.target ? ` (target ${fmtNum(e.target)})` : ''}`));
+    } else {
+      lines.push(`${i + 1}. ${b.name} — ${b.minutes_done}/${b.minutes} min · incline ${fmtNum(b.incline_actual)} · ${b.speeds_actual.map(fmtNum).join('/')} kph`);
+    }
+  });
+  if (s.notes) { lines.push(''); lines.push(`Notes: ${s.notes}`); }
+  return lines.join('\n');
+}
+function sessionJSON(s) { return JSON.stringify(s); }
+function githubIssueUrl(s) {
+  const title = `[workout-log] ${fmtDate(s.startedAt)} — ${s.title}`;
+  const body = `${sessionText(s)}\n\n<details><summary>json</summary>\n\n\`\`\`json\n${sessionJSON(s)}\n\`\`\`\n</details>`;
+  return `https://github.com/${GH_REPO}/issues/new?title=${encodeURIComponent(title)}&body=${encodeURIComponent(body)}`;
+}
+async function copyText(t) {
+  try { await navigator.clipboard.writeText(t); toast('Copied'); }
+  catch {
+    const ta = document.createElement('textarea'); ta.value = t; document.body.appendChild(ta); ta.select();
+    try { document.execCommand('copy'); toast('Copied'); } catch { toast('Copy failed — long-press the text'); }
+    ta.remove();
+  }
+}
+async function shareText(s) {
+  const text = sessionText(s) + '\n\n' + sessionJSON(s);
+  if (navigator.share) { try { await navigator.share({ title: s.title, text }); } catch {} }
+  else copyText(text);
+}
+let toastT;
+function toast(msg) {
+  $('#toast')?.remove();
+  const t = document.createElement('div'); t.id = 'toast'; t.className = 'toast'; t.textContent = msg;
+  document.body.appendChild(t); clearTimeout(toastT); toastT = setTimeout(() => t.remove(), 1800);
+}
+
+// ───────────────────────── summary / edit ─────────────────────────
+function renderSummary(s, edit) {
+  const blocks = s.blocks.map((b, bi) => {
+    if (b.type === 'interval') {
+      return `
+      <div class="card px-4 py-3">
+        <div class="flex items-center justify-between mb-2">
+          <div class="font-semibold text-slate-900">${bi + 1}. ${esc(b.name)}</div>
+          ${edit ? stepper(`s.blocks[${bi}].rounds_done`, b.rounds_done, 1, 'rounds', 0, b.rounds)
+                 : `<div class="text-[13px] text-slate-500">${b.rounds_done}/${b.rounds} rounds</div>`}
+        </div>
+        <div class="space-y-2">${b.exercises.map((e, ei) => `
+          <div class="flex items-center justify-between gap-3">
+            <div class="text-[14px] text-slate-700">${esc(e.name)}<span class="text-slate-400 text-[12px]"> · target ${fmtNum(e.target)}</span></div>
+            ${edit ? stepper(`s.blocks[${bi}].exercises[${ei}].actual`, e.actual, EXERCISES[e.ex].step, e.unit)
+                   : `<div class="font-semibold text-slate-900 text-[15px]">${fmtNum(e.actual)} <span class="text-[12px] text-slate-500 font-normal">${esc(e.unit)}</span></div>`}
+          </div>`).join('')}</div>
+      </div>`;
+    }
+    return `
+      <div class="card px-4 py-3">
+        <div class="flex items-center justify-between mb-2">
+          <div class="font-semibold text-slate-900">${bi + 1}. ${esc(b.name)}</div>
+          ${edit ? stepper(`s.blocks[${bi}].minutes_done`, b.minutes_done, 1, 'min', 0)
+                 : `<div class="text-[13px] text-slate-500">${b.minutes_done}/${b.minutes} min</div>`}
+        </div>
+        <div class="flex items-center justify-between gap-3">
+          <div class="text-[14px] text-slate-700">Incline</div>
+          ${edit ? stepper(`s.blocks[${bi}].incline_actual`, b.incline_actual, 1, '')
+                 : `<div class="font-semibold text-slate-900">${fmtNum(b.incline_actual)}</div>`}
+        </div>
+        ${b.speeds_actual.map((sp, si) => `
+        <div class="flex items-center justify-between gap-3 mt-2">
+          <div class="text-[14px] text-slate-700">Segment ${si + 1} speed</div>
+          ${edit ? stepper(`s.blocks[${bi}].speeds_actual[${si}]`, sp, 0.5, 'kph')
+                 : `<div class="font-semibold text-slate-900">${fmtNum(sp)} <span class="text-[12px] text-slate-500 font-normal">kph</span></div>`}
+        </div>`).join('')}
+      </div>`;
+  }).join('');
+  window._s = s;
+  shell(`
+    <header class="safe-top px-4 pb-3 pt-3 ${s.completed ? 'bg-emerald-600' : 'bg-slate-700'} text-white">
+      <a href="#/me" class="inline-flex items-center gap-1 text-white/90 text-[14px] mb-2">${I.back}Profile</a>
+      <div class="text-[11px] uppercase tracking-widest opacity-80 font-semibold">${s.completed ? 'Workout complete' : 'Stopped early'}</div>
+      <h1 class="text-[22px] font-bold leading-tight">${esc(s.title)}</h1>
+      <div class="text-[13px] opacity-90 mt-1">${fmtDate(s.startedAt)} · ${fmtTime(s.startedAt)} · ${s.duration_min} min</div>
+    </header>
+    <div class="px-4 py-4 space-y-3 pb-8">
+      ${blocks}
+      <div class="card px-4 py-3">
+        <div class="text-[12px] uppercase tracking-wider text-slate-400 font-semibold mb-1">Notes</div>
+        ${edit ? `<textarea class="w-full border border-slate-200 rounded-xl p-3 text-[15px]" rows="3" placeholder="How did it feel? Anything to change next time?" oninput="_s.notes=this.value">${esc(s.notes)}</textarea>`
+               : `<div class="text-[14px] text-slate-700">${esc(s.notes) || '<span class="text-slate-400">—</span>'}</div>`}
+      </div>
+      ${edit ? `<button class="btn btn-brand w-full" onclick="save(); go('s/${s.id}')">${I.check}Save log</button>` : `
+      <div class="grid grid-cols-2 gap-2">
+        <button class="btn btn-dark" onclick="copyText(sessionText(_s) + '\\n\\n' + sessionJSON(_s))">${I.copy}Copy log</button>
+        <a class="btn btn-dark" href="${githubIssueUrl(s)}" target="_blank" rel="noopener">${I.github}Save to GitHub</a>
+        <button class="btn btn-ghost" onclick="shareText(_s)">${I.share}Share</button>
+        <button class="btn btn-ghost" onclick="go('s/${s.id}/edit')">Edit</button>
+      </div>
+      <div class="log-pre">${esc(sessionText(s))}</div>
+      <p class="text-[12px] text-slate-400 px-1">Copy log puts the text plus a JSON block on the clipboard — paste it into an email or to Echo to file it. Save to GitHub opens a prefilled issue you submit with one tap.</p>
+      <button class="text-[13px] text-red-500 inline-flex items-center gap-1 px-1 pt-2" onclick="deleteSession('${s.id}')">${I.trash}Delete this session</button>`}
+    </div>
+  `, 'me');
+}
+function stepper(path, val, step, unit, min = 0, max = 999) {
+  return `<div class="stepper">
+    <button onclick="stepVal('${path}', ${-step}, ${min}, ${max}, this)">−</button>
+    <div class="val">${fmtNum(val)}${unit ? `<span class="text-[11px] font-medium text-slate-500"> ${esc(unit.replace(' per arm', '/arm'))}</span>` : ''}</div>
+    <button onclick="stepVal('${path}', ${step}, ${min}, ${max}, this)">+</button>
+  </div>`;
+}
+function stepVal(path, delta, min, max, btn) {
+  const p = path.replace(/^s\./, '').replace(/\[(\d+)\]/g, '.$1').split('.');
+  let o = window._s; for (let i = 0; i < p.length - 1; i++) o = o[p[i]];
+  const k = p[p.length - 1];
+  o[k] = Math.min(max, Math.max(min, Math.round((o[k] + delta) * 100) / 100));
+  const v = btn.parentElement.querySelector('.val'); const u = v.querySelector('span');
+  v.innerHTML = fmtNum(o[k]) + (u ? u.outerHTML : '');
+}
+function deleteSession(id) {
+  if (!confirm('Delete this session?')) return;
+  store.sessions = store.sessions.filter(s => s.id !== id); save(); go('me');
+}
+
+// ───────────────────────── profile ─────────────────────────
+function renderProfile() {
+  const ss = [...store.sessions].sort((a, b) => b.startedAt.localeCompare(a.startedAt));
+  const weekAgo = Date.now() - 7 * 86400000;
+  const thisWeek = ss.filter(s => new Date(s.startedAt) > weekAgo).length;
+  const mins = ss.reduce((a, s) => a + (s.duration_min || 0), 0);
+  const list = ss.length ? ss.map(s => `
+    <a href="#/s/${s.id}" class="card block px-4 py-3 row-tap">
+      <div class="flex items-center justify-between">
+        <div class="font-semibold text-slate-900 text-[15px]">${esc(s.title)}</div>
+        <div class="text-[12px] ${s.completed ? 'text-emerald-700' : 'text-slate-400'}">${s.completed ? '✓' : 'partial'}</div>
+      </div>
+      <div class="text-[12px] text-slate-500 mt-0.5">${fmtDate(s.startedAt)} · ${fmtTime(s.startedAt)} · ${s.duration_min} min · by ${esc(s.creator)}</div>
+      <div class="text-[12px] text-slate-600 mt-1.5">${s.blocks.filter(b => b.type === 'interval').flatMap(b => b.exercises).slice(0, 4).map(e => `${esc(e.name)} ${fmtNum(e.actual)}`).join(' · ')}</div>
+    </a>`).join('') : `<div class="card px-4 py-8 text-center text-slate-400 text-[14px]">No sessions yet. Pick a workout in Discover.</div>`;
+  shell(`
+    <header class="safe-top px-5 pb-4 pt-4">
+      <div class="flex items-center gap-3">
+        <span class="avatar" style="width:48px;height:48px;font-size:18px">${esc(store.name[0])}</span>
+        <div><h1 class="text-[22px] font-bold text-slate-900 leading-tight">${esc(store.name)}</h1><div class="text-[12px] text-slate-500">Logs live on this phone until you copy them out.</div></div>
+      </div>
+      <div class="grid grid-cols-3 gap-2 mt-4">
+        ${stat(ss.length, 'sessions')}${stat(thisWeek, 'this week')}${stat(mins, 'minutes')}
+      </div>
+    </header>
+    <div class="px-4 space-y-2 pb-8">
+      <div class="text-[11px] uppercase tracking-widest text-slate-400 font-semibold px-1">History</div>
+      ${list}
+      ${ss.length ? `<button class="btn btn-ghost btn-sm w-full mt-2" onclick="copyText(store.sessions.map(sessionText).join('\\n\\n———\\n\\n') + '\\n\\n' + JSON.stringify(store.sessions))">${I.copy}Copy all logs</button>` : ''}
+    </div>
+  `, 'me');
+}
+const stat = (v, l) => `<div class="card px-3 py-2.5 text-center"><div class="text-[22px] font-bold text-slate-900 leading-none">${v}</div><div class="text-[11px] text-slate-500 mt-1">${l}</div></div>`;
+
+// ───────────────────────── runner (do mode) ─────────────────────────
+const runner = {
+  s: null, w: null, bi: 0, ri: 0, ei: 0, si: 0, // block, round, exercise, segment
+  phase: 'ready', endsAt: 0, remaining: 0, paused: false, timer: null, wake: null, lastBeep: null, active: false,
+
+  start(w) {
+    this.w = w; this.s = newSession(w); this.bi = 0; this.active = true;
+    this.readyBlock();
+    this.timer = setInterval(() => this.tick(), 200);
+    document.addEventListener('visibilitychange', this.onVis = () => { if (!document.hidden) this.tick(); });
+    this.requestWake();
+  },
+  detach() {
+    if (!this.active) return;
+    clearInterval(this.timer); this.timer = null;
+    document.removeEventListener('visibilitychange', this.onVis);
+    this.wake?.release?.(); this.wake = null; this.active = false;
+  },
+  async requestWake() { try { this.wake = await navigator.wakeLock?.request('screen'); } catch {} },
+  block() { return this.w.blocks[this.bi]; },
+  blockLog() { return this.s.blocks[this.bi]; },
+
+  readyBlock() { this.ri = 0; this.ei = 0; this.si = 0; this.phase = 'ready'; this.paused = false; this.draw(); },
+  beginBlock() { this.setPhase('lead', 5); },
+  setPhase(phase, secs) {
+    this.phase = phase; this.remaining = secs; this.endsAt = Date.now() + secs * 1000; this.paused = false; this.lastBeep = null;
+    if (phase === 'work') { beep(880, .18); vib([120]); }
+    if (phase === 'rest') { beep(440, .25); vib([60, 60, 60]); }
+    this.draw();
+  },
+  tick() {
+    if (this.paused || !['lead', 'work', 'rest'].includes(this.phase)) return;
+    const left = (this.endsAt - Date.now()) / 1000;
+    this.remaining = Math.max(0, left);
+    const c = Math.ceil(left);
+    if (c <= 3 && c >= 1 && this.lastBeep !== c) { this.lastBeep = c; beep(660, .08); }
+    if (left <= 0) this.advance(); else this.drawClock();
+  },
+  advance() {
+    const b = this.block();
+    if (b.type === 'interval') {
+      if (this.phase === 'lead') return this.setPhase('work', b.work_s);
+      if (this.phase === 'work') {
+        const lastEx = this.ei === b.exercises.length - 1;
+        const lastRound = this.ri === b.rounds - 1;
+        if (lastEx) this.blockLog().rounds_done = this.ri + 1;
+        if (lastEx && lastRound) return this.finishBlock();
+        return this.setPhase('rest', b.rest_s);
+      }
+      if (this.phase === 'rest') {
+        this.ei++;
+        if (this.ei >= b.exercises.length) { this.ei = 0; this.ri++; }
+        return this.setPhase('work', b.work_s);
+      }
+    } else {
+      const segs = b.segments;
+      if (this.phase === 'lead') return this.setPhase('work', segs[0].s);
+      // steady: next segment
+      const totalSegs = segs.length * b.repeat;
+      const done = this.si + 1;
+      let secs = 0; for (let i = 0; i < done; i++) secs += segs[i % segs.length].s;
+      this.blockLog().minutes_done = Math.round(secs / 60);
+      if (done >= totalSegs) return this.finishBlock();
+      this.si = done;
+      return this.setPhase('work', segs[this.si % segs.length].s);
+    }
+  },
+  finishBlock() {
+    beep(1046, .35); vib([200, 80, 200]);
+    if (this.bi < this.w.blocks.length - 1) { this.bi++; this.readyBlock(); }
+    else { this.phase = 'done'; this.draw(); }
+  },
+  skip() { if (['lead', 'work', 'rest'].includes(this.phase)) this.advance(); },
+  togglePause() {
+    if (this.paused) { this.endsAt = Date.now() + this.remaining * 1000; this.paused = false; }
+    else { this.remaining = Math.max(0, (this.endsAt - Date.now()) / 1000); this.paused = true; }
+    this.draw();
+  },
+  endBlock() {
+    const b = this.block(), log = this.blockLog();
+    if (b.type === 'interval') log.rounds_done = Math.min(b.rounds, this.ri + (this.phase === 'rest' && this.ei === b.exercises.length - 1 ? 1 : 0));
+    else {
+      const segs = b.segments, per = segs.reduce((a, x) => a + x.s, 0);
+      const elapsedInSeg = this.phase === 'work' ? segs[this.si % segs.length].s - this.remaining : 0;
+      log.minutes_done = Math.round((Math.floor(this.si / segs.length) * per + segs.slice(0, this.si % segs.length).reduce((a, x) => a + x.s, 0) + elapsedInSeg) / 60);
+    }
+    this.finishBlock();
+  },
+  finishAll() {
+    const completed = this.phase === 'done';
+    finishSession(this.s, completed);
+    const id = this.s.id; this.detach(); go(`s/${id}`);
+  },
+  adjust(ei, delta) {
+    const e = this.blockLog().exercises[ei];
+    e.actual = Math.max(0, Math.round((e.actual + delta) * 100) / 100);
+    const el = $(`#act-${ei}`); if (el) el.textContent = fmtNum(e.actual);
+  },
+  adjustSteady(field, idx, delta) {
+    const log = this.blockLog();
+    if (field === 'incline') log.incline_actual = Math.max(0, log.incline_actual + delta);
+    else log.speeds_actual[idx] = Math.max(0, Math.round((log.speeds_actual[idx] + delta) * 100) / 100);
+    this.draw();
+  },
+
+  drawClock() {
+    const c = $('#clock'); if (c) c.textContent = mmss(this.remaining);
+    const bar = $('#bar'); if (bar) { const total = this.phaseTotal(); bar.style.width = `${100 * (1 - this.remaining / total)}%`; }
+  },
+  phaseTotal() {
+    const b = this.block();
+    if (this.phase === 'lead') return 5;
+    if (b.type === 'interval') return this.phase === 'work' ? b.work_s : b.rest_s;
+    return b.segments[this.si % b.segments.length].s;
+  },
+  draw() {
+    const b = this.block(), log = this.blockLog(), w = this.w;
+    const bg = this.phase === 'work' ? 'phase-work' : this.phase === 'rest' ? 'phase-rest' : this.phase === 'done' ? 'phase-done' : 'phase-ready';
+    let body;
+    if (this.phase === 'done') {
+      body = `
+        <div class="flex-1 flex flex-col items-center justify-center text-center px-6">
+          <div class="text-[64px] mb-2">🏁</div>
+          <div class="text-[26px] font-bold">Workout complete</div>
+          <div class="opacity-80 mt-1">${Math.round((Date.now() - new Date(this.s.startedAt)) / 60000)} min · ${w.blocks.length} blocks</div>
+        </div>
+        <div class="px-5 pb-8 safe-bottom"><button class="btn btn-brand w-full" onclick="runner.finishAll()">${I.check}Review &amp; save log</button></div>`;
+    } else if (this.phase === 'ready') {
+      const rows = b.type === 'interval'
+        ? log.exercises.map((e, ei) => `
+          <div class="flex items-center gap-3 py-2">
+            <img class="thumb" src="${ytThumb(EXERCISES[e.ex].video)}" alt="" onclick="openVideo('${e.ex}')">
+            <div class="flex-1 min-w-0"><div class="font-semibold text-[15px]">${esc(e.name)}</div><div class="text-[12px] opacity-75">${esc(EXERCISES[e.ex].cue)}</div></div>
+          </div>`).join('')
+        : `<div class="flex items-center gap-3 py-2">
+            <img class="thumb" src="${ytThumb(EXERCISES[b.ex].video)}" alt="" onclick="openVideo('${b.ex}')">
+            <div class="flex-1 min-w-0"><div class="font-semibold text-[15px]">${esc(EXERCISES[b.ex].name)}</div><div class="text-[12px] opacity-75">${b.repeat} × (${b.segments.map(s => `${s.s / 60} min @ ${s.speed} kph`).join(' + ')}) · incline ${b.incline}</div></div>
+          </div>`;
+      body = `
+        <div class="flex-1 px-5 pt-6">
+          <div class="phase-label">Block ${this.bi + 1} of ${w.blocks.length}</div>
+          <div class="text-[28px] font-bold leading-tight mt-1">${esc(b.name)}</div>
+          <div class="opacity-80 text-[14px] mt-1">${blockSummary(b)}</div>
+          <div class="mt-5 divide-y divide-white/10">${rows}</div>
+          ${b.type === 'interval' ? `<div class="mt-5 space-y-3">${log.exercises.map((e, ei) => `
+            <div class="flex items-center justify-between">
+              <div class="text-[14px] opacity-90">${esc(e.name)}</div>
+              <div class="stepper"><button onclick="runner.adjust(${ei}, ${-EXERCISES[e.ex].step})">−</button><div class="val"><span id="act-${ei}">${fmtNum(e.actual)}</span> <span class="text-[11px] opacity-70">${esc(e.unit.replace(' per arm', '/arm'))}</span></div><button onclick="runner.adjust(${ei}, ${EXERCISES[e.ex].step})">+</button></div>
+            </div>`).join('')}</div>` : ''}
+        </div>
+        <div class="px-5 pb-8 safe-bottom flex gap-2">
+          <button class="btn btn-brand flex-1" onclick="runner.beginBlock()">${I.play}Start block</button>
+          <button class="btn btn-ghost" onclick="runner.finishBlock()">Skip</button>
+        </div>`;
+    } else {
+      // lead / work / rest
+      const isInterval = b.type === 'interval';
+      const curEx = isInterval ? log.exercises[this.ei] : null;
+      const nextIdx = isInterval ? (this.ei + 1) % b.exercises.length : 0;
+      const nextEx = isInterval ? log.exercises[nextIdx] : null;
+      const label = this.phase === 'lead' ? 'Get ready' : this.phase === 'work' ? (isInterval ? 'Work' : 'Go') : 'Rest';
+      const seg = !isInterval ? b.segments[this.si % b.segments.length] : null;
+      const roundInfo = isInterval ? `Round ${this.ri + 1} of ${b.rounds}` : `Segment ${this.si + 1} of ${b.segments.length * b.repeat}`;
+      const focus = isInterval
+        ? (this.phase === 'rest'
+            ? `<div class="text-[13px] opacity-75">Next</div><div class="text-[26px] font-bold leading-tight">${esc(nextEx.name)}</div><div class="text-[16px] opacity-90 mt-0.5">${fmtNum(nextEx.actual)} ${esc(nextEx.unit)}</div>`
+            : `<div class="text-[13px] opacity-75">${this.phase === 'lead' ? 'First up' : 'Now'}</div><div class="text-[26px] font-bold leading-tight">${esc(curEx.name)}</div><div class="text-[16px] opacity-90 mt-0.5">${fmtNum(curEx.actual)} ${esc(curEx.unit)}</div>`)
+        : `<div class="text-[13px] opacity-75">${this.phase === 'lead' ? 'First segment' : 'Now'}</div><div class="text-[26px] font-bold leading-tight">${fmtNum(log.speeds_actual[this.si % b.segments.length])} kph · incline ${fmtNum(log.incline_actual)}</div><div class="text-[14px] opacity-90 mt-0.5">${esc(EXERCISES[b.ex].name)} · ${seg.s / 60} min</div>`;
+      const adjustIdx = isInterval ? (this.phase === 'rest' ? nextIdx : this.ei) : null;
+      const adjust = isInterval ? (() => { const e = log.exercises[adjustIdx]; return `
+          <div class="flex items-center justify-between mt-4">
+            <div class="text-[13px] opacity-80">What I'm using</div>
+            <div class="stepper"><button onclick="runner.adjust(${adjustIdx}, ${-EXERCISES[e.ex].step}); runner.draw()">−</button><div class="val"><span id="act-${adjustIdx}">${fmtNum(e.actual)}</span> <span class="text-[11px] opacity-70">${esc(e.unit.replace(' per arm', '/arm'))}</span></div><button onclick="runner.adjust(${adjustIdx}, ${EXERCISES[e.ex].step}); runner.draw()">+</button></div>
+          </div>`; })()
+        : `<div class="flex items-center justify-between mt-4">
+            <div class="text-[13px] opacity-80">Speed</div>
+            <div class="stepper"><button onclick="runner.adjustSteady('speed', ${this.si % b.segments.length}, -0.5)">−</button><div class="val">${fmtNum(log.speeds_actual[this.si % b.segments.length])} <span class="text-[11px] opacity-70">kph</span></div><button onclick="runner.adjustSteady('speed', ${this.si % b.segments.length}, 0.5)">+</button></div>
+          </div>
+          <div class="flex items-center justify-between mt-2">
+            <div class="text-[13px] opacity-80">Incline</div>
+            <div class="stepper"><button onclick="runner.adjustSteady('incline', 0, -1)">−</button><div class="val">${fmtNum(log.incline_actual)}</div><button onclick="runner.adjustSteady('incline', 0, 1)">+</button></div>
+          </div>`;
+      const videoKey = isInterval ? (this.phase === 'rest' ? nextEx.ex : curEx.ex) : b.ex;
+      body = `
+        <div class="px-5 pt-3">
+          <div class="flex items-center justify-between">
+            <div><div class="phase-label">${esc(b.name)}</div><div class="text-[13px] opacity-80 mt-0.5">${roundInfo}</div></div>
+            <button class="btn btn-ghost btn-sm" onclick="openVideo('${videoKey}')">${I.video}Demo</button>
+          </div>
+          ${isInterval ? `<div class="round-dots mt-3">${Array.from({ length: b.rounds }, (_, i) => `<i class="${i < this.ri || (i === this.ri && this.phase !== 'lead') ? 'on' : ''}"></i>`).join('')}</div>` : ''}
+        </div>
+        <div class="flex-1 flex flex-col items-center justify-center text-center px-5">
+          <div class="phase-label">${label}${this.paused ? ' · paused' : ''}</div>
+          <div id="clock" class="clock mt-1">${mmss(this.remaining)}</div>
+          <div class="bar w-full mt-4"><div id="bar" style="width:${100 * (1 - this.remaining / this.phaseTotal())}%"></div></div>
+        </div>
+        <div class="px-5 pb-3">${focus}${adjust}</div>
+        <div class="px-5 pb-8 safe-bottom grid grid-cols-3 gap-2">
+          <button class="btn btn-ghost" onclick="runner.togglePause()">${this.paused ? 'Resume' : 'Pause'}</button>
+          <button class="btn btn-ghost" onclick="runner.skip()">Skip</button>
+          <button class="btn btn-ghost" onclick="runner.endBlock()">End block</button>
+        </div>`;
+    }
+    app.innerHTML = `
+      <div class="run ${bg}">
+        <div class="safe-top px-4 pt-3 flex items-center justify-between">
+          <div class="text-[12px] font-semibold opacity-80 truncate">${esc(w.title)}</div>
+          <button class="p-1 opacity-80" onclick="runner.exit()" aria-label="Exit">${I.x}</button>
+        </div>
+        ${body}
+      </div>`;
+  },
+  exit() {
+    if (this.phase === 'ready' && this.bi === 0) { this.detach(); return go(`w/${this.w.id}`); }
+    if (confirm('End workout now? What you have done so far will be saved.')) {
+      const b = this.block();
+      if (this.phase !== 'done' && ['lead', 'work', 'rest'].includes(this.phase)) {
+        const log = this.blockLog();
+        if (b.type === 'interval') log.rounds_done = this.ri;
+      }
+      this.finishAll();
+    }
+  },
+};
+function renderRun(w) { runner.start(w); }
+
+// ───────────────────────── beeps + vibration ─────────────────────────
+let actx;
+function beep(freq, dur) {
+  try {
+    actx = actx || new (window.AudioContext || window.webkitAudioContext)();
+    if (actx.state === 'suspended') actx.resume();
+    const o = actx.createOscillator(), g = actx.createGain();
+    o.type = 'sine'; o.frequency.value = freq;
+    g.gain.setValueAtTime(0.0001, actx.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.4, actx.currentTime + 0.01);
+    g.gain.exponentialRampToValueAtTime(0.0001, actx.currentTime + dur);
+    o.connect(g).connect(actx.destination); o.start(); o.stop(actx.currentTime + dur + 0.05);
+  } catch {}
+}
+function vib(p) { try { navigator.vibrate?.(p); } catch {} }
+// unlock audio on first touch (iOS)
+document.addEventListener('touchstart', () => { try { actx = actx || new (window.AudioContext || window.webkitAudioContext)(); actx.resume(); } catch {} }, { once: true, passive: true });
+
+route();
+</script>
+</body>
+</html>
