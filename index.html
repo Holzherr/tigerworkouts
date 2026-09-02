@@ -3,10 +3,11 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1">
+<meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="theme-color" content="#ee6f3a">
-<title>Workout Hub — v0.1</title>
+<title>Workout Hub — v0.2</title>
 <script src="https://cdn.tailwindcss.com"></script>
 <style>
   :root { --brand: #ee6f3a; --brand-dark: #c1542a; --rest: #1e3a8a; }
@@ -15,7 +16,6 @@
   .app { max-width: 430px; margin: 0 auto; min-height: 100dvh; background: #fff; position: relative; display: flex; flex-direction: column; }
   @media (min-width: 480px) { .app { box-shadow: 0 0 0 1px rgba(255,255,255,.06), 0 30px 80px rgba(0,0,0,.5); } }
   .brand { background: var(--brand); }
-  .brand-text { color: var(--brand); }
   .safe-top { padding-top: max(env(safe-area-inset-top), 14px); }
   .safe-bottom { padding-bottom: max(env(safe-area-inset-bottom), 12px); }
   .tabbar { position: sticky; bottom: 0; background: rgba(255,255,255,.96); backdrop-filter: blur(8px); border-top: 1px solid #e2e8f0; }
@@ -37,6 +37,8 @@
   .stepper button:active { background: #e2e8f0; }
   .stepper .val { min-width: 84px; text-align: center; font-weight: 700; font-size: 17px; font-variant-numeric: tabular-nums; }
   .avatar { width: 36px; height: 36px; border-radius: 999px; background: linear-gradient(135deg,#f59e0b,#ee6f3a); color: #fff; display: inline-flex; align-items: center; justify-content: center; font-weight: 700; font-size: 14px; }
+  .exicon { width: 36px; height: 36px; border-radius: 10px; display: inline-flex; align-items: center; justify-content: center; flex: none; }
+  .exicon svg { width: 22px; height: 22px; }
   .sheet-backdrop { position: fixed; inset: 0; background: rgba(15,23,42,.55); z-index: 40; }
   .sheet { position: fixed; left: 50%; transform: translateX(-50%); bottom: 0; width: 100%; max-width: 430px; background: #fff; border-radius: 22px 22px 0 0; z-index: 50; max-height: 92dvh; overflow: auto; }
   .sheet-handle { width: 40px; height: 4px; border-radius: 4px; background: #cbd5e1; margin: 10px auto 4px; }
@@ -48,7 +50,7 @@
   .run.phase-rest { background: var(--rest); }
   .run.phase-ready { background: #0f172a; }
   .run.phase-done { background: #065f46; }
-  .clock { font-size: 104px; line-height: 1; font-weight: 800; letter-spacing: -0.04em; font-variant-numeric: tabular-nums; }
+  .clock { font-size: 96px; line-height: 1; font-weight: 800; letter-spacing: -0.04em; font-variant-numeric: tabular-nums; }
   .phase-label { font-size: 13px; letter-spacing: .2em; text-transform: uppercase; font-weight: 700; opacity: .85; }
   .bar { height: 6px; background: rgba(255,255,255,.25); border-radius: 6px; overflow: hidden; }
   .bar > div { height: 100%; background: #fff; transition: width .2s linear; }
@@ -59,12 +61,36 @@
   .run .btn-ghost { background: rgba(255,255,255,.14); color: #fff; }
   .run .btn-ghost:active { background: rgba(255,255,255,.28); }
   .run .btn-brand { background: #fff; color: #0f172a; }
+  /* block strip */
+  .blocks { display: flex; gap: 4px; }
+  .blocks span { flex: 1; height: 8px; border-radius: 6px; background: rgba(255,255,255,.22); }
+  .blocks span.done { background: rgba(255,255,255,.6); }
+  .blocks span.cur { background: #fff; box-shadow: 0 0 0 2px rgba(255,255,255,.35); }
   .round-dots { display: flex; gap: 5px; flex-wrap: wrap; }
   .round-dots i { width: 9px; height: 9px; border-radius: 999px; background: rgba(255,255,255,.3); display: block; }
   .round-dots i.on { background: #fff; }
+  .round-dots i.cur { background: #fff; box-shadow: 0 0 0 2px rgba(255,255,255,.35); }
+  /* step strip */
+  .steps { display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; -webkit-overflow-scrolling: touch; padding-bottom: 2px; }
+  .steps::-webkit-scrollbar { display: none; }
+  .step { flex: none; display: flex; align-items: center; gap: 7px; padding: 8px 10px; border-radius: 12px; background: rgba(255,255,255,.12); opacity: .55; min-width: 0; position: relative; touch-action: pan-x; }
+  .step.rest { padding: 8px 9px; }
+  .step .exicon { width: 26px; height: 26px; border-radius: 8px; }
+  .step .exicon svg { width: 16px; height: 16px; }
+  .step .t { font-size: 12px; font-weight: 600; white-space: nowrap; line-height: 1.1; }
+  .step .s { font-size: 10px; opacity: .8; white-space: nowrap; }
+  .step.done { opacity: .35; }
+  .step.cur { opacity: 1; background: #fff; color: #0f172a; box-shadow: 0 4px 14px rgba(0,0,0,.18); }
+  .step.next { opacity: .9; outline: 2px dashed rgba(255,255,255,.6); }
+  .swipe-row { position: relative; overflow: hidden; touch-action: pan-y; }
+  .swipe-row .inner { transition: transform .15s ease; }
+  .swipe-row .rm { position: absolute; right: 0; top: 0; bottom: 0; width: 84px; display: flex; align-items: center; justify-content: center; background: #ef4444; color: #fff; font-weight: 700; font-size: 13px; }
+  .elapsed { font-variant-numeric: tabular-nums; font-size: 12px; opacity: .85; display: inline-flex; align-items: center; gap: 4px; }
+  .next-block { background: rgba(255,255,255,.14); border-radius: 12px; padding: 8px 12px; font-size: 13px; }
   textarea, input[type=text] { font-size: 16px; }
   .log-pre { white-space: pre-wrap; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; line-height: 1.5; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 12px; color: #334155; }
-  .toast { position: fixed; left: 50%; bottom: 90px; transform: translateX(-50%); background: #0f172a; color: #fff; padding: 10px 16px; border-radius: 12px; font-size: 14px; z-index: 60; box-shadow: 0 10px 30px rgba(0,0,0,.3); }
+  .toast { position: fixed; left: 50%; bottom: 90px; transform: translateX(-50%); background: #0f172a; color: #fff; padding: 10px 16px; border-radius: 12px; font-size: 14px; z-index: 60; box-shadow: 0 10px 30px rgba(0,0,0,.3); display: flex; gap: 14px; align-items: center; }
+  .toast button { color: #fbbf24; font-weight: 700; }
   .fade { animation: fade .25s ease; }
   @keyframes fade { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
   .row-tap:active { background: #f8fafc; }
@@ -78,13 +104,15 @@
 const LS_KEY = 'workout-hub:v1';
 const store = load();
 function load() {
-  try { return Object.assign({ sessions: [], name: 'Nick' }, JSON.parse(localStorage.getItem(LS_KEY) || '{}')); }
-  catch { return { sessions: [], name: 'Nick' }; }
+  const d = { sessions: [], name: 'Nick', workouts: [], exercises: {} };
+  try { return Object.assign(d, JSON.parse(localStorage.getItem(LS_KEY) || '{}')); }
+  catch { return d; }
 }
 function save() { try { localStorage.setItem(LS_KEY, JSON.stringify(store)); } catch {} }
 
 const GH_REPO = 'Holzherr/nick-prototypes';
 const $ = (s, r = document) => r.querySelector(s);
+const $$ = (s, r = document) => [...r.querySelectorAll(s)];
 const app = $('#app');
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const fmtNum = n => (Math.round(n * 100) / 100).toString();
@@ -93,7 +121,14 @@ const mmss = s => `${Math.floor(s / 60)}:${pad(Math.max(0, Math.ceil(s)) % 60)}`
 const fmtDate = iso => new Date(iso).toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' });
 const fmtTime = iso => new Date(iso).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
 const ytThumb = id => `https://i.ytimg.com/vi/${id}/mqdefault.jpg`;
-const wById = id => WORKOUTS.find(w => w.id === id);
+const allWorkouts = () => [...store.workouts, ...WORKOUTS];
+const wById = id => allWorkouts().find(w => w.id === id);
+const isUserWorkout = w => store.workouts.some(x => x.id === w.id);
+const ICON_COLORS = { kettlebell: '#f59e0b', dumbbell: '#a78bfa', treadmill: '#38bdf8', walk: '#34d399', barbell: '#fb7185', body: '#fbbf24', band: '#f472b6', bike: '#22d3ee', rower: '#60a5fa', core: '#c084fc' };
+const EX = key => EXERCISES[key] || store.exercises[key] || { name: key, unit: 'kg', step: 2.5, icon: 'body', color: ICON_COLORS.body, cue: '', video: '' };
+const exLib = () => ({ ...EXERCISES, ...store.exercises });
+const exMedia = ex => ex.image || (ex.video ? ytThumb(ex.video) : '');
+const shortUnit = u => u.replace(' per arm', '/arm');
 
 function blockMinutes(b) {
   if (b.type === 'interval') return b.rounds * b.exercises.length * (b.work_s + b.rest_s) / 60;
@@ -107,6 +142,15 @@ function blockSummary(b) {
 }
 function lastSessionFor(workoutId) {
   return [...store.sessions].reverse().find(s => s.workoutId === workoutId && s.completed);
+}
+// collapse [17.5,17.5,15] → "17.5 kg ×2, 15 kg ×1"
+function runs(arr, unit) {
+  if (!arr.length) return '';
+  const out = []; let cur = arr[0], n = 0;
+  for (const v of arr) { if (v === cur) n++; else { out.push([cur, n]); cur = v; n = 1; } }
+  out.push([cur, n]);
+  if (out.length === 1) return `${fmtNum(out[0][0])} ${unit}`;
+  return out.map(([v, n]) => `${fmtNum(v)} ${unit} ×${n}`).join(', ');
 }
 
 // ───────────────────────── icons ─────────────────────────
@@ -123,7 +167,27 @@ const I = {
   share: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="18" height="18"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>',
   check: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" width="18" height="18"><polyline points="20 6 9 17 4 12"/></svg>',
   trash: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>',
+  // exercise icons (stroke, currentColor)
+  kettlebell: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 9V6a4 4 0 0 1 8 0v3"/><path d="M6.5 9h11l1.2 3.2A7 7 0 0 1 12 21a7 7 0 0 1-6.7-8.8z"/></svg>',
+  dumbbell: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 7v10M3 9v6M18 7v10M21 9v6"/><rect x="6" y="10" width="12" height="4" rx="1"/></svg>',
+  treadmill: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="15" cy="4" r="1.6"/><path d="M14 8l-3 3 2 2v4M14 8l3 2 2-1M11 11l-3 1-1 3"/><path d="M3 21h18"/><path d="M4 18l16-3"/></svg>',
+  walk: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="13" cy="4" r="1.6"/><path d="M12 8l-2 5 3 2v6M12 8l3 2 2 3M10 13l-2 2-1 5"/><path d="M3 22L21 14"/></svg>',
+  rest: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/></svg>',
+  barbell: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12h20"/><rect x="4" y="8" width="3" height="8" rx="1"/><rect x="17" y="8" width="3" height="8" rx="1"/><path d="M7 10h10M7 14h10"/></svg>',
+  body: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="4" r="1.8"/><path d="M12 7v6M8 9l4-2 4 2M9 21l3-8 3 8"/></svg>',
+  band: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 18c4-10 12-10 16 0"/><path d="M4 18l2-3M20 18l-2-3"/></svg>',
+  bike: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="16" r="3.5"/><circle cx="18" cy="16" r="3.5"/><path d="M6 16l4-7h5l3 7M10 9l2 7M13 5h3"/></svg>',
+  rower: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 18h18"/><circle cx="8" cy="7" r="1.6"/><path d="M8 9l3 4h4l2 3M8 9l-2 4 2 5"/></svg>',
+  core: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="5" cy="9" r="1.6"/><path d="M6 11l5 1 5-1 4 2M11 12l-1 6M16 11l1 6"/><path d="M3 20h18"/></svg>',
+  library: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>',
+  plus: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" width="18" height="18"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>',
+  link: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="18" height="18"><path d="M10 13a5 5 0 0 0 7.5.5l3-3a5 5 0 0 0-7-7l-1.7 1.7"/><path d="M14 11a5 5 0 0 0-7.5-.5l-3 3a5 5 0 0 0 7 7l1.7-1.7"/></svg>',
+  edit: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="18" height="18"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg>',
+  slope: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="14" height="14"><path d="M3 20L21 8v12z"/></svg>',
 };
+const exIcon = (key, size = '') => { const ex = EX(key); return `<span class="exicon ${size}" style="background:${ex.color || ICON_COLORS[ex.icon] || '#94a3b8'};color:#0f172a">${I[ex.icon] || I.body}</span>`; };
+const wColor = w => { const k = w.blocks[0]?.type === 'interval' ? w.blocks[0].exercises[0]?.ex : w.blocks[0]?.ex; const ex = k ? EX(k) : null; return ex?.color || ICON_COLORS[ex?.icon] || '#ee6f3a'; };
+const wExKeys = w => [...new Set(w.blocks.flatMap(b => b.type === 'interval' ? b.exercises.map(e => e.ex) : [b.ex]))];
 
 // ───────────────────────── router ─────────────────────────
 function route() {
@@ -134,68 +198,102 @@ function route() {
   if (seg === 'do' && wById(id)) return renderRun(wById(id));
   if (seg === 's' && store.sessions.find(s => s.id === id)) return renderSummary(store.sessions.find(s => s.id === id), extra === 'edit');
   if (seg === 'me') return renderProfile();
+  if (seg === 'new') return renderBuilder(null);
+  if (seg === 'edit' && wById(id)) return renderBuilder(wById(id));
+  if (seg === 'library') return renderLibrary();
+  if (seg === 'import' && id) return importWorkout(id);
   return renderDiscover();
 }
 window.addEventListener('hashchange', route);
-const go = h => { location.hash = h; };
+const go = h => { location.hash = '/' + h; };
 
 function shell(inner, tab) {
   app.innerHTML = `
     <div class="flex-1 fade">${inner}</div>
     <nav class="tabbar safe-bottom flex">
       <a href="#/" class="tab ${tab === 'discover' ? 'active' : ''}">${I.discover}<span>Discover</span></a>
+      <a href="#/library" class="tab ${tab === 'library' ? 'active' : ''}">${I.library}<span>Library</span></a>
       <a href="#/me" class="tab ${tab === 'me' ? 'active' : ''}">${I.me}<span>Profile</span></a>
     </nav>`;
   window.scrollTo(0, 0);
 }
 
 // ───────────────────────── discover ─────────────────────────
+let discoverTag = 'All';
 function renderDiscover() {
-  const cards = WORKOUTS.map(w => {
+  const ws = allWorkouts();
+  const tags = ['All', ...new Set(ws.flatMap(w => w.tags || []))];
+  const shown = ws.filter(w => discoverTag === 'All' || (w.tags || []).includes(discoverTag));
+  const featured = shown[0];
+  const creators = [...new Set(ws.map(w => w.creator))];
+  const hour = new Date().getHours();
+  const greet = hour < 12 ? 'Morning' : hour < 18 ? 'Afternoon' : 'Evening';
+  const card = w => {
     const last = lastSessionFor(w.id);
     return `
-    <a href="#/w/${w.id}" class="card block overflow-hidden row-tap">
-      <div class="brand text-white px-4 pt-4 pb-3">
-        <div class="flex items-center gap-2 mb-2">
-          <span class="avatar" style="background:rgba(255,255,255,.25)">${esc(w.creator[0])}</span>
-          <div class="leading-tight"><div class="text-[13px] font-semibold">${esc(w.creator)}</div><div class="text-[11px] opacity-80">${fmtDate(w.created)}</div></div>
-        </div>
-        <div class="text-[20px] font-bold leading-tight">${esc(w.title)}</div>
+    <a href="#/w/${w.id}" class="card flex items-stretch overflow-hidden row-tap">
+      <div class="w-[92px] flex-none flex flex-col items-center justify-center gap-1 p-2" style="background:linear-gradient(160deg,${wColor(w)},${wColor(w)}88)">
+        <div class="flex flex-wrap justify-center gap-1">${wExKeys(w).slice(0, 4).map(k => `<span class="exicon" style="width:26px;height:26px;border-radius:8px;background:rgba(255,255,255,.85);color:#0f172a">${(I[EX(k).icon] || I.body).replace('<svg', '<svg width="15" height="15"')}</span>`).join('')}</div>
+        <div class="text-[11px] font-bold text-slate-900/80 mt-1">${workoutMinutes(w)} min</div>
       </div>
-      <div class="px-4 py-3">
-        <div class="flex flex-wrap gap-1.5 mb-2.5">
-          <span class="chip bg-slate-100 text-slate-700">${I.clock}${workoutMinutes(w)} min</span>
-          <span class="chip bg-orange-50 text-orange-700">${esc(w.level)}</span>
-          ${w.tags.map(t => `<span class="chip bg-slate-100 text-slate-600">${esc(t)}</span>`).join('')}
-        </div>
-        <div class="text-[13px] text-slate-600 leading-relaxed">${w.blocks.map(b => esc(b.name)).join(' · ')}</div>
-        ${last ? `<div class="text-[12px] text-emerald-700 mt-2 font-medium">✓ Done ${fmtDate(last.startedAt)}</div>` : ''}
+      <div class="flex-1 min-w-0 px-3 py-2.5">
+        <div class="font-semibold text-slate-900 text-[15px] leading-tight">${esc(w.title)}</div>
+        <div class="text-[12px] text-slate-500 mt-0.5">${esc(w.creator)} · ${esc(w.level)} · ${w.blocks.length} blocks</div>
+        <div class="text-[12px] text-slate-500 mt-1 truncate">${w.blocks.map(b => esc(b.name)).join(' · ')}</div>
+        ${last ? `<div class="text-[11px] text-emerald-700 mt-1 font-medium">✓ Done ${fmtDate(last.startedAt)}</div>` : ''}
       </div>
     </a>`;
-  }).join('');
+  };
   shell(`
-    <header class="safe-top px-5 pb-3 pt-4">
-      <div class="text-[11px] uppercase tracking-widest text-slate-400 font-semibold">Discover</div>
-      <h1 class="text-[26px] font-bold text-slate-900">Workouts</h1>
+    <header class="safe-top px-5 pb-2 pt-4 flex items-end justify-between">
+      <div>
+        <div class="text-[13px] text-slate-500">${greet}, ${esc(store.name)}</div>
+        <h1 class="text-[26px] font-bold text-slate-900 leading-tight">Ready to move?</h1>
+      </div>
+      <button class="btn btn-brand btn-sm" onclick="go('new')">${I.plus}Create</button>
     </header>
-    <div class="px-4 space-y-3 pb-6">${cards}</div>
-    <p class="px-6 pb-6 text-[12px] text-slate-400">New workouts get added to <code>data.js</code>. Creator accounts and in-app builders come later once the gym flow proves itself.</p>
+    <div class="steps px-5 py-2">${tags.map(t => `<button class="chip ${t === discoverTag ? 'bg-slate-900 text-white' : 'bg-slate-100 text-slate-600'}" style="padding:7px 13px;font-size:12px;flex:none" onclick="discoverTag='${esc(t)}'; renderDiscover()">${esc(t)}</button>`).join('')}</div>
+    ${featured ? `
+    <div class="px-4 pt-2">
+      <a href="#/w/${featured.id}" class="block rounded-2xl overflow-hidden text-white relative" style="background:linear-gradient(135deg,${wColor(featured)} 0%,#ee6f3a 60%,#c1542a 100%)">
+        <div class="px-5 pt-5 pb-4">
+          <div class="flex items-center gap-2 mb-3"><span class="chip bg-white/25 text-white">Featured</span><span class="chip bg-white/25 text-white">${I.clock}${workoutMinutes(featured)} min</span><span class="chip bg-white/25 text-white">${esc(featured.level)}</span></div>
+          <div class="text-[24px] font-bold leading-tight">${esc(featured.title)}</div>
+          <div class="text-[13px] opacity-90 mt-1">by ${esc(featured.creator)} · ${featured.blocks.map(b => esc(b.name)).join(' · ')}</div>
+          <div class="flex items-center justify-between mt-4">
+            <div class="flex gap-1.5">${wExKeys(featured).map(k => `<span class="exicon" style="background:rgba(255,255,255,.9);color:#0f172a">${I[EX(k).icon] || I.body}</span>`).join('')}</div>
+            <span class="btn btn-sm" style="background:#fff;color:#0f172a">${I.play}Start</span>
+          </div>
+        </div>
+      </a>
+    </div>` : ''}
+    <div class="px-5 pt-5 pb-2 text-[11px] uppercase tracking-widest text-slate-400 font-semibold">Creators</div>
+    <div class="steps px-5 pb-2">${creators.map(c => `<div class="flex flex-col items-center gap-1" style="flex:none;width:64px"><span class="avatar" style="width:48px;height:48px;font-size:18px">${esc(c[0])}</span><div class="text-[11px] text-slate-600 truncate w-full text-center">${esc(c)}</div></div>`).join('')}
+      <button class="flex flex-col items-center gap-1" style="flex:none;width:64px" onclick="go('new')"><span class="avatar" style="width:48px;height:48px;background:#f1f5f9;color:#64748b">${I.plus}</span><div class="text-[11px] text-slate-500">You</div></button>
+    </div>
+    <div class="px-5 pt-3 pb-2 flex items-baseline justify-between"><div class="text-[11px] uppercase tracking-widest text-slate-400 font-semibold">${discoverTag === 'All' ? 'All workouts' : esc(discoverTag)}</div><div class="text-[12px] text-slate-400">${shown.length}</div></div>
+    <div class="px-4 space-y-2 pb-6">${shown.map(card).join('') || `<div class="card px-4 py-8 text-center text-slate-400 text-[14px]">Nothing tagged ${esc(discoverTag)} yet.</div>`}</div>
+    <p class="px-6 pb-6 text-[12px] text-slate-400">Create a workout, then Share link from its page — anyone who opens the link gets it in their Discover feed.</p>
   `, 'discover');
 }
 
 // ───────────────────────── workout detail ─────────────────────────
 function renderWorkout(w) {
   const last = lastSessionFor(w.id);
-  const lastActual = (bi, ei) => last?.blocks?.[bi]?.exercises?.[ei]?.actual;
+  const lastActual = (bi, ei) => last?.blocks?.[bi]?.exercises?.[ei];
   const blocks = w.blocks.map((b, bi) => {
     const rows = b.type === 'interval'
-      ? b.exercises.map((e, ei) => exRow(e.ex, `${fmtNum(e.target)} ${EXERCISES[e.ex].unit}`, lastActual(bi, ei) != null ? `Last: ${fmtNum(lastActual(bi, ei))}` : '')).join('')
+      ? b.exercises.map((e, ei) => {
+          const la = lastActual(bi, ei);
+          const hint = la ? (la.removed ? 'Last: skipped' : `Last: ${la.actuals?.length ? runs(la.actuals, shortUnit(la.unit)) : fmtNum(la.actual) + ' ' + shortUnit(la.unit)}`) : '';
+          return exRow(e.ex, `${fmtNum(e.target)} ${EX(e.ex).unit}`, hint);
+        }).join('')
       : exRow(b.ex, `${b.repeat} × (${b.segments.map(s => `${s.s / 60} min @ ${s.speed} kph`).join(' + ')}) · incline ${b.incline}`, '');
     return `
       <div class="card overflow-hidden">
-        <div class="px-4 pt-3 pb-2 flex items-baseline justify-between">
+        <div class="px-4 pt-3 pb-2 flex items-baseline justify-between gap-3">
           <div class="font-semibold text-slate-900">${bi + 1}. ${esc(b.name)}</div>
-          <div class="text-[12px] text-slate-500">${blockSummary(b)}</div>
+          <div class="text-[12px] text-slate-500 text-right">${blockSummary(b)}</div>
         </div>
         <div class="divide-y divide-slate-100">${rows}</div>
       </div>`;
@@ -214,9 +312,14 @@ function renderWorkout(w) {
         <span class="chip bg-white/20 text-white">${esc(w.level)}</span>
       </div>
       ${last ? `<div class="text-[12px] mt-3 opacity-90">Last done ${fmtDate(last.startedAt)} · ${last.duration_min} min</div>` : ''}
+      <div class="flex gap-2 mt-4">
+        <button class="btn btn-sm" style="background:rgba(255,255,255,.2);color:#fff" onclick="shareWorkout('${w.id}')">${I.link}Share link</button>
+        <button class="btn btn-sm" style="background:rgba(255,255,255,.2);color:#fff" onclick="go('edit/${w.id}')">${I.edit}${isUserWorkout(w) ? 'Edit' : 'Duplicate & edit'}</button>
+        ${isUserWorkout(w) ? `<button class="btn btn-sm" style="background:rgba(255,255,255,.2);color:#fff" onclick="deleteWorkout('${w.id}')">${I.trash}</button>` : ''}
+      </div>
     </header>
     <div class="px-4 py-4 space-y-3 pb-32">${blocks}
-      <p class="text-[12px] text-slate-400 px-1">Tap an exercise to watch the demo. In the timer, weights start at the target and you adjust with +/− as you go.</p>
+      <p class="text-[12px] text-slate-400 px-1">Tap an exercise to watch the demo. In the timer, weights start at the target and you adjust with +/− as you go. Swipe a step left to drop it.</p>
     </div>
     <div class="fixed bottom-[68px] left-1/2 -translate-x-1/2 w-full max-w-[430px] px-4 pointer-events-none">
       <div class="flex gap-2 pointer-events-auto">
@@ -227,21 +330,21 @@ function renderWorkout(w) {
   `, 'discover');
 }
 function exRow(key, target, hint) {
-  const ex = EXERCISES[key];
+  const ex = EX(key);
   return `
     <button class="w-full text-left flex items-center gap-3 px-4 py-2.5 row-tap" onclick="openVideo('${key}')">
-      <img class="thumb" src="${ytThumb(ex.video)}" alt="">
+      ${exIcon(key)}
       <div class="flex-1 min-w-0">
         <div class="font-medium text-slate-900 text-[15px]">${esc(ex.name)}</div>
         <div class="text-[12px] text-slate-500">${esc(target)}${hint ? ` <span class="text-emerald-700">· ${esc(hint)}</span>` : ''}</div>
       </div>
-      <span class="text-slate-400">${I.video}</span>
+      ${exMedia(ex) ? `<img class="thumb" style="width:64px;height:42px" src="${esc(exMedia(ex))}" alt="">` : ''}
     </button>`;
 }
 
 // ───────────────────────── video sheet ─────────────────────────
 function openVideo(key) {
-  const ex = EXERCISES[key];
+  const ex = EX(key);
   closeSheet();
   const el = document.createElement('div');
   el.id = 'sheet';
@@ -250,10 +353,11 @@ function openVideo(key) {
     <div class="sheet safe-bottom">
       <div class="sheet-handle"></div>
       <div class="px-4 pb-2 flex items-center justify-between">
-        <div class="font-semibold text-slate-900 text-[17px]">${esc(ex.name)}</div>
+        <div class="flex items-center gap-2">${exIcon(key)}<div class="font-semibold text-slate-900 text-[17px]">${esc(ex.name)}</div></div>
         <button class="text-slate-400 p-1" onclick="closeSheet()">${I.x}</button>
       </div>
-      <div class="px-4"><div class="video-wrap"><iframe src="https://www.youtube-nocookie.com/embed/${ex.video}?autoplay=1&playsinline=1&rel=0" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen></iframe></div></div>
+      ${ex.image ? `<div class="px-4 pb-3"><img src="${esc(ex.image)}" alt="" class="w-full rounded-xl" style="max-height:260px;object-fit:cover"></div>` : ''}
+      ${ex.video ? `<div class="px-4"><div class="video-wrap"><iframe src="https://www.youtube-nocookie.com/embed/${ex.video}?autoplay=1&playsinline=1&rel=0" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen></iframe></div></div>` : ''}
       <p class="px-4 pt-3 pb-4 text-[14px] text-slate-600 leading-relaxed">${esc(ex.cue)}</p>
     </div>`;
   document.body.appendChild(el);
@@ -267,9 +371,10 @@ function newSession(w) {
     workoutId: w.id, title: w.title, creator: w.creator,
     startedAt: new Date().toISOString(), endedAt: null, duration_min: 0, completed: false, notes: '',
     blocks: w.blocks.map(b => b.type === 'interval'
-      ? { name: b.name, type: 'interval', work_s: b.work_s, rest_s: b.rest_s, rounds: b.rounds, rounds_done: 0,
-          exercises: b.exercises.map(e => ({ ex: e.ex, name: EXERCISES[e.ex].name, unit: EXERCISES[e.ex].unit, target: e.target, actual: e.target })) }
-      : { name: b.name, type: 'steady', ex: b.ex, minutes: Math.round(blockMinutes(b)), minutes_done: 0, incline: b.incline,
+      ? { name: b.name, type: 'interval', work_s: b.work_s, rest_s: b.rest_s, rounds: b.rounds, rounds_done: 0, rests: [], skipped: false,
+          exercises: b.exercises.map(e => ({ ex: e.ex, name: EX(e.ex).name, unit: EX(e.ex).unit, target: e.target, actual: e.target, actuals: [], removed: false,
+            ...(EX(e.ex).incline ? { incline: e.incline ?? 0, incline_actual: e.incline ?? 0 } : {}) })) }
+      : { name: b.name, type: 'steady', ex: b.ex, minutes: Math.round(blockMinutes(b)), minutes_done: 0, incline: b.incline, skipped: false,
           speeds: b.segments.map(s => s.speed), incline_actual: b.incline, speeds_actual: b.segments.map(s => s.speed) }),
   };
 }
@@ -292,6 +397,19 @@ function logWithoutTimer(id) {
 }
 
 // ───────────────────────── log text + export ─────────────────────────
+function exLine(e) {
+  if (e.removed) return `${e.name}: dropped`;
+  const val = e.actuals?.length ? runs(e.actuals, e.unit) : `${fmtNum(e.actual)} ${e.unit}`;
+  const tgt = (e.actuals?.length ? e.actuals.some(a => a !== e.target) : e.actual !== e.target) ? ` (target ${fmtNum(e.target)})` : '';
+  const inc = e.incline_actual != null && e.incline_actual > 0 ? ` · incline ${fmtNum(e.incline_actual)}` : '';
+  return `${e.name}: ${val}${tgt}${inc}`;
+}
+function restLine(b) {
+  if (!b.rests?.length) return '';
+  const avg = b.rests.reduce((a, x) => a + x, 0) / b.rests.length;
+  if (Math.abs(avg - b.rest_s) < 3) return '';
+  return ` · rest ~${Math.round(avg)}s of ${b.rest_s}s`;
+}
 function sessionText(s) {
   const lines = [];
   lines.push(`${s.title} — by ${s.creator}`);
@@ -299,10 +417,10 @@ function sessionText(s) {
   lines.push('');
   s.blocks.forEach((b, i) => {
     if (b.type === 'interval') {
-      lines.push(`${i + 1}. ${b.name} — ${b.rounds_done}/${b.rounds} rounds · ${b.work_s}s on / ${b.rest_s}s off`);
-      b.exercises.forEach(e => lines.push(`   ${e.name}: ${fmtNum(e.actual)} ${e.unit}${e.actual !== e.target ? ` (target ${fmtNum(e.target)})` : ''}`));
+      lines.push(`${i + 1}. ${b.name} — ${b.rounds_done}/${b.rounds} rounds · ${b.work_s}s on / ${b.rest_s}s off${restLine(b)}${b.skipped ? ' · skipped' : ''}`);
+      b.exercises.forEach(e => lines.push(`   ${exLine(e)}`));
     } else {
-      lines.push(`${i + 1}. ${b.name} — ${b.minutes_done}/${b.minutes} min · incline ${fmtNum(b.incline_actual)} · ${b.speeds_actual.map(fmtNum).join('/')} kph`);
+      lines.push(`${i + 1}. ${b.name} — ${b.minutes_done}/${b.minutes} min · incline ${fmtNum(b.incline_actual)} · ${b.speeds_actual.map(fmtNum).join('/')} kph${b.skipped ? ' · skipped' : ''}`);
     }
   });
   if (s.notes) { lines.push(''); lines.push(`Notes: ${s.notes}`); }
@@ -328,10 +446,12 @@ async function shareText(s) {
   else copyText(text);
 }
 let toastT;
-function toast(msg) {
+function toast(msg, action, onAction) {
   $('#toast')?.remove();
-  const t = document.createElement('div'); t.id = 'toast'; t.className = 'toast'; t.textContent = msg;
-  document.body.appendChild(t); clearTimeout(toastT); toastT = setTimeout(() => t.remove(), 1800);
+  const t = document.createElement('div'); t.id = 'toast'; t.className = 'toast';
+  t.innerHTML = `<span>${esc(msg)}</span>${action ? `<button>${esc(action)}</button>` : ''}`;
+  if (action) t.querySelector('button').onclick = () => { onAction(); t.remove(); };
+  document.body.appendChild(t); clearTimeout(toastT); toastT = setTimeout(() => t.remove(), action ? 4000 : 1800);
 }
 
 // ───────────────────────── summary / edit ─────────────────────────
@@ -343,14 +463,15 @@ function renderSummary(s, edit) {
         <div class="flex items-center justify-between mb-2">
           <div class="font-semibold text-slate-900">${bi + 1}. ${esc(b.name)}</div>
           ${edit ? stepper(`s.blocks[${bi}].rounds_done`, b.rounds_done, 1, 'rounds', 0, b.rounds)
-                 : `<div class="text-[13px] text-slate-500">${b.rounds_done}/${b.rounds} rounds</div>`}
+                 : `<div class="text-[13px] text-slate-500">${b.rounds_done}/${b.rounds} rounds${restLine(b)}</div>`}
         </div>
         <div class="space-y-2">${b.exercises.map((e, ei) => `
           <div class="flex items-center justify-between gap-3">
-            <div class="text-[14px] text-slate-700">${esc(e.name)}<span class="text-slate-400 text-[12px]"> · target ${fmtNum(e.target)}</span></div>
-            ${edit ? stepper(`s.blocks[${bi}].exercises[${ei}].actual`, e.actual, EXERCISES[e.ex].step, e.unit)
-                   : `<div class="font-semibold text-slate-900 text-[15px]">${fmtNum(e.actual)} <span class="text-[12px] text-slate-500 font-normal">${esc(e.unit)}</span></div>`}
-          </div>`).join('')}</div>
+            <div class="flex items-center gap-2 min-w-0">${exIcon(e.ex)}<div class="text-[14px] text-slate-700 leading-tight">${esc(e.name)}<div class="text-slate-400 text-[12px]">target ${fmtNum(e.target)}${e.removed ? ' · dropped' : ''}</div></div></div>
+            ${edit ? stepper(`s.blocks[${bi}].exercises[${ei}].actual`, e.actual, EX(e.ex).step, e.unit)
+                   : `<div class="font-semibold text-slate-900 text-[15px] text-right">${e.removed ? '<span class="text-slate-400 font-normal">—</span>' : e.actuals?.length && new Set(e.actuals).size > 1 ? `<span class="text-[13px]">${esc(runs(e.actuals, shortUnit(e.unit)))}</span>` : `${fmtNum(e.actual)} <span class="text-[12px] text-slate-500 font-normal">${esc(e.unit)}</span>`}${e.incline_actual > 0 ? `<div class="text-[11px] text-slate-500 font-normal">incline ${fmtNum(e.incline_actual)}</div>` : ''}</div>`}
+          </div>
+          ${edit && e.incline_actual != null ? `<div class="flex items-center justify-between gap-3 pl-11"><div class="text-[13px] text-slate-500">Incline</div>${stepper(`s.blocks[${bi}].exercises[${ei}].incline_actual`, e.incline_actual, 1, '')}</div>` : ''}`).join('')}</div>
       </div>`;
     }
     return `
@@ -404,7 +525,7 @@ function renderSummary(s, edit) {
 function stepper(path, val, step, unit, min = 0, max = 999) {
   return `<div class="stepper">
     <button onclick="stepVal('${path}', ${-step}, ${min}, ${max}, this)">−</button>
-    <div class="val">${fmtNum(val)}${unit ? `<span class="text-[11px] font-medium text-slate-500"> ${esc(unit.replace(' per arm', '/arm'))}</span>` : ''}</div>
+    <div class="val">${fmtNum(val)}${unit ? `<span class="text-[11px] font-medium text-slate-500"> ${esc(shortUnit(unit))}</span>` : ''}</div>
     <button onclick="stepVal('${path}', ${step}, ${min}, ${max}, this)">+</button>
   </div>`;
 }
@@ -434,7 +555,7 @@ function renderProfile() {
         <div class="text-[12px] ${s.completed ? 'text-emerald-700' : 'text-slate-400'}">${s.completed ? '✓' : 'partial'}</div>
       </div>
       <div class="text-[12px] text-slate-500 mt-0.5">${fmtDate(s.startedAt)} · ${fmtTime(s.startedAt)} · ${s.duration_min} min · by ${esc(s.creator)}</div>
-      <div class="text-[12px] text-slate-600 mt-1.5">${s.blocks.filter(b => b.type === 'interval').flatMap(b => b.exercises).slice(0, 4).map(e => `${esc(e.name)} ${fmtNum(e.actual)}`).join(' · ')}</div>
+      <div class="text-[12px] text-slate-600 mt-1.5">${s.blocks.filter(b => b.type === 'interval').flatMap(b => b.exercises).filter(e => !e.removed).slice(0, 4).map(e => `${esc(e.name)} ${fmtNum(e.actual)}`).join(' · ')}</div>
     </a>`).join('') : `<div class="card px-4 py-8 text-center text-slate-400 text-[14px]">No sessions yet. Pick a workout in Discover.</div>`;
   shell(`
     <header class="safe-top px-5 pb-4 pt-4">
@@ -458,10 +579,10 @@ const stat = (v, l) => `<div class="card px-3 py-2.5 text-center"><div class="te
 // ───────────────────────── runner (do mode) ─────────────────────────
 const runner = {
   s: null, w: null, bi: 0, ri: 0, ei: 0, si: 0, // block, round, exercise, segment
-  phase: 'ready', endsAt: 0, remaining: 0, paused: false, timer: null, wake: null, lastBeep: null, active: false,
+  phase: 'ready', endsAt: 0, remaining: 0, paused: false, timer: null, wake: null, lastBeep: null, active: false, startedMs: 0,
 
   start(w) {
-    this.w = w; this.s = newSession(w); this.bi = 0; this.active = true;
+    this.w = w; this.s = newSession(w); this.bi = 0; this.active = true; this.startedMs = Date.now();
     this.readyBlock();
     this.timer = setInterval(() => this.tick(), 200);
     document.addEventListener('visibilitychange', this.onVis = () => { if (!document.hidden) this.tick(); });
@@ -476,16 +597,32 @@ const runner = {
   async requestWake() { try { this.wake = await navigator.wakeLock?.request('screen'); } catch {} },
   block() { return this.w.blocks[this.bi]; },
   blockLog() { return this.s.blocks[this.bi]; },
+  activeIdx() { return this.blockLog().exercises.map((e, i) => e.removed ? -1 : i).filter(i => i >= 0); },
+  nextActive(from) { const a = this.activeIdx(); return a.find(i => i > from); },
+  isLastEx() { const a = this.activeIdx(); return this.ei === a[a.length - 1]; },
+  elapsed() { return (Date.now() - this.startedMs) / 1000; },
 
   readyBlock() { this.ri = 0; this.ei = 0; this.si = 0; this.phase = 'ready'; this.paused = false; this.draw(); },
-  beginBlock() { this.setPhase('lead', 5); },
+  beginBlock() {
+    if (this.block().type === 'interval') {
+      const a = this.activeIdx();
+      if (!a.length) return this.finishBlock();
+      this.ei = a[0];
+    }
+    this.setPhase('lead', 5);
+  },
   setPhase(phase, secs) {
     this.phase = phase; this.remaining = secs; this.endsAt = Date.now() + secs * 1000; this.paused = false; this.lastBeep = null;
-    if (phase === 'work') { beep(880, .18); vib([120]); }
+    if (phase === 'work') {
+      beep(880, .18); vib([120]);
+      const b = this.block();
+      if (b.type === 'interval') { const e = this.blockLog().exercises[this.ei]; e.actuals[this.ri] = e.actual; }
+    }
     if (phase === 'rest') { beep(440, .25); vib([60, 60, 60]); }
     this.draw();
   },
   tick() {
+    const el = $('#elapsed'); if (el) el.textContent = mmss(this.elapsed());
     if (this.paused || !['lead', 'work', 'rest'].includes(this.phase)) return;
     const left = (this.endsAt - Date.now()) / 1000;
     this.remaining = Math.max(0, left);
@@ -494,29 +631,29 @@ const runner = {
     if (left <= 0) this.advance(); else this.drawClock();
   },
   advance() {
-    const b = this.block();
+    const b = this.block(), log = this.blockLog();
     if (b.type === 'interval') {
       if (this.phase === 'lead') return this.setPhase('work', b.work_s);
       if (this.phase === 'work') {
-        const lastEx = this.ei === b.exercises.length - 1;
+        const lastEx = this.isLastEx();
         const lastRound = this.ri === b.rounds - 1;
-        if (lastEx) this.blockLog().rounds_done = this.ri + 1;
+        if (lastEx) log.rounds_done = this.ri + 1;
         if (lastEx && lastRound) return this.finishBlock();
         return this.setPhase('rest', b.rest_s);
       }
       if (this.phase === 'rest') {
-        this.ei++;
-        if (this.ei >= b.exercises.length) { this.ei = 0; this.ri++; }
+        log.rests.push(Math.round(b.rest_s - this.remaining));
+        const nx = this.nextActive(this.ei);
+        if (nx == null) { this.ei = this.activeIdx()[0]; this.ri++; } else this.ei = nx;
         return this.setPhase('work', b.work_s);
       }
     } else {
       const segs = b.segments;
       if (this.phase === 'lead') return this.setPhase('work', segs[0].s);
-      // steady: next segment
       const totalSegs = segs.length * b.repeat;
       const done = this.si + 1;
       let secs = 0; for (let i = 0; i < done; i++) secs += segs[i % segs.length].s;
-      this.blockLog().minutes_done = Math.round(secs / 60);
+      log.minutes_done = Math.round(secs / 60);
       if (done >= totalSegs) return this.finishBlock();
       this.si = done;
       return this.setPhase('work', segs[this.si % segs.length].s);
@@ -527,6 +664,7 @@ const runner = {
     if (this.bi < this.w.blocks.length - 1) { this.bi++; this.readyBlock(); }
     else { this.phase = 'done'; this.draw(); }
   },
+  skipBlock() { this.blockLog().skipped = true; this.finishBlock(); },
   skip() { if (['lead', 'work', 'rest'].includes(this.phase)) this.advance(); },
   togglePause() {
     if (this.paused) { this.endsAt = Date.now() + this.remaining * 1000; this.paused = false; }
@@ -535,7 +673,7 @@ const runner = {
   },
   endBlock() {
     const b = this.block(), log = this.blockLog();
-    if (b.type === 'interval') log.rounds_done = Math.min(b.rounds, this.ri + (this.phase === 'rest' && this.ei === b.exercises.length - 1 ? 1 : 0));
+    if (b.type === 'interval') log.rounds_done = Math.min(b.rounds, this.ri + (this.phase === 'rest' && this.isLastEx() ? 1 : 0));
     else {
       const segs = b.segments, per = segs.reduce((a, x) => a + x.s, 0);
       const elapsedInSeg = this.phase === 'work' ? segs[this.si % segs.length].s - this.remaining : 0;
@@ -551,12 +689,30 @@ const runner = {
   adjust(ei, delta) {
     const e = this.blockLog().exercises[ei];
     e.actual = Math.max(0, Math.round((e.actual + delta) * 100) / 100);
+    if (this.phase === 'work' && ei === this.ei) e.actuals[this.ri] = e.actual;
     const el = $(`#act-${ei}`); if (el) el.textContent = fmtNum(e.actual);
+  },
+  adjustIncline(ei, delta) {
+    const e = this.blockLog().exercises[ei];
+    e.incline_actual = Math.max(0, Math.round((e.incline_actual + delta) * 10) / 10);
+    const el = $(`#inc-${ei}`); if (el) el.textContent = fmtNum(e.incline_actual);
   },
   adjustSteady(field, idx, delta) {
     const log = this.blockLog();
     if (field === 'incline') log.incline_actual = Math.max(0, log.incline_actual + delta);
     else log.speeds_actual[idx] = Math.max(0, Math.round((log.speeds_actual[idx] + delta) * 100) / 100);
+    this.draw();
+  },
+  removeEx(ei) {
+    const log = this.blockLog(), e = log.exercises[ei];
+    if (this.activeIdx().length <= 1) { toast('Last step — use Skip block instead'); return; }
+    e.removed = true;
+    toast(`Dropped ${e.name}`, 'Undo', () => { e.removed = false; this.draw(); });
+    if (this.phase !== 'ready' && ei === this.ei) {
+      // currently on this step: move on as if it ended
+      if (this.phase === 'work') { const b = this.block(); const lastRound = this.ri === b.rounds - 1; if (this.nextActive(ei) == null) { log.rounds_done = this.ri + 1; if (lastRound) return this.finishBlock(); } this.ei = ei; return this.setPhase('rest', b.rest_s); }
+      if (this.phase === 'rest' || this.phase === 'lead') { const nx = this.nextActive(ei) ?? this.activeIdx()[0]; if (this.nextActive(ei) == null && this.phase === 'rest') this.ri++; this.ei = nx; return this.setPhase('work', this.block().work_s); }
+    }
     this.draw();
   },
 
@@ -570,102 +726,152 @@ const runner = {
     if (b.type === 'interval') return this.phase === 'work' ? b.work_s : b.rest_s;
     return b.segments[this.si % b.segments.length].s;
   },
+  header(sub) {
+    const w = this.w;
+    return `
+      <div class="safe-top px-4 pt-3">
+        <div class="flex items-center justify-between">
+          <div class="text-[12px] font-semibold opacity-80 truncate">${esc(w.title)}</div>
+          <div class="flex items-center gap-3">
+            <span class="elapsed">${I.clock}<span id="elapsed">${mmss(this.elapsed())}</span></span>
+            <button class="p-1 opacity-80" onclick="runner.exit()" aria-label="Exit">${I.x}</button>
+          </div>
+        </div>
+        <div class="blocks mt-2">${w.blocks.map((b, i) => `<span class="${i < this.bi ? 'done' : i === this.bi ? 'cur' : ''}"></span>`).join('')}</div>
+        <div class="flex items-baseline justify-between mt-1.5">
+          <div class="text-[12px] opacity-80">Block ${this.bi + 1} of ${w.blocks.length}</div>
+          ${sub || ''}
+        </div>
+      </div>`;
+  },
+  stepStrip() {
+    const b = this.block(), log = this.blockLog();
+    const a = this.activeIdx();
+    const curPos = a.indexOf(this.ei);
+    const items = [];
+    a.forEach((ei, pos) => {
+      const e = log.exercises[ei];
+      const isCur = pos === curPos && (this.phase === 'work' || this.phase === 'lead');
+      const isDone = pos < curPos || (pos === curPos && this.phase === 'rest');
+      const isNext = this.phase === 'rest' && pos === curPos + 1;
+      items.push(`<div class="step ${isCur ? 'cur' : isDone ? 'done' : isNext ? 'next' : ''}" data-ei="${ei}" data-swipe>${exIcon(e.ex)}<div><div class="t">${esc(e.name)}</div><div class="s">${b.work_s}s · ${fmtNum(e.actual)} ${esc(shortUnit(e.unit))}</div></div></div>`);
+      const restCur = pos === curPos && this.phase === 'rest';
+      const restDone = pos < curPos;
+      const restNext = pos === curPos && this.phase === 'work';
+      const lastRestOfBlock = pos === a.length - 1 && this.ri === b.rounds - 1;
+      if (!lastRestOfBlock) items.push(`<div class="step rest ${restCur ? 'cur' : restDone ? 'done' : restNext ? 'next' : ''}"><span class="exicon" style="background:rgba(255,255,255,.25);color:currentColor">${I.rest}</span><div><div class="t">Rest</div><div class="s">${b.rest_s}s</div></div></div>`);
+    });
+    return `<div class="steps mt-3" id="steps">${items.join('')}</div>`;
+  },
   draw() {
     const b = this.block(), log = this.blockLog(), w = this.w;
     const bg = this.phase === 'work' ? 'phase-work' : this.phase === 'rest' ? 'phase-rest' : this.phase === 'done' ? 'phase-done' : 'phase-ready';
+    const nextBlock = w.blocks[this.bi + 1];
     let body;
     if (this.phase === 'done') {
       body = `
         <div class="flex-1 flex flex-col items-center justify-center text-center px-6">
           <div class="text-[64px] mb-2">🏁</div>
           <div class="text-[26px] font-bold">Workout complete</div>
-          <div class="opacity-80 mt-1">${Math.round((Date.now() - new Date(this.s.startedAt)) / 60000)} min · ${w.blocks.length} blocks</div>
+          <div class="opacity-80 mt-1">${Math.round(this.elapsed() / 60)} min · ${w.blocks.length} blocks</div>
         </div>
         <div class="px-5 pb-8 safe-bottom"><button class="btn btn-brand w-full" onclick="runner.finishAll()">${I.check}Review &amp; save log</button></div>`;
     } else if (this.phase === 'ready') {
       const rows = b.type === 'interval'
         ? log.exercises.map((e, ei) => `
-          <div class="flex items-center gap-3 py-2">
-            <img class="thumb" src="${ytThumb(EXERCISES[e.ex].video)}" alt="" onclick="openVideo('${e.ex}')">
-            <div class="flex-1 min-w-0"><div class="font-semibold text-[15px]">${esc(e.name)}</div><div class="text-[12px] opacity-75">${esc(EXERCISES[e.ex].cue)}</div></div>
+          <div class="swipe-row ${e.removed ? 'opacity-40' : ''}" data-ei="${ei}" ${e.removed ? '' : 'data-swipe'}>
+            <div class="rm">Drop</div>
+            <div class="inner flex items-center gap-3 py-2.5" style="background:#0f172a">
+              ${exIcon(e.ex)}
+              <div class="flex-1 min-w-0" onclick="openVideo('${e.ex}')"><div class="font-semibold text-[15px]">${esc(e.name)}${e.removed ? ' <span class="text-[11px] opacity-70">dropped</span>' : ''}</div><div class="text-[12px] opacity-75 truncate">${esc(EX(e.ex).cue)}</div></div>
+              ${e.removed ? `<button class="btn btn-ghost btn-sm" onclick="runner.blockLog().exercises[${ei}].removed=false; runner.draw()">Undo</button>` : `
+              <div class="stepper"><button onclick="runner.adjust(${ei}, ${-EX(e.ex).step})">−</button><div class="val"><span id="act-${ei}">${fmtNum(e.actual)}</span> <span class="text-[11px] opacity-70">${esc(shortUnit(e.unit))}</span></div><button onclick="runner.adjust(${ei}, ${EX(e.ex).step})">+</button></div>`}
+            </div>
           </div>`).join('')
         : `<div class="flex items-center gap-3 py-2">
-            <img class="thumb" src="${ytThumb(EXERCISES[b.ex].video)}" alt="" onclick="openVideo('${b.ex}')">
-            <div class="flex-1 min-w-0"><div class="font-semibold text-[15px]">${esc(EXERCISES[b.ex].name)}</div><div class="text-[12px] opacity-75">${b.repeat} × (${b.segments.map(s => `${s.s / 60} min @ ${s.speed} kph`).join(' + ')}) · incline ${b.incline}</div></div>
+            ${exIcon(b.ex)}
+            <div class="flex-1 min-w-0" onclick="openVideo('${b.ex}')"><div class="font-semibold text-[15px]">${esc(EX(b.ex).name)}</div><div class="text-[12px] opacity-75">${b.repeat} × (${b.segments.map(s => `${s.s / 60} min @ ${s.speed} kph`).join(' + ')}) · incline ${b.incline}</div></div>
+            <img class="thumb" style="width:64px;height:42px" src="${ytThumb(EX(b.ex).video)}" alt="">
           </div>`;
       body = `
-        <div class="flex-1 px-5 pt-6">
-          <div class="phase-label">Block ${this.bi + 1} of ${w.blocks.length}</div>
+        ${this.header()}
+        <div class="flex-1 px-5 pt-4">
+          <div class="phase-label">${this.bi === 0 ? 'First block' : 'Next block'}</div>
           <div class="text-[28px] font-bold leading-tight mt-1">${esc(b.name)}</div>
           <div class="opacity-80 text-[14px] mt-1">${blockSummary(b)}</div>
-          <div class="mt-5 divide-y divide-white/10">${rows}</div>
-          ${b.type === 'interval' ? `<div class="mt-5 space-y-3">${log.exercises.map((e, ei) => `
-            <div class="flex items-center justify-between">
-              <div class="text-[14px] opacity-90">${esc(e.name)}</div>
-              <div class="stepper"><button onclick="runner.adjust(${ei}, ${-EXERCISES[e.ex].step})">−</button><div class="val"><span id="act-${ei}">${fmtNum(e.actual)}</span> <span class="text-[11px] opacity-70">${esc(e.unit.replace(' per arm', '/arm'))}</span></div><button onclick="runner.adjust(${ei}, ${EXERCISES[e.ex].step})">+</button></div>
-            </div>`).join('')}</div>` : ''}
+          <div class="mt-4 divide-y divide-white/10">${rows}</div>
+          ${b.type === 'interval' ? `<div class="text-[11px] opacity-60 mt-2">Swipe a step left to drop it from this block. Tap the name for the demo.</div>` : ''}
+          ${nextBlock ? `<div class="next-block mt-5"><span class="opacity-70">After this:</span> <b>${esc(nextBlock.name)}</b> <span class="opacity-70">· ${blockSummary(nextBlock)}</span></div>` : `<div class="next-block mt-5 opacity-80">Last block.</div>`}
         </div>
         <div class="px-5 pb-8 safe-bottom flex gap-2">
           <button class="btn btn-brand flex-1" onclick="runner.beginBlock()">${I.play}Start block</button>
-          <button class="btn btn-ghost" onclick="runner.finishBlock()">Skip</button>
+          <button class="btn btn-ghost" onclick="runner.skipBlock()">Skip block</button>
         </div>`;
     } else {
       // lead / work / rest
       const isInterval = b.type === 'interval';
       const curEx = isInterval ? log.exercises[this.ei] : null;
-      const nextIdx = isInterval ? (this.ei + 1) % b.exercises.length : 0;
-      const nextEx = isInterval ? log.exercises[nextIdx] : null;
+      const nx = isInterval ? this.nextActive(this.ei) : null;
+      const nextEi = isInterval ? (nx == null ? this.activeIdx()[0] : nx) : null;
+      const nextEx = isInterval ? log.exercises[nextEi] : null;
       const label = this.phase === 'lead' ? 'Get ready' : this.phase === 'work' ? (isInterval ? 'Work' : 'Go') : 'Rest';
       const seg = !isInterval ? b.segments[this.si % b.segments.length] : null;
+      const lastRound = isInterval && this.ri === b.rounds - 1;
       const roundInfo = isInterval ? `Round ${this.ri + 1} of ${b.rounds}` : `Segment ${this.si + 1} of ${b.segments.length * b.repeat}`;
+      const focusEi = isInterval ? (this.phase === 'rest' ? nextEi : this.ei) : null;
+      const focusEx = isInterval ? log.exercises[focusEi] : null;
       const focus = isInterval
-        ? (this.phase === 'rest'
-            ? `<div class="text-[13px] opacity-75">Next</div><div class="text-[26px] font-bold leading-tight">${esc(nextEx.name)}</div><div class="text-[16px] opacity-90 mt-0.5">${fmtNum(nextEx.actual)} ${esc(nextEx.unit)}</div>`
-            : `<div class="text-[13px] opacity-75">${this.phase === 'lead' ? 'First up' : 'Now'}</div><div class="text-[26px] font-bold leading-tight">${esc(curEx.name)}</div><div class="text-[16px] opacity-90 mt-0.5">${fmtNum(curEx.actual)} ${esc(curEx.unit)}</div>`)
-        : `<div class="text-[13px] opacity-75">${this.phase === 'lead' ? 'First segment' : 'Now'}</div><div class="text-[26px] font-bold leading-tight">${fmtNum(log.speeds_actual[this.si % b.segments.length])} kph · incline ${fmtNum(log.incline_actual)}</div><div class="text-[14px] opacity-90 mt-0.5">${esc(EXERCISES[b.ex].name)} · ${seg.s / 60} min</div>`;
-      const adjustIdx = isInterval ? (this.phase === 'rest' ? nextIdx : this.ei) : null;
-      const adjust = isInterval ? (() => { const e = log.exercises[adjustIdx]; return `
-          <div class="flex items-center justify-between mt-4">
-            <div class="text-[13px] opacity-80">What I'm using</div>
-            <div class="stepper"><button onclick="runner.adjust(${adjustIdx}, ${-EXERCISES[e.ex].step}); runner.draw()">−</button><div class="val"><span id="act-${adjustIdx}">${fmtNum(e.actual)}</span> <span class="text-[11px] opacity-70">${esc(e.unit.replace(' per arm', '/arm'))}</span></div><button onclick="runner.adjust(${adjustIdx}, ${EXERCISES[e.ex].step}); runner.draw()">+</button></div>
-          </div>`; })()
-        : `<div class="flex items-center justify-between mt-4">
+        ? `<div class="flex items-center gap-3">
+             ${exIcon(focusEx.ex)}
+             <div class="min-w-0"><div class="text-[12px] opacity-75">${this.phase === 'rest' ? (nx == null ? 'Next round starts with' : 'Next') : this.phase === 'lead' ? 'First up' : 'Now'}</div>
+             <div class="text-[24px] font-bold leading-tight">${esc(focusEx.name)}</div></div>
+           </div>`
+        : `<div class="flex items-center gap-3">${exIcon(b.ex)}<div><div class="text-[12px] opacity-75">${this.phase === 'lead' ? 'First segment' : 'Now'}</div><div class="text-[24px] font-bold leading-tight">${fmtNum(log.speeds_actual[this.si % b.segments.length])} kph · incline ${fmtNum(log.incline_actual)}</div><div class="text-[13px] opacity-90">${esc(EX(b.ex).name)} · ${seg.s / 60} min</div></div></div>`;
+      const adjust = isInterval ? `
+          <div class="flex items-center justify-between mt-3">
+            <div class="text-[13px] opacity-80">${this.phase === 'rest' ? 'Next set with' : 'Using'}</div>
+            <div class="stepper"><button onclick="runner.adjust(${focusEi}, ${-EX(focusEx.ex).step})">−</button><div class="val"><span id="act-${focusEi}">${fmtNum(focusEx.actual)}</span> <span class="text-[11px] opacity-70">${esc(shortUnit(focusEx.unit))}</span></div><button onclick="runner.adjust(${focusEi}, ${EX(focusEx.ex).step})">+</button></div>
+          </div>
+          ${focusEx.incline_actual != null ? `
+          <div class="flex items-center justify-between mt-2">
+            <div class="text-[13px] opacity-80 inline-flex items-center gap-1">${I.slope}Incline</div>
+            <div class="stepper"><button onclick="runner.adjustIncline(${focusEi}, -1)">−</button><div class="val"><span id="inc-${focusEi}">${fmtNum(focusEx.incline_actual)}</span></div><button onclick="runner.adjustIncline(${focusEi}, 1)">+</button></div>
+          </div>` : ''}`
+        : `<div class="flex items-center justify-between mt-3">
             <div class="text-[13px] opacity-80">Speed</div>
             <div class="stepper"><button onclick="runner.adjustSteady('speed', ${this.si % b.segments.length}, -0.5)">−</button><div class="val">${fmtNum(log.speeds_actual[this.si % b.segments.length])} <span class="text-[11px] opacity-70">kph</span></div><button onclick="runner.adjustSteady('speed', ${this.si % b.segments.length}, 0.5)">+</button></div>
           </div>
           <div class="flex items-center justify-between mt-2">
-            <div class="text-[13px] opacity-80">Incline</div>
+            <div class="text-[13px] opacity-80 inline-flex items-center gap-1">${I.slope}Incline</div>
             <div class="stepper"><button onclick="runner.adjustSteady('incline', 0, -1)">−</button><div class="val">${fmtNum(log.incline_actual)}</div><button onclick="runner.adjustSteady('incline', 0, 1)">+</button></div>
           </div>`;
-      const videoKey = isInterval ? (this.phase === 'rest' ? nextEx.ex : curEx.ex) : b.ex;
+      const videoKey = isInterval ? focusEx.ex : b.ex;
+      const nextBlockNote = isInterval && lastRound && nextBlock && (this.phase === 'rest' || this.isLastEx())
+        ? `<div class="next-block mt-3"><span class="opacity-70">Next block:</span> <b>${esc(nextBlock.name)}</b></div>` : '';
       body = `
-        <div class="px-5 pt-3">
-          <div class="flex items-center justify-between">
-            <div><div class="phase-label">${esc(b.name)}</div><div class="text-[13px] opacity-80 mt-0.5">${roundInfo}</div></div>
-            <button class="btn btn-ghost btn-sm" onclick="openVideo('${videoKey}')">${I.video}Demo</button>
-          </div>
-          ${isInterval ? `<div class="round-dots mt-3">${Array.from({ length: b.rounds }, (_, i) => `<i class="${i < this.ri || (i === this.ri && this.phase !== 'lead') ? 'on' : ''}"></i>`).join('')}</div>` : ''}
+        ${this.header(`<div class="text-[13px] font-semibold">${esc(b.name)} · ${roundInfo}</div>`)}
+        <div class="px-4">
+          ${isInterval ? `<div class="round-dots mt-2">${Array.from({ length: b.rounds }, (_, i) => `<i class="${i < this.ri ? 'on' : i === this.ri ? 'cur' : ''}"></i>`).join('')}</div>` : ''}
+          ${isInterval ? this.stepStrip() : ''}
         </div>
-        <div class="flex-1 flex flex-col items-center justify-center text-center px-5">
+        <div class="flex-1 flex flex-col items-center justify-center text-center px-5 py-3">
           <div class="phase-label">${label}${this.paused ? ' · paused' : ''}</div>
           <div id="clock" class="clock mt-1">${mmss(this.remaining)}</div>
           <div class="bar w-full mt-4"><div id="bar" style="width:${100 * (1 - this.remaining / this.phaseTotal())}%"></div></div>
         </div>
-        <div class="px-5 pb-3">${focus}${adjust}</div>
+        <div class="px-5 pb-3">
+          <div class="flex items-start justify-between gap-2">${focus}<button class="btn btn-ghost btn-sm" onclick="openVideo('${videoKey}')">${I.video}</button></div>
+          ${adjust}${nextBlockNote}
+        </div>
         <div class="px-5 pb-8 safe-bottom grid grid-cols-3 gap-2">
           <button class="btn btn-ghost" onclick="runner.togglePause()">${this.paused ? 'Resume' : 'Pause'}</button>
-          <button class="btn btn-ghost" onclick="runner.skip()">Skip</button>
+          <button class="btn btn-ghost" onclick="runner.skip()">${this.phase === 'rest' ? 'Skip rest' : 'Skip'}</button>
           <button class="btn btn-ghost" onclick="runner.endBlock()">End block</button>
         </div>`;
     }
-    app.innerHTML = `
-      <div class="run ${bg}">
-        <div class="safe-top px-4 pt-3 flex items-center justify-between">
-          <div class="text-[12px] font-semibold opacity-80 truncate">${esc(w.title)}</div>
-          <button class="p-1 opacity-80" onclick="runner.exit()" aria-label="Exit">${I.x}</button>
-        </div>
-        ${body}
-      </div>`;
+    app.innerHTML = `<div class="run ${bg}">${body}</div>`;
+    attachSwipes();
+    const cur = $('#steps .step.cur'); if (cur) cur.scrollIntoView({ inline: 'center', block: 'nearest' });
   },
   exit() {
     if (this.phase === 'ready' && this.bi === 0) { this.detach(); return go(`w/${this.w.id}`); }
@@ -680,6 +886,216 @@ const runner = {
   },
 };
 function renderRun(w) { runner.start(w); }
+
+// swipe-left-to-drop on [data-swipe] elements (ready rows + step strip chips)
+function attachSwipes() {
+  $$('[data-swipe]').forEach(el => {
+    let x0 = null, dx = 0, y0 = 0, cancelled = false;
+    const inner = el.querySelector('.inner') || el;
+    el.addEventListener('touchstart', ev => { x0 = ev.touches[0].clientX; y0 = ev.touches[0].clientY; dx = 0; cancelled = false; inner.style.transition = 'none'; }, { passive: true });
+    el.addEventListener('touchmove', ev => {
+      if (x0 == null || cancelled) return;
+      dx = ev.touches[0].clientX - x0;
+      if (Math.abs(ev.touches[0].clientY - y0) > 30 && Math.abs(dx) < 20) { cancelled = true; inner.style.transform = ''; return; }
+      if (dx < 0) inner.style.transform = `translateX(${Math.max(dx, -110)}px)`;
+    }, { passive: true });
+    el.addEventListener('touchend', () => {
+      inner.style.transition = '';
+      if (!cancelled && dx < -70) runner.removeEx(+el.dataset.ei); else inner.style.transform = '';
+      x0 = null;
+    });
+  });
+}
+
+// ───────────────────────── share / import ─────────────────────────
+const b64e = str => btoa(unescape(encodeURIComponent(str))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+const b64d = str => decodeURIComponent(escape(atob(str.replace(/-/g, '+').replace(/_/g, '/'))));
+function shareWorkout(id) {
+  const w = wById(id);
+  const customs = {}; wExKeys(w).forEach(k => { if (store.exercises[k]) customs[k] = store.exercises[k]; });
+  const url = `${location.origin}${location.pathname}#/import/${b64e(JSON.stringify({ w, ex: customs }))}`;
+  if (navigator.share) navigator.share({ title: w.title, text: `${w.title} — a workout by ${w.creator}`, url }).catch(() => copyText(url));
+  else copyText(url);
+}
+function importWorkout(payload) {
+  try {
+    const { w, ex } = JSON.parse(b64d(payload));
+    Object.assign(store.exercises, ex || {});
+    const i = store.workouts.findIndex(x => x.id === w.id);
+    if (i >= 0) store.workouts[i] = w; else if (!WORKOUTS.some(x => x.id === w.id)) store.workouts.unshift(w);
+    save(); toast(`Added “${w.title}” by ${w.creator}`); go(`w/${w.id}`);
+  } catch { toast('That link did not contain a workout'); go(''); }
+}
+function deleteWorkout(id) {
+  if (!confirm('Delete this workout? Logged sessions are kept.')) return;
+  store.workouts = store.workouts.filter(w => w.id !== id); save(); go('');
+}
+
+// ───────────────────────── builder ─────────────────────────
+let draft = null;
+function renderBuilder(src) {
+  if (!draft || draft._src !== (src?.id || 'new')) {
+    draft = src ? JSON.parse(JSON.stringify(src)) : { title: '', creator: store.name, level: 'Medium', tags: [], blocks: [] };
+    draft._src = src?.id || 'new';
+    if (src && !isUserWorkout(src)) { draft.id = null; draft.creator = store.name; draft.title = src.title + ' (my version)'; }
+  }
+  drawBuilder();
+}
+const inp = (path, val, ph = '', type = 'text', cls = '') => `<input type="${type}" class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-[15px] ${cls}" value="${esc(val ?? '')}" placeholder="${esc(ph)}" oninput="setDraft('${path}', this.value)">`;
+function setDraft(path, val) { const p = path.split('.'); let o = draft; for (let i = 0; i < p.length - 1; i++) o = o[p[i]]; o[p[p.length - 1]] = val; }
+function numStep(path, val, step, unit, min = 0, max = 999) {
+  return `<div class="stepper"><button onclick="bumpDraft('${path}', ${-step}, ${min}, ${max})">−</button><div class="val">${fmtNum(val)}${unit ? `<span class="text-[11px] font-medium text-slate-500"> ${esc(unit)}</span>` : ''}</div><button onclick="bumpDraft('${path}', ${step}, ${min}, ${max})">+</button></div>`;
+}
+function bumpDraft(path, d, min, max) { const p = path.split('.'); let o = draft; for (let i = 0; i < p.length - 1; i++) o = o[p[i]]; const k = p[p.length - 1]; o[k] = Math.min(max, Math.max(min, Math.round((o[k] + d) * 100) / 100)); drawBuilder(); }
+function exSelect(path, val) {
+  const lib = exLib();
+  return `<select class="border border-slate-200 rounded-xl px-2 py-2.5 text-[14px] bg-white flex-1 min-w-0" onchange="if(this.value==='__new'){newExerciseSheet('${path}')}else{setDraft('${path}', this.value); drawBuilder()}">
+    ${Object.entries(lib).map(([k, e]) => `<option value="${k}" ${k === val ? 'selected' : ''}>${esc(e.name)}</option>`).join('')}
+    <option value="__new">＋ New exercise…</option>
+  </select>`;
+}
+function drawBuilder() {
+  const d = draft;
+  const blocks = d.blocks.map((b, bi) => b.type === 'interval' ? `
+    <div class="card px-4 py-3 space-y-3">
+      <div class="flex items-center justify-between gap-2">
+        <span class="chip bg-orange-50 text-orange-700">Interval</span>
+        <button class="text-slate-400" onclick="draft.blocks.splice(${bi},1); drawBuilder()">${I.trash}</button>
+      </div>
+      ${inp(`blocks.${bi}.name`, b.name, 'Block name (e.g. Swings + press)')}
+      <div class="grid grid-cols-3 gap-2 text-center">
+        <div><div class="text-[11px] text-slate-500 mb-1">Rounds</div>${numStep(`blocks.${bi}.rounds`, b.rounds, 1, '', 1, 50)}</div>
+        <div><div class="text-[11px] text-slate-500 mb-1">Work</div>${numStep(`blocks.${bi}.work_s`, b.work_s, 5, 's', 5, 600)}</div>
+        <div><div class="text-[11px] text-slate-500 mb-1">Rest</div>${numStep(`blocks.${bi}.rest_s`, b.rest_s, 5, 's', 0, 600)}</div>
+      </div>
+      <div class="space-y-2">${b.exercises.map((e, ei) => `
+        <div class="flex items-center gap-2">
+          ${exIcon(e.ex)}
+          ${exSelect(`blocks.${bi}.exercises.${ei}.ex`, e.ex)}
+          ${numStep(`blocks.${bi}.exercises.${ei}.target`, e.target, EX(e.ex).step, shortUnit(EX(e.ex).unit))}
+          <button class="text-slate-400 p-1" onclick="draft.blocks[${bi}].exercises.splice(${ei},1); drawBuilder()">${I.x}</button>
+        </div>`).join('')}</div>
+      <button class="btn btn-ghost btn-sm w-full" onclick="draft.blocks[${bi}].exercises.push({ex:'kb_swing',target:16}); drawBuilder()">${I.plus}Add exercise</button>
+    </div>` : `
+    <div class="card px-4 py-3 space-y-3">
+      <div class="flex items-center justify-between gap-2">
+        <span class="chip bg-sky-50 text-sky-700">Steady</span>
+        <button class="text-slate-400" onclick="draft.blocks.splice(${bi},1); drawBuilder()">${I.trash}</button>
+      </div>
+      ${inp(`blocks.${bi}.name`, b.name, 'Block name (e.g. Incline walk)')}
+      <div class="flex items-center gap-2">${exIcon(b.ex)}${exSelect(`blocks.${bi}.ex`, b.ex)}</div>
+      <div class="grid grid-cols-2 gap-2 text-center">
+        <div><div class="text-[11px] text-slate-500 mb-1">Incline</div>${numStep(`blocks.${bi}.incline`, b.incline, 1, '', 0, 30)}</div>
+        <div><div class="text-[11px] text-slate-500 mb-1">Repeat</div>${numStep(`blocks.${bi}.repeat`, b.repeat, 1, '×', 1, 20)}</div>
+      </div>
+      <div class="space-y-2">${b.segments.map((sg, si) => `
+        <div class="flex items-center gap-2">
+          <div class="text-[12px] text-slate-500 w-14">Seg ${si + 1}</div>
+          ${numStep(`blocks.${bi}.segments.${si}.s`, sg.s / 60, 1, 'min', 1, 60).replace(`bumpDraft('blocks.${bi}.segments.${si}.s', -1, 1, 60)`, `bumpDraft('blocks.${bi}.segments.${si}.s', -60, 60, 3600)`).replace(`bumpDraft('blocks.${bi}.segments.${si}.s', 1, 1, 60)`, `bumpDraft('blocks.${bi}.segments.${si}.s', 60, 60, 3600)`)}
+          ${numStep(`blocks.${bi}.segments.${si}.speed`, sg.speed, 0.5, 'kph', 0.5, 30)}
+          <button class="text-slate-400 p-1" onclick="draft.blocks[${bi}].segments.splice(${si},1); drawBuilder()">${I.x}</button>
+        </div>`).join('')}</div>
+      <button class="btn btn-ghost btn-sm w-full" onclick="draft.blocks[${bi}].segments.push({s:120,speed:6}); drawBuilder()">${I.plus}Add segment</button>
+    </div>`).join('');
+  const est = d.blocks.length ? workoutMinutes(d) : 0;
+  shell(`
+    <header class="safe-top px-4 pb-3 pt-3 bg-slate-900 text-white">
+      <button class="inline-flex items-center gap-1 text-white/90 text-[14px] mb-2" onclick="draft=null; history.back()">${I.back}Back</button>
+      <h1 class="text-[22px] font-bold leading-tight">${d.id ? 'Edit workout' : 'New workout'}</h1>
+      <div class="text-[13px] opacity-80 mt-1">${est} min · ${d.blocks.length} blocks</div>
+    </header>
+    <div class="px-4 py-4 space-y-3 pb-32">
+      <div class="card px-4 py-3 space-y-2">
+        ${inp('title', d.title, 'Workout title')}
+        <div class="grid grid-cols-2 gap-2">
+          ${inp('creator', d.creator, 'Creator name')}
+          <select class="border border-slate-200 rounded-xl px-3 py-2.5 text-[15px] bg-white" onchange="setDraft('level', this.value)">${['Easy', 'Medium', 'Hard'].map(l => `<option ${d.level === l ? 'selected' : ''}>${l}</option>`).join('')}</select>
+        </div>
+        <input type="text" class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-[15px]" value="${esc((d.tags || []).join(', '))}" placeholder="Tags, comma separated (HIIT, Kettlebell…)" oninput="draft.tags = this.value.split(',').map(t => t.trim()).filter(Boolean)">
+      </div>
+      ${blocks}
+      <div class="grid grid-cols-2 gap-2">
+        <button class="btn btn-ghost" onclick="draft.blocks.push({name:'',type:'interval',work_s:30,rest_s:30,rounds:8,exercises:[{ex:'kb_swing',target:16}]}); drawBuilder()">${I.plus}Interval block</button>
+        <button class="btn btn-ghost" onclick="draft.blocks.push({name:'',type:'steady',ex:'incline_walk',incline:6,repeat:2,segments:[{s:120,speed:6},{s:180,speed:9}]}); drawBuilder()">${I.plus}Steady block</button>
+      </div>
+      <p class="text-[12px] text-slate-400 px-1">Interval = rounds of work/rest per exercise. Steady = timed segments at a speed, one incline. Pick “New exercise…” in any dropdown to add your own with a video or image.</p>
+    </div>
+    <div class="fixed bottom-[68px] left-1/2 -translate-x-1/2 w-full max-w-[430px] px-4 pointer-events-none">
+      <button class="btn btn-brand w-full pointer-events-auto" onclick="saveDraft()">${I.check}Save workout</button>
+    </div>
+  `, 'discover');
+}
+function saveDraft() {
+  const d = draft;
+  if (!d.title.trim()) return toast('Give it a title');
+  if (!d.blocks.length) return toast('Add at least one block');
+  d.blocks.forEach((b, i) => { if (!b.name.trim()) b.name = b.type === 'interval' ? (b.exercises.map(e => EX(e.ex).name).join(' + ') || `Block ${i + 1}`) : EX(b.ex).name; });
+  if (!d.id) d.id = 'u-' + d.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') + '-' + Date.now().toString(36).slice(-4);
+  d.created = d.created || new Date().toISOString().slice(0, 10);
+  if (!d.tags?.length) d.tags = [];
+  delete d._src;
+  const i = store.workouts.findIndex(w => w.id === d.id);
+  if (i >= 0) store.workouts[i] = d; else store.workouts.unshift(d);
+  save(); const id = d.id; draft = null; toast('Saved'); go(`w/${id}`);
+}
+function newExerciseSheet(path) {
+  closeSheet();
+  const el = document.createElement('div'); el.id = 'sheet';
+  el.innerHTML = `
+    <div class="sheet-backdrop" onclick="closeSheet(); drawBuilder && draft && drawBuilder()"></div>
+    <div class="sheet safe-bottom">
+      <div class="sheet-handle"></div>
+      <div class="px-4 pb-2 flex items-center justify-between"><div class="font-semibold text-slate-900 text-[17px]">New exercise</div><button class="text-slate-400 p-1" onclick="closeSheet(); draft && drawBuilder()">${I.x}</button></div>
+      <div class="px-4 pb-4 space-y-2">
+        <input id="ne-name" type="text" class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-[15px]" placeholder="Name (e.g. Goblet squat)">
+        <div class="grid grid-cols-2 gap-2">
+          <select id="ne-icon" class="border border-slate-200 rounded-xl px-3 py-2.5 text-[15px] bg-white">${Object.keys(ICON_COLORS).map(k => `<option value="${k}">${k}</option>`).join('')}</select>
+          <select id="ne-unit" class="border border-slate-200 rounded-xl px-3 py-2.5 text-[15px] bg-white"><option>kg</option><option>kg per arm</option><option>kph</option><option>reps</option><option>cal</option><option>m</option></select>
+        </div>
+        <input id="ne-video" type="text" class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-[15px]" placeholder="YouTube link or ID (optional)">
+        <input id="ne-image" type="text" class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-[15px]" placeholder="Image URL (optional)">
+        <input id="ne-cue" type="text" class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-[15px]" placeholder="Form cue (optional)">
+        <button class="btn btn-brand w-full" onclick="saveNewExercise('${path}')">${I.check}Add to library</button>
+      </div>
+    </div>`;
+  document.body.appendChild(el);
+  setTimeout(() => $('#ne-name')?.focus(), 50);
+}
+function saveNewExercise(path) {
+  const name = $('#ne-name').value.trim(); if (!name) return toast('Name it first');
+  const icon = $('#ne-icon').value, unit = $('#ne-unit').value;
+  const vidRaw = $('#ne-video').value.trim();
+  const video = (vidRaw.match(/(?:v=|youtu\.be\/|shorts\/|embed\/)([\w-]{11})/) || [])[1] || (/^[\w-]{11}$/.test(vidRaw) ? vidRaw : '');
+  const key = 'c_' + name.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, '');
+  store.exercises[key] = { name, icon, color: ICON_COLORS[icon], unit, step: unit === 'kph' ? 0.5 : unit === 'reps' ? 1 : 2.5, video, image: $('#ne-image').value.trim(), cue: $('#ne-cue').value.trim(), incline: icon === 'treadmill' || icon === 'walk' };
+  save(); closeSheet();
+  if (path && draft) { setDraft(path, key); drawBuilder(); } else if (location.hash.includes('library')) renderLibrary();
+  toast(`Added ${name}`);
+}
+
+// ───────────────────────── library ─────────────────────────
+function renderLibrary() {
+  const lib = exLib();
+  const usedBy = k => allWorkouts().filter(w => wExKeys(w).includes(k)).length;
+  const rows = Object.entries(lib).sort((a, b) => a[1].name.localeCompare(b[1].name)).map(([k, ex]) => `
+    <button class="w-full text-left card flex items-center gap-3 px-3 py-2.5 row-tap" onclick="openVideo('${k}')">
+      ${exIcon(k)}
+      <div class="flex-1 min-w-0">
+        <div class="font-medium text-slate-900 text-[15px]">${esc(ex.name)}${store.exercises[k] ? ' <span class="chip bg-slate-100 text-slate-500">custom</span>' : ''}</div>
+        <div class="text-[12px] text-slate-500">${esc(ex.unit)} · steps of ${fmtNum(ex.step)}${ex.incline ? ' · incline' : ''} · in ${usedBy(k)} workout${usedBy(k) === 1 ? '' : 's'}</div>
+      </div>
+      ${exMedia(ex) ? `<img class="thumb" style="width:64px;height:42px" src="${esc(exMedia(ex))}" alt="">` : `<span class="thumb flex items-center justify-center text-slate-400" style="width:64px;height:42px">${I.video}</span>`}
+    </button>`).join('');
+  shell(`
+    <header class="safe-top px-5 pb-3 pt-4 flex items-end justify-between">
+      <div><div class="text-[11px] uppercase tracking-widest text-slate-400 font-semibold">Library</div><h1 class="text-[26px] font-bold text-slate-900">Exercises</h1></div>
+      <button class="btn btn-brand btn-sm" onclick="newExerciseSheet('')">${I.plus}New</button>
+    </header>
+    <div class="px-4 space-y-2 pb-8">${rows}
+      <p class="text-[12px] text-slate-400 px-1 pt-2">Every exercise has one demo video and an optional still. Custom ones live on this phone and travel with any workout you share.</p>
+    </div>
+  `, 'library');
+}
 
 // ───────────────────────── beeps + vibration ─────────────────────────
 let actx;

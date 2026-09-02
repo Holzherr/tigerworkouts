@@ -1,5 +1,6 @@
 // Workout Hub — seed content.
-// Exercises are the shared library (one YouTube demo each). Workouts reference
+// Exercises are the shared library (one YouTube demo each; icon = kettlebell|dumbbell|treadmill|walk,
+// color = accent used in the timer; incline: true adds an incline stepper). Workouts reference
 // them by key. Add a workout by appending to WORKOUTS; add an exercise by
 // adding a key to EXERCISES. No personal logs live here — those stay on-device.
 
@@ -7,37 +8,37 @@ const EXERCISES = {
   kb_swing: {
     name: 'Kettlebell swings',
     video: 'bDCeXbMJVNs',
-    unit: 'kg', step: 4,
+    unit: 'kg', step: 4, icon: 'kettlebell', color: '#f59e0b',
     cue: 'Hinge, not squat. Snap the hips, arms are ropes, bell to chest height.',
   },
   db_shoulder_press: {
     name: 'Shoulder press',
     video: '6eDlfTDb7Po',
-    unit: 'kg per arm', step: 2.5,
+    unit: 'kg per arm', step: 2.5, icon: 'dumbbell', color: '#a78bfa',
     cue: 'Standing, dumbbells at shoulders, press overhead. Ribs down, no arching.',
   },
   db_incline_press: {
     name: 'Incline chest press',
     video: 'c1ZX5ZXMQVk',
-    unit: 'kg per arm', step: 2.5,
+    unit: 'kg per arm', step: 2.5, icon: 'dumbbell', color: '#a78bfa',
     cue: 'Bench at ~30°. Elbows ~45° from torso, press up and slightly back.',
   },
   sprint: {
     name: 'Treadmill sprints',
     video: 'spg6AXxM3Pk',
-    unit: 'kph', step: 0.5,
+    unit: 'kph', step: 0.5, icon: 'treadmill', color: '#38bdf8', incline: true,
     cue: 'Belt keeps running. Hands on rails, hop to the side platforms for the rest, step back on for the next sprint.',
   },
   lat_raise: {
     name: 'Lateral raises',
     video: 'FmouSdWmFxw',
-    unit: 'kg per arm', step: 2.5,
+    unit: 'kg per arm', step: 2.5, icon: 'dumbbell', color: '#a78bfa',
     cue: 'Slight elbow bend, raise to shoulder height, lead with the elbows, control the way down.',
   },
   incline_walk: {
     name: 'Incline walk',
     video: 'Ii71nAaRc_8',
-    unit: 'kph', step: 0.5,
+    unit: 'kph', step: 0.5, icon: 'walk', color: '#34d399', incline: true,
     cue: 'Hands off the rails. Walk tall, push through the whole foot.',
   },
 };
