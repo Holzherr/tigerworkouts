@@ -7,7 +7,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="theme-color" content="#ee6f3a">
-<title>Workout Hub — v0.2.1</title>
+<title>Workout Hub — v0.2.2</title>
 <script src="https://cdn.tailwindcss.com"></script>
 <style>
   :root { --brand: #ee6f3a; --brand-dark: #c1542a; --rest: #1e3a8a; }
@@ -221,7 +221,6 @@ function shell(inner, tab) {
     <div class="flex-1 fade">${inner}</div>
     <nav class="tabbar safe-bottom flex">
       <a href="#/" class="tab ${tab === 'discover' ? 'active' : ''}">${I.discover}<span>Discover</span></a>
-      <a href="#/library" class="tab ${tab === 'library' ? 'active' : ''}">${I.library}<span>Library</span></a>
       <a href="#/me" class="tab ${tab === 'me' ? 'active' : ''}">${I.me}<span>Profile</span></a>
     </nav>`;
   window.scrollTo(0, 0);
@@ -1040,6 +1039,7 @@ function drawBuilder() {
         <button class="btn btn-ghost" onclick="draft.blocks.push({name:'',type:'steady',ex:'incline_walk',incline:6,repeat:2,segments:[{s:120,speed:6},{s:180,speed:9}]}); drawBuilder()">${I.plus}Steady block</button>
       </div>
       <p class="text-[12px] text-slate-400 px-1">Interval = rounds of work/rest per exercise. Steady = timed segments at a speed, one incline. Pick “New exercise…” in any dropdown to add your own with a video or image.</p>
+      <button class="btn btn-ghost btn-sm w-full" onclick="go('library')">${I.library}Exercise library (creator tools)</button>
     </div>
     <div class="fixed bottom-[68px] left-1/2 -translate-x-1/2 w-full max-w-[430px] px-4 pointer-events-none">
       <button class="btn btn-brand w-full pointer-events-auto" onclick="saveDraft()">${I.check}Save workout</button>
@@ -1202,13 +1202,13 @@ function renderLibrary() {
     </button>`).join('');
   shell(`
     <header class="safe-top px-5 pb-3 pt-4 flex items-end justify-between">
-      <div><div class="text-[11px] uppercase tracking-widest text-slate-400 font-semibold">Library</div><h1 class="text-[26px] font-bold text-slate-900">Exercises</h1></div>
+      <div><button class="inline-flex items-center gap-1 text-slate-500 text-[14px] mb-1" onclick="history.back()">${I.back}Back</button><div class="text-[11px] uppercase tracking-widest text-slate-400 font-semibold">Creator tools</div><h1 class="text-[26px] font-bold text-slate-900">Exercise library</h1></div>
       <button class="btn btn-brand btn-sm" onclick="newExerciseSheet('')">${I.plus}New</button>
     </header>
     <div class="px-4 space-y-2 pb-8">${rows}
-      <p class="text-[12px] text-slate-400 px-1 pt-2">Every exercise has one demo video and an optional still. Custom ones live on this phone and travel with any workout you share.</p>
+      <p class="text-[12px] text-slate-400 px-1 pt-2">Creator-side only — users never see this list. Every exercise has one demo video and an optional still. Custom ones live on this phone and travel with any workout you share.</p>
     </div>
-  `, 'library');
+  `, 'discover');
 }
 
 // ───────────────────────── beeps + vibration ─────────────────────────

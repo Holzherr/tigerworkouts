@@ -1,4 +1,4 @@
-# workout-hub — v0.2.1
+# workout-hub — v0.2.2
 
 Phone-shaped "Sweat / F45"-style workout app: creators publish workouts, you
 discover one, do it with a guided interval timer, and log what you actually did.
@@ -19,8 +19,9 @@ Live: https://holzherr.github.io/nick-prototypes/workout-hub/
 - **Share link** — encodes the workout (plus any custom exercises it uses)
   into the URL. Opening it adds the workout to that phone's Discover. This is
   how Priyanka's workouts get to Nick without a backend.
-- **Library tab** — every exercise (built-in + custom), icon, unit, demo,
-  how many workouts use it.
+- **Exercise library** (creator tool, reached from the builder, not a user
+  tab) — every exercise (built-in + custom), icon, unit, demo, how many
+  workouts use it.
 - **Do mode, reworked from feedback**
   - Block strip at the top: done / current (bright) / upcoming.
   - Step strip per round with rest shown as its own step; current step
