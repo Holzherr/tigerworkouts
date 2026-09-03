@@ -7,7 +7,11 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="theme-color" content="#ee6f3a">
-<title>Workout Hub — v0.2.2</title>
+<link rel="manifest" href="./manifest.webmanifest">
+<link rel="apple-touch-icon" href="./icons/apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="192x192" href="./icons/icon-192.png">
+<meta name="apple-mobile-web-app-title" content="Workout Hub">
+<title>Workout Hub — v0.3</title>
 <script src="https://cdn.tailwindcss.com"></script>
 <style>
   :root { --brand: #ee6f3a; --brand-dark: #c1542a; --rest: #1e3a8a; }
@@ -100,16 +104,18 @@
 <body>
 <div id="app" class="app"></div>
 <script src="./data.js"></script>
+<script src="./config.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.4/dist/umd/supabase.js"></script>
 <script>
 // ───────────────────────── store ─────────────────────────
 const LS_KEY = 'workout-hub:v1';
 const store = load();
 function load() {
-  const d = { sessions: [], name: 'Nick', workouts: [], exercises: {}, favorites: [{ name: 'Game of padel', icon: 'racket', minutes: 60 }] };
+  const d = { sessions: [], name: 'Nick', units: 'metric', workouts: [], exercises: {}, favorites: [{ name: 'Game of padel', icon: 'racket', minutes: 60 }] };
   try { return Object.assign(d, JSON.parse(localStorage.getItem(LS_KEY) || '{}')); }
   catch { return d; }
 }
-function save() { try { localStorage.setItem(LS_KEY, JSON.stringify(store)); } catch {} }
+function save() { try { localStorage.setItem(LS_KEY, JSON.stringify(store)); } catch {} if (window.cloud?.user) window.cloud.push(); }
 
 const GH_REPO = 'Holzherr/nick-prototypes';
 const $ = (s, r = document) => r.querySelector(s);
@@ -122,13 +128,13 @@ const mmss = s => `${Math.floor(s / 60)}:${pad(Math.max(0, Math.ceil(s)) % 60)}`
 const fmtDate = iso => new Date(iso).toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' });
 const fmtTime = iso => new Date(iso).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
 const ytThumb = id => `https://i.ytimg.com/vi/${id}/mqdefault.jpg`;
-const allWorkouts = () => [...store.workouts, ...WORKOUTS];
+const allWorkouts = () => [...store.workouts, ...(window.cloud?.remote?.workouts || []), ...WORKOUTS];
 const wById = id => allWorkouts().find(w => w.id === id);
 const isUserWorkout = w => store.workouts.some(x => x.id === w.id);
 const ICON_COLORS = { kettlebell: '#f59e0b', dumbbell: '#a78bfa', treadmill: '#38bdf8', walk: '#34d399', barbell: '#fb7185', body: '#fbbf24', band: '#f472b6', bike: '#22d3ee', rower: '#60a5fa', core: '#c084fc', racket: '#4ade80', run: '#fb923c', swim: '#38bdf8', yoga: '#e879f9', hike: '#a3e635', football: '#facc15' };
 const favIcon = f => `<span class="exicon" style="background:${ICON_COLORS[f.icon] || '#94a3b8'};color:#0f172a">${I[f.icon] || I.body}</span>`;
-const EX = key => EXERCISES[key] || store.exercises[key] || { name: key, unit: 'kg', step: 2.5, icon: 'body', color: ICON_COLORS.body, cue: '', video: '' };
-const exLib = () => ({ ...EXERCISES, ...store.exercises });
+const EX = key => EXERCISES[key] || store.exercises[key] || window.cloud?.remote?.exercises?.[key] || { name: key, unit: 'kg', step: 2.5, icon: 'body', color: ICON_COLORS.body, cue: '', video: '' };
+const exLib = () => ({ ...EXERCISES, ...(window.cloud?.remote?.exercises || {}), ...store.exercises });
 const exMedia = ex => ex.image || (ex.video ? ytThumb(ex.video) : '');
 const shortUnit = u => u.replace(' per arm', '/arm');
 
@@ -204,6 +210,7 @@ function route() {
   const [seg, id, extra] = h.split('/');
   runner.detach();
   if (seg === 'w' && wById(id)) return renderWorkout(wById(id));
+  if (seg === 'w' && id && window.cloud?.client && !window._pulledFor) { window._pulledFor = id; return cloud.sync(); }
   if (seg === 'do' && wById(id)) return renderRun(wById(id));
   if (seg === 's' && store.sessions.find(s => s.id === id)) return renderSummary(store.sessions.find(s => s.id === id), extra === 'edit');
   if (seg === 'me') return renderProfile();
@@ -535,11 +542,16 @@ function renderSummary(s, edit) {
         <button class="btn btn-ghost" onclick="shareText(_s)">${I.share}Share</button>
         <button class="btn btn-ghost" onclick="go('s/${s.id}/edit')">Edit</button>
       </div>
+      <div id="device-card"></div>
       <div class="log-pre">${esc(sessionText(s))}</div>
       <p class="text-[12px] text-slate-400 px-1">Copy log puts the text plus a JSON block on the clipboard — paste it into an email or to Echo to file it. Save to GitHub opens a prefilled issue you submit with one tap.</p>
       <button class="text-[13px] text-red-500 inline-flex items-center gap-1 px-1 pt-2" onclick="deleteSession('${s.id}')">${I.trash}Delete this session</button>`}
     </div>
   `, 'me');
+  if (window.cloud?.user && !edit) cloud.deviceFor(s).then(rows => {
+    const el = $('#device-card'); if (!el || !rows.length) return;
+    el.innerHTML = rows.map(r => `<div class="card px-4 py-3 mb-3"><div class="text-[12px] uppercase tracking-wider text-slate-400 font-semibold mb-1">From Fitbit</div><div class="flex flex-wrap gap-3 text-[14px] text-slate-700">${r.data.avg_hr ? `<span>avg HR <b>${r.data.avg_hr}</b></span>` : ''}${r.data.max_hr ? `<span>max HR <b>${r.data.max_hr}</b></span>` : ''}${r.data.calories ? `<span><b>${Math.round(r.data.calories)}</b> kcal</span>` : ''}${r.data.active_zone_min ? `<span><b>${r.data.active_zone_min}</b> zone min</span>` : ''}${r.data.type ? `<span class="text-slate-500">${esc(r.data.type)}</span>` : ''}</div></div>`).join('');
+  }).catch(() => {});
 }
 function stepper(path, val, step, unit, min = 0, max = 999) {
   return `<div class="stepper">
@@ -585,6 +597,7 @@ function renderProfile() {
       <div class="grid grid-cols-3 gap-2 mt-4">
         ${stat(ss.length, 'sessions')}${stat(thisWeek, 'this week')}${stat(mins, 'minutes')}
       </div>
+      ${accountCard()}
     </header>
     <div class="px-4 space-y-2 pb-8">
       <div class="text-[11px] uppercase tracking-widest text-slate-400 font-semibold px-1">History</div>
@@ -592,6 +605,27 @@ function renderProfile() {
       ${ss.length ? `<button class="btn btn-ghost btn-sm w-full mt-2" onclick="copyText(store.sessions.map(sessionText).join('\\n\\n———\\n\\n') + '\\n\\n' + JSON.stringify(store.sessions))">${I.copy}Copy all logs</button>` : ''}
     </div>
   `, 'me');
+}
+function accountCard() {
+  const c = window.cloud;
+  if (!c || !c.client) return `<div class="card px-4 py-3 mt-3 text-[13px] text-slate-500">Cloud sync not configured yet — logs stay on this phone.</div>`;
+  if (c.user) return `
+    <div class="card px-4 py-3 mt-3">
+      <div class="flex items-center justify-between">
+        <div><div class="text-[14px] font-semibold text-slate-900">${esc(c.user.email)}</div><div class="text-[12px] ${c.error ? 'text-red-500' : 'text-emerald-700'}">${c.error ? 'Sync error: ' + esc(c.error) : c.lastSync ? 'Synced ' + fmtTime(c.lastSync) : 'Syncing…'}</div></div>
+        <div class="flex gap-2"><button class="btn btn-ghost btn-sm" onclick="cloud.sync()">Sync</button><button class="btn btn-ghost btn-sm" onclick="cloud.signOut()">Sign out</button></div>
+      </div>
+      <div class="flex items-center justify-between mt-3"><div class="text-[13px] text-slate-600">Units</div><div class="flex gap-1">${['metric', 'imperial'].map(u => `<button class="chip ${store.units === u ? 'bg-slate-900 text-white' : 'bg-slate-100 text-slate-600'}" onclick="store.units='${u}'; save(); cloud.client.from('profiles').update({units:'${u}'}).eq('id', cloud.user.id).then(()=>renderProfile())">${u}</button>`).join('')}</div></div>
+    </div>`;
+  return `
+    <div class="card px-4 py-3 mt-3">
+      <div class="text-[14px] font-semibold text-slate-900">Sign in to sync across phones</div>
+      <div class="text-[12px] text-slate-500 mb-2">Magic link by email. Your logs, workouts and favourites back up to the cloud and follow you.</div>
+      <form class="flex gap-2" onsubmit="event.preventDefault(); const e=this.email.value.trim(); if(!e) return; cloud.signIn(e).then(()=>toast('Check your email for the link')).catch(err=>toast(err.message))">
+        <input name="email" type="email" required class="flex-1 border border-slate-200 rounded-xl px-3 py-2.5 text-[15px]" placeholder="you@example.com" autocomplete="email">
+        <button class="btn btn-brand btn-sm" type="submit">Send link</button>
+      </form>
+    </div>`;
 }
 const stat = (v, l) => `<div class="card px-3 py-2.5 text-center"><div class="text-[22px] font-bold text-slate-900 leading-none">${v}</div><div class="text-[11px] text-slate-500 mt-1">${l}</div></div>`;
 
@@ -932,6 +966,11 @@ const b64e = str => btoa(unescape(encodeURIComponent(str))).replace(/\+/g, '-').
 const b64d = str => decodeURIComponent(escape(atob(str.replace(/-/g, '+').replace(/_/g, '/'))));
 function shareWorkout(id) {
   const w = wById(id);
+  if (window.cloud?.user && (isUserWorkout(w) || WORKOUTS.some(x => x.id === w.id) || cloud.remote.workouts.some(x => x.id === w.id))) {
+    const url = `${location.origin}${location.pathname}#/w/${w.id}`;
+    if (navigator.share) return navigator.share({ title: w.title, text: `${w.title} — a workout by ${w.creator}`, url }).catch(() => copyText(url));
+    return copyText(url);
+  }
   const customs = {}; wExKeys(w).forEach(k => { if (store.exercises[k]) customs[k] = store.exercises[k]; });
   const url = `${location.origin}${location.pathname}#/import/${b64e(JSON.stringify({ w, ex: customs }))}`;
   if (navigator.share) navigator.share({ title: w.title, text: `${w.title} — a workout by ${w.creator}`, url }).catch(() => copyText(url));
@@ -1230,6 +1269,9 @@ function vib(p) { try { navigator.vibrate?.(p); } catch {} }
 document.addEventListener('touchstart', () => { try { actx = actx || new (window.AudioContext || window.webkitAudioContext)(); actx.resume(); } catch {} }, { once: true, passive: true });
 
 route();
+// PWA: service worker for offline app shell
+if ('serviceWorker' in navigator) window.addEventListener('load', () => navigator.serviceWorker.register('./sw.js').catch(() => {}));
 </script>
+<script src="./cloud.js"></script>
 </body>
 </html>

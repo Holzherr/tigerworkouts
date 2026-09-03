@@ -1,4 +1,4 @@
-# workout-hub — v0.2.2
+# workout-hub — v0.3
 
 Phone-shaped "Sweat / F45"-style workout app: creators publish workouts, you
 discover one, do it with a guided interval timer, and log what you actually did.
@@ -6,6 +6,35 @@ No accounts, no backend. Everything lives in the phone's localStorage; workouts
 travel between phones as share links.
 
 Live: https://holzherr.github.io/nick-prototypes/workout-hub/
+
+## What's in v0.3 — PWA + cloud
+
+- **Installable PWA**: `manifest.webmanifest`, icons, `sw.js` (network-first
+  app shell with offline fallback, cache-first for CDN + thumbnails). Add to
+  home screen on iPhone → runs full-screen, works with no signal in the gym.
+  Bump `CACHE` in `sw.js` when shipping.
+- **Supabase backend** (`supabase/`): schema in `migrations/0001_init.sql` —
+  profiles, exercises, workouts, sessions, user_state (favourites, prefs),
+  device_metrics (Fitbit rows) — all behind row-level security; public
+  workouts/exercises readable by anyone, everything else owner-only.
+  `seed.sql` is generated from `data.js` by `node tools/seed.mjs`.
+- **cloud.js**: magic-link sign-in (PKCE), debounced push of local state on
+  every save, pull of own rows + public content on open. localStorage stays
+  the cache, so nothing changes when offline. `config.js` holds the project
+  URL + anon key; empty = cloud off.
+- **Profile**: sign-in card, sync status, sign out, metric/imperial toggle
+  (stored; display conversion is spec item 4).
+- **Fitbit in history**: `tools/health-sync/push-supabase.py` (assistant repo)
+  upserts Google Health workouts/sleep/day rows into `device_metrics`; a
+  session's summary shows avg HR / calories / zone minutes from the
+  overlapping Fitbit workout (±30 min via `session_device()`).
+- Share link for cloud-backed workouts is the short `#/w/<id>` form; opening
+  it pulls the workout from the cloud.
+
+Setup once: `npx supabase login` → `npx supabase projects create workout-hub`
+→ `npx supabase link` → `npx supabase db push` → `psql < supabase/seed.sql`
+(or `npx supabase db query`) → paste URL + anon key into `config.js` → set
+Auth → URL configuration → Site URL / redirect URLs to the Pages URL.
 
 ## What's in v0.2 (after the first gym test)
 

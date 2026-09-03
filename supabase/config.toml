@@ -1,0 +1,15 @@
+# Supabase CLI config for Workout Hub. Project ref is set by `npx supabase link`.
+project_id = "workout-hub"
+
+[db]
+major_version = 17
+
+[auth]
+site_url = "https://holzherr.github.io/nick-prototypes/workout-hub/"
+additional_redirect_urls = ["https://holzherr.github.io/nick-prototypes/workout-hub/", "http://127.0.0.1:8765/workout-hub/", "http://localhost:8765/workout-hub/"]
+enable_signup = true
+
+[auth.email]
+enable_signup = true
+enable_confirmations = false
+otp_length = 8
