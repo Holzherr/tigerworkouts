@@ -85,4 +85,17 @@ const WORKOUTS = [
         segments: [ { s: 120, speed: 6 }, { s: 180, speed: 9 } ] },
     ],
   },
+  {
+    id: 'nick-long-incline-walk',
+    title: 'Long incline walk',
+    creator: 'Nick',
+    created: '2026-09-03',
+    level: 'Easy',
+    tags: ['Treadmill', 'Walk', 'Steady'],
+    blocks: [
+      // 75 min, ~4.4 km → ~3.5 kph. Incline is a placeholder (set what the treadmill was on).
+      { name: 'Incline walk', type: 'steady', ex: 'incline_walk', incline: 10, repeat: 1,
+        segments: [ { s: 4500, speed: 3.5 } ] },
+    ],
+  },
 ];

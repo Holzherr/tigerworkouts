@@ -11,7 +11,7 @@
 <link rel="apple-touch-icon" href="./icons/apple-touch-icon.png">
 <link rel="icon" type="image/png" sizes="192x192" href="./icons/icon-192.png">
 <meta name="apple-mobile-web-app-title" content="Workout Hub">
-<title>Workout Hub — v0.3</title>
+<title>Workout Hub — v0.3.1</title>
 <script src="https://cdn.tailwindcss.com"></script>
 <style>
   :root { --brand: #ee6f3a; --brand-dark: #c1542a; --rest: #1e3a8a; }
@@ -218,6 +218,7 @@ function route() {
   if (seg === 'edit' && wById(id)) return renderBuilder(wById(id));
   if (seg === 'library') return renderLibrary();
   if (seg === 'import' && id) return importWorkout(id);
+  if (seg === 'import-session' && id) return importSession(id);
   return renderDiscover();
 }
 window.addEventListener('hashchange', route);
@@ -548,10 +549,17 @@ function renderSummary(s, edit) {
       <button class="text-[13px] text-red-500 inline-flex items-center gap-1 px-1 pt-2" onclick="deleteSession('${s.id}')">${I.trash}Delete this session</button>`}
     </div>
   `, 'me');
-  if (window.cloud?.user && !edit) cloud.deviceFor(s).then(rows => {
-    const el = $('#device-card'); if (!el || !rows.length) return;
-    el.innerHTML = rows.map(r => `<div class="card px-4 py-3 mb-3"><div class="text-[12px] uppercase tracking-wider text-slate-400 font-semibold mb-1">From Fitbit</div><div class="flex flex-wrap gap-3 text-[14px] text-slate-700">${r.data.avg_hr ? `<span>avg HR <b>${r.data.avg_hr}</b></span>` : ''}${r.data.max_hr ? `<span>max HR <b>${r.data.max_hr}</b></span>` : ''}${r.data.calories ? `<span><b>${Math.round(r.data.calories)}</b> kcal</span>` : ''}${r.data.active_zone_min ? `<span><b>${r.data.active_zone_min}</b> zone min</span>` : ''}${r.data.type ? `<span class="text-slate-500">${esc(r.data.type)}</span>` : ''}</div></div>`).join('');
-  }).catch(() => {});
+  const deviceCard = (d, label) => `<div class="card px-4 py-3 mb-3"><div class="text-[12px] uppercase tracking-wider text-slate-400 font-semibold mb-1">${esc(label)}</div><div class="flex flex-wrap gap-3 text-[14px] text-slate-700">${d.avg_hr ? `<span>avg HR <b>${d.avg_hr}</b></span>` : ''}${d.max_hr ? `<span>max HR <b>${d.max_hr}</b></span>` : ''}${d.calories ? `<span><b>${Math.round(d.calories)}</b> kcal</span>` : ''}${d.steps ? `<span><b>${d.steps}</b> steps</span>` : ''}${d.distance_km ? `<span><b>${fmtNum(d.distance_km)}</b> km</span>` : ''}${d.active_zone_min ? `<span><b>${d.active_zone_min}</b> zone min</span>` : ''}${d.type ? `<span class="text-slate-500">${esc(d.type)}</span>` : ''}</div>${d.note ? `<div class="text-[12px] text-slate-500 mt-1">${esc(d.note)}</div>` : ''}</div>`;
+  if (!edit) {
+    const el = $('#device-card');
+    // readings saved with the session itself (treadmill display, Fitbit screenshot, Echo-filed data)
+    if (el && s.device) el.innerHTML = (Array.isArray(s.device) ? s.device : [s.device]).map(d => deviceCard(d, d.source || 'Device')).join('');
+    // watch data matched by rough time (±60 min, closest first) from the cloud
+    if (window.cloud?.user) cloud.deviceFor(s).then(rows => {
+      if (!el || !rows.length) return;
+      el.innerHTML += rows.map(r => deviceCard(r.data, `From Fitbit · ${fmtTime(r.started_at)}`)).join('');
+    }).catch(() => {});
+  }
 }
 function stepper(path, val, step, unit, min = 0, max = 999) {
   return `<div class="stepper">
@@ -984,6 +992,17 @@ function importWorkout(payload) {
     if (i >= 0) store.workouts[i] = w; else if (!WORKOUTS.some(x => x.id === w.id)) store.workouts.unshift(w);
     save(); toast(`Added “${w.title}” by ${w.creator}`); go(`w/${w.id}`);
   } catch { toast('That link did not contain a workout'); go(''); }
+}
+// A session filed from outside the phone (Echo, a treadmill screenshot, a Fitbit export)
+// arrives as a link; opening it logs the session here and syncs it if signed in.
+function importSession(payload) {
+  try {
+    const { s } = JSON.parse(b64d(payload));
+    if (!s?.id || !s.startedAt) throw new Error('bad');
+    const i = store.sessions.findIndex(x => x.id === s.id);
+    if (i >= 0) store.sessions[i] = s; else store.sessions.push(s);
+    save(); toast(`Logged ${s.title}`); go(`s/${s.id}`);
+  } catch { toast('That link did not contain a session'); go('me'); }
 }
 function deleteWorkout(id) {
   if (!confirm('Delete this workout? Logged sessions are kept.')) return;
