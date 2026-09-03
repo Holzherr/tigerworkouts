@@ -11,7 +11,7 @@
 <link rel="apple-touch-icon" href="./icons/apple-touch-icon.png">
 <link rel="icon" type="image/png" sizes="192x192" href="./icons/icon-192.png">
 <meta name="apple-mobile-web-app-title" content="Workout Hub">
-<title>Workout Hub — v0.4</title>
+<title>Workout Hub — v0.4.1</title>
 <script src="https://cdn.tailwindcss.com"></script>
 <style>
   :root { --brand: #ee6f3a; --brand-dark: #c1542a; --rest: #1e3a8a; }
@@ -97,7 +97,10 @@
   .swipe-row.swiping .rm { opacity: 1; }
   .elapsed { font-variant-numeric: tabular-nums; font-size: 12px; opacity: .85; display: inline-flex; align-items: center; gap: 4px; }
   .next-block { background: rgba(255,255,255,.14); border-radius: 12px; padding: 8px 12px; font-size: 13px; }
-  textarea, input[type=text] { font-size: 16px; }
+  /* iOS zooms the page when a focused field is under 16px — keep every field at 16px+ */
+  input, select, textarea { font-size: 16px; }
+  html { touch-action: manipulation; -webkit-text-size-adjust: 100%; }
+  body { overflow-x: hidden; }
   .log-pre { white-space: pre-wrap; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; line-height: 1.5; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 12px; color: #334155; }
   .toast { position: fixed; left: 50%; bottom: 90px; transform: translateX(-50%); background: #0f172a; color: #fff; padding: 10px 16px; border-radius: 12px; font-size: 14px; z-index: 60; box-shadow: 0 10px 30px rgba(0,0,0,.3); display: flex; gap: 14px; align-items: center; }
   .toast button { color: #fbbf24; font-weight: 700; }
@@ -604,7 +607,7 @@ function renderSessionEdit(s) {
           <div class="${e.removed ? 'opacity-50' : ''}">
             <div class="flex items-center gap-2">
               ${exIcon(e.ex)}
-              <select class="border border-slate-200 rounded-xl px-2 py-2 text-[14px] bg-white flex-1 min-w-0" onchange="const k=this.value, x=EX(k); Object.assign(_s.blocks[${bi}].exercises[${ei}], {ex:k, name:x.name, unit:x.unit}); sEdit()">
+              <select class="border border-slate-200 rounded-xl px-2 py-2 text-[16px] bg-white flex-1 min-w-0" onchange="const k=this.value, x=EX(k); Object.assign(_s.blocks[${bi}].exercises[${ei}], {ex:k, name:x.name, unit:x.unit}); sEdit()">
                 ${Object.entries(exLib()).map(([k, x]) => `<option value="${k}" ${k === e.ex ? 'selected' : ''}>${esc(x.name)}</option>`).join('')}
               </select>
               ${rowBtn(e.removed ? 'Restore' : 'Drop', `_s.blocks[${bi}].exercises[${ei}].removed=!_s.blocks[${bi}].exercises[${ei}].removed; sEdit()`, !e.removed)}
@@ -623,7 +626,7 @@ function renderSessionEdit(s) {
     return `
       <div class="card px-4 py-3 ${b.skipped ? 'opacity-60' : ''}">
         ${head}
-        <div class="flex items-center gap-2 mb-3">${exIcon(b.ex)}<select class="border border-slate-200 rounded-xl px-2 py-2 text-[14px] bg-white flex-1 min-w-0" onchange="_s.blocks[${bi}].ex=this.value; sEdit()">${Object.entries(exLib()).map(([k, x]) => `<option value="${k}" ${k === b.ex ? 'selected' : ''}>${esc(x.name)}</option>`).join('')}</select></div>
+        <div class="flex items-center gap-2 mb-3">${exIcon(b.ex)}<select class="border border-slate-200 rounded-xl px-2 py-2 text-[16px] bg-white flex-1 min-w-0" onchange="_s.blocks[${bi}].ex=this.value; sEdit()">${Object.entries(exLib()).map(([k, x]) => `<option value="${k}" ${k === b.ex ? 'selected' : ''}>${esc(x.name)}</option>`).join('')}</select></div>
         <div class="grid grid-cols-2 gap-2 text-center mb-2">
           <div><div class="text-[11px] text-slate-500 mb-1">Time spent</div>${stepper(`s.blocks[${bi}].minutes_done`, b.minutes_done, 1, 'min', 0, 600)}</div>
           <div><div class="text-[11px] text-slate-500 mb-1">Planned</div>${stepper(`s.blocks[${bi}].minutes`, b.minutes, 1, 'min', 1, 600)}</div>
@@ -646,8 +649,8 @@ function renderSessionEdit(s) {
     <div class="px-4 py-4 space-y-3 pb-32">
       <div class="card px-4 py-3">
         <div class="grid grid-cols-2 gap-2">
-          <div><div class="text-[11px] text-slate-500 mb-1">Date</div><input type="date" class="w-full border border-slate-200 rounded-xl px-3 py-2 text-[15px]" value="${localDate(s.startedAt)}" onchange="const d=new Date(_s.startedAt); const [y,m,dd]=this.value.split('-'); d.setFullYear(+y,+m-1,+dd); _s.startedAt=d.toISOString()"></div>
-          <div><div class="text-[11px] text-slate-500 mb-1">Start</div><input type="time" class="w-full border border-slate-200 rounded-xl px-3 py-2 text-[15px]" value="${localTime(s.startedAt)}" onchange="const d=new Date(_s.startedAt); const [h,mi]=this.value.split(':'); d.setHours(+h,+mi,0,0); _s.startedAt=d.toISOString()"></div>
+          <div><div class="text-[11px] text-slate-500 mb-1">Date</div><input type="date" class="w-full border border-slate-200 rounded-xl px-3 py-2 text-[16px]" value="${localDate(s.startedAt)}" onchange="const d=new Date(_s.startedAt); const [y,m,dd]=this.value.split('-'); d.setFullYear(+y,+m-1,+dd); _s.startedAt=d.toISOString()"></div>
+          <div><div class="text-[11px] text-slate-500 mb-1">Start</div><input type="time" class="w-full border border-slate-200 rounded-xl px-3 py-2 text-[16px]" value="${localTime(s.startedAt)}" onchange="const d=new Date(_s.startedAt); const [h,mi]=this.value.split(':'); d.setHours(+h,+mi,0,0); _s.startedAt=d.toISOString()"></div>
         </div>
         <div class="flex items-center justify-between gap-3 mt-3"><div class="text-[14px] text-slate-700">Total time</div>${stepper('s.duration_min', s.duration_min, 5, 'min', 1, 600)}</div>
         <div class="flex items-center justify-between gap-3 mt-3"><div class="text-[14px] text-slate-700">Completed</div>${rowBtn(s.completed ? 'Yes' : 'Stopped early', `_s.completed=!_s.completed; sEdit()`, !s.completed)}</div>
@@ -750,7 +753,7 @@ async function inviteFriend() {
         <div class="px-4 pb-4 space-y-3">
           <p class="text-[13px] text-slate-600">They get an email with a sign-in link. Tapping it on their phone opens Workout Hub, signed in. Best if they add the app to their home screen first.</p>
           <form class="flex gap-2" onsubmit="event.preventDefault(); const e=this.email.value.trim(); if(!e) return; const b=this.querySelector('button'); b.disabled=true; cloud.signIn(e).then(()=>{ closeSheet(); toast('Invite sent to ' + e); }).catch(err=>{ b.disabled=false; toast(err.message); })">
-            <input name="email" type="email" required class="flex-1 border border-slate-200 rounded-xl px-3 py-2.5 text-[15px]" placeholder="their@email.com" autocomplete="off">
+            <input name="email" type="email" required class="flex-1 border border-slate-200 rounded-xl px-3 py-2.5 text-[16px]" placeholder="their@email.com" autocomplete="off">
             <button class="btn btn-brand btn-sm" type="submit">Send invite</button>
           </form>
           <button class="btn btn-ghost btn-sm w-full" onclick="closeSheet(); inviteShare()">${I.share}Share the app link instead</button>
@@ -789,7 +792,7 @@ function accountCard() {
       <div class="text-[12px] text-slate-500 mb-2">Your logs, workouts and favourites back up to the cloud and follow you.</div>
       ${c.providers?.google ? `<button class="btn btn-ghost w-full mb-2" onclick="cloud.signInGoogle().catch(e=>toast(e.message))">${I.google}Continue with Google</button><div class="text-[11px] text-slate-400 text-center mb-2">or</div>` : ''}
       <form class="flex gap-2" onsubmit="event.preventDefault(); const e=this.email.value.trim(); if(!e) return; const b=this.querySelector('button'); b.disabled=true; cloud.signIn(e).then(()=>{ window._pendingEmail=e; renderProfile(); }).catch(err=>{ b.disabled=false; toast(err.message); })">
-        <input name="email" type="email" required class="flex-1 border border-slate-200 rounded-xl px-3 py-2.5 text-[15px]" placeholder="you@example.com" autocomplete="email">
+        <input name="email" type="email" required class="flex-1 border border-slate-200 rounded-xl px-3 py-2.5 text-[16px]" placeholder="you@example.com" autocomplete="email">
         <button class="btn btn-brand btn-sm" type="submit">Email me a code</button>
       </form>`}
     </div>`;
@@ -807,7 +810,7 @@ function openSettings() {
       <div class="sheet-handle"></div>
       <div class="px-4 pb-2 flex items-center justify-between"><div class="font-semibold text-slate-900 text-[17px]">Settings</div><button class="text-slate-400 p-1" onclick="closeSheet(); renderProfile()">${I.x}</button></div>
       <div class="px-4 pb-4 space-y-4">
-        <div class="flex items-center gap-3">${myAvatar(56)}<input type="text" class="flex-1 border border-slate-200 rounded-xl px-3 py-2.5 text-[15px]" value="${esc(store.name)}" placeholder="Your name" oninput="store.name=this.value; save()" onblur="_sdraw()"></div>
+        <div class="flex items-center gap-3">${myAvatar(56)}<input type="text" class="flex-1 border border-slate-200 rounded-xl px-3 py-2.5 text-[16px]" value="${esc(store.name)}" placeholder="Your name" oninput="store.name=this.value; save()" onblur="_sdraw()"></div>
         <div><div class="text-[11px] uppercase tracking-wider text-slate-400 font-semibold mb-1.5">Avatar</div>
           <div class="flex flex-wrap gap-1.5">${emojis.map(e => `<button class="exicon" style="width:40px;height:40px;background:${(store.avatar?.emoji || '') === e ? '#0f172a' : '#f1f5f9'};color:${(store.avatar?.emoji || '') === e ? '#fff' : '#0f172a'};font-size:20px" onclick="store.avatar={...(store.avatar||{}),emoji:'${e}'}; save(); _sdraw()">${e || esc((store.name || 'N')[0])}</button>`).join('')}</div>
           <div class="flex flex-wrap gap-1.5 mt-2">${colors.map(col => `<button class="exicon" style="width:28px;height:28px;border-radius:999px;background:${col};outline:${(store.avatar?.color || '#ee6f3a') === col ? '3px solid #0f172a' : 'none'}" onclick="store.avatar={...(store.avatar||{}),color:'${col}'}; save(); _sdraw()"></button>`).join('')}</div>
@@ -1203,7 +1206,7 @@ function renderBuilder(src) {
   }
   drawBuilder();
 }
-const inp = (path, val, ph = '', type = 'text', cls = '') => `<input type="${type}" class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-[15px] ${cls}" value="${esc(val ?? '')}" placeholder="${esc(ph)}" oninput="setDraft('${path}', this.value)">`;
+const inp = (path, val, ph = '', type = 'text', cls = '') => `<input type="${type}" class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-[16px] ${cls}" value="${esc(val ?? '')}" placeholder="${esc(ph)}" oninput="setDraft('${path}', this.value)">`;
 function setDraft(path, val) { const p = path.split('.'); let o = draft; for (let i = 0; i < p.length - 1; i++) o = o[p[i]]; o[p[p.length - 1]] = val; }
 function numStep(path, val, step, unit, min = 0, max = 999) {
   return `<div class="stepper"><button onclick="bumpDraft('${path}', ${-step}, ${min}, ${max})">−</button><div class="val">${fmtNum(val)}${unit ? `<span class="text-[11px] font-medium text-slate-500"> ${esc(unit)}</span>` : ''}</div><button onclick="bumpDraft('${path}', ${step}, ${min}, ${max})">+</button></div>`;
@@ -1211,7 +1214,7 @@ function numStep(path, val, step, unit, min = 0, max = 999) {
 function bumpDraft(path, d, min, max) { const p = path.split('.'); let o = draft; for (let i = 0; i < p.length - 1; i++) o = o[p[i]]; const k = p[p.length - 1]; o[k] = Math.min(max, Math.max(min, Math.round((o[k] + d) * 100) / 100)); drawBuilder(); }
 function exSelect(path, val) {
   const lib = exLib();
-  return `<select class="border border-slate-200 rounded-xl px-2 py-2.5 text-[14px] bg-white flex-1 min-w-0" onchange="if(this.value==='__new'){newExerciseSheet('${path}')}else{setDraft('${path}', this.value); drawBuilder()}">
+  return `<select class="border border-slate-200 rounded-xl px-2 py-2.5 text-[16px] bg-white flex-1 min-w-0" onchange="if(this.value==='__new'){newExerciseSheet('${path}')}else{setDraft('${path}', this.value); drawBuilder()}">
     ${Object.entries(lib).map(([k, e]) => `<option value="${k}" ${k === val ? 'selected' : ''}>${esc(e.name)}</option>`).join('')}
     <option value="__new">＋ New exercise…</option>
   </select>`;
@@ -1271,9 +1274,9 @@ function drawBuilder() {
         ${inp('title', d.title, 'Workout title')}
         <div class="grid grid-cols-2 gap-2">
           ${inp('creator', d.creator, 'Creator name')}
-          <select class="border border-slate-200 rounded-xl px-3 py-2.5 text-[15px] bg-white" onchange="setDraft('level', this.value)">${['Easy', 'Medium', 'Hard'].map(l => `<option ${d.level === l ? 'selected' : ''}>${l}</option>`).join('')}</select>
+          <select class="border border-slate-200 rounded-xl px-3 py-2.5 text-[16px] bg-white" onchange="setDraft('level', this.value)">${['Easy', 'Medium', 'Hard'].map(l => `<option ${d.level === l ? 'selected' : ''}>${l}</option>`).join('')}</select>
         </div>
-        <input type="text" class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-[15px]" value="${esc((d.tags || []).join(', '))}" placeholder="Tags, comma separated (HIIT, Kettlebell…)" oninput="draft.tags = this.value.split(',').map(t => t.trim()).filter(Boolean)">
+        <input type="text" class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-[16px]" value="${esc((d.tags || []).join(', '))}" placeholder="Tags, comma separated (HIIT, Kettlebell…)" oninput="draft.tags = this.value.split(',').map(t => t.trim()).filter(Boolean)">
       </div>
       ${blocks}
       <div class="grid grid-cols-2 gap-2">
@@ -1310,14 +1313,14 @@ function newExerciseSheet(path) {
       <div class="sheet-handle"></div>
       <div class="px-4 pb-2 flex items-center justify-between"><div class="font-semibold text-slate-900 text-[17px]">New exercise</div><button class="text-slate-400 p-1" onclick="closeSheet(); draft && drawBuilder()">${I.x}</button></div>
       <div class="px-4 pb-4 space-y-2">
-        <input id="ne-name" type="text" class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-[15px]" placeholder="Name (e.g. Goblet squat)">
+        <input id="ne-name" type="text" class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-[16px]" placeholder="Name (e.g. Goblet squat)">
         <div class="grid grid-cols-2 gap-2">
-          <select id="ne-icon" class="border border-slate-200 rounded-xl px-3 py-2.5 text-[15px] bg-white">${Object.keys(ICON_COLORS).map(k => `<option value="${k}">${k}</option>`).join('')}</select>
-          <select id="ne-unit" class="border border-slate-200 rounded-xl px-3 py-2.5 text-[15px] bg-white"><option>kg</option><option>kg per arm</option><option>kph</option><option>reps</option><option>cal</option><option>m</option></select>
+          <select id="ne-icon" class="border border-slate-200 rounded-xl px-3 py-2.5 text-[16px] bg-white">${Object.keys(ICON_COLORS).map(k => `<option value="${k}">${k}</option>`).join('')}</select>
+          <select id="ne-unit" class="border border-slate-200 rounded-xl px-3 py-2.5 text-[16px] bg-white"><option>kg</option><option>kg per arm</option><option>kph</option><option>reps</option><option>cal</option><option>m</option></select>
         </div>
-        <input id="ne-video" type="text" class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-[15px]" placeholder="YouTube link or ID (optional)">
-        <input id="ne-image" type="text" class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-[15px]" placeholder="Image URL (optional)">
-        <input id="ne-cue" type="text" class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-[15px]" placeholder="Form cue (optional)">
+        <input id="ne-video" type="text" class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-[16px]" placeholder="YouTube link or ID (optional)">
+        <input id="ne-image" type="text" class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-[16px]" placeholder="Image URL (optional)">
+        <input id="ne-cue" type="text" class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-[16px]" placeholder="Form cue (optional)">
         <button class="btn btn-brand w-full" onclick="saveNewExercise('${path}')">${I.check}Add to library</button>
       </div>
     </div>`;
@@ -1353,7 +1356,7 @@ function quickLog(i, existing) {
         <div class="flex items-center justify-between"><div class="text-[14px] text-slate-700">Duration</div><div class="stepper"><button onclick="_q.minutes=Math.max(5,_q.minutes-5); _qdraw()">−</button><div class="val">${q.minutes}<span class="text-[11px] font-medium text-slate-500"> min</span></div><button onclick="_q.minutes+=5; _qdraw()">+</button></div></div>
         <div class="flex items-center justify-between"><div class="text-[14px] text-slate-700">Finished</div><div class="text-[14px] font-semibold text-slate-900">just now</div></div>
         <div class="flex gap-2">${['easy', 'moderate', 'hard'].map(x => `<button class="chip flex-1 justify-center ${q.intensity === x ? 'bg-slate-900 text-white' : 'bg-slate-100 text-slate-600'}" style="padding:9px 0;font-size:13px" onclick="_q.intensity='${x}'; _qdraw()">${x}</button>`).join('')}</div>
-        <input type="text" class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-[15px]" placeholder="Note (score, partner, how it felt…)" value="${esc(q.notes)}" oninput="_q.notes=this.value">
+        <input type="text" class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-[16px]" placeholder="Note (score, partner, how it felt…)" value="${esc(q.notes)}" oninput="_q.notes=this.value">
         <button class="btn btn-brand w-full" onclick="saveQuickLog(${i})">${I.check}Log ${esc(q.title)}</button>
       </div>
     </div>`;
@@ -1399,7 +1402,7 @@ function addFavorite() {
       <div class="sheet-handle"></div>
       <div class="px-4 pb-2 flex items-center justify-between"><div class="font-semibold text-slate-900 text-[17px]">New favourite</div><button class="text-slate-400 p-1" onclick="closeSheet()">${I.x}</button></div>
       <div class="px-4 pb-4 space-y-3">
-        <input id="fv-name" type="text" class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-[15px]" placeholder="Name (e.g. Game of padel, 5k run, Swim)">
+        <input id="fv-name" type="text" class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-[16px]" placeholder="Name (e.g. Game of padel, 5k run, Swim)">
         <div class="flex flex-wrap gap-2" id="fv-icons">${icons.map((k, i) => `<button class="exicon" data-k="${k}" style="width:44px;height:44px;background:${ICON_COLORS[k]};color:#0f172a;outline:${i === 0 ? '3px solid #0f172a' : 'none'}" onclick="$$('#fv-icons .exicon').forEach(b=>b.style.outline='none'); this.style.outline='3px solid #0f172a'; window._fvIcon='${k}'">${I[k]}</button>`).join('')}</div>
         <div class="flex items-center justify-between"><div class="text-[14px] text-slate-700">Usual duration</div><div class="stepper"><button onclick="_fvMin=Math.max(5,_fvMin-5); $('#fv-min').textContent=_fvMin">−</button><div class="val"><span id="fv-min">60</span><span class="text-[11px] font-medium text-slate-500"> min</span></div><button onclick="_fvMin+=5; $('#fv-min').textContent=_fvMin">+</button></div></div>
         <button class="btn btn-brand w-full" onclick="saveFavorite()">${I.check}Add favourite</button>
