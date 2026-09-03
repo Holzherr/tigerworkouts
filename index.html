@@ -11,7 +11,7 @@
 <link rel="apple-touch-icon" href="./icons/apple-touch-icon.png">
 <link rel="icon" type="image/png" sizes="192x192" href="./icons/icon-192.png">
 <meta name="apple-mobile-web-app-title" content="Workout Hub">
-<title>Workout Hub — v0.3.2</title>
+<title>Workout Hub — v0.3.3</title>
 <script src="https://cdn.tailwindcss.com"></script>
 <style>
   :root { --brand: #ee6f3a; --brand-dark: #c1542a; --rest: #1e3a8a; }
@@ -484,6 +484,7 @@ function toast(msg, action, onAction) {
 // ───────────────────────── summary / edit ─────────────────────────
 function renderSummary(s, edit) {
   if (s.type === 'activity') return renderActivitySummary(s);
+  if (edit) return renderSessionEdit(s);
   const blocks = s.blocks.map((b, bi) => {
     if (b.type === 'interval') {
       return `
@@ -561,6 +562,104 @@ function renderSummary(s, edit) {
       el.innerHTML += rows.map(r => deviceCard(r.data, `From Fitbit · ${fmtTime(r.started_at)}`)).join('');
     }).catch(() => {});
   }
+}
+// ───────────────────────── session edit ─────────────────────────
+// Full edit of a logged session: when, how long, what was done per block/exercise/round.
+function renderSessionEdit(s) {
+  window._s = s;
+  const localTime = iso => { const d = new Date(iso); return `${pad(d.getHours())}:${pad(d.getMinutes())}`; };
+  const localDate = iso => { const d = new Date(iso); return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`; };
+  const rowBtn = (label, fn, danger) => `<button class="chip ${danger ? 'bg-red-50 text-red-600' : 'bg-slate-100 text-slate-600'}" style="padding:6px 10px" onclick="${fn}">${label}</button>`;
+  const blocks = s.blocks.map((b, bi) => {
+    const head = `
+      <div class="flex items-center justify-between gap-2 mb-2">
+        <input type="text" class="font-semibold text-slate-900 text-[15px] bg-transparent flex-1 min-w-0 border-b border-transparent focus:border-slate-300" value="${esc(b.name)}" oninput="_s.blocks[${bi}].name=this.value">
+        <div class="flex gap-1">${rowBtn(b.skipped ? 'Skipped' : 'Done', `_s.blocks[${bi}].skipped=!_s.blocks[${bi}].skipped; sEdit()`, b.skipped)}${rowBtn(I.trash, `if(confirm('Remove this block from the log?')){_s.blocks.splice(${bi},1); sEdit()}`, true)}</div>
+      </div>`;
+    if (b.type === 'interval') {
+      return `
+      <div class="card px-4 py-3 ${b.skipped ? 'opacity-60' : ''}">
+        ${head}
+        <div class="grid grid-cols-3 gap-2 text-center mb-3">
+          <div><div class="text-[11px] text-slate-500 mb-1">Rounds done</div>${stepper(`s.blocks[${bi}].rounds_done`, b.rounds_done, 1, `/${b.rounds}`, 0, 50)}</div>
+          <div><div class="text-[11px] text-slate-500 mb-1">Work</div>${stepper(`s.blocks[${bi}].work_s`, b.work_s, 5, 's', 5, 600)}</div>
+          <div><div class="text-[11px] text-slate-500 mb-1">Rest</div>${stepper(`s.blocks[${bi}].rest_s`, b.rest_s, 5, 's', 0, 600)}</div>
+        </div>
+        <div class="space-y-3">${b.exercises.map((e, ei) => {
+          const varies = e.actuals?.length > 1 && new Set(e.actuals).size > 1;
+          return `
+          <div class="${e.removed ? 'opacity-50' : ''}">
+            <div class="flex items-center gap-2">
+              ${exIcon(e.ex)}
+              <select class="border border-slate-200 rounded-xl px-2 py-2 text-[14px] bg-white flex-1 min-w-0" onchange="const k=this.value, x=EX(k); Object.assign(_s.blocks[${bi}].exercises[${ei}], {ex:k, name:x.name, unit:x.unit}); sEdit()">
+                ${Object.entries(exLib()).map(([k, x]) => `<option value="${k}" ${k === e.ex ? 'selected' : ''}>${esc(x.name)}</option>`).join('')}
+              </select>
+              ${rowBtn(e.removed ? 'Restore' : 'Drop', `_s.blocks[${bi}].exercises[${ei}].removed=!_s.blocks[${bi}].exercises[${ei}].removed; sEdit()`, !e.removed)}
+            </div>
+            <div class="flex items-center justify-between gap-3 mt-2 pl-11">
+              <div class="text-[13px] text-slate-500">${varies ? 'Per round' : 'Used'}<span class="text-slate-400"> · target ${fmtNum(e.target)}</span></div>
+              ${varies ? '' : stepper(`s.blocks[${bi}].exercises[${ei}].actual`, e.actual, EX(e.ex).step, e.unit)}
+            </div>
+            ${varies ? `<div class="pl-11 mt-1 flex flex-wrap gap-1.5">${e.actuals.map((a, ri) => `<div class="stepper" style="transform:scale(.85);transform-origin:left"><button onclick="stepVal('s.blocks[${bi}].exercises[${ei}].actuals[${ri}]', ${-EX(e.ex).step}, 0, 999, this)">−</button><div class="val" style="min-width:60px">${fmtNum(a)}<span class="text-[10px] text-slate-400"> r${ri + 1}</span></div><button onclick="stepVal('s.blocks[${bi}].exercises[${ei}].actuals[${ri}]', ${EX(e.ex).step}, 0, 999, this)">+</button></div>`).join('')}
+              <button class="chip bg-slate-100 text-slate-500" onclick="const e=_s.blocks[${bi}].exercises[${ei}]; e.actuals=[]; sEdit()">Same for all rounds</button></div>` : (e.actuals?.length > 1 ? `<div class="pl-11 mt-1"><button class="chip bg-slate-100 text-slate-500" onclick="const e=_s.blocks[${bi}].exercises[${ei}]; e.actuals=Array.from({length:_s.blocks[${bi}].rounds_done||_s.blocks[${bi}].rounds},()=>e.actual); e.actuals[e.actuals.length-1]=Math.max(0,e.actual-EX(e.ex).step); sEdit()">Vary per round</button></div>` : '')}
+            ${e.incline_actual != null ? `<div class="flex items-center justify-between gap-3 mt-2 pl-11"><div class="text-[13px] text-slate-500">Incline</div>${stepper(`s.blocks[${bi}].exercises[${ei}].incline_actual`, e.incline_actual, 1, '')}</div>` : ''}
+          </div>`; }).join('')}</div>
+        <button class="btn btn-ghost btn-sm w-full mt-3" onclick="const x=EX('kb_swing'); _s.blocks[${bi}].exercises.push({ex:'kb_swing',name:x.name,unit:x.unit,target:16,actual:16,actuals:[],removed:false}); sEdit()">${I.plus}Add exercise</button>
+      </div>`;
+    }
+    return `
+      <div class="card px-4 py-3 ${b.skipped ? 'opacity-60' : ''}">
+        ${head}
+        <div class="flex items-center gap-2 mb-3">${exIcon(b.ex)}<select class="border border-slate-200 rounded-xl px-2 py-2 text-[14px] bg-white flex-1 min-w-0" onchange="_s.blocks[${bi}].ex=this.value; sEdit()">${Object.entries(exLib()).map(([k, x]) => `<option value="${k}" ${k === b.ex ? 'selected' : ''}>${esc(x.name)}</option>`).join('')}</select></div>
+        <div class="grid grid-cols-2 gap-2 text-center mb-2">
+          <div><div class="text-[11px] text-slate-500 mb-1">Time spent</div>${stepper(`s.blocks[${bi}].minutes_done`, b.minutes_done, 1, 'min', 0, 600)}</div>
+          <div><div class="text-[11px] text-slate-500 mb-1">Planned</div>${stepper(`s.blocks[${bi}].minutes`, b.minutes, 1, 'min', 1, 600)}</div>
+        </div>
+        <div class="flex items-center justify-between gap-3 mt-2"><div class="text-[14px] text-slate-700">Incline</div>${stepper(`s.blocks[${bi}].incline_actual`, b.incline_actual, 1, '', 0, 40)}</div>
+        ${b.speeds_actual.map((sp, si) => `
+        <div class="flex items-center justify-between gap-3 mt-2">
+          <div class="text-[14px] text-slate-700">Segment ${si + 1} speed</div>
+          <div class="flex items-center gap-1">${stepper(`s.blocks[${bi}].speeds_actual[${si}]`, sp, 0.5, 'kph', 0, 40)}${b.speeds_actual.length > 1 ? `<button class="text-slate-400 p-1" onclick="_s.blocks[${bi}].speeds_actual.splice(${si},1); sEdit()">${I.x}</button>` : ''}</div>
+        </div>`).join('')}
+        <button class="btn btn-ghost btn-sm w-full mt-3" onclick="_s.blocks[${bi}].speeds_actual.push(_s.blocks[${bi}].speeds_actual.at(-1) ?? 6); sEdit()">${I.plus}Add segment</button>
+      </div>`;
+  }).join('');
+  shell(`
+    <header class="safe-top px-4 pb-3 pt-3 bg-slate-900 text-white">
+      <button class="inline-flex items-center gap-1 text-white/90 text-[14px] mb-2" onclick="go('s/${s.id}')">${I.back}Cancel</button>
+      <div class="text-[11px] uppercase tracking-widest opacity-80 font-semibold">Edit log</div>
+      <input type="text" class="text-[22px] font-bold leading-tight bg-transparent w-full border-b border-transparent focus:border-white/40" value="${esc(s.title)}" oninput="_s.title=this.value">
+    </header>
+    <div class="px-4 py-4 space-y-3 pb-32">
+      <div class="card px-4 py-3">
+        <div class="grid grid-cols-2 gap-2">
+          <div><div class="text-[11px] text-slate-500 mb-1">Date</div><input type="date" class="w-full border border-slate-200 rounded-xl px-3 py-2 text-[15px]" value="${localDate(s.startedAt)}" onchange="const d=new Date(_s.startedAt); const [y,m,dd]=this.value.split('-'); d.setFullYear(+y,+m-1,+dd); _s.startedAt=d.toISOString()"></div>
+          <div><div class="text-[11px] text-slate-500 mb-1">Start</div><input type="time" class="w-full border border-slate-200 rounded-xl px-3 py-2 text-[15px]" value="${localTime(s.startedAt)}" onchange="const d=new Date(_s.startedAt); const [h,mi]=this.value.split(':'); d.setHours(+h,+mi,0,0); _s.startedAt=d.toISOString()"></div>
+        </div>
+        <div class="flex items-center justify-between gap-3 mt-3"><div class="text-[14px] text-slate-700">Total time</div>${stepper('s.duration_min', s.duration_min, 5, 'min', 1, 600)}</div>
+        <div class="flex items-center justify-between gap-3 mt-3"><div class="text-[14px] text-slate-700">Completed</div>${rowBtn(s.completed ? 'Yes' : 'Stopped early', `_s.completed=!_s.completed; sEdit()`, !s.completed)}</div>
+      </div>
+      ${blocks}
+      <div class="grid grid-cols-2 gap-2">
+        <button class="btn btn-ghost btn-sm" onclick="const x=EX('kb_swing'); _s.blocks.push({name:'New block',type:'interval',work_s:30,rest_s:30,rounds:8,rounds_done:8,rests:[],skipped:false,exercises:[{ex:'kb_swing',name:x.name,unit:x.unit,target:16,actual:16,actuals:[],removed:false}]}); sEdit()">${I.plus}Interval block</button>
+        <button class="btn btn-ghost btn-sm" onclick="_s.blocks.push({name:'Incline walk',type:'steady',ex:'incline_walk',minutes:10,minutes_done:10,incline:6,skipped:false,speeds:[6],incline_actual:6,speeds_actual:[6]}); sEdit()">${I.plus}Steady block</button>
+      </div>
+      <div class="card px-4 py-3">
+        <div class="text-[12px] uppercase tracking-wider text-slate-400 font-semibold mb-1">Notes</div>
+        <textarea class="w-full border border-slate-200 rounded-xl p-3 text-[15px]" rows="3" placeholder="How did it feel? Anything to change next time?" oninput="_s.notes=this.value">${esc(s.notes)}</textarea>
+      </div>
+    </div>
+    <div class="fixed bottom-[68px] left-1/2 -translate-x-1/2 w-full max-w-[430px] px-4 pointer-events-none">
+      <button class="btn btn-brand w-full pointer-events-auto" onclick="sSave()">${I.check}Save log</button>
+    </div>
+  `, 'me');
+}
+function sEdit() { renderSessionEdit(window._s); }
+function sSave() {
+  const s = window._s;
+  s.endedAt = new Date(new Date(s.startedAt).getTime() + s.duration_min * 60000).toISOString();
+  s.blocks.forEach(b => { if (b.type === 'interval') b.exercises.forEach(e => { if (e.actuals?.length && new Set(e.actuals).size === 1) e.actual = e.actuals[0]; }); });
+  save(); go(`s/${s.id}`);
 }
 function stepper(path, val, step, unit, min = 0, max = 999) {
   return `<div class="stepper">
