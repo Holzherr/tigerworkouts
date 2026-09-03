@@ -1,5 +1,5 @@
 # Supabase CLI config for Workout Hub. Project ref is set by `npx supabase link`.
-project_id = "workout-hub"
+project_id = "icpdzjohsvlpyaluxgbt"
 
 [db]
 major_version = 17
