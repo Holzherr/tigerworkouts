@@ -24,6 +24,16 @@
     const { error } = await sb.auth.signInWithOtp({ email, options: { emailRedirectTo: redirectTo } });
     if (error) throw error;
   };
+  cloud.verifyCode = async (email, token) => {
+    const { error } = await sb.auth.verifyOtp({ email, token: token.replace(/\s+/g, ''), type: 'email' });
+    if (error) throw error;
+  };
+  cloud.signInGoogle = async () => {
+    const { error } = await sb.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: location.origin + location.pathname + '#/me' } });
+    if (error) throw error;
+  };
+  cloud.providers = {};
+  fetch(cfg.url + '/auth/v1/settings', { headers: { apikey: cfg.key } }).then(r => r.json()).then(d => { cloud.providers = d.external || {}; if (location.hash.includes('/me')) route(); }).catch(() => {});
   cloud.signOut = async () => { await sb.auth.signOut(); cloud.user = null; route(); };
 
   // ── push ──
@@ -37,7 +47,8 @@
     if (workouts.length) { const { error } = await sb.from('workouts').upsert(workouts, { onConflict: 'id' }); if (error) errs.push(error); }
     const exercises = Object.entries(store.exercises).map(([key, e]) => ({ key, owner: uid, public: true, data: e }));
     if (exercises.length) { const { error } = await sb.from('exercises').upsert(exercises, { onConflict: 'key' }); if (error) errs.push(error); }
-    { const { error } = await sb.from('user_state').upsert({ owner: uid, favorites: store.favorites, prefs: { name: store.name, saved: store.saved, units: store.units } }, { onConflict: 'owner' }); if (error) errs.push(error); }
+    { const { error } = await sb.from('user_state').upsert({ owner: uid, favorites: store.favorites, prefs: { name: store.name, saved: store.saved, units: store.units, avatar: store.avatar } }, { onConflict: 'owner' }); if (error) errs.push(error); }
+    { const { error } = await sb.from('profiles').update({ name: store.name, units: store.units }).eq('id', uid); if (error) errs.push(error); }
     if (errs.length) { cloud.error = errs[0].message; console.warn('push', errs); } else cloud.error = null;
   }
   cloud.push = debounce(pushAll, 1500);
@@ -56,7 +67,7 @@
     const { data: mine } = await sb.from('workouts').select('id,data').eq('owner', uid);
     (mine || []).forEach(r => { const i = store.workouts.findIndex(w => w.id === r.id); if (i < 0) store.workouts.push(r.data); });
     const { data: st } = await sb.from('user_state').select('favorites,prefs').eq('owner', uid).maybeSingle();
-    if (st) { (st.favorites || []).forEach(f => { if (!store.favorites.some(x => x.name === f.name)) store.favorites.push(f); }); if (st.prefs?.name) store.name = st.prefs.name; (st.prefs?.saved || []).forEach(id => { if (!store.saved.includes(id)) store.saved.push(id); }); }
+    if (st) { (st.favorites || []).forEach(f => { if (!store.favorites.some(x => x.name === f.name)) store.favorites.push(f); }); if (st.prefs?.name) store.name = st.prefs.name; if (st.prefs?.avatar) store.avatar = st.prefs.avatar; (st.prefs?.saved || []).forEach(id => { if (!store.saved.includes(id)) store.saved.push(id); }); }
     const { data: prof } = await sb.from('profiles').select('name,units').eq('id', uid).maybeSingle();
     if (prof?.units) store.units = prof.units;
     localStorage.setItem(LS_KEY, JSON.stringify(store));

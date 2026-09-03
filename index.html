@@ -11,7 +11,7 @@
 <link rel="apple-touch-icon" href="./icons/apple-touch-icon.png">
 <link rel="icon" type="image/png" sizes="192x192" href="./icons/icon-192.png">
 <meta name="apple-mobile-web-app-title" content="Workout Hub">
-<title>Workout Hub — v0.3.6</title>
+<title>Workout Hub — v0.4</title>
 <script src="https://cdn.tailwindcss.com"></script>
 <style>
   :root { --brand: #ee6f3a; --brand-dark: #c1542a; --rest: #1e3a8a; }
@@ -116,7 +116,7 @@
 const LS_KEY = 'workout-hub:v1';
 const store = load();
 function load() {
-  const d = { sessions: [], name: 'Nick', units: 'metric', workouts: [], exercises: {}, favorites: [{ name: 'Game of padel', icon: 'racket', minutes: 60 }], saved: [] };
+  const d = { sessions: [], name: 'Nick', units: 'metric', workouts: [], exercises: {}, favorites: [{ name: 'Game of padel', icon: 'racket', minutes: 60 }], saved: [], avatar: { emoji: '', color: '#ee6f3a' } };
   try { return Object.assign(d, JSON.parse(localStorage.getItem(LS_KEY) || '{}')); }
   catch { return d; }
 }
@@ -201,6 +201,8 @@ const I = {
   football: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7l4 3-1.5 5h-5L8 10z"/><path d="M12 3v4M16 10l4-1M14.5 15l2.5 3.5M9.5 15L7 18.5M8 10L4 9"/></svg>',
   heart: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="18" height="18"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8z"/></svg>',
   heartFill: '<svg viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="18" height="18"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8z"/></svg>',
+  gear: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="22" height="22"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>',
+  google: '<svg viewBox="0 0 24 24" width="18" height="18"><path fill="#4285F4" d="M23.5 12.3c0-.8-.1-1.6-.2-2.3H12v4.5h6.5c-.3 1.5-1.1 2.7-2.4 3.6v3h3.9c2.3-2.1 3.5-5.2 3.5-8.8z"/><path fill="#34A853" d="M12 24c3.2 0 6-1.1 8-2.9l-3.9-3c-1.1.7-2.5 1.2-4.1 1.2-3.1 0-5.8-2.1-6.7-5H1.2v3.1C3.2 21.3 7.3 24 12 24z"/><path fill="#FBBC05" d="M5.3 14.3c-.2-.7-.4-1.5-.4-2.3s.1-1.6.4-2.3V6.6H1.2C.4 8.2 0 10 0 12s.4 3.8 1.2 5.4l4.1-3.1z"/><path fill="#EA4335" d="M12 4.8c1.8 0 3.3.6 4.6 1.8l3.4-3.4C18 1.2 15.2 0 12 0 7.3 0 3.2 2.7 1.2 6.6l4.1 3.1c.9-2.9 3.6-4.9 6.7-4.9z"/></svg>',
   star: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16"><polygon points="12 2 15 8.5 22 9.3 17 14 18.3 21 12 17.6 5.7 21 7 14 2 9.3 9 8.5"/></svg>',
   plus: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" width="18" height="18"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>',
   link: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="18" height="18"><path d="M10 13a5 5 0 0 0 7.5.5l3-3a5 5 0 0 0-7-7l-1.7 1.7"/><path d="M14 11a5 5 0 0 0-7.5-.5l-3 3a5 5 0 0 0 7 7l1.7-1.7"/></svg>',
@@ -210,6 +212,7 @@ const I = {
 };
 const exIcon = (key, size = '') => { const ex = EX(key); return `<span class="exicon ${size}" style="background:${ex.color || ICON_COLORS[ex.icon] || '#94a3b8'};color:#0f172a">${I[ex.icon] || I.body}</span>`; };
 const wColor = w => { const k = w.blocks[0]?.type === 'interval' ? w.blocks[0].exercises[0]?.ex : w.blocks[0]?.ex; const ex = k ? EX(k) : null; return ex?.color || ICON_COLORS[ex?.icon] || '#ee6f3a'; };
+const myAvatar = (size = 36) => `<span class="avatar" style="width:${size}px;height:${size}px;font-size:${Math.round(size * .42)}px;background:${store.avatar?.emoji ? '#fff7ed' : `linear-gradient(135deg,${store.avatar?.color || '#f59e0b'},#c1542a)`}">${store.avatar?.emoji || esc((store.name || 'N')[0])}</span>`;
 const isSaved = id => store.saved.includes(id);
 function toggleSaved(id) { const i = store.saved.indexOf(id); if (i >= 0) store.saved.splice(i, 1); else store.saved.unshift(id); save(); toast(i >= 0 ? 'Removed from your workouts' : 'Saved to your profile'); route(); }
 const wExKeys = w => [...new Set(w.blocks.flatMap(b => b.type === 'interval' ? b.exercises.map(e => e.ex) : [b.ex]))];
@@ -709,14 +712,14 @@ function renderProfile() {
   shell(`
     <header class="safe-top px-5 pb-4 pt-4">
       <div class="flex items-center gap-3">
-        <span class="avatar" style="width:48px;height:48px;font-size:18px">${esc(store.name[0])}</span>
-        <div><h1 class="text-[22px] font-bold text-slate-900 leading-tight">${esc(store.name)}</h1><div class="text-[12px] text-slate-500">Logs live on this phone until you copy them out.</div></div>
+        ${myAvatar(48)}
+        <div class="flex-1 min-w-0"><h1 class="text-[22px] font-bold text-slate-900 leading-tight truncate">${esc(store.name)}</h1><div class="text-[12px] text-slate-500">${window.cloud?.user ? esc(window.cloud.user.email) : 'Logs live on this phone until you sign in.'}</div></div>
+        <button class="p-2 text-slate-500" onclick="openSettings()" aria-label="Settings">${I.gear}</button>
       </div>
       <div class="grid grid-cols-3 gap-2 mt-4">
         ${stat(ss.length, 'sessions')}${stat(thisWeek, 'this week')}${stat(mins, 'minutes')}
       </div>
       ${accountCard()}
-      <button class="btn btn-ghost btn-sm w-full mt-2" onclick="inviteFriend()">${I.invite}Invite someone</button>
     </header>
     <div class="px-4 space-y-2 pb-2">
       <div class="flex items-baseline justify-between px-1"><div class="text-[11px] uppercase tracking-widest text-slate-400 font-semibold">My workouts</div><button class="text-[12px] text-slate-400" onclick="go('new')">+ Create</button></div>
@@ -768,22 +771,53 @@ function accountCard() {
   const c = window.cloud;
   if (!c || !c.client) return `<div class="card px-4 py-3 mt-3 text-[13px] text-slate-500">Cloud sync not configured yet — logs stay on this phone.</div>`;
   if (c.user) return `
-    <div class="card px-4 py-3 mt-3">
-      <div class="flex items-center justify-between">
-        <div><div class="text-[14px] font-semibold text-slate-900">${esc(c.user.email)}</div><div class="text-[12px] ${c.error ? 'text-red-500' : 'text-emerald-700'}">${c.error ? 'Sync error: ' + esc(c.error) : c.lastSync ? 'Synced ' + fmtTime(c.lastSync) : 'Syncing…'}</div></div>
-        <div class="flex gap-2"><button class="btn btn-ghost btn-sm" onclick="cloud.sync()">Sync</button><button class="btn btn-ghost btn-sm" onclick="cloud.signOut()">Sign out</button></div>
-      </div>
-      <div class="flex items-center justify-between mt-3"><div class="text-[13px] text-slate-600">Units</div><div class="flex gap-1">${['metric', 'imperial'].map(u => `<button class="chip ${store.units === u ? 'bg-slate-900 text-white' : 'bg-slate-100 text-slate-600'}" onclick="store.units='${u}'; save(); cloud.client.from('profiles').update({units:'${u}'}).eq('id', cloud.user.id).then(()=>renderProfile())">${u}</button>`).join('')}</div></div>
+    <div class="card px-4 py-3 mt-3 flex items-center justify-between">
+      <div class="text-[12px] ${c.error ? 'text-red-500' : 'text-emerald-700'}">${c.error ? 'Sync error: ' + esc(c.error) : c.lastSync ? 'Synced ' + fmtTime(c.lastSync) : 'Syncing…'}</div>
+      <button class="btn btn-ghost btn-sm" onclick="cloud.sync()">Sync now</button>
     </div>`;
+  const pending = window._pendingEmail;
   return `
     <div class="card px-4 py-3 mt-3">
       <div class="text-[14px] font-semibold text-slate-900">Sign in to sync across phones</div>
-      <div class="text-[12px] text-slate-500 mb-2">Magic link by email. Your logs, workouts and favourites back up to the cloud and follow you.</div>
-      <form class="flex gap-2" onsubmit="event.preventDefault(); const e=this.email.value.trim(); if(!e) return; cloud.signIn(e).then(()=>toast('Sign-in link sent to ' + e)).catch(err=>toast(err.message))">
-        <input name="email" type="email" required class="flex-1 border border-slate-200 rounded-xl px-3 py-2.5 text-[15px]" placeholder="you@example.com" autocomplete="email">
-        <button class="btn btn-brand btn-sm" type="submit">Send link</button>
+      ${pending ? `
+      <div class="text-[12px] text-slate-500 mb-2">We emailed a 6-digit code to <b>${esc(pending)}</b>. Type it here.</div>
+      <form class="flex gap-2" onsubmit="event.preventDefault(); const t=this.code.value.trim(); if(!t) return; cloud.verifyCode('${esc(pending)}', t).then(()=>{ window._pendingEmail=null; toast('Signed in'); }).catch(err=>toast(err.message))">
+        <input name="code" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9 ]*" required class="flex-1 border border-slate-200 rounded-xl px-3 py-2.5 text-[20px] tracking-[.3em] text-center" placeholder="••••••">
+        <button class="btn btn-brand btn-sm" type="submit">Sign in</button>
       </form>
+      <div class="flex justify-between mt-2"><button class="text-[12px] text-slate-500" onclick="window._pendingEmail=null; renderProfile()">Use a different email</button><button class="text-[12px] text-slate-500" onclick="cloud.signIn('${esc(pending)}').then(()=>toast('New code sent')).catch(e=>toast(e.message))">Resend code</button></div>` : `
+      <div class="text-[12px] text-slate-500 mb-2">Your logs, workouts and favourites back up to the cloud and follow you.</div>
+      ${c.providers?.google ? `<button class="btn btn-ghost w-full mb-2" onclick="cloud.signInGoogle().catch(e=>toast(e.message))">${I.google}Continue with Google</button><div class="text-[11px] text-slate-400 text-center mb-2">or</div>` : ''}
+      <form class="flex gap-2" onsubmit="event.preventDefault(); const e=this.email.value.trim(); if(!e) return; const b=this.querySelector('button'); b.disabled=true; cloud.signIn(e).then(()=>{ window._pendingEmail=e; renderProfile(); }).catch(err=>{ b.disabled=false; toast(err.message); })">
+        <input name="email" type="email" required class="flex-1 border border-slate-200 rounded-xl px-3 py-2.5 text-[15px]" placeholder="you@example.com" autocomplete="email">
+        <button class="btn btn-brand btn-sm" type="submit">Email me a code</button>
+      </form>`}
     </div>`;
+}
+// ───────────────────────── settings sheet ─────────────────────────
+function openSettings() {
+  closeSheet();
+  const c = window.cloud;
+  const emojis = ['', '💪', '🏋️', '🏃', '🚴', '🧘', '🥊', '🎾', '⚽', '🏊', '🔥', '⚡', '🦁', '🐯', '🦊', '🐻'];
+  const colors = ['#ee6f3a', '#f59e0b', '#a78bfa', '#38bdf8', '#34d399', '#fb7185', '#4ade80', '#e879f9'];
+  const el = document.createElement('div'); el.id = 'sheet';
+  const draw = () => { el.innerHTML = `
+    <div class="sheet-backdrop" onclick="closeSheet(); renderProfile()"></div>
+    <div class="sheet safe-bottom">
+      <div class="sheet-handle"></div>
+      <div class="px-4 pb-2 flex items-center justify-between"><div class="font-semibold text-slate-900 text-[17px]">Settings</div><button class="text-slate-400 p-1" onclick="closeSheet(); renderProfile()">${I.x}</button></div>
+      <div class="px-4 pb-4 space-y-4">
+        <div class="flex items-center gap-3">${myAvatar(56)}<input type="text" class="flex-1 border border-slate-200 rounded-xl px-3 py-2.5 text-[15px]" value="${esc(store.name)}" placeholder="Your name" oninput="store.name=this.value; save()" onblur="_sdraw()"></div>
+        <div><div class="text-[11px] uppercase tracking-wider text-slate-400 font-semibold mb-1.5">Avatar</div>
+          <div class="flex flex-wrap gap-1.5">${emojis.map(e => `<button class="exicon" style="width:40px;height:40px;background:${(store.avatar?.emoji || '') === e ? '#0f172a' : '#f1f5f9'};color:${(store.avatar?.emoji || '') === e ? '#fff' : '#0f172a'};font-size:20px" onclick="store.avatar={...(store.avatar||{}),emoji:'${e}'}; save(); _sdraw()">${e || esc((store.name || 'N')[0])}</button>`).join('')}</div>
+          <div class="flex flex-wrap gap-1.5 mt-2">${colors.map(col => `<button class="exicon" style="width:28px;height:28px;border-radius:999px;background:${col};outline:${(store.avatar?.color || '#ee6f3a') === col ? '3px solid #0f172a' : 'none'}" onclick="store.avatar={...(store.avatar||{}),color:'${col}'}; save(); _sdraw()"></button>`).join('')}</div>
+        </div>
+        <div class="flex items-center justify-between"><div class="text-[14px] text-slate-700">Units</div><div class="flex gap-1">${['metric', 'imperial'].map(u => `<button class="chip ${store.units === u ? 'bg-slate-900 text-white' : 'bg-slate-100 text-slate-600'}" onclick="store.units='${u}'; save(); _sdraw()">${u}</button>`).join('')}</div></div>
+        <button class="btn btn-ghost w-full" onclick="closeSheet(); inviteFriend()">${I.invite}Invite someone</button>
+        ${c?.user ? `<div class="text-[12px] text-slate-500 text-center">Signed in as ${esc(c.user.email)}</div><button class="btn btn-ghost w-full" onclick="closeSheet(); cloud.signOut()">Sign out</button>` : ''}
+      </div>
+    </div>`; };
+  window._sdraw = draw; draw(); document.body.appendChild(el);
 }
 const stat = (v, l) => `<div class="card px-3 py-2.5 text-center"><div class="text-[22px] font-bold text-slate-900 leading-none">${v}</div><div class="text-[11px] text-slate-500 mt-1">${l}</div></div>`;
 
