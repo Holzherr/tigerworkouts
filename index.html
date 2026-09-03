@@ -11,7 +11,7 @@
 <link rel="apple-touch-icon" href="./icons/apple-touch-icon.png">
 <link rel="icon" type="image/png" sizes="192x192" href="./icons/icon-192.png">
 <meta name="apple-mobile-web-app-title" content="Workout Hub">
-<title>Workout Hub — v0.3.4</title>
+<title>Workout Hub — v0.3.5</title>
 <script src="https://cdn.tailwindcss.com"></script>
 <style>
   :root { --brand: #ee6f3a; --brand-dark: #c1542a; --rest: #1e3a8a; }
@@ -22,8 +22,8 @@
   .brand { background: var(--brand); }
   .safe-top { padding-top: calc(env(safe-area-inset-top, 0px) + 14px) !important; }
   .safe-bottom { padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 12px) !important; }
-  .tabbar { position: sticky; bottom: 0; background: rgba(255,255,255,.96); backdrop-filter: blur(8px); border-top: 1px solid #e2e8f0; }
-  .tab { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 8px 0; font-size: 11px; color: #64748b; }
+  .tabbar { position: sticky; bottom: 0; background: rgba(255,255,255,.96); backdrop-filter: blur(8px); border-top: 1px solid #e2e8f0; padding-bottom: max(env(safe-area-inset-bottom, 0px), 6px) !important; }
+  .tab { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 1px; padding: 6px 0 2px; font-size: 10px; color: #64748b; }
   .tab.active { color: var(--brand); }
   .tab svg { width: 22px; height: 22px; }
   .card { background: #fff; border: 1px solid #e2e8f0; border-radius: 16px; }
