@@ -11,7 +11,7 @@
 <link rel="apple-touch-icon" href="./icons/apple-touch-icon.png">
 <link rel="icon" type="image/png" sizes="192x192" href="./icons/icon-192.png">
 <meta name="apple-mobile-web-app-title" content="Workout Hub">
-<title>Workout Hub — v0.3.5</title>
+<title>Workout Hub — v0.3.6</title>
 <script src="https://cdn.tailwindcss.com"></script>
 <style>
   :root { --brand: #ee6f3a; --brand-dark: #c1542a; --rest: #1e3a8a; }
@@ -736,6 +736,30 @@ function renderProfile() {
 }
 async function inviteFriend() {
   const url = location.origin + location.pathname;
+  if (window.cloud?.client) {
+    closeSheet();
+    const el = document.createElement('div'); el.id = 'sheet';
+    el.innerHTML = `
+      <div class="sheet-backdrop" onclick="closeSheet()"></div>
+      <div class="sheet safe-bottom">
+        <div class="sheet-handle"></div>
+        <div class="px-4 pb-2 flex items-center justify-between"><div class="font-semibold text-slate-900 text-[17px]">Invite someone</div><button class="text-slate-400 p-1" onclick="closeSheet()">${I.x}</button></div>
+        <div class="px-4 pb-4 space-y-3">
+          <p class="text-[13px] text-slate-600">They get an email with a sign-in link. Tapping it on their phone opens Workout Hub, signed in. Best if they add the app to their home screen first.</p>
+          <form class="flex gap-2" onsubmit="event.preventDefault(); const e=this.email.value.trim(); if(!e) return; const b=this.querySelector('button'); b.disabled=true; cloud.signIn(e).then(()=>{ closeSheet(); toast('Invite sent to ' + e); }).catch(err=>{ b.disabled=false; toast(err.message); })">
+            <input name="email" type="email" required class="flex-1 border border-slate-200 rounded-xl px-3 py-2.5 text-[15px]" placeholder="their@email.com" autocomplete="off">
+            <button class="btn btn-brand btn-sm" type="submit">Send invite</button>
+          </form>
+          <button class="btn btn-ghost btn-sm w-full" onclick="closeSheet(); inviteShare()">${I.share}Share the app link instead</button>
+        </div>
+      </div>`;
+    document.body.appendChild(el); setTimeout(() => el.querySelector('input')?.focus(), 50);
+    return;
+  }
+  inviteShare();
+}
+async function inviteShare() {
+  const url = location.origin + location.pathname;
   const text = `Join me on Workout Hub — creator workouts with a guided timer.\n1. Open ${url} in Safari\n2. Share → Add to Home Screen\n3. Profile → sign in with your email\nThen share me a workout and I'll see it in Discover.`;
   if (navigator.share) { try { await navigator.share({ title: 'Workout Hub', text, url }); return; } catch {} }
   copyText(text);
@@ -755,7 +779,7 @@ function accountCard() {
     <div class="card px-4 py-3 mt-3">
       <div class="text-[14px] font-semibold text-slate-900">Sign in to sync across phones</div>
       <div class="text-[12px] text-slate-500 mb-2">Magic link by email. Your logs, workouts and favourites back up to the cloud and follow you.</div>
-      <form class="flex gap-2" onsubmit="event.preventDefault(); const e=this.email.value.trim(); if(!e) return; cloud.signIn(e).then(()=>toast('Check your email for the link')).catch(err=>toast(err.message))">
+      <form class="flex gap-2" onsubmit="event.preventDefault(); const e=this.email.value.trim(); if(!e) return; cloud.signIn(e).then(()=>toast('Sign-in link sent to ' + e)).catch(err=>toast(err.message))">
         <input name="email" type="email" required class="flex-1 border border-slate-200 rounded-xl px-3 py-2.5 text-[15px]" placeholder="you@example.com" autocomplete="email">
         <button class="btn btn-brand btn-sm" type="submit">Send link</button>
       </form>
