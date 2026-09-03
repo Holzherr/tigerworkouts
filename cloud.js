@@ -37,7 +37,7 @@
     if (workouts.length) { const { error } = await sb.from('workouts').upsert(workouts, { onConflict: 'id' }); if (error) errs.push(error); }
     const exercises = Object.entries(store.exercises).map(([key, e]) => ({ key, owner: uid, public: true, data: e }));
     if (exercises.length) { const { error } = await sb.from('exercises').upsert(exercises, { onConflict: 'key' }); if (error) errs.push(error); }
-    { const { error } = await sb.from('user_state').upsert({ owner: uid, favorites: store.favorites, prefs: { name: store.name } }, { onConflict: 'owner' }); if (error) errs.push(error); }
+    { const { error } = await sb.from('user_state').upsert({ owner: uid, favorites: store.favorites, prefs: { name: store.name, saved: store.saved, units: store.units } }, { onConflict: 'owner' }); if (error) errs.push(error); }
     if (errs.length) { cloud.error = errs[0].message; console.warn('push', errs); } else cloud.error = null;
   }
   cloud.push = debounce(pushAll, 1500);
@@ -56,7 +56,7 @@
     const { data: mine } = await sb.from('workouts').select('id,data').eq('owner', uid);
     (mine || []).forEach(r => { const i = store.workouts.findIndex(w => w.id === r.id); if (i < 0) store.workouts.push(r.data); });
     const { data: st } = await sb.from('user_state').select('favorites,prefs').eq('owner', uid).maybeSingle();
-    if (st) { (st.favorites || []).forEach(f => { if (!store.favorites.some(x => x.name === f.name)) store.favorites.push(f); }); if (st.prefs?.name) store.name = st.prefs.name; }
+    if (st) { (st.favorites || []).forEach(f => { if (!store.favorites.some(x => x.name === f.name)) store.favorites.push(f); }); if (st.prefs?.name) store.name = st.prefs.name; (st.prefs?.saved || []).forEach(id => { if (!store.saved.includes(id)) store.saved.push(id); }); }
     const { data: prof } = await sb.from('profiles').select('name,units').eq('id', uid).maybeSingle();
     if (prof?.units) store.units = prof.units;
     localStorage.setItem(LS_KEY, JSON.stringify(store));
