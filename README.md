@@ -158,6 +158,16 @@ rest to 20s, swap lateral raises for face pulls), written back as a draft
 workout the user accepts. The same event log feeds the health store and
 Google Health.
 
+### 6b. Flexible order mid-workout (equipment busy)
+In Do mode, let the user jump to any other block of the same workout, do it,
+then come back to where they were — the block strip becomes tappable, with a
+"Do this next" action on each upcoming block and a "Resume block N" prompt
+after the detour finishes. Also swap a single exercise for an alternative
+(same muscle group / equipment family from the library: e.g. treadmill sprints
+→ bike sprints, kettlebell swings → dumbbell swings) when a machine is taken,
+with the swap recorded in the log. Completed / skipped / pending state per
+block, so the summary still reads in workout order.
+
 ### 7. Fitbit / watch data in history
 Pull heart rate, calories, active-zone minutes and auto-detected workouts
 from the Google Health API (the `tools/health-sync` job in the assistant repo
