@@ -73,7 +73,7 @@
     localStorage.setItem(LS_KEY, JSON.stringify(store));
     cloud.lastSync = new Date().toISOString();
   }
-  cloud.sync = async () => { try { await pullAll(); await pushAll(); } catch (e) { cloud.error = e.message; } if (typeof route === 'function') route(); };
+  cloud.sync = async (announce) => { const before = store.sessions.length; try { await pullAll(); await pushAll(); } catch (e) { cloud.error = e.message; } if (typeof route === 'function') route(); if (announce && typeof toast === 'function' && !cloud.error) toast(`Signed in — ${store.sessions.length} session${store.sessions.length === 1 ? '' : 's'} saved to your account`); };
 
   // device metrics overlapping a session (±30 min)
   cloud.deviceFor = async s => {
@@ -87,8 +87,9 @@
     cloud.user = session?.user || null;
     if (event === 'SIGNED_IN' || event === 'INITIAL_SESSION') {
       if (location.search.includes('code=')) history.replaceState(null, '', location.pathname + (location.hash || '#/me'));
+      const first = !cloud.ready && event === 'SIGNED_IN';
       cloud.ready = true;
-      cloud.sync();
+      cloud.sync(first);
     }
     if (event === 'SIGNED_OUT') { cloud.ready = true; route(); }
   });

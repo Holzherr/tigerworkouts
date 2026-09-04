@@ -11,7 +11,7 @@
 <link rel="apple-touch-icon" href="./icons/apple-touch-icon.png">
 <link rel="icon" type="image/png" sizes="192x192" href="./icons/icon-192.png">
 <meta name="apple-mobile-web-app-title" content="Workout Hub">
-<title>Workout Hub — v0.4.3</title>
+<title>Workout Hub — v0.4.4</title>
 <script src="https://cdn.tailwindcss.com"></script>
 <style>
   :root { --brand: #ee6f3a; --brand-dark: #c1542a; --rest: #1e3a8a; }
@@ -563,6 +563,7 @@ function renderSummary(s, edit) {
       <div class="text-[13px] opacity-90 mt-1">${fmtDate(s.startedAt)} · ${fmtTime(s.startedAt)} · ${s.duration_min} min</div>
     </header>
     <div class="px-4 py-4 space-y-3 pb-8">
+      ${signInBanner()}
       ${blocks}
       <div class="card px-4 py-3">
         <div class="text-[12px] uppercase tracking-wider text-slate-400 font-semibold mb-1">Notes</div>
@@ -730,7 +731,7 @@ function renderProfile() {
     <header class="safe-top px-5 pb-4 pt-4">
       <div class="flex items-center gap-3">
         ${myAvatar(48)}
-        <div class="flex-1 min-w-0"><h1 class="text-[22px] font-bold text-slate-900 leading-tight truncate">${esc(store.name)}</h1><div class="text-[12px] text-slate-500">${window.cloud?.user ? esc(window.cloud.user.email) : 'Logs live on this phone until you sign in.'}</div></div>
+        <div class="flex-1 min-w-0"><h1 class="text-[22px] font-bold text-slate-900 leading-tight truncate">${esc(store.name)}</h1><div class="text-[12px] text-slate-500">${window.cloud?.user ? esc(window.cloud.user.email) : 'Not signed in — logs are saved on this phone only.'}</div></div>
         <button class="p-2 text-slate-500" onclick="openSettings()" aria-label="Settings">${I.gear}</button>
       </div>
       <div class="grid grid-cols-3 gap-2 mt-4">
@@ -783,6 +784,16 @@ async function inviteShare() {
   const text = `Join me on Workout Hub — creator workouts with a guided timer.\n1. Open ${url} in Safari\n2. Share → Add to Home Screen\n3. Profile → sign in with your email\nThen share me a workout and I'll see it in Discover.`;
   if (navigator.share) { try { await navigator.share({ title: 'Workout Hub', text, url }); return; } catch {} }
   copyText(text);
+}
+// shown on summaries when logged out: local-only warning + shortcut to sign in
+function signInBanner() {
+  const c = window.cloud;
+  if (!c?.client || c.user) return '';
+  return `<button class="w-full text-left card px-4 py-3 flex items-center gap-3 row-tap" style="border-color:#fdba74;background:#fff7ed" onclick="go('me')">
+    <span class="exicon" style="background:#fed7aa;color:#c2410c">${I.me}</span>
+    <div class="flex-1"><div class="text-[14px] font-semibold text-slate-900">Saved on this phone only</div><div class="text-[12px] text-slate-600">Sign in to save it to your account. Everything logged so far comes with you.</div></div>
+    <span class="text-orange-700 text-[13px] font-semibold">Sign in</span>
+  </button>`;
 }
 function accountCard() {
   const c = window.cloud;
@@ -1404,6 +1415,7 @@ function renderActivitySummary(s) {
       <div class="text-[13px] opacity-90 mt-1">${fmtDate(s.startedAt)} · ${fmtTime(s.startedAt)}–${fmtTime(s.endedAt)} · ${s.duration_min} min · ${esc(s.intensity)}</div>
     </header>
     <div class="px-4 py-4 space-y-3 pb-8">
+      ${signInBanner()}
       <div class="card px-4 py-3"><div class="text-[12px] uppercase tracking-wider text-slate-400 font-semibold mb-1">Notes</div><textarea class="w-full border border-slate-200 rounded-xl p-3 text-[16px]" rows="2" placeholder="Score, partner, how it felt…" oninput="_s.notes=this.value; clearTimeout(window._nt); window._nt=setTimeout(save, 600)" onblur="save()">${esc(s.notes)}</textarea></div>
       <div class="grid grid-cols-2 gap-2">
         <button class="btn btn-dark" onclick="copyText(sessionText(_s) + '\\n\\n' + sessionJSON(_s))">${I.copy}Copy log</button>
