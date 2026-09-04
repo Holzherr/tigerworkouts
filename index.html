@@ -11,7 +11,7 @@
 <link rel="apple-touch-icon" href="./icons/apple-touch-icon.png">
 <link rel="icon" type="image/png" sizes="192x192" href="./icons/icon-192.png">
 <meta name="apple-mobile-web-app-title" content="Workout Hub">
-<title>Workout Hub — v0.8</title>
+<title>Workout Hub — v0.8.1</title>
 <script src="https://cdn.tailwindcss.com"></script>
 <style>
   :root { --brand: #ee6f3a; --brand-dark: #c1542a; --rest: #1e3a8a; }
@@ -1112,9 +1112,9 @@ const runner = {
           </div>
         </div>
         <div class="blocks mt-2">${w.blocks.map((b, i) => `<span class="${i < this.bi ? 'done' : i === this.bi ? 'cur' : ''}"></span>`).join('')}</div>
-        <div class="flex items-baseline justify-between mt-1.5">
-          <div class="text-[12px] opacity-80">Block ${this.bi + 1} of ${w.blocks.length}</div>
-          ${sub || ''}
+        <div class="flex items-baseline justify-between gap-3 mt-1.5">
+          <div class="text-[12px] opacity-80 whitespace-nowrap flex-none">Block ${this.bi + 1} of ${w.blocks.length}</div>
+          <div class="min-w-0 truncate text-right">${sub || ''}</div>
         </div>
       </div>`;
   },
