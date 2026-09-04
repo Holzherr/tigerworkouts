@@ -11,7 +11,7 @@
 <link rel="apple-touch-icon" href="./icons/apple-touch-icon.png">
 <link rel="icon" type="image/png" sizes="192x192" href="./icons/icon-192.png">
 <meta name="apple-mobile-web-app-title" content="Workout Hub">
-<title>Workout Hub — v0.6.2</title>
+<title>Workout Hub — v0.6.3</title>
 <script src="https://cdn.tailwindcss.com"></script>
 <style>
   :root { --brand: #ee6f3a; --brand-dark: #c1542a; --rest: #1e3a8a; }
@@ -144,6 +144,10 @@ const favIcon = f => `<span class="exicon" style="background:${ICON_COLORS[f.ico
 const EX = key => EXERCISES[key] || store.exercises[key] || window.cloud?.remote?.exercises?.[key] || { name: key, unit: 'kg', step: 2.5, icon: 'body', color: ICON_COLORS.body, cue: '', video: '' };
 const exLib = () => ({ ...EXERCISES, ...(window.cloud?.remote?.exercises || {}), ...store.exercises });
 const exMedia = ex => ex.poster || ex.image || (ex.video ? ytThumb(ex.video) : '');
+// small live thumbnail: loops the demo clip when there is one, else a still
+const exThumb = (ex, size = 44, radius = 12) => ex.clip
+  ? `<video src="${esc(ex.clip)}" poster="${esc(ex.poster || '')}" autoplay muted loop playsinline style="width:${size}px;height:${size}px;border-radius:${radius}px;object-fit:cover;object-position:top;background:#fff;display:block"></video>`
+  : exMedia(ex) ? `<img src="${esc(exMedia(ex))}" alt="" style="width:${size}px;height:${size}px;border-radius:${radius}px;object-fit:cover;object-position:top;background:#fff;display:block">` : '';
 const shortUnit = u => u.replace(' per arm', '/arm');
 
 function blockMinutes(b) {
@@ -396,7 +400,7 @@ function exRow(key, target, hint) {
   const ex = EX(key);
   return `
     <button class="w-full text-left flex items-center gap-3 px-4 py-2 row-tap" onclick="openVideo('${key}')">
-      ${exMedia(ex) ? `<span class="relative flex-none"><img src="${esc(exMedia(ex))}" alt="" style="width:44px;height:44px;border-radius:12px;object-fit:cover;object-position:top;background:#fff"><span class="exicon absolute" style="width:18px;height:18px;border-radius:6px;right:-4px;bottom:-4px;background:${ex.color || ICON_COLORS[ex.icon] || '#94a3b8'};color:#0f172a;box-shadow:0 0 0 2px #fff">${(I[ex.icon] || I.body).replace('<svg', '<svg width="11" height="11"')}</span></span>` : exIcon(key)}
+      ${exMedia(ex) ? `<span class="relative flex-none">${exThumb(ex, 44, 12)}<span class="exicon absolute" style="width:18px;height:18px;border-radius:6px;right:-4px;bottom:-4px;background:${ex.color || ICON_COLORS[ex.icon] || '#94a3b8'};color:#0f172a;box-shadow:0 0 0 2px #fff">${(I[ex.icon] || I.body).replace('<svg', '<svg width="11" height="11"')}</span></span>` : exIcon(key)}
       <div class="flex-1 min-w-0">
         <div class="font-medium text-slate-900 text-[15px]">${esc(ex.name)}</div>
         <div class="text-[12px] text-slate-500">${esc(target)}${hint ? ` <span class="text-emerald-700">· ${esc(hint)}</span>` : ''}</div>
@@ -1081,7 +1085,7 @@ const runner = {
         : `<div class="flex items-center gap-3 py-2">
             ${exIcon(b.ex)}
             <div class="flex-1 min-w-0" onclick="openVideo('${b.ex}')"><div class="font-semibold text-[15px]">${esc(EX(b.ex).name)}</div><div class="text-[12px] opacity-75">${b.repeat} × (${b.segments.map(s => `${s.s / 60} min @ ${s.speed} kph`).join(' + ')}) · incline ${b.incline}</div></div>
-            <img class="thumb" style="width:64px;height:42px" src="${exMedia(EX(b.ex))}" alt="">
+            ${exThumb(EX(b.ex), 44, 10)}
           </div>`;
       body = `
         ${this.header()}
