@@ -11,7 +11,7 @@
 <link rel="apple-touch-icon" href="./icons/apple-touch-icon.png">
 <link rel="icon" type="image/png" sizes="192x192" href="./icons/icon-192.png">
 <meta name="apple-mobile-web-app-title" content="Workout Hub">
-<title>Workout Hub — v0.4.2</title>
+<title>Workout Hub — v0.4.3</title>
 <script src="https://cdn.tailwindcss.com"></script>
 <style>
   :root { --brand: #ee6f3a; --brand-dark: #c1542a; --rest: #1e3a8a; }
@@ -566,8 +566,7 @@ function renderSummary(s, edit) {
       ${blocks}
       <div class="card px-4 py-3">
         <div class="text-[12px] uppercase tracking-wider text-slate-400 font-semibold mb-1">Notes</div>
-        ${edit ? `<textarea class="w-full border border-slate-200 rounded-xl p-3 text-[16px]" rows="3" placeholder="How did it feel? Anything to change next time?" oninput="_s.notes=this.value">${esc(s.notes)}</textarea>`
-               : `<div class="text-[14px] text-slate-700">${esc(s.notes) || '<span class="text-slate-400">—</span>'}</div>`}
+        <textarea class="w-full border border-slate-200 rounded-xl p-3 text-[16px]" rows="${s.notes ? 3 : 2}" placeholder="How did it feel? Anything to change next time?" oninput="_s.notes=this.value; clearTimeout(window._nt); window._nt=setTimeout(save, 600)" onblur="save(); const p=this.closest('.card')?.parentElement?.querySelector('.log-pre'); if(p) p.textContent=sessionText(_s)">${esc(s.notes)}</textarea>
       </div>
       ${edit ? `<button class="btn btn-brand w-full" onclick="save(); go('s/${s.id}')">${I.check}Save log</button>` : `
       <div class="grid grid-cols-2 gap-2">
@@ -1405,7 +1404,7 @@ function renderActivitySummary(s) {
       <div class="text-[13px] opacity-90 mt-1">${fmtDate(s.startedAt)} · ${fmtTime(s.startedAt)}–${fmtTime(s.endedAt)} · ${s.duration_min} min · ${esc(s.intensity)}</div>
     </header>
     <div class="px-4 py-4 space-y-3 pb-8">
-      <div class="card px-4 py-3"><div class="text-[12px] uppercase tracking-wider text-slate-400 font-semibold mb-1">Notes</div><div class="text-[14px] text-slate-700">${esc(s.notes) || '<span class="text-slate-400">—</span>'}</div></div>
+      <div class="card px-4 py-3"><div class="text-[12px] uppercase tracking-wider text-slate-400 font-semibold mb-1">Notes</div><textarea class="w-full border border-slate-200 rounded-xl p-3 text-[16px]" rows="2" placeholder="Score, partner, how it felt…" oninput="_s.notes=this.value; clearTimeout(window._nt); window._nt=setTimeout(save, 600)" onblur="save()">${esc(s.notes)}</textarea></div>
       <div class="grid grid-cols-2 gap-2">
         <button class="btn btn-dark" onclick="copyText(sessionText(_s) + '\\n\\n' + sessionJSON(_s))">${I.copy}Copy log</button>
         <a class="btn btn-dark" href="${githubIssueUrl(s)}" target="_blank" rel="noopener">${I.github}Save to GitHub</a>
