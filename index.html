@@ -11,7 +11,7 @@
 <link rel="apple-touch-icon" href="./icons/apple-touch-icon.png">
 <link rel="icon" type="image/png" sizes="192x192" href="./icons/icon-192.png">
 <meta name="apple-mobile-web-app-title" content="Workout Hub">
-<title>Workout Hub — v0.5.1</title>
+<title>Workout Hub — v0.6</title>
 <script src="https://cdn.tailwindcss.com"></script>
 <style>
   :root { --brand: #ee6f3a; --brand-dark: #c1542a; --rest: #1e3a8a; }
@@ -143,7 +143,7 @@ const ICON_COLORS = { kettlebell: '#f59e0b', dumbbell: '#a78bfa', treadmill: '#3
 const favIcon = f => `<span class="exicon" style="background:${ICON_COLORS[f.icon] || '#94a3b8'};color:#0f172a">${I[f.icon] || I.body}</span>`;
 const EX = key => EXERCISES[key] || store.exercises[key] || window.cloud?.remote?.exercises?.[key] || { name: key, unit: 'kg', step: 2.5, icon: 'body', color: ICON_COLORS.body, cue: '', video: '' };
 const exLib = () => ({ ...EXERCISES, ...(window.cloud?.remote?.exercises || {}), ...store.exercises });
-const exMedia = ex => ex.image || (ex.video ? ytThumb(ex.video) : '');
+const exMedia = ex => ex.poster || ex.image || (ex.video ? ytThumb(ex.video) : '');
 const shortUnit = u => u.replace(' per arm', '/arm');
 
 function blockMinutes(b) {
@@ -419,8 +419,10 @@ function openVideo(key) {
         <div class="flex items-center gap-2">${exIcon(key)}<div class="font-semibold text-slate-900 text-[17px]">${esc(ex.name)}</div></div>
         <button class="text-slate-400 p-1" onclick="closeSheet()">${I.x}</button>
       </div>
-      ${ex.image ? `<div class="px-4 pb-3"><img src="${esc(ex.image)}" alt="" class="w-full rounded-xl" style="max-height:260px;object-fit:cover"></div>` : ''}
-      ${ex.video ? `<div class="px-4"><div class="video-wrap"><iframe src="https://www.youtube-nocookie.com/embed/${ex.video}?autoplay=1&playsinline=1&rel=0" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen></iframe></div></div>` : ''}
+      ${ex.clip ? `<div class="px-4"><video class="w-full rounded-xl" style="aspect-ratio:3/4;object-fit:cover;background:#e2e8f0;max-height:62vh" src="${esc(ex.clip)}" poster="${esc(ex.poster || '')}" autoplay muted loop playsinline></video></div>`
+        : ex.image ? `<div class="px-4 pb-3"><img src="${esc(ex.image)}" alt="" class="w-full rounded-xl" style="max-height:260px;object-fit:cover"></div>` : ''}
+      ${ex.video && !ex.clip ? `<div class="px-4"><div class="video-wrap"><iframe src="https://www.youtube-nocookie.com/embed/${ex.video}?autoplay=1&playsinline=1&rel=0" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen></iframe></div></div>` : ''}
+      ${ex.video && ex.clip ? `<div class="px-4 pt-3"><a class="btn btn-ghost btn-sm w-full" href="https://www.youtube.com/watch?v=${ex.video}" target="_blank" rel="noopener">${I.video}Watch a real demo on YouTube</a></div>` : ''}
       <p class="px-4 pt-3 pb-4 text-[14px] text-slate-600 leading-relaxed">${esc(ex.cue)}</p>
     </div>`;
   document.body.appendChild(el);
@@ -1079,7 +1081,7 @@ const runner = {
         : `<div class="flex items-center gap-3 py-2">
             ${exIcon(b.ex)}
             <div class="flex-1 min-w-0" onclick="openVideo('${b.ex}')"><div class="font-semibold text-[15px]">${esc(EX(b.ex).name)}</div><div class="text-[12px] opacity-75">${b.repeat} × (${b.segments.map(s => `${s.s / 60} min @ ${s.speed} kph`).join(' + ')}) · incline ${b.incline}</div></div>
-            <img class="thumb" style="width:64px;height:42px" src="${ytThumb(EX(b.ex).video)}" alt="">
+            <img class="thumb" style="width:64px;height:42px" src="${exMedia(EX(b.ex))}" alt="">
           </div>`;
       body = `
         ${this.header()}

@@ -1,4 +1,4 @@
-# workout-hub — v0.3
+# workout-hub — v0.6
 
 Phone-shaped "Sweat / F45"-style workout app: creators publish workouts, you
 discover one, do it with a guided interval timer, and log what you actually did.
@@ -6,6 +6,17 @@ No accounts, no backend. Everything lives in the phone's localStorage; workouts
 travel between phones as share links.
 
 Live: https://holzherr.github.io/nick-prototypes/workout-hub/
+
+## What's in v0.6 — generated exercise demos
+
+`media/<exercise>.mp4` + `.jpg`: 5-second looping demo clips of our own model
+for all six seed exercises. Pipeline (fal.ai, key in `~/.workout-hub-fal`):
+FLUX 2 Pro reference portrait → Nano Banana Pro edit for each exercise's start
+frame → MiniMax H3 Max Turbo image-to-video (768p, 5 s) → ffmpeg to 480px
+H.264, muted, ~150 KB each. Chosen over Kling (elbow bend, 2× price) and
+Seedance (rejects photoreal faces). ≈ £0.60 per exercise all in. Swap the
+reference portrait to re-render the library in a different body. Exercise
+sheet plays the clip; YouTube stays as "watch a real demo".
 
 ## What's in v0.3 — PWA + cloud
 
