@@ -11,7 +11,7 @@
 <link rel="apple-touch-icon" href="./icons/apple-touch-icon.png">
 <link rel="icon" type="image/png" sizes="192x192" href="./icons/icon-192.png">
 <meta name="apple-mobile-web-app-title" content="Workout Hub">
-<title>Workout Hub — v0.4.4</title>
+<title>Workout Hub — v0.5</title>
 <script src="https://cdn.tailwindcss.com"></script>
 <style>
   :root { --brand: #ee6f3a; --brand-dark: #c1542a; --rest: #1e3a8a; }
@@ -266,65 +266,68 @@ function shell(inner, tab) {
 }
 
 // ───────────────────────── discover ─────────────────────────
-let discoverTag = 'All';
+let discoverTag = 'All', discoverCreator = null;
+function heroCard(w) {
+  const last = lastSessionFor(w.id);
+  return `
+    <a href="#/w/${w.id}" class="block rounded-2xl overflow-hidden text-white relative row-tap" style="background:linear-gradient(135deg,${wColor(w)} 0%,#ee6f3a 60%,#c1542a 100%)">
+      <div class="px-5 pt-4 pb-4">
+        <div class="flex items-center justify-between mb-3">
+          <button class="flex items-center gap-2" onclick="event.preventDefault(); showCreator('${esc(w.creator)}')"><span class="avatar" style="width:28px;height:28px;font-size:12px;background:rgba(255,255,255,.3)">${esc(w.creator[0])}</span><span class="text-[13px] font-semibold">${esc(w.creator)}</span></button>
+          <div class="flex gap-1.5"><span class="chip bg-white/25 text-white">${I.clock}${workoutMinutes(w)} min</span><span class="chip bg-white/25 text-white">${esc(w.level)}</span>${isSaved(w.id) ? `<span class="chip bg-white text-orange-700">${I.heartFill.replace('width="18" height="18"', 'width="12" height="12"')}</span>` : ''}</div>
+        </div>
+        <div class="text-[24px] font-bold leading-tight">${esc(w.title)}</div>
+        <div class="text-[13px] opacity-90 mt-1">${w.blocks.map(b => esc(b.name)).join(' · ')}</div>
+        <div class="flex items-center justify-between mt-4">
+          <div class="flex gap-1.5">${wExKeys(w).slice(0, 5).map(k => `<span class="exicon" style="background:rgba(255,255,255,.9);color:#0f172a">${I[EX(k).icon] || I.body}</span>`).join('')}</div>
+          <span class="btn btn-sm" style="background:#fff;color:#0f172a">${I.play}Start</span>
+        </div>
+        ${last ? `<div class="text-[12px] opacity-90 mt-3">✓ Done ${fmtDate(last.startedAt)} · ${last.duration_min} min</div>` : ''}
+      </div>
+    </a>`;
+}
+function creatorsRow(ws) {
+  const creators = [...new Set(ws.map(w => w.creator))];
+  const count = c => ws.filter(w => w.creator === c).length;
+  return `
+    <div class="pt-2">
+      <div class="flex items-baseline justify-between px-1 pb-2"><div class="text-[11px] uppercase tracking-widest text-slate-400 font-semibold">Creators</div>${discoverCreator ? `<button class="text-[12px] text-slate-500" onclick="showCreator(null)">Show all</button>` : ''}</div>
+      <div class="steps pb-1">${creators.map(c => `<button class="flex flex-col items-center gap-1" style="flex:none;width:68px" onclick="showCreator('${esc(c)}')"><span class="avatar" style="width:52px;height:52px;font-size:20px;${discoverCreator === c ? 'outline:3px solid #0f172a;outline-offset:2px' : ''}">${esc(c[0])}</span><div class="text-[11px] ${discoverCreator === c ? 'text-slate-900 font-semibold' : 'text-slate-600'} truncate w-full text-center">${esc(c)}</div><div class="text-[10px] text-slate-400">${count(c)} workout${count(c) === 1 ? '' : 's'}</div></button>`).join('')}
+        <button class="flex flex-col items-center gap-1" style="flex:none;width:68px" onclick="go('new')"><span class="avatar" style="width:52px;height:52px;background:#f1f5f9;color:#64748b">${I.plus}</span><div class="text-[11px] text-slate-500">Create</div></button>
+      </div>
+    </div>`;
+}
+function showCreator(c) { discoverCreator = c; discoverTag = 'All'; renderDiscover(); window.scrollTo(0, 0); }
 function renderDiscover() {
   const ws = allWorkouts();
   const tags = ['All', ...(store.saved.length ? ['Saved'] : []), ...new Set(ws.flatMap(w => w.tags || []))];
-  const shown = ws.filter(w => discoverTag === 'All' || (discoverTag === 'Saved' ? isSaved(w.id) : (w.tags || []).includes(discoverTag)));
-  const featured = shown[0];
-  const creators = [...new Set(ws.map(w => w.creator))];
+  let shown = ws.filter(w => discoverTag === 'All' || (discoverTag === 'Saved' ? isSaved(w.id) : (w.tags || []).includes(discoverTag)));
+  if (discoverCreator) shown = shown.filter(w => w.creator === discoverCreator);
   const hour = new Date().getHours();
   const greet = hour < 12 ? 'Morning' : hour < 18 ? 'Afternoon' : 'Evening';
-  const card = w => {
-    const last = lastSessionFor(w.id);
-    return `
-    <a href="#/w/${w.id}" class="card flex items-stretch overflow-hidden row-tap">
-      <div class="w-[92px] flex-none flex flex-col items-center justify-center gap-1 p-2" style="background:linear-gradient(160deg,${wColor(w)},${wColor(w)}88)">
-        <div class="flex flex-wrap justify-center gap-1">${wExKeys(w).slice(0, 4).map(k => `<span class="exicon" style="width:26px;height:26px;border-radius:8px;background:rgba(255,255,255,.85);color:#0f172a">${(I[EX(k).icon] || I.body).replace('<svg', '<svg width="15" height="15"')}</span>`).join('')}</div>
-        <div class="text-[11px] font-bold text-slate-900/80 mt-1">${workoutMinutes(w)} min</div>
-      </div>
-      <div class="flex-1 min-w-0 px-3 py-2.5">
-        <div class="font-semibold text-slate-900 text-[15px] leading-tight flex items-center gap-1.5">${esc(w.title)}${isSaved(w.id) ? `<span class="text-orange-600">${I.heartFill.replace('width="18" height="18"', 'width="14" height="14"')}</span>` : ''}</div>
-        <div class="text-[12px] text-slate-500 mt-0.5">${esc(w.creator)} · ${esc(w.level)} · ${w.blocks.length} blocks</div>
-        <div class="text-[12px] text-slate-500 mt-1 truncate">${w.blocks.map(b => esc(b.name)).join(' · ')}</div>
-        ${last ? `<div class="text-[11px] text-emerald-700 mt-1 font-medium">✓ Done ${fmtDate(last.startedAt)}</div>` : ''}
-      </div>
-    </a>`;
-  };
+  const SPLIT = 5;
+  const first = shown.slice(0, SPLIT), rest = shown.slice(SPLIT);
+  const empty = `<div class="card px-4 py-8 text-center text-slate-400 text-[14px]">Nothing here yet.</div>`;
   shell(`
     <header class="safe-top px-5 pb-2 pt-4 flex items-end justify-between">
       <div>
         <div class="text-[13px] text-slate-500">${greet}, ${esc(store.name)}</div>
-        <h1 class="text-[26px] font-bold text-slate-900 leading-tight">Ready to move?</h1>
+        <h1 class="text-[26px] font-bold text-slate-900 leading-tight">${discoverCreator ? `Workouts by ${esc(discoverCreator)}` : 'Ready to move?'}</h1>
       </div>
-      <button class="btn btn-brand btn-sm" onclick="go('new')">${I.plus}Create</button>
+      ${discoverCreator ? `<button class="btn btn-ghost btn-sm" onclick="showCreator(null)">${I.x}</button>` : `<button class="btn btn-brand btn-sm" onclick="go('new')">${I.plus}Create</button>`}
     </header>
     <div class="steps px-5 py-2">${tags.map(t => `<button class="chip ${t === discoverTag ? 'bg-slate-900 text-white' : 'bg-slate-100 text-slate-600'}" style="padding:7px 13px;font-size:12px;flex:none" onclick="discoverTag='${esc(t)}'; renderDiscover()">${esc(t)}</button>`).join('')}</div>
-    ${featured ? `
-    <div class="px-4 pt-2">
-      <a href="#/w/${featured.id}" class="block rounded-2xl overflow-hidden text-white relative" style="background:linear-gradient(135deg,${wColor(featured)} 0%,#ee6f3a 60%,#c1542a 100%)">
-        <div class="px-5 pt-5 pb-4">
-          <div class="flex items-center gap-2 mb-3"><span class="chip bg-white/25 text-white">Featured</span><span class="chip bg-white/25 text-white">${I.clock}${workoutMinutes(featured)} min</span><span class="chip bg-white/25 text-white">${esc(featured.level)}</span></div>
-          <div class="text-[24px] font-bold leading-tight">${esc(featured.title)}</div>
-          <div class="text-[13px] opacity-90 mt-1">by ${esc(featured.creator)} · ${featured.blocks.map(b => esc(b.name)).join(' · ')}</div>
-          <div class="flex items-center justify-between mt-4">
-            <div class="flex gap-1.5">${wExKeys(featured).map(k => `<span class="exicon" style="background:rgba(255,255,255,.9);color:#0f172a">${I[EX(k).icon] || I.body}</span>`).join('')}</div>
-            <span class="btn btn-sm" style="background:#fff;color:#0f172a">${I.play}Start</span>
-          </div>
-        </div>
-      </a>
-    </div>` : ''}
-    <div class="px-5 pt-5 pb-2 flex items-baseline justify-between"><div class="text-[11px] uppercase tracking-widest text-slate-400 font-semibold">Quick log</div><button class="text-[12px] text-slate-400" onclick="manageFavorites()">Edit</button></div>
-    <div class="steps px-5 pb-1">${store.favorites.map((f, i) => `<button class="card flex items-center gap-2 px-3 py-2 row-tap" style="flex:none" onclick="quickLog(${i})">${favIcon(f)}<div class="text-left leading-tight"><div class="text-[13px] font-semibold text-slate-900">${esc(f.name)}</div><div class="text-[11px] text-slate-500">${f.minutes} min · tap to log</div></div></button>`).join('')}
+    ${discoverCreator ? '' : `
+    <div class="px-5 pt-2 pb-1 flex items-baseline justify-between"><div class="text-[11px] uppercase tracking-widest text-slate-400 font-semibold">Quick log</div><button class="text-[12px] text-slate-400" onclick="manageFavorites()">Edit</button></div>
+    <div class="steps px-5 pb-2">${store.favorites.map((f, i) => `<button class="card flex items-center gap-2 px-3 py-2 row-tap" style="flex:none" onclick="quickLog(${i})">${favIcon(f)}<div class="text-left leading-tight"><div class="text-[13px] font-semibold text-slate-900">${esc(f.name)}</div><div class="text-[11px] text-slate-500">${f.minutes} min · tap to log</div></div></button>`).join('')}
       <button class="card flex items-center gap-2 px-3 py-2 row-tap text-slate-500" style="flex:none" onclick="addFavorite()">${I.plus}<span class="text-[13px] font-medium">Favourite</span></button>
+    </div>`}
+    <div class="px-4 pt-2 space-y-3 pb-8">
+      ${first.map(heroCard).join('') || empty}
+      ${creatorsRow(ws)}
+      ${rest.map(heroCard).join('')}
+      <p class="text-[12px] text-slate-400 px-1 pt-2">Tap a creator to see just their workouts. Create your own, then Share link from its page.</p>
     </div>
-    <div class="px-5 pt-5 pb-2 text-[11px] uppercase tracking-widest text-slate-400 font-semibold">Creators</div>
-    <div class="steps px-5 pb-2">${creators.map(c => `<div class="flex flex-col items-center gap-1" style="flex:none;width:64px"><span class="avatar" style="width:48px;height:48px;font-size:18px">${esc(c[0])}</span><div class="text-[11px] text-slate-600 truncate w-full text-center">${esc(c)}</div></div>`).join('')}
-      <button class="flex flex-col items-center gap-1" style="flex:none;width:64px" onclick="go('new')"><span class="avatar" style="width:48px;height:48px;background:#f1f5f9;color:#64748b">${I.plus}</span><div class="text-[11px] text-slate-500">You</div></button>
-    </div>
-    <div class="px-5 pt-3 pb-2 flex items-baseline justify-between"><div class="text-[11px] uppercase tracking-widest text-slate-400 font-semibold">${discoverTag === 'All' ? 'All workouts' : esc(discoverTag)}</div><div class="text-[12px] text-slate-400">${shown.length}</div></div>
-    <div class="px-4 space-y-2 pb-6">${shown.map(card).join('') || `<div class="card px-4 py-8 text-center text-slate-400 text-[14px]">Nothing tagged ${esc(discoverTag)} yet.</div>`}</div>
-    <p class="px-6 pb-6 text-[12px] text-slate-400">Create a workout, then Share link from its page — anyone who opens the link gets it in their Discover feed.</p>
   `, 'discover');
 }
 
