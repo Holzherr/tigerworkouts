@@ -11,7 +11,7 @@
 <link rel="apple-touch-icon" href="./icons/apple-touch-icon.png">
 <link rel="icon" type="image/png" sizes="192x192" href="./icons/icon-192.png">
 <meta name="apple-mobile-web-app-title" content="Workout Hub">
-<title>Workout Hub — v0.8.1</title>
+<title>Workout Hub — v0.9</title>
 <script src="https://cdn.tailwindcss.com"></script>
 <style>
   :root { --brand: #ee6f3a; --brand-dark: #c1542a; --rest: #1e3a8a; }
@@ -22,7 +22,8 @@
   .brand { background: var(--brand); }
   .safe-top { padding-top: calc(env(safe-area-inset-top, 0px) + 14px) !important; }
   .safe-bottom { padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 12px) !important; }
-  .tabbar { position: sticky; bottom: 0; background: rgba(255,255,255,.96); backdrop-filter: blur(8px); border-top: 1px solid #e2e8f0; padding-bottom: max(env(safe-area-inset-bottom, 0px), 6px) !important; }
+  .tabbar { position: fixed; left: 50%; transform: translateX(-50%); bottom: 0; width: 100%; max-width: 430px; background: #fff; border-top: 1px solid #e2e8f0; padding-bottom: max(env(safe-area-inset-bottom, 0px), 6px) !important; z-index: 30; }
+  .app > .fade { padding-bottom: calc(64px + env(safe-area-inset-bottom, 0px)); }
   .tab { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 1px; padding: 6px 0 2px; font-size: 10px; color: #64748b; }
   .tab.active { color: var(--brand); }
   .tab svg { width: 22px; height: 22px; }
@@ -256,7 +257,7 @@ function route() {
   runner.detach();
   if (seg === 'w' && wById(id)) return renderWorkout(wById(id));
   if (seg === 'w' && id && window.cloud?.client && !window._pulledFor) { window._pulledFor = id; return cloud.sync(); }
-  if (seg === 'do' && id === 'today' && window._todayWorkout) return renderRun(window._todayWorkout);
+  if (seg === 'do' && id === 'today') { const r = runner.saved(); if (window._todayWorkout) return renderRun(window._todayWorkout); if (r?.w) { window._todayWorkout = r.w; return renderRun(r.w); } return go(''); }
   if (seg === 'do' && wById(id)) return renderRun(wById(id));
   if (seg === 's' && store.sessions.find(s => s.id === id)) return renderSummary(store.sessions.find(s => s.id === id), extra === 'edit');
   if (seg === 'me') return renderProfile();
@@ -338,6 +339,7 @@ function renderDiscover() {
       <button class="card flex items-center gap-2 px-3 py-2 row-tap text-slate-500" style="flex:none" onclick="addFavorite()">${I.plus}<span class="text-[13px] font-medium">Favourite</span></button>
     </div>`}
     <div class="px-4 pt-2 space-y-3 pb-8">
+      ${(() => { const r = runner.saved(); return r ? `<button class="w-full text-left card px-4 py-3 flex items-center gap-3 row-tap" style="border-color:#fdba74;background:#fff7ed" onclick="${r.w.customized ? `window._todayWorkout=runner.saved().w; go('do/today')` : `go('do/${r.w.id}')`}"><span class="exicon" style="background:#fed7aa;color:#c2410c">${I.play}</span><div class="flex-1"><div class="text-[14px] font-semibold text-slate-900">Resume ${esc(r.w.title)}</div><div class="text-[12px] text-slate-600">Block ${r.bi + 1} of ${r.w.blocks.length} · started ${fmtTime(r.s.startedAt)}</div></div><button class="text-[12px] text-slate-400 px-2 py-1" onclick="event.stopPropagation(); runner.clearPersist(); renderDiscover()">Discard</button></button>` : ''; })()}
       ${first.map(heroCard).join('') || empty}
       ${creatorsRow(ws)}
       ${rest.map(heroCard).join('')}
@@ -665,7 +667,7 @@ function renderSessionEdit(s) {
         <div class="flex items-center justify-between gap-3 mb-3"><div class="text-[13px] text-slate-500">Rest between sets</div>${stepper(`s.blocks[${bi}].rest_s`, b.rest_s, 5, 's', 0, 600)}</div>
         <div class="space-y-3">${b.exercises.map((e, ei) => `
           <div class="${e.removed ? 'opacity-50' : ''}">
-            <div class="flex items-center gap-2">${exIcon(e.ex)}<select class="border border-slate-200 rounded-xl px-2 py-2 text-[16px] bg-white flex-1 min-w-0" onchange="const k=this.value, x=EX(k); Object.assign(_s.blocks[${bi}].exercises[${ei}], {ex:k, name:x.name, unit:x.unit}); sEdit()">${Object.entries(exLib()).map(([k, x]) => `<option value="${k}" ${k === e.ex ? 'selected' : ''}>${esc(x.name)}</option>`).join('')}</select>${rowBtn(e.removed ? 'Restore' : 'Drop', `_s.blocks[${bi}].exercises[${ei}].removed=!_s.blocks[${bi}].exercises[${ei}].removed; sEdit()`, !e.removed)}</div>
+            <div class="flex items-center gap-2">${exIcon(e.ex)}<select class="border border-slate-200 rounded-xl px-2 py-2 text-[16px] bg-white flex-1 min-w-0" onchange="const k=this.value, x=EX(k); Object.assign(_s.blocks[${bi}].exercises[${ei}], {ex:k, name:x.name, unit:x.unit}); sEdit()">${exOptions(e.ex)}</select>${rowBtn(e.removed ? 'Restore' : 'Drop', `_s.blocks[${bi}].exercises[${ei}].removed=!_s.blocks[${bi}].exercises[${ei}].removed; sEdit()`, !e.removed)}</div>
             <div class="pl-11 mt-2 space-y-1.5">${(e.done || []).map((d, di) => `
               <div class="flex items-center gap-2"><div class="text-[12px] text-slate-500 w-10">Set ${di + 1}</div>${stepper(`s.blocks[${bi}].exercises[${ei}].done[${di}].reps`, d.reps, 1, 'reps', 0, 100).replace('class="stepper"', 'class="stepper" style="transform:scale(.85);transform-origin:left"')}${stepper(`s.blocks[${bi}].exercises[${ei}].done[${di}].weight`, d.weight, EX(e.ex).step, shortUnit(e.unit), 0, 999).replace('class="stepper"', 'class="stepper" style="transform:scale(.85);transform-origin:left"')}<button class="text-slate-400 p-1" onclick="_s.blocks[${bi}].exercises[${ei}].done.splice(${di},1); sEdit()">${I.x}</button></div>`).join('')}
               <button class="chip bg-slate-100 text-slate-600" onclick="const e=_s.blocks[${bi}].exercises[${ei}]; e.done=e.done||[]; const l=e.done[e.done.length-1]; e.done.push({reps:l?l.reps:e.reps, weight:l?l.weight:e.target}); sEdit()">+ Add set</button>
@@ -690,7 +692,7 @@ function renderSessionEdit(s) {
             <div class="flex items-center gap-2">
               ${exIcon(e.ex)}
               <select class="border border-slate-200 rounded-xl px-2 py-2 text-[16px] bg-white flex-1 min-w-0" onchange="const k=this.value, x=EX(k); Object.assign(_s.blocks[${bi}].exercises[${ei}], {ex:k, name:x.name, unit:x.unit}); sEdit()">
-                ${Object.entries(exLib()).map(([k, x]) => `<option value="${k}" ${k === e.ex ? 'selected' : ''}>${esc(x.name)}</option>`).join('')}
+                ${exOptions(e.ex)}
               </select>
               ${rowBtn(e.removed ? 'Restore' : 'Drop', `_s.blocks[${bi}].exercises[${ei}].removed=!_s.blocks[${bi}].exercises[${ei}].removed; sEdit()`, !e.removed)}
             </div>
@@ -708,7 +710,7 @@ function renderSessionEdit(s) {
     return `
       <div class="card px-4 py-3 ${b.skipped ? 'opacity-60' : ''}">
         ${head}
-        <div class="flex items-center gap-2 mb-3">${exIcon(b.ex)}<select class="border border-slate-200 rounded-xl px-2 py-2 text-[16px] bg-white flex-1 min-w-0" onchange="_s.blocks[${bi}].ex=this.value; sEdit()">${Object.entries(exLib()).map(([k, x]) => `<option value="${k}" ${k === b.ex ? 'selected' : ''}>${esc(x.name)}</option>`).join('')}</select></div>
+        <div class="flex items-center gap-2 mb-3">${exIcon(b.ex)}<select class="border border-slate-200 rounded-xl px-2 py-2 text-[16px] bg-white flex-1 min-w-0" onchange="_s.blocks[${bi}].ex=this.value; sEdit()">${exOptions(b.ex)}</select></div>
         <div class="grid grid-cols-2 gap-2 text-center mb-2">
           <div><div class="text-[11px] text-slate-500 mb-1">Time spent</div>${stepper(`s.blocks[${bi}].minutes_done`, b.minutes_done, 1, 'min', 0, 600)}</div>
           <div><div class="text-[11px] text-slate-500 mb-1">Planned</div>${stepper(`s.blocks[${bi}].minutes`, b.minutes, 1, 'min', 1, 600)}</div>
@@ -926,7 +928,27 @@ const runner = {
   s: null, w: null, bi: 0, ri: 0, ei: 0, si: 0, // block, round, exercise, segment
   phase: 'ready', endsAt: 0, remaining: 0, paused: false, timer: null, wake: null, lastBeep: null, active: false, startedMs: 0,
 
+  // ── persistence: iOS reloads a backgrounded web app, so the run is saved on every change and restored on return ──
+  persist() {
+    if (!this.active || !this.s) return;
+    try { localStorage.setItem('workout-hub:run', JSON.stringify({ w: this.w, s: this.s, bi: this.bi, ri: this.ri, ei: this.ei, si: this.si, phase: this.phase, endsAt: this.endsAt, remaining: this.remaining, paused: this.paused, startedMs: this.startedMs, blockStartMs: this.blockStartMs, savedAt: Date.now() })); } catch {}
+  },
+  clearPersist() { try { localStorage.removeItem('workout-hub:run'); } catch {} },
+  saved() { try { const r = JSON.parse(localStorage.getItem('workout-hub:run') || 'null'); return r && Date.now() - r.savedAt < 6 * 3600000 ? r : null; } catch { return null; } },
+  resume(r) {
+    Object.assign(this, { w: r.w, s: r.s, bi: r.bi, ri: r.ri, ei: r.ei, si: r.si, phase: r.phase, endsAt: r.endsAt, remaining: r.remaining, paused: r.paused, startedMs: r.startedMs, blockStartMs: r.blockStartMs, active: true, lastBeep: null });
+    this.timer = setInterval(() => this.tick(), 200);
+    document.addEventListener('visibilitychange', this.onVis = () => { if (!document.hidden) this.tick(); });
+    this.requestWake();
+    if (['lead', 'work', 'rest'].includes(this.phase)) {
+      // a countdown that ran out while we were away: land on its end, don't skip ahead silently
+      if (Date.now() >= this.endsAt) { this.remaining = 0; this.endsAt = Date.now(); if (!this.paused) { this.paused = true; toast('Timer ran out while the app was in the background — tap Resume to continue'); } }
+    }
+    this.draw();
+  },
   start(w) {
+    const r = this.saved();
+    if (r && r.w?.id === w.id && r.s?.workoutId === w.id) { toast('Resumed where you left off'); return this.resume(r); }
     this.w = w; this.s = newSession(w); this.bi = 0; this.active = true; this.startedMs = Date.now();
     this.readyBlock();
     this.timer = setInterval(() => this.tick(), 200);
@@ -935,6 +957,7 @@ const runner = {
   },
   detach() {
     if (!this.active) return;
+    this.persist();
     clearInterval(this.timer); this.timer = null;
     document.removeEventListener('visibilitychange', this.onVis);
     this.wake?.release?.(); this.wake = null; this.active = false;
@@ -982,6 +1005,7 @@ const runner = {
   },
   tick() {
     const el = $('#elapsed'); if (el) el.textContent = mmss(this.elapsed());
+    if (!this._pt || Date.now() - this._pt > 5000) { this._pt = Date.now(); this.persist(); }
     if (this.paused || !['lead', 'work', 'rest'].includes(this.phase)) return;
     if (this.block().type === 'sets' && this.phase === 'rest' && this.lastBeep === null) { /* rest countdown shared with interval path */ }
     const left = (this.endsAt - Date.now()) / 1000;
@@ -1049,7 +1073,7 @@ const runner = {
   finishAll() {
     const completed = this.phase === 'done';
     finishSession(this.s, completed);
-    const id = this.s.id; this.detach(); go(`s/${id}`);
+    const id = this.s.id; this.active = false; this.clearPersist(); clearInterval(this.timer); this.timer = null; document.removeEventListener('visibilitychange', this.onVis); this.wake?.release?.(); this.wake = null; go(`s/${id}`);
   },
   adjust(ei, delta) {
     const e = this.blockLog().exercises[ei];
@@ -1164,6 +1188,7 @@ const runner = {
           <button class="btn btn-ghost" onclick="runner.endBlock()">End block</button>
         </div>`;
       app.innerHTML = `<div class="run ${isRest ? 'phase-rest' : 'phase-work'}">${body}</div>`;
+      this.persist();
       return;
     }
     if (this.phase === 'done') {
@@ -1264,11 +1289,12 @@ const runner = {
         </div>`;
     }
     app.innerHTML = `<div class="run ${bg}">${body}</div>`;
+    this.persist();
     attachSwipes();
     const cur = $('#steps .step.cur'); if (cur) cur.scrollIntoView({ inline: 'center', block: 'nearest' });
   },
   exit() {
-    if (this.phase === 'ready' && this.bi === 0) { this.detach(); return go(`w/${this.w.id}`); }
+    if (this.phase === 'ready' && this.bi === 0) { this.active = false; this.clearPersist(); clearInterval(this.timer); this.timer = null; return go(`w/${this.w.id}`); }
     if (confirm('End workout now? What you have done so far will be saved.')) {
       const b = this.block();
       if (this.phase !== 'done' && ['lead', 'work', 'rest'].includes(this.phase)) {
@@ -1365,11 +1391,17 @@ function numStep(path, val, step, unit, min = 0, max = 999) {
   return `<div class="stepper"><button onclick="bumpDraft('${path}', ${-step}, ${min}, ${max})">−</button><div class="val">${fmtNum(val)}${unit ? `<span class="text-[11px] font-medium text-slate-500"> ${esc(unit)}</span>` : ''}</div><button onclick="bumpDraft('${path}', ${step}, ${min}, ${max})">+</button></div>`;
 }
 function bumpDraft(path, d, min, max) { const p = path.split('.'); let o = draft; for (let i = 0; i < p.length - 1; i++) o = o[p[i]]; const k = p[p.length - 1]; o[k] = Math.min(max, Math.max(min, Math.round((o[k] + d) * 100) / 100)); drawBuilder(); }
+const GROUP_LABEL = { barbell: 'Barbell & machines', dumbbell: 'Dumbbell', kettlebell: 'Kettlebell', body: 'Bodyweight', core: 'Core', band: 'Cable & band', treadmill: 'Treadmill', walk: 'Walking & stairs', run: 'Running', bike: 'Bike', rower: 'Rower & ski', swim: 'Swim', racket: 'Sport' };
+function exOptions(val) {
+  const lib = exLib(); const groups = {};
+  Object.entries(lib).forEach(([k, e]) => { const g = store.exercises[k] ? 'My exercises' : (GROUP_LABEL[e.icon] || 'Other'); (groups[g] = groups[g] || []).push([k, e]); });
+  const order = ['My exercises', ...Object.values(GROUP_LABEL).filter((v, i, a) => a.indexOf(v) === i), 'Other'];
+  return order.filter(g => groups[g]).map(g => `<optgroup label="${esc(g)}">${groups[g].sort((a, b) => a[1].name.localeCompare(b[1].name)).map(([k, e]) => `<option value="${k}" ${k === val ? 'selected' : ''}>${esc(e.name)}</option>`).join('')}</optgroup>`).join('');
+}
 function exSelect(path, val) {
-  const lib = exLib();
   return `<select class="border border-slate-200 rounded-xl px-2 py-2.5 text-[16px] bg-white flex-1 min-w-0" onchange="if(this.value==='__new'){newExerciseSheet('${path}')}else{setDraft('${path}', this.value); drawBuilder()}">
-    ${Object.entries(lib).map(([k, e]) => `<option value="${k}" ${k === val ? 'selected' : ''}>${esc(e.name)}</option>`).join('')}
-    <option value="__new">＋ New exercise…</option>
+    ${exOptions(val)}
+    <option value="__new">＋ New exercise… (anything not listed)</option>
   </select>`;
 }
 function drawBuilder() {

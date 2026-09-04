@@ -1,4 +1,4 @@
-# workout-hub — v0.6
+# workout-hub — v0.9
 
 Phone-shaped "Sweat / F45"-style workout app: creators publish workouts, you
 discover one, do it with a guided interval timer, and log what you actually did.
@@ -6,6 +6,26 @@ No accounts, no backend. Everything lives in the phone's localStorage; workouts
 travel between phones as share links.
 
 Live: https://holzherr.github.io/nick-prototypes/workout-hub/
+
+## What's in v0.9 — resume, library, usage stats
+
+- **Resume after app switch**: the run is saved to localStorage on every change
+  (and every 5 s) and restored when the page reloads — iOS kills backgrounded
+  web apps. A countdown that ran out while away lands paused on 0:00 rather
+  than skipping ahead. Discover shows a "Resume …" banner for an unfinished run.
+- **Tab bar** is fixed and solid (the sticky + backdrop-blur version flickered
+  on iOS). Cloud sync only re-renders when something actually changed.
+- **Sets block** (v0.8): sets × reps @ weight, Done per set, rest timer.
+- **Exercise library** grew to 72 seed exercises — barbell, dumbbell,
+  kettlebell, bodyweight, core, cable/machine, cardio machines — grouped in the
+  builder dropdown. No demo clips for the new ones yet (generated on demand,
+  and only when Nick asks). Users add anything else via "New exercise…"; those
+  live under their account and travel with shared workouts.
+- **Usage + demand views** (`supabase/migrations/0003_exercise_usage.sql`):
+  `exercise_usage` = how many workouts / creators reference each exercise key;
+  `exercise_demand` = user-added exercises grouped by normalised name with how
+  many users added them and how many workouts use them — the queue for
+  promoting popular custom exercises to structured seed entries.
 
 ## What's in v0.6 — generated exercise demos
 
