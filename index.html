@@ -11,7 +11,7 @@
 <link rel="apple-touch-icon" href="./icons/apple-touch-icon.png">
 <link rel="icon" type="image/png" sizes="192x192" href="./icons/icon-192.png">
 <meta name="apple-mobile-web-app-title" content="Workout Hub">
-<title>Workout Hub — v0.6.3</title>
+<title>Workout Hub — v0.6.4</title>
 <script src="https://cdn.tailwindcss.com"></script>
 <style>
   :root { --brand: #ee6f3a; --brand-dark: #c1542a; --rest: #1e3a8a; }
@@ -400,7 +400,7 @@ function exRow(key, target, hint) {
   const ex = EX(key);
   return `
     <button class="w-full text-left flex items-center gap-3 px-4 py-2 row-tap" onclick="openVideo('${key}')">
-      ${exMedia(ex) ? `<span class="relative flex-none">${exThumb(ex, 44, 12)}<span class="exicon absolute" style="width:18px;height:18px;border-radius:6px;right:-4px;bottom:-4px;background:${ex.color || ICON_COLORS[ex.icon] || '#94a3b8'};color:#0f172a;box-shadow:0 0 0 2px #fff">${(I[ex.icon] || I.body).replace('<svg', '<svg width="11" height="11"')}</span></span>` : exIcon(key)}
+      ${exMedia(ex) ? exThumb(ex, 48, 12) : exIcon(key)}
       <div class="flex-1 min-w-0">
         <div class="font-medium text-slate-900 text-[15px]">${esc(ex.name)}</div>
         <div class="text-[12px] text-slate-500">${esc(target)}${hint ? ` <span class="text-emerald-700">· ${esc(hint)}</span>` : ''}</div>
@@ -1494,7 +1494,7 @@ function renderLibrary() {
         <div class="font-medium text-slate-900 text-[15px]">${esc(ex.name)}${store.exercises[k] ? ' <span class="chip bg-slate-100 text-slate-500">custom</span>' : ''}</div>
         <div class="text-[12px] text-slate-500">${esc(ex.unit)} · steps of ${fmtNum(ex.step)}${ex.incline ? ' · incline' : ''} · in ${usedBy(k)} workout${usedBy(k) === 1 ? '' : 's'}</div>
       </div>
-      ${exMedia(ex) ? `<img class="thumb" style="width:64px;height:42px" src="${esc(exMedia(ex))}" alt="">` : `<span class="thumb flex items-center justify-center text-slate-400" style="width:64px;height:42px">${I.video}</span>`}
+      ${exMedia(ex) ? exThumb(ex, 48, 10) : `<span class="thumb flex items-center justify-center text-slate-400" style="width:64px;height:42px">${I.video}</span>`}
     </button>`).join('');
   shell(`
     <header class="safe-top px-5 pb-3 pt-4 flex items-end justify-between">
