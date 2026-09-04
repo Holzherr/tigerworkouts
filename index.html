@@ -11,7 +11,7 @@
 <link rel="apple-touch-icon" href="./icons/apple-touch-icon.png">
 <link rel="icon" type="image/png" sizes="192x192" href="./icons/icon-192.png">
 <meta name="apple-mobile-web-app-title" content="Workout Hub">
-<title>Workout Hub — v0.6.4</title>
+<title>Workout Hub — v0.7</title>
 <script src="https://cdn.tailwindcss.com"></script>
 <style>
   :root { --brand: #ee6f3a; --brand-dark: #c1542a; --rest: #1e3a8a; }
@@ -254,11 +254,12 @@ function route() {
   runner.detach();
   if (seg === 'w' && wById(id)) return renderWorkout(wById(id));
   if (seg === 'w' && id && window.cloud?.client && !window._pulledFor) { window._pulledFor = id; return cloud.sync(); }
+  if (seg === 'do' && id === 'today' && window._todayWorkout) return renderRun(window._todayWorkout);
   if (seg === 'do' && wById(id)) return renderRun(wById(id));
   if (seg === 's' && store.sessions.find(s => s.id === id)) return renderSummary(store.sessions.find(s => s.id === id), extra === 'edit');
   if (seg === 'me') return renderProfile();
   if (seg === 'new') return renderBuilder(null);
-  if (seg === 'edit' && wById(id)) return renderBuilder(wById(id));
+  if (seg === 'edit' && wById(id)) { if (extra !== 'today') { if (draft?._today) draft = null; } return renderBuilder(wById(id)); }
   if (seg === 'library') return renderLibrary();
   if (seg === 'import' && id) return importWorkout(id);
   if (seg === 'import-session' && id) return importSession(id);
@@ -272,7 +273,7 @@ function shell(inner, tab) {
     <div class="flex-1 fade">${inner}</div>
     <nav class="tabbar safe-bottom flex">
       <a href="#/" class="tab ${tab === 'discover' ? 'active' : ''}">${I.discover}<span>Discover</span></a>
-      <a href="#/me" class="tab ${tab === 'me' ? 'active' : ''}">${I.me}<span>Profile</span></a>
+      <a href="#/me" class="tab ${tab === 'me' ? 'active' : ''}">${window.cloud?.user ? `<span style="display:inline-flex;border-radius:999px;outline:${tab === 'me' ? '2px solid var(--brand)' : 'none'};outline-offset:1px">${myAvatar(22)}</span>` : I.me}<span>${window.cloud?.user ? esc((store.name || 'Profile').split(' ')[0]) : 'Profile'}</span></a>
     </nav>`;
   window.scrollTo(0, 0);
 }
@@ -352,7 +353,7 @@ function renderWorkout(w) {
       ? b.exercises.map((e, ei) => {
           const la = lastActual(bi, ei);
           const hint = la ? (la.removed ? 'Last: skipped' : `Last: ${la.actuals?.length ? runs(la.actuals, shortUnit(la.unit)) : fmtNum(la.actual) + ' ' + shortUnit(la.unit)}`) : '';
-          return exRow(e.ex, `${fmtNum(e.target)} ${EX(e.ex).unit}`, hint);
+          return exRow(e.ex, `${fmtNum(e.target)} ${EX(e.ex).unit}`, hint) + restRow(b.rest_s);
         }).join('')
       : exRow(b.ex, `${b.repeat} × (${b.segments.map(s => `${s.s / 60} min @ ${s.speed} kph`).join(' + ')}) · incline ${b.incline}`, '');
     return `
@@ -390,22 +391,23 @@ function renderWorkout(w) {
     </div>
     <div class="fixed bottom-[68px] left-1/2 -translate-x-1/2 w-full max-w-[430px] px-4 pointer-events-none">
       <div class="flex gap-2 pointer-events-auto">
-        <button class="btn btn-brand flex-1" onclick="go('do/${w.id}')">${I.play}Start workout</button>
+        <button class="btn btn-brand flex-1" onclick="go('do/${w.id}')">${I.play}Start</button>
+        <button class="btn btn-ghost" onclick="editForToday('${w.id}')">${I.edit}Edit &amp; start</button>
         <button class="btn btn-ghost" onclick="logWithoutTimer('${w.id}')">Log only</button>
       </div>
     </div>
   `, 'discover');
 }
+const restRow = secs => `<div class="flex items-center gap-3 px-4 py-1.5 text-slate-400"><span class="exicon" style="width:28px;height:28px;border-radius:8px;background:#f1f5f9;color:#64748b">${I.rest.replace('<svg', '<svg width="14" height="14"')}</span><div class="text-[13px]">Rest <b class="text-slate-500">${secs}s</b></div></div>`;
 function exRow(key, target, hint) {
   const ex = EX(key);
   return `
     <button class="w-full text-left flex items-center gap-3 px-4 py-2 row-tap" onclick="openVideo('${key}')">
-      ${exMedia(ex) ? exThumb(ex, 48, 12) : exIcon(key)}
       <div class="flex-1 min-w-0">
         <div class="font-medium text-slate-900 text-[15px]">${esc(ex.name)}</div>
         <div class="text-[12px] text-slate-500">${esc(target)}${hint ? ` <span class="text-emerald-700">· ${esc(hint)}</span>` : ''}</div>
       </div>
-      <span class="text-slate-300">${I.video}</span>
+      ${exMedia(ex) ? exThumb(ex, 52, 12) : exIcon(key)}
     </button>`;
 }
 
@@ -437,7 +439,7 @@ function closeSheet() { $('#sheet')?.remove(); }
 function newSession(w) {
   return {
     id: 's-' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
-    workoutId: w.id, title: w.title, creator: w.creator,
+    workoutId: w.id, title: w.title, creator: w.creator, customized: !!w.customized,
     startedAt: new Date().toISOString(), endedAt: null, duration_min: 0, completed: false, notes: '',
     blocks: w.blocks.map(b => b.type === 'interval'
       ? { name: b.name, type: 'interval', work_s: b.work_s, rest_s: b.rest_s, rounds: b.rounds, rounds_done: 0, rests: [], skipped: false,
@@ -496,6 +498,7 @@ function sessionText(s) {
       b.exercises.forEach(e => lines.push(`   ${exLine(e)}`));
     } else {
       lines.push(`${i + 1}. ${b.name} — ${b.minutes_done}/${b.minutes} min · incline ${fmtNum(b.incline_actual)} · ${b.speeds_actual.map(fmtNum).join('/')} kph${b.skipped ? ' · skipped' : ''}`);
+      (b.changes || []).forEach(c => lines.push(`   at ${mmss(c.t)}: ${fmtNum(c.speed)} kph · incline ${fmtNum(c.incline)}`));
     }
   });
   if (s.notes) { lines.push(''); lines.push(`Notes: ${s.notes}`); }
@@ -569,6 +572,7 @@ function renderSummary(s, edit) {
           ${edit ? stepper(`s.blocks[${bi}].speeds_actual[${si}]`, sp, 0.5, 'kph')
                  : `<div class="font-semibold text-slate-900">${fmtNum(sp)} <span class="text-[12px] text-slate-500 font-normal">kph</span></div>`}
         </div>`).join('')}
+        ${b.changes?.length ? `<div class="mt-2 pt-2 border-t border-slate-100"><div class="text-[11px] uppercase tracking-wider text-slate-400 font-semibold mb-1">Changes during the step</div>${b.changes.map(c => `<div class="text-[13px] text-slate-600 flex justify-between"><span>at ${mmss(c.t)}</span><span><b>${fmtNum(c.speed)}</b> kph · incline <b>${fmtNum(c.incline)}</b></span></div>`).join('')}</div>` : ''}
       </div>`;
   }).join('');
   window._s = s;
@@ -593,6 +597,7 @@ function renderSummary(s, edit) {
         <button class="btn btn-ghost" onclick="shareText(_s)">${I.share}Share</button>
         <button class="btn btn-ghost" onclick="go('s/${s.id}/edit')">Edit</button>
       </div>
+      ${s.workoutId && wById(s.workoutId) ? `<button class="btn btn-ghost w-full" onclick="toggleSaved('${s.workoutId}')">${isSaved(s.workoutId) ? I.heartFill + 'Saved to My workouts' : I.heart + 'Save workout to My workouts'}</button>` : ''}
       <div id="device-card"></div>
       <div class="log-pre">${esc(sessionText(s))}</div>
       <p class="text-[12px] text-slate-400 px-1">Copy log puts the text plus a JSON block on the clipboard — paste it into an email or to Echo to file it. Save to GitHub opens a prefilled issue you submit with one tap.</p>
@@ -675,7 +680,7 @@ function renderSessionEdit(s) {
   shell(`
     <header class="safe-top px-4 pb-3 pt-3 bg-slate-900 text-white">
       <button class="inline-flex items-center gap-1 text-white/90 text-[14px] mb-2" onclick="go('s/${s.id}')">${I.back}Cancel</button>
-      <div class="text-[11px] uppercase tracking-widest opacity-80 font-semibold">Edit log</div>
+      <div class="flex items-center justify-between"><div class="text-[11px] uppercase tracking-widest opacity-80 font-semibold">Edit log</div>${s.workoutId && wById(s.workoutId) ? `<button class="text-[12px] underline opacity-90" onclick="go('edit/${s.workoutId}')">Edit the workout itself</button>` : ''}</div>
       <input type="text" class="text-[22px] font-bold leading-tight bg-transparent w-full border-b border-transparent focus:border-white/40" value="${esc(s.title)}" oninput="_s.title=this.value">
     </header>
     <div class="px-4 py-4 space-y-3 pb-32">
@@ -898,6 +903,7 @@ const runner = {
 
   readyBlock() { this.ri = 0; this.ei = 0; this.si = 0; this.phase = 'ready'; this.paused = false; this.draw(); },
   beginBlock() {
+    this.blockStartMs = Date.now();
     if (this.block().type === 'interval') {
       const a = this.activeIdx();
       if (!a.length) return this.finishBlock();
@@ -995,6 +1001,12 @@ const runner = {
     const log = this.blockLog();
     if (field === 'incline') log.incline_actual = Math.max(0, log.incline_actual + delta);
     else log.speeds_actual[idx] = Math.max(0, Math.round((log.speeds_actual[idx] + delta) * 100) / 100);
+    // record the change against time into the block, so the log shows pace changes mid-step
+    const t = Math.max(0, Math.round((Date.now() - (this.blockStartMs || Date.now())) / 1000));
+    log.changes = log.changes || [];
+    const last = log.changes[log.changes.length - 1];
+    const entry = { t, speed: log.speeds_actual[idx], incline: log.incline_actual };
+    if (last && t - last.t < 8) Object.assign(last, entry); else log.changes.push(entry);
     this.draw();
   },
   removeEx(ei) {
@@ -1020,13 +1032,14 @@ const runner = {
     if (b.type === 'interval') return this.phase === 'work' ? b.work_s : b.rest_s;
     return b.segments[this.si % b.segments.length].s;
   },
-  header(sub) {
+  header(sub, extra = '') {
     const w = this.w;
     return `
       <div class="safe-top px-4 pt-3">
         <div class="flex items-center justify-between">
           <div class="text-[12px] font-semibold opacity-80 truncate">${esc(w.title)}</div>
           <div class="flex items-center gap-3">
+            ${extra}
             <span class="elapsed">${I.clock}<span id="elapsed">${mmss(this.elapsed())}</span></span>
             <button class="p-1 opacity-80" onclick="runner.exit()" aria-label="Exit">${I.x}</button>
           </div>
@@ -1108,7 +1121,7 @@ const runner = {
       const nx = isInterval ? this.nextActive(this.ei) : null;
       const nextEi = isInterval ? (nx == null ? this.activeIdx()[0] : nx) : null;
       const nextEx = isInterval ? log.exercises[nextEi] : null;
-      const label = this.phase === 'lead' ? 'Get ready' : this.phase === 'work' ? (isInterval ? 'Work' : 'Go') : 'Rest';
+      const label = this.phase === 'lead' ? 'Get ready' : this.phase === 'work' ? (isInterval ? 'Work' : '') : 'Rest';
       const seg = !isInterval ? b.segments[this.si % b.segments.length] : null;
       const lastRound = isInterval && this.ri === b.rounds - 1;
       const roundInfo = isInterval ? `Round ${this.ri + 1} of ${b.rounds}` : `Segment ${this.si + 1} of ${b.segments.length * b.repeat}`;
@@ -1143,18 +1156,14 @@ const runner = {
       const nextBlockNote = isInterval && lastRound && nextBlock && (this.phase === 'rest' || this.isLastEx())
         ? `<div class="next-block mt-3"><span class="opacity-70">Next block:</span> <b>${esc(nextBlock.name)}</b></div>` : '';
       body = `
-        ${this.header(`<div class="text-[13px] font-semibold">${esc(b.name)} · ${roundInfo}</div>`)}
-        <div class="px-4">
-          ${isInterval ? `<div class="round-dots mt-2">${Array.from({ length: b.rounds }, (_, i) => `<i class="${i < this.ri ? 'on' : i === this.ri ? 'cur' : ''}"></i>`).join('')}</div>` : ''}
-          ${isInterval ? this.stepStrip() : ''}
-        </div>
+        ${this.header(`<div class="text-[13px] font-semibold">${esc(b.name)} · ${roundInfo}</div>`, `<button class="btn btn-ghost btn-sm" onclick="openVideo('${videoKey}')">${I.video}Demo</button>`)}
         <div class="flex-1 flex flex-col items-center justify-center text-center px-5 py-3">
           <div class="phase-label">${label}${this.paused ? ' · paused' : ''}</div>
           <div id="clock" class="clock mt-1">${mmss(this.remaining)}</div>
           <div class="bar w-full mt-4"><div id="bar" style="width:${100 * (1 - this.remaining / this.phaseTotal())}%"></div></div>
         </div>
         <div class="px-5 pb-3">
-          <div class="flex items-start justify-between gap-2">${focus}<button class="btn btn-ghost btn-sm" onclick="openVideo('${videoKey}')">${I.video}</button></div>
+          <div class="flex items-start justify-between gap-2">${focus}</div>
           ${adjust}${nextBlockNote}
         </div>
         <div class="px-5 pb-8 safe-bottom grid grid-cols-3 gap-2">
@@ -1244,7 +1253,14 @@ function deleteWorkout(id) {
 
 // ───────────────────────── builder ─────────────────────────
 let draft = null;
+// one-off edit of a workout for this session: builder on a copy, Start runs it without saving a new workout
+function editForToday(id) {
+  const w = wById(id);
+  draft = JSON.parse(JSON.stringify(w)); draft._src = 'today:' + id; draft._today = id; draft._origTitle = w.title;
+  go('edit/' + id + '/today');
+}
 function renderBuilder(src) {
+  if (draft?._today && draft._src === 'today:' + src?.id) return drawBuilder();
   if (!draft || draft._src !== (src?.id || 'new')) {
     draft = src ? JSON.parse(JSON.stringify(src)) : { title: '', creator: store.name, level: 'Medium', tags: [], blocks: [] };
     draft._src = src?.id || 'new';
@@ -1285,7 +1301,8 @@ function drawBuilder() {
           ${exSelect(`blocks.${bi}.exercises.${ei}.ex`, e.ex)}
           ${numStep(`blocks.${bi}.exercises.${ei}.target`, e.target, EX(e.ex).step, shortUnit(EX(e.ex).unit))}
           <button class="text-slate-400 p-1" onclick="draft.blocks[${bi}].exercises.splice(${ei},1); drawBuilder()">${I.x}</button>
-        </div>`).join('')}</div>
+        </div>
+        <div class="flex items-center gap-2 pl-1"><span class="exicon" style="width:28px;height:28px;border-radius:8px;background:#f1f5f9;color:#64748b">${I.rest.replace('<svg', '<svg width="14" height="14"')}</span><div class="text-[13px] text-slate-500 flex-1">Rest</div>${numStep(`blocks.${bi}.rest_s`, b.rest_s, 5, 's', 0, 600).replace('class="stepper"', 'class="stepper" style="transform:scale(.85);transform-origin:right"')}</div>`).join('')}</div>
       <button class="btn btn-ghost btn-sm w-full" onclick="draft.blocks[${bi}].exercises.push({ex:'kb_swing',target:16}); drawBuilder()">${I.plus}Add exercise</button>
     </div>` : `
     <div class="card px-4 py-3 space-y-3">
@@ -1312,7 +1329,8 @@ function drawBuilder() {
   shell(`
     <header class="safe-top px-4 pb-3 pt-3 bg-slate-900 text-white">
       <button class="inline-flex items-center gap-1 text-white/90 text-[14px] mb-2" onclick="draft=null; history.back()">${I.back}Back</button>
-      <h1 class="text-[22px] font-bold leading-tight">${d.id ? 'Edit workout' : 'New workout'}</h1>
+      <h1 class="text-[22px] font-bold leading-tight">${d._today ? 'Edit for today' : d.id ? 'Edit workout' : 'New workout'}</h1>
+      ${d._today ? `<div class="text-[12px] opacity-80 mt-1">Changes apply to this session only. ${esc(d._origTitle)} stays as ${esc(d.creator)} made it.</div>` : ''}
       <div class="text-[13px] opacity-80 mt-1">${est} min · ${d.blocks.length} blocks</div>
     </header>
     <div class="px-4 py-4 space-y-3 pb-32">
@@ -1333,9 +1351,15 @@ function drawBuilder() {
       <button class="btn btn-ghost btn-sm w-full" onclick="go('library')">${I.library}Exercise library (creator tools)</button>
     </div>
     <div class="fixed bottom-[68px] left-1/2 -translate-x-1/2 w-full max-w-[430px] px-4 pointer-events-none">
-      <button class="btn btn-brand w-full pointer-events-auto" onclick="saveDraft()">${I.check}Save workout</button>
+      ${d._today ? `<div class="flex gap-2 pointer-events-auto"><button class="btn btn-brand flex-1" onclick="startToday()">${I.play}Start this version</button><button class="btn btn-ghost" onclick="draft._today=null; draft._src=draft.id; draft.title=draft._origTitle + ' (my version)'; draft.id=null; draft.creator=store.name; drawBuilder()">Save as mine</button></div>`
+                 : `<button class="btn btn-brand w-full pointer-events-auto" onclick="saveDraft()">${I.check}Save workout</button>`}
     </div>
   `, 'discover');
+}
+function startToday() {
+  const d = draft; if (!d.blocks.length) return toast('Add at least one block');
+  d.blocks.forEach((b, i) => { if (!b.name.trim()) b.name = b.type === 'interval' ? (b.exercises.map(e => EX(e.ex).name).join(' + ') || `Block ${i + 1}`) : EX(b.ex).name; });
+  window._todayWorkout = { ...d, id: d._today, title: d.title, customized: true }; draft = null; go('do/today');
 }
 function saveDraft() {
   const d = draft;
