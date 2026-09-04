@@ -1,6 +1,6 @@
 // Workout Hub service worker — app shell cached for offline use in the gym.
 // Bump CACHE when shipping a new version so clients pick it up.
-const CACHE = 'workout-hub-v0.7.0';
+const CACHE = 'workout-hub-v0.8.0';
 const SHELL = ['./', './index.html', './data.js', './manifest.webmanifest', './icons/icon-192.png', './icons/icon-512.png', './icons/apple-touch-icon.png'];
 
 self.addEventListener('install', e => {

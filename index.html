@@ -11,7 +11,7 @@
 <link rel="apple-touch-icon" href="./icons/apple-touch-icon.png">
 <link rel="icon" type="image/png" sizes="192x192" href="./icons/icon-192.png">
 <meta name="apple-mobile-web-app-title" content="Workout Hub">
-<title>Workout Hub — v0.7</title>
+<title>Workout Hub — v0.8</title>
 <script src="https://cdn.tailwindcss.com"></script>
 <style>
   :root { --brand: #ee6f3a; --brand-dark: #c1542a; --rest: #1e3a8a; }
@@ -151,11 +151,13 @@ const exThumb = (ex, size = 44, radius = 12) => ex.clip
 const shortUnit = u => u.replace(' per arm', '/arm');
 
 function blockMinutes(b) {
+  if (b.type === 'sets') return b.exercises.reduce((a, e) => a + e.sets * (e.reps * 3 + b.rest_s), 0) / 60;
   if (b.type === 'interval') return b.rounds * b.exercises.length * (b.work_s + b.rest_s) / 60;
   return b.repeat * b.segments.reduce((a, s) => a + s.s, 0) / 60;
 }
 function workoutMinutes(w) { return Math.round(w.blocks.reduce((a, b) => a + blockMinutes(b), 0)); }
 function blockSummary(b) {
+  if (b.type === 'sets') return `${b.exercises.reduce((a, e) => a + e.sets, 0)} sets · ${b.rest_s}s rest`;
   if (b.type === 'interval') return `${b.rounds} rounds · ${b.work_s}s on / ${b.rest_s}s off`;
   const mins = Math.round(blockMinutes(b));
   return `${mins} min · incline ${b.incline} · ${b.segments.map(s => s.speed).join('/')} kph`;
@@ -218,7 +220,7 @@ const I = {
   slope: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="14" height="14"><path d="M3 20L21 8v12z"/></svg>',
 };
 const exIcon = (key, size = '') => { const ex = EX(key); return `<span class="exicon ${size}" style="background:${ex.color || ICON_COLORS[ex.icon] || '#94a3b8'};color:#0f172a">${I[ex.icon] || I.body}</span>`; };
-const wColor = w => { const k = w.blocks[0]?.type === 'interval' ? w.blocks[0].exercises[0]?.ex : w.blocks[0]?.ex; const ex = k ? EX(k) : null; return ex?.color || ICON_COLORS[ex?.icon] || '#ee6f3a'; };
+const wColor = w => { const k = w.blocks[0]?.exercises ? w.blocks[0].exercises[0]?.ex : w.blocks[0]?.ex; const ex = k ? EX(k) : null; return ex?.color || ICON_COLORS[ex?.icon] || '#ee6f3a'; };
 const myAvatar = (size = 36) => store.avatar?.photo
   ? `<img class="avatar" src="${store.avatar.photo}" alt="" style="width:${size}px;height:${size}px;object-fit:cover;background:#e2e8f0">`
   : `<span class="avatar" style="width:${size}px;height:${size}px;font-size:${Math.round(size * .42)}px;background:${store.avatar?.emoji ? '#fff7ed' : `linear-gradient(135deg,${store.avatar?.color || '#f59e0b'},#c1542a)`}">${store.avatar?.emoji || esc((store.name || 'N')[0])}</span>`;
@@ -245,7 +247,7 @@ const PALETTES = [
 ];
 const wPalette = w => { let h = 0; for (const ch of String(w.id)) h = (h * 31 + ch.charCodeAt(0)) >>> 0; return PALETTES[h % PALETTES.length]; };
 const wGradient = w => { const [a, b] = wPalette(w); return `linear-gradient(135deg,${a} 0%,${b} 100%)`; };
-const wExKeys = w => [...new Set(w.blocks.flatMap(b => b.type === 'interval' ? b.exercises.map(e => e.ex) : [b.ex]))];
+const wExKeys = w => [...new Set(w.blocks.flatMap(b => b.exercises ? b.exercises.map(e => e.ex) : [b.ex]))];
 
 // ───────────────────────── router ─────────────────────────
 function route() {
@@ -349,7 +351,9 @@ function renderWorkout(w) {
   const last = lastSessionFor(w.id);
   const lastActual = (bi, ei) => last?.blocks?.[bi]?.exercises?.[ei];
   const blocks = w.blocks.map((b, bi) => {
-    const rows = b.type === 'interval'
+    const rows = b.type === 'sets'
+      ? b.exercises.map((e, ei) => { const la = lastActual(bi, ei); const hint = la?.done?.length ? `Last: ${la.done.map(d => `${d.reps}×${fmtNum(d.weight)}`).join(', ')}` : ''; return exRow(e.ex, `${e.sets} × ${e.reps} reps · ${fmtNum(e.target)} ${EX(e.ex).unit}`, hint); }).join('')
+      : b.type === 'interval'
       ? b.exercises.map((e, ei) => {
           const la = lastActual(bi, ei);
           const hint = la ? (la.removed ? 'Last: skipped' : `Last: ${la.actuals?.length ? runs(la.actuals, shortUnit(la.unit)) : fmtNum(la.actual) + ' ' + shortUnit(la.unit)}`) : '';
@@ -441,7 +445,10 @@ function newSession(w) {
     id: 's-' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
     workoutId: w.id, title: w.title, creator: w.creator, customized: !!w.customized,
     startedAt: new Date().toISOString(), endedAt: null, duration_min: 0, completed: false, notes: '',
-    blocks: w.blocks.map(b => b.type === 'interval'
+    blocks: w.blocks.map(b => b.type === 'sets'
+      ? { name: b.name, type: 'sets', rest_s: b.rest_s, skipped: false,
+          exercises: b.exercises.map(e => ({ ex: e.ex, name: EX(e.ex).name, unit: EX(e.ex).unit, sets: e.sets, reps: e.reps, target: e.target, actual: e.target, done: [], removed: false })) }
+      : b.type === 'interval'
       ? { name: b.name, type: 'interval', work_s: b.work_s, rest_s: b.rest_s, rounds: b.rounds, rounds_done: 0, rests: [], skipped: false,
           exercises: b.exercises.map(e => ({ ex: e.ex, name: EX(e.ex).name, unit: EX(e.ex).unit, target: e.target, actual: e.target, actuals: [], removed: false,
             ...(EX(e.ex).incline ? { incline: e.incline ?? 0, incline_actual: e.incline ?? 0 } : {}) })) }
@@ -459,7 +466,7 @@ function finishSession(s, completed) {
 function logWithoutTimer(id) {
   const w = wById(id);
   const s = newSession(w);
-  s.blocks.forEach(b => { if (b.type === 'interval') b.rounds_done = b.rounds; else b.minutes_done = b.minutes; });
+  s.blocks.forEach(b => { if (b.type === 'sets') b.exercises.forEach(e => { e.done = Array.from({ length: e.sets }, () => ({ reps: e.reps, weight: e.target })); }); else if (b.type === 'interval') b.rounds_done = b.rounds; else b.minutes_done = b.minutes; });
   s.endedAt = s.startedAt;
   s.duration_min = workoutMinutes(w);
   s.completed = true;
@@ -493,6 +500,17 @@ function sessionText(s) {
   lines.push(`${fmtDate(s.startedAt)} ${fmtTime(s.startedAt)}${s.endedAt ? '–' + fmtTime(s.endedAt) : ''} · ${s.duration_min} min${s.completed ? '' : ' · stopped early'}`);
   lines.push('');
   s.blocks.forEach((b, i) => {
+    if (b.type === 'sets') {
+      lines.push(`${i + 1}. ${b.name} — sets · ${b.rest_s}s rest${b.skipped ? ' · skipped' : ''}`);
+      b.exercises.forEach(e => {
+        if (e.removed) { lines.push(`   ${e.name}: dropped`); return; }
+        const done = e.done || [];
+        const same = done.length && done.every(d => d.reps === done[0].reps && d.weight === done[0].weight);
+        const did = !done.length ? 'not done' : same ? `${done.length}×${done[0].reps} @ ${fmtNum(done[0].weight)} ${e.unit}` : done.map(d => `${d.reps}×${fmtNum(d.weight)}`).join(', ') + ' ' + e.unit;
+        lines.push(`   ${e.name}: ${did} (plan ${e.sets}×${e.reps} @ ${fmtNum(e.target)})`);
+      });
+      return;
+    }
     if (b.type === 'interval') {
       lines.push(`${i + 1}. ${b.name} — ${b.rounds_done}/${b.rounds} rounds · ${b.work_s}s on / ${b.rest_s}s off${restLine(b)}${b.skipped ? ' · skipped' : ''}`);
       b.exercises.forEach(e => lines.push(`   ${exLine(e)}`));
@@ -537,6 +555,17 @@ function renderSummary(s, edit) {
   if (s.type === 'activity') return renderActivitySummary(s);
   if (edit) return renderSessionEdit(s);
   const blocks = s.blocks.map((b, bi) => {
+    if (b.type === 'sets') {
+      return `
+      <div class="card px-4 py-3">
+        <div class="flex items-center justify-between mb-2"><div class="font-semibold text-slate-900">${bi + 1}. ${esc(b.name)}</div><div class="text-[13px] text-slate-500">${b.exercises.reduce((a, e) => a + (e.done?.length || 0), 0)}/${b.exercises.reduce((a, e) => a + e.sets, 0)} sets${b.skipped ? ' · skipped' : ''}</div></div>
+        <div class="space-y-2">${b.exercises.map(e => `
+          <div class="flex items-start justify-between gap-3">
+            <div class="flex items-center gap-2 min-w-0">${exIcon(e.ex)}<div class="text-[14px] text-slate-700 leading-tight">${esc(e.name)}<div class="text-slate-400 text-[12px]">plan ${e.sets}×${e.reps} @ ${fmtNum(e.target)}${e.removed ? ' · dropped' : ''}</div></div></div>
+            <div class="text-right text-[13px] font-semibold text-slate-900">${e.removed ? '<span class="text-slate-400 font-normal">—</span>' : (e.done || []).map(d => `${d.reps}×${fmtNum(d.weight)}`).join('<br>') || '<span class="text-slate-400 font-normal">not done</span>'}</div>
+          </div>`).join('')}</div>
+      </div>`;
+    }
     if (b.type === 'interval') {
       return `
       <div class="card px-4 py-3">
@@ -629,6 +658,22 @@ function renderSessionEdit(s) {
         <input type="text" class="font-semibold text-slate-900 text-[16px] bg-transparent flex-1 min-w-0 border-b border-transparent focus:border-slate-300" value="${esc(b.name)}" oninput="_s.blocks[${bi}].name=this.value">
         <div class="flex gap-1">${rowBtn(b.skipped ? 'Skipped' : 'Done', `_s.blocks[${bi}].skipped=!_s.blocks[${bi}].skipped; sEdit()`, b.skipped)}${rowBtn(I.trash, `if(confirm('Remove this block from the log?')){_s.blocks.splice(${bi},1); sEdit()}`, true)}</div>
       </div>`;
+    if (b.type === 'sets') {
+      return `
+      <div class="card px-4 py-3 ${b.skipped ? 'opacity-60' : ''}">
+        ${head}
+        <div class="flex items-center justify-between gap-3 mb-3"><div class="text-[13px] text-slate-500">Rest between sets</div>${stepper(`s.blocks[${bi}].rest_s`, b.rest_s, 5, 's', 0, 600)}</div>
+        <div class="space-y-3">${b.exercises.map((e, ei) => `
+          <div class="${e.removed ? 'opacity-50' : ''}">
+            <div class="flex items-center gap-2">${exIcon(e.ex)}<select class="border border-slate-200 rounded-xl px-2 py-2 text-[16px] bg-white flex-1 min-w-0" onchange="const k=this.value, x=EX(k); Object.assign(_s.blocks[${bi}].exercises[${ei}], {ex:k, name:x.name, unit:x.unit}); sEdit()">${Object.entries(exLib()).map(([k, x]) => `<option value="${k}" ${k === e.ex ? 'selected' : ''}>${esc(x.name)}</option>`).join('')}</select>${rowBtn(e.removed ? 'Restore' : 'Drop', `_s.blocks[${bi}].exercises[${ei}].removed=!_s.blocks[${bi}].exercises[${ei}].removed; sEdit()`, !e.removed)}</div>
+            <div class="pl-11 mt-2 space-y-1.5">${(e.done || []).map((d, di) => `
+              <div class="flex items-center gap-2"><div class="text-[12px] text-slate-500 w-10">Set ${di + 1}</div>${stepper(`s.blocks[${bi}].exercises[${ei}].done[${di}].reps`, d.reps, 1, 'reps', 0, 100).replace('class="stepper"', 'class="stepper" style="transform:scale(.85);transform-origin:left"')}${stepper(`s.blocks[${bi}].exercises[${ei}].done[${di}].weight`, d.weight, EX(e.ex).step, shortUnit(e.unit), 0, 999).replace('class="stepper"', 'class="stepper" style="transform:scale(.85);transform-origin:left"')}<button class="text-slate-400 p-1" onclick="_s.blocks[${bi}].exercises[${ei}].done.splice(${di},1); sEdit()">${I.x}</button></div>`).join('')}
+              <button class="chip bg-slate-100 text-slate-600" onclick="const e=_s.blocks[${bi}].exercises[${ei}]; e.done=e.done||[]; const l=e.done[e.done.length-1]; e.done.push({reps:l?l.reps:e.reps, weight:l?l.weight:e.target}); sEdit()">+ Add set</button>
+            </div>
+          </div>`).join('')}</div>
+        <button class="btn btn-ghost btn-sm w-full mt-3" onclick="const x=EX('db_shoulder_press'); _s.blocks[${bi}].exercises.push({ex:'db_shoulder_press',name:x.name,unit:x.unit,sets:3,reps:10,target:10,actual:10,done:[],removed:false}); sEdit()">${I.plus}Add exercise</button>
+      </div>`;
+    }
     if (b.type === 'interval') {
       return `
       <div class="card px-4 py-3 ${b.skipped ? 'opacity-60' : ''}">
@@ -696,6 +741,7 @@ function renderSessionEdit(s) {
       <div class="grid grid-cols-2 gap-2">
         <button class="btn btn-ghost btn-sm" onclick="const x=EX('kb_swing'); _s.blocks.push({name:'New block',type:'interval',work_s:30,rest_s:30,rounds:8,rounds_done:8,rests:[],skipped:false,exercises:[{ex:'kb_swing',name:x.name,unit:x.unit,target:16,actual:16,actuals:[],removed:false}]}); sEdit()">${I.plus}Interval block</button>
         <button class="btn btn-ghost btn-sm" onclick="_s.blocks.push({name:'Incline walk',type:'steady',ex:'incline_walk',minutes:10,minutes_done:10,incline:6,skipped:false,speeds:[6],incline_actual:6,speeds_actual:[6]}); sEdit()">${I.plus}Steady block</button>
+        <button class="btn btn-ghost btn-sm col-span-2" onclick="const x=EX('db_shoulder_press'); _s.blocks.push({name:'Sets',type:'sets',rest_s:60,skipped:false,exercises:[{ex:'db_shoulder_press',name:x.name,unit:x.unit,sets:3,reps:10,target:10,actual:10,done:[],removed:false}]}); sEdit()">${I.plus}Sets block</button>
       </div>
       <div class="card px-4 py-3">
         <div class="text-[12px] uppercase tracking-wider text-slate-400 font-semibold mb-1">Notes</div>
@@ -711,7 +757,7 @@ function sEdit() { renderSessionEdit(window._s); }
 function sSave() {
   const s = window._s;
   s.endedAt = new Date(new Date(s.startedAt).getTime() + s.duration_min * 60000).toISOString();
-  s.blocks.forEach(b => { if (b.type === 'interval') b.exercises.forEach(e => { if (e.actuals?.length && new Set(e.actuals).size === 1) e.actual = e.actuals[0]; }); });
+  s.blocks.forEach(b => { if (b.type === 'interval') b.exercises.forEach(e => { if (e.actuals?.length && new Set(e.actuals).size === 1) e.actual = e.actuals[0]; }); if (b.type === 'sets') b.exercises.forEach(e => { if (e.done?.length) e.actual = e.done[e.done.length - 1].weight; }); });
   save(); go(`s/${s.id}`);
 }
 function stepper(path, val, step, unit, min = 0, max = 999) {
@@ -747,7 +793,7 @@ function renderProfile() {
         <div class="text-[12px] ${s.completed ? 'text-emerald-700' : 'text-slate-400'}">${s.completed ? '✓' : 'partial'}</div>
       </div>
       <div class="text-[12px] text-slate-500 mt-0.5">${fmtDate(s.startedAt)} · ${fmtTime(s.startedAt)} · ${s.duration_min} min${s.type === 'activity' ? '' : ' · by ' + esc(s.creator)}</div>
-      <div class="text-[12px] text-slate-600 mt-1.5">${s.type === 'activity' ? `${esc(s.intensity)}${s.notes ? ' · ' + esc(s.notes) : ''}` : s.blocks.filter(b => b.type === 'interval').flatMap(b => b.exercises).filter(e => !e.removed).slice(0, 4).map(e => `${esc(e.name)} ${fmtNum(e.actual)}`).join(' · ')}</div>
+      <div class="text-[12px] text-slate-600 mt-1.5">${s.type === 'activity' ? `${esc(s.intensity)}${s.notes ? ' · ' + esc(s.notes) : ''}` : s.blocks.filter(b => b.exercises).flatMap(b => b.exercises).filter(e => !e.removed).slice(0, 4).map(e => `${esc(e.name)} ${fmtNum(e.actual)}`).join(' · ')}</div>
     </a>`).join('') : `<div class="card px-4 py-8 text-center text-slate-400 text-[14px]">No sessions yet. Pick a workout in Discover.</div>`;
   shell(`
     <header class="safe-top px-5 pb-4 pt-4">
@@ -897,6 +943,18 @@ const runner = {
   block() { return this.w.blocks[this.bi]; },
   blockLog() { return this.s.blocks[this.bi]; },
   activeIdx() { return this.blockLog().exercises.map((e, i) => e.removed ? -1 : i).filter(i => i >= 0); },
+  // sets blocks: user-paced. phase 'set' waits for Done; then 'rest' timer; then next set / exercise.
+  setsDone() {
+    const b = this.block(), log = this.blockLog(), e = log.exercises[this.ei];
+    e.done.push({ reps: e.reps_actual ?? e.reps, weight: e.actual });
+    this.si++;
+    const more = this.si < e.sets;
+    const nx = this.nextActive(this.ei);
+    if (!more && nx == null) return this.finishBlock();
+    if (!more) { this.ei = nx; this.si = 0; }
+    return this.setPhase('rest', b.rest_s);
+  },
+  adjustReps(delta) { const e = this.blockLog().exercises[this.ei]; e.reps_actual = Math.max(0, (e.reps_actual ?? e.reps) + delta); const el = $('#reps-cur'); if (el) el.textContent = e.reps_actual; },
   nextActive(from) { const a = this.activeIdx(); return a.find(i => i > from); },
   isLastEx() { const a = this.activeIdx(); return this.ei === a[a.length - 1]; },
   elapsed() { return (Date.now() - this.startedMs) / 1000; },
@@ -904,11 +962,12 @@ const runner = {
   readyBlock() { this.ri = 0; this.ei = 0; this.si = 0; this.phase = 'ready'; this.paused = false; this.draw(); },
   beginBlock() {
     this.blockStartMs = Date.now();
-    if (this.block().type === 'interval') {
+    if (this.block().type !== 'steady') {
       const a = this.activeIdx();
       if (!a.length) return this.finishBlock();
-      this.ei = a[0];
+      this.ei = a[0]; this.si = 0;
     }
+    if (this.block().type === 'sets') { this.phase = 'set'; this.paused = false; return this.draw(); }
     this.setPhase('lead', 5);
   },
   setPhase(phase, secs) {
@@ -924,6 +983,7 @@ const runner = {
   tick() {
     const el = $('#elapsed'); if (el) el.textContent = mmss(this.elapsed());
     if (this.paused || !['lead', 'work', 'rest'].includes(this.phase)) return;
+    if (this.block().type === 'sets' && this.phase === 'rest' && this.lastBeep === null) { /* rest countdown shared with interval path */ }
     const left = (this.endsAt - Date.now()) / 1000;
     this.remaining = Math.max(0, left);
     const c = Math.ceil(left);
@@ -932,6 +992,10 @@ const runner = {
   },
   advance() {
     const b = this.block(), log = this.blockLog();
+    if (b.type === 'sets') {
+      if (this.phase === 'rest') { this.phase = 'set'; this.paused = false; return this.draw(); }
+      return this.setsDone();
+    }
     if (b.type === 'interval') {
       if (this.phase === 'lead') return this.setPhase('work', b.work_s);
       if (this.phase === 'work') {
@@ -973,6 +1037,7 @@ const runner = {
   },
   endBlock() {
     const b = this.block(), log = this.blockLog();
+    if (b.type === 'sets') return this.finishBlock();
     if (b.type === 'interval') log.rounds_done = Math.min(b.rounds, this.ri + (this.phase === 'rest' && this.isLastEx() ? 1 : 0));
     else {
       const segs = b.segments, per = segs.reduce((a, x) => a + x.s, 0);
@@ -989,7 +1054,7 @@ const runner = {
   adjust(ei, delta) {
     const e = this.blockLog().exercises[ei];
     e.actual = Math.max(0, Math.round((e.actual + delta) * 100) / 100);
-    if (this.phase === 'work' && ei === this.ei) e.actuals[this.ri] = e.actual;
+    if (this.phase === 'work' && ei === this.ei && e.actuals) e.actuals[this.ri] = e.actual;
     const el = $(`#act-${ei}`); if (el) el.textContent = fmtNum(e.actual);
   },
   adjustIncline(ei, delta) {
@@ -1011,6 +1076,7 @@ const runner = {
   },
   removeEx(ei) {
     const log = this.blockLog(), e = log.exercises[ei];
+    if (this.block().type === 'sets') { if (this.activeIdx().length <= 1) return toast('Last step — use End block instead'); e.removed = true; toast(`Dropped ${e.name}`, 'Undo', () => { e.removed = false; this.draw(); }); if (this.phase !== 'ready' && ei === this.ei) { const nx = this.nextActive(ei); if (nx == null) return this.finishBlock(); this.ei = nx; this.si = 0; this.phase = 'set'; } return this.draw(); }
     if (this.activeIdx().length <= 1) { toast('Last step — use Skip block instead'); return; }
     e.removed = true;
     toast(`Dropped ${e.name}`, 'Undo', () => { e.removed = false; this.draw(); });
@@ -1029,6 +1095,7 @@ const runner = {
   phaseTotal() {
     const b = this.block();
     if (this.phase === 'lead') return 5;
+    if (b.type === 'sets') return b.rest_s || 1;
     if (b.type === 'interval') return this.phase === 'work' ? b.work_s : b.rest_s;
     return b.segments[this.si % b.segments.length].s;
   },
@@ -1075,6 +1142,30 @@ const runner = {
     const bg = this.phase === 'work' ? 'phase-work' : this.phase === 'rest' ? 'phase-rest' : this.phase === 'done' ? 'phase-done' : 'phase-ready';
     const nextBlock = w.blocks[this.bi + 1];
     let body;
+    if (b.type === 'sets' && (this.phase === 'set' || this.phase === 'rest')) {
+      const e = log.exercises[this.ei];
+      const isRest = this.phase === 'rest';
+      const nextE = isRest ? log.exercises[this.ei] : e;
+      const setNo = Math.min(this.si + 1, nextE.sets);
+      body = `
+        ${this.header(`<div class="text-[13px] font-semibold">${esc(b.name)} · ${esc(nextE.name)} · set ${setNo} of ${nextE.sets}</div>`, `<button class="btn btn-ghost btn-sm" onclick="openVideo('${nextE.ex}')">${I.video}Demo</button>`)}
+        <div class="flex-1 flex flex-col items-center justify-center text-center px-5 py-3">
+          ${isRest ? `<div class="phase-label">Rest</div><div id="clock" class="clock mt-1">${mmss(this.remaining)}</div><div class="bar w-full mt-4"><div id="bar" style="width:${100 * (1 - this.remaining / this.phaseTotal())}%"></div></div>`
+                   : `<div class="phase-label">Set ${setNo} of ${e.sets}</div><div class="text-[64px] font-extrabold leading-none mt-2" style="letter-spacing:-.03em"><span id="reps-cur">${e.reps_actual ?? e.reps}</span><span class="text-[24px] font-bold opacity-80"> reps</span></div><div class="text-[22px] font-bold mt-1">${fmtNum(e.actual)} <span class="text-[15px] opacity-80">${esc(e.unit)}</span></div>
+                      <div class="text-[12px] opacity-75 mt-3">${e.done.length ? 'Done so far: ' + e.done.map(d => `${d.reps}×${fmtNum(d.weight)}`).join(', ') : 'Tap Done when you finish the set'}</div>`}
+        </div>
+        <div class="px-5 pb-3">
+          <div class="flex items-center gap-3">${exIcon(nextE.ex)}<div class="min-w-0"><div class="text-[12px] opacity-75">${isRest ? 'Next' : 'Now'}</div><div class="text-[24px] font-bold leading-tight">${esc(nextE.name)}</div></div></div>
+          ${isRest ? '' : `<div class="flex items-center justify-between mt-3"><div class="text-[13px] opacity-80">Reps</div><div class="stepper"><button onclick="runner.adjustReps(-1)">−</button><div class="val"><span>${e.reps_actual ?? e.reps}</span></div><button onclick="runner.adjustReps(1)">+</button></div></div>`}
+          <div class="flex items-center justify-between mt-2"><div class="text-[13px] opacity-80">${isRest ? 'Next set with' : 'Using'}</div><div class="stepper"><button onclick="runner.adjust(${this.ei}, ${-EX(nextE.ex).step})">−</button><div class="val"><span id="act-${this.ei}">${fmtNum(nextE.actual)}</span> <span class="text-[11px] opacity-70">${esc(shortUnit(nextE.unit))}</span></div><button onclick="runner.adjust(${this.ei}, ${EX(nextE.ex).step})">+</button></div></div>
+        </div>
+        <div class="px-5 pb-8 safe-bottom grid grid-cols-3 gap-2">
+          ${isRest ? `<button class="btn btn-ghost" onclick="runner.togglePause()">${this.paused ? 'Resume' : 'Pause'}</button><button class="btn btn-brand" onclick="runner.advance()">Skip rest</button>` : `<button class="btn btn-brand col-span-2" onclick="runner.setsDone()">${I.check}Done set</button>`}
+          <button class="btn btn-ghost" onclick="runner.endBlock()">End block</button>
+        </div>`;
+      app.innerHTML = `<div class="run ${isRest ? 'phase-rest' : 'phase-work'}">${body}</div>`;
+      return;
+    }
     if (this.phase === 'done') {
       body = `
         <div class="flex-1 flex flex-col items-center justify-center text-center px-6">
@@ -1084,7 +1175,7 @@ const runner = {
         </div>
         <div class="px-5 pb-8 safe-bottom"><button class="btn btn-brand w-full" onclick="runner.finishAll()">${I.check}Review &amp; save log</button></div>`;
     } else if (this.phase === 'ready') {
-      const rows = b.type === 'interval'
+      const rows = b.type !== 'steady'
         ? log.exercises.map((e, ei) => `
           <div class="swipe-row ${e.removed ? 'opacity-40' : ''}" data-ei="${ei}" ${e.removed ? '' : 'data-swipe'}>
             <div class="rm">Drop</div>
@@ -1107,7 +1198,7 @@ const runner = {
           <div class="text-[28px] font-bold leading-tight mt-1">${esc(b.name)}</div>
           <div class="opacity-80 text-[14px] mt-1">${blockSummary(b)}</div>
           <div class="mt-4 divide-y divide-white/10">${rows}</div>
-          ${b.type === 'interval' ? `<div class="text-[11px] opacity-60 mt-2">Swipe a step left to drop it from this block. Tap the name for the demo.</div>` : ''}
+          ${b.type !== 'steady' ? `<div class="text-[11px] opacity-60 mt-2">Swipe a step left to drop it from this block. Tap the name for the demo.</div>` : ''}
           ${nextBlock ? `<div class="next-block mt-5"><span class="opacity-70">After this:</span> <b>${esc(nextBlock.name)}</b> <span class="opacity-70">· ${blockSummary(nextBlock)}</span></div>` : `<div class="next-block mt-5 opacity-80">Last block.</div>`}
         </div>
         <div class="px-5 pb-8 safe-bottom flex gap-2">
@@ -1283,7 +1374,25 @@ function exSelect(path, val) {
 }
 function drawBuilder() {
   const d = draft;
-  const blocks = d.blocks.map((b, bi) => b.type === 'interval' ? `
+  const blocks = d.blocks.map((b, bi) => b.type === 'sets' ? `
+    <div class="card px-4 py-3 space-y-3">
+      <div class="flex items-center justify-between gap-2">
+        <span class="chip bg-violet-50 text-violet-700">Sets</span>
+        <button class="text-slate-400" onclick="draft.blocks.splice(${bi},1); drawBuilder()">${I.trash}</button>
+      </div>
+      ${inp(`blocks.${bi}.name`, b.name, 'Block name (e.g. Upper body strength)')}
+      <div class="flex items-center justify-between gap-3"><div class="text-[13px] text-slate-500">Rest between sets</div>${numStep(`blocks.${bi}.rest_s`, b.rest_s, 5, 's', 0, 600)}</div>
+      <div class="space-y-3">${b.exercises.map((e, ei) => `
+        <div>
+          <div class="flex items-center gap-2">${exIcon(e.ex)}${exSelect(`blocks.${bi}.exercises.${ei}.ex`, e.ex)}<button class="text-slate-400 p-1" onclick="draft.blocks[${bi}].exercises.splice(${ei},1); drawBuilder()">${I.x}</button></div>
+          <div class="grid grid-cols-3 gap-2 text-center mt-2">
+            <div><div class="text-[11px] text-slate-500 mb-1">Sets</div>${numStep(`blocks.${bi}.exercises.${ei}.sets`, e.sets, 1, '', 1, 20)}</div>
+            <div><div class="text-[11px] text-slate-500 mb-1">Reps</div>${numStep(`blocks.${bi}.exercises.${ei}.reps`, e.reps, 1, '', 1, 100)}</div>
+            <div><div class="text-[11px] text-slate-500 mb-1">${esc(shortUnit(EX(e.ex).unit))}</div>${numStep(`blocks.${bi}.exercises.${ei}.target`, e.target, EX(e.ex).step, '', 0, 999)}</div>
+          </div>
+        </div>`).join('')}</div>
+      <button class="btn btn-ghost btn-sm w-full" onclick="draft.blocks[${bi}].exercises.push({ex:'db_shoulder_press',sets:3,reps:10,target:10}); drawBuilder()">${I.plus}Add exercise</button>
+    </div>` : b.type === 'interval' ? `
     <div class="card px-4 py-3 space-y-3">
       <div class="flex items-center justify-between gap-2">
         <span class="chip bg-orange-50 text-orange-700">Interval</span>
@@ -1346,8 +1455,9 @@ function drawBuilder() {
       <div class="grid grid-cols-2 gap-2">
         <button class="btn btn-ghost" onclick="draft.blocks.push({name:'',type:'interval',work_s:30,rest_s:30,rounds:8,exercises:[{ex:'kb_swing',target:16}]}); drawBuilder()">${I.plus}Interval block</button>
         <button class="btn btn-ghost" onclick="draft.blocks.push({name:'',type:'steady',ex:'incline_walk',incline:6,repeat:2,segments:[{s:120,speed:6},{s:180,speed:9}]}); drawBuilder()">${I.plus}Steady block</button>
+        <button class="btn btn-ghost col-span-2" onclick="draft.blocks.push({name:'',type:'sets',rest_s:60,exercises:[{ex:'db_shoulder_press',sets:3,reps:10,target:10}]}); drawBuilder()">${I.plus}Sets block <span class="text-[12px] font-normal opacity-70">sets × reps, tap Done per set</span></button>
       </div>
-      <p class="text-[12px] text-slate-400 px-1">Interval = rounds of work/rest per exercise. Steady = timed segments at a speed, one incline. Pick “New exercise…” in any dropdown to add your own with a video or image.</p>
+      <p class="text-[12px] text-slate-400 px-1">Interval = rounds of work/rest per exercise. Sets = sets × reps at a weight, you tap Done after each set. Steady = timed segments at a speed, one incline. Pick “New exercise…” in any dropdown to add your own with a video or image.</p>
       <button class="btn btn-ghost btn-sm w-full" onclick="go('library')">${I.library}Exercise library (creator tools)</button>
     </div>
     <div class="fixed bottom-[68px] left-1/2 -translate-x-1/2 w-full max-w-[430px] px-4 pointer-events-none">
@@ -1358,14 +1468,14 @@ function drawBuilder() {
 }
 function startToday() {
   const d = draft; if (!d.blocks.length) return toast('Add at least one block');
-  d.blocks.forEach((b, i) => { if (!b.name.trim()) b.name = b.type === 'interval' ? (b.exercises.map(e => EX(e.ex).name).join(' + ') || `Block ${i + 1}`) : EX(b.ex).name; });
+  d.blocks.forEach((b, i) => { if (!b.name.trim()) b.name = b.type !== 'steady' ? (b.exercises.map(e => EX(e.ex).name).join(' + ') || `Block ${i + 1}`) : EX(b.ex).name; });
   window._todayWorkout = { ...d, id: d._today, title: d.title, customized: true }; draft = null; go('do/today');
 }
 function saveDraft() {
   const d = draft;
   if (!d.title.trim()) return toast('Give it a title');
   if (!d.blocks.length) return toast('Add at least one block');
-  d.blocks.forEach((b, i) => { if (!b.name.trim()) b.name = b.type === 'interval' ? (b.exercises.map(e => EX(e.ex).name).join(' + ') || `Block ${i + 1}`) : EX(b.ex).name; });
+  d.blocks.forEach((b, i) => { if (!b.name.trim()) b.name = b.type !== 'steady' ? (b.exercises.map(e => EX(e.ex).name).join(' + ') || `Block ${i + 1}`) : EX(b.ex).name; });
   if (!d.id) d.id = 'u-' + d.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') + '-' + Date.now().toString(36).slice(-4);
   d.created = d.created || new Date().toISOString().slice(0, 10);
   if (!d.tags?.length) d.tags = [];

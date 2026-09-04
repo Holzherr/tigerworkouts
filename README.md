@@ -88,6 +88,8 @@ icon, color, cue, optional image, `incline: true`) and `WORKOUTS`
 (creator, blocks). Block types:
 
 - `interval` — `rounds × (each exercise: work_s on, rest_s off)`
+- `sets` — classic strength: each exercise `sets × reps @ target`, one `rest_s`
+  between sets; user-paced (tap Done per set, rest timer), per-set reps + weight logged
 - `steady` — `segments × repeat`, each segment timed at a speed, one incline
 
 User-created workouts and custom exercises live in localStorage under
