@@ -11,7 +11,7 @@
 <link rel="apple-touch-icon" href="./icons/apple-touch-icon.png">
 <link rel="icon" type="image/png" sizes="192x192" href="./icons/icon-192.png">
 <meta name="apple-mobile-web-app-title" content="Workout Hub">
-<title>Workout Hub — v0.5</title>
+<title>Workout Hub — v0.5.1</title>
 <script src="https://cdn.tailwindcss.com"></script>
 <style>
   :root { --brand: #ee6f3a; --brand-dark: #c1542a; --rest: #1e3a8a; }
@@ -233,6 +233,14 @@ function setAvatarPhoto(file) {
 }
 const isSaved = id => store.saved.includes(id);
 function toggleSaved(id) { const i = store.saved.indexOf(id); if (i >= 0) store.saved.splice(i, 1); else store.saved.unshift(id); save(); toast(i >= 0 ? 'Removed from your workouts' : 'Saved to your profile'); route(); }
+// stable per-workout palette (index from id hash) so cards look distinct
+const PALETTES = [
+  ['#f97316', '#c2410c'], ['#0ea5e9', '#1e40af'], ['#10b981', '#065f46'], ['#8b5cf6', '#4c1d95'],
+  ['#f43f5e', '#9f1239'], ['#eab308', '#a16207'], ['#14b8a6', '#134e4a'], ['#6366f1', '#312e81'],
+  ['#ec4899', '#831843'], ['#84cc16', '#3f6212'],
+];
+const wPalette = w => { let h = 0; for (const ch of String(w.id)) h = (h * 31 + ch.charCodeAt(0)) >>> 0; return PALETTES[h % PALETTES.length]; };
+const wGradient = w => { const [a, b] = wPalette(w); return `linear-gradient(135deg,${a} 0%,${b} 100%)`; };
 const wExKeys = w => [...new Set(w.blocks.flatMap(b => b.type === 'interval' ? b.exercises.map(e => e.ex) : [b.ex]))];
 
 // ───────────────────────── router ─────────────────────────
@@ -270,11 +278,11 @@ let discoverTag = 'All', discoverCreator = null;
 function heroCard(w) {
   const last = lastSessionFor(w.id);
   return `
-    <a href="#/w/${w.id}" class="block rounded-2xl overflow-hidden text-white relative row-tap" style="background:linear-gradient(135deg,${wColor(w)} 0%,#ee6f3a 60%,#c1542a 100%)">
+    <a href="#/w/${w.id}" class="block rounded-2xl overflow-hidden text-white relative row-tap" style="background:${wGradient(w)}">
       <div class="px-5 pt-4 pb-4">
         <div class="flex items-center justify-between mb-3">
           <button class="flex items-center gap-2" onclick="event.preventDefault(); showCreator('${esc(w.creator)}')"><span class="avatar" style="width:28px;height:28px;font-size:12px;background:rgba(255,255,255,.3)">${esc(w.creator[0])}</span><span class="text-[13px] font-semibold">${esc(w.creator)}</span></button>
-          <div class="flex gap-1.5"><span class="chip bg-white/25 text-white">${I.clock}${workoutMinutes(w)} min</span><span class="chip bg-white/25 text-white">${esc(w.level)}</span>${isSaved(w.id) ? `<span class="chip bg-white text-orange-700">${I.heartFill.replace('width="18" height="18"', 'width="12" height="12"')}</span>` : ''}</div>
+          <div class="flex gap-1.5"><span class="chip bg-white/25 text-white">${I.clock}${workoutMinutes(w)} min</span><span class="chip bg-white/25 text-white">${esc(w.level)}</span>${isSaved(w.id) ? `<span class="chip bg-white" style="color:${wPalette(w)[1]}">${I.heartFill.replace('width="18" height="18"', 'width="12" height="12"')}</span>` : ''}</div>
         </div>
         <div class="text-[24px] font-bold leading-tight">${esc(w.title)}</div>
         <div class="text-[13px] opacity-90 mt-1">${w.blocks.map(b => esc(b.name)).join(' · ')}</div>
@@ -292,7 +300,7 @@ function creatorsRow(ws) {
   return `
     <div class="pt-2">
       <div class="flex items-baseline justify-between px-1 pb-2"><div class="text-[11px] uppercase tracking-widest text-slate-400 font-semibold">Creators</div>${discoverCreator ? `<button class="text-[12px] text-slate-500" onclick="showCreator(null)">Show all</button>` : ''}</div>
-      <div class="steps pb-1">${creators.map(c => `<button class="flex flex-col items-center gap-1" style="flex:none;width:68px" onclick="showCreator('${esc(c)}')"><span class="avatar" style="width:52px;height:52px;font-size:20px;${discoverCreator === c ? 'outline:3px solid #0f172a;outline-offset:2px' : ''}">${esc(c[0])}</span><div class="text-[11px] ${discoverCreator === c ? 'text-slate-900 font-semibold' : 'text-slate-600'} truncate w-full text-center">${esc(c)}</div><div class="text-[10px] text-slate-400">${count(c)} workout${count(c) === 1 ? '' : 's'}</div></button>`).join('')}
+      <div class="steps pb-1">${creators.map(c => `<button class="flex flex-col items-center gap-1" style="flex:none;width:68px" onclick="showCreator('${esc(c)}')"><span class="avatar" style="width:52px;height:52px;font-size:20px;background:${wGradient({ id: c })};${discoverCreator === c ? 'outline:3px solid #0f172a;outline-offset:2px' : ''}">${esc(c[0])}</span><div class="text-[11px] ${discoverCreator === c ? 'text-slate-900 font-semibold' : 'text-slate-600'} truncate w-full text-center">${esc(c)}</div><div class="text-[10px] text-slate-400">${count(c)} workout${count(c) === 1 ? '' : 's'}</div></button>`).join('')}
         <button class="flex flex-col items-center gap-1" style="flex:none;width:68px" onclick="go('new')"><span class="avatar" style="width:52px;height:52px;background:#f1f5f9;color:#64748b">${I.plus}</span><div class="text-[11px] text-slate-500">Create</div></button>
       </div>
     </div>`;
@@ -353,7 +361,7 @@ function renderWorkout(w) {
       </div>`;
   }).join('');
   shell(`
-    <header class="brand text-white safe-top px-4 pb-5 pt-3">
+    <header class="text-white safe-top px-4 pb-5 pt-3" style="background:${wGradient(w)}">
       <a href="#/" class="inline-flex items-center gap-1 text-white/90 text-[14px] mb-3">${I.back}Discover</a>
       <div class="flex items-center gap-2 mb-2">
         <span class="avatar" style="background:rgba(255,255,255,.25)">${esc(w.creator[0])}</span>
@@ -367,7 +375,7 @@ function renderWorkout(w) {
       </div>
       ${last ? `<div class="text-[12px] mt-3 opacity-90">Last done ${fmtDate(last.startedAt)} · ${last.duration_min} min</div>` : ''}
       <div class="flex gap-2 mt-4">
-        <button class="btn btn-sm" style="background:${isSaved(w.id) ? '#fff' : 'rgba(255,255,255,.2)'};color:${isSaved(w.id) ? '#c1542a' : '#fff'}" onclick="toggleSaved('${w.id}')">${isSaved(w.id) ? I.heartFill : I.heart}${isSaved(w.id) ? 'Saved' : 'Save'}</button>
+        <button class="btn btn-sm" style="background:${isSaved(w.id) ? '#fff' : 'rgba(255,255,255,.2)'};color:${isSaved(w.id) ? wPalette(w)[1] : '#fff'}" onclick="toggleSaved('${w.id}')">${isSaved(w.id) ? I.heartFill : I.heart}${isSaved(w.id) ? 'Saved' : 'Save'}</button>
         <button class="btn btn-sm" style="background:rgba(255,255,255,.2);color:#fff" onclick="shareWorkout('${w.id}')">${I.link}Share link</button>
         <button class="btn btn-sm" style="background:rgba(255,255,255,.2);color:#fff" onclick="go('edit/${w.id}')">${I.edit}${isUserWorkout(w) ? 'Edit' : 'Duplicate & edit'}</button>
         ${isUserWorkout(w) ? `<button class="btn btn-sm" style="background:rgba(255,255,255,.2);color:#fff" onclick="deleteWorkout('${w.id}')">${I.trash}</button>` : ''}
