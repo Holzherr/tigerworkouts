@@ -11,7 +11,7 @@
 <link rel="apple-touch-icon" href="./icons/apple-touch-icon.png">
 <link rel="icon" type="image/png" sizes="192x192" href="./icons/icon-192.png">
 <meta name="apple-mobile-web-app-title" content="Workout Hub">
-<title>Workout Hub — v0.6</title>
+<title>Workout Hub — v0.6.1</title>
 <script src="https://cdn.tailwindcss.com"></script>
 <style>
   :root { --brand: #ee6f3a; --brand-dark: #c1542a; --rest: #1e3a8a; }
@@ -395,13 +395,13 @@ function renderWorkout(w) {
 function exRow(key, target, hint) {
   const ex = EX(key);
   return `
-    <button class="w-full text-left flex items-center gap-3 px-4 py-2.5 row-tap" onclick="openVideo('${key}')">
-      ${exIcon(key)}
+    <button class="w-full text-left flex items-center gap-3 px-4 py-2 row-tap" onclick="openVideo('${key}')">
+      ${exMedia(ex) ? `<span class="relative flex-none"><img src="${esc(exMedia(ex))}" alt="" style="width:44px;height:44px;border-radius:12px;object-fit:cover;object-position:top;background:#e2e8f0"><span class="exicon absolute" style="width:18px;height:18px;border-radius:6px;right:-4px;bottom:-4px;background:${ex.color || ICON_COLORS[ex.icon] || '#94a3b8'};color:#0f172a;box-shadow:0 0 0 2px #fff">${(I[ex.icon] || I.body).replace('<svg', '<svg width="11" height="11"')}</span></span>` : exIcon(key)}
       <div class="flex-1 min-w-0">
         <div class="font-medium text-slate-900 text-[15px]">${esc(ex.name)}</div>
         <div class="text-[12px] text-slate-500">${esc(target)}${hint ? ` <span class="text-emerald-700">· ${esc(hint)}</span>` : ''}</div>
       </div>
-      ${exMedia(ex) ? `<img class="thumb" style="width:64px;height:42px" src="${esc(exMedia(ex))}" alt="">` : ''}
+      <span class="text-slate-300">${I.video}</span>
     </button>`;
 }
 
