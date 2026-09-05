@@ -19,6 +19,14 @@
   const iso = d => new Date(d).toISOString();
   const debounce = (fn, ms) => { let t; return (...a) => { clearTimeout(t); t = setTimeout(() => fn(...a), ms); }; };
 
+  // Three-way session sync. `snap` holds the JSON of each session as last seen
+  // on the server, so we can tell local edits from server-side edits/deletes
+  // (Echo edits and deletes sessions directly in Supabase).
+  const SNAP_KEY = 'workout-hub:synced';
+  let snap = {}; try { snap = JSON.parse(localStorage.getItem(SNAP_KEY) || '{}') || {}; } catch {}
+  const saveSnap = () => { try { localStorage.setItem(SNAP_KEY, JSON.stringify(snap)); } catch {} };
+  const J = o => JSON.stringify(o);
+
   cloud.signIn = async email => {
     const redirectTo = location.origin + location.pathname;
     const { error } = await sb.auth.signInWithOtp({ email, options: { emailRedirectTo: redirectTo } });
@@ -41,8 +49,12 @@
     if (!cloud.user) return;
     const uid = cloud.user.id;
     const errs = [];
-    const sessions = store.sessions.map(s => ({ id: s.id, owner: uid, workout_id: s.workoutId || null, type: s.type || 'workout', title: s.title, started_at: iso(s.startedAt), ended_at: s.endedAt ? iso(s.endedAt) : null, duration_min: s.duration_min || 0, completed: !!s.completed, data: s }));
-    if (sessions.length) { const { error } = await sb.from('sessions').upsert(sessions, { onConflict: 'id' }); if (error) errs.push(error); }
+    const dirty = store.sessions.filter(s => J(s) !== snap[s.id]);
+    const sessions = dirty.map(s => ({ id: s.id, owner: uid, workout_id: s.workoutId || null, type: s.type || 'workout', title: s.title, started_at: iso(s.startedAt), ended_at: s.endedAt ? iso(s.endedAt) : null, duration_min: s.duration_min || 0, completed: !!s.completed, data: s }));
+    if (sessions.length) { const { error } = await sb.from('sessions').upsert(sessions, { onConflict: 'id' }); if (error) errs.push(error); else dirty.forEach(s => { snap[s.id] = J(s); }); }
+    const gone = Object.keys(snap).filter(id => !store.sessions.some(s => s.id === id));
+    if (gone.length) { const { error } = await sb.from('sessions').delete().in('id', gone).eq('owner', uid); if (error) errs.push(error); else gone.forEach(id => { delete snap[id]; }); }
+    saveSnap();
     const workouts = store.workouts.map(w => ({ id: w.id, owner: uid, creator: w.creator, title: w.title, public: w.public !== false, data: w }));
     if (workouts.length) { const { error } = await sb.from('workouts').upsert(workouts, { onConflict: 'id' }); if (error) errs.push(error); }
     const exercises = Object.entries(store.exercises).map(([key, e]) => ({ key, owner: uid, public: true, data: e }));
@@ -62,8 +74,16 @@
     cloud.remote.workouts = (pubW || []).map(r => r.data).filter(w => !WORKOUTS.some(x => x.id === w.id) && !store.workouts.some(x => x.id === w.id));
     cloud.remote.exercises = Object.fromEntries((pubE || []).filter(r => !EXERCISES[r.key]).map(r => [r.key, r.data]));
     if (!uid) return;
-    const { data: rows } = await sb.from('sessions').select('id,data,updated_at').eq('owner', uid);
-    (rows || []).forEach(r => { if (!store.sessions.some(s => s.id === r.id)) store.sessions.push(r.data); });
+    const { data: rows } = await sb.from('sessions').select('id,data').eq('owner', uid);
+    const remote = new Map((rows || []).map(r => [r.id, r.data]));
+    remote.forEach((d, id) => {
+      const rj = J(d), i = store.sessions.findIndex(s => s.id === id);
+      if (i < 0) { if (!(id in snap)) { store.sessions.push(d); snap[id] = rj; } return; } // new on server (or deleted locally → push removes it)
+      const lj = J(store.sessions[i]);
+      if (!(id in snap) || (rj !== snap[id] && lj === snap[id])) { store.sessions[i] = d; snap[id] = rj; } // first sight or server-side edit → server wins
+    });
+    store.sessions = store.sessions.filter(s => { if (!remote.has(s.id) && s.id in snap && J(s) === snap[s.id]) { delete snap[s.id]; return false; } return true; }); // deleted on server
+    saveSnap();
     const { data: mine } = await sb.from('workouts').select('id,data').eq('owner', uid);
     (mine || []).forEach(r => { const i = store.workouts.findIndex(w => w.id === r.id); if (i < 0) store.workouts.push(r.data); });
     const { data: st } = await sb.from('user_state').select('favorites,prefs').eq('owner', uid).maybeSingle();
