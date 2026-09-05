@@ -1,0 +1,60 @@
+@import 'tailwindcss';
+
+/* Design tokens. Mirrors DESIGN.md; every component takes colour and radius from here. */
+@theme {
+  --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+
+  --color-brand: #ee6f3a;
+  --color-brand-hover: #c1542a;
+  --color-brand-soft: #fff7ed;
+  --color-brand-line: #f5b899;
+  --color-brand-ink: #c2410c;
+  --color-rest: #1e3a8a;
+
+  --color-ink: #0f172a;
+  --color-body: #475569;
+  --color-muted: #64748b;
+  --color-faint: #94a3b8;
+  --color-hint: #cbd5e1;
+  --color-line: #e2e8f0;
+  --color-line-soft: #f1f5f9;
+  --color-surface: #ffffff;
+  --color-canvas: #f8fafc;
+  --color-well: #eef2f7;
+  --color-danger: #b91c1c;
+  --color-danger-soft: #fee2e2;
+  --color-warn: #b45309;
+  --color-warn-soft: #fffbeb;
+
+  --radius-card: 16px;
+  --radius-control: 12px;
+  --radius-tile: 14px;
+  --radius-sheet: 24px;
+
+  --shadow-lift: 0 16px 30px -10px rgb(15 23 42 / 0.4);
+}
+
+@layer base {
+  html {
+    -webkit-text-size-adjust: 100%;
+  }
+  body {
+    @apply bg-canvas text-ink font-sans antialiased;
+  }
+  button {
+    @apply cursor-pointer;
+  }
+  /* iOS zooms into inputs under 16px; keep every field at 16px. */
+  input,
+  select,
+  textarea {
+    font-size: 16px;
+  }
+}
+
+@utility safe-top {
+  padding-top: env(safe-area-inset-top);
+}
+@utility safe-bottom {
+  padding-bottom: env(safe-area-inset-bottom);
+}
