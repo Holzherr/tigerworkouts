@@ -1,4 +1,4 @@
-import { ArrowLeftRight, X } from 'lucide-react';
+import { ChevronUp, X } from 'lucide-react';
 import { forwardRef } from 'react';
 import { Button } from '@/shared/components/ui/button';
 import { Chip } from '@/shared/components/ui/chip';
@@ -92,19 +92,18 @@ export const StepRow = forwardRef<HTMLDivElement, StepRowProps>(({ step, expande
                 onClick={e => (stop(e), onSwap?.())}
                 onPointerDown={stop}
                 aria-label={`${step.exercise.name}, tap to change exercise`}
-                className="flex h-10 w-full items-center gap-2 rounded-control border border-line bg-surface pr-2 pl-3 text-left shadow-xs active:bg-line-soft"
+                className="flex h-10 w-full items-center rounded-control border border-line bg-surface px-3 text-left shadow-xs active:bg-line-soft"
               >
                 <span className="min-w-0 flex-1 truncate text-[15px] font-bold text-ink">{step.exercise.name}</span>
-                <ArrowLeftRight className="size-4 shrink-0 text-brand" />
               </button>
             </>
           )}
         </div>
+        <ChevronUp className="size-4 shrink-0 text-faint" />
         {removeBtn}
       </div>
       <div className="mx-2 mb-2 space-y-2.5 rounded-control bg-canvas px-3 py-3" onPointerDown={stop} onClick={stop}>
         {isRest ? <RestBody step={step} onChange={onChange} /> : <ExerciseBody step={step} onChange={onChange} />}
-        <div className="text-[12px] text-muted">Tap the header to close</div>
       </div>
     </div>
   );
