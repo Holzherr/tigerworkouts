@@ -11,7 +11,7 @@
 <link rel="apple-touch-icon" href="./icons/apple-touch-icon.png">
 <link rel="icon" type="image/png" sizes="192x192" href="./icons/icon-192.png">
 <meta name="apple-mobile-web-app-title" content="Workout Hub">
-<title>Workout Hub — v0.9</title>
+<title>Workout Hub — v0.9.1</title>
 <script src="https://cdn.tailwindcss.com"></script>
 <style>
   :root { --brand: #ee6f3a; --brand-dark: #c1542a; --rest: #1e3a8a; }
@@ -146,6 +146,7 @@ const EX = key => EXERCISES[key] || store.exercises[key] || window.cloud?.remote
 const exLib = () => ({ ...EXERCISES, ...(window.cloud?.remote?.exercises || {}), ...store.exercises });
 const exMedia = ex => ex.poster || ex.image || (ex.video ? ytThumb(ex.video) : '');
 // small live thumbnail: loops the demo clip when there is one, else a still
+const stepTile = key => { const ex = EX(key); return ex.clip || exMedia(ex) ? `<span class="flex-none" style="box-shadow:0 6px 18px rgba(0,0,0,.25);border-radius:16px" onclick="openVideo('${key}')">${exThumb(ex, 88, 16)}</span>` : exIcon(key); };
 const exThumb = (ex, size = 44, radius = 12) => ex.clip
   ? `<video src="${esc(ex.clip)}" poster="${esc(ex.poster || '')}" autoplay muted loop playsinline style="width:${size}px;height:${size}px;border-radius:${radius}px;object-fit:cover;object-position:top;background:#fff;display:block"></video>`
   : exMedia(ex) ? `<img src="${esc(exMedia(ex))}" alt="" style="width:${size}px;height:${size}px;border-radius:${radius}px;object-fit:cover;object-position:top;background:#fff;display:block">` : '';
@@ -667,7 +668,7 @@ function renderSessionEdit(s) {
         <div class="flex items-center justify-between gap-3 mb-3"><div class="text-[13px] text-slate-500">Rest between sets</div>${stepper(`s.blocks[${bi}].rest_s`, b.rest_s, 5, 's', 0, 600)}</div>
         <div class="space-y-3">${b.exercises.map((e, ei) => `
           <div class="${e.removed ? 'opacity-50' : ''}">
-            <div class="flex items-center gap-2">${exIcon(e.ex)}<select class="border border-slate-200 rounded-xl px-2 py-2 text-[16px] bg-white flex-1 min-w-0" onchange="const k=this.value, x=EX(k); Object.assign(_s.blocks[${bi}].exercises[${ei}], {ex:k, name:x.name, unit:x.unit}); sEdit()">${exOptions(e.ex)}</select>${rowBtn(e.removed ? 'Restore' : 'Drop', `_s.blocks[${bi}].exercises[${ei}].removed=!_s.blocks[${bi}].exercises[${ei}].removed; sEdit()`, !e.removed)}</div>
+            <div class="flex items-center gap-2">${exIcon(e.ex)}${exSelect(`s.blocks[${bi}].exercises[${ei}]`, e.ex, 'session')}${rowBtn(e.removed ? 'Restore' : 'Drop', `_s.blocks[${bi}].exercises[${ei}].removed=!_s.blocks[${bi}].exercises[${ei}].removed; sEdit()`, !e.removed)}</div>
             <div class="pl-11 mt-2 space-y-1.5">${(e.done || []).map((d, di) => `
               <div class="flex items-center gap-2"><div class="text-[12px] text-slate-500 w-10">Set ${di + 1}</div>${stepper(`s.blocks[${bi}].exercises[${ei}].done[${di}].reps`, d.reps, 1, 'reps', 0, 100).replace('class="stepper"', 'class="stepper" style="transform:scale(.85);transform-origin:left"')}${stepper(`s.blocks[${bi}].exercises[${ei}].done[${di}].weight`, d.weight, EX(e.ex).step, shortUnit(e.unit), 0, 999).replace('class="stepper"', 'class="stepper" style="transform:scale(.85);transform-origin:left"')}<button class="text-slate-400 p-1" onclick="_s.blocks[${bi}].exercises[${ei}].done.splice(${di},1); sEdit()">${I.x}</button></div>`).join('')}
               <button class="chip bg-slate-100 text-slate-600" onclick="const e=_s.blocks[${bi}].exercises[${ei}]; e.done=e.done||[]; const l=e.done[e.done.length-1]; e.done.push({reps:l?l.reps:e.reps, weight:l?l.weight:e.target}); sEdit()">+ Add set</button>
@@ -710,7 +711,7 @@ function renderSessionEdit(s) {
     return `
       <div class="card px-4 py-3 ${b.skipped ? 'opacity-60' : ''}">
         ${head}
-        <div class="flex items-center gap-2 mb-3">${exIcon(b.ex)}<select class="border border-slate-200 rounded-xl px-2 py-2 text-[16px] bg-white flex-1 min-w-0" onchange="_s.blocks[${bi}].ex=this.value; sEdit()">${exOptions(b.ex)}</select></div>
+        <div class="flex items-center gap-2 mb-3">${exIcon(b.ex)}${exSelect(`s.blocks[${bi}]`, b.ex, 'session')}</div>
         <div class="grid grid-cols-2 gap-2 text-center mb-2">
           <div><div class="text-[11px] text-slate-500 mb-1">Time spent</div>${stepper(`s.blocks[${bi}].minutes_done`, b.minutes_done, 1, 'min', 0, 600)}</div>
           <div><div class="text-[11px] text-slate-500 mb-1">Planned</div>${stepper(`s.blocks[${bi}].minutes`, b.minutes, 1, 'min', 1, 600)}</div>
@@ -1179,7 +1180,7 @@ const runner = {
                       <div class="text-[12px] opacity-75 mt-3">${e.done.length ? 'Done so far: ' + e.done.map(d => `${d.reps}×${fmtNum(d.weight)}`).join(', ') : 'Tap Done when you finish the set'}</div>`}
         </div>
         <div class="px-5 pb-3">
-          <div class="flex items-center gap-3">${exIcon(nextE.ex)}<div class="min-w-0"><div class="text-[12px] opacity-75">${isRest ? 'Next' : 'Now'}</div><div class="text-[24px] font-bold leading-tight">${esc(nextE.name)}</div></div></div>
+          <div class="flex items-center gap-3">${stepTile(nextE.ex)}<div class="min-w-0"><div class="text-[12px] opacity-75">${isRest ? 'Next' : 'Now'}</div><div class="text-[24px] font-bold leading-tight">${esc(nextE.name)}</div></div></div>
           ${isRest ? '' : `<div class="flex items-center justify-between mt-3"><div class="text-[13px] opacity-80">Reps</div><div class="stepper"><button onclick="runner.adjustReps(-1)">−</button><div class="val"><span>${e.reps_actual ?? e.reps}</span></div><button onclick="runner.adjustReps(1)">+</button></div></div>`}
           <div class="flex items-center justify-between mt-2"><div class="text-[13px] opacity-80">${isRest ? 'Next set with' : 'Using'}</div><div class="stepper"><button onclick="runner.adjust(${this.ei}, ${-EX(nextE.ex).step})">−</button><div class="val"><span id="act-${this.ei}">${fmtNum(nextE.actual)}</span> <span class="text-[11px] opacity-70">${esc(shortUnit(nextE.unit))}</span></div><button onclick="runner.adjust(${this.ei}, ${EX(nextE.ex).step})">+</button></div></div>
         </div>
@@ -1205,7 +1206,7 @@ const runner = {
           <div class="swipe-row ${e.removed ? 'opacity-40' : ''}" data-ei="${ei}" ${e.removed ? '' : 'data-swipe'}>
             <div class="rm">Drop</div>
             <div class="inner flex items-center gap-3 py-2.5" style="background:#0f172a">
-              ${exIcon(e.ex)}
+              ${EX(e.ex).clip ? `<span class="flex-none">${exThumb(EX(e.ex), 48, 12)}</span>` : exIcon(e.ex)}
               <div class="flex-1 min-w-0" onclick="openVideo('${e.ex}')"><div class="font-semibold text-[15px]">${esc(e.name)}${e.removed ? ' <span class="text-[11px] opacity-70">dropped</span>' : ''}</div><div class="text-[12px] opacity-75 truncate">${esc(EX(e.ex).cue)}</div></div>
               ${e.removed ? `<button class="btn btn-ghost btn-sm" onclick="runner.blockLog().exercises[${ei}].removed=false; runner.draw()">Undo</button>` : `
               <div class="stepper"><button onclick="runner.adjust(${ei}, ${-EX(e.ex).step})">−</button><div class="val"><span id="act-${ei}">${fmtNum(e.actual)}</span> <span class="text-[11px] opacity-70">${esc(shortUnit(e.unit))}</span></div><button onclick="runner.adjust(${ei}, ${EX(e.ex).step})">+</button></div>`}
@@ -1245,11 +1246,11 @@ const runner = {
       const focusEx = isInterval ? log.exercises[focusEi] : null;
       const focus = isInterval
         ? `<div class="flex items-center gap-3">
-             ${exIcon(focusEx.ex)}
+             ${stepTile(focusEx.ex)}
              <div class="min-w-0"><div class="text-[12px] opacity-75">${this.phase === 'rest' ? (nx == null ? 'Next round starts with' : 'Next') : this.phase === 'lead' ? 'First up' : 'Now'}</div>
              <div class="text-[24px] font-bold leading-tight">${esc(focusEx.name)}</div></div>
            </div>`
-        : `<div class="flex items-center gap-3">${exIcon(b.ex)}<div><div class="text-[12px] opacity-75">${this.phase === 'lead' ? 'First segment' : 'Now'}</div><div class="text-[24px] font-bold leading-tight">${fmtNum(log.speeds_actual[this.si % b.segments.length])} kph · incline ${fmtNum(log.incline_actual)}</div><div class="text-[13px] opacity-90">${esc(EX(b.ex).name)} · ${seg.s / 60} min</div></div></div>`;
+        : `<div class="flex items-center gap-3">${stepTile(b.ex)}<div><div class="text-[12px] opacity-75">${this.phase === 'lead' ? 'First segment' : 'Now'}</div><div class="text-[24px] font-bold leading-tight">${fmtNum(log.speeds_actual[this.si % b.segments.length])} kph · incline ${fmtNum(log.incline_actual)}</div><div class="text-[13px] opacity-90">${esc(EX(b.ex).name)} · ${seg.s / 60} min</div></div></div>`;
       const adjust = isInterval ? `
           <div class="flex items-center justify-between mt-3">
             <div class="text-[13px] opacity-80">${this.phase === 'rest' ? 'Next set with' : 'Using'}</div>
@@ -1398,11 +1399,34 @@ function exOptions(val) {
   const order = ['My exercises', ...Object.values(GROUP_LABEL).filter((v, i, a) => a.indexOf(v) === i), 'Other'];
   return order.filter(g => groups[g]).map(g => `<optgroup label="${esc(g)}">${groups[g].sort((a, b) => a[1].name.localeCompare(b[1].name)).map(([k, e]) => `<option value="${k}" ${k === val ? 'selected' : ''}>${esc(e.name)}</option>`).join('')}</optgroup>`).join('');
 }
-function exSelect(path, val) {
-  return `<select class="border border-slate-200 rounded-xl px-2 py-2.5 text-[16px] bg-white flex-1 min-w-0" onchange="if(this.value==='__new'){newExerciseSheet('${path}')}else{setDraft('${path}', this.value); drawBuilder()}">
-    ${exOptions(val)}
-    <option value="__new">＋ New exercise… (anything not listed)</option>
-  </select>`;
+function exSelect(path, val, onPick = 'draft') {
+  const ex = EX(val);
+  return `<button class="border border-slate-200 rounded-xl px-3 py-2.5 text-[16px] bg-white flex-1 min-w-0 text-left flex items-center justify-between gap-2" onclick="pickExercise('${path}', '${onPick}')"><span class="truncate">${esc(ex.name)}</span><span class="text-slate-400 text-[12px] flex-none">change</span></button>`;
+}
+// searchable picker sheet: type to filter 70+ exercises, grouped; "Add" creates a custom one from the typed name
+function pickExercise(path, onPick) {
+  closeSheet();
+  const el = document.createElement('div'); el.id = 'sheet';
+  const apply = k => { if (onPick === 'session') { const p = path.replace(/^s\./, '').replace(/\[(\d+)\]/g, '.$1').split('.'); let o = window._s; for (let i = 0; i < p.length - 1; i++) o = o[p[i]]; const x = EX(k); Object.assign(o[p[p.length - 1]] === undefined ? o : o, {}); o.ex = k; o.name = x.name; o.unit = x.unit; closeSheet(); sEdit(); } else { setDraft(path, k); closeSheet(); drawBuilder(); } };
+  window._pickApply = apply;
+  const draw = q => {
+    const lib = exLib(); const ql = q.trim().toLowerCase();
+    const groups = {};
+    Object.entries(lib).forEach(([k, e]) => { if (ql && !e.name.toLowerCase().includes(ql) && !k.includes(ql.replace(/\s+/g, '_'))) return; const g = store.exercises[k] ? 'My exercises' : (GROUP_LABEL[e.icon] || 'Other'); (groups[g] = groups[g] || []).push([k, e]); });
+    const order = ['My exercises', ...Object.values(GROUP_LABEL).filter((v, i, a) => a.indexOf(v) === i), 'Other'].filter(g => groups[g]);
+    $('#pick-list').innerHTML = order.map(g => `<div class="text-[11px] uppercase tracking-widest text-slate-400 font-semibold px-1 pt-3 pb-1">${esc(g)}</div>` + groups[g].sort((a, b) => a[1].name.localeCompare(b[1].name)).map(([k, e]) => `<button class="w-full text-left flex items-center gap-3 px-2 py-2 rounded-xl row-tap" onclick="_pickApply('${k}')">${e.clip ? exThumb(e, 36, 10) : exIcon(k)}<div class="flex-1 min-w-0"><div class="text-[15px] text-slate-900">${esc(e.name)}</div><div class="text-[11px] text-slate-500">${esc(e.unit)}</div></div></button>`).join('')).join('')
+      + (ql ? `<button class="w-full text-left flex items-center gap-3 px-2 py-3 mt-2 rounded-xl border border-dashed border-slate-300" onclick="closeSheet(); newExerciseSheet('${path}', ${JSON.stringify(q.trim())})">${I.plus}<div class="text-[15px] text-slate-700">Add “${esc(q.trim())}” as a new exercise</div></button>` : '');
+  };
+  el.innerHTML = `
+    <div class="sheet-backdrop" onclick="closeSheet()"></div>
+    <div class="sheet safe-bottom" style="height:88dvh">
+      <div class="sheet-handle"></div>
+      <div class="px-4 pb-2 flex items-center gap-2"><input id="pick-q" type="search" class="flex-1 border border-slate-200 rounded-xl px-3 py-2.5 text-[16px]" placeholder="Search exercises…" autocomplete="off"><button class="text-slate-400 p-1" onclick="closeSheet()">${I.x}</button></div>
+      <div id="pick-list" class="px-2 pb-6 overflow-auto" style="max-height:calc(88dvh - 70px)"></div>
+    </div>`;
+  document.body.appendChild(el);
+  $('#pick-q').addEventListener('input', e => draw(e.target.value)); draw('');
+  setTimeout(() => $('#pick-q')?.focus(), 80);
 }
 function drawBuilder() {
   const d = draft;
@@ -1477,11 +1501,13 @@ function drawBuilder() {
     <div class="px-4 py-4 space-y-3 pb-32">
       <div class="card px-4 py-3 space-y-2">
         ${inp('title', d.title, 'Workout title')}
+        <button class="text-[12px] text-slate-500 px-1" onclick="draft._adv=!draft._adv; drawBuilder()">${d._adv ? '▾ Hide' : '▸ Advanced'} <span class="text-slate-400">· ${esc(d.creator)} · ${esc(d.level)}${(d.tags || []).length ? ' · ' + esc(d.tags.join(', ')) : ''}</span></button>
+        ${d._adv ? `
         <div class="grid grid-cols-2 gap-2">
           ${inp('creator', d.creator, 'Creator name')}
           <select class="border border-slate-200 rounded-xl px-3 py-2.5 text-[16px] bg-white" onchange="setDraft('level', this.value)">${['Easy', 'Medium', 'Hard'].map(l => `<option ${d.level === l ? 'selected' : ''}>${l}</option>`).join('')}</select>
         </div>
-        <input type="text" class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-[16px]" value="${esc((d.tags || []).join(', '))}" placeholder="Tags, comma separated (HIIT, Kettlebell…)" oninput="draft.tags = this.value.split(',').map(t => t.trim()).filter(Boolean)">
+        <input type="text" class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-[16px]" value="${esc((d.tags || []).join(', '))}" placeholder="Tags, comma separated (HIIT, Kettlebell…)" oninput="draft.tags = this.value.split(',').map(t => t.trim()).filter(Boolean)">` : ''}
       </div>
       ${blocks}
       <div class="grid grid-cols-2 gap-2">
@@ -1510,13 +1536,13 @@ function saveDraft() {
   d.blocks.forEach((b, i) => { if (!b.name.trim()) b.name = b.type !== 'steady' ? (b.exercises.map(e => EX(e.ex).name).join(' + ') || `Block ${i + 1}`) : EX(b.ex).name; });
   if (!d.id) d.id = 'u-' + d.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') + '-' + Date.now().toString(36).slice(-4);
   d.created = d.created || new Date().toISOString().slice(0, 10);
-  if (!d.tags?.length) d.tags = [];
-  delete d._src;
+  if (!d.tags?.length) d.tags = [...new Set(wExKeys(d).map(k => GROUP_LABEL[EX(k).icon]).filter(Boolean))].slice(0, 3);
+  delete d._src; delete d._adv;
   const i = store.workouts.findIndex(w => w.id === d.id);
   if (i >= 0) store.workouts[i] = d; else store.workouts.unshift(d);
   save(); const id = d.id; draft = null; toast('Saved'); go(`w/${id}`);
 }
-function newExerciseSheet(path) {
+function newExerciseSheet(path, prefill = '') {
   closeSheet();
   const el = document.createElement('div'); el.id = 'sheet';
   el.innerHTML = `
@@ -1525,7 +1551,7 @@ function newExerciseSheet(path) {
       <div class="sheet-handle"></div>
       <div class="px-4 pb-2 flex items-center justify-between"><div class="font-semibold text-slate-900 text-[17px]">New exercise</div><button class="text-slate-400 p-1" onclick="closeSheet(); draft && drawBuilder()">${I.x}</button></div>
       <div class="px-4 pb-4 space-y-2">
-        <input id="ne-name" type="text" class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-[16px]" placeholder="Name (e.g. Goblet squat)">
+        <input id="ne-name" type="text" class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-[16px]" placeholder="Name (e.g. Goblet squat)" value="${esc(prefill)}">
         <div class="grid grid-cols-2 gap-2">
           <select id="ne-icon" class="border border-slate-200 rounded-xl px-3 py-2.5 text-[16px] bg-white">${Object.keys(ICON_COLORS).map(k => `<option value="${k}">${k}</option>`).join('')}</select>
           <select id="ne-unit" class="border border-slate-200 rounded-xl px-3 py-2.5 text-[16px] bg-white"><option>kg</option><option>kg per arm</option><option>kph</option><option>reps</option><option>cal</option><option>m</option></select>
