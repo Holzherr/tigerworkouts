@@ -1,4 +1,4 @@
-import { ChevronUp, X } from 'lucide-react';
+import { ArrowLeftRight, X } from 'lucide-react';
 import { forwardRef } from 'react';
 import { Button } from '@/shared/components/ui/button';
 import { Chip } from '@/shared/components/ui/chip';
@@ -41,7 +41,8 @@ const stop = (e: React.SyntheticEvent) => e.stopPropagation();
 
 /**
  * One line of the runsheet. Collapsed: thumb, name, duration, value pill, caret, ✕ — the whole
- * row toggles. Expanded (orange tint): bigger clip, the name becomes the swap target, then two
+ * row toggles. Expanded (stays white so it reads as part of its block; the controls sit on a grey
+ * well): bigger clip, the name becomes the swap target, then two
  * settings rows: Weight (unit in the label) with a stepper, and For with a stepper plus a
  * seconds / reps / minutes dropdown. Rest steps show quick-pick chips instead of a weight row.
  * Pure: every change is handed back through onChange.
@@ -50,7 +51,6 @@ export const StepRow = forwardRef<HTMLDivElement, StepRowProps>(({ step, expande
   const isRest = step.kind === 'rest';
   const shell = cn(
     'relative bg-surface transition-[box-shadow,transform] duration-150 select-none',
-    expanded && 'bg-brand-soft',
     lifted && 'rotate-[-0.6deg] scale-[1.03] shadow-lift',
     className
   );
@@ -76,9 +76,9 @@ export const StepRow = forwardRef<HTMLDivElement, StepRowProps>(({ step, expande
   }
 
   return (
-    <div ref={ref} className={cn(shell, 'rounded-card')} {...rest}>
+    <div ref={ref} className={shell} {...rest}>
       <div role="button" tabIndex={0} aria-expanded onClick={onToggle} onKeyDown={e => e.key === 'Enter' && onToggle()} className="flex items-center gap-3 px-3 pt-3 pb-1">
-        {isRest ? <ClipThumb variant="rest" size="lg" className="size-14 text-[20px]" /> : <ClipThumb size="lg" clip={step.exercise.clip} poster={step.exercise.poster} icon={step.exercise.icon} />}
+        {isRest ? <ClipThumb variant="rest" size="lg" className="size-14 text-[20px]" /> : <ClipThumb size="lg" className="size-14" clip={step.exercise.clip} poster={step.exercise.poster} icon={step.exercise.icon} />}
         <div className="min-w-0 flex-1">
           {isRest ? (
             <>
@@ -87,21 +87,25 @@ export const StepRow = forwardRef<HTMLDivElement, StepRowProps>(({ step, expande
             </>
           ) : (
             <>
-              <button type="button" onClick={e => (stop(e), onSwap?.())} onPointerDown={stop} className="block max-w-full truncate text-left text-[15px] font-semibold text-ink">
-                {step.exercise.name}
+              <button
+                type="button"
+                onClick={e => (stop(e), onSwap?.())}
+                onPointerDown={stop}
+                aria-label={`${step.exercise.name}, tap to change exercise`}
+                className="flex h-10 w-full items-center gap-2 rounded-control border border-line bg-surface pr-2 pl-3 text-left shadow-xs active:bg-line-soft"
+              >
+                <span className="min-w-0 flex-1 truncate text-[15px] font-bold text-ink">{step.exercise.name}</span>
+                <ArrowLeftRight className="size-4 shrink-0 text-brand" />
               </button>
-              <button type="button" onClick={e => (stop(e), onSwap?.())} onPointerDown={stop} className="text-[12px] font-bold text-brand">
-                tap name to change ›
-              </button>
+              <div className="mt-1 text-[12px] text-muted">Tap to swap exercise</div>
             </>
           )}
         </div>
-        <ChevronUp className="size-4 shrink-0 text-faint" />
         {removeBtn}
       </div>
-      <div className="space-y-2.5 px-3 pt-1 pb-3" onPointerDown={stop} onClick={stop}>
+      <div className="mx-2 mb-2 space-y-2.5 rounded-control bg-canvas px-3 py-3" onPointerDown={stop} onClick={stop}>
         {isRest ? <RestBody step={step} onChange={onChange} /> : <ExerciseBody step={step} onChange={onChange} />}
-        <div className="text-[12px] text-muted">Tap the header to close · ✕ removes · swipe works here too</div>
+        <div className="text-[12px] text-muted">Tap the header to close</div>
       </div>
     </div>
   );

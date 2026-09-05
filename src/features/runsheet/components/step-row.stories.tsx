@@ -11,7 +11,7 @@ const meta = {
     docs: {
       description: {
         component:
-          'One line of the runsheet, 348px wide on a phone. Collapsed: 48px clip thumbnail, name with duration under it, grey value pill ("28 kg"), caret, ✕. Expanded (orange tint): 72px clip, the name is the swap target ("tap name to change ›"), then Weight (unit in the label) with a stepper and For with a stepper plus a seconds / reps / minutes dropdown. Rest rows swap the clip for a grey pause square and show quick-pick chips when open.',
+          'One line of the runsheet, 348px wide on a phone. Collapsed: 48px clip thumbnail, name with duration under it, grey value pill ("28 kg"), caret, ✕. Expanded (white, controls on a grey well so the row still reads as part of its block): 72px clip, the name is the swap target ("tap name to change ›"), then Weight (unit in the label) with a stepper and For with a stepper plus a seconds / reps / minutes dropdown. Rest rows swap the clip for a grey pause square and show quick-pick chips when open.',
       },
     },
   },
