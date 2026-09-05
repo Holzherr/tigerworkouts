@@ -97,7 +97,6 @@ export const StepRow = forwardRef<HTMLDivElement, StepRowProps>(({ step, expande
                 <span className="min-w-0 flex-1 truncate text-[15px] font-bold text-ink">{step.exercise.name}</span>
                 <ArrowLeftRight className="size-4 shrink-0 text-brand" />
               </button>
-              <div className="mt-1 text-[12px] text-muted">Tap to swap exercise</div>
             </>
           )}
         </div>
