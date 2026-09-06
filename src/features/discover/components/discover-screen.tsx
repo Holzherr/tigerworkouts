@@ -41,6 +41,16 @@ export interface DiscoverScreenProps {
 }
 
 const wid = (r: Runsheet) => r.id ?? r.title;
+/** Consecutive cards with the same reason share one header. */
+const groupRecs = (recs: ReturnType<typeof recommend>) => {
+  const out: [string, ReturnType<typeof recommend>][] = [];
+  for (const r of recs) {
+    const last = out[out.length - 1];
+    if (last && last[0] === r.reason) last[1].push(r);
+    else out.push([r.reason, [r]]);
+  }
+  return out;
+};
 
 /**
  * Home feed with three tabs in a segmented control under the title. Saved: the user's own and
@@ -119,13 +129,15 @@ export const DiscoverScreen = ({ workouts, results = [], savedIds = [], onOpen, 
           <>
             {above}
             {results.length === 0 && <div className="px-1 pb-1 text-[12px] text-muted">Log a workout and this list learns what you like. Until then, some good first ones.</div>}
-            {recs.map(rec => (
-              <div key={wid(rec.runsheet)}>
-                <div className="flex items-center gap-1 px-1 pb-1 text-[11px] font-bold tracking-widest text-brand-ink uppercase">
-                  <Sparkles className="size-3" /> {rec.reason}
+            {groupRecs(recs).map(([reason, list]) => (
+              <section key={reason} className="space-y-2">
+                <div className="flex items-center gap-1.5 px-1 pt-1 text-[12px] font-bold text-brand-ink">
+                  <Sparkles className="size-3.5" /> {reason}
                 </div>
-                <WorkoutCard runsheet={rec.runsheet} onOpen={onOpen} />
-              </div>
+                {list.map(rec => (
+                  <WorkoutCard key={wid(rec.runsheet)} runsheet={rec.runsheet} onOpen={onOpen} />
+                ))}
+              </section>
             ))}
           </>
         )}

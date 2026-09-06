@@ -8,6 +8,9 @@ import type { Favorite } from '@/features/cloud/sync';
 import type { SessionResult } from '@/features/runsheet/progression';
 
 const ICONS = ['🎾', '🏃', '🚴', '🏊', '🥾', '⚽', '🧘', '🥊', '🏓', '⛳', '🏋️', '🚶'];
+const LEGACY_ICON: Record<string, string> = { racket: '🎾', run: '🏃', bike: '🚴', swim: '🏊', hike: '🥾', football: '⚽', yoga: '🧘', body: '💪', walk: '🚶', rower: '🚣', kettlebell: '🏋️', barbell: '🏋️', dumbbell: '🏋️' };
+/** Favourites saved by the old app carry icon names, not emoji. */
+export const favIcon = (f: { icon?: string }) => (f.icon && f.icon.length <= 2 ? f.icon : LEGACY_ICON[f.icon ?? ''] ?? '🏃');
 const INTENSITY = ['easy', 'steady', 'hard'];
 
 export interface QuickLogRowProps {
@@ -28,7 +31,7 @@ export const QuickLogRow = ({ favorites, onLog, onManage }: QuickLogRowProps) =>
     <div className="-mx-3 flex gap-2 overflow-x-auto px-3 pb-1 [scrollbar-width:none]">
       {favorites.map(f => (
         <button key={f.name} type="button" onClick={() => onLog(f)} className="flex shrink-0 items-center gap-2 rounded-card border border-line bg-surface px-3 py-2 text-left active:bg-line-soft">
-          <span className="grid size-9 place-items-center rounded-control bg-brand-soft text-[18px]">{f.icon ?? '🏃'}</span>
+          <span className="grid size-9 place-items-center rounded-control bg-brand-soft text-[18px]">{favIcon(f)}</span>
           <span className="leading-tight">
             <span className="block text-[13px] font-semibold">{f.name}</span>
             <span className="block text-[11px] text-muted">{f.minutes} min · tap to log</span>
@@ -102,7 +105,7 @@ export const ManageFavoritesSheet = ({ open, onOpenChange, favorites, onChange }
       <div className="space-y-3 pb-2">
         {favorites.map((f, i) => (
           <div key={f.name} className="flex items-center gap-3">
-            <span className="text-[18px]">{f.icon}</span>
+            <span className="text-[18px]">{favIcon(f)}</span>
             <span className="flex-1 text-[15px]">
               {f.name} <span className="text-muted">· {f.minutes} min</span>
             </span>
