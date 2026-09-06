@@ -126,5 +126,10 @@
       ],
       "note": "Timestamps from YouTube key moments (on-screen captions)."
     }
-  ]
+  ],
+  "video": {
+    "provider": "youtube",
+    "id": "-p0PA9Zt8zk",
+    "url": "https://www.youtube.com/watch?v=-p0PA9Zt8zk"
+  }
 }

@@ -87,13 +87,9 @@
           "exercise": "bw_situp",
           "forMode": "reps",
           "forValue": 60
-        },
-        {
-          "kind": "rest",
-          "id": "r1",
-          "seconds": 180
         }
-      ]
+      ],
+      "restBetweenSec": 180
     }
   ]
 }

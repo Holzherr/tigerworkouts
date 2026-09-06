@@ -360,5 +360,10 @@
       ],
       "note": "startSeconds derived from the video's fixed interval grid (anchored on YouTube key moments), so may drift a few seconds; workout starts at 0:00, sets are 6 min with 1 min rests"
     }
-  ]
+  ],
+  "video": {
+    "provider": "youtube",
+    "id": "UBMk30rjy0o",
+    "url": "https://www.youtube.com/watch?v=UBMk30rjy0o"
+  }
 }

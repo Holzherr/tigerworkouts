@@ -31,7 +31,8 @@
       "exercise": "cardio_walk",
       "forMode": "minutes",
       "forValue": 5,
-      "note": "Brisk warm-up walk. Stretch before you start (see nhs-post-run-stretch or the NHS pre-run video)."
+      "note": "Brisk warm-up walk. Stretch before you start (see nhs-post-run-stretch or the NHS pre-run video).",
+      "role": "warmup"
     },
     {
       "kind": "block",
@@ -98,7 +99,8 @@
       "exercise": "cardio_walk",
       "forMode": "minutes",
       "forValue": 5,
-      "note": "Cool-down walk, then stretch (nhs-post-run-stretch)."
+      "note": "Cool-down walk, then stretch (nhs-post-run-stretch).",
+      "role": "cooldown"
     }
   ]
 }

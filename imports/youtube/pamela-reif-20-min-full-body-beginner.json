@@ -421,5 +421,10 @@
         }
       ]
     }
-  ]
+  ],
+  "video": {
+    "provider": "youtube",
+    "id": "UItWltVZZmE",
+    "url": "https://www.youtube.com/watch?v=UItWltVZZmE"
+  }
 }

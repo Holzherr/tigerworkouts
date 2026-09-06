@@ -79,5 +79,6 @@
       "forValue": 10,
       "note": "10 to 15 slow rocks"
     }
-  ]
+  ],
+  "score": "distance"
 }

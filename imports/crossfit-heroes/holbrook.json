@@ -33,10 +33,10 @@
           "kind": "exercise",
           "id": "s1",
           "exercise": "bb_thruster",
-          "target": 52.0,
+          "target": 52,
           "rx": {
-            "men": 52.0,
-            "women": 34.0
+            "men": 52,
+            "women": 34
           },
           "forMode": "reps",
           "forValue": 5,
@@ -56,13 +56,9 @@
           "forMode": "meters",
           "forValue": 100,
           "note": "sprint"
-        },
-        {
-          "kind": "rest",
-          "id": "r1",
-          "seconds": 60
         }
-      ]
+      ],
+      "restBetweenSec": 60
     }
   ]
 }

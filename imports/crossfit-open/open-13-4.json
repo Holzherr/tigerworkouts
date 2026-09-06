@@ -43,10 +43,10 @@
           "kind": "exercise",
           "id": "s1",
           "exercise": "bb_clean_and_jerk",
-          "target": 61.0,
+          "target": 61,
           "rx": {
-            "men": 61.0,
-            "women": 43.0
+            "men": 61,
+            "women": 43
           },
           "forMode": "reps",
           "forValue": 3,
@@ -61,5 +61,6 @@
         }
       ]
     }
-  ]
+  ],
+  "score": "reps"
 }

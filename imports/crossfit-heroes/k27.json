@@ -31,9 +31,9 @@
           "kind": "exercise",
           "id": "s1",
           "exercise": "bb_hang_power_clean",
-          "target": 84.0,
+          "target": 84,
           "rx": {
-            "men": 84.0,
+            "men": 84,
             "women": 47.5
           },
           "forMode": "reps",
@@ -56,5 +56,6 @@
         }
       ]
     }
-  ]
+  ],
+  "score": "load"
 }

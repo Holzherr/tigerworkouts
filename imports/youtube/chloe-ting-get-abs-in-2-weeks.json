@@ -207,5 +207,10 @@
       ],
       "note": "Exercise pairs run back to back; 10 s rest after each pair. Timestamps from key moments plus the pair grid."
     }
-  ]
+  ],
+  "video": {
+    "provider": "youtube",
+    "id": "2pLT-olgUJs",
+    "url": "https://www.youtube.com/watch?v=2pLT-olgUJs"
+  }
 }

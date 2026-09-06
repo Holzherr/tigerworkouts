@@ -64,5 +64,10 @@
       ],
       "note": "One step per song; timestamps from the description."
     }
-  ]
+  ],
+  "video": {
+    "provider": "youtube",
+    "id": "zm8Z-63UoTo",
+    "url": "https://www.youtube.com/watch?v=zm8Z-63UoTo"
+  }
 }

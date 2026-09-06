@@ -196,5 +196,10 @@
         }
       ]
     }
-  ]
+  ],
+  "video": {
+    "provider": "youtube",
+    "id": "tczVC2rRO7U",
+    "url": "https://www.youtube.com/watch?v=tczVC2rRO7U"
+  }
 }

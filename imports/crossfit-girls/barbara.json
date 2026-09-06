@@ -55,14 +55,9 @@
           "exercise": "bw_squat",
           "forMode": "reps",
           "forValue": 50
-        },
-        {
-          "kind": "rest",
-          "id": "r1",
-          "seconds": 180,
-          "note": "Rest exactly 3 minutes between rounds; final rest not counted"
         }
-      ]
+      ],
+      "restBetweenSec": 180
     }
   ]
 }

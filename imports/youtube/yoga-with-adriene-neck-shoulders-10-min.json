@@ -106,5 +106,10 @@
       ],
       "note": "No timestamps in the description or chapters; durations are estimates that sum to the video length."
     }
-  ]
+  ],
+  "video": {
+    "provider": "youtube",
+    "id": "X3-gKPNyrTA",
+    "url": "https://www.youtube.com/watch?v=X3-gKPNyrTA"
+  }
 }

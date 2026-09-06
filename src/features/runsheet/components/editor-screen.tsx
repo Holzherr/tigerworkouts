@@ -1,6 +1,20 @@
 import { ChevronLeft, ClipboardPaste, PenLine, Play } from 'lucide-react';
 import { Button } from '@/shared/components/ui/button';
-import { runsheetMinutes, type ExerciseStep, type Item, type Runsheet } from '../model';
+import { useState } from 'react';
+import { Dropdown } from '@/shared/components/ui/dropdown';
+import { Stepper } from '@/shared/components/ui/stepper';
+import { runsheetMinutes, scoreType, type ExerciseStep, type Item, type Runsheet, type ScoreType } from '../model';
+
+const SCORE_OPTIONS = [
+  { value: 'auto', label: 'Auto' },
+  { value: 'time', label: 'Time' },
+  { value: 'rounds', label: 'Rounds + reps' },
+  { value: 'reps', label: 'Total reps' },
+  { value: 'load', label: 'Load' },
+  { value: 'distance', label: 'Distance' },
+  { value: 'none', label: 'Not scored' },
+] as const;
+const SCORE_LABEL: Record<ScoreType, string> = { time: 'for time', rounds: 'rounds + reps', reps: 'total reps', load: 'for load', distance: 'for distance', none: '' };
 import { RunsheetList } from './runsheet-list';
 
 export interface EditorScreenProps {
@@ -17,6 +31,8 @@ export interface EditorScreenProps {
   /** Free-text change line ("press 20, half rests"); the host parses it. */
   onTextChange?: (text: string) => void;
   mode?: 'tonight' | 'author';
+  resolveTarget?: (step: ExerciseStep) => number | undefined;
+  refTitle?: (runsheetId: string) => string | undefined;
 }
 
 /**
@@ -24,10 +40,12 @@ export interface EditorScreenProps {
  * 4 blocks", Reset on the right and the free-text change line under it; the runsheet fills the
  * body; Start and Save as mine are pinned above the tab bar.
  */
-export const EditorScreen = ({ runsheet, onChange, onPickExercise, onSwapExercise, onBack, onReset, onStart, onSaveAsMine, onPastePlan, onTextChange, mode = 'tonight' }: EditorScreenProps) => {
+export const EditorScreen = ({ runsheet, onChange, onPickExercise, onSwapExercise, onBack, onReset, onStart, onSaveAsMine, onPastePlan, onTextChange, mode = 'tonight', resolveTarget, refTitle }: EditorScreenProps) => {
   const setItems = (items: Item[]) => onChange({ ...runsheet, items });
   const minutes = runsheetMinutes(runsheet);
   const blocks = runsheet.items.filter(i => i.kind === 'block').length;
+  const score = scoreType(runsheet);
+  const [settings, setSettings] = useState(false);
   return (
     <div className="flex h-full min-h-0 flex-col bg-canvas">
       <header className="safe-top shrink-0 border-b border-line bg-surface px-4 pb-2.5">
@@ -42,9 +60,24 @@ export const EditorScreen = ({ runsheet, onChange, onPickExercise, onSwapExercis
           )}
         </div>
         <h1 className="mt-1 text-[19px] leading-tight font-extrabold text-ink">{runsheet.title}</h1>
-        <div className="mt-0.5 text-[12px] text-muted">
+        <button type="button" onClick={() => setSettings(x => !x)} className="mt-0.5 block text-left text-[12px] text-muted">
           {mode === 'tonight' ? "Tonight's version" : `By ${runsheet.creator ?? 'you'}`} · <b className="text-ink">{minutes} min</b> · {blocks} {blocks === 1 ? 'block' : 'blocks'}
-        </div>
+          {runsheet.timeCapSec ? ` · cap ${Math.round(runsheet.timeCapSec / 60)}:00` : ''}
+          {score !== 'none' ? ` · ${SCORE_LABEL[score]}` : ''}
+          <span className="text-faint"> {settings ? '▴' : '▾'}</span>
+        </button>
+        {settings && (
+          <div className="mt-2 space-y-2 rounded-control bg-canvas p-3">
+            <div className="flex items-center justify-between gap-3">
+              <span className="text-[14px]">Time cap <span className="text-muted">(min, whole workout)</span></span>
+              <Stepper aria-label="Time cap" value={Math.round((runsheet.timeCapSec ?? 0) / 60)} min={0} max={120} onChange={m => onChange({ ...runsheet, timeCapSec: m ? m * 60 : undefined })} />
+            </div>
+            <div className="flex items-center justify-between gap-3">
+              <span className="text-[14px]">Scored on</span>
+              <Dropdown aria-label="Score" value={runsheet.score ?? 'auto'} options={SCORE_OPTIONS} onValueChange={v => onChange({ ...runsheet, score: v === 'auto' ? undefined : (v as ScoreType) })} />
+            </div>
+          </div>
+        )}
         <label className="mt-2.5 flex h-11 items-center gap-2 rounded-tile border border-line bg-surface px-3 text-faint">
           <PenLine className="size-4 shrink-0" />
           <input
@@ -66,7 +99,7 @@ export const EditorScreen = ({ runsheet, onChange, onPickExercise, onSwapExercis
         </label>
       </header>
       <div className="min-h-0 flex-1 overflow-y-auto px-3 pt-3 pb-28">
-        <RunsheetList items={runsheet.items} onChange={setItems} onPickExercise={onPickExercise} onSwapExercise={onSwapExercise} />
+        <RunsheetList items={runsheet.items} onChange={setItems} onPickExercise={onPickExercise} onSwapExercise={onSwapExercise} resolveTarget={resolveTarget} refTitle={refTitle} />
       </div>
       <div className="safe-bottom shrink-0 border-t border-line bg-surface p-3">
         <div className="flex gap-2">

@@ -650,5 +650,10 @@
       ],
       "note": "startSeconds derived from the video's fixed interval grid (anchored on YouTube key moments), so may drift a few seconds; key moments confirm the 30 s grid from 5:49 with a 20 s water break after move 16"
     }
-  ]
+  ],
+  "video": {
+    "provider": "youtube",
+    "id": "tbbZBtdd20U",
+    "url": "https://www.youtube.com/watch?v=tbbZBtdd20U"
+  }
 }

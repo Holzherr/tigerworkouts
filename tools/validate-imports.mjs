@@ -8,7 +8,9 @@ const root = path.join(here, '../imports');
 const libSrc = fs.readFileSync(path.join(here, '../src/features/exercises/library.ts'), 'utf8');
 const libKeys = new Set([...libSrc.matchAll(/^\s{2}"([a-z0-9_]+)":/gm)].map(m => m[1]));
 
-const FOR = new Set(['seconds', 'reps', 'minutes', 'meters', 'calories', 'max']);
+const FOR = new Set(['seconds', 'reps', 'minutes', 'meters', 'calories', 'max', 'amrap', 'segment']);
+const ROLES = new Set(['warmup', 'main', 'cooldown']);
+const SCORES = new Set(['time', 'rounds', 'reps', 'load', 'distance', 'none']);
 const MODES = new Set(['rounds', 'fortime', 'amrap', 'emom', 'ladder']);
 const KINDS = new Set(['benchmark', 'program', 'video', 'article', 'protocol', 'user']);
 const GROUPS = new Set(['barbell', 'dumbbell', 'kettlebell', 'body', 'core', 'band', 'treadmill', 'walk', 'run', 'bike', 'rower', 'swim', 'gym']);
@@ -64,11 +66,18 @@ for (const s of sources) {
         err(`${where}: unknown exercise ${key}`);
       }
       if (!FOR.has(st.forMode)) err(`${where}: bad forMode ${st.forMode}`);
-      if (st.forMode !== 'max' && !(st.forValue > 0)) err(`${where}: forValue missing`);
+      if (st.forMode !== 'max' && st.forMode !== 'segment' && !(st.forValue > 0)) err(`${where}: forValue missing`);
+      if (st.forMode === 'segment' && !(st.startSeconds >= 0)) err(`${where}: segment needs startSeconds`);
+      if (st.role && !ROLES.has(st.role)) err(`${where}: bad role ${st.role}`);
       fors[st.forMode] = (fors[st.forMode] || 0) + 1;
     };
+    if (w.score && !SCORES.has(w.score)) err(`bad score ${w.score}`);
+    if (w.video && !(w.video.provider === 'youtube' && w.video.id)) err('bad video');
     (w.items || []).forEach((it, i) => {
+      if (it.kind === 'ref') { if (!it.runsheetId) err(`item ${i}: ref needs runsheetId`); return; }
+      if (it.role && !ROLES.has(it.role)) err(`item ${i}: bad role ${it.role}`);
       if (it.kind === 'block') {
+        if (it.score && !SCORES.has(it.score)) err(`item ${i}: bad score ${it.score}`);
         const mode = it.mode ?? 'rounds';
         if (!MODES.has(mode)) err(`item ${i}: bad mode ${it.mode}`);
         modes[mode] = (modes[mode] || 0) + 1;

@@ -363,5 +363,10 @@
         }
       ]
     }
-  ]
+  ],
+  "video": {
+    "provider": "youtube",
+    "id": "ScInpT_5dIQ",
+    "url": "https://www.youtube.com/watch?v=ScInpT_5dIQ"
+  }
 }

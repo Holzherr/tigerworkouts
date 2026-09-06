@@ -193,5 +193,10 @@
       ],
       "note": "Yoga flow: durations approximate; startSeconds from key-moment cues that clearly mark the pose."
     }
-  ]
+  ],
+  "video": {
+    "provider": "youtube",
+    "id": "oBu-pQG6sTY",
+    "url": "https://www.youtube.com/watch?v=oBu-pQG6sTY"
+  }
 }

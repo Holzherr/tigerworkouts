@@ -68,13 +68,9 @@
             "women": 29.5
           },
           "note": "95/65 lb"
-        },
-        {
-          "kind": "rest",
-          "id": "r1",
-          "seconds": 60
         }
-      ]
+      ],
+      "restBetweenSec": 60
     }
   ]
 }

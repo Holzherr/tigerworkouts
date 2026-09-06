@@ -61,13 +61,9 @@
           "forMode": "reps",
           "forValue": 7,
           "note": "Chest-to-bar; bar ~6 in above standing reach"
-        },
-        {
-          "kind": "rest",
-          "id": "r1",
-          "seconds": 120
         }
-      ]
+      ],
+      "restBetweenSec": 120
     }
   ]
 }

@@ -296,5 +296,10 @@
         }
       ]
     }
-  ]
+  ],
+  "video": {
+    "provider": "youtube",
+    "id": "icoe6C2E-aY",
+    "url": "https://www.youtube.com/watch?v=icoe6C2E-aY"
+  }
 }

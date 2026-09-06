@@ -4,7 +4,18 @@ import { Chip } from '@/shared/components/ui/chip';
 import { Stepper } from '@/shared/components/ui/stepper';
 import { cn, fmtClock } from '@/shared/utils/ui-utils';
 import { Dropdown } from '@/shared/components/ui/dropdown';
-import { blockSeconds, modeLabel, roundSeconds, type Block, type BlockMode } from '../model';
+import { blockSeconds, modeLabel, roundSeconds, ROLE_LABEL, type Block, type BlockMode, type ItemRole, type ScoreType } from '../model';
+
+const ROLE_OPTIONS = (Object.keys(ROLE_LABEL) as ItemRole[]).map(r => ({ value: r, label: ROLE_LABEL[r] }));
+const SCORE_OPTIONS = [
+  { value: 'auto', label: 'Auto' },
+  { value: 'time', label: 'Time' },
+  { value: 'rounds', label: 'Rounds + reps' },
+  { value: 'reps', label: 'Total reps' },
+  { value: 'load', label: 'Load' },
+  { value: 'distance', label: 'Distance' },
+  { value: 'none', label: 'Not scored' },
+] as const;
 
 const MODE_OPTIONS = [
   { value: 'rounds', label: 'Rounds' },
@@ -18,7 +29,7 @@ export interface BlockHeaderProps extends Omit<React.HTMLAttributes<HTMLDivEleme
   block: Block;
   expanded: boolean;
   onToggle: () => void;
-  onChange: (patch: Partial<Pick<Block, 'name' | 'repeat' | 'mode' | 'timeCapSec' | 'everySec' | 'ladder'>>) => void;
+  onChange: (patch: Partial<Pick<Block, 'name' | 'repeat' | 'mode' | 'timeCapSec' | 'everySec' | 'ladder' | 'restBetweenSec' | 'role' | 'score'>>) => void;
   /** Shown instead of the stats line while a step is being dragged out and one would remain. */
   dissolving?: boolean;
   lifted?: boolean;
@@ -43,7 +54,7 @@ export const BlockHeader = forwardRef<HTMLDivElement, BlockHeaderProps>(({ block
             <div className="text-[12px] font-bold text-brand-ink">1 step left · bracket will dissolve</div>
           ) : (
             <div className="text-[12px] text-muted">
-              {block.steps.length} steps · {fmtClock(round)} per round · {Math.round(blockSeconds(block) / 60)} min{block.note ? ` · ${block.note}` : ''}
+              {block.steps.length} steps · {fmtClock(round)} per round · {Math.round(blockSeconds(block) / 60)} min{block.restBetweenSec ? ` · rest ${block.restBetweenSec}s between` : ''}{block.note ? ` · ${block.note}` : ''}
             </div>
           )}
         </div>
@@ -81,6 +92,20 @@ export const BlockHeader = forwardRef<HTMLDivElement, BlockHeaderProps>(({ block
               <Stepper aria-label="Interval" value={block.everySec ?? 60} step={15} min={15} max={600} onChange={everySec => onChange({ everySec })} />
             </div>
           )}
+          {(block.mode ?? 'rounds') !== 'emom' && (
+            <div className="flex items-center justify-between gap-3">
+              <span className="text-[14px]">Rest between rounds <span className="text-muted">(sec)</span></span>
+              <Stepper aria-label="Rest between rounds" value={block.restBetweenSec ?? 0} step={15} min={0} max={600} onChange={v => onChange({ restBetweenSec: v || undefined })} />
+            </div>
+          )}
+          <div className="flex items-center justify-between gap-3">
+            <span className="text-[14px]">Part of session</span>
+            <Dropdown aria-label="Part" value={block.role ?? 'main'} options={ROLE_OPTIONS} onValueChange={role => onChange({ role: role === 'main' ? undefined : role })} />
+          </div>
+          <div className="flex items-center justify-between gap-3">
+            <span className="text-[14px]">Scored on</span>
+            <Dropdown aria-label="Score" value={block.score ?? 'auto'} options={SCORE_OPTIONS} onValueChange={v => onChange({ score: v === 'auto' ? undefined : (v as ScoreType) })} />
+          </div>
           <label className="block">
             <span className="text-[12px] text-muted">Block name</span>
             <input type="text" value={block.name} onChange={e => onChange({ name: e.target.value })} className="mt-1 h-11 w-full rounded-control border border-line bg-surface px-3 text-[16px] font-semibold text-ink outline-none focus:border-hint" />

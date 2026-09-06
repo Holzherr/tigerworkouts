@@ -100,5 +100,10 @@
       ],
       "note": "One step per song; timestamps from the description."
     }
-  ]
+  ],
+  "video": {
+    "provider": "youtube",
+    "id": "SoRmqE7A_IE",
+    "url": "https://www.youtube.com/watch?v=SoRmqE7A_IE"
+  }
 }

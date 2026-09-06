@@ -91,9 +91,9 @@
           "kind": "exercise",
           "id": "s4",
           "exercise": "kb_turkish_getup",
-          "target": 18.0,
+          "target": 18,
           "rx": {
-            "men": 18.0,
+            "men": 18,
             "women": 13.5
           },
           "forMode": "max",
@@ -119,10 +119,10 @@
           "kind": "exercise",
           "id": "s5",
           "exercise": "bb_snatch",
-          "target": 34.0,
+          "target": 34,
           "rx": {
-            "men": 34.0,
-            "women": 25.0
+            "men": 34,
+            "women": 25
           },
           "forMode": "reps",
           "forValue": 7,
@@ -160,5 +160,6 @@
         }
       ]
     }
-  ]
+  ],
+  "score": "reps"
 }

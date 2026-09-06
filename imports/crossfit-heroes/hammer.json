@@ -32,10 +32,10 @@
           "kind": "exercise",
           "id": "s1",
           "exercise": "bb_power_clean",
-          "target": 61.0,
+          "target": 61,
           "rx": {
-            "men": 61.0,
-            "women": 43.0
+            "men": 61,
+            "women": 43
           },
           "forMode": "reps",
           "forValue": 5,
@@ -45,10 +45,10 @@
           "kind": "exercise",
           "id": "s2",
           "exercise": "bb_front_squat",
-          "target": 61.0,
+          "target": 61,
           "rx": {
-            "men": 61.0,
-            "women": 43.0
+            "men": 61,
+            "women": 43
           },
           "forMode": "reps",
           "forValue": 10,
@@ -58,10 +58,10 @@
           "kind": "exercise",
           "id": "s3",
           "exercise": "bb_push_jerk",
-          "target": 61.0,
+          "target": 61,
           "rx": {
-            "men": 61.0,
-            "women": 43.0
+            "men": 61,
+            "women": 43
           },
           "forMode": "reps",
           "forValue": 5,
@@ -73,13 +73,9 @@
           "exercise": "bw_pullup",
           "forMode": "reps",
           "forValue": 20
-        },
-        {
-          "kind": "rest",
-          "id": "r1",
-          "seconds": 90
         }
-      ]
+      ],
+      "restBetweenSec": 90
     }
   ]
 }

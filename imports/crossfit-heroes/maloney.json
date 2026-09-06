@@ -61,13 +61,9 @@
             "women": 56.5
           },
           "note": "185/125 lb"
-        },
-        {
-          "kind": "rest",
-          "id": "r1",
-          "seconds": 120
         }
-      ]
+      ],
+      "restBetweenSec": 120
     }
   ]
 }

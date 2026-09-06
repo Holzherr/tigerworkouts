@@ -56,13 +56,9 @@
           "forMode": "reps",
           "forValue": 10,
           "note": "24/20 in box"
-        },
-        {
-          "kind": "rest",
-          "id": "r1",
-          "seconds": 180
         }
-      ]
+      ],
+      "restBetweenSec": 180
     }
   ]
 }

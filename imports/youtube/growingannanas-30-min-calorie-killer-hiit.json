@@ -512,5 +512,10 @@
         }
       ]
     }
-  ]
+  ],
+  "video": {
+    "provider": "youtube",
+    "id": "jpizoUy4K9s",
+    "url": "https://www.youtube.com/watch?v=jpizoUy4K9s"
+  }
 }

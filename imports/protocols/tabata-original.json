@@ -25,7 +25,8 @@
       "exercise": "cardio_bike",
       "forMode": "minutes",
       "forValue": 10,
-      "note": "Warm-up, easy (~50% VO2max)"
+      "note": "Warm-up, easy (~50% VO2max)",
+      "role": "warmup"
     },
     {
       "kind": "block",

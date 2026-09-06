@@ -27,5 +27,6 @@
       "forValue": 12,
       "note": "Max distance in 12 min; score = metres"
     }
-  ]
+  ],
+  "score": "distance"
 }

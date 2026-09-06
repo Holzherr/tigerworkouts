@@ -361,5 +361,10 @@
         }
       ]
     }
-  ]
+  ],
+  "video": {
+    "provider": "youtube",
+    "id": "cZnsLVArIt8",
+    "url": "https://www.youtube.com/watch?v=cZnsLVArIt8"
+  }
 }

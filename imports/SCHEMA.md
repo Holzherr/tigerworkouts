@@ -38,7 +38,7 @@ A step is an exercise or a rest. A block is a named list of steps with a mode.
 // exercise step
 { "kind": "exercise", "id": "s1", "exercise": "bw_thruster", "target": 43, "rx": { "men": 43, "women": 29 },
   "forMode": "reps", "forValue": 21, "note": "95/65 lb" }
-// forMode: seconds | reps | minutes | meters | calories | max
+// forMode: seconds | reps | minutes | meters | calories | max | amrap ("5+": at least forValue, log the rest) | segment (video, startSeconds→endSeconds, no timer)
 // target: load/speed in the exercise's unit (kg, kg per arm, kph, W). Omit for bodyweight.
 // rx: prescribed men's/women's loads in the same unit when the source gives both. Convert lb→kg (÷2.2046, round to 0.5).
 // startSeconds: for follow-along videos, where this step starts in the video.
@@ -59,6 +59,12 @@ Rules:
 - **Max effort** ("max reps pull-ups", "plank max hold"): `forMode: "max"`, forValue 0.
 - **Each side** (lunges L/R, single-arm rows): one step with `"perSide": true`, not two steps.
 - **Ranges** ("15 to 24 reps"): `forValue` = lower bound, `forMax` = upper bound.
+- **Roles**: `"role": "warmup" | "main" | "cooldown"` on any item; the list shows dividers. A shared routine is a ref item: `{ "kind": "ref", "id": "w", "runsheetId": "nhs-6-minute-warm-up", "role": "warmup" }`.
+- **Scores**: `"score": time | rounds | reps | load | distance | none` on the runsheet (or a block) when it isn't obvious from the mode (FGB = reps, Cooper = distance, 1RM = load).
+- **One clock**: `"timeCapSec"` on the runsheet when a cap spans several blocks. `"restBetweenSec"` on a block for rest between repeats (never a trailing rest step).
+- **Progression**: `"progression": { "onSuccessKg": 2.5, "deloadPct": 10, "failAfter": 3 }` or `{ "amrapBumpAt": 5, "tmBumpKg": 2.5 }` on the runsheet or block.
+- **Videos**: `"video": { "provider": "youtube", "id": "...", "url": "..." }` on the runsheet; steps use `startSeconds` (+ `endSeconds` for `segment`).
+- **Uneven ladders**: per step `"ladderFactor": 10` (double-unders 10n) or `"ladderFixed": true`.
 - **Relative loads**: `loadFactor` (× bodyweight, e.g. 1.5) or `targetPct` (% of training max, e.g. 65) instead of `target`.
 - **Rounds**: "5 rounds of A, B, C" = one block, `repeat: 5`, no rest steps unless the source says.
 - **Intervals** (30s on / 30s off): exercise step `forMode: seconds` followed by a rest step, block `repeat` = rounds.

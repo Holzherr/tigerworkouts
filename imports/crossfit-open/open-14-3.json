@@ -34,10 +34,10 @@
           "kind": "exercise",
           "id": "s1",
           "exercise": "bb_deadlift",
-          "target": 61.0,
+          "target": 61,
           "rx": {
-            "men": 61.0,
-            "women": 43.0
+            "men": 61,
+            "women": 43
           },
           "forMode": "reps",
           "forValue": 10,
@@ -55,10 +55,10 @@
           "kind": "exercise",
           "id": "s3",
           "exercise": "bb_deadlift",
-          "target": 84.0,
+          "target": 84,
           "rx": {
-            "men": 84.0,
-            "women": 61.0
+            "men": 84,
+            "women": 61
           },
           "forMode": "reps",
           "forValue": 15,
@@ -76,9 +76,9 @@
           "kind": "exercise",
           "id": "s5",
           "exercise": "bb_deadlift",
-          "target": 102.0,
+          "target": 102,
           "rx": {
-            "men": 102.0,
+            "men": 102,
             "women": 70.5
           },
           "forMode": "reps",
@@ -100,7 +100,7 @@
           "target": 124.5,
           "rx": {
             "men": 124.5,
-            "women": 84.0
+            "women": 84
           },
           "forMode": "reps",
           "forValue": 25,
@@ -118,10 +118,10 @@
           "kind": "exercise",
           "id": "s9",
           "exercise": "bb_deadlift",
-          "target": 143.0,
+          "target": 143,
           "rx": {
-            "men": 143.0,
-            "women": 93.0
+            "men": 143,
+            "women": 93
           },
           "forMode": "reps",
           "forValue": 30,
@@ -142,7 +142,7 @@
           "target": 165.5,
           "rx": {
             "men": 165.5,
-            "women": 102.0
+            "women": 102
           },
           "forMode": "reps",
           "forValue": 35,
@@ -158,5 +158,6 @@
         }
       ]
     }
-  ]
+  ],
+  "score": "reps"
 }

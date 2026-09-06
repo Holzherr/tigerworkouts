@@ -56,13 +56,9 @@
           "exercise": "bw_burpee",
           "forMode": "reps",
           "forValue": 10
-        },
-        {
-          "kind": "rest",
-          "id": "r1",
-          "seconds": 30
         }
-      ]
+      ],
+      "restBetweenSec": 30
     }
   ]
 }

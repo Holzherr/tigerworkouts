@@ -76,7 +76,8 @@
       "exercise": "bw_stretch_inner_thigh",
       "forMode": "seconds",
       "forValue": 15,
-      "note": "Hold 15 to 20 s"
+      "note": "Hold 15 to 20 s",
+      "role": "cooldown"
     },
     {
       "kind": "block",

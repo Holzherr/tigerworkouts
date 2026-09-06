@@ -15,6 +15,7 @@ const FOR_OPTIONS = [
   { value: 'meters', label: 'metres' },
   { value: 'calories', label: 'calories' },
   { value: 'max', label: 'max' },
+  { value: 'amrap', label: 'reps+' },
 ] as const satisfies readonly { value: ForMode; label: string }[];
 
 const REST_OPTIONS = [
@@ -38,6 +39,8 @@ export interface StepRowProps extends Omit<React.HTMLAttributes<HTMLDivElement>,
   groupTarget?: boolean;
   /** Small grey line under the name when collapsed, e.g. "last time 17.5". */
   hint?: string;
+  /** kg this user should load when the step is % TM or × BW. */
+  resolvedTarget?: number;
 }
 
 const stop = (e: React.SyntheticEvent) => e.stopPropagation();
@@ -50,7 +53,7 @@ const stop = (e: React.SyntheticEvent) => e.stopPropagation();
  * seconds / reps / minutes dropdown. Rest steps show quick-pick chips instead of a weight row.
  * Pure: every change is handed back through onChange.
  */
-export const StepRow = forwardRef<HTMLDivElement, StepRowProps>(({ step, expanded, onToggle, onChange, onRemove, onSwap, lifted, groupTarget, hint, className, ...rest }, ref) => {
+export const StepRow = forwardRef<HTMLDivElement, StepRowProps>(({ step, expanded, onToggle, onChange, onRemove, onSwap, lifted, groupTarget, hint, resolvedTarget, className, ...rest }, ref) => {
   const isRest = step.kind === 'rest';
   const shell = cn(
     'relative bg-surface transition-[box-shadow,transform] duration-150 select-none',
@@ -70,9 +73,9 @@ export const StepRow = forwardRef<HTMLDivElement, StepRowProps>(({ step, expande
         {isRest ? <ClipThumb variant="rest" /> : <ClipThumb clip={step.exercise.clip} poster={step.exercise.poster} icon={step.exercise.icon} />}
         <div className="min-w-0 flex-1">
           <div className={cn('line-clamp-2 text-[14.5px] leading-tight font-semibold', isRest && 'text-body')}>{isRest ? 'Rest' : step.exercise.name}</div>
-          <div className="text-[12px] text-muted">{groupTarget ? <span className="font-bold text-brand-ink">Release to make a block</span> : isRest ? 'step' : (hint ?? forLabel(step))}</div>
+          <div className="text-[12px] text-muted">{groupTarget ? <span className="font-bold text-brand-ink">Release to make a block</span> : isRest ? 'step' : (hint ?? `${forLabel(step)}${resolvedTarget !== undefined && step.targetPct !== undefined ? ` · ${step.targetPct}% TM` : resolvedTarget !== undefined && step.loadFactor !== undefined ? ` · ${step.loadFactor}× BW` : ''}${step.perSide ? '' : ''}`)}</div>
         </div>
-        <Chip variant="value">{isRest ? `${step.seconds}s` : loadLabel(step) || forLabel(step)}</Chip>
+        <Chip variant="value">{isRest ? `${step.seconds}s` : resolvedTarget !== undefined && (step.targetPct !== undefined || step.loadFactor !== undefined) ? `${resolvedTarget} kg` : loadLabel(step) || forLabel(step)}</Chip>
         {removeBtn}
       </div>
     );
@@ -140,7 +143,7 @@ const ExerciseBody = ({ step, onChange }: { step: ExerciseStep; onChange: (s: St
     </div>
   </>
 );
-const defaultFor = (m: ForMode) => (m === 'seconds' ? 30 : m === 'reps' ? 10 : m === 'meters' ? 400 : m === 'calories' ? 15 : 5);
+const defaultFor = (m: ForMode) => (m === 'seconds' ? 30 : m === 'reps' || m === 'amrap' ? 10 : m === 'meters' ? 400 : m === 'calories' ? 15 : m === 'max' || m === 'segment' ? 0 : 5);
 
 const RestBody = ({ step, onChange }: { step: RestStep; onChange: (s: Step) => void }) => {
   const minutes = step.seconds % 60 === 0 && step.seconds >= 60;

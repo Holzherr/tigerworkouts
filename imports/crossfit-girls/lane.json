@@ -43,14 +43,10 @@
           "forMode": "reps",
           "forValue": 1,
           "note": "Max reps; score = reps"
-        },
-        {
-          "kind": "rest",
-          "id": "r1",
-          "seconds": 180,
-          "note": "Rest as needed between rounds"
         }
-      ]
+      ],
+      "restBetweenSec": 180
     }
-  ]
+  ],
+  "score": "reps"
 }

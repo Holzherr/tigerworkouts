@@ -146,5 +146,10 @@
       ],
       "note": "Yoga flow: durations are approximate segment lengths; startSeconds where a key moment marks the pose, otherwise estimated."
     }
-  ]
+  ],
+  "video": {
+    "provider": "youtube",
+    "id": "v7AYKMP6rOE",
+    "url": "https://www.youtube.com/watch?v=v7AYKMP6rOE"
+  }
 }

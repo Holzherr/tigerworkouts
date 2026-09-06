@@ -511,5 +511,10 @@
         }
       ]
     }
-  ]
+  ],
+  "video": {
+    "provider": "youtube",
+    "id": "Prl5NeXTDkk",
+    "url": "https://www.youtube.com/watch?v=Prl5NeXTDkk"
+  }
 }

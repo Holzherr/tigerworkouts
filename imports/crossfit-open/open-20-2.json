@@ -36,7 +36,7 @@
           "target": 22.5,
           "rx": {
             "men": 22.5,
-            "women": 16.0
+            "women": 16
           },
           "forMode": "reps",
           "forValue": 4,
@@ -58,5 +58,6 @@
         }
       ]
     }
-  ]
+  ],
+  "score": "reps"
 }

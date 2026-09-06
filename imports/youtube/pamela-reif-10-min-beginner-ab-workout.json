@@ -225,5 +225,10 @@
       ],
       "note": "startSeconds derived from the video's fixed interval grid (anchored on YouTube key moments), so may drift a few seconds; workout starts at 0:05"
     }
-  ]
+  ],
+  "video": {
+    "provider": "youtube",
+    "id": "1f8yoFFdkcY",
+    "url": "https://www.youtube.com/watch?v=1f8yoFFdkcY"
+  }
 }

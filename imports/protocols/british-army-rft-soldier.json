@@ -61,7 +61,8 @@
       "forMode": "reps",
       "forValue": 1,
       "target": 22,
-      "note": "2 × 22 kg cans, simulates a stretcher carry; distance not published"
+      "note": "2 × 22 kg cans, simulates a stretcher carry; distance not published",
+      "role": "cooldown"
     },
     {
       "kind": "exercise",

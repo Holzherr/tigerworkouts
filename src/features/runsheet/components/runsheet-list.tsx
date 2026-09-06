@@ -14,7 +14,9 @@ import { SortableContext, useSortable, verticalListSortingStrategy } from '@dnd-
 import { CSS } from '@dnd-kit/utilities';
 import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { cn } from '@/shared/utils/ui-utils';
-import { appendToBlock, flatten, groupOnto, insertAfter, makeRest, moveRow, removeStep, replaceStep, updateBlock, type Block, type ExerciseStep, type Item, type Row, type Step } from '../model';
+import { appendToBlock, flatten, groupOnto, insertAfter, makeRest, moveRow, removeItem, removeStep, replaceStep, ROLE_LABEL, updateBlock, type Block, type ExerciseStep, type Item, type ItemRole, type Row, type Step } from '../model';
+import { Link2, X } from 'lucide-react';
+import { Button } from '@/shared/components/ui/button';
 import { AddTile, SeamInsert, type AddKind } from './add-controls';
 import { BlockBracket, BlockHeader } from './block-bracket';
 import { StepRow } from './step-row';
@@ -31,6 +33,10 @@ export interface RunsheetListProps {
   onExpandedChange?: (id: string | null) => void;
   /** Rest inserted between two exercises when they are grouped; 0 disables. */
   autoRest?: number;
+  /** Resolve % TM / × BW loads to kg for display. */
+  resolveTarget?: (step: ExerciseStep) => number | undefined;
+  /** Title lookup for ref items (embedded runsheets). */
+  refTitle?: (runsheetId: string) => string | undefined;
   className?: string;
 }
 
@@ -45,7 +51,7 @@ const LIFT_MS = 350;
  * to make a block or join one. Blocks drag as a chunk by their header. Tap a row to expand it,
  * swipe or ✕ to remove, ＋ on a seam to insert there.
  */
-export const RunsheetList = ({ items, onChange, onPickExercise, onSwapExercise, expandedId: expandedProp, onExpandedChange, autoRest = 30, className }: RunsheetListProps) => {
+export const RunsheetList = ({ items, onChange, onPickExercise, onSwapExercise, expandedId: expandedProp, onExpandedChange, autoRest = 30, resolveTarget, refTitle, className }: RunsheetListProps) => {
   const [expandedLocal, setExpandedLocal] = useState<string | null>(null);
   const expandedId = expandedProp === undefined ? expandedLocal : expandedProp;
   const setExpanded = (id: string | null) => (onExpandedChange ? onExpandedChange(id) : setExpandedLocal(id));
@@ -166,6 +172,7 @@ export const RunsheetList = ({ items, onChange, onPickExercise, onSwapExercise, 
             onSwap={row.step.kind === 'exercise' ? () => swap(row.step as ExerciseStep) : undefined}
             lifted={activeId === row.id}
             groupTarget={groupTarget === row.id}
+            resolvedTarget={row.step.kind === 'exercise' && resolveTarget ? resolveTarget(row.step) : undefined}
           />
         </SwipeToRemove>
       )}
@@ -174,11 +181,46 @@ export const RunsheetList = ({ items, onChange, onPickExercise, onSwapExercise, 
 
   const blocks: React.ReactNode[] = [];
   let i = 0;
+  let currentRole: ItemRole | null = null;
+  const roleOf = (r: Row): ItemRole => (r.type === 'step' ? (r.step.role ?? 'main') : r.type === 'block-head' ? (r.block.role ?? 'main') : r.type === 'ref' ? (r.ref.role ?? 'main') : 'main');
+  const hasRoles = rows.some(r => r.type !== 'block-end' && roleOf(r) !== 'main');
+  const divider = (r: Row) => {
+    const role = roleOf(r);
+    if (!hasRoles || role === currentRole) return null;
+    currentRole = role;
+    return (
+      <div key={`role-${role}-${r.id}`} className="flex items-center gap-2 pt-2 pb-1 text-[11px] font-bold tracking-widest text-muted uppercase">
+        <span className="h-px flex-1 bg-line" />
+        {ROLE_LABEL[role]}
+        <span className="h-px flex-1 bg-line" />
+      </div>
+    );
+  };
   while (i < rows.length) {
     const r = rows[i];
+    if (r.type === 'ref') {
+      blocks.push(
+        <Fragment key={r.id}>
+          {divider(r)}
+          <div className="flex items-center gap-2.5 rounded-card border border-dashed border-hint bg-surface px-3 py-2">
+            <Link2 className="size-4 shrink-0 text-faint" />
+            <div className="min-w-0 flex-1">
+              <div className="truncate text-[14px] font-semibold">{refTitle?.(r.ref.runsheetId) ?? r.ref.runsheetId}</div>
+              <div className="text-[12px] text-muted">included workout</div>
+            </div>
+            <Button variant="quiet" size="icon-sm" aria-label="Remove" onClick={() => onChange(removeItem(items, r.id))} className="text-hint">
+              <X />
+            </Button>
+          </div>
+        </Fragment>
+      );
+      i++;
+      continue;
+    }
     if (r.type === 'step') {
       blocks.push(
         <Fragment key={r.id}>
+          {divider(r)}
           {renderStep(r, false)}
           {!activeId && <SeamInsert onInsert={k => add(k, { after: r.id })} className="mt-2" />}
         </Fragment>
@@ -201,6 +243,8 @@ export const RunsheetList = ({ items, onChange, onPickExercise, onSwapExercise, 
         j++;
       }
       const endRow = rows[j];
+      const div = divider(r);
+      if (div) blocks.push(div);
       blocks.push(
         <SortableBlock
           key={block.id}

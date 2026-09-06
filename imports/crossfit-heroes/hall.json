@@ -32,9 +32,9 @@
           "kind": "exercise",
           "id": "s1",
           "exercise": "bb_squat_clean",
-          "target": 102.0,
+          "target": 102,
           "rx": {
-            "men": 102.0,
+            "men": 102,
             "women": 70.5
           },
           "forMode": "reps",
@@ -61,13 +61,10 @@
           "forMode": "reps",
           "forValue": 20,
           "note": "53/35 lb; 10 each arm"
-        },
-        {
-          "kind": "rest",
-          "id": "r1",
-          "seconds": 120
         }
-      ]
+      ],
+      "restBetweenSec": 120
     }
-  ]
+  ],
+  "score": "load"
 }

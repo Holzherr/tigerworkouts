@@ -325,5 +325,10 @@
         }
       ]
     }
-  ]
+  ],
+  "video": {
+    "provider": "youtube",
+    "id": "2MoGxae-zyo",
+    "url": "https://www.youtube.com/watch?v=2MoGxae-zyo"
+  }
 }

@@ -70,13 +70,9 @@
           "forMode": "meters",
           "forValue": 100,
           "note": "Sprint"
-        },
-        {
-          "kind": "rest",
-          "id": "r1",
-          "seconds": 120
         }
-      ]
+      ],
+      "restBetweenSec": 120
     }
   ]
 }
