@@ -33,6 +33,8 @@ export interface StepResult {
 }
 
 export interface SessionResult {
+  /** Stable id (sessions.id); assigned on first save. */
+  id?: string;
   runsheetId: string;
   /** Title at the time, so history reads even if the workout is gone. */
   title?: string;
@@ -44,6 +46,8 @@ export interface SessionResult {
   activity?: { name: string; icon?: string; minutes: number; intensity?: string };
   /** Device heart-rate summary attached after sync (Fitbit / Google Health). */
   device?: { avgHr?: number; maxHr?: number; calories?: number; source?: string };
+  /** The v0.9 row this came from, kept so edits push back a shape the old app reads. */
+  legacy?: unknown;
   /** Score in the workout's score type: seconds, rounds (+ reps/1000), total reps, kg, metres. */
   score?: number;
   scoreText?: string;

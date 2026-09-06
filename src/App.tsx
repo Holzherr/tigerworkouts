@@ -23,6 +23,11 @@ import { Button } from '@/shared/components/ui/button';
 import { Sheet } from '@/shared/components/ui/sheet';
 import { TabBar } from '@/shared/components/ui/tab-bar';
 import { useActions, useAppState } from './app/store';
+import { sendCode, signOut, verifyCode } from '@/features/cloud/client';
+import { deviceFor, fetchPublicWorkouts } from '@/features/cloud/sync';
+import { useCloudSync } from '@/features/cloud/use-sync';
+import { SessionDetailScreen } from '@/features/results/components/session-detail-screen';
+import { FULL_LIBRARY as LIB } from '@/features/workouts/imported';
 
 // Temporary picker until the searchable exercise sheet is ported.
 const pick = async (): Promise<ExerciseStep | null> => {
@@ -38,7 +43,7 @@ const TABS = [
 ] as const;
 type Tab = (typeof TABS)[number]['id'];
 
-type Route = { name: 'tab'; tab: Tab; sub?: string } | { name: 'workout' | 'edit' | 'follow' | 'result' | 'do'; id: string };
+type Route = { name: 'tab'; tab: Tab; sub?: string } | { name: 'workout' | 'edit' | 'follow' | 'result' | 'do' | 'session'; id: string };
 
 const parse = (hash: string): Route => {
   const seg = hash.replace(/^#\/?/, '').split('/');
@@ -48,6 +53,7 @@ const parse = (hash: string): Route => {
   if (seg[0] === 'follow' && id) return { name: 'follow', id };
   if (seg[0] === 'result' && id) return { name: 'result', id };
   if (seg[0] === 'do' && id) return { name: 'do', id };
+  if (seg[0] === 's' && id) return { name: 'session', id };
   return { name: 'tab', tab: seg[0] === 'history' || seg[0] === 'me' ? seg[0] : 'discover', sub: seg[1] };
 };
 const go = (path: string) => {
@@ -59,6 +65,11 @@ const usesRelativeLoads = (r: Runsheet) => r.items.some(i => (i.kind === 'block'
 export default function App() {
   const st = useAppState();
   const act = useActions();
+  const cloud = useCloudSync();
+  const [remote, setRemote] = useState<Runsheet[]>([]);
+  useEffect(() => {
+    fetchPublicWorkouts().then(setRemote).catch(() => {});
+  }, [cloud.user]);
   const [route, setRoute] = useState<Route>(() => parse(location.hash));
   useEffect(() => {
     const on = () => setRoute(parse(location.hash));
@@ -66,7 +77,7 @@ export default function App() {
     return () => removeEventListener('hashchange', on);
   }, []);
 
-  const all = useMemo(() => [...(st.workouts.length ? st.workouts : [priyanka()]), ...IMPORTED.map(w => w.runsheet)], [st.workouts]);
+  const all = useMemo(() => [...(st.workouts.length ? st.workouts : [priyanka()]), ...remote.filter(r => !st.workouts.some(w => w.id === r.id)), ...IMPORTED.map(w => w.runsheet)], [st.workouts, remote]);
   const byId = useMemo(() => new Map(all.map(r => [wid(r), r])), [all]);
   const lookup = (id: string) => byId.get(id);
   const refTitle = (id: string) => byId.get(id)?.title;
@@ -148,6 +159,25 @@ export default function App() {
     if (!r) return shell('discover', <Missing />);
     return <RunRoute key={route.id} runsheet={resolveRefs(r, lookup)} onFinish={res => (setPending(res), go(`/result/${encodeURIComponent(route.id)}`))} onExit={() => (Runner.clearPersisted(), go(`/w/${encodeURIComponent(route.id)}`))} />;
   }
+  if (route.name === 'session') {
+    const res = st.results.find(x => x.id === route.id);
+    if (!res) return shell('history', <Missing />);
+    const r = byId.get(res.runsheetId);
+    return (
+      <div className="h-dvh">
+        <SessionDetailScreen
+          result={res}
+          runsheet={r}
+          exercise={k => LIB[k] ?? { key: k, name: k, unit: '', step: 1 }}
+          loadDevice={cloud.user ? () => deviceFor(res) : undefined}
+          onBack={() => go('/history')}
+          onChange={p => act.updateResult(res.id!, p)}
+          onDelete={() => (act.deleteResult(res.id!), go('/history'))}
+          onRepeat={r ? () => go(`/w/${encodeURIComponent(wid(r))}`) : undefined}
+        />
+      </div>
+    );
+  }
   if (route.name === 'result') {
     const r = draft ?? byId.get(route.id);
     if (!r) return shell('discover', <Missing />);
@@ -197,10 +227,10 @@ export default function App() {
           {st.results.filter(r => sub !== 'week' || Date.now() - Date.parse(r.startedAt) < 7 * 864e5).map((res, i) => {
             const r = byId.get(res.runsheetId);
             return (
-              <button key={i} type="button" onClick={() => r && go(`/w/${encodeURIComponent(res.runsheetId)}`)} className="flex w-full items-center gap-3 rounded-card border border-line bg-surface px-3 py-2 text-left">
+              <button key={res.id ?? i} type="button" onClick={() => go(`/s/${encodeURIComponent(res.id ?? '')}`)} className="flex w-full items-center gap-3 rounded-card border border-line bg-surface px-3 py-2 text-left">
                 <div className="min-w-0 flex-1">
-                  <div className="truncate text-[14px] font-bold">{r?.title ?? res.runsheetId}</div>
-                  <div className="text-[12px] text-muted">{res.startedAt.slice(0, 10)}</div>
+                  <div className="truncate text-[14px] font-bold">{res.title ?? r?.title ?? res.runsheetId}</div>
+                  <div className="text-[12px] text-muted">{res.startedAt.slice(0, 10)}{res.durationSec ? ` · ${Math.round(res.durationSec / 60)} min` : res.activity ? ` · ${res.activity.minutes} min` : ''}{res.completed === false ? ' · stopped early' : ''}</div>
                 </div>
                 <div className="text-[15px] font-extrabold tabular-nums">{r ? fmtScore(scoreType(r), res.score, res.scoreText) : (res.scoreText ?? '')}</div>
               </button>
@@ -216,27 +246,25 @@ export default function App() {
       <div className="flex h-full flex-col bg-canvas">
         <header className="safe-top bg-surface px-4 pt-3 pb-2">
           <h1 className="text-[22px] font-extrabold">{st.name}</h1>
-          <div className="text-[12px] text-muted">{st.signedIn ? 'Signed in · logs back up to your account' : 'Not signed in · logs stay on this phone'}</div>
+          <div className="text-[12px] text-muted">{cloud.user ? `Signed in as ${cloud.user.email}` : 'Not signed in · logs stay on this phone'}</div>
         </header>
         <div className="min-h-0 flex-1 space-y-2 overflow-y-auto px-3 py-3">
           <StatTiles stats={[{ value: st.results.length, label: 'sessions', onClick: () => go('/history') }, { value: st.results.filter(r => Date.now() - Date.parse(r.startedAt) < 7 * 864e5).length, label: 'this week', onClick: () => go('/history/week') }, { value: st.saved.length, label: 'saved', onClick: () => go('/discover/saved') }]} />
-          {!st.signedIn && (
-            <SignInCard
-              onSendCode={async () => {
-                /* auth not ported: accept any address */
-              }}
-              onVerify={async (_e, c) => {
-                if (c.length < 6) throw new Error('Enter the 6 digits from the email');
-                act.setSignedIn(true);
-              }}
-            />
+          {!cloud.user && <SignInCard onSendCode={sendCode} onVerify={async (e, c) => { await verifyCode(e, c); act.setSignedIn(true); }} />}
+          {cloud.user && (
+            <div className="flex items-center justify-between rounded-card border border-line bg-surface px-3 py-2 text-[13px]">
+              <span className={st.syncError ? 'text-danger' : 'text-muted'}>{st.syncError ? `Sync error: ${st.syncError}` : st.lastSync ? `Synced ${new Date(st.lastSync).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })} · ${cloud.user.email}` : 'Syncing…'}</span>
+              <Button variant="text" size="inline" onClick={cloud.syncNow}>
+                Sync now
+              </Button>
+            </div>
           )}
           <Button variant="ghost" block onClick={() => setTmOpen(true)}>
             Training maxes
           </Button>
           {tmSheet()}
-          {st.signedIn && (
-            <Button variant="quiet" block onClick={() => (act.setSignedIn(false), go('/discover'))}>
+          {cloud.user && (
+            <Button variant="quiet" block onClick={() => signOut().then(() => (act.setSignedIn(false), go('/discover')))}>
               Sign out
             </Button>
           )}
@@ -252,7 +280,7 @@ export default function App() {
       </div>
     );
   }
-  if (!st.signedIn && sub !== 'search') {
+  if (!st.signedIn && !cloud.user && sub !== 'search') {
     const clips = ['kb_swing', 'db_incline_press', 'sprint', 'lat_raise', 'db_shoulder_press', 'incline_walk'].map(k => ({ clip: EX[k].clip, poster: EX[k].poster, name: EX[k].name }));
     return (
       <div className="h-dvh">
