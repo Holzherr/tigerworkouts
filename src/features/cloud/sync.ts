@@ -8,6 +8,7 @@
  * Rows the v0.9 app wrote are converted on the way in and preserved on the way out.
  */
 import type { Runsheet } from '@/features/runsheet/model';
+import type { LibraryExercise } from '@/features/exercises/library';
 import type { SessionResult, TrainingMaxes } from '@/features/runsheet/progression';
 import { currentUser, sb } from './client';
 import { fromLegacySession, isLegacySession, legacyWorkoutToRunsheet, type LegacySession } from './legacy';
@@ -22,6 +23,7 @@ export interface SyncTarget {
   units: 'metric' | 'imperial';
   trainingMaxes: TrainingMaxes;
   bodyweightKg?: number;
+  exercises?: Record<string, LibraryExercise>;
 }
 export interface Favorite {
   name: string;
@@ -209,6 +211,20 @@ export const sync = async (local: SyncTarget): Promise<SyncResult> => {
       else gone.forEach(k => delete snap[k]);
     }
     patch.workouts = workouts;
+  }
+
+  // ── custom exercises: union, push the ones the server lacks ──
+  const { data: exRows } = await sb.from('exercises').select('key,data').eq('owner', uid);
+  const exercises: Record<string, LibraryExercise> = { ...(local.exercises ?? {}) };
+  for (const row of exRows ?? []) if (!exercises[row.key as string]) exercises[row.key as string] = { key: row.key as string, ...(row.data as Omit<LibraryExercise, 'key'>) };
+  const missing = Object.values(exercises).filter(e => !(exRows ?? []).some(r => r.key === e.key));
+  if (missing.length) {
+    const { error } = await sb.from('exercises').upsert(missing.map(e => ({ key: e.key, owner: uid, public: true, data: e })), { onConflict: 'key' });
+    if (error) errors.push(error.message);
+  }
+  if (J(exercises) !== J(local.exercises ?? {})) {
+    patch.exercises = exercises;
+    changed = true;
   }
 
   // ── user state: last writer wins, server fills blanks ──

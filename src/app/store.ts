@@ -6,6 +6,7 @@ import { useCallback, useSyncExternalStore } from 'react';
 import type { Runsheet } from '@/features/runsheet/model';
 import type { SessionResult, TrainingMaxes } from '@/features/runsheet/progression';
 import type { Avatar, Favorite } from '@/features/cloud/sync';
+import type { LibraryExercise } from '@/features/exercises/library';
 import { fromLegacySession, legacyWorkoutToRunsheet, readLegacyLocal } from '@/features/cloud/legacy';
 
 export interface AppState {
@@ -18,6 +19,8 @@ export interface AppState {
   avatar?: Avatar;
   units: 'metric' | 'imperial';
   favorites: Favorite[];
+  /** Exercises the user added from the picker. */
+  exercises: Record<string, LibraryExercise>;
   /** Set by the landing page's Get started so the feed shows before the code arrives; real auth lives in cloud/client. */
   signedIn: boolean;
   migratedLegacy?: boolean;
@@ -26,7 +29,7 @@ export interface AppState {
 }
 
 const KEY = 'workout-hub-next:v1';
-const EMPTY: AppState = { workouts: [], results: [], trainingMaxes: {}, saved: [], name: 'Nick', units: 'metric', favorites: [], signedIn: false };
+const EMPTY: AppState = { workouts: [], results: [], trainingMaxes: {}, saved: [], name: 'Nick', units: 'metric', favorites: [], exercises: {}, signedIn: false };
 
 let state: AppState = (() => {
   try {
@@ -81,5 +84,6 @@ export const useActions = () => ({
   deleteResult: useCallback((id: string) => setState(s => ({ results: s.results.filter(r => r.id !== id) })), []),
   setProfile: useCallback((p: Partial<Pick<AppState, 'name' | 'avatar' | 'units'>>) => setState(p), []),
   setFavorites: useCallback((favorites: Favorite[]) => setState({ favorites }), []),
+  addExercise: useCallback((e: LibraryExercise) => setState(s => ({ exercises: { ...s.exercises, [e.key]: e } })), []),
   toggleSaved: useCallback((id: string) => setState(s => ({ saved: s.saved.includes(id) ? s.saved.filter(x => x !== id) : [...s.saved, id] })), []),
 });

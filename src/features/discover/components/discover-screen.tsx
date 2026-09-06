@@ -36,6 +36,8 @@ export interface DiscoverScreenProps {
   initialTab?: DiscoverTab;
   initialFilter?: DiscoverFilter;
   title?: string;
+  /** Rendered at the top of For you (Resume banner, quick log). */
+  above?: React.ReactNode;
 }
 
 const wid = (r: Runsheet) => r.id ?? r.title;
@@ -47,7 +49,7 @@ const wid = (r: Runsheet) => r.id ?? r.title;
  * with no query it shows filter chips and the full catalogue (programs collapsed to one row each),
  * with a query it shows matches only.
  */
-export const DiscoverScreen = ({ workouts, results = [], savedIds = [], onOpen, onOpenProgram, initialTab = 'recommended', initialFilter = 'all', title = 'Discover' }: DiscoverScreenProps) => {
+export const DiscoverScreen = ({ workouts, results = [], savedIds = [], onOpen, onOpenProgram, initialTab = 'recommended', initialFilter = 'all', title = 'Discover', above }: DiscoverScreenProps) => {
   const [tab, setTab] = useState<DiscoverTab>(initialTab);
   const [q, setQ] = useState('');
   const [filter, setFilter] = useState<DiscoverFilter>(initialFilter);
@@ -115,6 +117,7 @@ export const DiscoverScreen = ({ workouts, results = [], savedIds = [], onOpen, 
 
         {tab === 'recommended' && (
           <>
+            {above}
             {results.length === 0 && <div className="px-1 pb-1 text-[12px] text-muted">Log a workout and this list learns what you like. Until then, some good first ones.</div>}
             {recs.map(rec => (
               <div key={wid(rec.runsheet)}>

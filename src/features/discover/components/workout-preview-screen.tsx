@@ -1,4 +1,4 @@
-import { ChevronLeft, ExternalLink, Pencil, Play, Video } from 'lucide-react';
+import { ChevronLeft, ExternalLink, Pencil, Play, Share2, Video } from 'lucide-react';
 import { Button } from '@/shared/components/ui/button';
 import { Chip } from '@/shared/components/ui/chip';
 import { ClipThumb } from '@/shared/components/ui/clip-thumb';
@@ -18,6 +18,7 @@ export interface WorkoutPreviewScreenProps {
   onLogOnly?: () => void;
   onSave?: () => void;
   saved?: boolean;
+  onShare?: () => void;
 }
 
 const SCORE_TEXT: Record<string, string> = { time: 'For time', rounds: 'AMRAP: rounds + reps', reps: 'Total reps', load: 'For load', distance: 'For distance' };
@@ -27,7 +28,7 @@ const SCORE_TEXT: Record<string, string> = { time: 'For time', rounds: 'AMRAP: r
  * length / mode / score, a plain list of blocks and steps (no editing), the user's best and
  * last results, and the actions: Start, Edit & start, Follow along for videos, Save.
  */
-export const WorkoutPreviewScreen = ({ runsheet: r, history = [], onBack, onStart, onEditAndStart, onFollowAlong, onLogOnly, onSave, saved }: WorkoutPreviewScreenProps) => {
+export const WorkoutPreviewScreen = ({ runsheet: r, history = [], onBack, onStart, onEditAndStart, onFollowAlong, onLogOnly, onSave, saved, onShare }: WorkoutPreviewScreenProps) => {
   const kind = r.source?.kind ?? 'user';
   const score = scoreType(r);
   const scored = history.filter(h => h.score !== undefined);
@@ -142,6 +143,11 @@ export const WorkoutPreviewScreen = ({ runsheet: r, history = [], onBack, onStar
           {onSave && (
             <Button variant={saved ? 'soft' : 'ghost'} onClick={onSave}>
               {saved ? 'Saved' : 'Save'}
+            </Button>
+          )}
+          {onShare && (
+            <Button variant="ghost" size="icon" aria-label="Share" onClick={onShare}>
+              <Share2 />
             </Button>
           )}
         </div>
