@@ -11,7 +11,7 @@
 <link rel="apple-touch-icon" href="./icons/apple-touch-icon.png">
 <link rel="icon" type="image/png" sizes="192x192" href="./icons/icon-192.png">
 <meta name="apple-mobile-web-app-title" content="TigerWorkouts">
-<title>TigerWorkouts — v0.9.6</title>
+<title>TigerWorkouts — v0.9.7</title>
 <link rel="icon" type="image/svg+xml" href="./icons/icon.svg">
 <script src="https://cdn.tailwindcss.com"></script>
 <style>
@@ -821,7 +821,7 @@ function renderProfile() {
         <button class="p-2 text-slate-500" onclick="openSettings()" aria-label="Settings">${I.gear}</button>
       </div>
       <div class="grid grid-cols-3 gap-2 mt-4">
-        ${stat(ss.length, 'sessions')}${stat(thisWeek, 'this week')}${stat(mins, 'minutes')}
+        ${stat(ss.length, 'sessions', 'sessions')}${stat(thisWeek, 'this week', 'week')}${stat(mins, 'minutes', 'minutes')}
       </div>
       ${accountCard()}
     </header>
@@ -942,7 +942,40 @@ function openSettings() {
     </div>`; };
   window._sdraw = draw; draw(); document.body.appendChild(el);
 }
-const stat = (v, l) => `<div class="card px-3 py-2.5 text-center"><div class="text-[22px] font-bold text-slate-900 leading-none">${v}</div><div class="text-[11px] text-slate-500 mt-1">${l}</div></div>`;
+const stat = (v, l, kind) => `<button class="card px-3 py-2.5 text-center w-full row-tap" ${kind ? `onclick="openStats('${kind}')"` : ''}><div class="text-[22px] font-bold text-slate-900 leading-none">${v}</div><div class="text-[11px] text-slate-500 mt-1">${l}</div></button>`;
+// stats sheet: what's behind the three numbers on the profile
+function openStats(kind) {
+  closeSheet();
+  const ss = [...store.sessions].sort((a, b) => b.startedAt.localeCompare(a.startedAt));
+  const weekAgo = Date.now() - 7 * 86400000;
+  const row = s => `<a href="#/s/${s.id}" class="flex items-center gap-3 py-2 row-tap" onclick="closeSheet()"><div class="flex-1 min-w-0"><div class="text-[14px] font-semibold text-slate-900 truncate">${esc(s.title)}</div><div class="text-[12px] text-slate-500">${fmtDate(s.startedAt)} · ${fmtTime(s.startedAt)}</div></div><div class="text-[13px] font-semibold text-slate-700">${s.duration_min || 0} min</div></a>`;
+  let title, body;
+  if (kind === 'week') {
+    const w = ss.filter(s => new Date(s.startedAt) > weekAgo);
+    title = 'This week';
+    body = w.length ? `<div class="text-[12px] text-slate-500 mb-1">${w.length} session${w.length === 1 ? '' : 's'} · ${w.reduce((a, s) => a + (s.duration_min || 0), 0)} min</div>` + w.map(row).join('') : '<div class="text-slate-400 text-[14px] py-6 text-center">Nothing in the last 7 days.</div>';
+  } else if (kind === 'minutes') {
+    title = 'Minutes';
+    const weeks = [];
+    for (let i = 0; i < 8; i++) { const end = Date.now() - i * 7 * 86400000, start = end - 7 * 86400000; const mins = ss.filter(s => { const t = +new Date(s.startedAt); return t > start && t <= end; }).reduce((a, s) => a + (s.duration_min || 0), 0); weeks.push({ label: i === 0 ? 'This week' : i === 1 ? 'Last week' : `${i} weeks ago`, mins }); }
+    const max = Math.max(1, ...weeks.map(w => w.mins));
+    const byTitle = {}; ss.forEach(s => { byTitle[s.title] = (byTitle[s.title] || 0) + (s.duration_min || 0); });
+    body = weeks.map(w => `<div class="flex items-center gap-2 py-1"><div class="text-[12px] text-slate-500 w-24 shrink-0">${w.label}</div><div class="flex-1 h-5 rounded-md bg-slate-100 overflow-hidden"><div class="h-full rounded-md" style="width:${Math.round(100 * w.mins / max)}%;background:var(--brand)"></div></div><div class="text-[12px] font-semibold text-slate-700 w-12 text-right">${w.mins}</div></div>`).join('')
+      + `<div class="text-[11px] uppercase tracking-widest text-slate-400 font-semibold mt-4 mb-1">By workout</div>` + (Object.entries(byTitle).sort((a, b) => b[1] - a[1]).map(([t, m]) => `<div class="flex justify-between py-1 text-[13px]"><span class="text-slate-700 truncate">${esc(t)}</span><span class="font-semibold text-slate-900">${m} min</span></div>`).join('') || '<div class="text-slate-400 text-[14px] py-4 text-center">No minutes logged yet.</div>');
+  } else {
+    title = 'All sessions';
+    body = ss.length ? ss.map(row).join('') : '<div class="text-slate-400 text-[14px] py-6 text-center">No sessions yet.</div>';
+  }
+  const el = document.createElement('div'); el.id = 'sheet';
+  el.innerHTML = `
+    <div class="sheet-backdrop" onclick="closeSheet()"></div>
+    <div class="sheet safe-bottom" style="max-height:80dvh">
+      <div class="sheet-handle"></div>
+      <div class="px-4 pb-2 flex items-center justify-between"><div class="font-semibold text-slate-900 text-[17px]">${title}</div><button class="text-slate-400 p-1" onclick="closeSheet()">${I.x}</button></div>
+      <div class="px-4 pb-6 overflow-auto" style="max-height:calc(80dvh - 60px)">${body}</div>
+    </div>`;
+  document.body.appendChild(el);
+}
 
 // ───────────────────────── runner (do mode) ─────────────────────────
 const runner = {
