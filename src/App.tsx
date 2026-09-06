@@ -1,6 +1,8 @@
 import { Flame, History, User } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
-import { DiscoverScreen } from '@/features/discover/components/discover-screen';
+import { DiscoverScreen, type DiscoverTab } from '@/features/discover/components/discover-screen';
+import { LandingScreen } from '@/features/landing/components/landing-screen';
+import { FULL_LIBRARY } from '@/features/workouts/imported';
 import { WorkoutCard } from '@/features/discover/components/workout-card';
 import { WorkoutPreviewScreen } from '@/features/discover/components/workout-preview-screen';
 import { EditorScreen } from '@/features/runsheet/components/editor-screen';
@@ -30,7 +32,7 @@ const TABS = [
 ] as const;
 type Tab = (typeof TABS)[number]['id'];
 
-type Route = { name: 'tab'; tab: Tab } | { name: 'workout' | 'edit' | 'follow' | 'result'; id: string };
+type Route = { name: 'tab'; tab: Tab; sub?: string } | { name: 'workout' | 'edit' | 'follow' | 'result'; id: string };
 
 const parse = (hash: string): Route => {
   const seg = hash.replace(/^#\/?/, '').split('/');
@@ -39,7 +41,7 @@ const parse = (hash: string): Route => {
   if (seg[0] === 'edit' && id) return { name: 'edit', id };
   if (seg[0] === 'follow' && id) return { name: 'follow', id };
   if (seg[0] === 'result' && id) return { name: 'result', id };
-  return { name: 'tab', tab: seg[0] === 'history' || seg[0] === 'me' ? seg[0] : 'discover' };
+  return { name: 'tab', tab: seg[0] === 'history' || seg[0] === 'me' ? seg[0] : 'discover', sub: seg[1] };
 };
 const go = (path: string) => {
   location.hash = path;
@@ -61,7 +63,6 @@ export default function App() {
   const byId = useMemo(() => new Map(all.map(r => [wid(r), r])), [all]);
   const lookup = (id: string) => byId.get(id);
   const refTitle = (id: string) => byId.get(id)?.title;
-  const mineIds = useMemo(() => new Set([...st.workouts.map(wid), ...st.saved, priyanka().id!]), [st.workouts, st.saved]);
   const resolve = (s: ExerciseStep) => resolveTarget(s, st.trainingMaxes, st.bodyweightKg);
 
   const [draft, setDraft] = useState<Runsheet | null>(null); // one-off edited copy for "Edit & start"
@@ -207,6 +208,9 @@ export default function App() {
             Training maxes
           </Button>
           {tmSheet()}
+          <Button variant="quiet" block onClick={() => (act.setSignedIn(false), go('/discover'))}>
+            Sign out
+          </Button>
           <div className="pt-2 text-[11px] font-bold tracking-widest text-muted uppercase">Saved</div>
           {st.saved
             .map(id => byId.get(id))
@@ -219,7 +223,17 @@ export default function App() {
       </div>
     );
   }
-  return shell('discover', <DiscoverScreen workouts={all} onOpen={r => go(`/w/${encodeURIComponent(wid(r))}`)} onOpenProgram={(_, days) => go(`/w/${encodeURIComponent(wid(days[0]))}`)} mineIds={mineIds} />);
+  const sub = route.name === 'tab' ? route.sub : undefined;
+  if (!st.signedIn && sub !== 'search') {
+    const clips = ['kb_swing', 'db_incline_press', 'sprint', 'lat_raise', 'db_shoulder_press', 'incline_walk'].map(k => ({ clip: EX[k].clip, poster: EX[k].poster, name: EX[k].name }));
+    return (
+      <div className="h-dvh">
+        <LandingScreen onGetStarted={() => (act.setSignedIn(true), go('/discover'))} onBrowse={() => go('/discover/search')} workoutCount={all.length} exerciseCount={Object.keys(FULL_LIBRARY).length} clips={clips} />
+      </div>
+    );
+  }
+  const initialTab: DiscoverTab = sub === 'search' ? 'search' : sub === 'saved' ? 'saved' : 'recommended';
+  return shell('discover', <DiscoverScreen key={initialTab} initialTab={initialTab} workouts={all} results={st.results} savedIds={st.saved} onOpen={r => go(`/w/${encodeURIComponent(wid(r))}`)} onOpenProgram={(_, days) => go(`/w/${encodeURIComponent(wid(days[0]))}`)} />);
 }
 
 const Missing = () => (

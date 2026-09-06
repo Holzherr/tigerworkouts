@@ -13,10 +13,12 @@ export interface AppState {
   bodyweightKg?: number;
   saved: string[];
   name: string;
+  /** Local stand-in for auth until Supabase is ported: the landing page shows until this is true. */
+  signedIn: boolean;
 }
 
 const KEY = 'workout-hub-next:v1';
-const EMPTY: AppState = { workouts: [], results: [], trainingMaxes: {}, saved: [], name: 'Nick' };
+const EMPTY: AppState = { workouts: [], results: [], trainingMaxes: {}, saved: [], name: 'Nick', signedIn: false };
 
 let state: AppState = (() => {
   try {
@@ -46,5 +48,6 @@ export const useActions = () => ({
   addResult: useCallback((res: SessionResult) => setState(s => ({ results: [res, ...s.results] })), []),
   setTrainingMaxes: useCallback((tm: TrainingMaxes) => setState({ trainingMaxes: tm }), []),
   setBodyweight: useCallback((kg: number) => setState({ bodyweightKg: kg }), []),
+  setSignedIn: useCallback((signedIn: boolean) => setState({ signedIn }), []),
   toggleSaved: useCallback((id: string) => setState(s => ({ saved: s.saved.includes(id) ? s.saved.filter(x => x !== id) : [...s.saved, id] })), []),
 });
