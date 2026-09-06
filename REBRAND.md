@@ -27,11 +27,12 @@ Source of truth for the mark: `src/shared/brand/tiger-mark-path.ts`; tile geomet
    `~/.workout-hub-smtp`). Change the sender display name to "TigerWorkouts" in
    Supabase → Auth → SMTP settings and retitle the confirmation + magic-link templates
    ("Your TigerWorkouts code"). No code change.
-4. **Domain: tigerworkouts.com.** Same pattern as by9am.com and nickholzherr.com: buy on
-   Cloudflare, GitHub Pages custom domain on a dedicated repo (`Holzherr/tigerworkouts`),
-   Cloudflare proxy, `CNAME` file in the repo. Move `workout-hub-next` out of nick-prototypes
-   into that repo when it reaches parity so the Vite `base` becomes `/`. Until then keep the
-   GitHub Pages paths. Update Supabase `site_url` + redirect allow-list when the domain goes live.
+4. **Domain: tigerworkouts.com.** Bought 6 Sep 2026 (Cloudflare). Repo `Holzherr/tigerworkouts`
+   created with the v0.9.4 app at root + `CNAME` + `.nojekyll`. Remaining browser steps are in
+   that repo's `SETUP.md` (enable Pages, Cloudflare CNAME → holzherr.github.io proxied, SSL Full,
+   Supabase site_url / redirect list / SMTP sender / email templates). After go-live: turn
+   `nick-prototypes/workout-hub/index.html` into a redirect. Move `workout-hub-next` into the
+   tigerworkouts repo at parity so the Vite `base` becomes `/`.
 5. **iOS shell** (`Holzherr/workout-hub-app`, parked): rename appId `com.holzherr.workouthub`
    → `com.holzherr.tigerworkouts`, display name "TigerWorkouts", drop `icons/icon-1024.png`
    into the asset catalog. Only when native is picked back up.
