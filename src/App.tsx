@@ -2,6 +2,8 @@ import { Flame, History, User } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { DiscoverScreen, type DiscoverTab } from '@/features/discover/components/discover-screen';
 import { LandingScreen } from '@/features/landing/components/landing-screen';
+import { SignInCard } from '@/features/auth/components/sign-in-card';
+import { StatTiles } from '@/shared/components/ui/stat-tiles';
 import { FULL_LIBRARY } from '@/features/workouts/imported';
 import { WorkoutCard } from '@/features/discover/components/workout-card';
 import { WorkoutPreviewScreen } from '@/features/discover/components/workout-preview-screen';
@@ -199,18 +201,30 @@ export default function App() {
       <div className="flex h-full flex-col bg-canvas">
         <header className="safe-top bg-surface px-4 pt-3 pb-2">
           <h1 className="text-[22px] font-extrabold">{st.name}</h1>
-          <div className="text-[12px] text-muted">
-            {st.results.length} results · {st.workouts.length} workouts · {st.saved.length} saved
-          </div>
+          <div className="text-[12px] text-muted">{st.signedIn ? 'Signed in · logs back up to your account' : 'Not signed in · logs stay on this phone'}</div>
         </header>
         <div className="min-h-0 flex-1 space-y-2 overflow-y-auto px-3 py-3">
+          <StatTiles stats={[{ value: st.results.length, label: 'sessions' }, { value: st.results.filter(r => Date.now() - Date.parse(r.startedAt) < 7 * 864e5).length, label: 'this week' }, { value: st.saved.length, label: 'saved' }]} />
+          {!st.signedIn && (
+            <SignInCard
+              onSendCode={async () => {
+                /* auth not ported: accept any address */
+              }}
+              onVerify={async (_e, c) => {
+                if (c.length < 6) throw new Error('Enter the 6 digits from the email');
+                act.setSignedIn(true);
+              }}
+            />
+          )}
           <Button variant="ghost" block onClick={() => setTmOpen(true)}>
             Training maxes
           </Button>
           {tmSheet()}
-          <Button variant="quiet" block onClick={() => (act.setSignedIn(false), go('/discover'))}>
-            Sign out
-          </Button>
+          {st.signedIn && (
+            <Button variant="quiet" block onClick={() => (act.setSignedIn(false), go('/discover'))}>
+              Sign out
+            </Button>
+          )}
           <div className="pt-2 text-[11px] font-bold tracking-widest text-muted uppercase">Saved</div>
           {st.saved
             .map(id => byId.get(id))
@@ -228,7 +242,7 @@ export default function App() {
     const clips = ['kb_swing', 'db_incline_press', 'sprint', 'lat_raise', 'db_shoulder_press', 'incline_walk'].map(k => ({ clip: EX[k].clip, poster: EX[k].poster, name: EX[k].name }));
     return (
       <div className="h-dvh">
-        <LandingScreen onGetStarted={() => (act.setSignedIn(true), go('/discover'))} onBrowse={() => go('/discover/search')} workoutCount={all.length} exerciseCount={Object.keys(FULL_LIBRARY).length} clips={clips} />
+        <LandingScreen onGetStarted={() => go('/me')} onBrowse={() => go('/discover/search')} workoutCount={all.length} exerciseCount={Object.keys(FULL_LIBRARY).length} clips={clips} />
       </div>
     );
   }

@@ -1,7 +1,8 @@
 import { Bookmark, ChevronRight, Search, Sparkles } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { Chip } from '@/shared/components/ui/chip';
-import { cn } from '@/shared/utils/ui-utils';
+import { EmptyState } from '@/shared/components/ui/empty-state';
+import { SegmentedControl } from '@/shared/components/ui/segmented-control';
 import type { Runsheet } from '@/features/runsheet/model';
 import type { SessionResult } from '@/features/runsheet/progression';
 import { recommend } from '../recommend';
@@ -10,11 +11,11 @@ import { WorkoutCard } from './workout-card';
 export type DiscoverTab = 'saved' | 'recommended' | 'search';
 export type DiscoverFilter = 'all' | 'benchmark' | 'program' | 'video' | 'article' | 'protocol';
 
-const TABS: { id: DiscoverTab; label: string; icon: React.ReactNode }[] = [
-  { id: 'saved', label: 'Saved', icon: <Bookmark className="size-4" /> },
-  { id: 'recommended', label: 'For you', icon: <Sparkles className="size-4" /> },
-  { id: 'search', label: 'Search', icon: <Search className="size-4" /> },
-];
+const TABS = [
+  { id: 'saved', label: 'Saved', icon: <Bookmark /> },
+  { id: 'recommended', label: 'For you', icon: <Sparkles /> },
+  { id: 'search', label: 'Search', icon: <Search /> },
+] as const satisfies readonly { id: DiscoverTab; label: string; icon: React.ReactNode }[];
 const FILTERS: { id: DiscoverFilter; label: string }[] = [
   { id: 'all', label: 'All' },
   { id: 'benchmark', label: 'Benchmarks' },
@@ -82,14 +83,7 @@ export const DiscoverScreen = ({ workouts, results = [], savedIds = [], onOpen, 
     <div className="flex h-full min-h-0 flex-col bg-canvas">
       <header className="safe-top shrink-0 bg-surface px-4 pt-3 pb-2">
         <h1 className="text-[22px] font-extrabold">{title}</h1>
-        <div role="tablist" className="mt-2 grid grid-cols-3 rounded-tile bg-line-soft p-1">
-          {TABS.map(t => (
-            <button key={t.id} role="tab" aria-selected={tab === t.id} type="button" onClick={() => setTab(t.id)} className={cn('flex h-9 items-center justify-center gap-1.5 rounded-control text-[13px] font-bold transition-colors', tab === t.id ? 'bg-surface text-ink shadow-xs' : 'text-muted')}>
-              {t.icon}
-              {t.label}
-            </button>
-          ))}
-        </div>
+        <SegmentedControl aria-label="Feed" className="mt-2" options={TABS} value={tab} onChange={setTab} />
         {tab === 'search' && (
           <>
             <label className="mt-2 flex h-11 items-center gap-2 rounded-tile border border-line bg-canvas px-3">
@@ -115,13 +109,7 @@ export const DiscoverScreen = ({ workouts, results = [], savedIds = [], onOpen, 
             {saved.map(r => (
               <WorkoutCard key={wid(r)} runsheet={r} onOpen={onOpen} />
             ))}
-            {saved.length === 0 && (
-              <div className="py-12 text-center text-[13px] text-muted">
-                Nothing saved yet.
-                <br />
-                Tap Save on any workout, or Save as mine after editing one.
-              </div>
-            )}
+            {saved.length === 0 && <EmptyState icon={<Bookmark />} title="Nothing saved yet" body="Tap Save on any workout, or Save as mine after editing one." action={{ label: 'Browse workouts', onClick: () => setTab('search') }} />}
           </>
         )}
 
@@ -165,7 +153,7 @@ export const DiscoverScreen = ({ workouts, results = [], savedIds = [], onOpen, 
                 Show more ({singles.length - shown.length} left)
               </button>
             )}
-            {programs.size === 0 && singles.length === 0 && <div className="py-10 text-center text-[13px] text-muted">Nothing matches “{q}”.</div>}
+            {programs.size === 0 && singles.length === 0 && <EmptyState title={`Nothing matches “${q}”`} body="Try a creator, a program name or an exercise." />}
           </>
         )}
       </div>

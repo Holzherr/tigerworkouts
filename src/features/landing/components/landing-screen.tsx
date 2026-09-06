@@ -1,6 +1,7 @@
 import { ArrowRight, Dumbbell, Film, Gift, GitFork, Search, TrendingUp, Users } from 'lucide-react';
 import { Button } from '@/shared/components/ui/button';
 import { ClipThumb } from '@/shared/components/ui/clip-thumb';
+import { StatTiles } from '@/shared/components/ui/stat-tiles';
 import { Logo } from '@/shared/brand';
 import { cn } from '@/shared/utils/ui-utils';
 
@@ -61,18 +62,7 @@ export const LandingScreen = ({ onGetStarted, onBrowse, workoutCount = 470, exer
         </div>
       )}
 
-      <div className="grid grid-cols-3 gap-2 px-5 pt-4 pb-2">
-        {[
-          [String(workoutCount) + '+', 'workouts'],
-          [String(exerciseCount) + '+', 'exercises'],
-          ['£0', 'forever'],
-        ].map(([n, l]) => (
-          <div key={l} className="rounded-card border border-line bg-surface px-3 py-2.5 text-center">
-            <div className="text-[20px] font-black tabular-nums">{n}</div>
-            <div className="text-[11px] text-muted">{l}</div>
-          </div>
-        ))}
-      </div>
+      <StatTiles className="px-5 pt-4 pb-2" stats={[{ value: `${workoutCount}+`, label: 'workouts' }, { value: `${exerciseCount}+`, label: 'exercises' }, { value: '£0', label: 'forever' }]} />
 
       <section className="space-y-2 px-5 py-4">
         {POINTS.map(p => (
