@@ -28,7 +28,7 @@ export const LIBRARY: Record<string, LibraryExercise> = {
 `;
 for (const k of keys) {
   const e = ex[k];
-  const o = { key: k, name: e.name, unit: e.unit || '', step: e.step || 1, group: e.icon, cue: e.cue || '' };
+  const o = { key: k, name: e.name, unit: e.unit === 'reps' || e.unit === 'bodyweight' ? '' : e.unit || '', step: e.step || 1, group: e.icon, cue: e.cue || '' };
   if (e.clip) o.clip = e.clip;
   if (e.poster) o.poster = e.poster;
   out += `  ${JSON.stringify(k)}: ${JSON.stringify(o)},\n`;

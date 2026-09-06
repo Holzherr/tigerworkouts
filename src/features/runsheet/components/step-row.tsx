@@ -120,7 +120,7 @@ const Label = ({ children }: { children: React.ReactNode }) => <div className="t
 
 const ExerciseBody = ({ step, onChange }: { step: ExerciseStep; onChange: (s: Step) => void }) => (
   <>
-    {step.exercise.unit && (
+    {step.exercise.unit && step.exercise.unit !== 'reps' && (
       <div className="flex items-center justify-between gap-3">
         <Label>
           Weight <span className="text-muted">({step.exercise.unit})</span>

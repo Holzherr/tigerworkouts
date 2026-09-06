@@ -58,6 +58,8 @@ export interface ExerciseRef {
   clip?: string;
   poster?: string;
   icon?: string;
+  /** One-line coaching cue shown in the timer. */
+  cue?: string;
 }
 
 export interface ExerciseStep {

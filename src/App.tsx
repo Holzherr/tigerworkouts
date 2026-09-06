@@ -14,6 +14,10 @@ import { fmtScore, resolveTarget } from '@/features/runsheet/progression';
 import { ResultSheet } from '@/features/results/components/result-sheet';
 import { TrainingMaxSheet } from '@/features/results/components/training-max-sheet';
 import { FollowAlongScreen } from '@/features/video/components/follow-along-screen';
+import { TimerScreen } from '@/features/timer/components/timer-screen';
+import { useRunner } from '@/features/timer/use-runner';
+import * as Runner from '@/features/timer/runner';
+import type { SessionResult } from '@/features/runsheet/progression';
 import { IMPORTED } from '@/features/workouts/imported';
 import { Button } from '@/shared/components/ui/button';
 import { Sheet } from '@/shared/components/ui/sheet';
@@ -34,7 +38,7 @@ const TABS = [
 ] as const;
 type Tab = (typeof TABS)[number]['id'];
 
-type Route = { name: 'tab'; tab: Tab; sub?: string } | { name: 'workout' | 'edit' | 'follow' | 'result'; id: string };
+type Route = { name: 'tab'; tab: Tab; sub?: string } | { name: 'workout' | 'edit' | 'follow' | 'result' | 'do'; id: string };
 
 const parse = (hash: string): Route => {
   const seg = hash.replace(/^#\/?/, '').split('/');
@@ -43,6 +47,7 @@ const parse = (hash: string): Route => {
   if (seg[0] === 'edit' && id) return { name: 'edit', id };
   if (seg[0] === 'follow' && id) return { name: 'follow', id };
   if (seg[0] === 'result' && id) return { name: 'result', id };
+  if (seg[0] === 'do' && id) return { name: 'do', id };
   return { name: 'tab', tab: seg[0] === 'history' || seg[0] === 'me' ? seg[0] : 'discover', sub: seg[1] };
 };
 const go = (path: string) => {
@@ -68,6 +73,7 @@ export default function App() {
   const resolve = (s: ExerciseStep) => resolveTarget(s, st.trainingMaxes, st.bodyweightKg);
 
   const [draft, setDraft] = useState<Runsheet | null>(null); // one-off edited copy for "Edit & start"
+  const [pending, setPending] = useState<Partial<SessionResult> | null>(null); // what the timer recorded, for the result sheet
   const [tmOpen, setTmOpen] = useState(false);
 
   const shell = (tab: Tab, body: React.ReactNode) => (
@@ -91,7 +97,7 @@ export default function App() {
           runsheet={r}
           history={st.results.filter(x => x.runsheetId === wid(r))}
           onBack={() => go('/discover')}
-          onStart={() => go(`/result/${encodeURIComponent(route.id)}`)}
+          onStart={() => (setDraft(null), go(`/do/${encodeURIComponent(route.id)}`))}
           onEditAndStart={() => (setDraft(structuredClone(resolveRefs(r, lookup))), go(`/edit/${encodeURIComponent(route.id)}`))}
           onFollowAlong={r.video ? () => go(`/follow/${encodeURIComponent(route.id)}`) : undefined}
           onLogOnly={() => go(`/result/${encodeURIComponent(route.id)}`)}
@@ -114,7 +120,7 @@ export default function App() {
           onSwapExercise={pick}
           onBack={() => (setDraft(null), go(`/w/${encodeURIComponent(route.id)}`))}
           onReset={() => setDraft(base ? structuredClone(resolveRefs(base, lookup)) : null)}
-          onStart={() => go(`/result/${encodeURIComponent(route.id)}`)}
+          onStart={() => go(`/do/${encodeURIComponent(route.id)}`)}
           onSaveAsMine={() => {
             const mine: Runsheet = { ...r, id: `u-${Date.now().toString(36)}`, creator: st.name, source: { title: r.title, url: r.source?.url, author: r.source?.author ?? r.creator, kind: 'user' }, program: undefined };
             act.saveWorkout(mine);
@@ -137,6 +143,11 @@ export default function App() {
       </div>
     );
   }
+  if (route.name === 'do') {
+    const r = draft ?? byId.get(route.id);
+    if (!r) return shell('discover', <Missing />);
+    return <RunRoute key={route.id} runsheet={resolveRefs(r, lookup)} onFinish={res => (setPending(res), go(`/result/${encodeURIComponent(route.id)}`))} onExit={() => (Runner.clearPersisted(), go(`/w/${encodeURIComponent(route.id)}`))} />;
+  }
   if (route.name === 'result') {
     const r = draft ?? byId.get(route.id);
     if (!r) return shell('discover', <Missing />);
@@ -147,13 +158,15 @@ export default function App() {
           history={st.results.filter(x => x.runsheetId === wid(r))}
           trainingMaxes={st.trainingMaxes}
           bodyweightKg={st.bodyweightKg}
-          onCancel={() => go(`/w/${encodeURIComponent(route.id)}`)}
+          initial={pending ?? undefined}
+          onCancel={() => (setPending(null), go(`/w/${encodeURIComponent(route.id)}`))}
           onSave={(res, next) => {
             act.addResult({ ...res, runsheetId: wid(r) });
             const tm = { ...st.trainingMaxes };
             for (const n of next) if (n.to !== undefined && n.reason.includes('training max')) tm[n.exerciseKey] = n.to;
             act.setTrainingMaxes(tm);
             setDraft(null);
+            setPending(null);
             go('/history');
           }}
         />
@@ -250,6 +263,15 @@ export default function App() {
   const initialTab: DiscoverTab = sub === 'search' ? 'search' : sub === 'saved' ? 'saved' : 'recommended';
   return shell('discover', <DiscoverScreen key={initialTab} initialTab={initialTab} workouts={all} results={st.results} savedIds={st.saved} onOpen={r => go(`/w/${encodeURIComponent(wid(r))}`)} onOpenProgram={(_, days) => go(`/w/${encodeURIComponent(wid(days[0]))}`)} />);
 }
+
+const RunRoute = ({ runsheet, onFinish, onExit }: { runsheet: Runsheet; onFinish: (r: Partial<SessionResult>) => void; onExit: () => void }) => {
+  const { state, now, act } = useRunner(runsheet, { resume: true });
+  return (
+    <div className="relative h-dvh">
+      <TimerScreen runsheet={runsheet} state={state} now={now} onDone={act.done} onSkip={act.skip} onBack={act.back} onPause={act.pause} onResume={act.resume} onAdjust={act.adjust} onSetReps={act.setReps} onDrop={act.drop} onFinish={() => { const done = Runner.finish(state, Date.now()); Runner.clearPersisted(); onFinish(Runner.toResult(done, runsheet, Date.now())); }} onExit={onExit} />
+    </div>
+  );
+};
 
 const Missing = () => (
   <div className="p-6 text-center text-[13px] text-muted">

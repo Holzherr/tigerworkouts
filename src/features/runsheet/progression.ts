@@ -34,8 +34,16 @@ export interface StepResult {
 
 export interface SessionResult {
   runsheetId: string;
+  /** Title at the time, so history reads even if the workout is gone. */
+  title?: string;
   startedAt: string;
   endedAt?: string;
+  durationSec?: number;
+  completed?: boolean;
+  /** Quick-logged activity (padel, a run) rather than a runsheet. */
+  activity?: { name: string; icon?: string; minutes: number; intensity?: string };
+  /** Device heart-rate summary attached after sync (Fitbit / Google Health). */
+  device?: { avgHr?: number; maxHr?: number; calories?: number; source?: string };
   /** Score in the workout's score type: seconds, rounds (+ reps/1000), total reps, kg, metres. */
   score?: number;
   scoreText?: string;

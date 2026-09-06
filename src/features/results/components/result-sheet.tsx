@@ -16,6 +16,8 @@ export interface ResultSheetProps {
   trainingMaxes?: TrainingMaxes;
   bodyweightKg?: number;
   startedAt?: string;
+  /** What the timer recorded: score, per-step targets and reps, duration. */
+  initial?: Partial<SessionResult>;
   onSave: (result: SessionResult, next: NextLoad[]) => void;
   onCancel?: () => void;
 }
@@ -28,18 +30,21 @@ const exerciseSteps = (r: Runsheet): ExerciseStep[] => r.items.flatMap(it => (it
  * reps on any 5+ or max set. Bottom: "Next time" lines produced by the progression rules, then
  * Save. Pure: the host stores the result and updates training maxes.
  */
-export const ResultSheet = ({ runsheet, history = [], trainingMaxes = {}, bodyweightKg, startedAt, onSave, onCancel }: ResultSheetProps) => {
+export const ResultSheet = ({ runsheet, history = [], trainingMaxes = {}, bodyweightKg, startedAt, initial, onSave, onCancel }: ResultSheetProps) => {
   const type = scoreType(runsheet);
   const steps = useMemo(() => exerciseSteps(runsheet), [runsheet]);
   const hasProgression = !!runsheet.progression || runsheet.items.some(i => i.kind === 'block' && i.progression);
-  const [score, setScore] = useState<number | undefined>();
+  const [score, setScore] = useState<number | undefined>(initial?.score);
   const [notes, setNotes] = useState('');
   const [rows, setRows] = useState<Record<string, StepResult>>(() =>
     Object.fromEntries(
-      steps.map(s => [s.id, { stepId: s.id, exerciseKey: s.exercise.key, target: resolveTarget(s, trainingMaxes, bodyweightKg), success: hasProgression ? true : undefined, reps: s.forMode === 'amrap' || s.forMode === 'max' ? [s.forValue] : undefined }])
+      steps.map(s => {
+        const rec = initial?.steps?.find(x => x.stepId === s.id);
+        return [s.id, { stepId: s.id, exerciseKey: s.exercise.key, target: rec?.target ?? resolveTarget(s, trainingMaxes, bodyweightKg), success: rec?.success ?? (hasProgression ? true : undefined), reps: rec?.reps ?? (s.forMode === 'amrap' || s.forMode === 'max' ? [s.forValue] : undefined) }];
+      })
     )
   );
-  const result: SessionResult = { runsheetId: runsheet.id ?? runsheet.title, startedAt: startedAt ?? new Date().toISOString(), endedAt: new Date().toISOString(), score, scoreText: score !== undefined ? fmtScore(type, score) : undefined, steps: Object.values(rows), notes: notes || undefined };
+  const result: SessionResult = { ...initial, runsheetId: runsheet.id ?? runsheet.title, title: runsheet.title, startedAt: initial?.startedAt ?? startedAt ?? new Date().toISOString(), endedAt: initial?.endedAt ?? new Date().toISOString(), score, scoreText: score !== undefined ? fmtScore(type, score) : undefined, steps: Object.values(rows), notes: notes || undefined };
   const next = useMemo(() => nextLoads(runsheet, result, history, trainingMaxes), [runsheet, result, history, trainingMaxes]);
   const set = (id: string, patch: Partial<StepResult>) => setRows(r => ({ ...r, [id]: { ...r[id], ...patch } }));
   const seen = new Set<string>();
@@ -49,6 +54,7 @@ export const ResultSheet = ({ runsheet, history = [], trainingMaxes = {}, bodywe
       <header className="safe-top shrink-0 border-b border-line bg-surface px-4 pt-3 pb-3">
         <div className="text-[12px] text-muted">Log result</div>
         <h1 className="text-[19px] leading-tight font-extrabold">{runsheet.title}</h1>
+        {initial?.durationSec !== undefined && <div className="mt-0.5 text-[12px] text-muted">{Math.round(initial.durationSec / 60)} min{initial.completed === false ? ' · stopped early' : ''}</div>}
         {type !== 'none' && <ScoreEntry type={type} value={score} onChange={setScore} className="mt-3" />}
       </header>
       <div className="min-h-0 flex-1 space-y-2 overflow-y-auto px-3 py-3">
@@ -68,7 +74,7 @@ export const ResultSheet = ({ runsheet, history = [], trainingMaxes = {}, bodywe
                     {s.targetPct ? ` · ${s.targetPct}% TM` : ''}
                   </div>
                 </div>
-                {s.exercise.unit && <Stepper size="sm" aria-label="Load used" value={row.target ?? 0} step={s.exercise.step} onChange={t => set(s.id, { target: t })} />}
+                {s.exercise.unit && s.exercise.unit !== 'reps' && <Stepper size="sm" aria-label="Load used" value={row.target ?? 0} step={s.exercise.step} onChange={t => set(s.id, { target: t })} />}
               </div>
               {(hasProgression || logsReps) && (
                 <div className="mt-2 flex items-center justify-between gap-2">
