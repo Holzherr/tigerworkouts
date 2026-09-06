@@ -1,0 +1,100 @@
+{
+  "id": "cf-hero-fern",
+  "title": "FERN",
+  "creator": "CrossFit",
+  "description": "In a 20/14 lb vest with a 60-minute cap: a 2-mile run, then 9 rounds of a 20-calorie row and 20 burpees, then 3 rounds of 30 push-ups, 30 pull-ups and 30 burpees. Honours Darryl Fern of the Royal Regiment of Scotland, killed by a roadside IED in Kut, Iraq, in 2008. Drop the vest before dropping reps.",
+  "source": {
+    "title": "FERN – CrossFit Hero WOD",
+    "url": "https://www.crossfit.com/benchmark/fern",
+    "author": "CrossFit",
+    "kind": "benchmark",
+    "license": "Public benchmark; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "CrossFit",
+    "Hero",
+    "For time",
+    "Weight vest",
+    "Run",
+    "Row",
+    "Bodyweight",
+    "Long"
+  ],
+  "level": "Hard",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "Run",
+      "mode": "fortime",
+      "repeat": 1,
+      "note": "Wear a 20/14 lb weight vest; 60-minute cap on the whole workout",
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "cardio_run",
+          "forMode": "meters",
+          "forValue": 3219,
+          "note": "2 miles"
+        }
+      ]
+    },
+    {
+      "kind": "block",
+      "id": "b2",
+      "name": "9 rounds",
+      "mode": "fortime",
+      "repeat": 9,
+      "note": "Wear a 20/14 lb weight vest",
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "cardio_rower",
+          "forMode": "calories",
+          "forValue": 20
+        },
+        {
+          "kind": "exercise",
+          "id": "s3",
+          "exercise": "bw_burpee",
+          "forMode": "reps",
+          "forValue": 20
+        }
+      ]
+    },
+    {
+      "kind": "block",
+      "id": "b3",
+      "name": "3 rounds",
+      "mode": "fortime",
+      "repeat": 3,
+      "note": "Wear a 20/14 lb weight vest",
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s4",
+          "exercise": "bw_pushup",
+          "forMode": "reps",
+          "forValue": 30
+        },
+        {
+          "kind": "exercise",
+          "id": "s5",
+          "exercise": "bw_pullup",
+          "forMode": "reps",
+          "forValue": 30
+        },
+        {
+          "kind": "exercise",
+          "id": "s6",
+          "exercise": "bw_burpee",
+          "forMode": "reps",
+          "forValue": 30
+        }
+      ]
+    }
+  ]
+}

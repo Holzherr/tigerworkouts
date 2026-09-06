@@ -1,0 +1,85 @@
+{
+  "id": "cf-hero-hammer",
+  "title": "Hammer",
+  "creator": "CrossFit",
+  "description": "Five rounds, each for time, of 5 power cleans, 10 front squats, 5 jerks at 135/95 lb and 20 pull-ups, with 90 seconds rest between rounds. Honours U.S. Army 1st Sgt. Michael \"Hammer\" Bordelon, killed by a car bomb in Mosul, Iraq, in 2005. Record each round's time.",
+  "source": {
+    "title": "Hammer – CrossFit Hero WOD",
+    "url": "https://www.crossfit.com/benchmark/hammer",
+    "author": "CrossFit",
+    "kind": "benchmark",
+    "license": "Public benchmark; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "CrossFit",
+    "Hero",
+    "For time",
+    "Intervals",
+    "Barbell"
+  ],
+  "level": "Hard",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "Hammer",
+      "mode": "fortime",
+      "repeat": 5,
+      "note": "Each round for time",
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "bb_power_clean",
+          "target": 61.0,
+          "rx": {
+            "men": 61.0,
+            "women": 43.0
+          },
+          "forMode": "reps",
+          "forValue": 5,
+          "note": "135/95 lb"
+        },
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "bb_front_squat",
+          "target": 61.0,
+          "rx": {
+            "men": 61.0,
+            "women": 43.0
+          },
+          "forMode": "reps",
+          "forValue": 10,
+          "note": "135/95 lb"
+        },
+        {
+          "kind": "exercise",
+          "id": "s3",
+          "exercise": "bb_push_jerk",
+          "target": 61.0,
+          "rx": {
+            "men": 61.0,
+            "women": 43.0
+          },
+          "forMode": "reps",
+          "forValue": 5,
+          "note": "135/95 lb"
+        },
+        {
+          "kind": "exercise",
+          "id": "s4",
+          "exercise": "bw_pullup",
+          "forMode": "reps",
+          "forValue": 20
+        },
+        {
+          "kind": "rest",
+          "id": "r1",
+          "seconds": 90
+        }
+      ]
+    }
+  ]
+}

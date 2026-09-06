@@ -107,3 +107,29 @@ describe('fromLegacy', () => {
     expect(runsheetSeconds(r)).toBe(120 * 8);
   });
 });
+
+describe('block modes', () => {
+  it('amrap is its time cap, emom is interval × rounds, fortime is capped', () => {
+    const steps = [swings(), makeRest(30)];
+    expect(runsheetSeconds({ items: [{ ...block(steps, 5), mode: 'amrap', timeCapSec: 1200 }] })).toBe(1200);
+    expect(runsheetSeconds({ items: [{ ...block(steps, 10), mode: 'emom', everySec: 60 }] })).toBe(600);
+    expect(runsheetSeconds({ items: [{ ...block(steps, 5), mode: 'fortime', timeCapSec: 200 }] })).toBe(200);
+    expect(runsheetSeconds({ items: [{ ...block(steps, 5), mode: 'fortime' }] })).toBe(300);
+  });
+  it('estimates metres and calories', () => {
+    expect(runsheetSeconds({ items: [makeExercise(SPRINT, { forMode: 'meters', forValue: 400 })] })).toBe(120);
+    expect(runsheetSeconds({ items: [makeExercise(SPRINT, { forMode: 'calories', forValue: 15 })] })).toBe(60);
+  });
+});
+
+describe('ladder and max', () => {
+  it('a 21-15-9 ladder sums every rung', () => {
+    const b: Block = { ...block([swings(), press()], 1), mode: 'ladder', ladder: [21, 15, 9] };
+    // swings/press default forMode seconds 30 → unaffected by rung; make them reps
+    b.steps = b.steps.map(s => (s.kind === 'exercise' ? { ...s, forMode: 'reps', forValue: 1 } : s));
+    expect(runsheetSeconds({ items: [b] })).toBe((21 + 15 + 9) * 2 * 3);
+  });
+  it('max steps estimate a minute', () => {
+    expect(runsheetSeconds({ items: [makeExercise(KB, { forMode: 'max', forValue: 0 })] })).toBe(60);
+  });
+});

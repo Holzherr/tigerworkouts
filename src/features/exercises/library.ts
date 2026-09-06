@@ -1,7 +1,7 @@
 // Generated from ../../../../workout-hub/data.js by tools/port-library.mjs. Edit there, then re-run.
 import type { ExerciseRef } from '@/features/runsheet/model';
 
-export type ExerciseGroup = "kettlebell" | "dumbbell" | "treadmill" | "walk" | "barbell" | "body" | "core" | "band" | "rower" | "bike" | "run" | "swim";
+export type ExerciseGroup = "kettlebell" | "dumbbell" | "treadmill" | "walk" | "barbell" | "body" | "core" | "band" | "rower" | "bike" | "run" | "swim" | "gym";
 
 export interface LibraryExercise extends ExerciseRef {
   group: ExerciseGroup;
@@ -20,7 +20,8 @@ export const GROUP_LABEL: Record<ExerciseGroup, string> = {
   "rower": "Rower & ski",
   "bike": "Bike",
   "run": "Running",
-  "swim": "Swim"
+  "swim": "Swim",
+  "gym": "Gym rig & odd objects"
 };
 
 export const LIBRARY: Record<string, LibraryExercise> = {

@@ -1,0 +1,68 @@
+{
+  "id": "cf-hero-emily",
+  "title": "Emily",
+  "creator": "CrossFit",
+  "description": "Ten rounds of 30 double-unders, 15 pull-ups, 30 squats and a 100 m sprint, resting 2 minutes after each round. Honours U.S. Army 2nd Lt. Emily J. T. Perez, killed by an IED while leading a convoy in Al Kifl, Iraq, in 2006. Interval-style: each round should be a sprint.",
+  "source": {
+    "title": "Emily – CrossFit Hero WOD",
+    "url": "https://www.crossfit.com/benchmark/emily",
+    "author": "CrossFit",
+    "kind": "benchmark",
+    "license": "Public benchmark; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "CrossFit",
+    "Hero",
+    "For time",
+    "Intervals",
+    "Bodyweight",
+    "Run"
+  ],
+  "level": "Hard",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "Emily",
+      "mode": "fortime",
+      "repeat": 10,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "bw_double_under",
+          "forMode": "reps",
+          "forValue": 30
+        },
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "bw_pullup",
+          "forMode": "reps",
+          "forValue": 15
+        },
+        {
+          "kind": "exercise",
+          "id": "s3",
+          "exercise": "bw_squat",
+          "forMode": "reps",
+          "forValue": 30
+        },
+        {
+          "kind": "exercise",
+          "id": "s4",
+          "exercise": "cardio_run",
+          "forMode": "meters",
+          "forValue": 100,
+          "note": "sprint"
+        },
+        {
+          "kind": "rest",
+          "id": "r1",
+          "seconds": 120
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,89 @@
+{
+  "id": "cf-hero-jason",
+  "title": "Jason",
+  "creator": "CrossFit",
+  "description": "100 squats and 5 muscle-ups, 75 squats and 10 muscle-ups, 50 squats and 15 muscle-ups, 25 squats and 20 muscle-ups. Honours U.S. Navy SEAL SO1 Jason Dale Lewis, killed by an IED in southern Baghdad in 2007. 50 muscle-ups; scale to 3 pull-ups and 3 dips per muscle-up.",
+  "source": {
+    "title": "Jason – CrossFit Hero WOD",
+    "url": "https://www.crossfit.com/benchmark/jason",
+    "author": "CrossFit",
+    "kind": "benchmark",
+    "license": "Public benchmark; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "CrossFit",
+    "Hero",
+    "For time",
+    "Bodyweight",
+    "Gymnastics"
+  ],
+  "level": "Hard",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "Jason",
+      "mode": "fortime",
+      "repeat": 1,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "bw_squat",
+          "forMode": "reps",
+          "forValue": 100
+        },
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "gym_muscle_up",
+          "forMode": "reps",
+          "forValue": 5
+        },
+        {
+          "kind": "exercise",
+          "id": "s3",
+          "exercise": "bw_squat",
+          "forMode": "reps",
+          "forValue": 75
+        },
+        {
+          "kind": "exercise",
+          "id": "s4",
+          "exercise": "gym_muscle_up",
+          "forMode": "reps",
+          "forValue": 10
+        },
+        {
+          "kind": "exercise",
+          "id": "s5",
+          "exercise": "bw_squat",
+          "forMode": "reps",
+          "forValue": 50
+        },
+        {
+          "kind": "exercise",
+          "id": "s6",
+          "exercise": "gym_muscle_up",
+          "forMode": "reps",
+          "forValue": 15
+        },
+        {
+          "kind": "exercise",
+          "id": "s7",
+          "exercise": "bw_squat",
+          "forMode": "reps",
+          "forValue": 25
+        },
+        {
+          "kind": "exercise",
+          "id": "s8",
+          "exercise": "gym_muscle_up",
+          "forMode": "reps",
+          "forValue": 20
+        }
+      ]
+    }
+  ]
+}

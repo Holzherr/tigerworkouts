@@ -1,0 +1,53 @@
+{
+  "id": "cf-hero-gator",
+  "title": "Gator",
+  "creator": "CrossFit",
+  "description": "Eight rounds of 5 front squats at 185/125 lb and 26 ring push-ups. Honours U.S. Army Spc. Christopher \"Gator\" Gathercole, 75th Ranger Regiment, killed by enemy fire in Ghazni, Afghanistan, in 2008. 208 ring push-ups; scale to the floor when form goes.",
+  "source": {
+    "title": "Gator – CrossFit Hero WOD",
+    "url": "https://www.crossfit.com/benchmark/gator",
+    "author": "CrossFit",
+    "kind": "benchmark",
+    "license": "Public benchmark; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "CrossFit",
+    "Hero",
+    "For time",
+    "Barbell",
+    "Gymnastics"
+  ],
+  "level": "Hard",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "Gator",
+      "mode": "fortime",
+      "repeat": 8,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "bb_front_squat",
+          "target": 84.0,
+          "rx": {
+            "men": 84.0,
+            "women": 56.5
+          },
+          "forMode": "reps",
+          "forValue": 5,
+          "note": "185/125 lb"
+        },
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "gym_ring_pushup",
+          "forMode": "reps",
+          "forValue": 26
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,221 @@
+{
+  "id": "prog-wendler-531-week-2",
+  "title": "5/3/1 – Week 2 (3×3)",
+  "creator": "Jim Wendler",
+  "description": "Jim Wendler's 5/3/1: one main lift per day (press, deadlift, bench, squat), three work sets a week at rising percentages of a training max set at 90% of your 1RM, last set for max reps. Week 1 is 5s (65/75/85%), week 2 3s (70/80/90%), week 3 5/3/1 (75/85/95%), week 4 a deload (40/50/60%); then add 2.5 kg to the press/bench TM and 5 kg to squat/deadlift and repeat. Each block here is a separate training day. Add assistance after the main lift (e.g. Boring But Big 5×10 at 50%, or 50–100 reps each of a push, a pull and a single-leg/core move).",
+  "source": {
+    "title": "5/3/1: the basic 4-week template",
+    "url": "https://thefitness.wiki/routines/5-3-1-for-beginners/",
+    "author": "Jim Wendler",
+    "kind": "program",
+    "license": "Freely published program; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "Program",
+    "Strength",
+    "Barbell",
+    "Percentage-based",
+    "5/3/1"
+  ],
+  "level": "Medium",
+  "program": {
+    "name": "Wendler 5/3/1",
+    "day": "Week 2 (3×3)",
+    "order": 2
+  },
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "Day 1 – Press",
+      "repeat": 1,
+      "note": "Separate training day; warm up first, then these three work sets; assistance after",
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "bb_ohp",
+          "forMode": "reps",
+          "forValue": 3,
+          "note": "70% TM"
+        },
+        {
+          "kind": "rest",
+          "id": "r1",
+          "seconds": 180
+        },
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "bb_ohp",
+          "forMode": "reps",
+          "forValue": 3,
+          "note": "80% TM"
+        },
+        {
+          "kind": "rest",
+          "id": "r2",
+          "seconds": 180
+        },
+        {
+          "kind": "exercise",
+          "id": "s3",
+          "exercise": "bb_ohp",
+          "forMode": "reps",
+          "forValue": 3,
+          "note": "90% TM – 3+ AMRAP"
+        },
+        {
+          "kind": "rest",
+          "id": "r3",
+          "seconds": 180
+        }
+      ]
+    },
+    {
+      "kind": "block",
+      "id": "b2",
+      "name": "Day 2 – Deadlift",
+      "repeat": 1,
+      "note": "Separate training day; warm up first, then these three work sets; assistance after",
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s4",
+          "exercise": "bb_deadlift",
+          "forMode": "reps",
+          "forValue": 3,
+          "note": "70% TM"
+        },
+        {
+          "kind": "rest",
+          "id": "r4",
+          "seconds": 180
+        },
+        {
+          "kind": "exercise",
+          "id": "s5",
+          "exercise": "bb_deadlift",
+          "forMode": "reps",
+          "forValue": 3,
+          "note": "80% TM"
+        },
+        {
+          "kind": "rest",
+          "id": "r5",
+          "seconds": 180
+        },
+        {
+          "kind": "exercise",
+          "id": "s6",
+          "exercise": "bb_deadlift",
+          "forMode": "reps",
+          "forValue": 3,
+          "note": "90% TM – 3+ AMRAP"
+        },
+        {
+          "kind": "rest",
+          "id": "r6",
+          "seconds": 180
+        }
+      ]
+    },
+    {
+      "kind": "block",
+      "id": "b3",
+      "name": "Day 3 – Bench press",
+      "repeat": 1,
+      "note": "Separate training day; warm up first, then these three work sets; assistance after",
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s7",
+          "exercise": "bb_bench",
+          "forMode": "reps",
+          "forValue": 3,
+          "note": "70% TM"
+        },
+        {
+          "kind": "rest",
+          "id": "r7",
+          "seconds": 180
+        },
+        {
+          "kind": "exercise",
+          "id": "s8",
+          "exercise": "bb_bench",
+          "forMode": "reps",
+          "forValue": 3,
+          "note": "80% TM"
+        },
+        {
+          "kind": "rest",
+          "id": "r8",
+          "seconds": 180
+        },
+        {
+          "kind": "exercise",
+          "id": "s9",
+          "exercise": "bb_bench",
+          "forMode": "reps",
+          "forValue": 3,
+          "note": "90% TM – 3+ AMRAP"
+        },
+        {
+          "kind": "rest",
+          "id": "r9",
+          "seconds": 180
+        }
+      ]
+    },
+    {
+      "kind": "block",
+      "id": "b4",
+      "name": "Day 4 – Squat",
+      "repeat": 1,
+      "note": "Separate training day; warm up first, then these three work sets; assistance after",
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s10",
+          "exercise": "bb_back_squat",
+          "forMode": "reps",
+          "forValue": 3,
+          "note": "70% TM"
+        },
+        {
+          "kind": "rest",
+          "id": "r10",
+          "seconds": 180
+        },
+        {
+          "kind": "exercise",
+          "id": "s11",
+          "exercise": "bb_back_squat",
+          "forMode": "reps",
+          "forValue": 3,
+          "note": "80% TM"
+        },
+        {
+          "kind": "rest",
+          "id": "r11",
+          "seconds": 180
+        },
+        {
+          "kind": "exercise",
+          "id": "s12",
+          "exercise": "bb_back_squat",
+          "forMode": "reps",
+          "forValue": 3,
+          "note": "90% TM – 3+ AMRAP"
+        },
+        {
+          "kind": "rest",
+          "id": "r12",
+          "seconds": 180
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,53 @@
+{
+  "id": "nhs-c25k-w8",
+  "title": "Couch to 5K – Week 8",
+  "creator": "NHS",
+  "description": "Week 8 is three identical 28-minute continuous runs with the 5-minute warm-up and cool-down walks, 38 minutes each. Warm-up and cool-down matter more as the runs get longer; a new route or playlist keeps it fresh.",
+  "source": {
+    "title": "Couch to 5K running plan",
+    "url": "https://www.nhs.uk/better-health/get-active/get-running-with-couch-to-5k/couch-to-5k-running-plan/",
+    "author": "NHS",
+    "kind": "program",
+    "license": "Open Government Licence v3.0 (NHS)",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "NHS",
+    "Couch to 5K",
+    "Running",
+    "Beginner",
+    "Continuous run"
+  ],
+  "level": "Medium",
+  "program": {
+    "name": "Couch to 5K",
+    "day": "Week 8",
+    "order": 12
+  },
+  "items": [
+    {
+      "kind": "exercise",
+      "id": "s1",
+      "exercise": "cardio_walk",
+      "forMode": "minutes",
+      "forValue": 5,
+      "note": "Brisk warm-up walk. Stretch before you start (see nhs-post-run-stretch or the NHS pre-run video)."
+    },
+    {
+      "kind": "exercise",
+      "id": "s2",
+      "exercise": "cardio_run",
+      "forMode": "minutes",
+      "forValue": 28,
+      "note": "Steady pace"
+    },
+    {
+      "kind": "exercise",
+      "id": "s3",
+      "exercise": "cardio_walk",
+      "forMode": "minutes",
+      "forValue": 5,
+      "note": "Cool-down walk, then stretch (nhs-post-run-stretch)."
+    }
+  ]
+}

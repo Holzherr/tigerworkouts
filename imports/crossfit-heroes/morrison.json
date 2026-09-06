@@ -1,0 +1,74 @@
+{
+  "id": "cf-hero-morrison",
+  "title": "Morrison",
+  "creator": "CrossFit",
+  "description": "A 50-40-30-20-10 ladder of wall balls, box jumps and kettlebell swings, for time. Honours U.S. Army Spc. Scott Morrison, killed by an IED in Kandahar in 2010. That is 150 reps of each; scale the ball and bell before scaling the reps.",
+  "source": {
+    "title": "Morrison – CrossFit Hero WOD",
+    "url": "https://www.crossfit.com/benchmark/morrison",
+    "author": "CrossFit",
+    "kind": "benchmark",
+    "license": "Public benchmark; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "CrossFit",
+    "Hero WOD",
+    "For time",
+    "Ladder",
+    "Kettlebell"
+  ],
+  "level": "Hard",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "50-40-30-20-10",
+      "mode": "ladder",
+      "repeat": 1,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "gym_wall_ball",
+          "forMode": "reps",
+          "forValue": 50,
+          "target": 9,
+          "rx": {
+            "men": 9,
+            "women": 6.5
+          },
+          "note": "20/14 lb — 10/9 ft target"
+        },
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "bw_box_jump",
+          "forMode": "reps",
+          "forValue": 50,
+          "note": "24/20 in box"
+        },
+        {
+          "kind": "exercise",
+          "id": "s3",
+          "exercise": "kb_swing",
+          "forMode": "reps",
+          "forValue": 50,
+          "target": 24,
+          "rx": {
+            "men": 24,
+            "women": 16
+          },
+          "note": "53/35 lb"
+        }
+      ],
+      "ladder": [
+        50,
+        40,
+        30,
+        20,
+        10
+      ]
+    }
+  ]
+}

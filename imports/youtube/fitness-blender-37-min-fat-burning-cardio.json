@@ -1,0 +1,394 @@
+{
+  "id": "yt-fitness-blender-37-min-fat-burning-cardio",
+  "title": "Fat Burning Cardio Workout - 37 Minute Fitness Blender Cardio Workout at Home",
+  "creator": "Fitness Blender",
+  "description": "Fitness Blender's 2011 bodyweight cardio session, 76M+ views and the most-watched video on the channel. Sixteen exercises in eight pairs, each pair done A-B-A-B for 40 seconds with a 15-second jog between, so every move is hit twice; then six 20-second-per-side stretches. Kelli's low-key delivery and the on-screen timer make it easy to follow; the pairing structure is what makes it 37 minutes.",
+  "source": {
+    "title": "Fat Burning Cardio Workout - 37 Minute Fitness Blender Cardio Workout at Home",
+    "url": "https://www.youtube.com/watch?v=fcN37TxBE_s",
+    "author": "Fitness Blender",
+    "kind": "video",
+    "license": "Video © creator, linked not copied; exercise list is factual",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "Follow-along",
+    "Cardio",
+    "No equipment"
+  ],
+  "level": "Medium",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "Warm-up",
+      "repeat": 1,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "bw_warm_up",
+          "forMode": "seconds",
+          "forValue": 175,
+          "startSeconds": 20,
+          "note": "Torso twists at 1:33"
+        }
+      ]
+    },
+    {
+      "kind": "block",
+      "id": "b2",
+      "name": "Pair 1",
+      "repeat": 2,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "bw_burpee",
+          "forMode": "seconds",
+          "forValue": 40,
+          "startSeconds": 195,
+          "note": "Slow burpee"
+        },
+        {
+          "kind": "rest",
+          "id": "r1",
+          "seconds": 15
+        },
+        {
+          "kind": "exercise",
+          "id": "s3",
+          "exercise": "bw_jumping_jack",
+          "forMode": "seconds",
+          "forValue": 40,
+          "startSeconds": 250
+        },
+        {
+          "kind": "rest",
+          "id": "r2",
+          "seconds": 15
+        }
+      ],
+      "note": "A, B, A, B: 40 s each with a 15 s jog or boxer shuffle between; startSeconds for the first round"
+    },
+    {
+      "kind": "block",
+      "id": "b3",
+      "name": "Pair 2",
+      "repeat": 2,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s4",
+          "exercise": "bw_step_jack",
+          "forMode": "seconds",
+          "forValue": 40,
+          "startSeconds": 415,
+          "note": "Lateral step + reach"
+        },
+        {
+          "kind": "rest",
+          "id": "r3",
+          "seconds": 15
+        },
+        {
+          "kind": "exercise",
+          "id": "s5",
+          "exercise": "bw_jumping_jack",
+          "forMode": "seconds",
+          "forValue": 40,
+          "startSeconds": 470,
+          "note": "Ventral jacks"
+        },
+        {
+          "kind": "rest",
+          "id": "r4",
+          "seconds": 15
+        }
+      ],
+      "note": "A, B, A, B: 40 s each with a 15 s jog or boxer shuffle between; startSeconds for the first round"
+    },
+    {
+      "kind": "block",
+      "id": "b4",
+      "name": "Pair 3",
+      "repeat": 2,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s6",
+          "exercise": "bw_high_knees",
+          "forMode": "seconds",
+          "forValue": 40,
+          "startSeconds": 635,
+          "note": "High knee with a pause"
+        },
+        {
+          "kind": "rest",
+          "id": "r5",
+          "seconds": 15
+        },
+        {
+          "kind": "exercise",
+          "id": "s7",
+          "exercise": "bw_jumping_jack",
+          "forMode": "seconds",
+          "forValue": 40,
+          "startSeconds": 690,
+          "note": "Fly jacks"
+        },
+        {
+          "kind": "rest",
+          "id": "r6",
+          "seconds": 15
+        }
+      ],
+      "note": "A, B, A, B: 40 s each with a 15 s jog or boxer shuffle between; startSeconds for the first round"
+    },
+    {
+      "kind": "block",
+      "id": "b5",
+      "name": "Pair 4",
+      "repeat": 2,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s8",
+          "exercise": "bw_standing_crunch",
+          "forMode": "seconds",
+          "forValue": 40,
+          "startSeconds": 855,
+          "note": "Standing bicycle crunch"
+        },
+        {
+          "kind": "rest",
+          "id": "r7",
+          "seconds": 15
+        },
+        {
+          "kind": "exercise",
+          "id": "s9",
+          "exercise": "bw_lunge",
+          "forMode": "seconds",
+          "forValue": 40,
+          "startSeconds": 910,
+          "note": "Lunge jack: alternating lunge, hands to the front ankle, stand with hands overhead"
+        },
+        {
+          "kind": "rest",
+          "id": "r8",
+          "seconds": 15
+        }
+      ],
+      "note": "A, B, A, B: 40 s each with a 15 s jog or boxer shuffle between; startSeconds for the first round"
+    },
+    {
+      "kind": "block",
+      "id": "b6",
+      "name": "Pair 5",
+      "repeat": 2,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s10",
+          "exercise": "bw_plank_shoulder_tap",
+          "forMode": "seconds",
+          "forValue": 40,
+          "startSeconds": 1075,
+          "note": "Plank slaps"
+        },
+        {
+          "kind": "rest",
+          "id": "r9",
+          "seconds": 15
+        },
+        {
+          "kind": "exercise",
+          "id": "s11",
+          "exercise": "bw_jumping_jack",
+          "forMode": "seconds",
+          "forValue": 40,
+          "startSeconds": 1130,
+          "note": "Stutter jack: pause three times on the way up and down"
+        },
+        {
+          "kind": "rest",
+          "id": "r10",
+          "seconds": 15
+        }
+      ],
+      "note": "A, B, A, B: 40 s each with a 15 s jog or boxer shuffle between; startSeconds for the first round"
+    },
+    {
+      "kind": "block",
+      "id": "b7",
+      "name": "Pair 6",
+      "repeat": 2,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s12",
+          "exercise": "bw_skater",
+          "forMode": "seconds",
+          "forValue": 40,
+          "startSeconds": 1295,
+          "note": "Lateral hops"
+        },
+        {
+          "kind": "rest",
+          "id": "r11",
+          "seconds": 15
+        },
+        {
+          "kind": "exercise",
+          "id": "s13",
+          "exercise": "bw_high_knees",
+          "forMode": "seconds",
+          "forValue": 40,
+          "startSeconds": 1350,
+          "note": "High knee jack: clap under the thigh"
+        },
+        {
+          "kind": "rest",
+          "id": "r12",
+          "seconds": 15
+        }
+      ],
+      "note": "A, B, A, B: 40 s each with a 15 s jog or boxer shuffle between; startSeconds for the first round"
+    },
+    {
+      "kind": "block",
+      "id": "b8",
+      "name": "Pair 7",
+      "repeat": 2,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s14",
+          "exercise": "bw_standing_side_leg_lift",
+          "forMode": "seconds",
+          "forValue": 40,
+          "startSeconds": 1515,
+          "note": "Side leg raise with oblique crunch"
+        },
+        {
+          "kind": "rest",
+          "id": "r13",
+          "seconds": 15
+        },
+        {
+          "kind": "exercise",
+          "id": "s15",
+          "exercise": "bw_plank",
+          "forMode": "seconds",
+          "forValue": 40,
+          "startSeconds": 1570,
+          "note": "Plank with rear leg raise"
+        },
+        {
+          "kind": "rest",
+          "id": "r14",
+          "seconds": 15
+        }
+      ],
+      "note": "A, B, A, B: 40 s each with a 15 s jog or boxer shuffle between; startSeconds for the first round"
+    },
+    {
+      "kind": "block",
+      "id": "b9",
+      "name": "Pair 8",
+      "repeat": 2,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s16",
+          "exercise": "bw_cross_body_toe_touch",
+          "forMode": "seconds",
+          "forValue": 40,
+          "startSeconds": 1735,
+          "note": "Toe touch kicks"
+        },
+        {
+          "kind": "rest",
+          "id": "r15",
+          "seconds": 15
+        },
+        {
+          "kind": "exercise",
+          "id": "s17",
+          "exercise": "bw_jumping_jack",
+          "forMode": "seconds",
+          "forValue": 40,
+          "startSeconds": 1790
+        },
+        {
+          "kind": "rest",
+          "id": "r16",
+          "seconds": 15
+        }
+      ],
+      "note": "A, B, A, B: 40 s each with a 15 s jog or boxer shuffle between; startSeconds for the first round"
+    },
+    {
+      "kind": "block",
+      "id": "b10",
+      "name": "Cool-down (20 s each side)",
+      "repeat": 1,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s18",
+          "exercise": "bw_stretch_hamstring_standing",
+          "forMode": "seconds",
+          "forValue": 40,
+          "startSeconds": 1956,
+          "note": "Lunging hamstring stretch"
+        },
+        {
+          "kind": "exercise",
+          "id": "s19",
+          "exercise": "bw_stretch_thigh",
+          "forMode": "seconds",
+          "forValue": 40,
+          "startSeconds": 2003,
+          "note": "Standing single-leg quad stretch"
+        },
+        {
+          "kind": "exercise",
+          "id": "s20",
+          "exercise": "bw_stretch_calf",
+          "forMode": "seconds",
+          "forValue": 40,
+          "startSeconds": 2047,
+          "note": "Wall calf stretch"
+        },
+        {
+          "kind": "exercise",
+          "id": "s21",
+          "exercise": "bw_stretch_chest",
+          "forMode": "seconds",
+          "forValue": 40,
+          "startSeconds": 2095,
+          "note": "Wall chest stretch"
+        },
+        {
+          "kind": "exercise",
+          "id": "s22",
+          "exercise": "bw_stretch_forward_bend",
+          "forMode": "seconds",
+          "forValue": 40,
+          "startSeconds": 2144,
+          "note": "Wide hamstring and overhead shoulder stretch"
+        },
+        {
+          "kind": "exercise",
+          "id": "s23",
+          "exercise": "bw_stretch_inner_thigh",
+          "forMode": "seconds",
+          "forValue": 40,
+          "startSeconds": 2174
+        }
+      ]
+    }
+  ]
+}

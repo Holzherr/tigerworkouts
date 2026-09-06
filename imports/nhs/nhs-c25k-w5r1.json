@@ -1,0 +1,76 @@
+{
+  "id": "nhs-c25k-w5r1",
+  "title": "Couch to 5K – Week 5 Run 1",
+  "creator": "NHS",
+  "description": "The first of three different sessions in week 5: three 5-minute runs separated by 3-minute walks, between the warm-up and cool-down walks. Total 31 minutes. From here on you run more than you walk, so warm up properly.",
+  "source": {
+    "title": "Couch to 5K running plan",
+    "url": "https://www.nhs.uk/better-health/get-active/get-running-with-couch-to-5k/couch-to-5k-running-plan/",
+    "author": "NHS",
+    "kind": "program",
+    "license": "Open Government Licence v3.0 (NHS)",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "NHS",
+    "Couch to 5K",
+    "Running",
+    "Beginner",
+    "Intervals"
+  ],
+  "level": "Medium",
+  "program": {
+    "name": "Couch to 5K",
+    "day": "Week 5 Run 1",
+    "order": 5
+  },
+  "items": [
+    {
+      "kind": "exercise",
+      "id": "s1",
+      "exercise": "cardio_walk",
+      "forMode": "minutes",
+      "forValue": 5,
+      "note": "Brisk warm-up walk. Stretch before you start (see nhs-post-run-stretch or the NHS pre-run video)."
+    },
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "Run/walk intervals",
+      "repeat": 2,
+      "note": "Run 5 min, walk 3 min, twice",
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "cardio_run",
+          "forMode": "seconds",
+          "forValue": 300
+        },
+        {
+          "kind": "exercise",
+          "id": "s3",
+          "exercise": "cardio_walk",
+          "forMode": "seconds",
+          "forValue": 180
+        }
+      ]
+    },
+    {
+      "kind": "exercise",
+      "id": "s4",
+      "exercise": "cardio_run",
+      "forMode": "seconds",
+      "forValue": 300,
+      "note": "Final run"
+    },
+    {
+      "kind": "exercise",
+      "id": "s5",
+      "exercise": "cardio_walk",
+      "forMode": "minutes",
+      "forValue": 5,
+      "note": "Cool-down walk, then stretch (nhs-post-run-stretch)."
+    }
+  ]
+}

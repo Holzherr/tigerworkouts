@@ -1,0 +1,133 @@
+{
+  "id": "prog-phul-lower-power",
+  "title": "PHUL – Lower Power",
+  "creator": "Brandon Campbell",
+  "description": "Brandon Campbell's four-day upper/lower split: two heavy power days (3–5 reps on the big compounds) and two hypertrophy days (8–12 reps, more isolation), so every muscle is hit twice a week. Run Mon/Tue/Thu/Fri. Progress by adding weight when you hit the top of the rep range with a rep in reserve; the source gives no rest times, so 3 min is used on the 3–5 rep lifts and 90 s elsewhere. Set ranges (3–4) are modelled at the lower number, which the author suggests when starting.",
+  "source": {
+    "title": "Power Hypertrophy Upper Lower (P.H.U.L.) Workout",
+    "url": "https://www.muscleandstrength.com/workouts/phul-workout",
+    "author": "Brandon Campbell",
+    "kind": "program",
+    "license": "Freely published program; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "Program",
+    "Hypertrophy",
+    "Strength",
+    "Upper/lower"
+  ],
+  "level": "Hard",
+  "program": {
+    "name": "PHUL",
+    "day": "Lower Power",
+    "order": 2
+  },
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "Squat 3–4×3–5",
+      "repeat": 3,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "bb_back_squat",
+          "forMode": "reps",
+          "forValue": 5,
+          "note": "3–5 reps, one rep in the tank"
+        },
+        {
+          "kind": "rest",
+          "id": "r1",
+          "seconds": 180
+        }
+      ]
+    },
+    {
+      "kind": "block",
+      "id": "b2",
+      "name": "Deadlift 3–4×3–5",
+      "repeat": 3,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "bb_deadlift",
+          "forMode": "reps",
+          "forValue": 5,
+          "note": "3–5 reps"
+        },
+        {
+          "kind": "rest",
+          "id": "r2",
+          "seconds": 180
+        }
+      ]
+    },
+    {
+      "kind": "block",
+      "id": "b3",
+      "name": "Leg press 3–5×10–15",
+      "repeat": 3,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s3",
+          "exercise": "machine_leg_press",
+          "forMode": "reps",
+          "forValue": 15,
+          "note": "10–15 reps"
+        },
+        {
+          "kind": "rest",
+          "id": "r3",
+          "seconds": 90
+        }
+      ]
+    },
+    {
+      "kind": "block",
+      "id": "b4",
+      "name": "Leg curl 3–4×6–10",
+      "repeat": 3,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s4",
+          "exercise": "machine_leg_curl",
+          "forMode": "reps",
+          "forValue": 10,
+          "note": "6–10 reps"
+        },
+        {
+          "kind": "rest",
+          "id": "r4",
+          "seconds": 90
+        }
+      ]
+    },
+    {
+      "kind": "block",
+      "id": "b5",
+      "name": "Calf exercise 4×6–10",
+      "repeat": 4,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s5",
+          "exercise": "machine_calf_raise",
+          "forMode": "reps",
+          "forValue": 10,
+          "note": "6–10 reps, any calf exercise"
+        },
+        {
+          "kind": "rest",
+          "id": "r5",
+          "seconds": 60
+        }
+      ]
+    }
+  ]
+}

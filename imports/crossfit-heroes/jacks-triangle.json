@@ -1,0 +1,110 @@
+{
+  "id": "cf-hero-jacks-triangle",
+  "title": "Jack's Triangle",
+  "creator": "CrossFit",
+  "description": "On a 23-minute clock for total reps: 2 minutes of max deadlifts at 225/155 lb, then a 19-minute AMRAP of 4 strict pull-ups, 11 box jumps to a 30/24 in box, 13 hand-release push-ups and a 23-calorie bike, then 2 more minutes of max deadlifts. Honours U.S. Marine Cpl. Kevin \"Jack\" Dempsey, 2nd Reconnaissance Battalion, killed by an IED in Al Anbar Province, Iraq, in 2004. Posted in 2026.",
+  "source": {
+    "title": "Jack's Triangle – CrossFit Hero WOD",
+    "url": "https://www.crossfit.com/benchmark/jacks-triangle-h",
+    "author": "CrossFit",
+    "kind": "benchmark",
+    "license": "Public benchmark; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "CrossFit",
+    "Hero",
+    "AMRAP",
+    "Barbell",
+    "Bodyweight",
+    "Bike"
+  ],
+  "level": "Hard",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "Deadlifts (0:00-2:00)",
+      "mode": "amrap",
+      "repeat": 1,
+      "timeCapSec": 120,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "bb_deadlift",
+          "target": 102.0,
+          "rx": {
+            "men": 102.0,
+            "women": 70.5
+          },
+          "forMode": "max",
+          "forValue": 1,
+          "note": "225/155 lb; max reps in 2 minutes"
+        }
+      ]
+    },
+    {
+      "kind": "block",
+      "id": "b2",
+      "name": "AMRAP (2:00-21:00)",
+      "mode": "amrap",
+      "repeat": 1,
+      "timeCapSec": 1140,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "bw_strict_pullup",
+          "forMode": "reps",
+          "forValue": 4
+        },
+        {
+          "kind": "exercise",
+          "id": "s3",
+          "exercise": "bw_box_jump",
+          "forMode": "reps",
+          "forValue": 11,
+          "note": "30/24 in box"
+        },
+        {
+          "kind": "exercise",
+          "id": "s4",
+          "exercise": "bw_hand_release_pushup",
+          "forMode": "reps",
+          "forValue": 13
+        },
+        {
+          "kind": "exercise",
+          "id": "s5",
+          "exercise": "cardio_assault_bike",
+          "forMode": "calories",
+          "forValue": 23
+        }
+      ]
+    },
+    {
+      "kind": "block",
+      "id": "b3",
+      "name": "Deadlifts (21:00-23:00)",
+      "mode": "amrap",
+      "repeat": 1,
+      "timeCapSec": 120,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s6",
+          "exercise": "bb_deadlift",
+          "target": 102.0,
+          "rx": {
+            "men": 102.0,
+            "women": 70.5
+          },
+          "forMode": "max",
+          "forValue": 1,
+          "note": "225/155 lb; max reps in 2 minutes"
+        }
+      ]
+    }
+  ]
+}

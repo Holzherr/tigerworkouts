@@ -1,0 +1,67 @@
+{
+  "id": "nhs-c25k-w5r2",
+  "title": "Couch to 5K – Week 5 Run 2",
+  "creator": "NHS",
+  "description": "Week 5 run 2: two 8-minute runs with a 5-minute walk between them, plus the warm-up and cool-down walks. Total 31 minutes. It is the stepping stone to the first 20-minute run in run 3.",
+  "source": {
+    "title": "Couch to 5K running plan",
+    "url": "https://www.nhs.uk/better-health/get-active/get-running-with-couch-to-5k/couch-to-5k-running-plan/",
+    "author": "NHS",
+    "kind": "program",
+    "license": "Open Government Licence v3.0 (NHS)",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "NHS",
+    "Couch to 5K",
+    "Running",
+    "Beginner",
+    "Intervals"
+  ],
+  "level": "Medium",
+  "program": {
+    "name": "Couch to 5K",
+    "day": "Week 5 Run 2",
+    "order": 6
+  },
+  "items": [
+    {
+      "kind": "exercise",
+      "id": "s1",
+      "exercise": "cardio_walk",
+      "forMode": "minutes",
+      "forValue": 5,
+      "note": "Brisk warm-up walk. Stretch before you start (see nhs-post-run-stretch or the NHS pre-run video)."
+    },
+    {
+      "kind": "exercise",
+      "id": "s2",
+      "exercise": "cardio_run",
+      "forMode": "seconds",
+      "forValue": 480
+    },
+    {
+      "kind": "exercise",
+      "id": "s3",
+      "exercise": "cardio_walk",
+      "forMode": "seconds",
+      "forValue": 300
+    },
+    {
+      "kind": "exercise",
+      "id": "s4",
+      "exercise": "cardio_run",
+      "forMode": "seconds",
+      "forValue": 480,
+      "note": "Final run"
+    },
+    {
+      "kind": "exercise",
+      "id": "s5",
+      "exercise": "cardio_walk",
+      "forMode": "minutes",
+      "forValue": 5,
+      "note": "Cool-down walk, then stretch (nhs-post-run-stretch)."
+    }
+  ]
+}

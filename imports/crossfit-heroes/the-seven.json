@@ -1,0 +1,101 @@
+{
+  "id": "cf-hero-the-seven",
+  "title": "The Seven",
+  "creator": "CrossFit",
+  "description": "Seven rounds of 7 handstand push-ups, 7 thrusters, 7 knees-to-elbows, 7 deadlifts, 7 burpees, 7 kettlebell swings and 7 pull-ups, for time. Honours the seven CIA officers killed by a suicide bomber at Forward Operating Base Chapman, Afghanistan, on 30 December 2009. Three loads and seven movements; a long, grinding round.",
+  "source": {
+    "title": "The Seven – CrossFit Hero WOD",
+    "url": "https://www.crossfit.com/benchmark/the-seven-new",
+    "author": "CrossFit",
+    "kind": "benchmark",
+    "license": "Public benchmark; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "CrossFit",
+    "Hero WOD",
+    "For time",
+    "Barbell",
+    "Kettlebell",
+    "Gymnastics"
+  ],
+  "level": "Hard",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "7 rounds",
+      "mode": "fortime",
+      "repeat": 7,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "bw_handstand_pushup",
+          "forMode": "reps",
+          "forValue": 7
+        },
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "bb_thruster",
+          "forMode": "reps",
+          "forValue": 7,
+          "target": 61,
+          "rx": {
+            "men": 61,
+            "women": 43
+          },
+          "note": "135/95 lb"
+        },
+        {
+          "kind": "exercise",
+          "id": "s3",
+          "exercise": "bw_knees_to_elbows",
+          "forMode": "reps",
+          "forValue": 7
+        },
+        {
+          "kind": "exercise",
+          "id": "s4",
+          "exercise": "bb_deadlift",
+          "forMode": "reps",
+          "forValue": 7,
+          "target": 111,
+          "rx": {
+            "men": 111,
+            "women": 75
+          },
+          "note": "245/165 lb"
+        },
+        {
+          "kind": "exercise",
+          "id": "s5",
+          "exercise": "bw_burpee",
+          "forMode": "reps",
+          "forValue": 7
+        },
+        {
+          "kind": "exercise",
+          "id": "s6",
+          "exercise": "kb_swing",
+          "forMode": "reps",
+          "forValue": 7,
+          "target": 32,
+          "rx": {
+            "men": 32,
+            "women": 24
+          },
+          "note": "70/53 lb"
+        },
+        {
+          "kind": "exercise",
+          "id": "s7",
+          "exercise": "bw_pullup",
+          "forMode": "reps",
+          "forValue": 7
+        }
+      ]
+    }
+  ]
+}

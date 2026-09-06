@@ -1,0 +1,153 @@
+{
+  "id": "proto-tabata-this",
+  "title": "Tabata This",
+  "creator": "CrossFit",
+  "description": "Five Tabatas back to back with a minute of rest between them: row (calories), squats, pull-ups, push-ups and sit-ups. Each Tabata is 8 rounds of 20 seconds of work and 10 seconds of rest, and your score for each is the lowest rep count in any of its rounds; add the five together. Twenty-four minutes that reward even pacing over heroics.",
+  "source": {
+    "title": "Tabata This – CrossFit Workout of the Day 101011",
+    "url": "https://www.crossfit.com/workout/2010/10/11",
+    "author": "CrossFit",
+    "kind": "benchmark",
+    "license": "Published protocol; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "CrossFit",
+    "Tabata",
+    "Bodyweight",
+    "Rower"
+  ],
+  "level": "Hard",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "Tabata Row",
+      "mode": "rounds",
+      "repeat": 8,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "cardio_rower",
+          "forMode": "seconds",
+          "forValue": 20,
+          "note": "Max calories; score = lowest of the 8 rounds"
+        },
+        {
+          "kind": "rest",
+          "id": "r2",
+          "seconds": 10
+        }
+      ]
+    },
+    {
+      "kind": "rest",
+      "id": "r3",
+      "seconds": 60
+    },
+    {
+      "kind": "block",
+      "id": "b2",
+      "name": "Tabata Squat",
+      "mode": "rounds",
+      "repeat": 8,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s4",
+          "exercise": "bw_squat",
+          "forMode": "seconds",
+          "forValue": 20,
+          "note": "Max reps; score = lowest of the 8 rounds"
+        },
+        {
+          "kind": "rest",
+          "id": "r5",
+          "seconds": 10
+        }
+      ]
+    },
+    {
+      "kind": "rest",
+      "id": "r6",
+      "seconds": 60
+    },
+    {
+      "kind": "block",
+      "id": "b3",
+      "name": "Tabata Pull-up",
+      "mode": "rounds",
+      "repeat": 8,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s7",
+          "exercise": "bw_pullup",
+          "forMode": "seconds",
+          "forValue": 20,
+          "note": "Max reps; score = lowest of the 8 rounds"
+        },
+        {
+          "kind": "rest",
+          "id": "r8",
+          "seconds": 10
+        }
+      ]
+    },
+    {
+      "kind": "rest",
+      "id": "r9",
+      "seconds": 60
+    },
+    {
+      "kind": "block",
+      "id": "b4",
+      "name": "Tabata Push-up",
+      "mode": "rounds",
+      "repeat": 8,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s10",
+          "exercise": "bw_pushup",
+          "forMode": "seconds",
+          "forValue": 20,
+          "note": "Max reps; score = lowest of the 8 rounds"
+        },
+        {
+          "kind": "rest",
+          "id": "r11",
+          "seconds": 10
+        }
+      ]
+    },
+    {
+      "kind": "rest",
+      "id": "r12",
+      "seconds": 60
+    },
+    {
+      "kind": "block",
+      "id": "b5",
+      "name": "Tabata Sit-up",
+      "mode": "rounds",
+      "repeat": 8,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s13",
+          "exercise": "bw_situp",
+          "forMode": "seconds",
+          "forValue": 20,
+          "note": "Max reps; score = lowest of the 8 rounds"
+        },
+        {
+          "kind": "rest",
+          "id": "r14",
+          "seconds": 10
+        }
+      ]
+    }
+  ]
+}

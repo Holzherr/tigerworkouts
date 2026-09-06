@@ -1,0 +1,116 @@
+{
+  "id": "nhs-10-min-firm-butt",
+  "title": "10-minute firm butt workout",
+  "creator": "NHS",
+  "description": "Five glute and thigh moves from the NHS 10-minute series: squats, side-lying leg raises, bridges, one-leg kickbacks and lunges, 8 to 10 reps each, with single-leg moves done on both sides. No equipment and floor-friendly, so it works as a beginner lower-body session. Add a second round if 10 minutes feels light. Warm up first with the NHS 6-minute warm-up (nhs-6-min-warm-up) and finish with the 5-minute stretch (nhs-5-min-cool-down-stretch).",
+  "source": {
+    "title": "10-minute firm butt workout",
+    "url": "https://web.archive.org/web/20220401/https://www.nhs.uk/live-well/exercise/10-minute-firm-butt-workout/",
+    "author": "NHS",
+    "kind": "article",
+    "license": "Open Government Licence v3.0 (NHS)",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "NHS",
+    "Home workout",
+    "No equipment",
+    "Glutes",
+    "Legs",
+    "10 minutes"
+  ],
+  "level": "Easy",
+  "items": [
+    {
+      "kind": "exercise",
+      "id": "s1",
+      "exercise": "bw_squat",
+      "forMode": "reps",
+      "forValue": 8,
+      "note": "8 to 10 reps, thighs to parallel"
+    },
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "Side-lying leg raise",
+      "repeat": 1,
+      "note": "8 to 10 each side",
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "bw_side_lying_leg_raise",
+          "forMode": "reps",
+          "forValue": 8,
+          "note": "Right side"
+        },
+        {
+          "kind": "exercise",
+          "id": "s3",
+          "exercise": "bw_side_lying_leg_raise",
+          "forMode": "reps",
+          "forValue": 8,
+          "note": "Left side"
+        }
+      ]
+    },
+    {
+      "kind": "exercise",
+      "id": "s4",
+      "exercise": "bw_hip_bridge",
+      "forMode": "reps",
+      "forValue": 8,
+      "note": "8 to 10 reps"
+    },
+    {
+      "kind": "block",
+      "id": "b2",
+      "name": "One-leg kickbacks",
+      "repeat": 1,
+      "note": "8 to 10 each leg",
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s5",
+          "exercise": "bw_donkey_kick",
+          "forMode": "reps",
+          "forValue": 8,
+          "note": "Right leg"
+        },
+        {
+          "kind": "exercise",
+          "id": "s6",
+          "exercise": "bw_donkey_kick",
+          "forMode": "reps",
+          "forValue": 8,
+          "note": "Left leg"
+        }
+      ]
+    },
+    {
+      "kind": "block",
+      "id": "b3",
+      "name": "Lunges",
+      "repeat": 1,
+      "note": "8 to 10 each leg",
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s7",
+          "exercise": "bw_lunge",
+          "forMode": "reps",
+          "forValue": 8,
+          "note": "Step forward with the right leg"
+        },
+        {
+          "kind": "exercise",
+          "id": "s8",
+          "exercise": "bw_lunge",
+          "forMode": "reps",
+          "forValue": 8,
+          "note": "Left leg"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,73 @@
+{
+  "id": "nhs-10-min-upper-arms",
+  "title": "10-minute upper arms workout",
+  "creator": "NHS",
+  "description": "A short triceps-focused routine from the NHS 10-minute series: press-ups, close-grip wall push-ups, bench dips and kneeling triceps kickbacks, 10 to 15 reps each. It needs only a wall and a stable chair. Do the press-ups on the knees to make it easier or move the wall push-ups to a chair or the floor to make it harder. Warm up first with the NHS 6-minute warm-up (nhs-6-min-warm-up) and finish with the 5-minute stretch (nhs-5-min-cool-down-stretch).",
+  "source": {
+    "title": "10-minute upper arms workout",
+    "url": "https://web.archive.org/web/20220401/https://www.nhs.uk/live-well/exercise/10-minute-upper-arms-workout/",
+    "author": "NHS",
+    "kind": "article",
+    "license": "Open Government Licence v3.0 (NHS)",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "NHS",
+    "Home workout",
+    "No equipment",
+    "Arms",
+    "10 minutes"
+  ],
+  "level": "Easy",
+  "items": [
+    {
+      "kind": "exercise",
+      "id": "s1",
+      "exercise": "bw_pushup",
+      "forMode": "reps",
+      "forValue": 10,
+      "note": "10 to 15 reps; knees down for an easier version"
+    },
+    {
+      "kind": "exercise",
+      "id": "s2",
+      "exercise": "bw_wall_pushup",
+      "forMode": "reps",
+      "forValue": 10,
+      "note": "Close grip, hands shoulder-width or closer, elbows tucked; 10 to 15 reps"
+    },
+    {
+      "kind": "exercise",
+      "id": "s3",
+      "exercise": "bw_bench_dip",
+      "forMode": "reps",
+      "forValue": 10,
+      "note": "Hands on the edge of a stable chair, knees at 90 degrees; 10 to 15 reps"
+    },
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "Triceps kickbacks",
+      "repeat": 1,
+      "note": "10 to 15 reps each arm; the source uses no weight",
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s4",
+          "exercise": "db_tricep_kickback",
+          "forMode": "reps",
+          "forValue": 10,
+          "note": "Kneel on the right knee, left arm"
+        },
+        {
+          "kind": "exercise",
+          "id": "s5",
+          "exercise": "db_tricep_kickback",
+          "forMode": "reps",
+          "forValue": 10,
+          "note": "Switch knees, right arm"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,112 @@
+{
+  "id": "prog-ivysaur-448-week-a-day-1",
+  "title": "Ivysaur 4-4-8 – Week A – Day 1",
+  "creator": "u/Ivysaur (r/Fitness)",
+  "description": "Ivysaur's 4-4-8: three full-body days a week over a two-week rotation, each lift alternating a heavy 4×4 and a lighter 4×8 (the 8-rep weight is 90% of the 4-rep weight). Bench and overhead press every session, squat/deadlift and chin-up/row alternating. The third day of each week swaps two lifts' last sets for an AMRAP: 8+ reps doubles next week's jump. Weekly increases: squat/deadlift +15 lb (7.5 kg), bench/row +10 lb (5 kg), press +5 lb (2.5 kg); chin-ups add 2.5 lb after two clean sessions; fail the reps → drop 10%.",
+  "source": {
+    "title": "Ivysaur's Beginner 4-4-8 Program",
+    "url": "https://liftvault.com/programs/strength/ivysaur-spreadsheet/",
+    "author": "u/Ivysaur (r/Fitness)",
+    "kind": "program",
+    "license": "Freely published program; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "Program",
+    "Strength",
+    "Barbell",
+    "Full body"
+  ],
+  "level": "Medium",
+  "program": {
+    "name": "Ivysaur 4-4-8",
+    "day": "Week A – Day 1",
+    "order": 1
+  },
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "Bench press 4×4",
+      "repeat": 4,
+      "note": "Heavy day: rest 2–3 min",
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "bb_bench",
+          "forMode": "reps",
+          "forValue": 4
+        },
+        {
+          "kind": "rest",
+          "id": "r1",
+          "seconds": 150
+        }
+      ]
+    },
+    {
+      "kind": "block",
+      "id": "b2",
+      "name": "Squat 4×8",
+      "repeat": 4,
+      "note": "Light day (90% of the 4-rep weight): rest 90 s–2 min",
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "bb_back_squat",
+          "forMode": "reps",
+          "forValue": 8
+        },
+        {
+          "kind": "rest",
+          "id": "r2",
+          "seconds": 120
+        }
+      ]
+    },
+    {
+      "kind": "block",
+      "id": "b3",
+      "name": "Overhead press 4×8",
+      "repeat": 4,
+      "note": "Light day (90% of the 4-rep weight): rest 90 s–2 min",
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s3",
+          "exercise": "bb_ohp",
+          "forMode": "reps",
+          "forValue": 8
+        },
+        {
+          "kind": "rest",
+          "id": "r3",
+          "seconds": 120
+        }
+      ]
+    },
+    {
+      "kind": "block",
+      "id": "b4",
+      "name": "Chin-ups 4×8",
+      "repeat": 4,
+      "note": "Light day (90% of the 4-rep weight): rest 90 s–2 min",
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s4",
+          "exercise": "bw_chinup",
+          "forMode": "reps",
+          "forValue": 8
+        },
+        {
+          "kind": "rest",
+          "id": "r4",
+          "seconds": 120
+        }
+      ]
+    }
+  ]
+}

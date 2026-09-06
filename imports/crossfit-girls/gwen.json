@@ -1,0 +1,69 @@
+{
+  "id": "cf-girls-gwen",
+  "title": "Gwen",
+  "creator": "CrossFit",
+  "description": "Clean and jerks for 15, 12 and 9 unbroken reps, touch-and-go at the floor, using the same load for all three sets and resting as needed between them. Scored by load, not time: the score is the heaviest weight you complete all three sets with. Regripping or dumping the bar ends the set.",
+  "source": {
+    "title": "Gwen – CrossFit benchmark WOD (\"The Girls\")",
+    "url": "https://www.crossfit.com/benchmark/gwen",
+    "author": "CrossFit",
+    "kind": "benchmark",
+    "license": "Public benchmark; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "CrossFit",
+    "Girls",
+    "For load",
+    "Barbell"
+  ],
+  "level": "Hard",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "Gwen",
+      "mode": "rounds",
+      "repeat": 1,
+      "note": "Score = load used for all three unbroken sets",
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "bb_clean_and_jerk",
+          "forMode": "reps",
+          "forValue": 15,
+          "note": "Unbroken, touch-and-go; pick one load for all sets"
+        },
+        {
+          "kind": "rest",
+          "id": "r1",
+          "seconds": 180,
+          "note": "Rest as needed"
+        },
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "bb_clean_and_jerk",
+          "forMode": "reps",
+          "forValue": 12,
+          "note": "Unbroken, same load"
+        },
+        {
+          "kind": "rest",
+          "id": "r2",
+          "seconds": 180,
+          "note": "Rest as needed"
+        },
+        {
+          "kind": "exercise",
+          "id": "s3",
+          "exercise": "bb_clean_and_jerk",
+          "forMode": "reps",
+          "forValue": 9,
+          "note": "Unbroken, same load"
+        }
+      ]
+    }
+  ]
+}

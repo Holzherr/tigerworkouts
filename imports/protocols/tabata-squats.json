@@ -1,0 +1,47 @@
+{
+  "id": "proto-tabata-squats",
+  "title": "Tabata Squats",
+  "creator": "Izumi Tabata (protocol); community variant",
+  "description": "The Tabata clock applied to air squats: eight rounds of 20 seconds of as many squats as possible with 10 seconds off. The usual score is the lowest rep count of any round, which punishes going out too fast. Four minutes, no equipment.",
+  "source": {
+    "title": "Tabata regimen (High-intensity interval training, Wikipedia; original: Tabata et al. 1996)",
+    "url": "https://en.wikipedia.org/wiki/High-intensity_interval_training#Tabata_regimen",
+    "author": "Izumi Tabata (protocol); common bodyweight/kettlebell variant",
+    "kind": "protocol",
+    "license": "Published protocol; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "Protocol",
+    "Tabata",
+    "HIIT",
+    "Bodyweight",
+    "No equipment"
+  ],
+  "level": "Medium",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "Tabata",
+      "mode": "rounds",
+      "repeat": 8,
+      "note": "8 × (20 s on / 10 s off) = 4:00",
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "bw_squat",
+          "forMode": "seconds",
+          "forValue": 20,
+          "note": "Max reps; score = lowest round"
+        },
+        {
+          "kind": "rest",
+          "id": "r2",
+          "seconds": 10
+        }
+      ]
+    }
+  ]
+}

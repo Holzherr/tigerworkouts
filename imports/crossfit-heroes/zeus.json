@@ -1,0 +1,103 @@
+{
+  "id": "cf-hero-zeus",
+  "title": "Zeus",
+  "creator": "CrossFit",
+  "description": "Three rounds of 30 wall balls, 30 sumo deadlift high pulls, 30 box jumps, 30 push presses, a 30-calorie row, 30 push-ups and 10 bodyweight back squats, for time. Honours U.S. Army Spc. David E. Hickman, 82nd Airborne, killed by an IED in Baghdad in 2011, the last U.S. soldier killed in the Iraq War. Light bar for the first two barbell movements, bodyweight for the squats.",
+  "source": {
+    "title": "Zeus – CrossFit Hero WOD",
+    "url": "https://www.crossfit.com/benchmark/zeus",
+    "author": "CrossFit",
+    "kind": "benchmark",
+    "license": "Public benchmark; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "CrossFit",
+    "Hero WOD",
+    "For time",
+    "Barbell",
+    "Wall ball",
+    "Rower"
+  ],
+  "level": "Hard",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "3 rounds",
+      "mode": "fortime",
+      "repeat": 3,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "gym_wall_ball",
+          "forMode": "reps",
+          "forValue": 30,
+          "target": 9,
+          "rx": {
+            "men": 9,
+            "women": 6.5
+          },
+          "note": "20/14 lb — 10/9 ft target"
+        },
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "bb_sdhp",
+          "forMode": "reps",
+          "forValue": 30,
+          "target": 34,
+          "rx": {
+            "men": 34,
+            "women": 25
+          },
+          "note": "75/55 lb"
+        },
+        {
+          "kind": "exercise",
+          "id": "s3",
+          "exercise": "bw_box_jump",
+          "forMode": "reps",
+          "forValue": 30,
+          "note": "24/20 in box"
+        },
+        {
+          "kind": "exercise",
+          "id": "s4",
+          "exercise": "bb_push_press",
+          "forMode": "reps",
+          "forValue": 30,
+          "target": 34,
+          "rx": {
+            "men": 34,
+            "women": 25
+          },
+          "note": "75/55 lb"
+        },
+        {
+          "kind": "exercise",
+          "id": "s5",
+          "exercise": "cardio_rower",
+          "forMode": "calories",
+          "forValue": 30
+        },
+        {
+          "kind": "exercise",
+          "id": "s6",
+          "exercise": "bw_pushup",
+          "forMode": "reps",
+          "forValue": 30
+        },
+        {
+          "kind": "exercise",
+          "id": "s7",
+          "exercise": "bb_back_squat",
+          "forMode": "reps",
+          "forValue": 10,
+          "note": "Bodyweight on the bar"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,73 @@
+{
+  "id": "cf-hero-hall",
+  "title": "Hall",
+  "creator": "CrossFit",
+  "description": "Five rounds of 3 cleans at 225/155 lb, a 200 m sprint and 20 kettlebell snatches (10 each arm) at 53/35 lb, resting 2 minutes between rounds. Honours U.S. Air Force Capt. Ryan P. Hall, killed in a U-28 crash near Camp Lemonnier, Djibouti, in 2012. Heavy cleans; scale to about 80% of your 1RM.",
+  "source": {
+    "title": "Hall – CrossFit Hero WOD",
+    "url": "https://www.crossfit.com/benchmark/hall",
+    "author": "CrossFit",
+    "kind": "benchmark",
+    "license": "Public benchmark; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "CrossFit",
+    "Hero",
+    "For time",
+    "Intervals",
+    "Barbell",
+    "Kettlebell"
+  ],
+  "level": "Hard",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "Hall",
+      "mode": "fortime",
+      "repeat": 5,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "bb_squat_clean",
+          "target": 102.0,
+          "rx": {
+            "men": 102.0,
+            "women": 70.5
+          },
+          "forMode": "reps",
+          "forValue": 3,
+          "note": "225/155 lb"
+        },
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "cardio_run",
+          "forMode": "meters",
+          "forValue": 200,
+          "note": "sprint"
+        },
+        {
+          "kind": "exercise",
+          "id": "s3",
+          "exercise": "kb_snatch",
+          "target": 24,
+          "rx": {
+            "men": 24,
+            "women": 16
+          },
+          "forMode": "reps",
+          "forValue": 20,
+          "note": "53/35 lb; 10 each arm"
+        },
+        {
+          "kind": "rest",
+          "id": "r1",
+          "seconds": 120
+        }
+      ]
+    }
+  ]
+}

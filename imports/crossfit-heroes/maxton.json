@@ -1,0 +1,57 @@
+{
+  "id": "cf-hero-maxton",
+  "title": "Maxton",
+  "creator": "CrossFit",
+  "description": "Thirteen rounds of 8 strict pull-ups, 26 box step-ups and 21 burpees, wearing a vest, for time. Honours Navy Corpsman Maxton Soviak, 22, one of the 13 U.S. service members killed in the Kabul airport attack in 2021; the workout uses his favourite movements. Over 100 strict pull-ups and 270 burpees, so scale rounds before you scale the standard.",
+  "source": {
+    "title": "Maxton – CrossFit Hero WOD",
+    "url": "https://www.crossfit.com/benchmark/maxton",
+    "author": "CrossFit",
+    "kind": "benchmark",
+    "license": "Public benchmark; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "CrossFit",
+    "Hero WOD",
+    "For time",
+    "Bodyweight",
+    "Weight vest"
+  ],
+  "level": "Hard",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "13 rounds",
+      "mode": "fortime",
+      "repeat": 13,
+      "note": "20/14 lb (9/6.5 kg) vest",
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "bw_pullup",
+          "forMode": "reps",
+          "forValue": 8,
+          "note": "Strict"
+        },
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "bw_step_up",
+          "forMode": "reps",
+          "forValue": 26,
+          "note": "24/20 in box"
+        },
+        {
+          "kind": "exercise",
+          "id": "s3",
+          "exercise": "bw_burpee",
+          "forMode": "reps",
+          "forValue": 21
+        }
+      ]
+    }
+  ]
+}

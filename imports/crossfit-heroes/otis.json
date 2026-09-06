@@ -1,0 +1,58 @@
+{
+  "id": "cf-hero-otis",
+  "title": "Otis",
+  "creator": "CrossFit",
+  "description": "A 15-minute ascending ladder: 1 back squat, 1 shoulder press, 1 deadlift, then 2 of each, 3 of each, and so on; score is total reps. Honours U.S. Marine Lt. Col. Christopher 'Otis' Raible, killed in the attack on Camp Bastion, Afghanistan, in 2012. Loads are 1.5x bodyweight for squats and deadlifts and 3/4 bodyweight for the press, so this is heavy from the first round.",
+  "source": {
+    "title": "Otis – CrossFit Hero WOD",
+    "url": "https://www.crossfit.com/benchmark/otis",
+    "author": "CrossFit",
+    "kind": "benchmark",
+    "license": "Public benchmark; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "CrossFit",
+    "Hero WOD",
+    "AMRAP",
+    "Ladder",
+    "Barbell"
+  ],
+  "level": "Hard",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "AMRAP 15 (ladder)",
+      "mode": "amrap",
+      "timeCapSec": 900,
+      "note": "Round 1 = 1 rep each, round 2 = 2 reps each, etc. Score total reps.",
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "bb_back_squat",
+          "forMode": "reps",
+          "forValue": 1,
+          "note": "1.5x bodyweight; add 1 rep per round"
+        },
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "bb_ohp",
+          "forMode": "reps",
+          "forValue": 1,
+          "note": "3/4 bodyweight; add 1 rep per round"
+        },
+        {
+          "kind": "exercise",
+          "id": "s3",
+          "exercise": "bb_deadlift",
+          "forMode": "reps",
+          "forValue": 1,
+          "note": "1.5x bodyweight; add 1 rep per round"
+        }
+      ]
+    }
+  ]
+}

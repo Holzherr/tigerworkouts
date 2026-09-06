@@ -1,0 +1,151 @@
+{
+  "id": "cf-hero-luke",
+  "title": "Luke",
+  "creator": "CrossFit",
+  "description": "Seven 400 m runs with 15 clean and jerks at 155/105 lb, 30 toes-to-bars, 45 wall balls, 45 kettlebell swings at 53/35 lb, 30 ring dips and 15 front-rack lunges between them. Honours U.S. Marine Staff Sgt. Leon H. Lucas Jr., killed by a grenade attack in Helmand Province, Afghanistan, in 2011. A long chipper; scale the barbell to one load you can lunge with.",
+  "source": {
+    "title": "Luke – CrossFit Hero WOD",
+    "url": "https://www.crossfit.com/benchmark/luke",
+    "author": "CrossFit",
+    "kind": "benchmark",
+    "license": "Public benchmark; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "CrossFit",
+    "Hero",
+    "For time",
+    "Run",
+    "Barbell",
+    "Kettlebell",
+    "Wall ball",
+    "Long"
+  ],
+  "level": "Hard",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "Luke",
+      "mode": "fortime",
+      "repeat": 1,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "cardio_run",
+          "forMode": "meters",
+          "forValue": 400
+        },
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "bb_clean_and_jerk",
+          "target": 70.5,
+          "rx": {
+            "men": 70.5,
+            "women": 47.5
+          },
+          "forMode": "reps",
+          "forValue": 15,
+          "note": "155/105 lb"
+        },
+        {
+          "kind": "exercise",
+          "id": "s3",
+          "exercise": "cardio_run",
+          "forMode": "meters",
+          "forValue": 400
+        },
+        {
+          "kind": "exercise",
+          "id": "s4",
+          "exercise": "bw_toes_to_bar",
+          "forMode": "reps",
+          "forValue": 30
+        },
+        {
+          "kind": "exercise",
+          "id": "s5",
+          "exercise": "cardio_run",
+          "forMode": "meters",
+          "forValue": 400
+        },
+        {
+          "kind": "exercise",
+          "id": "s6",
+          "exercise": "gym_wall_ball",
+          "target": 9.0,
+          "rx": {
+            "men": 9.0,
+            "women": 6.5
+          },
+          "forMode": "reps",
+          "forValue": 45,
+          "note": "20/14 lb; 10/9 ft target"
+        },
+        {
+          "kind": "exercise",
+          "id": "s7",
+          "exercise": "cardio_run",
+          "forMode": "meters",
+          "forValue": 400
+        },
+        {
+          "kind": "exercise",
+          "id": "s8",
+          "exercise": "kb_swing",
+          "target": 24,
+          "rx": {
+            "men": 24,
+            "women": 16
+          },
+          "forMode": "reps",
+          "forValue": 45,
+          "note": "53/35 lb"
+        },
+        {
+          "kind": "exercise",
+          "id": "s9",
+          "exercise": "cardio_run",
+          "forMode": "meters",
+          "forValue": 400
+        },
+        {
+          "kind": "exercise",
+          "id": "s10",
+          "exercise": "gym_ring_dip",
+          "forMode": "reps",
+          "forValue": 30
+        },
+        {
+          "kind": "exercise",
+          "id": "s11",
+          "exercise": "cardio_run",
+          "forMode": "meters",
+          "forValue": 400
+        },
+        {
+          "kind": "exercise",
+          "id": "s12",
+          "exercise": "bb_front_rack_lunge",
+          "target": 70.5,
+          "rx": {
+            "men": 70.5,
+            "women": 47.5
+          },
+          "forMode": "reps",
+          "forValue": 15,
+          "note": "155/105 lb"
+        },
+        {
+          "kind": "exercise",
+          "id": "s13",
+          "exercise": "cardio_run",
+          "forMode": "meters",
+          "forValue": 400
+        }
+      ]
+    }
+  ]
+}

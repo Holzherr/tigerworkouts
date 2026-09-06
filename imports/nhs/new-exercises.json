@@ -1,0 +1,482 @@
+[
+  {
+    "key": "cardio_walk",
+    "name": "Walk",
+    "unit": "kph",
+    "step": 0.5,
+    "group": "walk",
+    "cue": "Brisk but comfortable, arms swinging, look ahead."
+  },
+  {
+    "key": "bw_march",
+    "name": "March on the spot",
+    "unit": "",
+    "step": 1,
+    "group": "body",
+    "cue": "Lift the knees, pump the arms in rhythm, elbows bent, fists soft."
+  },
+  {
+    "key": "bw_heel_dig",
+    "name": "Heel digs",
+    "unit": "",
+    "step": 1,
+    "group": "body",
+    "cue": "Alternate heels to the front, toes up, punch out with each dig, soft knee on the standing leg."
+  },
+  {
+    "key": "bw_knee_lift",
+    "name": "Knee lifts",
+    "unit": "",
+    "step": 1,
+    "group": "body",
+    "cue": "Stand tall, bring alternate knees up to touch the opposite hand, abs tight."
+  },
+  {
+    "key": "bw_shoulder_roll",
+    "name": "Shoulder rolls",
+    "unit": "",
+    "step": 1,
+    "group": "body",
+    "cue": "Keep marching, roll the shoulders forwards then backwards, arms loose."
+  },
+  {
+    "key": "bw_mini_squat",
+    "name": "Mini squat",
+    "unit": "",
+    "step": 1,
+    "group": "body",
+    "cue": "Feet shoulder-width, bend the knees only a little (about 10 cm), back straight, come up and squeeze the glutes."
+  },
+  {
+    "key": "bw_star_jump",
+    "name": "Star jumps",
+    "unit": "",
+    "step": 1,
+    "group": "body",
+    "cue": "Jump up spreading arms and legs into a star, land softly with knees together and hands by the sides."
+  },
+  {
+    "key": "bw_tap_back",
+    "name": "Tap backs",
+    "unit": "",
+    "step": 1,
+    "group": "body",
+    "cue": "Step one leg back and swing both arms forward, alternate legs in a continuous rhythm; jump the switch for spotty dogs."
+  },
+  {
+    "key": "bw_knee_pushup",
+    "name": "Three-quarter press-up",
+    "unit": "",
+    "step": 1,
+    "group": "body",
+    "cue": "Hands under shoulders, knees on the floor, lower the chest to about 5 cm off the floor and push back up."
+  },
+  {
+    "key": "bw_wall_pushup",
+    "name": "Wall press-up",
+    "unit": "",
+    "step": 1,
+    "group": "body",
+    "cue": "Arm's length from the wall, hands at chest height, elbows tucked, bend the arms to bring the chest to the wall and push back."
+  },
+  {
+    "key": "bw_bench_dip",
+    "name": "Bench dip",
+    "unit": "",
+    "step": 1,
+    "group": "body",
+    "cue": "Hands gripping the edge of a chair or the floor behind you, hips lifted, bend the elbows to about 90 degrees and push back up."
+  },
+  {
+    "key": "db_tricep_kickback",
+    "name": "Triceps kickback",
+    "unit": "kg per arm",
+    "step": 1,
+    "group": "dumbbell",
+    "cue": "Kneel and lean forward, elbow raised behind you at 90 degrees, straighten the arm back, bend and repeat."
+  },
+  {
+    "key": "band_shoulder_press",
+    "name": "Band shoulder press",
+    "unit": "kg",
+    "step": 1,
+    "group": "band",
+    "cue": "Band under both feet, fists at shoulder height, press overhead until the hands meet, widen the grip on the way down."
+  },
+  {
+    "key": "band_lunge_press",
+    "name": "Band lunge with shoulder press",
+    "unit": "kg",
+    "step": 1,
+    "group": "band",
+    "cue": "Band under the front foot; drop into a lunge while pressing the arms overhead, return and repeat."
+  },
+  {
+    "key": "band_curl",
+    "name": "Band biceps curl",
+    "unit": "kg",
+    "step": 1,
+    "group": "band",
+    "cue": "Band under one or both feet, palms out, elbows tucked, curl the fists to the shoulders and lower slowly."
+  },
+  {
+    "key": "band_lat_raise",
+    "name": "Band lateral raise",
+    "unit": "kg",
+    "step": 1,
+    "group": "band",
+    "cue": "Band under both feet, palms in, raise straight arms to shoulder height without shrugging."
+  },
+  {
+    "key": "bw_calf_raise",
+    "name": "Calf raise",
+    "unit": "",
+    "step": 1,
+    "group": "body",
+    "cue": "Hands on a wall or chair, rise slowly onto the toes and lower the heels under control."
+  },
+  {
+    "key": "bw_side_lying_leg_raise",
+    "name": "Side-lying leg raise",
+    "unit": "",
+    "step": 1,
+    "group": "body",
+    "cue": "Lie on one side, bottom knee bent, raise the top leg without letting the hips tilt back."
+  },
+  {
+    "key": "bw_donkey_kick",
+    "name": "One-leg kickback",
+    "unit": "",
+    "step": 1,
+    "group": "body",
+    "cue": "On hands and knees, keep the knee bent at 90 degrees and raise the leg behind you, squeezing the glute."
+  },
+  {
+    "key": "bw_sit_to_stand",
+    "name": "Sit to stand",
+    "unit": "",
+    "step": 1,
+    "group": "body",
+    "cue": "Sit on the edge of a chair, feet hip-width, lean forward, stand up with the legs (not the arms), sit back down slowly."
+  },
+  {
+    "key": "bw_standing_side_leg_lift",
+    "name": "Standing sideways leg lift",
+    "unit": "",
+    "step": 1,
+    "group": "body",
+    "cue": "Hands on a chair, raise one leg out to the side keeping the back and hips straight, no tilting."
+  },
+  {
+    "key": "bw_standing_leg_extension",
+    "name": "Standing leg extension",
+    "unit": "",
+    "step": 1,
+    "group": "body",
+    "cue": "Hands on a chair, raise one straight leg backwards without arching the back, feel the hamstring and glute."
+  },
+  {
+    "key": "bw_wall_sit",
+    "name": "Wall squat",
+    "unit": "",
+    "step": 1,
+    "group": "body",
+    "cue": "Back against the wall, feet a foot out, slide down by bending the knees, knees behind the toes, tense the thighs on the way up."
+  },
+  {
+    "key": "bw_seated_leg_extension",
+    "name": "Seated thigh contraction",
+    "unit": "",
+    "step": 1,
+    "group": "body",
+    "cue": "Sit upright, straighten and raise one leg, squeeze the thigh muscle and hold."
+  },
+  {
+    "key": "bw_step_up",
+    "name": "Step-up",
+    "unit": "",
+    "step": 1,
+    "group": "body",
+    "cue": "Step up with one foot, bring the other up to join it, step down slowly and in control."
+  },
+  {
+    "key": "bw_hip_march",
+    "name": "Seated hip marching",
+    "unit": "",
+    "step": 1,
+    "group": "body",
+    "cue": "Sit upright away from the back of the chair, lift one knee as far as comfortable, place the foot down with control, alternate."
+  },
+  {
+    "key": "bw_crunch",
+    "name": "Stomach crunch",
+    "unit": "",
+    "step": 1,
+    "group": "core",
+    "cue": "Knees bent, hands behind the ears, lower back pressed into the floor, lift the shoulder blades no more than 7.5 cm and lower slowly."
+  },
+  {
+    "key": "bw_oblique_crunch",
+    "name": "Oblique crunch",
+    "unit": "",
+    "step": 1,
+    "group": "core",
+    "cue": "Knees rolled to one side (or one hand behind the ear), curl the upper body diagonally across towards the opposite knee."
+  },
+  {
+    "key": "bw_reverse_crunch",
+    "name": "Reverse crunch",
+    "unit": "",
+    "step": 1,
+    "group": "core",
+    "cue": "Knees bent at 90 degrees, pull the knees to the chest until the tailbone lifts off the floor, lower slowly."
+  },
+  {
+    "key": "bw_back_raise",
+    "name": "Back raise",
+    "unit": "",
+    "step": 1,
+    "group": "core",
+    "cue": "Lying face down, hands by the temples, raise the shoulders no more than 7.5 cm off the floor, long neck, look down."
+  },
+  {
+    "key": "bw_cobra",
+    "name": "Back extension on forearms",
+    "unit": "",
+    "step": 1,
+    "group": "core",
+    "cue": "Lie on the front propped on the forearms, push down on the hands to arch the back gently, hips stay on the floor."
+  },
+  {
+    "key": "bw_deep_abdominal",
+    "name": "Deep abdominal brace",
+    "unit": "",
+    "step": 1,
+    "group": "core",
+    "cue": "Lying on the back, knees bent, breathe out and gently draw the lower tummy and pelvic floor up towards the chest; hold and breathe."
+  },
+  {
+    "key": "bw_pelvic_tilt",
+    "name": "Pelvic tilt",
+    "unit": "",
+    "step": 1,
+    "group": "core",
+    "cue": "Flatten the lower back into the floor, tense the stomach, then tilt the pelvis towards the heels; rock slowly."
+  },
+  {
+    "key": "bw_trunk_rotation",
+    "name": "Trunk rotation",
+    "unit": "",
+    "step": 1,
+    "group": "core",
+    "cue": "Feet parallel, shoulders back and down, rotate the upper body to one side without moving the hips."
+  },
+  {
+    "key": "bw_seated_twist",
+    "name": "Seated upper-body twist",
+    "unit": "",
+    "step": 1,
+    "group": "core",
+    "cue": "Sit upright, arms crossed on the shoulders, turn the upper body as far as comfortable without moving the hips."
+  },
+  {
+    "key": "bw_knee_roll",
+    "name": "Knee rolls",
+    "unit": "",
+    "step": 1,
+    "group": "core",
+    "cue": "On the back, knees bent and together, roll the knees to one side keeping both shoulders down."
+  },
+  {
+    "key": "bw_sideways_walk",
+    "name": "Sideways walking",
+    "unit": "",
+    "step": 1,
+    "group": "body",
+    "cue": "Feet together, knees soft, step one foot to the side and bring the other to join it; do not drop the hips."
+  },
+  {
+    "key": "bw_grapevine",
+    "name": "Grapevine",
+    "unit": "",
+    "step": 1,
+    "group": "body",
+    "cue": "Walk sideways crossing one foot over the other; smaller steps work the balance harder, fingers on a wall if needed."
+  },
+  {
+    "key": "bw_heel_to_toe_walk",
+    "name": "Heel-to-toe walk",
+    "unit": "",
+    "step": 1,
+    "group": "body",
+    "cue": "Place the heel of one foot directly in front of the toes of the other, look forward, fingers on a wall if needed."
+  },
+  {
+    "key": "bw_one_leg_stand",
+    "name": "One-leg stand",
+    "unit": "",
+    "step": 1,
+    "group": "body",
+    "cue": "Face a wall with fingertips touching it, lift one leg keeping the hips level and a slight bend in the standing leg."
+  },
+  {
+    "key": "bw_stretch_buttock",
+    "name": "Buttock stretch",
+    "unit": "",
+    "step": 1,
+    "group": "body",
+    "cue": "On the back, cross one ankle over the opposite thigh, pull the lower thigh towards the chest."
+  },
+  {
+    "key": "bw_stretch_hamstring_lying",
+    "name": "Lying hamstring stretch",
+    "unit": "",
+    "step": 1,
+    "group": "body",
+    "cue": "On the back, hold one straight leg below the knee and pull it towards you, other foot on the floor."
+  },
+  {
+    "key": "bw_stretch_hamstring_standing",
+    "name": "Standing hamstring stretch",
+    "unit": "",
+    "step": 1,
+    "group": "body",
+    "cue": "One leg forward on the heel with toes up (or on a step), bend the other knee, hinge forward with a straight back."
+  },
+  {
+    "key": "bw_stretch_hamstring_seated",
+    "name": "Seated hamstring stretch",
+    "unit": "",
+    "step": 1,
+    "group": "body",
+    "cue": "Sit tall with straight legs, bend from the hips and bring the chest towards the thighs, back straight."
+  },
+  {
+    "key": "bw_stretch_inner_thigh",
+    "name": "Inner thigh stretch",
+    "unit": "",
+    "step": 1,
+    "group": "body",
+    "cue": "Sit tall with the soles of the feet together, hold the feet and lower the knees towards the floor."
+  },
+  {
+    "key": "bw_stretch_calf",
+    "name": "Calf stretch",
+    "unit": "",
+    "step": 1,
+    "group": "body",
+    "cue": "Step one leg back straight with the heel down, front knee bent, hands on a wall, push the back heel into the floor."
+  },
+  {
+    "key": "bw_stretch_thigh",
+    "name": "Thigh stretch",
+    "unit": "",
+    "step": 1,
+    "group": "body",
+    "cue": "Hold the top of the foot and pull the heel towards the buttock, knees together, hips forward, hold a wall for balance."
+  },
+  {
+    "key": "bw_stretch_hip_flexor",
+    "name": "Hip flexor stretch",
+    "unit": "",
+    "step": 1,
+    "group": "body",
+    "cue": "Step forward, keep the back leg straight, bend the front knee and push the back hip forward."
+  },
+  {
+    "key": "bw_stretch_itb",
+    "name": "ITB stretch",
+    "unit": "",
+    "step": 1,
+    "group": "body",
+    "cue": "Cross one leg behind the other, lean away from it and push the hip outwards, feet flat, no bending forward."
+  },
+  {
+    "key": "bw_stretch_knee_to_chest",
+    "name": "Knee to chest stretch",
+    "unit": "",
+    "step": 1,
+    "group": "body",
+    "cue": "On the back, pull one or both knees to the chest with the hands, head down, neck relaxed."
+  },
+  {
+    "key": "bw_stretch_sciatic",
+    "name": "Sciatic mobilising stretch",
+    "unit": "",
+    "step": 1,
+    "group": "body",
+    "cue": "On the back, knee to chest, hold behind the thigh and slowly straighten the knee, then bend and return."
+  },
+  {
+    "key": "bw_stretch_chest",
+    "name": "Chest stretch",
+    "unit": "",
+    "step": 1,
+    "group": "body",
+    "cue": "Shoulders back and down, arms out or hands on hips, push the chest forward and up."
+  },
+  {
+    "key": "bw_stretch_upper_back",
+    "name": "Upper back stretch",
+    "unit": "",
+    "step": 1,
+    "group": "body",
+    "cue": "Clasp the hands, extend the arms forward at shoulder height, look down and round the upper back."
+  },
+  {
+    "key": "bw_stretch_side",
+    "name": "Side stretch",
+    "unit": "",
+    "step": 1,
+    "group": "body",
+    "cue": "Reach one arm overhead and lean to the opposite side, or slide one hand down the side of the leg; feel the opposite hip or side."
+  },
+  {
+    "key": "bw_stretch_overhead",
+    "name": "Overhead stretch",
+    "unit": "",
+    "step": 1,
+    "group": "body",
+    "cue": "Extend the arms over the head and lengthen from toes to fingertips, breathing slowly."
+  },
+  {
+    "key": "bw_stretch_forward_bend",
+    "name": "Standing forward bend",
+    "unit": "",
+    "step": 1,
+    "group": "body",
+    "cue": "Feet hip-width, hinge from the waist bringing the chest towards the thighs, legs and back straight."
+  },
+  {
+    "key": "bw_child_pose",
+    "name": "Bottom to heels stretch",
+    "unit": "",
+    "step": 1,
+    "group": "body",
+    "cue": "On all fours, move the bottom back towards the heels and hold for a breath, back and neck straight."
+  },
+  {
+    "key": "bw_neck_rotation",
+    "name": "Neck rotation",
+    "unit": "",
+    "step": 1,
+    "group": "body",
+    "cue": "Sit upright, shoulders down, turn the head slowly towards one shoulder as far as comfortable."
+  },
+  {
+    "key": "bw_neck_stretch",
+    "name": "Neck stretch",
+    "unit": "",
+    "step": 1,
+    "group": "body",
+    "cue": "Hold one shoulder down with the opposite hand and tilt the head away from it."
+  },
+  {
+    "key": "bw_ankle_pump",
+    "name": "Ankle stretch",
+    "unit": "",
+    "step": 1,
+    "group": "body",
+    "cue": "Leg straight and raised, point the toes away then back towards you."
+  }
+]

@@ -1,0 +1,63 @@
+{
+  "id": "cf-open-12-3",
+  "title": "Open 12.3",
+  "creator": "CrossFit Games",
+  "description": "Eighteen-minute AMRAP of 15 box jumps (24/20 in), 12 push presses at 115/75 lb and 9 toes-to-bars. A long triplet where the push press grip and the box jumps wear you down evenly. Masters 55+ used 95/55 lb and could step up.",
+  "source": {
+    "title": "CrossFit Games Open 2012 – Workout 12.3",
+    "url": "https://games.crossfit.com/workouts/open/2012",
+    "author": "CrossFit Games",
+    "kind": "benchmark",
+    "license": "Public competition workout; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "CrossFit",
+    "CrossFit Open",
+    "2012",
+    "AMRAP",
+    "Barbell",
+    "Bodyweight"
+  ],
+  "level": "Hard",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "AMRAP 18",
+      "mode": "amrap",
+      "repeat": 1,
+      "timeCapSec": 1080,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "bw_box_jump",
+          "forMode": "reps",
+          "forValue": 15,
+          "note": "24/20 in box"
+        },
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "bb_push_press",
+          "target": 52.0,
+          "rx": {
+            "men": 52.0,
+            "women": 34.0
+          },
+          "forMode": "reps",
+          "forValue": 12,
+          "note": "115/75 lb"
+        },
+        {
+          "kind": "exercise",
+          "id": "s3",
+          "exercise": "bw_toes_to_bar",
+          "forMode": "reps",
+          "forValue": 9
+        }
+      ]
+    }
+  ]
+}

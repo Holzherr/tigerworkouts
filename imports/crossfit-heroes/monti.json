@@ -1,0 +1,84 @@
+{
+  "id": "cf-hero-monti",
+  "title": "Monti",
+  "creator": "CrossFit",
+  "description": "Five rounds of 50 barbell step-ups, 15 cleans, 50 more step-ups and 10 snatches, for time. Honours U.S. Army Sgt. 1st Class Jared C. Monti, Medal of Honor recipient, killed in Gowardesh, Afghanistan, in 2006. Five hundred step-ups with an empty bar on your back is the real story here; keep the box at 20 inches.",
+  "source": {
+    "title": "Monti – CrossFit Hero WOD",
+    "url": "https://www.crossfit.com/benchmark/monti",
+    "author": "CrossFit",
+    "kind": "benchmark",
+    "license": "Public benchmark; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "CrossFit",
+    "Hero WOD",
+    "For time",
+    "Barbell"
+  ],
+  "level": "Hard",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "5 rounds",
+      "mode": "fortime",
+      "repeat": 5,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "bb_step_up",
+          "forMode": "reps",
+          "forValue": 50,
+          "target": 20.5,
+          "rx": {
+            "men": 20.5,
+            "women": 16
+          },
+          "note": "45/35 lb — 20 in box"
+        },
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "bb_squat_clean",
+          "forMode": "reps",
+          "forValue": 15,
+          "target": 61,
+          "rx": {
+            "men": 61,
+            "women": 43
+          },
+          "note": "135/95 lb"
+        },
+        {
+          "kind": "exercise",
+          "id": "s3",
+          "exercise": "bb_step_up",
+          "forMode": "reps",
+          "forValue": 50,
+          "target": 20.5,
+          "rx": {
+            "men": 20.5,
+            "women": 16
+          },
+          "note": "45/35 lb — 20 in box"
+        },
+        {
+          "kind": "exercise",
+          "id": "s4",
+          "exercise": "bb_power_snatch",
+          "forMode": "reps",
+          "forValue": 10,
+          "target": 61,
+          "rx": {
+            "men": 61,
+            "women": 43
+          },
+          "note": "135/95 lb — Any snatch"
+        }
+      ]
+    }
+  ]
+}

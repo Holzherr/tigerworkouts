@@ -1,0 +1,425 @@
+{
+  "id": "yt-pamela-reif-20-min-full-body-beginner",
+  "title": "20 MIN FULL BODY WORKOUT - Beginner Version",
+  "creator": "Pamela Reif",
+  "description": "Pamela Reif's beginner full-body session, 65M+ views. Basic moves at 30 seconds each grouped into short sets that repeat, with a 30-second break after every set and a stretch at the end; slower and more forgiving than her other 20-minute videos. Jumping jacks, squats, curtsy lunges, slow mountain climbers, planks and supermans. A good first follow-along.",
+  "source": {
+    "title": "20 MIN FULL BODY WORKOUT - Beginner Version // No Equipment I Pamela Reif",
+    "url": "https://www.youtube.com/watch?v=UItWltVZZmE",
+    "author": "Pamela Reif",
+    "kind": "video",
+    "license": "Video © creator, linked not copied; exercise list is factual",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "Follow-along",
+    "Full body",
+    "Beginner",
+    "No equipment"
+  ],
+  "level": "Easy",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "Set A",
+      "repeat": 1,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "bw_jumping_jack",
+          "forMode": "seconds",
+          "forValue": 30,
+          "startSeconds": 3
+        },
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "bw_inchworm",
+          "forMode": "seconds",
+          "forValue": 30,
+          "startSeconds": 33,
+          "note": "Walk down to plank and back"
+        },
+        {
+          "kind": "exercise",
+          "id": "s3",
+          "exercise": "bw_jumping_jack",
+          "forMode": "seconds",
+          "forValue": 30,
+          "startSeconds": 63
+        },
+        {
+          "kind": "exercise",
+          "id": "s4",
+          "exercise": "bw_inchworm",
+          "forMode": "seconds",
+          "forValue": 30,
+          "startSeconds": 93,
+          "note": "Walk down to plank and back"
+        }
+      ]
+    },
+    {
+      "kind": "rest",
+      "id": "r1",
+      "seconds": 30
+    },
+    {
+      "kind": "block",
+      "id": "b2",
+      "name": "Set B",
+      "repeat": 1,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s5",
+          "exercise": "bw_squat",
+          "forMode": "seconds",
+          "forValue": 30,
+          "startSeconds": 153
+        },
+        {
+          "kind": "exercise",
+          "id": "s6",
+          "exercise": "bw_squat",
+          "forMode": "seconds",
+          "forValue": 30,
+          "startSeconds": 183,
+          "note": "Squat with cross elbow to knee"
+        },
+        {
+          "kind": "exercise",
+          "id": "s7",
+          "exercise": "bw_curtsy_lunge",
+          "forMode": "seconds",
+          "forValue": 30,
+          "startSeconds": 213
+        },
+        {
+          "kind": "exercise",
+          "id": "s8",
+          "exercise": "bw_jump_twist",
+          "forMode": "seconds",
+          "forValue": 30,
+          "startSeconds": 243
+        },
+        {
+          "kind": "exercise",
+          "id": "s9",
+          "exercise": "bw_squat",
+          "forMode": "seconds",
+          "forValue": 30,
+          "startSeconds": 273
+        },
+        {
+          "kind": "exercise",
+          "id": "s10",
+          "exercise": "bw_squat",
+          "forMode": "seconds",
+          "forValue": 30,
+          "startSeconds": 303,
+          "note": "Squat with cross elbow to knee"
+        }
+      ]
+    },
+    {
+      "kind": "rest",
+      "id": "r2",
+      "seconds": 30
+    },
+    {
+      "kind": "block",
+      "id": "b3",
+      "name": "Set B (again)",
+      "repeat": 1,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s11",
+          "exercise": "bw_squat",
+          "forMode": "seconds",
+          "forValue": 30,
+          "startSeconds": 363
+        },
+        {
+          "kind": "exercise",
+          "id": "s12",
+          "exercise": "bw_squat",
+          "forMode": "seconds",
+          "forValue": 30,
+          "startSeconds": 393,
+          "note": "Squat with cross elbow to knee"
+        },
+        {
+          "kind": "exercise",
+          "id": "s13",
+          "exercise": "bw_curtsy_lunge",
+          "forMode": "seconds",
+          "forValue": 30,
+          "startSeconds": 423
+        },
+        {
+          "kind": "exercise",
+          "id": "s14",
+          "exercise": "bw_jump_twist",
+          "forMode": "seconds",
+          "forValue": 30,
+          "startSeconds": 453
+        },
+        {
+          "kind": "exercise",
+          "id": "s15",
+          "exercise": "bw_squat",
+          "forMode": "seconds",
+          "forValue": 30,
+          "startSeconds": 483
+        },
+        {
+          "kind": "exercise",
+          "id": "s16",
+          "exercise": "bw_squat",
+          "forMode": "seconds",
+          "forValue": 30,
+          "startSeconds": 513,
+          "note": "Squat with cross elbow to knee"
+        }
+      ]
+    },
+    {
+      "kind": "rest",
+      "id": "r3",
+      "seconds": 30
+    },
+    {
+      "kind": "block",
+      "id": "b4",
+      "name": "Set A (again)",
+      "repeat": 1,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s17",
+          "exercise": "bw_jumping_jack",
+          "forMode": "seconds",
+          "forValue": 30,
+          "startSeconds": 573
+        },
+        {
+          "kind": "exercise",
+          "id": "s18",
+          "exercise": "bw_inchworm",
+          "forMode": "seconds",
+          "forValue": 30,
+          "startSeconds": 603,
+          "note": "Walk down to plank and back"
+        },
+        {
+          "kind": "exercise",
+          "id": "s19",
+          "exercise": "bw_jumping_jack",
+          "forMode": "seconds",
+          "forValue": 30,
+          "startSeconds": 633
+        },
+        {
+          "kind": "exercise",
+          "id": "s20",
+          "exercise": "bw_inchworm",
+          "forMode": "seconds",
+          "forValue": 30,
+          "startSeconds": 663,
+          "note": "Walk down to plank and back"
+        }
+      ]
+    },
+    {
+      "kind": "rest",
+      "id": "r4",
+      "seconds": 30
+    },
+    {
+      "kind": "block",
+      "id": "b5",
+      "name": "Set C",
+      "repeat": 1,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s21",
+          "exercise": "bw_bicycle_crunch",
+          "forMode": "seconds",
+          "forValue": 30,
+          "startSeconds": 723,
+          "note": "Slow"
+        },
+        {
+          "kind": "exercise",
+          "id": "s22",
+          "exercise": "bw_crunch",
+          "forMode": "seconds",
+          "forValue": 30,
+          "startSeconds": 753,
+          "note": "Legs straight"
+        },
+        {
+          "kind": "exercise",
+          "id": "s23",
+          "exercise": "bw_mountain_climber",
+          "forMode": "seconds",
+          "forValue": 30,
+          "startSeconds": 783,
+          "note": "Slow"
+        },
+        {
+          "kind": "exercise",
+          "id": "s24",
+          "exercise": "bw_plank",
+          "forMode": "seconds",
+          "forValue": 30,
+          "startSeconds": 813
+        },
+        {
+          "kind": "exercise",
+          "id": "s25",
+          "exercise": "bw_superman",
+          "forMode": "seconds",
+          "forValue": 30,
+          "startSeconds": 843
+        },
+        {
+          "kind": "exercise",
+          "id": "s26",
+          "exercise": "bw_mountain_climber",
+          "forMode": "seconds",
+          "forValue": 30,
+          "startSeconds": 873,
+          "note": "Slow"
+        },
+        {
+          "kind": "exercise",
+          "id": "s27",
+          "exercise": "bw_plank",
+          "forMode": "seconds",
+          "forValue": 30,
+          "startSeconds": 903
+        }
+      ]
+    },
+    {
+      "kind": "rest",
+      "id": "r5",
+      "seconds": 30
+    },
+    {
+      "kind": "block",
+      "id": "b6",
+      "name": "Set C (again)",
+      "repeat": 1,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s28",
+          "exercise": "bw_bicycle_crunch",
+          "forMode": "seconds",
+          "forValue": 30,
+          "startSeconds": 963,
+          "note": "Slow"
+        },
+        {
+          "kind": "exercise",
+          "id": "s29",
+          "exercise": "bw_crunch",
+          "forMode": "seconds",
+          "forValue": 30,
+          "startSeconds": 993,
+          "note": "Legs straight"
+        },
+        {
+          "kind": "exercise",
+          "id": "s30",
+          "exercise": "bw_mountain_climber",
+          "forMode": "seconds",
+          "forValue": 30,
+          "startSeconds": 1023,
+          "note": "Slow"
+        },
+        {
+          "kind": "exercise",
+          "id": "s31",
+          "exercise": "bw_superman",
+          "forMode": "seconds",
+          "forValue": 30,
+          "startSeconds": 1053
+        },
+        {
+          "kind": "exercise",
+          "id": "s32",
+          "exercise": "bw_mountain_climber",
+          "forMode": "seconds",
+          "forValue": 30,
+          "startSeconds": 1083,
+          "note": "Slow"
+        },
+        {
+          "kind": "exercise",
+          "id": "s33",
+          "exercise": "bw_plank",
+          "forMode": "seconds",
+          "forValue": 30,
+          "startSeconds": 1113
+        }
+      ]
+    },
+    {
+      "kind": "rest",
+      "id": "r6",
+      "seconds": 30
+    },
+    {
+      "kind": "block",
+      "id": "b7",
+      "name": "Stretch",
+      "repeat": 1,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s34",
+          "exercise": "bw_stretch_deep_squat",
+          "forMode": "seconds",
+          "forValue": 30,
+          "startSeconds": 1173,
+          "note": "Squat with stretch"
+        },
+        {
+          "kind": "exercise",
+          "id": "s35",
+          "exercise": "bw_stretch_hip_flexor",
+          "forMode": "seconds",
+          "forValue": 30,
+          "startSeconds": 1203,
+          "note": "Right"
+        },
+        {
+          "kind": "exercise",
+          "id": "s36",
+          "exercise": "bw_stretch_hip_flexor",
+          "forMode": "seconds",
+          "forValue": 30,
+          "startSeconds": 1233,
+          "note": "Left"
+        },
+        {
+          "kind": "exercise",
+          "id": "s37",
+          "exercise": "bw_stretch_overhead",
+          "forMode": "seconds",
+          "forValue": 30,
+          "startSeconds": 1263,
+          "note": "Whole-body stretch"
+        }
+      ]
+    }
+  ]
+}

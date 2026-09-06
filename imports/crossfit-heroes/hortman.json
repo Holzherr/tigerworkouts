@@ -1,0 +1,57 @@
+{
+  "id": "cf-hero-hortman",
+  "title": "Hortman",
+  "creator": "CrossFit",
+  "description": "A 45-minute AMRAP of an 800 m run, 80 squats and 8 muscle-ups. Honours U.S. Army Capt. John D. Hortman, 160th Special Operations Aviation Regiment, killed in a training helicopter accident at Fort Benning in 2011. A long steady grind; scale muscle-ups to 8 pull-ups and 8 dips.",
+  "source": {
+    "title": "Hortman – CrossFit Hero WOD",
+    "url": "https://www.crossfit.com/benchmark/hortman",
+    "author": "CrossFit",
+    "kind": "benchmark",
+    "license": "Public benchmark; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "CrossFit",
+    "Hero",
+    "AMRAP",
+    "Run",
+    "Bodyweight",
+    "Gymnastics",
+    "Long"
+  ],
+  "level": "Hard",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "Hortman",
+      "mode": "amrap",
+      "repeat": 1,
+      "timeCapSec": 2700,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "cardio_run",
+          "forMode": "meters",
+          "forValue": 800
+        },
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "bw_squat",
+          "forMode": "reps",
+          "forValue": 80
+        },
+        {
+          "kind": "exercise",
+          "id": "s3",
+          "exercise": "gym_muscle_up",
+          "forMode": "reps",
+          "forValue": 8
+        }
+      ]
+    }
+  ]
+}

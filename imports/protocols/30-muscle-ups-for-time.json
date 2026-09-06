@@ -1,0 +1,40 @@
+{
+  "id": "proto-30-muscle-ups-for-time",
+  "title": "30 Muscle-ups for Time",
+  "creator": "CrossFit",
+  "description": "Thirty ring muscle-ups as fast as you can, a crossfit.com staple since 2007. Everything hinges on the transition, so break into small sets from the start rather than failing big ones. If you cannot do muscle-ups, the prescribed substitute is 120 pull-ups and 120 dips.",
+  "source": {
+    "title": "30 Muscle-ups for time – CrossFit Workout of the Day 080801",
+    "url": "https://www.crossfit.com/workout/2008/08/01",
+    "author": "CrossFit",
+    "kind": "benchmark",
+    "license": "Published protocol; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "CrossFit",
+    "For time",
+    "Gymnastics",
+    "Rings"
+  ],
+  "level": "Hard",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "30 muscle-ups",
+      "mode": "fortime",
+      "repeat": 1,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "gym_muscle_up",
+          "forMode": "reps",
+          "forValue": 30,
+          "note": "Scale: 120 pull-ups + 120 dips"
+        }
+      ]
+    }
+  ]
+}

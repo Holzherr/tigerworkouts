@@ -1,0 +1,68 @@
+{
+  "id": "yt-madfit-15-min-dance-party",
+  "title": "15 MIN DANCE PARTY WORKOUT (2010s hits)",
+  "creator": "MadFit",
+  "description": "The original MadFit dance party (10M+ views): four 2010s pop songs danced back to back for 15 minutes. Songs run 3 to 4.5 minutes each, so the cardio blocks are longer than the TikTok version and it is noticeably harder. No equipment, no floor work.",
+  "source": {
+    "title": "15 MIN DANCE PARTY WORKOUT - Full Body/No Equipment",
+    "url": "https://www.youtube.com/watch?v=zm8Z-63UoTo",
+    "author": "MadFit",
+    "kind": "video",
+    "license": "Video © creator, linked not copied; exercise list is factual",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "Follow-along",
+    "Dance",
+    "Cardio",
+    "No equipment"
+  ],
+  "level": "Medium",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "Dance cardio",
+      "repeat": 1,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "bw_dance_cardio",
+          "forMode": "seconds",
+          "forValue": 282,
+          "startSeconds": 0,
+          "note": "On The Floor - J Lo & Pitbull"
+        },
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "bw_dance_cardio",
+          "forMode": "seconds",
+          "forValue": 180,
+          "startSeconds": 282,
+          "note": "Don't Call Me Up - Mabel"
+        },
+        {
+          "kind": "exercise",
+          "id": "s3",
+          "exercise": "bw_dance_cardio",
+          "forMode": "seconds",
+          "forValue": 254,
+          "startSeconds": 462,
+          "note": "Give Me Everything - Pitbull, Ne-Yo, Nayer"
+        },
+        {
+          "kind": "exercise",
+          "id": "s4",
+          "exercise": "bw_dance_cardio",
+          "forMode": "seconds",
+          "forValue": 185,
+          "startSeconds": 716,
+          "note": "Tip Toe - Jason Derulo"
+        }
+      ],
+      "note": "One step per song; timestamps from the description."
+    }
+  ]
+}

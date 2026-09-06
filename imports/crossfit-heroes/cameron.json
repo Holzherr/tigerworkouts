@@ -1,0 +1,113 @@
+{
+  "id": "cf-hero-cameron",
+  "title": "Cameron",
+  "creator": "CrossFit",
+  "description": "A ten-movement chipper: 50 walking lunges, 25 chest-to-bar pull-ups, 50 box jumps, 25 triple-unders, 50 back extensions, 25 ring dips, 50 knees-to-elbows, 25 two-for-one wall balls, 50 sit-ups and 5 rope climbs. Honours U.S. Coast Guard Lt. Junior Grade Thomas Cameron, killed in a helicopter crash in Mobile Bay in 2012. Swap triple-unders for 75 double-unders and two-for-ones for 50 wall balls.",
+  "source": {
+    "title": "Cameron – CrossFit Hero WOD",
+    "url": "https://www.crossfit.com/benchmark/cameron",
+    "author": "CrossFit",
+    "kind": "benchmark",
+    "license": "Public benchmark; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "CrossFit",
+    "Hero",
+    "For time",
+    "Bodyweight",
+    "Gymnastics",
+    "Wall ball"
+  ],
+  "level": "Hard",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "Cameron",
+      "mode": "fortime",
+      "repeat": 1,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "bw_lunge",
+          "forMode": "reps",
+          "forValue": 50
+        },
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "bw_chest_to_bar_pullup",
+          "forMode": "reps",
+          "forValue": 25
+        },
+        {
+          "kind": "exercise",
+          "id": "s3",
+          "exercise": "bw_box_jump",
+          "forMode": "reps",
+          "forValue": 50,
+          "note": "24/20 in box"
+        },
+        {
+          "kind": "exercise",
+          "id": "s4",
+          "exercise": "bw_double_under",
+          "forMode": "reps",
+          "forValue": 25,
+          "note": "triple-unders"
+        },
+        {
+          "kind": "exercise",
+          "id": "s5",
+          "exercise": "gym_back_extension",
+          "forMode": "reps",
+          "forValue": 50
+        },
+        {
+          "kind": "exercise",
+          "id": "s6",
+          "exercise": "gym_ring_dip",
+          "forMode": "reps",
+          "forValue": 25
+        },
+        {
+          "kind": "exercise",
+          "id": "s7",
+          "exercise": "bw_knees_to_elbows",
+          "forMode": "reps",
+          "forValue": 50
+        },
+        {
+          "kind": "exercise",
+          "id": "s8",
+          "exercise": "gym_wall_ball",
+          "target": 9.0,
+          "rx": {
+            "men": 9.0,
+            "women": 6.5
+          },
+          "forMode": "reps",
+          "forValue": 25,
+          "note": "20/14 lb; two-for-ones; 10/9 ft target"
+        },
+        {
+          "kind": "exercise",
+          "id": "s9",
+          "exercise": "bw_situp",
+          "forMode": "reps",
+          "forValue": 50
+        },
+        {
+          "kind": "exercise",
+          "id": "s10",
+          "exercise": "gym_rope_climb",
+          "forMode": "reps",
+          "forValue": 5,
+          "note": "15 ft"
+        }
+      ]
+    }
+  ]
+}

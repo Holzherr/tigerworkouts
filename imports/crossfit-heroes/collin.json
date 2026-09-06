@@ -1,0 +1,80 @@
+{
+  "id": "cf-hero-collin",
+  "title": "Collin",
+  "creator": "CrossFit",
+  "description": "Six rounds of a 400 m sandbag carry with a 50/35 lb bag, 12 push presses at 115/75 lb, 12 box jumps and 12 sumo deadlift high pulls at 95/65 lb. Honours U.S. Navy SEAL Chief Collin Trent Thomas, shot during combat operations in eastern Afghanistan in 2010. Two bars or change plates; scale the carry to a heavy dumbbell if no sandbag.",
+  "source": {
+    "title": "Collin – CrossFit Hero WOD",
+    "url": "https://www.crossfit.com/benchmark/collin",
+    "author": "CrossFit",
+    "kind": "benchmark",
+    "license": "Public benchmark; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "CrossFit",
+    "Hero",
+    "For time",
+    "Barbell",
+    "Sandbag"
+  ],
+  "level": "Hard",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "Collin",
+      "mode": "fortime",
+      "repeat": 6,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "gym_sandbag_carry",
+          "target": 22.5,
+          "rx": {
+            "men": 22.5,
+            "women": 16.0
+          },
+          "forMode": "meters",
+          "forValue": 400,
+          "note": "50/35 lb"
+        },
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "bb_push_press",
+          "target": 52.0,
+          "rx": {
+            "men": 52.0,
+            "women": 34.0
+          },
+          "forMode": "reps",
+          "forValue": 12,
+          "note": "115/75 lb"
+        },
+        {
+          "kind": "exercise",
+          "id": "s3",
+          "exercise": "bw_box_jump",
+          "forMode": "reps",
+          "forValue": 12,
+          "note": "24/20 in box"
+        },
+        {
+          "kind": "exercise",
+          "id": "s4",
+          "exercise": "bb_sdhp",
+          "target": 43.0,
+          "rx": {
+            "men": 43.0,
+            "women": 29.5
+          },
+          "forMode": "reps",
+          "forValue": 12,
+          "note": "95/65 lb"
+        }
+      ]
+    }
+  ]
+}

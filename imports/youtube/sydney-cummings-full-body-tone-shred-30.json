@@ -1,0 +1,217 @@
+{
+  "id": "yt-sydney-cummings-full-body-tone-shred-30",
+  "title": "Full Body Tone & Shred Workout (30 Minute)",
+  "creator": "Sydney Cummings",
+  "description": "A REPS Phase 2 circuit session from Sydney Cummings, ~390K views. Three circuits of three compound dumbbell moves at 45 seconds each, three rounds per circuit, with a rest between circuits; moderate tempo for strength and hypertrophy rather than speed. She uses 20 to 50 lb dumbbells, so this is one for people already comfortable lifting.",
+  "source": {
+    "title": "Full Body Tone & Shred Workout | 30 Minute",
+    "url": "https://www.youtube.com/watch?v=pk9h4olBPtU",
+    "author": "Sydney Cummings",
+    "kind": "video",
+    "license": "Video © creator, linked not copied; exercise list is factual",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "Follow-along",
+    "Dumbbells",
+    "Full body",
+    "Circuit"
+  ],
+  "level": "Medium",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b4",
+      "name": "Warm-up",
+      "repeat": 1,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s10",
+          "exercise": "bw_warm_up",
+          "forMode": "seconds",
+          "forValue": 120,
+          "startSeconds": 18
+        }
+      ]
+    },
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "Circuit 1",
+      "repeat": 3,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "db_front_squat",
+          "forMode": "seconds",
+          "forValue": 45,
+          "startSeconds": 138,
+          "note": "Squat + high (upright) row"
+        },
+        {
+          "kind": "rest",
+          "id": "r1",
+          "seconds": 15
+        },
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "db_lunge",
+          "forMode": "seconds",
+          "forValue": 45,
+          "startSeconds": 198,
+          "note": "Reverse lunge + front raise"
+        },
+        {
+          "kind": "rest",
+          "id": "r2",
+          "seconds": 15
+        },
+        {
+          "kind": "exercise",
+          "id": "s3",
+          "exercise": "bw_bicycle_crunch",
+          "forMode": "seconds",
+          "forValue": 45,
+          "startSeconds": 258
+        },
+        {
+          "kind": "rest",
+          "id": "r3",
+          "seconds": 15
+        }
+      ],
+      "note": "45 s work / 15 s rest, 3 rounds; startSeconds for round 1 from the chapter start."
+    },
+    {
+      "kind": "rest",
+      "id": "r10",
+      "seconds": 15
+    },
+    {
+      "kind": "block",
+      "id": "b2",
+      "name": "Circuit 2",
+      "repeat": 3,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s4",
+          "exercise": "db_deadlift",
+          "forMode": "seconds",
+          "forValue": 45,
+          "startSeconds": 693,
+          "note": "Deadlift + row, right arm"
+        },
+        {
+          "kind": "rest",
+          "id": "r4",
+          "seconds": 15
+        },
+        {
+          "kind": "exercise",
+          "id": "s5",
+          "exercise": "db_deadlift",
+          "forMode": "seconds",
+          "forValue": 45,
+          "startSeconds": 753,
+          "note": "Deadlift + row, left arm"
+        },
+        {
+          "kind": "rest",
+          "id": "r5",
+          "seconds": 15
+        },
+        {
+          "kind": "exercise",
+          "id": "s6",
+          "exercise": "bw_situp",
+          "forMode": "seconds",
+          "forValue": 45,
+          "startSeconds": 813,
+          "note": "Dumbbell sit-up + twist"
+        },
+        {
+          "kind": "rest",
+          "id": "r6",
+          "seconds": 15
+        }
+      ],
+      "note": "45 s work / 15 s rest, 3 rounds; startSeconds for round 1 from the chapter start."
+    },
+    {
+      "kind": "rest",
+      "id": "r11",
+      "seconds": 15
+    },
+    {
+      "kind": "block",
+      "id": "b3",
+      "name": "Circuit 3",
+      "repeat": 3,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s7",
+          "exercise": "db_lateral_lunge",
+          "forMode": "seconds",
+          "forValue": 45,
+          "startSeconds": 1249,
+          "note": "Lateral lunge into reverse lunge, dumbbells back-racked"
+        },
+        {
+          "kind": "rest",
+          "id": "r7",
+          "seconds": 15
+        },
+        {
+          "kind": "exercise",
+          "id": "s8",
+          "exercise": "db_shoulder_press",
+          "forMode": "seconds",
+          "forValue": 45,
+          "startSeconds": 1309,
+          "note": "Shoulder press + calf raise"
+        },
+        {
+          "kind": "rest",
+          "id": "r8",
+          "seconds": 15
+        },
+        {
+          "kind": "exercise",
+          "id": "s9",
+          "exercise": "bw_hollow_hold",
+          "forMode": "seconds",
+          "forValue": 45,
+          "startSeconds": 1369,
+          "note": "6-inch hold with ab call-outs"
+        },
+        {
+          "kind": "rest",
+          "id": "r9",
+          "seconds": 15
+        }
+      ],
+      "note": "45 s work / 15 s rest, 3 rounds; startSeconds for round 1 from the chapter start."
+    },
+    {
+      "kind": "block",
+      "id": "b5",
+      "name": "Cool-down",
+      "repeat": 1,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s11",
+          "exercise": "bw_cool_down",
+          "forMode": "seconds",
+          "forValue": 200,
+          "startSeconds": 1774
+        }
+      ]
+    }
+  ]
+}

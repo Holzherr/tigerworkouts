@@ -1,0 +1,63 @@
+{
+  "id": "cf-open-19-5",
+  "title": "Open 19.5",
+  "creator": "CrossFit Games",
+  "description": "33-27-21-15-9 thrusters at 95/65 lb and chest-to-bar pull-ups, 20-minute cap. Fran stretched to 105 reps of each. Scaled used 65/45 lb and jumping pull-ups.",
+  "source": {
+    "title": "CrossFit Games Open 2019 – Workout 19.5",
+    "url": "https://games.crossfit.com/workouts/open/2019/5",
+    "author": "CrossFit Games",
+    "kind": "benchmark",
+    "license": "Public competition workout; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "CrossFit",
+    "CrossFit Open",
+    "2019",
+    "For time",
+    "Ladder",
+    "Barbell",
+    "Gymnastics"
+  ],
+  "level": "Hard",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "33-27-21-15-9",
+      "mode": "ladder",
+      "repeat": 1,
+      "ladder": [
+        33,
+        27,
+        21,
+        15,
+        9
+      ],
+      "timeCapSec": 1200,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "bb_thruster",
+          "target": 43.0,
+          "rx": {
+            "men": 43.0,
+            "women": 29.5
+          },
+          "forMode": "reps",
+          "forValue": 33,
+          "note": "95/65 lb"
+        },
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "bw_chest_to_bar_pullup",
+          "forMode": "reps",
+          "forValue": 33
+        }
+      ]
+    }
+  ]
+}

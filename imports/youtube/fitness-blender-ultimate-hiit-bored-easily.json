@@ -1,0 +1,654 @@
+{
+  "id": "yt-fitness-blender-ultimate-hiit-bored-easily",
+  "title": "Ultimate HIIT Workout for People Who Get Bored Easily",
+  "creator": "Fitness Blender",
+  "description": "Fitness Blender's Tabata-style no-repeat HIIT, 11M+ views. A 5-minute warm-up of ten 30-second moves, then roughly forty different exercises at 20 seconds on and 10 seconds off with one water break in the middle: jumps, burpee variations, plank work and kicks. The 20-second bursts are meant to be all-out; keep the feet moving in the 10-second gaps.",
+  "source": {
+    "title": "Ultimate HIIT Workout for People Who Get Bored Easily - Fat Burning HIIT Cardio Workout",
+    "url": "https://www.youtube.com/watch?v=tbbZBtdd20U",
+    "author": "Fitness Blender",
+    "kind": "video",
+    "license": "Video © creator, linked not copied; exercise list is factual",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "Follow-along",
+    "HIIT",
+    "Cardio",
+    "No equipment",
+    "No repeat"
+  ],
+  "level": "Hard",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "Warm-up (30 s each)",
+      "repeat": 1,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "bw_jog_on_spot",
+          "forMode": "seconds",
+          "forValue": 30,
+          "startSeconds": 45,
+          "note": "Jog in place"
+        },
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "bw_march",
+          "forMode": "seconds",
+          "forValue": 30,
+          "startSeconds": 75,
+          "note": "High-knee march"
+        },
+        {
+          "kind": "exercise",
+          "id": "s3",
+          "exercise": "bw_butt_kick",
+          "forMode": "seconds",
+          "forValue": 30,
+          "startSeconds": 105,
+          "note": "With rows"
+        },
+        {
+          "kind": "exercise",
+          "id": "s4",
+          "exercise": "bw_front_kick",
+          "forMode": "seconds",
+          "forValue": 30,
+          "startSeconds": 135
+        },
+        {
+          "kind": "exercise",
+          "id": "s5",
+          "exercise": "bw_cross_body_toe_touch",
+          "forMode": "seconds",
+          "forValue": 30,
+          "startSeconds": 165,
+          "note": "Overhead and toe touch"
+        },
+        {
+          "kind": "exercise",
+          "id": "s6",
+          "exercise": "bw_inchworm",
+          "forMode": "seconds",
+          "forValue": 30,
+          "startSeconds": 195,
+          "note": "Walkdowns"
+        },
+        {
+          "kind": "exercise",
+          "id": "s7",
+          "exercise": "bw_lunge",
+          "forMode": "seconds",
+          "forValue": 30,
+          "startSeconds": 225
+        },
+        {
+          "kind": "exercise",
+          "id": "s8",
+          "exercise": "bw_squat",
+          "forMode": "seconds",
+          "forValue": 30,
+          "startSeconds": 255
+        },
+        {
+          "kind": "exercise",
+          "id": "s9",
+          "exercise": "bw_curtsy_lunge",
+          "forMode": "seconds",
+          "forValue": 30,
+          "startSeconds": 285
+        },
+        {
+          "kind": "exercise",
+          "id": "s10",
+          "exercise": "bw_jumping_jack",
+          "forMode": "seconds",
+          "forValue": 30,
+          "startSeconds": 315
+        }
+      ]
+    },
+    {
+      "kind": "block",
+      "id": "b2",
+      "name": "HIIT part 1 (20 s on / 10 s off)",
+      "repeat": 1,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s11",
+          "exercise": "bw_high_knees",
+          "forMode": "seconds",
+          "forValue": 20,
+          "startSeconds": 349
+        },
+        {
+          "kind": "rest",
+          "id": "r1",
+          "seconds": 10
+        },
+        {
+          "kind": "exercise",
+          "id": "s12",
+          "exercise": "bw_mountain_climber",
+          "forMode": "seconds",
+          "forValue": 20,
+          "startSeconds": 379
+        },
+        {
+          "kind": "rest",
+          "id": "r2",
+          "seconds": 10
+        },
+        {
+          "kind": "exercise",
+          "id": "s13",
+          "exercise": "bw_squat",
+          "forMode": "seconds",
+          "forValue": 20,
+          "startSeconds": 409,
+          "note": "Ski to sumo"
+        },
+        {
+          "kind": "rest",
+          "id": "r3",
+          "seconds": 10
+        },
+        {
+          "kind": "exercise",
+          "id": "s14",
+          "exercise": "bw_lateral_hop",
+          "forMode": "seconds",
+          "forValue": 20,
+          "startSeconds": 439,
+          "note": "Lateral jumps"
+        },
+        {
+          "kind": "rest",
+          "id": "r4",
+          "seconds": 10
+        },
+        {
+          "kind": "exercise",
+          "id": "s15",
+          "exercise": "bw_burpee",
+          "forMode": "seconds",
+          "forValue": 20,
+          "startSeconds": 469
+        },
+        {
+          "kind": "rest",
+          "id": "r5",
+          "seconds": 10
+        },
+        {
+          "kind": "exercise",
+          "id": "s16",
+          "exercise": "bw_jump_lunge",
+          "forMode": "seconds",
+          "forValue": 20,
+          "startSeconds": 499,
+          "note": "Split jumps"
+        },
+        {
+          "kind": "rest",
+          "id": "r6",
+          "seconds": 10
+        },
+        {
+          "kind": "exercise",
+          "id": "s17",
+          "exercise": "bw_jump_squat",
+          "forMode": "seconds",
+          "forValue": 20,
+          "startSeconds": 529,
+          "note": "Side step jumps: jump squat with a side step"
+        },
+        {
+          "kind": "rest",
+          "id": "r7",
+          "seconds": 10
+        },
+        {
+          "kind": "exercise",
+          "id": "s18",
+          "exercise": "bw_pushup",
+          "forMode": "seconds",
+          "forValue": 20,
+          "startSeconds": 559,
+          "note": "Spider push-ups"
+        },
+        {
+          "kind": "rest",
+          "id": "r8",
+          "seconds": 10
+        },
+        {
+          "kind": "exercise",
+          "id": "s19",
+          "exercise": "bw_jackknife",
+          "forMode": "seconds",
+          "forValue": 20,
+          "startSeconds": 589,
+          "note": "Single leg"
+        },
+        {
+          "kind": "rest",
+          "id": "r9",
+          "seconds": 10
+        },
+        {
+          "kind": "exercise",
+          "id": "s20",
+          "exercise": "bw_broad_jump",
+          "forMode": "seconds",
+          "forValue": 20,
+          "startSeconds": 619
+        },
+        {
+          "kind": "rest",
+          "id": "r10",
+          "seconds": 10
+        },
+        {
+          "kind": "exercise",
+          "id": "s21",
+          "exercise": "bw_jump_lunge",
+          "forMode": "seconds",
+          "forValue": 20,
+          "startSeconds": 649
+        },
+        {
+          "kind": "rest",
+          "id": "r11",
+          "seconds": 10
+        },
+        {
+          "kind": "exercise",
+          "id": "s22",
+          "exercise": "bw_jump_squat",
+          "forMode": "seconds",
+          "forValue": 20,
+          "startSeconds": 679,
+          "note": "Round of applause: clap under the legs"
+        },
+        {
+          "kind": "rest",
+          "id": "r12",
+          "seconds": 10
+        },
+        {
+          "kind": "exercise",
+          "id": "s23",
+          "exercise": "bw_fast_feet",
+          "forMode": "seconds",
+          "forValue": 20,
+          "startSeconds": 709
+        },
+        {
+          "kind": "rest",
+          "id": "r13",
+          "seconds": 10
+        },
+        {
+          "kind": "exercise",
+          "id": "s24",
+          "exercise": "bw_jumping_jack",
+          "forMode": "seconds",
+          "forValue": 20,
+          "startSeconds": 739,
+          "note": "Up & out jacks"
+        },
+        {
+          "kind": "rest",
+          "id": "r14",
+          "seconds": 10
+        },
+        {
+          "kind": "exercise",
+          "id": "s25",
+          "exercise": "bw_star_jump",
+          "forMode": "seconds",
+          "forValue": 20,
+          "startSeconds": 769
+        },
+        {
+          "kind": "rest",
+          "id": "r15",
+          "seconds": 10
+        },
+        {
+          "kind": "exercise",
+          "id": "s26",
+          "exercise": "bw_knee_drive",
+          "forMode": "seconds",
+          "forValue": 20,
+          "startSeconds": 799,
+          "note": "2 knees + switch foot"
+        },
+        {
+          "kind": "rest",
+          "id": "r16",
+          "seconds": 10
+        }
+      ]
+    },
+    {
+      "kind": "rest",
+      "id": "r17",
+      "seconds": 20
+    },
+    {
+      "kind": "block",
+      "id": "b3",
+      "name": "HIIT part 2 (20 s on / 10 s off)",
+      "repeat": 1,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s27",
+          "exercise": "bw_burpee",
+          "forMode": "seconds",
+          "forValue": 20,
+          "startSeconds": 849,
+          "note": "Get-ups (lie down, stand up)"
+        },
+        {
+          "kind": "rest",
+          "id": "r18",
+          "seconds": 10
+        },
+        {
+          "kind": "exercise",
+          "id": "s28",
+          "exercise": "bw_plank_jack",
+          "forMode": "seconds",
+          "forValue": 20,
+          "startSeconds": 879
+        },
+        {
+          "kind": "rest",
+          "id": "r19",
+          "seconds": 10
+        },
+        {
+          "kind": "exercise",
+          "id": "s29",
+          "exercise": "bw_high_knees",
+          "forMode": "seconds",
+          "forValue": 20,
+          "startSeconds": 909,
+          "note": "Power skips"
+        },
+        {
+          "kind": "rest",
+          "id": "r20",
+          "seconds": 10
+        },
+        {
+          "kind": "exercise",
+          "id": "s30",
+          "exercise": "bw_lateral_lunge",
+          "forMode": "seconds",
+          "forValue": 20,
+          "startSeconds": 939,
+          "note": "Side lunge, centre jump"
+        },
+        {
+          "kind": "rest",
+          "id": "r21",
+          "seconds": 10
+        },
+        {
+          "kind": "exercise",
+          "id": "s31",
+          "exercise": "bw_burpee",
+          "forMode": "seconds",
+          "forValue": 20,
+          "startSeconds": 969,
+          "note": "Squat-hold burpee"
+        },
+        {
+          "kind": "rest",
+          "id": "r22",
+          "seconds": 10
+        },
+        {
+          "kind": "exercise",
+          "id": "s32",
+          "exercise": "bw_pushup",
+          "forMode": "seconds",
+          "forValue": 20,
+          "startSeconds": 999
+        },
+        {
+          "kind": "rest",
+          "id": "r23",
+          "seconds": 10
+        },
+        {
+          "kind": "exercise",
+          "id": "s33",
+          "exercise": "bw_russian_twist",
+          "forMode": "seconds",
+          "forValue": 20,
+          "startSeconds": 1029
+        },
+        {
+          "kind": "rest",
+          "id": "r24",
+          "seconds": 10
+        },
+        {
+          "kind": "exercise",
+          "id": "s34",
+          "exercise": "bw_jump_squat",
+          "forMode": "seconds",
+          "forValue": 20,
+          "startSeconds": 1059,
+          "note": "Oz squats"
+        },
+        {
+          "kind": "rest",
+          "id": "r25",
+          "seconds": 10
+        },
+        {
+          "kind": "exercise",
+          "id": "s35",
+          "exercise": "bw_curtsy_lunge",
+          "forMode": "seconds",
+          "forValue": 20,
+          "startSeconds": 1089,
+          "note": "Power curtsy"
+        },
+        {
+          "kind": "rest",
+          "id": "r26",
+          "seconds": 10
+        },
+        {
+          "kind": "exercise",
+          "id": "s36",
+          "exercise": "bw_front_kick",
+          "forMode": "seconds",
+          "forValue": 20,
+          "startSeconds": 1119,
+          "note": "2 high kicks + jump"
+        },
+        {
+          "kind": "rest",
+          "id": "r27",
+          "seconds": 10
+        },
+        {
+          "kind": "exercise",
+          "id": "s37",
+          "exercise": "bw_jump_squat",
+          "forMode": "seconds",
+          "forValue": 20,
+          "startSeconds": 1149,
+          "note": "Rocket squats"
+        },
+        {
+          "kind": "rest",
+          "id": "r28",
+          "seconds": 10
+        },
+        {
+          "kind": "exercise",
+          "id": "s38",
+          "exercise": "bw_up_down_plank",
+          "forMode": "seconds",
+          "forValue": 20,
+          "startSeconds": 1179,
+          "note": "Plank up + toe tap"
+        },
+        {
+          "kind": "rest",
+          "id": "r29",
+          "seconds": 10
+        },
+        {
+          "kind": "exercise",
+          "id": "s39",
+          "exercise": "bw_butt_kick",
+          "forMode": "seconds",
+          "forValue": 20,
+          "startSeconds": 1209,
+          "note": "Butt-kicker drops"
+        },
+        {
+          "kind": "rest",
+          "id": "r30",
+          "seconds": 10
+        },
+        {
+          "kind": "exercise",
+          "id": "s40",
+          "exercise": "bw_jump_lunge",
+          "forMode": "seconds",
+          "forValue": 20,
+          "startSeconds": 1239,
+          "note": "3-pulse jumping lunges"
+        },
+        {
+          "kind": "rest",
+          "id": "r31",
+          "seconds": 10
+        },
+        {
+          "kind": "exercise",
+          "id": "s41",
+          "exercise": "bw_crab_toe_touch",
+          "forMode": "seconds",
+          "forValue": 20,
+          "startSeconds": 1269,
+          "note": "Tricep dip kicks"
+        },
+        {
+          "kind": "rest",
+          "id": "r32",
+          "seconds": 10
+        },
+        {
+          "kind": "exercise",
+          "id": "s42",
+          "exercise": "bw_up_down_plank",
+          "forMode": "seconds",
+          "forValue": 20,
+          "startSeconds": 1299
+        },
+        {
+          "kind": "rest",
+          "id": "r33",
+          "seconds": 10
+        },
+        {
+          "kind": "exercise",
+          "id": "s43",
+          "exercise": "bw_squat",
+          "forMode": "seconds",
+          "forValue": 20,
+          "startSeconds": 1329,
+          "note": "Front kick + squat"
+        },
+        {
+          "kind": "rest",
+          "id": "r34",
+          "seconds": 10
+        },
+        {
+          "kind": "exercise",
+          "id": "s44",
+          "exercise": "bw_jumping_jack",
+          "forMode": "seconds",
+          "forValue": 20,
+          "startSeconds": 1359,
+          "note": "Stutter jacks"
+        },
+        {
+          "kind": "rest",
+          "id": "r35",
+          "seconds": 10
+        },
+        {
+          "kind": "exercise",
+          "id": "s45",
+          "exercise": "bw_jump_lunge",
+          "forMode": "seconds",
+          "forValue": 20,
+          "startSeconds": 1389,
+          "note": "Split jump squat"
+        },
+        {
+          "kind": "rest",
+          "id": "r36",
+          "seconds": 10
+        },
+        {
+          "kind": "exercise",
+          "id": "s46",
+          "exercise": "bw_jumping_jack",
+          "forMode": "seconds",
+          "forValue": 20,
+          "startSeconds": 1419,
+          "note": "Fly jacks"
+        },
+        {
+          "kind": "rest",
+          "id": "r37",
+          "seconds": 10
+        },
+        {
+          "kind": "exercise",
+          "id": "s47",
+          "exercise": "bw_lateral_lunge",
+          "forMode": "seconds",
+          "forValue": 20,
+          "startSeconds": 1449,
+          "note": "Plyo toe-tap side lunge"
+        },
+        {
+          "kind": "rest",
+          "id": "r38",
+          "seconds": 10
+        },
+        {
+          "kind": "exercise",
+          "id": "s48",
+          "exercise": "bw_jump_squat",
+          "forMode": "seconds",
+          "forValue": 20,
+          "startSeconds": 1479
+        }
+      ],
+      "note": "startSeconds derived from the video's fixed interval grid (anchored on YouTube key moments), so may drift a few seconds; key moments confirm the 30 s grid from 5:49 with a 20 s water break after move 16"
+    }
+  ]
+}

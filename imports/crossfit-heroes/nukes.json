@@ -1,0 +1,113 @@
+{
+  "id": "cf-hero-nukes",
+  "title": "Nukes",
+  "creator": "CrossFit",
+  "description": "Three back-to-back windows: 8 minutes to run a mile and do max deadlifts, 10 minutes for a mile and max power cleans, 12 minutes for a mile and max overhead squats, no rest between. Honours U.S. Marine Capt. Matthew 'Nukes' Manoukian of MARSOC, shot by an Afghan policeman in Sangin in 2012. Score is total barbell reps.",
+  "source": {
+    "title": "Nukes – CrossFit Hero WOD",
+    "url": "https://www.crossfit.com/benchmark/nukes",
+    "author": "CrossFit",
+    "kind": "benchmark",
+    "license": "Public benchmark; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "CrossFit",
+    "Hero WOD",
+    "For reps",
+    "Barbell",
+    "Running"
+  ],
+  "level": "Hard",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "8 min: mile + deadlifts",
+      "mode": "amrap",
+      "timeCapSec": 480,
+      "note": "Score total reps",
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "cardio_run",
+          "forMode": "meters",
+          "forValue": 1609
+        },
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "bb_deadlift",
+          "forMode": "reps",
+          "forValue": 1,
+          "target": 143,
+          "rx": {
+            "men": 143,
+            "women": 93
+          },
+          "note": "315/205 lb — Max reps in the remaining time"
+        }
+      ]
+    },
+    {
+      "kind": "block",
+      "id": "b2",
+      "name": "10 min: mile + power cleans",
+      "mode": "amrap",
+      "timeCapSec": 600,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s3",
+          "exercise": "cardio_run",
+          "forMode": "meters",
+          "forValue": 1609
+        },
+        {
+          "kind": "exercise",
+          "id": "s4",
+          "exercise": "bb_power_clean",
+          "forMode": "reps",
+          "forValue": 1,
+          "target": 102,
+          "rx": {
+            "men": 102,
+            "women": 70.5
+          },
+          "note": "225/155 lb — Max reps in the remaining time"
+        }
+      ]
+    },
+    {
+      "kind": "block",
+      "id": "b3",
+      "name": "12 min: mile + overhead squats",
+      "mode": "amrap",
+      "timeCapSec": 720,
+      "note": "Do not rest between windows",
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s5",
+          "exercise": "cardio_run",
+          "forMode": "meters",
+          "forValue": 1609
+        },
+        {
+          "kind": "exercise",
+          "id": "s6",
+          "exercise": "bb_overhead_squat",
+          "forMode": "reps",
+          "forValue": 1,
+          "target": 61,
+          "rx": {
+            "men": 61,
+            "women": 43
+          },
+          "note": "135/95 lb — Max reps in the remaining time"
+        }
+      ]
+    }
+  ]
+}

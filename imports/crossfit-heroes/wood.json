@@ -1,0 +1,80 @@
+{
+  "id": "cf-hero-wood",
+  "title": "Wood",
+  "creator": "CrossFit",
+  "description": "Five rounds of a 400 m run, 10 burpee box jumps, 10 sumo deadlift high pulls and 10 thrusters, with one minute's rest between rounds. Honours Australian Army Sgt. Brett Wood MG of the 2nd Commando Regiment, killed by an IED in Helmand Province in 2011. Same bar for both movements; the rest keeps the rounds fast.",
+  "source": {
+    "title": "Wood – CrossFit Hero WOD",
+    "url": "https://www.crossfit.com/benchmark/wood",
+    "author": "CrossFit",
+    "kind": "benchmark",
+    "license": "Public benchmark; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "CrossFit",
+    "Hero WOD",
+    "For time",
+    "Barbell",
+    "Running"
+  ],
+  "level": "Hard",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "5 rounds",
+      "mode": "fortime",
+      "repeat": 5,
+      "note": "Rest 1 minute between rounds",
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "cardio_run",
+          "forMode": "meters",
+          "forValue": 400
+        },
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "bw_burpee_box_jump",
+          "forMode": "reps",
+          "forValue": 10,
+          "note": "24/20 in box"
+        },
+        {
+          "kind": "exercise",
+          "id": "s3",
+          "exercise": "bb_sdhp",
+          "forMode": "reps",
+          "forValue": 10,
+          "target": 43,
+          "rx": {
+            "men": 43,
+            "women": 29.5
+          },
+          "note": "95/65 lb"
+        },
+        {
+          "kind": "exercise",
+          "id": "s4",
+          "exercise": "bb_thruster",
+          "forMode": "reps",
+          "forValue": 10,
+          "target": 43,
+          "rx": {
+            "men": 43,
+            "women": 29.5
+          },
+          "note": "95/65 lb"
+        },
+        {
+          "kind": "rest",
+          "id": "r1",
+          "seconds": 60
+        }
+      ]
+    }
+  ]
+}

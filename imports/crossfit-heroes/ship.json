@@ -1,0 +1,54 @@
+{
+  "id": "cf-hero-ship",
+  "title": "Ship",
+  "creator": "CrossFit",
+  "description": "Nine rounds of 7 heavy squat cleans and 8 burpee box jumps to a tall box, for time. Honours Canadian Forces Sgt. Prescott Shipway of 2 PPCLI, killed by a roadside bomb in Kandahar Province in 2008. The 36-inch box is unusually high; drop to 30/24 if in doubt.",
+  "source": {
+    "title": "Ship – CrossFit Hero WOD",
+    "url": "https://www.crossfit.com/benchmark/ship",
+    "author": "CrossFit",
+    "kind": "benchmark",
+    "license": "Public benchmark; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "CrossFit",
+    "Hero WOD",
+    "For time",
+    "Barbell",
+    "Bodyweight"
+  ],
+  "level": "Hard",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "9 rounds",
+      "mode": "fortime",
+      "repeat": 9,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "bb_squat_clean",
+          "forMode": "reps",
+          "forValue": 7,
+          "target": 84,
+          "rx": {
+            "men": 84,
+            "women": 56.5
+          },
+          "note": "185/125 lb"
+        },
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "bw_burpee_box_jump",
+          "forMode": "reps",
+          "forValue": 8,
+          "note": "36/30 in box"
+        }
+      ]
+    }
+  ]
+}

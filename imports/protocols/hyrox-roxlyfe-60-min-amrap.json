@@ -1,0 +1,73 @@
+{
+  "id": "proto-hyrox-roxlyfe-60-min-amrap",
+  "title": "Hyrox 60-minute AMRAP: run, sled pull, run, farmers carry",
+  "creator": "Greg Williams (Rox Lyfe)",
+  "description": "An hour-long aerobic session from Rox Lyfe's training-plan fundamentals: as many rounds as possible of a 500 m run, 40 m sled pull, 500 m run and 100 m farmers carry. It targets the two stations most people are weakest at while teaching you to run on tired legs. Keep the runs at a steady race-ish pace rather than sprinting.",
+  "source": {
+    "title": "HYROX Training Plan Fundamentals – Rox Lyfe",
+    "url": "https://roxlyfe.com/hyrox-training-plan-fundamentals/",
+    "author": "Greg Williams",
+    "kind": "article",
+    "license": "Published protocol; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "Hyrox",
+    "AMRAP",
+    "Running",
+    "Sled",
+    "Endurance"
+  ],
+  "level": "Hard",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "60 min AMRAP",
+      "mode": "amrap",
+      "repeat": 1,
+      "timeCapSec": 3600,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "cardio_run",
+          "forMode": "meters",
+          "forValue": 500
+        },
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "gym_sled_pull",
+          "forMode": "meters",
+          "forValue": 40,
+          "target": 103,
+          "rx": {
+            "men": 103,
+            "women": 78
+          },
+          "note": "Race weight or lighter"
+        },
+        {
+          "kind": "exercise",
+          "id": "s3",
+          "exercise": "cardio_run",
+          "forMode": "meters",
+          "forValue": 500
+        },
+        {
+          "kind": "exercise",
+          "id": "s4",
+          "exercise": "gym_farmers_carry",
+          "forMode": "meters",
+          "forValue": 100,
+          "target": 24,
+          "rx": {
+            "men": 24,
+            "women": 16
+          }
+        }
+      ]
+    }
+  ]
+}

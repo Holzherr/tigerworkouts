@@ -1,0 +1,73 @@
+{
+  "id": "cf-hero-kev",
+  "title": "Kev",
+  "creator": "CrossFit",
+  "description": "A partner 26-minute AMRAP of 6 deadlifts each at 315/205 lb, 9 synchronised bar-facing burpees, 9 bar muscle-ups each and a 55 ft partner barbell carry. Honours Dutch Korps Commandotroepen Cpl. Kevin van de Rijdt, killed in heavy combat in Afghanistan in 2009. Solo: do the reps once and carry the bar alone at a lighter load.",
+  "source": {
+    "title": "Kev – CrossFit Hero WOD",
+    "url": "https://www.crossfit.com/benchmark/kev",
+    "author": "CrossFit",
+    "kind": "benchmark",
+    "license": "Public benchmark; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "CrossFit",
+    "Hero",
+    "AMRAP",
+    "Partner",
+    "Barbell",
+    "Gymnastics"
+  ],
+  "level": "Hard",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "Kev",
+      "mode": "amrap",
+      "repeat": 1,
+      "timeCapSec": 1560,
+      "note": "Partner workout",
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "bb_deadlift",
+          "target": 143.0,
+          "rx": {
+            "men": 143.0,
+            "women": 93.0
+          },
+          "forMode": "reps",
+          "forValue": 6,
+          "note": "315/205 lb; each partner"
+        },
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "bw_bar_facing_burpee",
+          "forMode": "reps",
+          "forValue": 9,
+          "note": "synchronised"
+        },
+        {
+          "kind": "exercise",
+          "id": "s3",
+          "exercise": "bw_bar_muscle_up",
+          "forMode": "reps",
+          "forValue": 9,
+          "note": "each partner"
+        },
+        {
+          "kind": "exercise",
+          "id": "s4",
+          "exercise": "gym_partner_carry",
+          "forMode": "meters",
+          "forValue": 17,
+          "note": "55 ft partner barbell carry"
+        }
+      ]
+    }
+  ]
+}

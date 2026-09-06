@@ -1,0 +1,60 @@
+{
+  "id": "cf-hero-hansen",
+  "title": "Hansen",
+  "creator": "CrossFit",
+  "description": "Five rounds of 30 kettlebell swings at 70/53 lb, 30 burpees and 30 GHD sit-ups. Honours U.S. Marine Staff Sgt. Daniel Hansen, killed by an IED in Farah Province, Afghanistan, in 2009. 150 GHD sit-ups is a lot; do sit-ups if you are not used to the GHD.",
+  "source": {
+    "title": "Hansen – CrossFit Hero WOD",
+    "url": "https://www.crossfit.com/benchmark/hansen",
+    "author": "CrossFit",
+    "kind": "benchmark",
+    "license": "Public benchmark; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "CrossFit",
+    "Hero",
+    "For time",
+    "Kettlebell",
+    "Bodyweight"
+  ],
+  "level": "Hard",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "Hansen",
+      "mode": "fortime",
+      "repeat": 5,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "kb_swing",
+          "target": 32,
+          "rx": {
+            "men": 32,
+            "women": 24
+          },
+          "forMode": "reps",
+          "forValue": 30,
+          "note": "70/53 lb"
+        },
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "bw_burpee",
+          "forMode": "reps",
+          "forValue": 30
+        },
+        {
+          "kind": "exercise",
+          "id": "s3",
+          "exercise": "gym_ghd_situp",
+          "forMode": "reps",
+          "forValue": 30
+        }
+      ]
+    }
+  ]
+}

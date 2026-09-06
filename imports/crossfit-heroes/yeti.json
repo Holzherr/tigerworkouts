@@ -1,0 +1,60 @@
+{
+  "id": "cf-hero-yeti",
+  "title": "Yeti",
+  "creator": "CrossFit",
+  "description": "25 pull-ups, 10 muscle-ups, a 1.5-mile run, 10 muscle-ups and 25 pull-ups, for time. Honours U.S. Bureau of Land Management smokejumper Mark Thomas Urban, killed in a parachute jump during an equipment evaluation in Idaho in 2013. Fast if you have muscle-ups; scale them to chest-to-bar pull-ups and dips.",
+  "source": {
+    "title": "Yeti – CrossFit Hero WOD",
+    "url": "https://www.crossfit.com/benchmark/yeti",
+    "author": "CrossFit",
+    "kind": "benchmark",
+    "license": "Public benchmark; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "CrossFit",
+    "Hero WOD",
+    "For time",
+    "Gymnastics",
+    "Running"
+  ],
+  "level": "Hard",
+  "items": [
+    {
+      "kind": "exercise",
+      "id": "s1",
+      "exercise": "bw_pullup",
+      "forMode": "reps",
+      "forValue": 25
+    },
+    {
+      "kind": "exercise",
+      "id": "s2",
+      "exercise": "gym_muscle_up",
+      "forMode": "reps",
+      "forValue": 10
+    },
+    {
+      "kind": "exercise",
+      "id": "s3",
+      "exercise": "cardio_run",
+      "forMode": "meters",
+      "forValue": 2414,
+      "note": "1.5 miles"
+    },
+    {
+      "kind": "exercise",
+      "id": "s4",
+      "exercise": "gym_muscle_up",
+      "forMode": "reps",
+      "forValue": 10
+    },
+    {
+      "kind": "exercise",
+      "id": "s5",
+      "exercise": "bw_pullup",
+      "forMode": "reps",
+      "forValue": 25
+    }
+  ]
+}

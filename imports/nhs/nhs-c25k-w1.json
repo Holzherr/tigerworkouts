@@ -1,0 +1,76 @@
+{
+  "id": "nhs-c25k-w1",
+  "title": "Couch to 5K – Week 1",
+  "creator": "NHS",
+  "description": "The first Couch to 5K session: after a 5-minute walk you alternate 60 seconds of running with 90 seconds of walking, 8 runs in all, then walk 5 minutes to cool down. Total 28 minutes 30 seconds. Do it three times in week 1 with a rest day between runs; the pace is whatever feels comfortable. Runs 1, 2 and 3 are identical.",
+  "source": {
+    "title": "Couch to 5K running plan",
+    "url": "https://www.nhs.uk/better-health/get-active/get-running-with-couch-to-5k/couch-to-5k-running-plan/",
+    "author": "NHS",
+    "kind": "program",
+    "license": "Open Government Licence v3.0 (NHS)",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "NHS",
+    "Couch to 5K",
+    "Running",
+    "Beginner",
+    "Intervals"
+  ],
+  "level": "Easy",
+  "program": {
+    "name": "Couch to 5K",
+    "day": "Week 1",
+    "order": 1
+  },
+  "items": [
+    {
+      "kind": "exercise",
+      "id": "s1",
+      "exercise": "cardio_walk",
+      "forMode": "minutes",
+      "forValue": 5,
+      "note": "Brisk warm-up walk. Stretch before you start (see nhs-post-run-stretch or the NHS pre-run video)."
+    },
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "Run/walk intervals",
+      "repeat": 7,
+      "note": "Run 1 min, walk 1 min 30 s, 7 times",
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "cardio_run",
+          "forMode": "seconds",
+          "forValue": 60
+        },
+        {
+          "kind": "exercise",
+          "id": "s3",
+          "exercise": "cardio_walk",
+          "forMode": "seconds",
+          "forValue": 90
+        }
+      ]
+    },
+    {
+      "kind": "exercise",
+      "id": "s4",
+      "exercise": "cardio_run",
+      "forMode": "seconds",
+      "forValue": 60,
+      "note": "Final run"
+    },
+    {
+      "kind": "exercise",
+      "id": "s5",
+      "exercise": "cardio_walk",
+      "forMode": "minutes",
+      "forValue": 5,
+      "note": "Cool-down walk, then stretch (nhs-post-run-stretch)."
+    }
+  ]
+}

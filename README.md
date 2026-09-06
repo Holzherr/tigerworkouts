@@ -55,8 +55,17 @@ list of steps). Blocks are made by dropping one step onto another and dissolve w
 left. `model.ts` holds every edit as a pure function; `fromLegacy()` converts v0.9 `data.js`
 workouts.
 
+## Imported workouts
+
+`imports/<source>/*.json`: 472 public workouts in runsheet form (CrossFit Girls, Heroes, Open,
+NHS + Couch to 5K, free lifting programs, protocols, YouTube follow-alongs) with source
+attribution, plus 277 exercises they needed. Format in `imports/SCHEMA.md`, findings and build
+list in `imports/LEARNINGS.md`. Validate with `node tools/validate-imports.mjs`; browse them in
+Storybook under Workouts → Imported. Verbatim originals live in the private assistant repo.
+
 ## Status
 
 Done: tokens, primitives, runsheet editor with tap-to-expand, swipe-to-remove, drag-to-reorder,
-drop-to-group, seam and tile inserts, block repeat editing. Stub: exercise picker (prompt()),
-text-to-workout line. Not yet ported: Discover, timer, history, profile, auth/cloud sync.
+drop-to-group, seam and tile inserts, block modes (rounds, for time, AMRAP, EMOM, ladder), stills
+for every exercise, 472 imported workouts. Stub: exercise picker (prompt()), text-to-workout line.
+Not yet ported: Discover, timer, history, profile, auth/cloud sync.

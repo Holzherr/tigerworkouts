@@ -1,0 +1,300 @@
+{
+  "id": "yt-caroline-girvan-20-min-dumbbell-full-body-no-repeat",
+  "title": "20 MIN Dumbbell Full Body Workout - Compound Movements (No Repeat)",
+  "creator": "Caroline Girvan",
+  "description": "Caroline Girvan's most-watched short session, 5.9M+ views: eighteen compound dumbbell moves done once each at 40 seconds on and 20 seconds off, then two 60-second core moves with no rest. Rows, front-rack squats, chest press, lunges, RDLs and push-ups with 15 kg per hand, dropping to 7.5 kg for shoulders and abs. Her loads are the targets; no timestamps are published.",
+  "source": {
+    "title": "20 MIN Dumbbell Full Body Workout - Compound Movements | NO REPEAT",
+    "url": "https://www.youtube.com/watch?v=icoe6C2E-aY",
+    "author": "Caroline Girvan",
+    "kind": "video",
+    "license": "Video © creator, linked not copied; exercise list is factual",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "Follow-along",
+    "Dumbbells",
+    "Full body",
+    "Strength",
+    "No repeat"
+  ],
+  "level": "Medium",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "18 exercises, 40 s on / 20 s off",
+      "repeat": 1,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "db_row",
+          "forMode": "seconds",
+          "forValue": 40,
+          "target": 15,
+          "note": "Single-arm bent-over row, one side"
+        },
+        {
+          "kind": "rest",
+          "id": "r1",
+          "seconds": 20
+        },
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "db_row",
+          "forMode": "seconds",
+          "forValue": 40,
+          "target": 15,
+          "note": "Switch side"
+        },
+        {
+          "kind": "rest",
+          "id": "r2",
+          "seconds": 20
+        },
+        {
+          "kind": "exercise",
+          "id": "s3",
+          "exercise": "db_front_squat",
+          "forMode": "seconds",
+          "forValue": 40,
+          "target": 15,
+          "note": "Front rack squat"
+        },
+        {
+          "kind": "rest",
+          "id": "r3",
+          "seconds": 20
+        },
+        {
+          "kind": "exercise",
+          "id": "s4",
+          "exercise": "db_floor_press",
+          "forMode": "seconds",
+          "forValue": 40,
+          "target": 15,
+          "note": "Chest press"
+        },
+        {
+          "kind": "rest",
+          "id": "r4",
+          "seconds": 20
+        },
+        {
+          "kind": "exercise",
+          "id": "s5",
+          "exercise": "db_lunge",
+          "forMode": "seconds",
+          "forValue": 40,
+          "target": 15,
+          "note": "Static lunge, one side"
+        },
+        {
+          "kind": "rest",
+          "id": "r5",
+          "seconds": 20
+        },
+        {
+          "kind": "exercise",
+          "id": "s6",
+          "exercise": "db_lunge",
+          "forMode": "seconds",
+          "forValue": 40,
+          "target": 15,
+          "note": "Switch side"
+        },
+        {
+          "kind": "rest",
+          "id": "r6",
+          "seconds": 20
+        },
+        {
+          "kind": "exercise",
+          "id": "s7",
+          "exercise": "db_renegade_row",
+          "forMode": "seconds",
+          "forValue": 40,
+          "target": 15
+        },
+        {
+          "kind": "rest",
+          "id": "r7",
+          "seconds": 20
+        },
+        {
+          "kind": "exercise",
+          "id": "s8",
+          "exercise": "db_lunge",
+          "forMode": "seconds",
+          "forValue": 40,
+          "target": 15,
+          "note": "Alternating rear lunges"
+        },
+        {
+          "kind": "rest",
+          "id": "r8",
+          "seconds": 20
+        },
+        {
+          "kind": "exercise",
+          "id": "s9",
+          "exercise": "db_pullover",
+          "forMode": "seconds",
+          "forValue": 40,
+          "target": 15
+        },
+        {
+          "kind": "rest",
+          "id": "r9",
+          "seconds": 20
+        },
+        {
+          "kind": "exercise",
+          "id": "s10",
+          "exercise": "db_rdl",
+          "forMode": "seconds",
+          "forValue": 40,
+          "target": 15
+        },
+        {
+          "kind": "rest",
+          "id": "r10",
+          "seconds": 20
+        },
+        {
+          "kind": "exercise",
+          "id": "s11",
+          "exercise": "bw_pushup",
+          "forMode": "seconds",
+          "forValue": 40
+        },
+        {
+          "kind": "rest",
+          "id": "r11",
+          "seconds": 20
+        },
+        {
+          "kind": "exercise",
+          "id": "s12",
+          "exercise": "db_goblet_squat",
+          "forMode": "seconds",
+          "forValue": 40,
+          "target": 15,
+          "note": "Close-stance squat, one dumbbell"
+        },
+        {
+          "kind": "rest",
+          "id": "r12",
+          "seconds": 20
+        },
+        {
+          "kind": "exercise",
+          "id": "s13",
+          "exercise": "db_shoulder_press",
+          "forMode": "seconds",
+          "forValue": 40,
+          "target": 7.5
+        },
+        {
+          "kind": "rest",
+          "id": "r13",
+          "seconds": 20
+        },
+        {
+          "kind": "exercise",
+          "id": "s14",
+          "exercise": "db_lunge",
+          "forMode": "seconds",
+          "forValue": 40,
+          "target": 7.5,
+          "note": "Rear step, forward-lean lunge, one side"
+        },
+        {
+          "kind": "rest",
+          "id": "r14",
+          "seconds": 20
+        },
+        {
+          "kind": "exercise",
+          "id": "s15",
+          "exercise": "db_lunge",
+          "forMode": "seconds",
+          "forValue": 40,
+          "target": 7.5,
+          "note": "Switch side"
+        },
+        {
+          "kind": "rest",
+          "id": "r15",
+          "seconds": 20
+        },
+        {
+          "kind": "exercise",
+          "id": "s16",
+          "exercise": "db_pullover",
+          "forMode": "seconds",
+          "forValue": 40,
+          "target": 7.5,
+          "note": "Lat sweeps"
+        },
+        {
+          "kind": "rest",
+          "id": "r16",
+          "seconds": 20
+        },
+        {
+          "kind": "exercise",
+          "id": "s17",
+          "exercise": "db_goblet_squat",
+          "forMode": "seconds",
+          "forValue": 40,
+          "target": 15
+        },
+        {
+          "kind": "rest",
+          "id": "r17",
+          "seconds": 20
+        },
+        {
+          "kind": "exercise",
+          "id": "s18",
+          "exercise": "db_upright_row",
+          "forMode": "seconds",
+          "forValue": 40,
+          "target": 7.5
+        },
+        {
+          "kind": "rest",
+          "id": "r18",
+          "seconds": 20
+        }
+      ]
+    },
+    {
+      "kind": "block",
+      "id": "b2",
+      "name": "Abs, 60 s each, no rest",
+      "repeat": 1,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s19",
+          "exercise": "bw_dead_bug",
+          "forMode": "seconds",
+          "forValue": 60,
+          "note": "Alternating dead bug holding 7.5 kg dumbbells"
+        },
+        {
+          "kind": "exercise",
+          "id": "s20",
+          "exercise": "bw_toe_touch_crunch",
+          "forMode": "seconds",
+          "forValue": 60,
+          "note": "Toe reach to leg lower with one 7.5 kg dumbbell"
+        }
+      ]
+    }
+  ]
+}

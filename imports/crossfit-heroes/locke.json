@@ -1,0 +1,96 @@
+{
+  "id": "cf-hero-locke",
+  "title": "Locke",
+  "creator": "CrossFit",
+  "description": "A 565 m row or run, 7 rounds of 9 deadlifts at 185/125 lb, 25 push-ups and 21 box step-ups, then another 565 m row or run. Honours Matthew S. Locke, Army National Guard veteran and Tennessee law enforcement officer, who died in 2021 trying to save a life. Steady rounds; the push-ups add up to 175.",
+  "source": {
+    "title": "Locke – CrossFit Hero WOD",
+    "url": "https://www.crossfit.com/benchmark/locke",
+    "author": "CrossFit",
+    "kind": "benchmark",
+    "license": "Public benchmark; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "CrossFit",
+    "Hero",
+    "For time",
+    "Row",
+    "Barbell",
+    "Bodyweight"
+  ],
+  "level": "Hard",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "Row or run",
+      "mode": "fortime",
+      "repeat": 1,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "cardio_rower",
+          "forMode": "meters",
+          "forValue": 565,
+          "note": "or run 565 m"
+        }
+      ]
+    },
+    {
+      "kind": "block",
+      "id": "b2",
+      "name": "7 rounds",
+      "mode": "fortime",
+      "repeat": 7,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "bb_deadlift",
+          "target": 84.0,
+          "rx": {
+            "men": 84.0,
+            "women": 56.5
+          },
+          "forMode": "reps",
+          "forValue": 9,
+          "note": "185/125 lb"
+        },
+        {
+          "kind": "exercise",
+          "id": "s3",
+          "exercise": "bw_pushup",
+          "forMode": "reps",
+          "forValue": 25
+        },
+        {
+          "kind": "exercise",
+          "id": "s4",
+          "exercise": "bw_box_step_up",
+          "forMode": "reps",
+          "forValue": 21,
+          "note": "24/20 in box"
+        }
+      ]
+    },
+    {
+      "kind": "block",
+      "id": "b3",
+      "name": "Row or run",
+      "mode": "fortime",
+      "repeat": 1,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s5",
+          "exercise": "cardio_rower",
+          "forMode": "meters",
+          "forValue": 565,
+          "note": "or run 565 m"
+        }
+      ]
+    }
+  ]
+}

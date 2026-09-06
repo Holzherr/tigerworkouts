@@ -1,0 +1,415 @@
+{
+  "id": "yt-sydney-cummings-no-repeats-total-body-30",
+  "title": "NO REPEATS Total Body Workout (30 Minutes)",
+  "creator": "Sydney Cummings",
+  "description": "A December 2023 EMBRACE-program session from Sydney Cummings Houdyshell, one of her most-watched recent uploads at nearly 500K views. Twenty-six dumbbell and bodyweight moves, each done once for 45 seconds with 15 seconds rest: lower body, upper body, core, compound combos, then a cardio finish. She uses 15 to 30 lb dumbbells; pick loads that let you keep a controlled tempo.",
+  "source": {
+    "title": "NO REPEATS Total Body Workout | 30 Minutes",
+    "url": "https://www.youtube.com/watch?v=dSIg0t4yVgM",
+    "author": "Sydney Cummings",
+    "kind": "video",
+    "license": "Video © creator, linked not copied; exercise list is factual",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "Follow-along",
+    "Dumbbells",
+    "Full body",
+    "No repeat"
+  ],
+  "level": "Medium",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "Warm-up",
+      "repeat": 1,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s27",
+          "exercise": "bw_warm_up",
+          "forMode": "seconds",
+          "forValue": 108,
+          "startSeconds": 37
+        }
+      ]
+    },
+    {
+      "kind": "block",
+      "id": "b2",
+      "name": "26 exercises, 45 s on / 15 s off",
+      "repeat": 1,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "db_front_squat",
+          "forMode": "seconds",
+          "forValue": 45,
+          "startSeconds": 145
+        },
+        {
+          "kind": "rest",
+          "id": "r1",
+          "seconds": 15
+        },
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "db_lunge",
+          "forMode": "seconds",
+          "forValue": 45,
+          "startSeconds": 205
+        },
+        {
+          "kind": "rest",
+          "id": "r2",
+          "seconds": 15
+        },
+        {
+          "kind": "exercise",
+          "id": "s3",
+          "exercise": "db_deadlift",
+          "forMode": "seconds",
+          "forValue": 45,
+          "startSeconds": 265,
+          "note": "Single-leg per key moments"
+        },
+        {
+          "kind": "rest",
+          "id": "r3",
+          "seconds": 15
+        },
+        {
+          "kind": "exercise",
+          "id": "s4",
+          "exercise": "db_lateral_lunge",
+          "forMode": "seconds",
+          "forValue": 45,
+          "startSeconds": 325
+        },
+        {
+          "kind": "rest",
+          "id": "r4",
+          "seconds": 15
+        },
+        {
+          "kind": "exercise",
+          "id": "s5",
+          "exercise": "bw_hip_bridge",
+          "forMode": "seconds",
+          "forValue": 45,
+          "startSeconds": 385,
+          "note": "Holding a dumbbell on the hips"
+        },
+        {
+          "kind": "rest",
+          "id": "r5",
+          "seconds": 15
+        },
+        {
+          "kind": "exercise",
+          "id": "s6",
+          "exercise": "db_shoulder_press",
+          "forMode": "seconds",
+          "forValue": 45,
+          "startSeconds": 445
+        },
+        {
+          "kind": "rest",
+          "id": "r6",
+          "seconds": 15
+        },
+        {
+          "kind": "exercise",
+          "id": "s7",
+          "exercise": "db_row",
+          "forMode": "seconds",
+          "forValue": 45,
+          "startSeconds": 505,
+          "note": "Bent-over row, both arms"
+        },
+        {
+          "kind": "rest",
+          "id": "r7",
+          "seconds": 15
+        },
+        {
+          "kind": "exercise",
+          "id": "s8",
+          "exercise": "db_tricep_ext",
+          "forMode": "seconds",
+          "forValue": 45,
+          "startSeconds": 565
+        },
+        {
+          "kind": "rest",
+          "id": "r8",
+          "seconds": 15
+        },
+        {
+          "kind": "exercise",
+          "id": "s9",
+          "exercise": "db_hammer_curl",
+          "forMode": "seconds",
+          "forValue": 45,
+          "startSeconds": 625,
+          "note": "Seated"
+        },
+        {
+          "kind": "rest",
+          "id": "r9",
+          "seconds": 15
+        },
+        {
+          "kind": "exercise",
+          "id": "s10",
+          "exercise": "db_floor_press",
+          "forMode": "seconds",
+          "forValue": 45,
+          "startSeconds": 685,
+          "note": "Chest press / fly on the floor"
+        },
+        {
+          "kind": "rest",
+          "id": "r10",
+          "seconds": 15
+        },
+        {
+          "kind": "exercise",
+          "id": "s11",
+          "exercise": "bw_situp",
+          "forMode": "seconds",
+          "forValue": 45,
+          "startSeconds": 745,
+          "note": "Holding a dumbbell"
+        },
+        {
+          "kind": "rest",
+          "id": "r11",
+          "seconds": 15
+        },
+        {
+          "kind": "exercise",
+          "id": "s12",
+          "exercise": "bw_reverse_crunch",
+          "forMode": "seconds",
+          "forValue": 45,
+          "startSeconds": 805
+        },
+        {
+          "kind": "rest",
+          "id": "r12",
+          "seconds": 15
+        },
+        {
+          "kind": "exercise",
+          "id": "s13",
+          "exercise": "bw_russian_twist",
+          "forMode": "seconds",
+          "forValue": 45,
+          "startSeconds": 865,
+          "note": "Seated straight-arm twists with a dumbbell"
+        },
+        {
+          "kind": "rest",
+          "id": "r13",
+          "seconds": 15
+        },
+        {
+          "kind": "exercise",
+          "id": "s14",
+          "exercise": "bw_plank",
+          "forMode": "seconds",
+          "forValue": 45,
+          "startSeconds": 925,
+          "note": "On the dumbbells"
+        },
+        {
+          "kind": "rest",
+          "id": "r14",
+          "seconds": 15
+        },
+        {
+          "kind": "exercise",
+          "id": "s15",
+          "exercise": "bw_plank_hip_dip",
+          "forMode": "seconds",
+          "forValue": 45,
+          "startSeconds": 985,
+          "note": "Plank hip taps"
+        },
+        {
+          "kind": "rest",
+          "id": "r15",
+          "seconds": 15
+        },
+        {
+          "kind": "exercise",
+          "id": "s16",
+          "exercise": "db_thruster",
+          "forMode": "seconds",
+          "forValue": 45,
+          "startSeconds": 1045,
+          "note": "Squat and press"
+        },
+        {
+          "kind": "rest",
+          "id": "r16",
+          "seconds": 15
+        },
+        {
+          "kind": "exercise",
+          "id": "s17",
+          "exercise": "db_rdl",
+          "forMode": "seconds",
+          "forValue": 45,
+          "startSeconds": 1105,
+          "note": "RDL and row"
+        },
+        {
+          "kind": "rest",
+          "id": "r17",
+          "seconds": 15
+        },
+        {
+          "kind": "exercise",
+          "id": "s18",
+          "exercise": "db_lunge",
+          "forMode": "seconds",
+          "forValue": 45,
+          "startSeconds": 1165,
+          "note": "Split squat + front raise"
+        },
+        {
+          "kind": "rest",
+          "id": "r18",
+          "seconds": 15
+        },
+        {
+          "kind": "exercise",
+          "id": "s19",
+          "exercise": "db_lunge",
+          "forMode": "seconds",
+          "forValue": 45,
+          "startSeconds": 1225,
+          "note": "Reverse lunge + lateral raise"
+        },
+        {
+          "kind": "rest",
+          "id": "r19",
+          "seconds": 15
+        },
+        {
+          "kind": "exercise",
+          "id": "s20",
+          "exercise": "db_floor_press",
+          "forMode": "seconds",
+          "forValue": 45,
+          "startSeconds": 1285,
+          "note": "Glute bridge + chest press"
+        },
+        {
+          "kind": "rest",
+          "id": "r20",
+          "seconds": 15
+        },
+        {
+          "kind": "exercise",
+          "id": "s21",
+          "exercise": "bw_lateral_shuffle",
+          "forMode": "seconds",
+          "forValue": 45,
+          "startSeconds": 1345,
+          "note": "Lateral slides"
+        },
+        {
+          "kind": "rest",
+          "id": "r21",
+          "seconds": 15
+        },
+        {
+          "kind": "exercise",
+          "id": "s22",
+          "exercise": "bw_knee_drive",
+          "forMode": "seconds",
+          "forValue": 45,
+          "startSeconds": 1405,
+          "note": "3 per side, then switch"
+        },
+        {
+          "kind": "rest",
+          "id": "r22",
+          "seconds": 15
+        },
+        {
+          "kind": "exercise",
+          "id": "s23",
+          "exercise": "bw_high_knees",
+          "forMode": "seconds",
+          "forValue": 45,
+          "startSeconds": 1465
+        },
+        {
+          "kind": "rest",
+          "id": "r23",
+          "seconds": 15
+        },
+        {
+          "kind": "exercise",
+          "id": "s24",
+          "exercise": "bw_squat",
+          "forMode": "seconds",
+          "forValue": 45,
+          "startSeconds": 1525,
+          "note": "Squat with tap-downs side to side"
+        },
+        {
+          "kind": "rest",
+          "id": "r24",
+          "seconds": 15
+        },
+        {
+          "kind": "exercise",
+          "id": "s25",
+          "exercise": "bw_mountain_climber",
+          "forMode": "seconds",
+          "forValue": 45,
+          "startSeconds": 1585
+        },
+        {
+          "kind": "rest",
+          "id": "r25",
+          "seconds": 15
+        },
+        {
+          "kind": "exercise",
+          "id": "s26",
+          "exercise": "bw_burpee",
+          "forMode": "seconds",
+          "forValue": 45,
+          "startSeconds": 1645,
+          "note": "With push-up"
+        }
+      ],
+      "note": "Timestamps from YouTube key moments (60 s grid from 2:25)."
+    },
+    {
+      "kind": "block",
+      "id": "b3",
+      "name": "Cool-down",
+      "repeat": 1,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s28",
+          "exercise": "bw_cool_down",
+          "forMode": "seconds",
+          "forValue": 120,
+          "startSeconds": 1765
+        }
+      ]
+    }
+  ]
+}

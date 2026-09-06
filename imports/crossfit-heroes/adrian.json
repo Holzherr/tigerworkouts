@@ -1,0 +1,62 @@
+{
+  "id": "cf-hero-adrian",
+  "title": "Adrian",
+  "creator": "CrossFit",
+  "description": "Seven rounds of 3 forward rolls, 5 wall climbs, 7 toes-to-bars and 9 box jumps to a high 30/24 in box. Honours U.S. Army Sgt. 1st Class Adrian Elizalde, killed by an IED in Baghdad in 2007. Lower the box and swap wall climbs for inchworms if needed.",
+  "source": {
+    "title": "Adrian – CrossFit Hero WOD",
+    "url": "https://www.crossfit.com/benchmark/adrian",
+    "author": "CrossFit",
+    "kind": "benchmark",
+    "license": "Public benchmark; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "CrossFit",
+    "Hero",
+    "For time",
+    "Bodyweight",
+    "Gymnastics"
+  ],
+  "level": "Hard",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "Adrian",
+      "mode": "fortime",
+      "repeat": 7,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "bw_forward_roll",
+          "forMode": "reps",
+          "forValue": 3
+        },
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "bw_wall_climb",
+          "forMode": "reps",
+          "forValue": 5
+        },
+        {
+          "kind": "exercise",
+          "id": "s3",
+          "exercise": "bw_toes_to_bar",
+          "forMode": "reps",
+          "forValue": 7
+        },
+        {
+          "kind": "exercise",
+          "id": "s4",
+          "exercise": "bw_box_jump",
+          "forMode": "reps",
+          "forValue": 9,
+          "note": "30/24 in box"
+        }
+      ]
+    }
+  ]
+}

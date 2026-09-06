@@ -1,0 +1,56 @@
+{
+  "id": "cf-open-13-5",
+  "title": "Open 13.5",
+  "creator": "CrossFit Games",
+  "description": "Four-minute AMRAP of 15 thrusters at 100/65 lb and 15 chest-to-bar pull-ups. Finish three rounds (90 reps) inside 4 minutes and the clock extends to 8; keep clearing 90 reps per window and it extends to 12 and 16. Masters 55+ used 65/45 lb with chin-over-bar or jumping pull-ups.",
+  "source": {
+    "title": "CrossFit Games Open 2013 – Workout 13.5",
+    "url": "https://games.crossfit.com/workouts/open/2013",
+    "author": "CrossFit Games",
+    "kind": "benchmark",
+    "license": "Public competition workout; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "CrossFit",
+    "CrossFit Open",
+    "2013",
+    "AMRAP",
+    "Barbell",
+    "Gymnastics"
+  ],
+  "level": "Hard",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "AMRAP 4 (+4)",
+      "mode": "amrap",
+      "repeat": 1,
+      "timeCapSec": 240,
+      "note": "Complete 3 rounds (90 reps) before 4:00 and the cap extends to 8:00; 180 reps before 8:00 extends to 12:00; 270 before 12:00 extends to 16:00.",
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "bb_thruster",
+          "target": 45.5,
+          "rx": {
+            "men": 45.5,
+            "women": 29.5
+          },
+          "forMode": "reps",
+          "forValue": 15,
+          "note": "100/65 lb"
+        },
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "bw_chest_to_bar_pullup",
+          "forMode": "reps",
+          "forValue": 15
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,53 @@
+{
+  "id": "nhs-c25k-w9",
+  "title": "Couch to 5K – Week 9",
+  "creator": "NHS",
+  "description": "The final week: three identical 30-minute continuous runs with the 5-minute walks either side, 40 minutes each. Finishing run 3 completes Couch to 5K; the plan suggests a parkrun as the next step.",
+  "source": {
+    "title": "Couch to 5K running plan",
+    "url": "https://www.nhs.uk/better-health/get-active/get-running-with-couch-to-5k/couch-to-5k-running-plan/",
+    "author": "NHS",
+    "kind": "program",
+    "license": "Open Government Licence v3.0 (NHS)",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "NHS",
+    "Couch to 5K",
+    "Running",
+    "Beginner",
+    "Continuous run"
+  ],
+  "level": "Medium",
+  "program": {
+    "name": "Couch to 5K",
+    "day": "Week 9",
+    "order": 13
+  },
+  "items": [
+    {
+      "kind": "exercise",
+      "id": "s1",
+      "exercise": "cardio_walk",
+      "forMode": "minutes",
+      "forValue": 5,
+      "note": "Brisk warm-up walk. Stretch before you start (see nhs-post-run-stretch or the NHS pre-run video)."
+    },
+    {
+      "kind": "exercise",
+      "id": "s2",
+      "exercise": "cardio_run",
+      "forMode": "minutes",
+      "forValue": 30,
+      "note": "Steady pace; the last three runs of the plan"
+    },
+    {
+      "kind": "exercise",
+      "id": "s3",
+      "exercise": "cardio_walk",
+      "forMode": "minutes",
+      "forValue": 5,
+      "note": "Cool-down walk, then stretch (nhs-post-run-stretch)."
+    }
+  ]
+}

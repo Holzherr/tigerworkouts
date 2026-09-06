@@ -1,0 +1,74 @@
+{
+  "id": "cf-hero-santiago",
+  "title": "Santiago",
+  "creator": "CrossFit",
+  "description": "Seven rounds of 18 dumbbell hang squat cleans, 18 pull-ups, 10 power cleans and 10 handstand push-ups, for time. Honours U.S. Army Ranger Sgt. Anibal Santiago, who died at Bagram, Afghanistan, in 2010. 126 dumbbell squat cleans is the sneaky volume; keep the dumbbells light.",
+  "source": {
+    "title": "Santiago – CrossFit Hero WOD",
+    "url": "https://www.crossfit.com/benchmark/santiago",
+    "author": "CrossFit",
+    "kind": "benchmark",
+    "license": "Public benchmark; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "CrossFit",
+    "Hero WOD",
+    "For time",
+    "Dumbbell",
+    "Barbell",
+    "Gymnastics"
+  ],
+  "level": "Hard",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "7 rounds",
+      "mode": "fortime",
+      "repeat": 7,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "db_hang_squat_clean",
+          "forMode": "reps",
+          "forValue": 18,
+          "target": 16,
+          "rx": {
+            "men": 16,
+            "women": 9
+          },
+          "note": "35/20 lb"
+        },
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "bw_pullup",
+          "forMode": "reps",
+          "forValue": 18
+        },
+        {
+          "kind": "exercise",
+          "id": "s3",
+          "exercise": "bb_power_clean",
+          "forMode": "reps",
+          "forValue": 10,
+          "target": 61,
+          "rx": {
+            "men": 61,
+            "women": 43
+          },
+          "note": "135/95 lb"
+        },
+        {
+          "kind": "exercise",
+          "id": "s4",
+          "exercise": "bw_handstand_pushup",
+          "forMode": "reps",
+          "forValue": 10
+        }
+      ]
+    }
+  ]
+}

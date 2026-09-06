@@ -1,0 +1,72 @@
+{
+  "id": "nhs-6-min-warm-up",
+  "title": "6-minute warm-up",
+  "creator": "NHS",
+  "description": "The NHS general warm-up used before all its 10-minute workouts: three minutes of marching, then heel digs, knee lifts, shoulder rolls and knee bends. It is timed rather than rep-based (60 heel digs in 60 seconds) and should take at least six minutes. Use it before any of the nhs-10-min workouts or a run.",
+  "source": {
+    "title": "How to warm up before exercising",
+    "url": "https://www.nhs.uk/live-well/exercise/how-to-warm-up-before-exercising/",
+    "author": "NHS",
+    "kind": "article",
+    "license": "Open Government Licence v3.0 (NHS)",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "NHS",
+    "Warm-up",
+    "No equipment",
+    "6 minutes"
+  ],
+  "level": "Easy",
+  "items": [
+    {
+      "kind": "exercise",
+      "id": "s1",
+      "exercise": "bw_march",
+      "forMode": "seconds",
+      "forValue": 180,
+      "note": "March on the spot, then forwards and backwards, pumping the arms"
+    },
+    {
+      "kind": "exercise",
+      "id": "s2",
+      "exercise": "bw_heel_dig",
+      "forMode": "seconds",
+      "forValue": 60,
+      "note": "Aim for 60 heel digs"
+    },
+    {
+      "kind": "exercise",
+      "id": "s3",
+      "exercise": "bw_knee_lift",
+      "forMode": "seconds",
+      "forValue": 30,
+      "note": "Aim for 30 knee lifts"
+    },
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "Shoulder rolls",
+      "repeat": 2,
+      "note": "2 sets of 10",
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s4",
+          "exercise": "bw_shoulder_roll",
+          "forMode": "reps",
+          "forValue": 10,
+          "note": "5 forwards, 5 backwards, keep marching"
+        }
+      ]
+    },
+    {
+      "kind": "exercise",
+      "id": "s5",
+      "exercise": "bw_mini_squat",
+      "forMode": "reps",
+      "forValue": 10,
+      "note": "Knee bends: lower no more than 10 cm"
+    }
+  ]
+}

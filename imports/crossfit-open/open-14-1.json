@@ -1,0 +1,55 @@
+{
+  "id": "cf-open-14-1",
+  "title": "Open 14.1",
+  "creator": "CrossFit Games",
+  "description": "Repeat of 11.1: ten-minute AMRAP of 30 double-unders and 15 power snatches at 75/55 lb. Fast rope, light bar, no rest. Masters 55+ used 65/45 lb.",
+  "source": {
+    "title": "CrossFit Games Open 2014 – Workout 14.1",
+    "url": "https://games.crossfit.com/workouts/open/2014",
+    "author": "CrossFit Games",
+    "kind": "benchmark",
+    "license": "Public competition workout; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "CrossFit",
+    "CrossFit Open",
+    "2014",
+    "AMRAP",
+    "Barbell",
+    "Jump rope"
+  ],
+  "level": "Medium",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "AMRAP 10",
+      "mode": "amrap",
+      "repeat": 1,
+      "timeCapSec": 600,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "bw_double_under",
+          "forMode": "reps",
+          "forValue": 30
+        },
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "bb_power_snatch",
+          "target": 34.0,
+          "rx": {
+            "men": 34.0,
+            "women": 25.0
+          },
+          "forMode": "reps",
+          "forValue": 15,
+          "note": "75/55 lb"
+        }
+      ]
+    }
+  ]
+}

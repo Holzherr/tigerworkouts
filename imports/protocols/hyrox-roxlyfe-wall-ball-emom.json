@@ -1,0 +1,45 @@
+{
+  "id": "proto-hyrox-roxlyfe-wall-ball-emom",
+  "title": "Hyrox wall ball EMOM 10",
+  "creator": "Greg Williams (Rox Lyfe)",
+  "description": "Fifteen wall balls every minute for 10 minutes, ideally with a ball a little heavier than your race weight. 150 reps with built-in rest, it builds the rhythm and unbroken sets you need for the last station of a Hyrox. Use the race target height (3.0 m men, 2.7 m women).",
+  "source": {
+    "title": "HYROX Wall Balls Guide – Rox Lyfe",
+    "url": "https://roxlyfe.com/hyrox-wall-balls-guide/",
+    "author": "Greg Williams",
+    "kind": "article",
+    "license": "Published protocol; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "Hyrox",
+    "EMOM",
+    "Wall ball"
+  ],
+  "level": "Medium",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "EMOM 10",
+      "mode": "emom",
+      "repeat": 10,
+      "everySec": 60,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "gym_wall_ball",
+          "forMode": "reps",
+          "forValue": 15,
+          "target": 9,
+          "rx": {
+            "men": 9,
+            "women": 6
+          },
+          "note": "Slightly heavier than race weight (race: 6/4 kg Open)"
+        }
+      ]
+    }
+  ]
+}

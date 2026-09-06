@@ -1,0 +1,53 @@
+{
+  "id": "cf-hero-coe",
+  "title": "Coe",
+  "creator": "CrossFit",
+  "description": "Ten rounds of 10 thrusters at 95/65 lb and 10 ring push-ups. Honours U.S. Army Sgt. Keith Adam Coe, killed by an explosive device in Khalis, Iraq, in 2010. One hundred of each; the ring push-ups fade fast, so scale to floor push-ups when the chest stops touching.",
+  "source": {
+    "title": "Coe – CrossFit Hero WOD",
+    "url": "https://www.crossfit.com/benchmark/coe",
+    "author": "CrossFit",
+    "kind": "benchmark",
+    "license": "Public benchmark; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "CrossFit",
+    "Hero",
+    "For time",
+    "Barbell",
+    "Gymnastics"
+  ],
+  "level": "Hard",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "Coe",
+      "mode": "fortime",
+      "repeat": 10,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "bb_thruster",
+          "target": 43.0,
+          "rx": {
+            "men": 43.0,
+            "women": 29.5
+          },
+          "forMode": "reps",
+          "forValue": 10,
+          "note": "95/65 lb"
+        },
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "gym_ring_pushup",
+          "forMode": "reps",
+          "forValue": 10
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,75 @@
+{
+  "id": "cf-hero-kelly-brown",
+  "title": "Kelly Brown",
+  "creator": "CrossFit",
+  "description": "Five rounds of a 440 m row, 10 box jumps to a 30/24 in box, 10 deadlifts at 275/185 lb and 10 wall balls with a 30/20 lb ball. Honours CrossFit Kids Seminar Staff Flowmaster Kelly Brown, who died of ovarian cancer in 2020. Lower the box and the ball weight before the row.",
+  "source": {
+    "title": "Kelly Brown – CrossFit Hero WOD",
+    "url": "https://www.crossfit.com/benchmark/kelly-brown",
+    "author": "CrossFit",
+    "kind": "benchmark",
+    "license": "Public benchmark; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "CrossFit",
+    "Hero",
+    "For time",
+    "Row",
+    "Barbell",
+    "Wall ball"
+  ],
+  "level": "Hard",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "Kelly Brown",
+      "mode": "fortime",
+      "repeat": 5,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "cardio_rower",
+          "forMode": "meters",
+          "forValue": 440
+        },
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "bw_box_jump",
+          "forMode": "reps",
+          "forValue": 10,
+          "note": "30/24 in box"
+        },
+        {
+          "kind": "exercise",
+          "id": "s3",
+          "exercise": "bb_deadlift",
+          "target": 124.5,
+          "rx": {
+            "men": 124.5,
+            "women": 84.0
+          },
+          "forMode": "reps",
+          "forValue": 10,
+          "note": "275/185 lb"
+        },
+        {
+          "kind": "exercise",
+          "id": "s4",
+          "exercise": "gym_wall_ball",
+          "target": 13.5,
+          "rx": {
+            "men": 13.5,
+            "women": 9.0
+          },
+          "forMode": "reps",
+          "forValue": 10,
+          "note": "30/20 lb; 10/9 ft target"
+        }
+      ]
+    }
+  ]
+}

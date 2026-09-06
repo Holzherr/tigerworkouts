@@ -1,0 +1,75 @@
+{
+  "id": "cf-hero-oda-7313",
+  "title": "ODA 7313",
+  "creator": "CrossFit",
+  "description": "Seven rounds of a 300 m jog, 10 single-arm dumbbell thrusters each side and 7 strict pull-ups, for time. Honours U.S. Army Special Forces Sgt. 1st Class Javier 'Jaguar' Gutierrez of ODA 7313, killed in Nangarhar Province, Afghanistan, in 2020. Light dumbbell, strict pulling; keep the jog easy.",
+  "source": {
+    "title": "ODA 7313 – CrossFit Hero WOD",
+    "url": "https://www.crossfit.com/benchmark/oda-7313",
+    "author": "CrossFit",
+    "kind": "benchmark",
+    "license": "Public benchmark; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "CrossFit",
+    "Hero WOD",
+    "For time",
+    "Dumbbell",
+    "Running"
+  ],
+  "level": "Hard",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "7 rounds",
+      "mode": "fortime",
+      "repeat": 7,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "cardio_run",
+          "forMode": "meters",
+          "forValue": 300,
+          "note": "Jog"
+        },
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "db_thruster",
+          "forMode": "reps",
+          "forValue": 10,
+          "target": 13.5,
+          "rx": {
+            "men": 13.5,
+            "women": 9
+          },
+          "note": "30/20 lb — Left arm only"
+        },
+        {
+          "kind": "exercise",
+          "id": "s3",
+          "exercise": "db_thruster",
+          "forMode": "reps",
+          "forValue": 10,
+          "target": 13.5,
+          "rx": {
+            "men": 13.5,
+            "women": 9
+          },
+          "note": "30/20 lb — Right arm only"
+        },
+        {
+          "kind": "exercise",
+          "id": "s4",
+          "exercise": "bw_pullup",
+          "forMode": "reps",
+          "forValue": 7,
+          "note": "Strict"
+        }
+      ]
+    }
+  ]
+}

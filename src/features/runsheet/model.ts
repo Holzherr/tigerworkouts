@@ -4,7 +4,21 @@
  * these and hand the new value back up.
  */
 
-export type ForMode = 'seconds' | 'reps' | 'minutes';
+/** max = as many reps / as long a hold as possible; forValue is ignored (score is the result). */
+export type ForMode = 'seconds' | 'reps' | 'minutes' | 'meters' | 'calories' | 'max';
+
+/** How a block is run. rounds = repeat N times; fortime = N rounds, clock counts up, optional cap;
+ *  amrap = as many rounds as possible in timeCapSec; emom = start the steps every everySec, N times. */
+export type BlockMode = 'rounds' | 'fortime' | 'amrap' | 'emom' | 'ladder';
+
+export interface Source {
+  title: string;
+  url?: string;
+  author?: string;
+  kind: 'benchmark' | 'program' | 'video' | 'article' | 'protocol' | 'user';
+  license?: string;
+  importedAt?: string;
+}
 
 export interface ExerciseRef {
   key: string;
@@ -26,13 +40,26 @@ export interface ExerciseStep {
   target?: number;
   forMode: ForMode;
   forValue: number;
+  /** Upper bound when the source gives a range ("15 to 24 reps"). */
+  forMax?: number;
+  /** Do the reps/time on each side (lunges, single-arm rows). The timer doubles it. */
+  perSide?: boolean;
+  /** Load as a multiple of bodyweight (Linda: 1.5) or a percent of a training max (nSuns: 65). One of these instead of target. */
+  loadFactor?: number;
+  targetPct?: number;
   incline?: number;
+  /** Prescribed loads when the source gives men's / women's Rx, in the exercise unit. */
+  rx?: { men?: number; women?: number };
+  /** Video timestamp (seconds) when the workout is a follow-along. */
+  startSeconds?: number;
+  note?: string;
 }
 
 export interface RestStep {
   kind: 'rest';
   id: string;
   seconds: number;
+  note?: string;
 }
 
 export type Step = ExerciseStep | RestStep;
@@ -41,7 +68,16 @@ export interface Block {
   kind: 'block';
   id: string;
   name: string;
+  /** Rounds (rounds / fortime / emom). Ignored for amrap. */
   repeat: number;
+  mode?: BlockMode;
+  /** amrap length, or the cap on a fortime block. */
+  timeCapSec?: number;
+  /** emom interval, default 60. */
+  everySec?: number;
+  /** ladder rep scheme (21-15-9): each rung runs the steps with forValue scaled to the rung. */
+  ladder?: number[];
+  note?: string;
   steps: Step[];
 }
 
@@ -51,6 +87,12 @@ export interface Runsheet {
   id?: string;
   title: string;
   creator?: string;
+  description?: string;
+  source?: Source;
+  tags?: string[];
+  level?: 'Easy' | 'Medium' | 'Hard';
+  /** Set when the workout is one day of a multi-day program. */
+  program?: { name: string; day: string; order?: number };
   items: Item[];
 }
 
@@ -76,16 +118,44 @@ export const stepSeconds = (s: Step): number => {
   if (s.kind === 'rest') return s.seconds;
   if (s.forMode === 'seconds') return s.forValue;
   if (s.forMode === 'minutes') return s.forValue * 60;
-  return s.forValue * 3;
+  if (s.forMode === 'meters') return s.forValue * 0.3; // ~2 min per 400 m
+  if (s.forMode === 'calories') return s.forValue * 4;
+  if (s.forMode === 'max') return 60;
+  return s.forValue * 3 * (s.perSide ? 2 : 1);
 };
+/** A ladder block's steps for one rung: reps replaced by the rung value (rests untouched). */
+export const rungSteps = (b: Block, rung: number): Step[] => b.steps.map(st => (st.kind === 'exercise' && st.forMode === 'reps' ? { ...st, forValue: rung } : st));
 export const roundSeconds = (b: Block) => b.steps.reduce((t, s) => t + stepSeconds(s), 0);
-export const itemSeconds = (i: Item) => (i.kind === 'block' ? roundSeconds(i) * i.repeat : stepSeconds(i));
+export const blockSeconds = (b: Block) => {
+  const mode = b.mode ?? 'rounds';
+  if (mode === 'amrap') return b.timeCapSec ?? roundSeconds(b) * b.repeat;
+  if (mode === 'emom') return (b.everySec ?? 60) * b.repeat;
+  if (mode === 'ladder') return (b.ladder ?? []).reduce((t, r) => t + rungSteps(b, r).reduce((u, st) => u + stepSeconds(st), 0), 0);
+  const est = roundSeconds(b) * b.repeat;
+  return mode === 'fortime' && b.timeCapSec ? Math.min(est, b.timeCapSec) : est;
+};
+export const itemSeconds = (i: Item) => (i.kind === 'block' ? blockSeconds(i) : stepSeconds(i));
 export const runsheetSeconds = (r: Pick<Runsheet, 'items'>) => r.items.reduce((t, i) => t + itemSeconds(i), 0);
 export const runsheetMinutes = (r: Pick<Runsheet, 'items'>) => Math.round(runsheetSeconds(r) / 60);
 
 // ── labels ──
 export const shortUnit = (unit: string) => unit.replace(' per arm', '').replace(' per side', '').trim();
-export const forLabel = (s: ExerciseStep) => (s.forMode === 'seconds' ? `${s.forValue}s` : s.forMode === 'minutes' ? `${s.forValue} min` : `${s.forValue} reps`);
+export const forLabel = (s: ExerciseStep) => {
+  const n = s.forMax ? `${s.forValue}–${s.forMax}` : `${s.forValue}`;
+  const base = s.forMode === 'max' ? 'max' : s.forMode === 'seconds' ? `${n}s` : s.forMode === 'minutes' ? `${n} min` : s.forMode === 'meters' ? `${n} m` : s.forMode === 'calories' ? `${n} cal` : `${n} reps`;
+  return s.perSide ? `${base} each side` : base;
+};
+/** "43 kg", "1.5× BW", "65% TM" or empty for bodyweight. */
+export const loadLabel = (s: ExerciseStep) => (s.loadFactor ? `${s.loadFactor}× BW` : s.targetPct ? `${s.targetPct}% TM` : s.target !== undefined ? `${s.target % 1 ? s.target.toFixed(1) : s.target} ${shortUnit(s.exercise.unit)}` : '');
+/** "×8", "AMRAP 20:00", "EMOM 10", "5 rounds for time" */
+export const modeLabel = (b: Block) => {
+  const mode = b.mode ?? 'rounds';
+  if (mode === 'amrap') return `AMRAP ${Math.round((b.timeCapSec ?? 0) / 60)}:00`;
+  if (mode === 'emom') return `EMOM ${b.repeat}`;
+  if (mode === 'fortime') return `${b.repeat} round${b.repeat === 1 ? '' : 's'} for time`;
+  if (mode === 'ladder') return (b.ladder ?? []).join('-');
+  return `×${b.repeat}`;
+};
 /** Default block name: exercise names joined with " + ". */
 export const autoBlockName = (steps: Step[]) => {
   const names = steps.filter((s): s is ExerciseStep => s.kind === 'exercise').map(s => s.exercise.name);
@@ -130,7 +200,7 @@ export const replaceStep = (items: Item[], id: string, next: Step): Item[] =>
     return it;
   });
 
-export const updateBlock = (items: Item[], id: string, patch: Partial<Pick<Block, 'name' | 'repeat'>>): Item[] =>
+export const updateBlock = (items: Item[], id: string, patch: Partial<Pick<Block, 'name' | 'repeat' | 'mode' | 'timeCapSec' | 'everySec' | 'note' | 'ladder'>>): Item[] =>
   items.map(it => (it.id === id && it.kind === 'block' ? { ...it, ...patch } : it));
 
 /** Remove a step. A block left with one step dissolves into that step; with none, it disappears. */

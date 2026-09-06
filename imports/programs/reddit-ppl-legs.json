@@ -1,0 +1,160 @@
+{
+  "id": "prog-reddit-ppl-legs",
+  "title": "Reddit PPL – Legs",
+  "creator": "u/Metallicadpa (r/Fitness)",
+  "description": "Metallicadpa's six-day push/pull/legs: each day opens with a barbell lift progressed linearly (4×5 then a 5+ AMRAP set), followed by 8–12 rep accessories and high-rep isolation work. Run PPLPPLR or PPLRPPL; the pull and push main lifts alternate weekly (deadlift/row, bench/OHP), so a two-week rotation covers both variants. Add 2.5 kg to upper lifts and squat and 5 kg to deadlift each session; deload 10% after failing the same weight three sessions running; accessories go up once you hit 3×12.",
+  "source": {
+    "title": "A Linear Progression Based PPL Program for Beginners",
+    "url": "https://thefitness.wiki/reddit-archive/a-linear-progression-based-ppl-program-for-beginners/",
+    "author": "u/Metallicadpa (r/Fitness)",
+    "kind": "program",
+    "license": "Freely published program; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "Program",
+    "Hypertrophy",
+    "Strength",
+    "Barbell",
+    "PPL"
+  ],
+  "level": "Medium",
+  "program": {
+    "name": "Reddit PPL (Metallicadpa)",
+    "day": "Legs (both weeks)",
+    "order": 3
+  },
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "Squat 2×5, 1×5+",
+      "repeat": 2,
+      "note": "Rest 3–5 min; +2.5 kg per session (+5 kg deadlift); 3 fails at a weight → drop 10%",
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "bb_back_squat",
+          "forMode": "reps",
+          "forValue": 5
+        },
+        {
+          "kind": "rest",
+          "id": "r1",
+          "seconds": 180
+        }
+      ]
+    },
+    {
+      "kind": "block",
+      "id": "b2",
+      "name": "Squat 2×5, 1×5+ – AMRAP",
+      "repeat": 1,
+      "note": "AMRAP set",
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "bb_back_squat",
+          "forMode": "reps",
+          "forValue": 5,
+          "note": "5+ reps: as many as possible with good form"
+        },
+        {
+          "kind": "rest",
+          "id": "r2",
+          "seconds": 180
+        }
+      ]
+    },
+    {
+      "kind": "block",
+      "id": "b3",
+      "name": "Romanian deadlift 3×8–12",
+      "repeat": 3,
+      "note": "Add weight when you get 3×12 with good form",
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s3",
+          "exercise": "bb_rdl",
+          "forMode": "reps",
+          "forValue": 12,
+          "note": "8–12 reps"
+        },
+        {
+          "kind": "rest",
+          "id": "r3",
+          "seconds": 90
+        }
+      ]
+    },
+    {
+      "kind": "block",
+      "id": "b4",
+      "name": "Leg press 3×8–12",
+      "repeat": 3,
+      "note": "Add weight when you get 3×12 with good form",
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s4",
+          "exercise": "machine_leg_press",
+          "forMode": "reps",
+          "forValue": 12,
+          "note": "8–12 reps"
+        },
+        {
+          "kind": "rest",
+          "id": "r4",
+          "seconds": 90
+        }
+      ]
+    },
+    {
+      "kind": "block",
+      "id": "b5",
+      "name": "Leg curls 3×8–12",
+      "repeat": 3,
+      "note": "Add weight when you get 3×12 with good form",
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s5",
+          "exercise": "machine_leg_curl",
+          "forMode": "reps",
+          "forValue": 12,
+          "note": "8–12 reps"
+        },
+        {
+          "kind": "rest",
+          "id": "r5",
+          "seconds": 90
+        }
+      ]
+    },
+    {
+      "kind": "block",
+      "id": "b6",
+      "name": "Calf raises 5×8–12",
+      "repeat": 5,
+      "note": "Add weight when you get 3×12 with good form",
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s6",
+          "exercise": "machine_calf_raise",
+          "forMode": "reps",
+          "forValue": 12,
+          "note": "8–12 reps"
+        },
+        {
+          "kind": "rest",
+          "id": "r6",
+          "seconds": 60
+        }
+      ]
+    }
+  ]
+}

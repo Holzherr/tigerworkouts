@@ -1,0 +1,69 @@
+{
+  "id": "cf-hero-jack",
+  "title": "Jack",
+  "creator": "CrossFit",
+  "description": "A 20-minute AMRAP of 10 push presses at 115/75 lb, 10 kettlebell swings at 1.5/1 pood and 10 box jumps. Honours U.S. Army Staff Sgt. Jack M. Martin III, 1st Special Forces Group, killed by an IED on Jolo Island, Philippines, in 2009. Straightforward rounds; aim for 15 or more.",
+  "source": {
+    "title": "Jack – CrossFit Hero WOD",
+    "url": "https://www.crossfit.com/benchmark/jack",
+    "author": "CrossFit",
+    "kind": "benchmark",
+    "license": "Public benchmark; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "CrossFit",
+    "Hero",
+    "AMRAP",
+    "Barbell",
+    "Kettlebell",
+    "Bodyweight"
+  ],
+  "level": "Hard",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "Jack",
+      "mode": "amrap",
+      "repeat": 1,
+      "timeCapSec": 1200,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "bb_push_press",
+          "target": 52.0,
+          "rx": {
+            "men": 52.0,
+            "women": 34.0
+          },
+          "forMode": "reps",
+          "forValue": 10,
+          "note": "115/75 lb"
+        },
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "kb_swing",
+          "target": 24,
+          "rx": {
+            "men": 24,
+            "women": 16
+          },
+          "forMode": "reps",
+          "forValue": 10,
+          "note": "1.5/1 pood (24/16 kg)"
+        },
+        {
+          "kind": "exercise",
+          "id": "s3",
+          "exercise": "bw_box_jump",
+          "forMode": "reps",
+          "forValue": 10,
+          "note": "24/20 in box"
+        }
+      ]
+    }
+  ]
+}

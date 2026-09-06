@@ -1,0 +1,84 @@
+{
+  "id": "cf-hero-servais",
+  "title": "Servais",
+  "creator": "CrossFit",
+  "description": "Run 1.5 miles, then eight rounds of 19 pull-ups, 19 push-ups and 19 burpees, then a 400 m sandbag carry and a 1-mile dumbbell farmers carry, for time. Honours U.S. Air Force Senior Airman Adam Servais of the 23rd Special Tactics Squadron, killed in Uruzgan Province, Afghanistan, in 2006. The carries at the end are the memorable part; pick a sandbag you can shoulder.",
+  "source": {
+    "title": "Servais – CrossFit Hero WOD",
+    "url": "https://www.crossfit.com/benchmark/servais",
+    "author": "CrossFit",
+    "kind": "benchmark",
+    "license": "Public benchmark; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "CrossFit",
+    "Hero WOD",
+    "For time",
+    "Bodyweight",
+    "Running",
+    "Carry"
+  ],
+  "level": "Hard",
+  "items": [
+    {
+      "kind": "exercise",
+      "id": "s1",
+      "exercise": "cardio_run",
+      "forMode": "meters",
+      "forValue": 2414,
+      "note": "1.5 miles"
+    },
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "8 rounds",
+      "mode": "fortime",
+      "repeat": 8,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "bw_pullup",
+          "forMode": "reps",
+          "forValue": 19
+        },
+        {
+          "kind": "exercise",
+          "id": "s3",
+          "exercise": "bw_pushup",
+          "forMode": "reps",
+          "forValue": 19
+        },
+        {
+          "kind": "exercise",
+          "id": "s4",
+          "exercise": "bw_burpee",
+          "forMode": "reps",
+          "forValue": 19
+        }
+      ]
+    },
+    {
+      "kind": "exercise",
+      "id": "s5",
+      "exercise": "gym_sandbag_carry",
+      "forMode": "meters",
+      "forValue": 400,
+      "note": "Heavy sandbag"
+    },
+    {
+      "kind": "exercise",
+      "id": "s6",
+      "exercise": "db_farmers_carry",
+      "forMode": "meters",
+      "forValue": 1609,
+      "target": 20.5,
+      "rx": {
+        "men": 20.5,
+        "women": 13.5
+      },
+      "note": "45/30 lb — 1 mile"
+    }
+  ]
+}

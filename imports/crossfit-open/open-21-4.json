@@ -1,0 +1,65 @@
+{
+  "id": "cf-open-21-4",
+  "title": "Open 21.4",
+  "creator": "CrossFit Games",
+  "description": "Immediately after 21.3, seven minutes to build to a max-load complex of 1 deadlift, 1 clean, 1 hang clean and 1 jerk, unbroken. Score is the heaviest complex completed. Foundations swapped the jerk for a push press and started with a stick.",
+  "source": {
+    "title": "CrossFit Games Open 2021 – Workout 21.4",
+    "url": "https://games.crossfit.com/workouts/open/2021/4",
+    "author": "CrossFit Games",
+    "kind": "benchmark",
+    "license": "Public competition workout; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "CrossFit",
+    "CrossFit Open",
+    "2021",
+    "Max lift",
+    "Barbell"
+  ],
+  "level": "Hard",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "Complex for max load",
+      "mode": "fortime",
+      "repeat": 1,
+      "timeCapSec": 420,
+      "note": "Unbroken complex; add load between attempts. Score = heaviest successful complex in 7 minutes.",
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "bb_deadlift",
+          "forMode": "reps",
+          "forValue": 1
+        },
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "bb_clean",
+          "forMode": "reps",
+          "forValue": 1
+        },
+        {
+          "kind": "exercise",
+          "id": "s3",
+          "exercise": "bb_hang_power_clean",
+          "forMode": "reps",
+          "forValue": 1,
+          "note": "squat or power"
+        },
+        {
+          "kind": "exercise",
+          "id": "s4",
+          "exercise": "bb_push_jerk",
+          "forMode": "reps",
+          "forValue": 1,
+          "note": "any jerk"
+        }
+      ]
+    }
+  ]
+}

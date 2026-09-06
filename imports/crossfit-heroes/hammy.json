@@ -1,0 +1,153 @@
+{
+  "id": "cf-hero-hammy",
+  "title": "Hammy",
+  "creator": "CrossFit",
+  "description": "A long pyramid: runs of 1,200, 800, 400, 400, 800 and 1,200 m between 80 box step-overs, 40 hand-release push-ups, 40 burpees to a 6 in target, 20 strict pull-ups, 20 burpee box jumps and 10 ring muscle-ups, then back out. Honours Cpl. Stuart \"Hammy\" Hamilton, 2nd Battalion Royal Irish Regiment, killed in a training accident in 2021. Scale muscle-ups to chest-to-bar pull-ups and dips.",
+  "source": {
+    "title": "Hammy – CrossFit Hero WOD",
+    "url": "https://www.crossfit.com/benchmark/hammy",
+    "author": "CrossFit",
+    "kind": "benchmark",
+    "license": "Public benchmark; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "CrossFit",
+    "Hero",
+    "For time",
+    "Run",
+    "Bodyweight",
+    "Gymnastics",
+    "Long"
+  ],
+  "level": "Hard",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "Hammy",
+      "mode": "fortime",
+      "repeat": 1,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "cardio_run",
+          "forMode": "meters",
+          "forValue": 1200
+        },
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "bw_box_step_up",
+          "forMode": "reps",
+          "forValue": 80,
+          "note": "step-overs; 24/20 in box"
+        },
+        {
+          "kind": "exercise",
+          "id": "s3",
+          "exercise": "bw_hand_release_pushup",
+          "forMode": "reps",
+          "forValue": 40
+        },
+        {
+          "kind": "exercise",
+          "id": "s4",
+          "exercise": "cardio_run",
+          "forMode": "meters",
+          "forValue": 800
+        },
+        {
+          "kind": "exercise",
+          "id": "s5",
+          "exercise": "bw_burpee",
+          "forMode": "reps",
+          "forValue": 40,
+          "note": "to a 6 in target"
+        },
+        {
+          "kind": "exercise",
+          "id": "s6",
+          "exercise": "bw_strict_pullup",
+          "forMode": "reps",
+          "forValue": 20
+        },
+        {
+          "kind": "exercise",
+          "id": "s7",
+          "exercise": "cardio_run",
+          "forMode": "meters",
+          "forValue": 400
+        },
+        {
+          "kind": "exercise",
+          "id": "s8",
+          "exercise": "bw_burpee_box_jump",
+          "forMode": "reps",
+          "forValue": 20,
+          "note": "24/20 in box"
+        },
+        {
+          "kind": "exercise",
+          "id": "s9",
+          "exercise": "gym_muscle_up",
+          "forMode": "reps",
+          "forValue": 10,
+          "note": "rings"
+        },
+        {
+          "kind": "exercise",
+          "id": "s10",
+          "exercise": "cardio_run",
+          "forMode": "meters",
+          "forValue": 400
+        },
+        {
+          "kind": "exercise",
+          "id": "s11",
+          "exercise": "bw_burpee",
+          "forMode": "reps",
+          "forValue": 40,
+          "note": "to a 6 in target"
+        },
+        {
+          "kind": "exercise",
+          "id": "s12",
+          "exercise": "bw_strict_pullup",
+          "forMode": "reps",
+          "forValue": 20
+        },
+        {
+          "kind": "exercise",
+          "id": "s13",
+          "exercise": "cardio_run",
+          "forMode": "meters",
+          "forValue": 800
+        },
+        {
+          "kind": "exercise",
+          "id": "s14",
+          "exercise": "bw_box_step_up",
+          "forMode": "reps",
+          "forValue": 80,
+          "note": "step-overs; 24/20 in box"
+        },
+        {
+          "kind": "exercise",
+          "id": "s15",
+          "exercise": "bw_hand_release_pushup",
+          "forMode": "reps",
+          "forValue": 40
+        },
+        {
+          "kind": "exercise",
+          "id": "s16",
+          "exercise": "cardio_run",
+          "forMode": "meters",
+          "forValue": 1200
+        }
+      ]
+    }
+  ]
+}

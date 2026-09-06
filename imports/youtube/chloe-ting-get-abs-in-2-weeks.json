@@ -1,0 +1,211 @@
+{
+  "id": "yt-chloe-ting-get-abs-in-2-weeks",
+  "title": "Get Abs in 2 Weeks (Abs Workout Challenge)",
+  "creator": "Chloe Ting",
+  "description": "Chloe Ting's 2019 abs video, the most-watched home workout on YouTube at over 600 million views and the daily anchor of her 2 Weeks Shred Challenge. Seventeen floor exercises in 30-second pairs with a 10-second breather after each pair, about 10 minutes on the mat. Suits anyone with a basic plank; drop to the knees on the plank moves to scale it down.",
+  "source": {
+    "title": "Get Abs in 2 WEEKS | Abs Workout Challenge",
+    "url": "https://www.youtube.com/watch?v=2pLT-olgUJs",
+    "author": "Chloe Ting",
+    "kind": "video",
+    "license": "Video © creator, linked not copied; exercise list is factual",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "Follow-along",
+    "Abs",
+    "No equipment",
+    "HIIT"
+  ],
+  "level": "Medium",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "Abs circuit",
+      "repeat": 1,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "bw_leg_raise",
+          "forMode": "seconds",
+          "forValue": 30,
+          "startSeconds": 43,
+          "note": "Leg raise with a clap under the legs at the top"
+        },
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "bw_reverse_crunch",
+          "forMode": "seconds",
+          "forValue": 30,
+          "startSeconds": 73
+        },
+        {
+          "kind": "rest",
+          "id": "r1",
+          "seconds": 10
+        },
+        {
+          "kind": "exercise",
+          "id": "s3",
+          "exercise": "bw_spiderman_plank",
+          "forMode": "seconds",
+          "forValue": 30,
+          "startSeconds": 113
+        },
+        {
+          "kind": "exercise",
+          "id": "s4",
+          "exercise": "bw_cross_body_mountain_climber",
+          "forMode": "seconds",
+          "forValue": 30,
+          "startSeconds": 143
+        },
+        {
+          "kind": "rest",
+          "id": "r2",
+          "seconds": 10
+        },
+        {
+          "kind": "exercise",
+          "id": "s5",
+          "exercise": "bw_russian_twist",
+          "forMode": "seconds",
+          "forValue": 30,
+          "startSeconds": 183
+        },
+        {
+          "kind": "exercise",
+          "id": "s6",
+          "exercise": "bw_in_and_out",
+          "forMode": "seconds",
+          "forValue": 30,
+          "startSeconds": 213
+        },
+        {
+          "kind": "rest",
+          "id": "r3",
+          "seconds": 10
+        },
+        {
+          "kind": "exercise",
+          "id": "s7",
+          "exercise": "bw_plank_hip_dip",
+          "forMode": "seconds",
+          "forValue": 30,
+          "startSeconds": 253
+        },
+        {
+          "kind": "exercise",
+          "id": "s8",
+          "exercise": "bw_plank_jack",
+          "forMode": "seconds",
+          "forValue": 30,
+          "startSeconds": 283
+        },
+        {
+          "kind": "rest",
+          "id": "r4",
+          "seconds": 10
+        },
+        {
+          "kind": "exercise",
+          "id": "s9",
+          "exercise": "bw_hundred",
+          "forMode": "seconds",
+          "forValue": 30,
+          "startSeconds": 323
+        },
+        {
+          "kind": "exercise",
+          "id": "s10",
+          "exercise": "bw_crunch",
+          "forMode": "seconds",
+          "forValue": 30,
+          "startSeconds": 353
+        },
+        {
+          "kind": "rest",
+          "id": "r5",
+          "seconds": 10
+        },
+        {
+          "kind": "exercise",
+          "id": "s11",
+          "exercise": "bw_up_down_plank",
+          "forMode": "seconds",
+          "forValue": 30,
+          "startSeconds": 393
+        },
+        {
+          "kind": "exercise",
+          "id": "s12",
+          "exercise": "bw_plank",
+          "forMode": "seconds",
+          "forValue": 30,
+          "startSeconds": 423
+        },
+        {
+          "kind": "rest",
+          "id": "r6",
+          "seconds": 10
+        },
+        {
+          "kind": "exercise",
+          "id": "s13",
+          "exercise": "bw_heel_touch",
+          "forMode": "seconds",
+          "forValue": 30,
+          "startSeconds": 463
+        },
+        {
+          "kind": "exercise",
+          "id": "s14",
+          "exercise": "bw_bicycle_crunch",
+          "forMode": "seconds",
+          "forValue": 30,
+          "startSeconds": 493
+        },
+        {
+          "kind": "rest",
+          "id": "r7",
+          "seconds": 10
+        },
+        {
+          "kind": "exercise",
+          "id": "s15",
+          "exercise": "bw_reverse_crunch",
+          "forMode": "seconds",
+          "forValue": 30,
+          "startSeconds": 533,
+          "note": "Reverse crunch with a leg extension"
+        },
+        {
+          "kind": "exercise",
+          "id": "s16",
+          "exercise": "bw_crunch",
+          "forMode": "seconds",
+          "forValue": 30,
+          "startSeconds": 563,
+          "note": "Straight-leg crunch, legs held up"
+        },
+        {
+          "kind": "rest",
+          "id": "r8",
+          "seconds": 10
+        },
+        {
+          "kind": "exercise",
+          "id": "s17",
+          "exercise": "bw_up_down_plank",
+          "forMode": "seconds",
+          "forValue": 30,
+          "startSeconds": 603
+        }
+      ],
+      "note": "Exercise pairs run back to back; 10 s rest after each pair. Timestamps from key moments plus the pair grid."
+    }
+  ]
+}

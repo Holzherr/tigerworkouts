@@ -1,0 +1,55 @@
+{
+  "id": "cf-open-19-1",
+  "title": "Open 19.1",
+  "creator": "CrossFit Games",
+  "description": "Fifteen-minute AMRAP of 19 wall balls (20/14 lb to 10/9 ft) and a 19-calorie row. Two movements, no skill barrier, all pacing. Scaled used a 14/10 lb ball.",
+  "source": {
+    "title": "CrossFit Games Open 2019 – Workout 19.1",
+    "url": "https://games.crossfit.com/workouts/open/2019/1",
+    "author": "CrossFit Games",
+    "kind": "benchmark",
+    "license": "Public competition workout; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "CrossFit",
+    "CrossFit Open",
+    "2019",
+    "AMRAP",
+    "Wall ball",
+    "Rower"
+  ],
+  "level": "Medium",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "AMRAP 15",
+      "mode": "amrap",
+      "repeat": 1,
+      "timeCapSec": 900,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "gym_wall_ball",
+          "target": 9.0,
+          "rx": {
+            "men": 9.0,
+            "women": 6.5
+          },
+          "forMode": "reps",
+          "forValue": 19,
+          "note": "20/14 lb. 10/9 ft target"
+        },
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "cardio_rower",
+          "forMode": "calories",
+          "forValue": 19
+        }
+      ]
+    }
+  ]
+}

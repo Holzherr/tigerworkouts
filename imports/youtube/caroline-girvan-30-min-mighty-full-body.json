@@ -1,0 +1,367 @@
+{
+  "id": "yt-caroline-girvan-30-min-mighty-full-body",
+  "title": "30 Min MIGHTY Full Body Workout - Dumbbells",
+  "creator": "Caroline Girvan",
+  "description": "A 30-minute full-body dumbbell session from Caroline Girvan, 4.5M+ views. Twenty-two 60-second sets with 20 seconds rest, using static lunges between every upper-body pair (chest press, shoulder press, rows, pullovers) and staggered RDLs, then a 3-minute non-stop dumbbell abs finisher. She uses 17.5 kg per hand, 9 kg for shoulders and abs; no timestamps are published.",
+  "source": {
+    "title": "30 Min MIGHTY Full Body Workout - Dumbbells | Caroline Girvan",
+    "url": "https://www.youtube.com/watch?v=ScInpT_5dIQ",
+    "author": "Caroline Girvan",
+    "kind": "video",
+    "license": "Video © creator, linked not copied; exercise list is factual",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "Follow-along",
+    "Dumbbells",
+    "Full body",
+    "Strength"
+  ],
+  "level": "Hard",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b2",
+      "name": "22 sets, 60 s on / 20 s off",
+      "repeat": 1,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s4",
+          "exercise": "db_floor_press",
+          "forMode": "seconds",
+          "forValue": 60,
+          "target": 17.5,
+          "note": "Chest press"
+        },
+        {
+          "kind": "rest",
+          "id": "r1",
+          "seconds": 20
+        },
+        {
+          "kind": "exercise",
+          "id": "s5",
+          "exercise": "db_floor_press",
+          "forMode": "seconds",
+          "forValue": 60,
+          "target": 17.5,
+          "note": "Chest press"
+        },
+        {
+          "kind": "rest",
+          "id": "r2",
+          "seconds": 20
+        },
+        {
+          "kind": "exercise",
+          "id": "s6",
+          "exercise": "db_lunge",
+          "forMode": "seconds",
+          "forValue": 60,
+          "target": 17.5,
+          "note": "Static lunge, one side"
+        },
+        {
+          "kind": "rest",
+          "id": "r3",
+          "seconds": 20
+        },
+        {
+          "kind": "exercise",
+          "id": "s7",
+          "exercise": "db_lunge",
+          "forMode": "seconds",
+          "forValue": 60,
+          "target": 17.5,
+          "note": "Switch side"
+        },
+        {
+          "kind": "rest",
+          "id": "r4",
+          "seconds": 20
+        },
+        {
+          "kind": "exercise",
+          "id": "s8",
+          "exercise": "db_shoulder_press",
+          "forMode": "seconds",
+          "forValue": 60,
+          "target": 9
+        },
+        {
+          "kind": "rest",
+          "id": "r5",
+          "seconds": 20
+        },
+        {
+          "kind": "exercise",
+          "id": "s9",
+          "exercise": "db_shoulder_press",
+          "forMode": "seconds",
+          "forValue": 60,
+          "target": 9
+        },
+        {
+          "kind": "rest",
+          "id": "r6",
+          "seconds": 20
+        },
+        {
+          "kind": "exercise",
+          "id": "s10",
+          "exercise": "db_lunge",
+          "forMode": "seconds",
+          "forValue": 60,
+          "target": 17.5,
+          "note": "Static lunge, one side"
+        },
+        {
+          "kind": "rest",
+          "id": "r7",
+          "seconds": 20
+        },
+        {
+          "kind": "exercise",
+          "id": "s11",
+          "exercise": "db_lunge",
+          "forMode": "seconds",
+          "forValue": 60,
+          "target": 17.5,
+          "note": "Switch side"
+        },
+        {
+          "kind": "rest",
+          "id": "r8",
+          "seconds": 20
+        },
+        {
+          "kind": "exercise",
+          "id": "s12",
+          "exercise": "db_row",
+          "forMode": "seconds",
+          "forValue": 60,
+          "target": 17.5,
+          "note": "Bent-over row, one side"
+        },
+        {
+          "kind": "rest",
+          "id": "r9",
+          "seconds": 20
+        },
+        {
+          "kind": "exercise",
+          "id": "s13",
+          "exercise": "db_row",
+          "forMode": "seconds",
+          "forValue": 60,
+          "target": 17.5,
+          "note": "Switch side"
+        },
+        {
+          "kind": "rest",
+          "id": "r10",
+          "seconds": 20
+        },
+        {
+          "kind": "exercise",
+          "id": "s14",
+          "exercise": "db_row",
+          "forMode": "seconds",
+          "forValue": 60,
+          "target": 17.5,
+          "note": "Switch side"
+        },
+        {
+          "kind": "rest",
+          "id": "r11",
+          "seconds": 20
+        },
+        {
+          "kind": "exercise",
+          "id": "s15",
+          "exercise": "db_row",
+          "forMode": "seconds",
+          "forValue": 60,
+          "target": 17.5,
+          "note": "Switch side"
+        },
+        {
+          "kind": "rest",
+          "id": "r12",
+          "seconds": 20
+        },
+        {
+          "kind": "exercise",
+          "id": "s16",
+          "exercise": "db_lunge",
+          "forMode": "seconds",
+          "forValue": 60,
+          "target": 17.5,
+          "note": "Static lunge, one side"
+        },
+        {
+          "kind": "rest",
+          "id": "r13",
+          "seconds": 20
+        },
+        {
+          "kind": "exercise",
+          "id": "s17",
+          "exercise": "db_lunge",
+          "forMode": "seconds",
+          "forValue": 60,
+          "target": 17.5,
+          "note": "Switch side"
+        },
+        {
+          "kind": "rest",
+          "id": "r14",
+          "seconds": 20
+        },
+        {
+          "kind": "exercise",
+          "id": "s18",
+          "exercise": "db_pullover",
+          "forMode": "seconds",
+          "forValue": 60,
+          "target": 17.5
+        },
+        {
+          "kind": "rest",
+          "id": "r15",
+          "seconds": 20
+        },
+        {
+          "kind": "exercise",
+          "id": "s19",
+          "exercise": "db_pullover",
+          "forMode": "seconds",
+          "forValue": 60,
+          "target": 17.5
+        },
+        {
+          "kind": "rest",
+          "id": "r16",
+          "seconds": 20
+        },
+        {
+          "kind": "exercise",
+          "id": "s20",
+          "exercise": "db_lunge",
+          "forMode": "seconds",
+          "forValue": 60,
+          "target": 17.5,
+          "note": "Static lunge, one side"
+        },
+        {
+          "kind": "rest",
+          "id": "r17",
+          "seconds": 20
+        },
+        {
+          "kind": "exercise",
+          "id": "s21",
+          "exercise": "db_lunge",
+          "forMode": "seconds",
+          "forValue": 60,
+          "target": 17.5,
+          "note": "Switch side"
+        },
+        {
+          "kind": "rest",
+          "id": "r18",
+          "seconds": 20
+        },
+        {
+          "kind": "exercise",
+          "id": "s22",
+          "exercise": "db_rdl",
+          "forMode": "seconds",
+          "forValue": 60,
+          "target": 17.5,
+          "note": "Staggered RDL, one side"
+        },
+        {
+          "kind": "rest",
+          "id": "r19",
+          "seconds": 20
+        },
+        {
+          "kind": "exercise",
+          "id": "s23",
+          "exercise": "db_rdl",
+          "forMode": "seconds",
+          "forValue": 60,
+          "target": 17.5,
+          "note": "Switch side"
+        },
+        {
+          "kind": "rest",
+          "id": "r20",
+          "seconds": 20
+        },
+        {
+          "kind": "exercise",
+          "id": "s24",
+          "exercise": "db_rdl",
+          "forMode": "seconds",
+          "forValue": 60,
+          "target": 17.5,
+          "note": "Switch side"
+        },
+        {
+          "kind": "rest",
+          "id": "r21",
+          "seconds": 20
+        },
+        {
+          "kind": "exercise",
+          "id": "s25",
+          "exercise": "db_rdl",
+          "forMode": "seconds",
+          "forValue": 60,
+          "target": 17.5,
+          "note": "Switch side"
+        },
+        {
+          "kind": "rest",
+          "id": "r22",
+          "seconds": 20
+        }
+      ]
+    },
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "Finisher, 3 min non-stop",
+      "repeat": 1,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "bw_crunch",
+          "forMode": "seconds",
+          "forValue": 60,
+          "note": "Dumbbell crunch hold with leg lower (9 kg)"
+        },
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "bw_toe_touch_crunch",
+          "forMode": "seconds",
+          "forValue": 60,
+          "note": "Dumbbell toe reach (9 kg)"
+        },
+        {
+          "kind": "exercise",
+          "id": "s3",
+          "exercise": "bw_crunch",
+          "forMode": "seconds",
+          "forValue": 60,
+          "note": "Dumbbell crunch hold with leg lower (9 kg)"
+        }
+      ]
+    }
+  ]
+}

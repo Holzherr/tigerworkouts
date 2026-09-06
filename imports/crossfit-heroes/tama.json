@@ -1,0 +1,127 @@
+{
+  "id": "cf-hero-tama",
+  "title": "Tama",
+  "creator": "CrossFit",
+  "description": "An 800 m single-arm barbell farmers carry, 31 toes-to-bar, 31 push-ups and 31 front squats; a 400 m carry at a heavier bar, 31 toes-to-bar, 31 push-ups and 31 hang power cleans; then a 200 m carry at the heaviest bar, for time. Honours New Zealand Army Cpl. Luke Tamatea, killed by a roadside bomb in Bamyan Province, Afghanistan, in 2012. Carrying a barbell one-handed is awkward on purpose; switch hands as needed.",
+  "source": {
+    "title": "Tama – CrossFit Hero WOD",
+    "url": "https://www.crossfit.com/benchmark/tama",
+    "author": "CrossFit",
+    "kind": "benchmark",
+    "license": "Public benchmark; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "CrossFit",
+    "Hero WOD",
+    "For time",
+    "Barbell",
+    "Carry",
+    "Gymnastics"
+  ],
+  "level": "Hard",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "Chipper",
+      "mode": "fortime",
+      "repeat": 1,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "bb_farmers_carry",
+          "forMode": "meters",
+          "forValue": 800,
+          "target": 20.5,
+          "rx": {
+            "men": 20.5,
+            "women": 16
+          },
+          "note": "45/35 lb — Single arm, switch as needed"
+        },
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "bw_toes_to_bar",
+          "forMode": "reps",
+          "forValue": 31
+        },
+        {
+          "kind": "exercise",
+          "id": "s3",
+          "exercise": "bw_pushup",
+          "forMode": "reps",
+          "forValue": 31
+        },
+        {
+          "kind": "exercise",
+          "id": "s4",
+          "exercise": "bb_front_squat",
+          "forMode": "reps",
+          "forValue": 31,
+          "target": 43,
+          "rx": {
+            "men": 43,
+            "women": 29.5
+          },
+          "note": "95/65 lb"
+        },
+        {
+          "kind": "exercise",
+          "id": "s5",
+          "exercise": "bb_farmers_carry",
+          "forMode": "meters",
+          "forValue": 400,
+          "target": 43,
+          "rx": {
+            "men": 43,
+            "women": 29.5
+          },
+          "note": "95/65 lb — Single arm"
+        },
+        {
+          "kind": "exercise",
+          "id": "s6",
+          "exercise": "bw_toes_to_bar",
+          "forMode": "reps",
+          "forValue": 31
+        },
+        {
+          "kind": "exercise",
+          "id": "s7",
+          "exercise": "bw_pushup",
+          "forMode": "reps",
+          "forValue": 31
+        },
+        {
+          "kind": "exercise",
+          "id": "s8",
+          "exercise": "bb_hang_power_clean",
+          "forMode": "reps",
+          "forValue": 31,
+          "target": 61,
+          "rx": {
+            "men": 61,
+            "women": 43
+          },
+          "note": "135/95 lb"
+        },
+        {
+          "kind": "exercise",
+          "id": "s9",
+          "exercise": "bb_farmers_carry",
+          "forMode": "meters",
+          "forValue": 200,
+          "target": 61,
+          "rx": {
+            "men": 61,
+            "women": 43
+          },
+          "note": "135/95 lb — Single arm"
+        }
+      ]
+    }
+  ]
+}

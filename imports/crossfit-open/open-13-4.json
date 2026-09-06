@@ -1,0 +1,65 @@
+{
+  "id": "cf-open-13-4",
+  "title": "Open 13.4",
+  "creator": "CrossFit Games",
+  "description": "Seven-minute ascending ladder of clean and jerks at 135/95 lb and toes-to-bars: 3-3, 6-6, 9-9 and up. Score is total reps. Masters 55+ used 115/65 lb.",
+  "source": {
+    "title": "CrossFit Games Open 2013 – Workout 13.4",
+    "url": "https://games.crossfit.com/workouts/open/2013",
+    "author": "CrossFit Games",
+    "kind": "benchmark",
+    "license": "Public competition workout; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "CrossFit",
+    "CrossFit Open",
+    "2013",
+    "AMRAP",
+    "Ladder",
+    "Barbell",
+    "Gymnastics"
+  ],
+  "level": "Hard",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "Ladder 3-6-9… in 7 min",
+      "mode": "ladder",
+      "repeat": 1,
+      "ladder": [
+        3,
+        6,
+        9,
+        12,
+        15,
+        18
+      ],
+      "timeCapSec": 420,
+      "note": "AMRAP 7: keep adding 3 reps per round (21, 24…) until the clock runs out. Score = total reps.",
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "bb_clean_and_jerk",
+          "target": 61.0,
+          "rx": {
+            "men": 61.0,
+            "women": 43.0
+          },
+          "forMode": "reps",
+          "forValue": 3,
+          "note": "135/95 lb"
+        },
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "bw_toes_to_bar",
+          "forMode": "reps",
+          "forValue": 3
+        }
+      ]
+    }
+  ]
+}

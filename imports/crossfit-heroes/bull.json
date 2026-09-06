@@ -1,0 +1,67 @@
+{
+  "id": "cf-hero-bull",
+  "title": "Bull",
+  "creator": "CrossFit",
+  "description": "Two rounds of 200 double-unders, 50 overhead squats at 135/95 lb, 50 pull-ups and a mile run. Honours U.S. Marine Capt. Brandon \"Bull\" Barrett, killed supporting combat operations in Helmand Province, Afghanistan, in 2010. A 40-minute-plus effort; scale the overhead squat load hard.",
+  "source": {
+    "title": "Bull – CrossFit Hero WOD",
+    "url": "https://www.crossfit.com/benchmark/bull",
+    "author": "CrossFit",
+    "kind": "benchmark",
+    "license": "Public benchmark; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "CrossFit",
+    "Hero",
+    "For time",
+    "Run",
+    "Barbell"
+  ],
+  "level": "Hard",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "Bull",
+      "mode": "fortime",
+      "repeat": 2,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "bw_double_under",
+          "forMode": "reps",
+          "forValue": 200
+        },
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "bb_overhead_squat",
+          "target": 61.0,
+          "rx": {
+            "men": 61.0,
+            "women": 43.0
+          },
+          "forMode": "reps",
+          "forValue": 50,
+          "note": "135/95 lb"
+        },
+        {
+          "kind": "exercise",
+          "id": "s3",
+          "exercise": "bw_pullup",
+          "forMode": "reps",
+          "forValue": 50
+        },
+        {
+          "kind": "exercise",
+          "id": "s4",
+          "exercise": "cardio_run",
+          "forMode": "meters",
+          "forValue": 1609
+        }
+      ]
+    }
+  ]
+}

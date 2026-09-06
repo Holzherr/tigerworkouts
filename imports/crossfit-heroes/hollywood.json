@@ -1,0 +1,108 @@
+{
+  "id": "cf-hero-hollywood",
+  "title": "Hollywood",
+  "creator": "CrossFit",
+  "description": "A 2,000 m run, then 22 wall balls with a heavy 30/20 lb ball, 22 muscle-ups, 22 wall balls, 22 power cleans at 185/125 lb, 22 wall balls and another 2,000 m run. Honours British Army Sgt. Jonathan \"Hollywood\" Hollingsworth, 22 SAS, killed in Basra, Iraq, in 2006. Scale muscle-ups to pull-ups and dips.",
+  "source": {
+    "title": "Hollywood – CrossFit Hero WOD",
+    "url": "https://www.crossfit.com/benchmark/hollywood",
+    "author": "CrossFit",
+    "kind": "benchmark",
+    "license": "Public benchmark; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "CrossFit",
+    "Hero",
+    "For time",
+    "Run",
+    "Wall ball",
+    "Gymnastics",
+    "Barbell"
+  ],
+  "level": "Hard",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "Hollywood",
+      "mode": "fortime",
+      "repeat": 1,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "cardio_run",
+          "forMode": "meters",
+          "forValue": 2000
+        },
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "gym_wall_ball",
+          "target": 13.5,
+          "rx": {
+            "men": 13.5,
+            "women": 9.0
+          },
+          "forMode": "reps",
+          "forValue": 22,
+          "note": "30/20 lb; 10/9 ft target"
+        },
+        {
+          "kind": "exercise",
+          "id": "s3",
+          "exercise": "gym_muscle_up",
+          "forMode": "reps",
+          "forValue": 22
+        },
+        {
+          "kind": "exercise",
+          "id": "s4",
+          "exercise": "gym_wall_ball",
+          "target": 13.5,
+          "rx": {
+            "men": 13.5,
+            "women": 9.0
+          },
+          "forMode": "reps",
+          "forValue": 22,
+          "note": "30/20 lb; 10/9 ft target"
+        },
+        {
+          "kind": "exercise",
+          "id": "s5",
+          "exercise": "bb_power_clean",
+          "target": 84.0,
+          "rx": {
+            "men": 84.0,
+            "women": 56.5
+          },
+          "forMode": "reps",
+          "forValue": 22,
+          "note": "185/125 lb"
+        },
+        {
+          "kind": "exercise",
+          "id": "s6",
+          "exercise": "gym_wall_ball",
+          "target": 13.5,
+          "rx": {
+            "men": 13.5,
+            "women": 9.0
+          },
+          "forMode": "reps",
+          "forValue": 22,
+          "note": "30/20 lb; 10/9 ft target"
+        },
+        {
+          "kind": "exercise",
+          "id": "s7",
+          "exercise": "cardio_run",
+          "forMode": "meters",
+          "forValue": 2000
+        }
+      ]
+    }
+  ]
+}

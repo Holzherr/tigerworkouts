@@ -1,0 +1,76 @@
+{
+  "id": "cf-hero-glen",
+  "title": "Glen",
+  "creator": "CrossFit",
+  "description": "30 clean and jerks at 135/95 lb, a mile run, 10 rope climbs to 15 ft, another mile and 100 burpees. Honours former U.S. Navy SEAL Glen Doherty, killed in the 2012 attack on the U.S. consulate in Benghazi, Libya. Scale rope climbs to 3 rope pulls each.",
+  "source": {
+    "title": "Glen – CrossFit Hero WOD",
+    "url": "https://www.crossfit.com/benchmark/glen",
+    "author": "CrossFit",
+    "kind": "benchmark",
+    "license": "Public benchmark; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "CrossFit",
+    "Hero",
+    "For time",
+    "Barbell",
+    "Run",
+    "Gymnastics"
+  ],
+  "level": "Hard",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "Glen",
+      "mode": "fortime",
+      "repeat": 1,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "bb_clean_and_jerk",
+          "target": 61.0,
+          "rx": {
+            "men": 61.0,
+            "women": 43.0
+          },
+          "forMode": "reps",
+          "forValue": 30,
+          "note": "135/95 lb"
+        },
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "cardio_run",
+          "forMode": "meters",
+          "forValue": 1609
+        },
+        {
+          "kind": "exercise",
+          "id": "s3",
+          "exercise": "gym_rope_climb",
+          "forMode": "reps",
+          "forValue": 10,
+          "note": "15 ft"
+        },
+        {
+          "kind": "exercise",
+          "id": "s4",
+          "exercise": "cardio_run",
+          "forMode": "meters",
+          "forValue": 1609
+        },
+        {
+          "kind": "exercise",
+          "id": "s5",
+          "exercise": "bw_burpee",
+          "forMode": "reps",
+          "forValue": 100
+        }
+      ]
+    }
+  ]
+}

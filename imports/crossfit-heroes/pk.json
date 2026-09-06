@@ -1,0 +1,73 @@
+{
+  "id": "cf-hero-pk",
+  "title": "PK",
+  "creator": "CrossFit",
+  "description": "Five rounds of 10 heavy back squats, 10 heavy deadlifts and a 400 m sprint, resting two minutes between rounds, for time. Honours U.S. Army Special Forces Capt. Andrew Pedersen-Keel, killed by an Afghan security-forces member in Jalrez District in 2013. The rest lets you keep the loads heavy and the run fast.",
+  "source": {
+    "title": "PK – CrossFit Hero WOD",
+    "url": "https://www.crossfit.com/benchmark/pk",
+    "author": "CrossFit",
+    "kind": "benchmark",
+    "license": "Public benchmark; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "CrossFit",
+    "Hero WOD",
+    "For time",
+    "Barbell",
+    "Running"
+  ],
+  "level": "Hard",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "5 rounds",
+      "mode": "fortime",
+      "repeat": 5,
+      "note": "Rest 2 minutes between rounds",
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "bb_back_squat",
+          "forMode": "reps",
+          "forValue": 10,
+          "target": 102,
+          "rx": {
+            "men": 102,
+            "women": 70.5
+          },
+          "note": "225/155 lb"
+        },
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "bb_deadlift",
+          "forMode": "reps",
+          "forValue": 10,
+          "target": 124.5,
+          "rx": {
+            "men": 124.5,
+            "women": 84
+          },
+          "note": "275/185 lb"
+        },
+        {
+          "kind": "exercise",
+          "id": "s3",
+          "exercise": "cardio_run",
+          "forMode": "meters",
+          "forValue": 400,
+          "note": "Sprint"
+        },
+        {
+          "kind": "rest",
+          "id": "r1",
+          "seconds": 120
+        }
+      ]
+    }
+  ]
+}

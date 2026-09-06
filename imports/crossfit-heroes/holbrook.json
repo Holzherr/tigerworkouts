@@ -1,0 +1,68 @@
+{
+  "id": "cf-hero-holbrook",
+  "title": "Holbrook",
+  "creator": "CrossFit",
+  "description": "Ten rounds, each for time, of 5 thrusters at 115/75 lb, 10 pull-ups and a 100 m sprint, with a minute's rest between rounds. Honours U.S. Army Capt. Jason Holbrook, 3rd Special Forces Group, killed by an IED in Tsagay, Afghanistan, in 2010. Every round is a sprint; record each.",
+  "source": {
+    "title": "Holbrook – CrossFit Hero WOD",
+    "url": "https://www.crossfit.com/benchmark/holbrook",
+    "author": "CrossFit",
+    "kind": "benchmark",
+    "license": "Public benchmark; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "CrossFit",
+    "Hero",
+    "For time",
+    "Intervals",
+    "Barbell",
+    "Run"
+  ],
+  "level": "Hard",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "Holbrook",
+      "mode": "fortime",
+      "repeat": 10,
+      "note": "Each round for time",
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "bb_thruster",
+          "target": 52.0,
+          "rx": {
+            "men": 52.0,
+            "women": 34.0
+          },
+          "forMode": "reps",
+          "forValue": 5,
+          "note": "115/75 lb"
+        },
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "bw_pullup",
+          "forMode": "reps",
+          "forValue": 10
+        },
+        {
+          "kind": "exercise",
+          "id": "s3",
+          "exercise": "cardio_run",
+          "forMode": "meters",
+          "forValue": 100,
+          "note": "sprint"
+        },
+        {
+          "kind": "rest",
+          "id": "r1",
+          "seconds": 60
+        }
+      ]
+    }
+  ]
+}

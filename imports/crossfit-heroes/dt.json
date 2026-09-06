@@ -1,0 +1,71 @@
+{
+  "id": "cf-hero-dt",
+  "title": "DT",
+  "creator": "CrossFit",
+  "description": "Five rounds of 12 deadlifts, 9 hang power cleans and 6 push jerks with one 155/105 lb bar. Honours U.S. Air Force Staff Sgt. Timothy P. Davis, killed by an IED in Afghanistan in 2009. The best-known barbell Hero WOD and a Games event; scale to a load you can jerk for six when tired.",
+  "source": {
+    "title": "DT – CrossFit Hero WOD",
+    "url": "https://www.crossfit.com/benchmark/dt-new",
+    "author": "CrossFit",
+    "kind": "benchmark",
+    "license": "Public benchmark; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "CrossFit",
+    "Hero",
+    "For time",
+    "Barbell"
+  ],
+  "level": "Hard",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "DT",
+      "mode": "fortime",
+      "repeat": 5,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "bb_deadlift",
+          "target": 70.5,
+          "rx": {
+            "men": 70.5,
+            "women": 47.5
+          },
+          "forMode": "reps",
+          "forValue": 12,
+          "note": "155/105 lb"
+        },
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "bb_hang_power_clean",
+          "target": 70.5,
+          "rx": {
+            "men": 70.5,
+            "women": 47.5
+          },
+          "forMode": "reps",
+          "forValue": 9,
+          "note": "155/105 lb"
+        },
+        {
+          "kind": "exercise",
+          "id": "s3",
+          "exercise": "bb_push_jerk",
+          "target": 70.5,
+          "rx": {
+            "men": 70.5,
+            "women": 47.5
+          },
+          "forMode": "reps",
+          "forValue": 6,
+          "note": "155/105 lb"
+        }
+      ]
+    }
+  ]
+}

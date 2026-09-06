@@ -1,0 +1,68 @@
+{
+  "id": "cf-hero-wittman",
+  "title": "Wittman",
+  "creator": "CrossFit",
+  "description": "Seven rounds of 15 kettlebell swings, 15 power cleans and 15 box jumps, for time. Honours U.S. Army Sgt. Jeremiah Wittman, killed by a roadside bomb in Zhari Province, Afghanistan, in 2010. Light loads, 315 reps; aim for unbroken sets early.",
+  "source": {
+    "title": "Wittman – CrossFit Hero WOD",
+    "url": "https://www.crossfit.com/benchmark/wittman",
+    "author": "CrossFit",
+    "kind": "benchmark",
+    "license": "Public benchmark; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "CrossFit",
+    "Hero WOD",
+    "For time",
+    "Kettlebell",
+    "Barbell",
+    "Bodyweight"
+  ],
+  "level": "Hard",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "7 rounds",
+      "mode": "fortime",
+      "repeat": 7,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "kb_swing",
+          "forMode": "reps",
+          "forValue": 15,
+          "target": 24,
+          "rx": {
+            "men": 24,
+            "women": 16
+          },
+          "note": "53/35 lb"
+        },
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "bb_power_clean",
+          "forMode": "reps",
+          "forValue": 15,
+          "target": 43,
+          "rx": {
+            "men": 43,
+            "women": 29.5
+          },
+          "note": "95/65 lb"
+        },
+        {
+          "kind": "exercise",
+          "id": "s3",
+          "exercise": "bw_box_jump",
+          "forMode": "reps",
+          "forValue": 15,
+          "note": "24/20 in box"
+        }
+      ]
+    }
+  ]
+}

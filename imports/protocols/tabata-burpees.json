@@ -1,0 +1,47 @@
+{
+  "id": "proto-tabata-burpees",
+  "title": "Tabata Burpees",
+  "creator": "Izumi Tabata (protocol); community variant",
+  "description": "Eight rounds of 20 seconds of burpees with 10 seconds of rest. The nastiest common Tabata: full burpees with a chest-to-floor and a jump, score the lowest round. Scale by stepping back instead of jumping.",
+  "source": {
+    "title": "Tabata regimen (High-intensity interval training, Wikipedia; original: Tabata et al. 1996)",
+    "url": "https://en.wikipedia.org/wiki/High-intensity_interval_training#Tabata_regimen",
+    "author": "Izumi Tabata (protocol); common bodyweight/kettlebell variant",
+    "kind": "protocol",
+    "license": "Published protocol; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "Protocol",
+    "Tabata",
+    "HIIT",
+    "Bodyweight",
+    "No equipment"
+  ],
+  "level": "Hard",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "Tabata",
+      "mode": "rounds",
+      "repeat": 8,
+      "note": "8 × (20 s on / 10 s off) = 4:00",
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "bw_burpee",
+          "forMode": "seconds",
+          "forValue": 20,
+          "note": "Max reps; score = lowest round"
+        },
+        {
+          "kind": "rest",
+          "id": "r2",
+          "seconds": 10
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,63 @@
+{
+  "id": "cf-hero-mccluskey",
+  "title": "McCluskey",
+  "creator": "CrossFit",
+  "description": "Three rounds of 9 muscle-ups, 15 burpee pull-ups, 21 pull-ups and an 800 m run, ideally in a vest, for time. Honours U.S. Army Sgt. Jason 'Mick' McCluskey, killed by small-arms fire in Afghanistan in 2010. A lot of pulling: swap muscle-ups for chest-to-bar or banded reps if needed.",
+  "source": {
+    "title": "McCluskey – CrossFit Hero WOD",
+    "url": "https://www.crossfit.com/benchmark/mccluskey",
+    "author": "CrossFit",
+    "kind": "benchmark",
+    "license": "Public benchmark; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "CrossFit",
+    "Hero WOD",
+    "For time",
+    "Gymnastics",
+    "Running",
+    "Weight vest"
+  ],
+  "level": "Hard",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "3 rounds",
+      "mode": "fortime",
+      "repeat": 3,
+      "note": "Wear a 20/14 lb (9/6.5 kg) weight vest or body armour if you have one.",
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "gym_muscle_up",
+          "forMode": "reps",
+          "forValue": 9
+        },
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "bw_burpee_pullup",
+          "forMode": "reps",
+          "forValue": 15
+        },
+        {
+          "kind": "exercise",
+          "id": "s3",
+          "exercise": "bw_pullup",
+          "forMode": "reps",
+          "forValue": 21
+        },
+        {
+          "kind": "exercise",
+          "id": "s4",
+          "exercise": "cardio_run",
+          "forMode": "meters",
+          "forValue": 800
+        }
+      ]
+    }
+  ]
+}

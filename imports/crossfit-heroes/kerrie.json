@@ -1,0 +1,78 @@
+{
+  "id": "cf-hero-kerrie",
+  "title": "Kerrie",
+  "creator": "CrossFit",
+  "description": "Ten rounds in a weight vest of a 100 m sprint, 5 burpees, 20 sit-ups, 15 push-ups and another 100 m sprint, resting 2 minutes between rounds. Honours Omaha Police Officer Kerrie Orozco, killed in the line of duty in 2015 hours before starting maternity leave. Interval-style; sprint every round.",
+  "source": {
+    "title": "Kerrie – CrossFit Hero WOD",
+    "url": "https://www.crossfit.com/benchmark/kerrie",
+    "author": "CrossFit",
+    "kind": "benchmark",
+    "license": "Public benchmark; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "CrossFit",
+    "Hero",
+    "For time",
+    "Intervals",
+    "Bodyweight",
+    "Run",
+    "Weight vest"
+  ],
+  "level": "Hard",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "Kerrie",
+      "mode": "fortime",
+      "repeat": 10,
+      "note": "Wear a weight vest",
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "cardio_run",
+          "forMode": "meters",
+          "forValue": 100,
+          "note": "sprint"
+        },
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "bw_burpee",
+          "forMode": "reps",
+          "forValue": 5
+        },
+        {
+          "kind": "exercise",
+          "id": "s3",
+          "exercise": "bw_situp",
+          "forMode": "reps",
+          "forValue": 20
+        },
+        {
+          "kind": "exercise",
+          "id": "s4",
+          "exercise": "bw_pushup",
+          "forMode": "reps",
+          "forValue": 15
+        },
+        {
+          "kind": "exercise",
+          "id": "s5",
+          "exercise": "cardio_run",
+          "forMode": "meters",
+          "forValue": 100,
+          "note": "sprint"
+        },
+        {
+          "kind": "rest",
+          "id": "r1",
+          "seconds": 120
+        }
+      ]
+    }
+  ]
+}

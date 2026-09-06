@@ -1,0 +1,162 @@
+{
+  "id": "cf-open-14-3",
+  "title": "Open 14.3",
+  "creator": "CrossFit Games",
+  "description": "Eight-minute AMRAP up a deadlift ladder: 10 at 135/95 lb, 15 at 185/135, 20 at 225/155, 25 at 275/185, 30 at 315/205, 35 at 365/225, with 15 box jumps (24/20 in) after every set. Score is total reps; stop where the bar stops. Masters 55+ started at 95/65 lb.",
+  "source": {
+    "title": "CrossFit Games Open 2014 – Workout 14.3",
+    "url": "https://games.crossfit.com/workouts/open/2014",
+    "author": "CrossFit Games",
+    "kind": "benchmark",
+    "license": "Public competition workout; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "CrossFit",
+    "CrossFit Open",
+    "2014",
+    "AMRAP",
+    "Ladder",
+    "Barbell"
+  ],
+  "level": "Hard",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "Deadlift ladder",
+      "mode": "amrap",
+      "repeat": 1,
+      "timeCapSec": 480,
+      "note": "Work through the list once; score = total reps in 8 minutes.",
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "bb_deadlift",
+          "target": 61.0,
+          "rx": {
+            "men": 61.0,
+            "women": 43.0
+          },
+          "forMode": "reps",
+          "forValue": 10,
+          "note": "135/95 lb"
+        },
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "bw_box_jump",
+          "forMode": "reps",
+          "forValue": 15,
+          "note": "24/20 in box"
+        },
+        {
+          "kind": "exercise",
+          "id": "s3",
+          "exercise": "bb_deadlift",
+          "target": 84.0,
+          "rx": {
+            "men": 84.0,
+            "women": 61.0
+          },
+          "forMode": "reps",
+          "forValue": 15,
+          "note": "185/135 lb"
+        },
+        {
+          "kind": "exercise",
+          "id": "s4",
+          "exercise": "bw_box_jump",
+          "forMode": "reps",
+          "forValue": 15,
+          "note": "24/20 in box"
+        },
+        {
+          "kind": "exercise",
+          "id": "s5",
+          "exercise": "bb_deadlift",
+          "target": 102.0,
+          "rx": {
+            "men": 102.0,
+            "women": 70.5
+          },
+          "forMode": "reps",
+          "forValue": 20,
+          "note": "225/155 lb"
+        },
+        {
+          "kind": "exercise",
+          "id": "s6",
+          "exercise": "bw_box_jump",
+          "forMode": "reps",
+          "forValue": 15,
+          "note": "24/20 in box"
+        },
+        {
+          "kind": "exercise",
+          "id": "s7",
+          "exercise": "bb_deadlift",
+          "target": 124.5,
+          "rx": {
+            "men": 124.5,
+            "women": 84.0
+          },
+          "forMode": "reps",
+          "forValue": 25,
+          "note": "275/185 lb"
+        },
+        {
+          "kind": "exercise",
+          "id": "s8",
+          "exercise": "bw_box_jump",
+          "forMode": "reps",
+          "forValue": 15,
+          "note": "24/20 in box"
+        },
+        {
+          "kind": "exercise",
+          "id": "s9",
+          "exercise": "bb_deadlift",
+          "target": 143.0,
+          "rx": {
+            "men": 143.0,
+            "women": 93.0
+          },
+          "forMode": "reps",
+          "forValue": 30,
+          "note": "315/205 lb"
+        },
+        {
+          "kind": "exercise",
+          "id": "s10",
+          "exercise": "bw_box_jump",
+          "forMode": "reps",
+          "forValue": 15,
+          "note": "24/20 in box"
+        },
+        {
+          "kind": "exercise",
+          "id": "s11",
+          "exercise": "bb_deadlift",
+          "target": 165.5,
+          "rx": {
+            "men": 165.5,
+            "women": 102.0
+          },
+          "forMode": "reps",
+          "forValue": 35,
+          "note": "365/225 lb"
+        },
+        {
+          "kind": "exercise",
+          "id": "s12",
+          "exercise": "bw_box_jump",
+          "forMode": "reps",
+          "forValue": 15,
+          "note": "24/20 in box"
+        }
+      ]
+    }
+  ]
+}

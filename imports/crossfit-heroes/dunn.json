@@ -1,0 +1,57 @@
+{
+  "id": "cf-hero-dunn",
+  "title": "Dunn",
+  "creator": "CrossFit",
+  "description": "A 19-minute AMRAP of 3 muscle-ups, a 5-10-15 yard shuttle sprint and 6 burpee box jump-overs on a 20 in box without touching it. Honours U.S. Marine Lance Cpl. Kielin Dunn, killed in Helmand Province, Afghanistan, in 2010. Scale muscle-ups to chest-to-bar pull-ups.",
+  "source": {
+    "title": "Dunn – CrossFit Hero WOD",
+    "url": "https://www.crossfit.com/benchmark/dunn",
+    "author": "CrossFit",
+    "kind": "benchmark",
+    "license": "Public benchmark; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "CrossFit",
+    "Hero",
+    "AMRAP",
+    "Gymnastics",
+    "Bodyweight"
+  ],
+  "level": "Hard",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "Dunn",
+      "mode": "amrap",
+      "repeat": 1,
+      "timeCapSec": 1140,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "gym_muscle_up",
+          "forMode": "reps",
+          "forValue": 3
+        },
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "cardio_shuttle_run",
+          "forMode": "reps",
+          "forValue": 1,
+          "note": "5, 10 and 15 yards out and back"
+        },
+        {
+          "kind": "exercise",
+          "id": "s3",
+          "exercise": "bw_burpee_box_jump_over",
+          "forMode": "reps",
+          "forValue": 6,
+          "note": "20 in box; jump over without touching"
+        }
+      ]
+    }
+  ]
+}

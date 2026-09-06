@@ -1,0 +1,111 @@
+{
+  "id": "cf-hero-andy",
+  "title": "Andy",
+  "creator": "CrossFit",
+  "description": "A weighted-vest chipper: 25 thrusters, 50 box jumps, 75 deadlifts, a 1.5-mile run, then back down through 75 deadlifts, 50 box jumps and 25 thrusters. Honours U.S. Army Sgt. 1st Class Andrew T. Weathers, who died in 2014 of wounds received defending his position in Helmand Province, Afghanistan. Drop the vest first, then the run distance.",
+  "source": {
+    "title": "Andy – CrossFit Hero WOD",
+    "url": "https://www.crossfit.com/benchmark/andy",
+    "author": "CrossFit",
+    "kind": "benchmark",
+    "license": "Public benchmark; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "CrossFit",
+    "Hero",
+    "For time",
+    "Run",
+    "Barbell",
+    "Weight vest"
+  ],
+  "level": "Hard",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "Andy",
+      "mode": "fortime",
+      "repeat": 1,
+      "note": "Wear a 20/14 lb weight vest",
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "bb_thruster",
+          "target": 52.0,
+          "rx": {
+            "men": 52.0,
+            "women": 34.0
+          },
+          "forMode": "reps",
+          "forValue": 25,
+          "note": "115/75 lb"
+        },
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "bw_box_jump",
+          "forMode": "reps",
+          "forValue": 50,
+          "note": "24/20 in box"
+        },
+        {
+          "kind": "exercise",
+          "id": "s3",
+          "exercise": "bb_deadlift",
+          "target": 52.0,
+          "rx": {
+            "men": 52.0,
+            "women": 34.0
+          },
+          "forMode": "reps",
+          "forValue": 75,
+          "note": "115/75 lb"
+        },
+        {
+          "kind": "exercise",
+          "id": "s4",
+          "exercise": "cardio_run",
+          "forMode": "meters",
+          "forValue": 2414,
+          "note": "1.5 miles"
+        },
+        {
+          "kind": "exercise",
+          "id": "s5",
+          "exercise": "bb_deadlift",
+          "target": 52.0,
+          "rx": {
+            "men": 52.0,
+            "women": 34.0
+          },
+          "forMode": "reps",
+          "forValue": 75,
+          "note": "115/75 lb"
+        },
+        {
+          "kind": "exercise",
+          "id": "s6",
+          "exercise": "bw_box_jump",
+          "forMode": "reps",
+          "forValue": 50,
+          "note": "24/20 in box"
+        },
+        {
+          "kind": "exercise",
+          "id": "s7",
+          "exercise": "bb_thruster",
+          "target": 52.0,
+          "rx": {
+            "men": 52.0,
+            "women": 34.0
+          },
+          "forMode": "reps",
+          "forValue": 25,
+          "note": "115/75 lb"
+        }
+      ]
+    }
+  ]
+}

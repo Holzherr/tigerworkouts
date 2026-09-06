@@ -1,0 +1,67 @@
+{
+  "id": "cf-hero-manuel",
+  "title": "Manuel",
+  "creator": "CrossFit",
+  "description": "Five 10-minute rounds on a running clock: 3 minutes of rope climbs, 2 of squats, 2 of push-ups, then a 400 m run inside a 3-minute window, resting whatever is left. Honours Italian Army Capt. Manuel Fiorito, killed by a roadside bomb in Kabul in 2006. Score is total reps; wear a vest if you have one.",
+  "source": {
+    "title": "Manuel – CrossFit Hero WOD",
+    "url": "https://www.crossfit.com/benchmark/manuel",
+    "author": "CrossFit",
+    "kind": "benchmark",
+    "license": "Public benchmark; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "CrossFit",
+    "Hero WOD",
+    "For reps",
+    "Bodyweight",
+    "Running",
+    "Weight vest"
+  ],
+  "level": "Hard",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "5 rounds (10 min each)",
+      "mode": "rounds",
+      "repeat": 5,
+      "note": "Score total reps. Wear a 20/14 lb (9/6.5 kg) weight vest or body armour if you have one.",
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "gym_rope_climb",
+          "forMode": "minutes",
+          "forValue": 3,
+          "note": "Max climbs in 3 minutes"
+        },
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "bw_squat",
+          "forMode": "minutes",
+          "forValue": 2,
+          "note": "Max reps"
+        },
+        {
+          "kind": "exercise",
+          "id": "s3",
+          "exercise": "bw_pushup",
+          "forMode": "minutes",
+          "forValue": 2,
+          "note": "Max reps"
+        },
+        {
+          "kind": "exercise",
+          "id": "s4",
+          "exercise": "cardio_run",
+          "forMode": "meters",
+          "forValue": 400,
+          "note": "3-minute window; rest the remainder before the next round"
+        }
+      ]
+    }
+  ]
+}

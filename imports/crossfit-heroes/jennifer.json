@@ -1,0 +1,62 @@
+{
+  "id": "cf-hero-jennifer",
+  "title": "Jennifer",
+  "creator": "CrossFit",
+  "description": "A 26-minute AMRAP of 10 pull-ups, 15 kettlebell swings at 53/35 lb and 20 box jumps. Honours Guelph Police Constable Jennifer Kovach, killed in a squad-car collision responding to a call in 2013. Simple movements; pace for a steady 12 to 15 rounds.",
+  "source": {
+    "title": "Jennifer – CrossFit Hero WOD",
+    "url": "https://www.crossfit.com/benchmark/jennifer",
+    "author": "CrossFit",
+    "kind": "benchmark",
+    "license": "Public benchmark; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "CrossFit",
+    "Hero",
+    "AMRAP",
+    "Kettlebell",
+    "Bodyweight"
+  ],
+  "level": "Hard",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "Jennifer",
+      "mode": "amrap",
+      "repeat": 1,
+      "timeCapSec": 1560,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "bw_pullup",
+          "forMode": "reps",
+          "forValue": 10
+        },
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "kb_swing",
+          "target": 24,
+          "rx": {
+            "men": 24,
+            "women": 16
+          },
+          "forMode": "reps",
+          "forValue": 15,
+          "note": "53/35 lb"
+        },
+        {
+          "kind": "exercise",
+          "id": "s3",
+          "exercise": "bw_box_jump",
+          "forMode": "reps",
+          "forValue": 20,
+          "note": "24/20 in box"
+        }
+      ]
+    }
+  ]
+}

@@ -9,8 +9,8 @@ const w = {};
 new Function('window', src + ';window.EXERCISES=EXERCISES')(w);
 const ex = w.EXERCISES;
 const keys = Object.keys(ex);
-const GROUP = { barbell: 'Barbell & machines', dumbbell: 'Dumbbell', kettlebell: 'Kettlebell', body: 'Bodyweight', core: 'Core', band: 'Cable & band', treadmill: 'Treadmill', walk: 'Walking & stairs', run: 'Running', bike: 'Bike', rower: 'Rower & ski', swim: 'Swim', racket: 'Sport' };
-const groups = [...new Set(keys.map(k => ex[k].icon))];
+const GROUP = { barbell: 'Barbell & machines', dumbbell: 'Dumbbell', kettlebell: 'Kettlebell', body: 'Bodyweight', core: 'Core', band: 'Cable & band', treadmill: 'Treadmill', walk: 'Walking & stairs', run: 'Running', bike: 'Bike', rower: 'Rower & ski', swim: 'Swim', racket: 'Sport', gym: 'Gym rig & odd objects' };
+const groups = [...new Set([...keys.map(k => ex[k].icon), 'gym'])]; // gym = rig, rings, wall ball, sled, rope (imports)
 
 let out = `// Generated from ../../../../workout-hub/data.js by tools/port-library.mjs. Edit there, then re-run.
 import type { ExerciseRef } from '@/features/runsheet/model';

@@ -1,0 +1,157 @@
+{
+  "id": "cf-hero-nunez",
+  "title": "Nunez",
+  "creator": "CrossFit",
+  "description": "A descending chipper in three segments: 800 m run, 60 burpee box jump overs, 50 pull-ups and 40 squats; then 600 m, 30, 25 chest-to-bar and 20 heavier squats; then 400 m, 15, 12 bar muscle-ups and 10 squat cleans at the heaviest bar. Honours Deputy Andrew Nunez of the San Bernardino County Sheriff's Department, killed responding to a domestic violence call in 2025. Three loads on one bar, so plan the plate changes.",
+  "source": {
+    "title": "Nunez – CrossFit Hero WOD",
+    "url": "https://www.crossfit.com/benchmark/nunez",
+    "author": "CrossFit",
+    "kind": "benchmark",
+    "license": "Public benchmark; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "CrossFit",
+    "Hero WOD",
+    "For time",
+    "Barbell",
+    "Gymnastics",
+    "Running"
+  ],
+  "level": "Hard",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "Segment 1",
+      "mode": "fortime",
+      "repeat": 1,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "cardio_run",
+          "forMode": "meters",
+          "forValue": 800
+        },
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "bw_burpee_box_jump_over",
+          "forMode": "reps",
+          "forValue": 60,
+          "note": "20 in box"
+        },
+        {
+          "kind": "exercise",
+          "id": "s3",
+          "exercise": "bw_pullup",
+          "forMode": "reps",
+          "forValue": 50
+        },
+        {
+          "kind": "exercise",
+          "id": "s4",
+          "exercise": "bb_back_squat",
+          "forMode": "reps",
+          "forValue": 40,
+          "target": 43,
+          "rx": {
+            "men": 43,
+            "women": 29.5
+          },
+          "note": "95/65 lb"
+        }
+      ]
+    },
+    {
+      "kind": "block",
+      "id": "b2",
+      "name": "Segment 2",
+      "mode": "fortime",
+      "repeat": 1,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s5",
+          "exercise": "cardio_run",
+          "forMode": "meters",
+          "forValue": 600
+        },
+        {
+          "kind": "exercise",
+          "id": "s6",
+          "exercise": "bw_burpee_box_jump_over",
+          "forMode": "reps",
+          "forValue": 30,
+          "note": "20 in box"
+        },
+        {
+          "kind": "exercise",
+          "id": "s7",
+          "exercise": "bw_chest_to_bar_pullup",
+          "forMode": "reps",
+          "forValue": 25
+        },
+        {
+          "kind": "exercise",
+          "id": "s8",
+          "exercise": "bb_back_squat",
+          "forMode": "reps",
+          "forValue": 20,
+          "target": 84,
+          "rx": {
+            "men": 84,
+            "women": 56.5
+          },
+          "note": "185/125 lb"
+        }
+      ]
+    },
+    {
+      "kind": "block",
+      "id": "b3",
+      "name": "Segment 3",
+      "mode": "fortime",
+      "repeat": 1,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s9",
+          "exercise": "cardio_run",
+          "forMode": "meters",
+          "forValue": 400
+        },
+        {
+          "kind": "exercise",
+          "id": "s10",
+          "exercise": "bw_burpee_box_jump_over",
+          "forMode": "reps",
+          "forValue": 15,
+          "note": "20 in box"
+        },
+        {
+          "kind": "exercise",
+          "id": "s11",
+          "exercise": "bw_bar_muscle_up",
+          "forMode": "reps",
+          "forValue": 12
+        },
+        {
+          "kind": "exercise",
+          "id": "s12",
+          "exercise": "bb_squat_clean",
+          "forMode": "reps",
+          "forValue": 10,
+          "target": 102,
+          "rx": {
+            "men": 102,
+            "women": 70.5
+          },
+          "note": "225/155 lb"
+        }
+      ]
+    }
+  ]
+}

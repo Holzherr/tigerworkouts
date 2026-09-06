@@ -1,0 +1,68 @@
+{
+  "id": "cf-hero-bulger",
+  "title": "Bulger",
+  "creator": "CrossFit",
+  "description": "Ten rounds of a 150 m run, 7 chest-to-bar pull-ups, 7 front squats at 135/95 lb and 7 handstand push-ups. Honours Canadian Forces Cpl. Nicholas Bulger, killed by an IED in Zhari District, Afghanistan, in 2009. Seventy reps of each skill movement; scale to keep rounds under three minutes.",
+  "source": {
+    "title": "Bulger – CrossFit Hero WOD",
+    "url": "https://www.crossfit.com/benchmark/bulger",
+    "author": "CrossFit",
+    "kind": "benchmark",
+    "license": "Public benchmark; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "CrossFit",
+    "Hero",
+    "For time",
+    "Run",
+    "Barbell",
+    "Gymnastics"
+  ],
+  "level": "Hard",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "Bulger",
+      "mode": "fortime",
+      "repeat": 10,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "cardio_run",
+          "forMode": "meters",
+          "forValue": 150
+        },
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "bw_chest_to_bar_pullup",
+          "forMode": "reps",
+          "forValue": 7
+        },
+        {
+          "kind": "exercise",
+          "id": "s3",
+          "exercise": "bb_front_squat",
+          "target": 61.0,
+          "rx": {
+            "men": 61.0,
+            "women": 43.0
+          },
+          "forMode": "reps",
+          "forValue": 7,
+          "note": "135/95 lb"
+        },
+        {
+          "kind": "exercise",
+          "id": "s4",
+          "exercise": "bw_handstand_pushup",
+          "forMode": "reps",
+          "forValue": 7
+        }
+      ]
+    }
+  ]
+}

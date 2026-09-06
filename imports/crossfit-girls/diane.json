@@ -1,0 +1,59 @@
+{
+  "id": "cf-girls-diane",
+  "title": "Diane",
+  "creator": "CrossFit",
+  "description": "21-15-9 reps of deadlifts at 225/155 lb and handstand push-ups. An original 2003 Girl that pairs a heavy hinge with an inverted press, so the handstand push-ups usually decide the time. Scale with pike push-ups and a lighter bar.",
+  "source": {
+    "title": "Diane – CrossFit benchmark WOD (\"The Girls\")",
+    "url": "https://www.crossfit.com/benchmark/diane",
+    "author": "CrossFit",
+    "kind": "benchmark",
+    "license": "Public benchmark; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "CrossFit",
+    "Girls",
+    "For time",
+    "Barbell",
+    "Gymnastics"
+  ],
+  "level": "Hard",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "21-15-9",
+      "mode": "ladder",
+      "repeat": 1,
+      "note": "Rep scheme 21-15-9",
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "bb_deadlift",
+          "target": 102,
+          "rx": {
+            "men": 102,
+            "women": 70.5
+          },
+          "forMode": "reps",
+          "forValue": 21,
+          "note": "225/155 lb"
+        },
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "bw_handstand_pushup",
+          "forMode": "reps",
+          "forValue": 21
+        }
+      ],
+      "ladder": [
+        21,
+        15,
+        9
+      ]
+    }
+  ]
+}

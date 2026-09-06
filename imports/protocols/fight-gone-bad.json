@@ -1,0 +1,93 @@
+{
+  "id": "proto-fight-gone-bad",
+  "title": "Fight Gone Bad",
+  "creator": "CrossFit",
+  "description": "Three 5-minute rounds of five 1-minute stations: wall balls, sumo deadlift high pulls, box jumps, push presses and rowing for calories, with one minute of rest between rounds. You move on the call of \"rotate\" and score the total reps plus calories across all three rounds. Designed for MMA fighter BJ Penn to mimic a three-round fight; 300+ is a solid score.",
+  "source": {
+    "title": "Fight Gone Bad – CrossFit Workout of the Day 180730",
+    "url": "https://www.crossfit.com/workout/2018/07/30",
+    "author": "CrossFit",
+    "kind": "benchmark",
+    "license": "Published protocol; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "CrossFit",
+    "Max reps",
+    "Barbell",
+    "Rower"
+  ],
+  "level": "Hard",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "Fight Gone Bad",
+      "mode": "rounds",
+      "repeat": 3,
+      "note": "Score = total reps + calories over 3 rounds. Move on \"rotate\", no transition time.",
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "gym_wall_ball",
+          "forMode": "seconds",
+          "forValue": 60,
+          "target": 9,
+          "rx": {
+            "men": 9,
+            "women": 6.5
+          },
+          "note": "20/14 lb ball to 10/9 ft, max reps"
+        },
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "bb_sdhp",
+          "forMode": "seconds",
+          "forValue": 60,
+          "target": 34,
+          "rx": {
+            "men": 34,
+            "women": 25
+          },
+          "note": "75/55 lb, max reps"
+        },
+        {
+          "kind": "exercise",
+          "id": "s3",
+          "exercise": "bw_box_jump",
+          "forMode": "seconds",
+          "forValue": 60,
+          "note": "20 in box, max reps"
+        },
+        {
+          "kind": "exercise",
+          "id": "s4",
+          "exercise": "bb_push_press",
+          "forMode": "seconds",
+          "forValue": 60,
+          "target": 34,
+          "rx": {
+            "men": 34,
+            "women": 25
+          },
+          "note": "75/55 lb, max reps"
+        },
+        {
+          "kind": "exercise",
+          "id": "s5",
+          "exercise": "cardio_rower",
+          "forMode": "seconds",
+          "forValue": 60,
+          "note": "Max calories"
+        },
+        {
+          "kind": "rest",
+          "id": "r6",
+          "seconds": 60
+        }
+      ]
+    }
+  ]
+}

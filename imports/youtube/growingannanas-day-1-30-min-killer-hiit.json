@@ -1,0 +1,515 @@
+{
+  "id": "yt-growingannanas-day-1-30-min-killer-hiit",
+  "title": "Day 1 - 30 MIN KILLER HIIT WORKOUT (Grow Advanced HIIT Challenge)",
+  "creator": "growingannanas",
+  "description": "Day 1 of growingannanas' 28-day Grow Advanced HIIT Challenge (January 2021), 4.7M+ views. Thirty no-repeat bodyweight moves at 50 seconds on and 10 seconds off, starting easy with squats and a jog and building to burpee combos and star jumps, then five 50-second stretches. On-screen 'up next' captions give a clean timestamp for every move.",
+  "source": {
+    "title": "Day 1 - 30 MIN KILLER HIIT WORKOUT - Full Body, No Equipment, No Repeat",
+    "url": "https://www.youtube.com/watch?v=Prl5NeXTDkk",
+    "author": "growingannanas",
+    "kind": "video",
+    "license": "Video © creator, linked not copied; exercise list is factual",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "Follow-along",
+    "HIIT",
+    "Full body",
+    "No equipment",
+    "No repeat",
+    "Program"
+  ],
+  "level": "Hard",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "30 exercises, 50 s on / 10 s off",
+      "repeat": 1,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "bw_squat",
+          "forMode": "seconds",
+          "forValue": 50,
+          "startSeconds": 16,
+          "note": "Air squats"
+        },
+        {
+          "kind": "rest",
+          "id": "r1",
+          "seconds": 10
+        },
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "bw_stretch_hip_flexor",
+          "forMode": "seconds",
+          "forValue": 50,
+          "startSeconds": 76,
+          "note": "Dynamic lunge stretch"
+        },
+        {
+          "kind": "rest",
+          "id": "r2",
+          "seconds": 10
+        },
+        {
+          "kind": "exercise",
+          "id": "s3",
+          "exercise": "bw_jog_on_spot",
+          "forMode": "seconds",
+          "forValue": 50,
+          "startSeconds": 136,
+          "note": "Run in place"
+        },
+        {
+          "kind": "rest",
+          "id": "r3",
+          "seconds": 10
+        },
+        {
+          "kind": "exercise",
+          "id": "s4",
+          "exercise": "bw_squat",
+          "forMode": "seconds",
+          "forValue": 50,
+          "startSeconds": 196,
+          "note": "Squat side stretch"
+        },
+        {
+          "kind": "rest",
+          "id": "r4",
+          "seconds": 10
+        },
+        {
+          "kind": "exercise",
+          "id": "s5",
+          "exercise": "bw_lateral_shuffle",
+          "forMode": "seconds",
+          "forValue": 50,
+          "startSeconds": 256,
+          "note": "Side-to-side shuffle run"
+        },
+        {
+          "kind": "rest",
+          "id": "r5",
+          "seconds": 10
+        },
+        {
+          "kind": "exercise",
+          "id": "s6",
+          "exercise": "bw_jumping_jack",
+          "forMode": "seconds",
+          "forValue": 50,
+          "startSeconds": 316
+        },
+        {
+          "kind": "rest",
+          "id": "r6",
+          "seconds": 10
+        },
+        {
+          "kind": "exercise",
+          "id": "s7",
+          "exercise": "bw_knee_drive",
+          "forMode": "seconds",
+          "forValue": 50,
+          "startSeconds": 376,
+          "note": "Dynamic alternating knees"
+        },
+        {
+          "kind": "rest",
+          "id": "r7",
+          "seconds": 10
+        },
+        {
+          "kind": "exercise",
+          "id": "s8",
+          "exercise": "bw_high_knees",
+          "forMode": "seconds",
+          "forValue": 50,
+          "startSeconds": 436
+        },
+        {
+          "kind": "rest",
+          "id": "r8",
+          "seconds": 10
+        },
+        {
+          "kind": "exercise",
+          "id": "s9",
+          "exercise": "bw_mountain_climber",
+          "forMode": "seconds",
+          "forValue": 50,
+          "startSeconds": 496
+        },
+        {
+          "kind": "rest",
+          "id": "r9",
+          "seconds": 10
+        },
+        {
+          "kind": "exercise",
+          "id": "s10",
+          "exercise": "bw_jump_lunge",
+          "forMode": "seconds",
+          "forValue": 50,
+          "startSeconds": 556,
+          "note": "Scissor jumps"
+        },
+        {
+          "kind": "rest",
+          "id": "r10",
+          "seconds": 10
+        },
+        {
+          "kind": "exercise",
+          "id": "s11",
+          "exercise": "bw_jump_squat",
+          "forMode": "seconds",
+          "forValue": 50,
+          "startSeconds": 616
+        },
+        {
+          "kind": "rest",
+          "id": "r11",
+          "seconds": 10
+        },
+        {
+          "kind": "exercise",
+          "id": "s12",
+          "exercise": "bw_high_knees",
+          "forMode": "seconds",
+          "forValue": 50,
+          "startSeconds": 676,
+          "note": "Knee-tap run"
+        },
+        {
+          "kind": "rest",
+          "id": "r12",
+          "seconds": 10
+        },
+        {
+          "kind": "exercise",
+          "id": "s13",
+          "exercise": "bw_bear_crawl",
+          "forMode": "seconds",
+          "forValue": 50,
+          "startSeconds": 736,
+          "note": "Bear hold with knee taps"
+        },
+        {
+          "kind": "rest",
+          "id": "r13",
+          "seconds": 10
+        },
+        {
+          "kind": "exercise",
+          "id": "s14",
+          "exercise": "bw_crab_toe_touch",
+          "forMode": "seconds",
+          "forValue": 50,
+          "startSeconds": 796
+        },
+        {
+          "kind": "rest",
+          "id": "r14",
+          "seconds": 10
+        },
+        {
+          "kind": "exercise",
+          "id": "s15",
+          "exercise": "bw_up_down_plank",
+          "forMode": "seconds",
+          "forValue": 50,
+          "startSeconds": 856
+        },
+        {
+          "kind": "rest",
+          "id": "r15",
+          "seconds": 10
+        },
+        {
+          "kind": "exercise",
+          "id": "s16",
+          "exercise": "bw_plank_shoulder_tap",
+          "forMode": "seconds",
+          "forValue": 50,
+          "startSeconds": 916
+        },
+        {
+          "kind": "rest",
+          "id": "r16",
+          "seconds": 10
+        },
+        {
+          "kind": "exercise",
+          "id": "s17",
+          "exercise": "bw_pushup",
+          "forMode": "seconds",
+          "forValue": 50,
+          "startSeconds": 976,
+          "note": "Push-up toe taps"
+        },
+        {
+          "kind": "rest",
+          "id": "r17",
+          "seconds": 10
+        },
+        {
+          "kind": "exercise",
+          "id": "s18",
+          "exercise": "bw_mountain_climber",
+          "forMode": "seconds",
+          "forValue": 50,
+          "startSeconds": 1036,
+          "note": "4 high knees + 4 climbers"
+        },
+        {
+          "kind": "rest",
+          "id": "r18",
+          "seconds": 10
+        },
+        {
+          "kind": "exercise",
+          "id": "s19",
+          "exercise": "bw_kneel_to_stand",
+          "forMode": "seconds",
+          "forValue": 50,
+          "startSeconds": 1096,
+          "note": "Kneeling-up squat jump"
+        },
+        {
+          "kind": "rest",
+          "id": "r19",
+          "seconds": 10
+        },
+        {
+          "kind": "exercise",
+          "id": "s20",
+          "exercise": "bw_skater",
+          "forMode": "seconds",
+          "forValue": 50,
+          "startSeconds": 1156,
+          "note": "Side-to-side hop"
+        },
+        {
+          "kind": "rest",
+          "id": "r20",
+          "seconds": 10
+        },
+        {
+          "kind": "exercise",
+          "id": "s21",
+          "exercise": "bw_side_plank",
+          "forMode": "seconds",
+          "forValue": 50,
+          "startSeconds": 1216,
+          "note": "Side plank crunches, left"
+        },
+        {
+          "kind": "rest",
+          "id": "r21",
+          "seconds": 10
+        },
+        {
+          "kind": "exercise",
+          "id": "s22",
+          "exercise": "bw_side_plank",
+          "forMode": "seconds",
+          "forValue": 50,
+          "startSeconds": 1276,
+          "note": "Side plank crunches, right"
+        },
+        {
+          "kind": "rest",
+          "id": "r22",
+          "seconds": 10
+        },
+        {
+          "kind": "exercise",
+          "id": "s23",
+          "exercise": "bw_in_out_squat",
+          "forMode": "seconds",
+          "forValue": 50,
+          "startSeconds": 1336,
+          "note": "Squat jacks"
+        },
+        {
+          "kind": "rest",
+          "id": "r23",
+          "seconds": 10
+        },
+        {
+          "kind": "exercise",
+          "id": "s24",
+          "exercise": "bw_curtsy_lunge",
+          "forMode": "seconds",
+          "forValue": 50,
+          "startSeconds": 1396
+        },
+        {
+          "kind": "rest",
+          "id": "r24",
+          "seconds": 10
+        },
+        {
+          "kind": "exercise",
+          "id": "s25",
+          "exercise": "bw_jump_lunge",
+          "forMode": "seconds",
+          "forValue": 50,
+          "startSeconds": 1456
+        },
+        {
+          "kind": "rest",
+          "id": "r25",
+          "seconds": 10
+        },
+        {
+          "kind": "exercise",
+          "id": "s26",
+          "exercise": "bw_leg_raise",
+          "forMode": "seconds",
+          "forValue": 50,
+          "startSeconds": 1516,
+          "note": "Alternating"
+        },
+        {
+          "kind": "rest",
+          "id": "r26",
+          "seconds": 10
+        },
+        {
+          "kind": "exercise",
+          "id": "s27",
+          "exercise": "bw_situp",
+          "forMode": "seconds",
+          "forValue": 50,
+          "startSeconds": 1576,
+          "note": "Heel-tap sit-ups"
+        },
+        {
+          "kind": "rest",
+          "id": "r27",
+          "seconds": 10
+        },
+        {
+          "kind": "exercise",
+          "id": "s28",
+          "exercise": "bw_burpee",
+          "forMode": "seconds",
+          "forValue": 50,
+          "startSeconds": 1636
+        },
+        {
+          "kind": "rest",
+          "id": "r28",
+          "seconds": 10
+        },
+        {
+          "kind": "exercise",
+          "id": "s29",
+          "exercise": "bw_burpee",
+          "forMode": "seconds",
+          "forValue": 50,
+          "startSeconds": 1696,
+          "note": "Lunge jump burpee"
+        },
+        {
+          "kind": "rest",
+          "id": "r29",
+          "seconds": 10
+        },
+        {
+          "kind": "exercise",
+          "id": "s30",
+          "exercise": "bw_star_jump",
+          "forMode": "seconds",
+          "forValue": 50,
+          "startSeconds": 1756
+        },
+        {
+          "kind": "rest",
+          "id": "r30",
+          "seconds": 10
+        }
+      ],
+      "note": "startSeconds from the 'UP NEXT' key moments (each appears 10 s before the move) on a 60 s grid"
+    },
+    {
+      "kind": "block",
+      "id": "b2",
+      "name": "Cool-down, 50 s on / 10 s off",
+      "repeat": 1,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s31",
+          "exercise": "bw_stretch_hamstring_standing",
+          "forMode": "seconds",
+          "forValue": 50,
+          "startSeconds": 1824,
+          "note": "Reach up, hamstring stretch"
+        },
+        {
+          "kind": "rest",
+          "id": "r31",
+          "seconds": 10
+        },
+        {
+          "kind": "exercise",
+          "id": "s32",
+          "exercise": "bw_cobra",
+          "forMode": "seconds",
+          "forValue": 50,
+          "startSeconds": 1884,
+          "note": "Cobra ab stretch"
+        },
+        {
+          "kind": "rest",
+          "id": "r32",
+          "seconds": 10
+        },
+        {
+          "kind": "exercise",
+          "id": "s33",
+          "exercise": "bw_stretch_hip_flexor",
+          "forMode": "seconds",
+          "forValue": 50,
+          "startSeconds": 1944,
+          "note": "Lunge stretch, left"
+        },
+        {
+          "kind": "rest",
+          "id": "r33",
+          "seconds": 10
+        },
+        {
+          "kind": "exercise",
+          "id": "s34",
+          "exercise": "bw_stretch_hip_flexor",
+          "forMode": "seconds",
+          "forValue": 50,
+          "startSeconds": 2004,
+          "note": "Lunge stretch, right"
+        },
+        {
+          "kind": "rest",
+          "id": "r34",
+          "seconds": 10
+        },
+        {
+          "kind": "exercise",
+          "id": "s35",
+          "exercise": "bw_stretch_deep_squat",
+          "forMode": "seconds",
+          "forValue": 50,
+          "startSeconds": 2064
+        }
+      ]
+    }
+  ]
+}

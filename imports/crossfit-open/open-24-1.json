@@ -1,0 +1,80 @@
+{
+  "id": "cf-open-24-1",
+  "title": "Open 24.1",
+  "creator": "CrossFit Games",
+  "description": "21-15-9 of dumbbell snatches on one arm, lateral burpees over the dumbbell, snatches on the other arm and burpees again, 50/35 lb dumbbell, 15-minute cap. 90 snatches and 90 burpees. Scaled used 35/20 lb; Foundations 25/15 lb with regular burpees.",
+  "source": {
+    "title": "CrossFit Games Open 2024 – Workout 24.1",
+    "url": "https://games.crossfit.com/workouts/open/2024/1",
+    "author": "CrossFit Games",
+    "kind": "benchmark",
+    "license": "Public competition workout; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "CrossFit",
+    "CrossFit Open",
+    "2024",
+    "For time",
+    "Ladder",
+    "Dumbbell"
+  ],
+  "level": "Hard",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "21-15-9",
+      "mode": "ladder",
+      "repeat": 1,
+      "ladder": [
+        21,
+        15,
+        9
+      ],
+      "timeCapSec": 900,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "db_snatch",
+          "target": 22.5,
+          "rx": {
+            "men": 22.5,
+            "women": 16.0
+          },
+          "forMode": "reps",
+          "forValue": 21,
+          "note": "50/35 lb. arm 1"
+        },
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "bw_burpee_over_dumbbell",
+          "forMode": "reps",
+          "forValue": 21
+        },
+        {
+          "kind": "exercise",
+          "id": "s3",
+          "exercise": "db_snatch",
+          "target": 22.5,
+          "rx": {
+            "men": 22.5,
+            "women": 16.0
+          },
+          "forMode": "reps",
+          "forValue": 21,
+          "note": "50/35 lb. arm 2"
+        },
+        {
+          "kind": "exercise",
+          "id": "s4",
+          "exercise": "bw_burpee_over_dumbbell",
+          "forMode": "reps",
+          "forValue": 21
+        }
+      ]
+    }
+  ]
+}

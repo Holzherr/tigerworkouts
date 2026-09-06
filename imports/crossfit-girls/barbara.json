@@ -1,0 +1,68 @@
+{
+  "id": "cf-girls-barbara",
+  "title": "Barbara",
+  "creator": "CrossFit",
+  "description": "Five rounds of 20 pull-ups, 30 push-ups, 40 sit-ups and 50 squats with exactly three minutes of rest between rounds. An original 2003 Girl; each round is a roughly three-minute all-out interval, so the score is the sum of the five work periods. Scale by cutting reps per round rather than the rest.",
+  "source": {
+    "title": "Barbara – CrossFit benchmark WOD (\"The Girls\")",
+    "url": "https://www.crossfit.com/benchmark/barbara",
+    "author": "CrossFit",
+    "kind": "benchmark",
+    "license": "Public benchmark; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "CrossFit",
+    "Girls",
+    "For time",
+    "Bodyweight",
+    "Intervals"
+  ],
+  "level": "Hard",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "Barbara",
+      "mode": "fortime",
+      "repeat": 5,
+      "note": "Score = total time of the 5 work rounds",
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "bw_pullup",
+          "forMode": "reps",
+          "forValue": 20
+        },
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "bw_pushup",
+          "forMode": "reps",
+          "forValue": 30
+        },
+        {
+          "kind": "exercise",
+          "id": "s3",
+          "exercise": "bw_situp",
+          "forMode": "reps",
+          "forValue": 40
+        },
+        {
+          "kind": "exercise",
+          "id": "s4",
+          "exercise": "bw_squat",
+          "forMode": "reps",
+          "forValue": 50
+        },
+        {
+          "kind": "rest",
+          "id": "r1",
+          "seconds": 180,
+          "note": "Rest exactly 3 minutes between rounds; final rest not counted"
+        }
+      ]
+    }
+  ]
+}

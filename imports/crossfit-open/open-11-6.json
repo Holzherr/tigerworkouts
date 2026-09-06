@@ -1,0 +1,65 @@
+{
+  "id": "cf-open-11-6",
+  "title": "Open 11.6",
+  "creator": "CrossFit Games",
+  "description": "Seven-minute ascending ladder of thrusters at 100/65 lb and chest-to-bar pull-ups: 3 and 3, 6 and 6, 9 and 9 and so on. Score is total reps. Repeated as 12.5 and 18.5, so it is the closest thing the Open has to a signature test. Masters 55+ used 90/55 lb.",
+  "source": {
+    "title": "CrossFit Games Open 2011 – Workout 11.6",
+    "url": "https://games.crossfit.com/workouts/open/2011",
+    "author": "CrossFit Games",
+    "kind": "benchmark",
+    "license": "Public competition workout; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "CrossFit",
+    "CrossFit Open",
+    "2011",
+    "AMRAP",
+    "Ladder",
+    "Barbell",
+    "Gymnastics"
+  ],
+  "level": "Hard",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "Ladder 3-6-9… in 7 min",
+      "mode": "ladder",
+      "repeat": 1,
+      "ladder": [
+        3,
+        6,
+        9,
+        12,
+        15,
+        18
+      ],
+      "timeCapSec": 420,
+      "note": "AMRAP 7: keep adding 3 reps per round (21, 24…) until the clock runs out. Score = total reps.",
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "bb_thruster",
+          "target": 45.5,
+          "rx": {
+            "men": 45.5,
+            "women": 29.5
+          },
+          "forMode": "reps",
+          "forValue": 3,
+          "note": "100/65 lb"
+        },
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "bw_chest_to_bar_pullup",
+          "forMode": "reps",
+          "forValue": 3
+        }
+      ]
+    }
+  ]
+}

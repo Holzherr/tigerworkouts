@@ -1,0 +1,229 @@
+{
+  "id": "yt-pamela-reif-10-min-beginner-ab-workout",
+  "title": "10 MIN BEGINNER AB WORKOUT (No Equipment)",
+  "creator": "Pamela Reif",
+  "description": "The beginner counterpart to Pamela Reif's abs video, 100M+ views. Fifteen simpler core moves at 30 seconds each with a 10-second break between them, so the whole thing is about 10 minutes and manageable for someone new to training. Crunches, heel touches, holds, slow mountain climbers and planks; no jumping and no equipment.",
+  "source": {
+    "title": "10 MIN BEGINNER AB WORKOUT // No Equipment | Pamela Reif",
+    "url": "https://www.youtube.com/watch?v=1f8yoFFdkcY",
+    "author": "Pamela Reif",
+    "kind": "video",
+    "license": "Video © creator, linked not copied; exercise list is factual",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "Follow-along",
+    "Abs",
+    "Beginner",
+    "No equipment"
+  ],
+  "level": "Easy",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "Abs, 15 x 30 s with 10 s breaks",
+      "repeat": 1,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "bw_crunch",
+          "forMode": "seconds",
+          "forValue": 30,
+          "startSeconds": 5
+        },
+        {
+          "kind": "rest",
+          "id": "r1",
+          "seconds": 10
+        },
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "bw_oblique_crunch",
+          "forMode": "seconds",
+          "forValue": 30,
+          "startSeconds": 45,
+          "note": "Left"
+        },
+        {
+          "kind": "rest",
+          "id": "r2",
+          "seconds": 10
+        },
+        {
+          "kind": "exercise",
+          "id": "s3",
+          "exercise": "bw_oblique_crunch",
+          "forMode": "seconds",
+          "forValue": 30,
+          "startSeconds": 85,
+          "note": "Right"
+        },
+        {
+          "kind": "rest",
+          "id": "r3",
+          "seconds": 10
+        },
+        {
+          "kind": "exercise",
+          "id": "s4",
+          "exercise": "bw_heel_touch",
+          "forMode": "seconds",
+          "forValue": 30,
+          "startSeconds": 125
+        },
+        {
+          "kind": "rest",
+          "id": "r4",
+          "seconds": 10
+        },
+        {
+          "kind": "exercise",
+          "id": "s5",
+          "exercise": "bw_hollow_hold",
+          "forMode": "seconds",
+          "forValue": 30,
+          "startSeconds": 165,
+          "note": "Ab hold"
+        },
+        {
+          "kind": "rest",
+          "id": "r5",
+          "seconds": 10
+        },
+        {
+          "kind": "exercise",
+          "id": "s6",
+          "exercise": "bw_russian_twist",
+          "forMode": "seconds",
+          "forValue": 30,
+          "startSeconds": 205
+        },
+        {
+          "kind": "rest",
+          "id": "r6",
+          "seconds": 10
+        },
+        {
+          "kind": "exercise",
+          "id": "s7",
+          "exercise": "bw_hollow_hold",
+          "forMode": "seconds",
+          "forValue": 30,
+          "startSeconds": 245,
+          "note": "Seated lean-back hold"
+        },
+        {
+          "kind": "rest",
+          "id": "r7",
+          "seconds": 10
+        },
+        {
+          "kind": "exercise",
+          "id": "s8",
+          "exercise": "bw_mountain_climber",
+          "forMode": "seconds",
+          "forValue": 30,
+          "startSeconds": 285,
+          "note": "Slow"
+        },
+        {
+          "kind": "rest",
+          "id": "r8",
+          "seconds": 10
+        },
+        {
+          "kind": "exercise",
+          "id": "s9",
+          "exercise": "bw_plank",
+          "forMode": "seconds",
+          "forValue": 30,
+          "startSeconds": 325
+        },
+        {
+          "kind": "rest",
+          "id": "r9",
+          "seconds": 10
+        },
+        {
+          "kind": "exercise",
+          "id": "s10",
+          "exercise": "bw_toe_touch_crunch",
+          "forMode": "seconds",
+          "forValue": 30,
+          "startSeconds": 365
+        },
+        {
+          "kind": "rest",
+          "id": "r10",
+          "seconds": 10
+        },
+        {
+          "kind": "exercise",
+          "id": "s11",
+          "exercise": "bw_bicycle_crunch",
+          "forMode": "seconds",
+          "forValue": 30,
+          "startSeconds": 405
+        },
+        {
+          "kind": "rest",
+          "id": "r11",
+          "seconds": 10
+        },
+        {
+          "kind": "exercise",
+          "id": "s12",
+          "exercise": "bw_reverse_crunch",
+          "forMode": "seconds",
+          "forValue": 30,
+          "startSeconds": 445,
+          "note": "Hip lift"
+        },
+        {
+          "kind": "rest",
+          "id": "r12",
+          "seconds": 10
+        },
+        {
+          "kind": "exercise",
+          "id": "s13",
+          "exercise": "bw_hollow_hold",
+          "forMode": "seconds",
+          "forValue": 30,
+          "startSeconds": 485,
+          "note": "Ab hold"
+        },
+        {
+          "kind": "rest",
+          "id": "r13",
+          "seconds": 10
+        },
+        {
+          "kind": "exercise",
+          "id": "s14",
+          "exercise": "bw_spiderman_plank",
+          "forMode": "seconds",
+          "forValue": 30,
+          "startSeconds": 525
+        },
+        {
+          "kind": "rest",
+          "id": "r14",
+          "seconds": 10
+        },
+        {
+          "kind": "exercise",
+          "id": "s15",
+          "exercise": "bw_plank",
+          "forMode": "seconds",
+          "forValue": 30,
+          "startSeconds": 565
+        }
+      ],
+      "note": "startSeconds derived from the video's fixed interval grid (anchored on YouTube key moments), so may drift a few seconds; workout starts at 0:05"
+    }
+  ]
+}

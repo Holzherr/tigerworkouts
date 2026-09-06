@@ -1,0 +1,102 @@
+{
+  "id": "cf-hero-josie",
+  "title": "Josie",
+  "creator": "CrossFit",
+  "description": "A mile run, 3 rounds of 30 burpees, 4 power cleans and 6 front squats at 155/105 lb, then another mile, in a 20 lb vest. Honours Deputy U.S. Marshal Josie Wells, killed in the line of duty in 2015. Vest first, then the bar, when scaling.",
+  "source": {
+    "title": "Josie – CrossFit Hero WOD",
+    "url": "https://www.crossfit.com/benchmark/josie",
+    "author": "CrossFit",
+    "kind": "benchmark",
+    "license": "Public benchmark; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "CrossFit",
+    "Hero",
+    "For time",
+    "Run",
+    "Barbell",
+    "Weight vest"
+  ],
+  "level": "Hard",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "Run",
+      "mode": "fortime",
+      "repeat": 1,
+      "note": "Wear a 20 lb weight vest",
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "cardio_run",
+          "forMode": "meters",
+          "forValue": 1609
+        }
+      ]
+    },
+    {
+      "kind": "block",
+      "id": "b2",
+      "name": "3 rounds",
+      "mode": "fortime",
+      "repeat": 3,
+      "note": "Wear a 20 lb weight vest",
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "bw_burpee",
+          "forMode": "reps",
+          "forValue": 30
+        },
+        {
+          "kind": "exercise",
+          "id": "s3",
+          "exercise": "bb_power_clean",
+          "target": 70.5,
+          "rx": {
+            "men": 70.5,
+            "women": 47.5
+          },
+          "forMode": "reps",
+          "forValue": 4,
+          "note": "155/105 lb"
+        },
+        {
+          "kind": "exercise",
+          "id": "s4",
+          "exercise": "bb_front_squat",
+          "target": 70.5,
+          "rx": {
+            "men": 70.5,
+            "women": 47.5
+          },
+          "forMode": "reps",
+          "forValue": 6,
+          "note": "155/105 lb"
+        }
+      ]
+    },
+    {
+      "kind": "block",
+      "id": "b3",
+      "name": "Run",
+      "mode": "fortime",
+      "repeat": 1,
+      "note": "Wear a 20 lb weight vest",
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s5",
+          "exercise": "cardio_run",
+          "forMode": "meters",
+          "forValue": 1609
+        }
+      ]
+    }
+  ]
+}

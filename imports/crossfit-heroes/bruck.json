@@ -1,0 +1,66 @@
+{
+  "id": "cf-hero-bruck",
+  "title": "Bruck",
+  "creator": "CrossFit",
+  "description": "Four rounds of a 400 m run, 24 back squats at 185/125 lb and 24 jerks at 135/95 lb. Honours U.S. Coast Guard Petty Officer 3rd Class Nathan B. Bruckenthal, killed in a boat explosion off the coast of Iraq in 2004. Two bars; scale both to keep sets of 8 or more.",
+  "source": {
+    "title": "Bruck – CrossFit Hero WOD",
+    "url": "https://www.crossfit.com/benchmark/bruck",
+    "author": "CrossFit",
+    "kind": "benchmark",
+    "license": "Public benchmark; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "CrossFit",
+    "Hero",
+    "For time",
+    "Run",
+    "Barbell"
+  ],
+  "level": "Hard",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "Bruck",
+      "mode": "fortime",
+      "repeat": 4,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "cardio_run",
+          "forMode": "meters",
+          "forValue": 400
+        },
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "bb_back_squat",
+          "target": 84.0,
+          "rx": {
+            "men": 84.0,
+            "women": 56.5
+          },
+          "forMode": "reps",
+          "forValue": 24,
+          "note": "185/125 lb"
+        },
+        {
+          "kind": "exercise",
+          "id": "s3",
+          "exercise": "bb_push_jerk",
+          "target": 61.0,
+          "rx": {
+            "men": 61.0,
+            "women": 43.0
+          },
+          "forMode": "reps",
+          "forValue": 24,
+          "note": "135/95 lb"
+        }
+      ]
+    }
+  ]
+}

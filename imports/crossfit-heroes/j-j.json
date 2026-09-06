@@ -1,0 +1,335 @@
+{
+  "id": "cf-hero-j-j",
+  "title": "J.J.",
+  "creator": "CrossFit",
+  "description": "A crossing ladder: squat cleans at 185/125 lb go 1 to 10 while parallette handstand push-ups go 10 down to 1. Honours U.S. Marine Lance Cpl. Justin James \"JJ\" Wilson, killed in Helmand Province, Afghanistan, in 2010. 55 of each; scale the handstand push-ups to a regular deficit or the floor.",
+  "source": {
+    "title": "J.J. – CrossFit Hero WOD",
+    "url": "https://www.crossfit.com/benchmark/j-j",
+    "author": "CrossFit",
+    "kind": "benchmark",
+    "license": "Public benchmark; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "CrossFit",
+    "Hero",
+    "For time",
+    "Ladder",
+    "Barbell",
+    "Gymnastics"
+  ],
+  "level": "Hard",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "1 / 10",
+      "mode": "fortime",
+      "repeat": 1,
+      "note": "Cleans 1 to 10, handstand push-ups 10 to 1",
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "bb_squat_clean",
+          "target": 84.0,
+          "rx": {
+            "men": 84.0,
+            "women": 56.5
+          },
+          "forMode": "reps",
+          "forValue": 1,
+          "note": "185/125 lb"
+        },
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "bw_handstand_pushup",
+          "forMode": "reps",
+          "forValue": 10,
+          "note": "on parallettes"
+        }
+      ]
+    },
+    {
+      "kind": "block",
+      "id": "b2",
+      "name": "2 / 9",
+      "mode": "fortime",
+      "repeat": 1,
+      "note": "Cleans 1 to 10, handstand push-ups 10 to 1",
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s3",
+          "exercise": "bb_squat_clean",
+          "target": 84.0,
+          "rx": {
+            "men": 84.0,
+            "women": 56.5
+          },
+          "forMode": "reps",
+          "forValue": 2,
+          "note": "185/125 lb"
+        },
+        {
+          "kind": "exercise",
+          "id": "s4",
+          "exercise": "bw_handstand_pushup",
+          "forMode": "reps",
+          "forValue": 9,
+          "note": "on parallettes"
+        }
+      ]
+    },
+    {
+      "kind": "block",
+      "id": "b3",
+      "name": "3 / 8",
+      "mode": "fortime",
+      "repeat": 1,
+      "note": "Cleans 1 to 10, handstand push-ups 10 to 1",
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s5",
+          "exercise": "bb_squat_clean",
+          "target": 84.0,
+          "rx": {
+            "men": 84.0,
+            "women": 56.5
+          },
+          "forMode": "reps",
+          "forValue": 3,
+          "note": "185/125 lb"
+        },
+        {
+          "kind": "exercise",
+          "id": "s6",
+          "exercise": "bw_handstand_pushup",
+          "forMode": "reps",
+          "forValue": 8,
+          "note": "on parallettes"
+        }
+      ]
+    },
+    {
+      "kind": "block",
+      "id": "b4",
+      "name": "4 / 7",
+      "mode": "fortime",
+      "repeat": 1,
+      "note": "Cleans 1 to 10, handstand push-ups 10 to 1",
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s7",
+          "exercise": "bb_squat_clean",
+          "target": 84.0,
+          "rx": {
+            "men": 84.0,
+            "women": 56.5
+          },
+          "forMode": "reps",
+          "forValue": 4,
+          "note": "185/125 lb"
+        },
+        {
+          "kind": "exercise",
+          "id": "s8",
+          "exercise": "bw_handstand_pushup",
+          "forMode": "reps",
+          "forValue": 7,
+          "note": "on parallettes"
+        }
+      ]
+    },
+    {
+      "kind": "block",
+      "id": "b5",
+      "name": "5 / 6",
+      "mode": "fortime",
+      "repeat": 1,
+      "note": "Cleans 1 to 10, handstand push-ups 10 to 1",
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s9",
+          "exercise": "bb_squat_clean",
+          "target": 84.0,
+          "rx": {
+            "men": 84.0,
+            "women": 56.5
+          },
+          "forMode": "reps",
+          "forValue": 5,
+          "note": "185/125 lb"
+        },
+        {
+          "kind": "exercise",
+          "id": "s10",
+          "exercise": "bw_handstand_pushup",
+          "forMode": "reps",
+          "forValue": 6,
+          "note": "on parallettes"
+        }
+      ]
+    },
+    {
+      "kind": "block",
+      "id": "b6",
+      "name": "6 / 5",
+      "mode": "fortime",
+      "repeat": 1,
+      "note": "Cleans 1 to 10, handstand push-ups 10 to 1",
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s11",
+          "exercise": "bb_squat_clean",
+          "target": 84.0,
+          "rx": {
+            "men": 84.0,
+            "women": 56.5
+          },
+          "forMode": "reps",
+          "forValue": 6,
+          "note": "185/125 lb"
+        },
+        {
+          "kind": "exercise",
+          "id": "s12",
+          "exercise": "bw_handstand_pushup",
+          "forMode": "reps",
+          "forValue": 5,
+          "note": "on parallettes"
+        }
+      ]
+    },
+    {
+      "kind": "block",
+      "id": "b7",
+      "name": "7 / 4",
+      "mode": "fortime",
+      "repeat": 1,
+      "note": "Cleans 1 to 10, handstand push-ups 10 to 1",
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s13",
+          "exercise": "bb_squat_clean",
+          "target": 84.0,
+          "rx": {
+            "men": 84.0,
+            "women": 56.5
+          },
+          "forMode": "reps",
+          "forValue": 7,
+          "note": "185/125 lb"
+        },
+        {
+          "kind": "exercise",
+          "id": "s14",
+          "exercise": "bw_handstand_pushup",
+          "forMode": "reps",
+          "forValue": 4,
+          "note": "on parallettes"
+        }
+      ]
+    },
+    {
+      "kind": "block",
+      "id": "b8",
+      "name": "8 / 3",
+      "mode": "fortime",
+      "repeat": 1,
+      "note": "Cleans 1 to 10, handstand push-ups 10 to 1",
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s15",
+          "exercise": "bb_squat_clean",
+          "target": 84.0,
+          "rx": {
+            "men": 84.0,
+            "women": 56.5
+          },
+          "forMode": "reps",
+          "forValue": 8,
+          "note": "185/125 lb"
+        },
+        {
+          "kind": "exercise",
+          "id": "s16",
+          "exercise": "bw_handstand_pushup",
+          "forMode": "reps",
+          "forValue": 3,
+          "note": "on parallettes"
+        }
+      ]
+    },
+    {
+      "kind": "block",
+      "id": "b9",
+      "name": "9 / 2",
+      "mode": "fortime",
+      "repeat": 1,
+      "note": "Cleans 1 to 10, handstand push-ups 10 to 1",
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s17",
+          "exercise": "bb_squat_clean",
+          "target": 84.0,
+          "rx": {
+            "men": 84.0,
+            "women": 56.5
+          },
+          "forMode": "reps",
+          "forValue": 9,
+          "note": "185/125 lb"
+        },
+        {
+          "kind": "exercise",
+          "id": "s18",
+          "exercise": "bw_handstand_pushup",
+          "forMode": "reps",
+          "forValue": 2,
+          "note": "on parallettes"
+        }
+      ]
+    },
+    {
+      "kind": "block",
+      "id": "b10",
+      "name": "10 / 1",
+      "mode": "fortime",
+      "repeat": 1,
+      "note": "Cleans 1 to 10, handstand push-ups 10 to 1",
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s19",
+          "exercise": "bb_squat_clean",
+          "target": 84.0,
+          "rx": {
+            "men": 84.0,
+            "women": 56.5
+          },
+          "forMode": "reps",
+          "forValue": 10,
+          "note": "185/125 lb"
+        },
+        {
+          "kind": "exercise",
+          "id": "s20",
+          "exercise": "bw_handstand_pushup",
+          "forMode": "reps",
+          "forValue": 1,
+          "note": "on parallettes"
+        }
+      ]
+    }
+  ]
+}

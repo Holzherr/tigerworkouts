@@ -1,0 +1,202 @@
+{
+  "id": "yt-pamela-reif-10-min-ab-workout",
+  "title": "10 MIN AB WORKOUT (No Equipment)",
+  "creator": "Pamela Reif",
+  "description": "Pamela Reif's signature abs video, 113M+ views, and her hardest short one: twenty floor exercises at 30 seconds each with no breaks at all, the next move shown in the corner. Mostly crunch, bicycle, jackknife and hold variations, finishing with a plank. Suits people who already have a solid core; beginners should use her beginner version instead.",
+  "source": {
+    "title": "10 MIN AB WORKOUT // No Equipment | Pamela Reif",
+    "url": "https://www.youtube.com/watch?v=AnYl6Nk9GOA",
+    "author": "Pamela Reif",
+    "kind": "video",
+    "license": "Video © creator, linked not copied; exercise list is factual",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "Follow-along",
+    "Abs",
+    "No equipment"
+  ],
+  "level": "Hard",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "Abs, 20 x 30 s, no breaks",
+      "repeat": 1,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "bw_crunch",
+          "forMode": "seconds",
+          "forValue": 30,
+          "startSeconds": 0
+        },
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "bw_crunch",
+          "forMode": "seconds",
+          "forValue": 30,
+          "startSeconds": 30,
+          "note": "Crunch with knee lift"
+        },
+        {
+          "kind": "exercise",
+          "id": "s3",
+          "exercise": "bw_bicycle_crunch",
+          "forMode": "seconds",
+          "forValue": 30,
+          "startSeconds": 60
+        },
+        {
+          "kind": "exercise",
+          "id": "s4",
+          "exercise": "bw_toe_touch_crunch",
+          "forMode": "seconds",
+          "forValue": 30,
+          "startSeconds": 90
+        },
+        {
+          "kind": "exercise",
+          "id": "s5",
+          "exercise": "bw_crunch",
+          "forMode": "seconds",
+          "forValue": 30,
+          "startSeconds": 120,
+          "note": "Crunch with leg lift"
+        },
+        {
+          "kind": "exercise",
+          "id": "s6",
+          "exercise": "bw_in_and_out",
+          "forMode": "seconds",
+          "forValue": 30,
+          "startSeconds": 150,
+          "note": "Reach out, tuck in"
+        },
+        {
+          "kind": "exercise",
+          "id": "s7",
+          "exercise": "bw_reverse_crunch",
+          "forMode": "seconds",
+          "forValue": 30,
+          "startSeconds": 180,
+          "note": "Roll-in"
+        },
+        {
+          "kind": "exercise",
+          "id": "s8",
+          "exercise": "bw_bicycle_crunch",
+          "forMode": "seconds",
+          "forValue": 30,
+          "startSeconds": 210
+        },
+        {
+          "kind": "exercise",
+          "id": "s9",
+          "exercise": "bw_oblique_crunch",
+          "forMode": "seconds",
+          "forValue": 30,
+          "startSeconds": 240,
+          "note": "Reclined, right"
+        },
+        {
+          "kind": "exercise",
+          "id": "s10",
+          "exercise": "bw_oblique_crunch",
+          "forMode": "seconds",
+          "forValue": 30,
+          "startSeconds": 270,
+          "note": "Reclined, left"
+        },
+        {
+          "kind": "exercise",
+          "id": "s11",
+          "exercise": "bw_seated_crunch",
+          "forMode": "seconds",
+          "forValue": 30,
+          "startSeconds": 300
+        },
+        {
+          "kind": "exercise",
+          "id": "s12",
+          "exercise": "bw_seated_crunch",
+          "forMode": "seconds",
+          "forValue": 30,
+          "startSeconds": 330,
+          "note": "Oblique, right"
+        },
+        {
+          "kind": "exercise",
+          "id": "s13",
+          "exercise": "bw_seated_crunch",
+          "forMode": "seconds",
+          "forValue": 30,
+          "startSeconds": 360,
+          "note": "Oblique, left"
+        },
+        {
+          "kind": "exercise",
+          "id": "s14",
+          "exercise": "bw_jackknife",
+          "forMode": "seconds",
+          "forValue": 30,
+          "startSeconds": 390
+        },
+        {
+          "kind": "exercise",
+          "id": "s15",
+          "exercise": "bw_starfish_crunch",
+          "forMode": "seconds",
+          "forValue": 30,
+          "startSeconds": 420
+        },
+        {
+          "kind": "exercise",
+          "id": "s16",
+          "exercise": "bw_in_and_out",
+          "forMode": "seconds",
+          "forValue": 30,
+          "startSeconds": 450,
+          "note": "Reach out, tuck in"
+        },
+        {
+          "kind": "exercise",
+          "id": "s17",
+          "exercise": "bw_jackknife",
+          "forMode": "seconds",
+          "forValue": 30,
+          "startSeconds": 480,
+          "note": "Starfish to jackknife"
+        },
+        {
+          "kind": "exercise",
+          "id": "s18",
+          "exercise": "bw_reverse_crunch",
+          "forMode": "seconds",
+          "forValue": 30,
+          "startSeconds": 510,
+          "note": "Roll-in"
+        },
+        {
+          "kind": "exercise",
+          "id": "s19",
+          "exercise": "bw_hollow_hold",
+          "forMode": "seconds",
+          "forValue": 30,
+          "startSeconds": 540
+        },
+        {
+          "kind": "exercise",
+          "id": "s20",
+          "exercise": "bw_plank",
+          "forMode": "seconds",
+          "forValue": 30,
+          "startSeconds": 570
+        }
+      ],
+      "note": "startSeconds derived from the video's fixed interval grid (anchored on YouTube key moments), so may drift a few seconds; workout starts at 0:00"
+    }
+  ]
+}

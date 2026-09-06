@@ -1,0 +1,62 @@
+{
+  "id": "cf-open-20-2",
+  "title": "Open 20.2",
+  "creator": "CrossFit Games",
+  "description": "Twenty-minute AMRAP of 4 dumbbell thrusters with two 50/35 lb dumbbells, 6 toes-to-bars and 24 double-unders. Short rounds, many of them; the score is total reps. Scaled used 35/20 lb, knee raises and single-unders.",
+  "source": {
+    "title": "CrossFit Games Open 2020 – Workout 20.2",
+    "url": "https://games.crossfit.com/workouts/open/2020/2",
+    "author": "CrossFit Games",
+    "kind": "benchmark",
+    "license": "Public competition workout; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "CrossFit",
+    "CrossFit Open",
+    "2020",
+    "AMRAP",
+    "Dumbbell",
+    "Jump rope"
+  ],
+  "level": "Hard",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "AMRAP 20",
+      "mode": "amrap",
+      "repeat": 1,
+      "timeCapSec": 1200,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "db_thruster",
+          "target": 22.5,
+          "rx": {
+            "men": 22.5,
+            "women": 16.0
+          },
+          "forMode": "reps",
+          "forValue": 4,
+          "note": "50/35 lb. two dumbbells"
+        },
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "bw_toes_to_bar",
+          "forMode": "reps",
+          "forValue": 6
+        },
+        {
+          "kind": "exercise",
+          "id": "s3",
+          "exercise": "bw_double_under",
+          "forMode": "reps",
+          "forValue": 24
+        }
+      ]
+    }
+  ]
+}

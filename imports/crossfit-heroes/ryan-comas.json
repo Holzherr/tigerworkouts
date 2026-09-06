@@ -1,0 +1,98 @@
+{
+  "id": "cf-hero-ryan-comas",
+  "title": "Ryan Comas",
+  "creator": "CrossFit",
+  "description": "A team-of-three workout: a 1,065 m row or ski (or 1,065 ft VersaClimb), ten rounds of 13 deadlifts, 13 pull-ups, 13-calorie row, 13 back squats and 13 burpees, then the machine piece again, for time. Honours Petty Officer 3rd Class Ryan Patrick Comas of Philadelphia, who died by suicide in 2024. Rotate athletes so one works while two rest.",
+  "source": {
+    "title": "Ryan Comas – CrossFit Hero WOD",
+    "url": "https://www.crossfit.com/benchmark/ryan-comas",
+    "author": "CrossFit",
+    "kind": "benchmark",
+    "license": "Public benchmark; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "CrossFit",
+    "Hero WOD",
+    "For time",
+    "Team",
+    "Barbell",
+    "Rower"
+  ],
+  "level": "Hard",
+  "items": [
+    {
+      "kind": "exercise",
+      "id": "s1",
+      "exercise": "cardio_rower",
+      "forMode": "meters",
+      "forValue": 1065,
+      "note": "Or 1,065 m ski or 1,065 ft VersaClimb"
+    },
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "10 rounds",
+      "mode": "fortime",
+      "repeat": 10,
+      "note": "Team of 3, split the work as you like",
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "bb_deadlift",
+          "forMode": "reps",
+          "forValue": 13,
+          "target": 102,
+          "rx": {
+            "men": 102,
+            "women": 75
+          },
+          "note": "225/165 lb"
+        },
+        {
+          "kind": "exercise",
+          "id": "s3",
+          "exercise": "bw_pullup",
+          "forMode": "reps",
+          "forValue": 13
+        },
+        {
+          "kind": "exercise",
+          "id": "s4",
+          "exercise": "cardio_rower",
+          "forMode": "calories",
+          "forValue": 13
+        },
+        {
+          "kind": "exercise",
+          "id": "s5",
+          "exercise": "bb_back_squat",
+          "forMode": "reps",
+          "forValue": 13,
+          "target": 102,
+          "rx": {
+            "men": 102,
+            "women": 75
+          },
+          "note": "225/165 lb"
+        },
+        {
+          "kind": "exercise",
+          "id": "s6",
+          "exercise": "bw_burpee",
+          "forMode": "reps",
+          "forValue": 13
+        }
+      ]
+    },
+    {
+      "kind": "exercise",
+      "id": "s7",
+      "exercise": "cardio_rower",
+      "forMode": "meters",
+      "forValue": 1065,
+      "note": "Or 1,065 m ski or 1,065 ft VersaClimb"
+    }
+  ]
+}

@@ -1,0 +1,124 @@
+{
+  "id": "cf-hero-bert",
+  "title": "Bert",
+  "creator": "CrossFit",
+  "description": "A long bodyweight pyramid with a 400 m run between every set: 50 burpees, 100 push-ups, 150 walking lunges, 200 squats, then back down. Honours U.S. Marine Cpl. Albert Gettings, killed conducting counter-sniper operations in Fallujah, Iraq, in 2009. Halve the reps for a 30-minute version.",
+  "source": {
+    "title": "Bert – CrossFit Hero WOD",
+    "url": "https://www.crossfit.com/benchmark/bert",
+    "author": "CrossFit",
+    "kind": "benchmark",
+    "license": "Public benchmark; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "CrossFit",
+    "Hero",
+    "For time",
+    "Run",
+    "Bodyweight"
+  ],
+  "level": "Hard",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "Bert",
+      "mode": "fortime",
+      "repeat": 1,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "bw_burpee",
+          "forMode": "reps",
+          "forValue": 50
+        },
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "cardio_run",
+          "forMode": "meters",
+          "forValue": 400
+        },
+        {
+          "kind": "exercise",
+          "id": "s3",
+          "exercise": "bw_pushup",
+          "forMode": "reps",
+          "forValue": 100
+        },
+        {
+          "kind": "exercise",
+          "id": "s4",
+          "exercise": "cardio_run",
+          "forMode": "meters",
+          "forValue": 400
+        },
+        {
+          "kind": "exercise",
+          "id": "s5",
+          "exercise": "bw_lunge",
+          "forMode": "reps",
+          "forValue": 150
+        },
+        {
+          "kind": "exercise",
+          "id": "s6",
+          "exercise": "cardio_run",
+          "forMode": "meters",
+          "forValue": 400
+        },
+        {
+          "kind": "exercise",
+          "id": "s7",
+          "exercise": "bw_squat",
+          "forMode": "reps",
+          "forValue": 200
+        },
+        {
+          "kind": "exercise",
+          "id": "s8",
+          "exercise": "cardio_run",
+          "forMode": "meters",
+          "forValue": 400
+        },
+        {
+          "kind": "exercise",
+          "id": "s9",
+          "exercise": "bw_lunge",
+          "forMode": "reps",
+          "forValue": 150
+        },
+        {
+          "kind": "exercise",
+          "id": "s10",
+          "exercise": "cardio_run",
+          "forMode": "meters",
+          "forValue": 400
+        },
+        {
+          "kind": "exercise",
+          "id": "s11",
+          "exercise": "bw_pushup",
+          "forMode": "reps",
+          "forValue": 100
+        },
+        {
+          "kind": "exercise",
+          "id": "s12",
+          "exercise": "cardio_run",
+          "forMode": "meters",
+          "forValue": 400
+        },
+        {
+          "kind": "exercise",
+          "id": "s13",
+          "exercise": "bw_burpee",
+          "forMode": "reps",
+          "forValue": 50
+        }
+      ]
+    }
+  ]
+}

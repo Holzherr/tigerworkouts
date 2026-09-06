@@ -5,13 +5,16 @@ import { Chip } from '@/shared/components/ui/chip';
 import { ClipThumb } from '@/shared/components/ui/clip-thumb';
 import { Dropdown } from '@/shared/components/ui/dropdown';
 import { Stepper } from '@/shared/components/ui/stepper';
-import { cn, fmtNum } from '@/shared/utils/ui-utils';
-import { forLabel, shortUnit, type ExerciseStep, type ForMode, type RestStep, type Step } from '../model';
+import { cn } from '@/shared/utils/ui-utils';
+import { forLabel, loadLabel, type ExerciseStep, type ForMode, type RestStep, type Step } from '../model';
 
 const FOR_OPTIONS = [
   { value: 'seconds', label: 'seconds' },
   { value: 'reps', label: 'reps' },
   { value: 'minutes', label: 'minutes' },
+  { value: 'meters', label: 'metres' },
+  { value: 'calories', label: 'calories' },
+  { value: 'max', label: 'max' },
 ] as const satisfies readonly { value: ForMode; label: string }[];
 
 const REST_OPTIONS = [
@@ -69,7 +72,7 @@ export const StepRow = forwardRef<HTMLDivElement, StepRowProps>(({ step, expande
           <div className={cn('line-clamp-2 text-[14.5px] leading-tight font-semibold', isRest && 'text-body')}>{isRest ? 'Rest' : step.exercise.name}</div>
           <div className="text-[12px] text-muted">{groupTarget ? <span className="font-bold text-brand-ink">Release to make a block</span> : isRest ? 'step' : (hint ?? forLabel(step))}</div>
         </div>
-        <Chip variant="value">{isRest ? `${step.seconds}s` : step.target !== undefined ? `${fmtNum(step.target)} ${shortUnit(step.exercise.unit)}` : forLabel(step)}</Chip>
+        <Chip variant="value">{isRest ? `${step.seconds}s` : loadLabel(step) || forLabel(step)}</Chip>
         {removeBtn}
       </div>
     );
@@ -131,13 +134,13 @@ const ExerciseBody = ({ step, onChange }: { step: ExerciseStep; onChange: (s: St
     <div className="flex items-center justify-between gap-3">
       <Label>For</Label>
       <div className="flex items-center gap-1.5">
-        <Stepper aria-label="Duration" value={step.forValue} step={step.forMode === 'seconds' ? 5 : 1} min={1} max={step.forMode === 'seconds' ? 600 : 200} onChange={forValue => onChange({ ...step, forValue })} />
+        <Stepper aria-label="Duration" value={step.forValue} step={step.forMode === 'seconds' ? 5 : step.forMode === 'meters' ? 50 : 1} min={1} max={step.forMode === 'seconds' ? 600 : step.forMode === 'meters' ? 42195 : 200} onChange={forValue => onChange({ ...step, forValue })} />
         <Dropdown aria-label="Duration unit" value={step.forMode} options={FOR_OPTIONS} onValueChange={forMode => onChange({ ...step, forMode, forValue: defaultFor(forMode) })} />
       </div>
     </div>
   </>
 );
-const defaultFor = (m: ForMode) => (m === 'seconds' ? 30 : m === 'reps' ? 10 : 5);
+const defaultFor = (m: ForMode) => (m === 'seconds' ? 30 : m === 'reps' ? 10 : m === 'meters' ? 400 : m === 'calories' ? 15 : 5);
 
 const RestBody = ({ step, onChange }: { step: RestStep; onChange: (s: Step) => void }) => {
   const minutes = step.seconds % 60 === 0 && step.seconds >= 60;

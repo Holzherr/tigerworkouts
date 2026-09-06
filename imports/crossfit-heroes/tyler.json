@@ -1,0 +1,53 @@
+{
+  "id": "cf-hero-tyler",
+  "title": "Tyler",
+  "creator": "CrossFit",
+  "description": "Five rounds of 7 muscle-ups and 21 sumo deadlift high pulls, for time. Honours U.S. Army 1st Lt. Tyler E. Parten, killed by RPG and small-arms fire in Konar Province, Afghanistan, in 2009. The high pulls fatigue the same pulling muscles as the muscle-ups, so plan the sets.",
+  "source": {
+    "title": "Tyler – CrossFit Hero WOD",
+    "url": "https://www.crossfit.com/benchmark/tyler",
+    "author": "CrossFit",
+    "kind": "benchmark",
+    "license": "Public benchmark; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "CrossFit",
+    "Hero WOD",
+    "For time",
+    "Gymnastics",
+    "Barbell"
+  ],
+  "level": "Hard",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "5 rounds",
+      "mode": "fortime",
+      "repeat": 5,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "gym_muscle_up",
+          "forMode": "reps",
+          "forValue": 7
+        },
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "bb_sdhp",
+          "forMode": "reps",
+          "forValue": 21,
+          "target": 43,
+          "rx": {
+            "men": 43,
+            "women": 29.5
+          },
+          "note": "95/65 lb"
+        }
+      ]
+    }
+  ]
+}

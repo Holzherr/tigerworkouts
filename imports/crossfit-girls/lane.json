@@ -1,0 +1,56 @@
+{
+  "id": "cf-girls-lane",
+  "title": "Lane",
+  "creator": "CrossFit",
+  "description": "Five rounds of max-rep hang power snatches at three-quarters bodyweight and max-rep handstand push-ups, resting as needed between rounds. A 2021 Girl in the Lynne format: not for time, score is total reps. Scale the bar or use pike push-ups.",
+  "source": {
+    "title": "Lane – CrossFit benchmark WOD (\"The Girls\")",
+    "url": "https://www.crossfit.com/benchmark/lane",
+    "author": "CrossFit",
+    "kind": "benchmark",
+    "license": "Public benchmark; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "CrossFit",
+    "Girls",
+    "Max reps",
+    "Barbell",
+    "Gymnastics"
+  ],
+  "level": "Hard",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "Lane",
+      "mode": "rounds",
+      "repeat": 5,
+      "note": "Score = total reps over 5 rounds",
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "bb_hang_power_snatch",
+          "forMode": "reps",
+          "forValue": 1,
+          "note": "Max reps at 0.75x bodyweight; score = reps"
+        },
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "bw_handstand_pushup",
+          "forMode": "reps",
+          "forValue": 1,
+          "note": "Max reps; score = reps"
+        },
+        {
+          "kind": "rest",
+          "id": "r1",
+          "seconds": 180,
+          "note": "Rest as needed between rounds"
+        }
+      ]
+    }
+  ]
+}

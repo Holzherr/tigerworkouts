@@ -1,0 +1,60 @@
+{
+  "id": "cf-hero-marston",
+  "title": "Marston",
+  "creator": "CrossFit",
+  "description": "A 20-minute AMRAP of one very heavy deadlift, 10 toes-to-bar and 15 bar-facing burpees. Honours Navy SEAL Special Warfare Operator 1st Class William Blake Marston, who died in a parachute training accident in 2015. The single deadlift is meant to be near-max, so load to roughly 85-90% of your 1RM.",
+  "source": {
+    "title": "Marston – CrossFit Hero WOD",
+    "url": "https://www.crossfit.com/benchmark/marston",
+    "author": "CrossFit",
+    "kind": "benchmark",
+    "license": "Public benchmark; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "CrossFit",
+    "Hero WOD",
+    "AMRAP",
+    "Barbell",
+    "Gymnastics"
+  ],
+  "level": "Hard",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "AMRAP 20",
+      "mode": "amrap",
+      "timeCapSec": 1200,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "bb_deadlift",
+          "forMode": "reps",
+          "forValue": 1,
+          "target": 183.5,
+          "rx": {
+            "men": 183.5,
+            "women": 124.5
+          },
+          "note": "405/275 lb"
+        },
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "bw_toes_to_bar",
+          "forMode": "reps",
+          "forValue": 10
+        },
+        {
+          "kind": "exercise",
+          "id": "s3",
+          "exercise": "bw_bar_facing_burpee",
+          "forMode": "reps",
+          "forValue": 15
+        }
+      ]
+    }
+  ]
+}

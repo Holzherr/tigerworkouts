@@ -1,0 +1,441 @@
+{
+  "id": "yt-growingannanas-20-min-killer-hiit",
+  "title": "20 MIN KILLER HIIT Full Body Workout (No Equipment, No Repeat)",
+  "creator": "growingannanas",
+  "description": "Anna Engelschall's most-watched 20-minute HIIT, 6.4M+ views. Thirty bodyweight moves done once each at 30 seconds on and 10 seconds off, no warm-up beyond a jog and no cool-down in the video; burpee variations, plank work, squat jacks and lunge jumps. The description lists every exercise. Hard pace; take longer breaks when needed, as she says herself.",
+  "source": {
+    "title": "20 MIN KILLER HIIT Full Body Workout - No Equipment - No Repeat Cardio HIIT Home Workout",
+    "url": "https://www.youtube.com/watch?v=hLVh5IBsCxk",
+    "author": "growingannanas",
+    "kind": "video",
+    "license": "Video © creator, linked not copied; exercise list is factual",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "Follow-along",
+    "HIIT",
+    "Full body",
+    "No equipment",
+    "No repeat"
+  ],
+  "level": "Hard",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "30 exercises, 30 s on / 10 s off",
+      "repeat": 1,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "bw_jog_on_spot",
+          "forMode": "seconds",
+          "forValue": 30,
+          "startSeconds": 4,
+          "note": "Warm-up run"
+        },
+        {
+          "kind": "rest",
+          "id": "r1",
+          "seconds": 10
+        },
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "bw_jumping_jack",
+          "forMode": "seconds",
+          "forValue": 30,
+          "startSeconds": 44
+        },
+        {
+          "kind": "rest",
+          "id": "r2",
+          "seconds": 10
+        },
+        {
+          "kind": "exercise",
+          "id": "s3",
+          "exercise": "bw_squat",
+          "forMode": "seconds",
+          "forValue": 30,
+          "startSeconds": 84,
+          "note": "Squat + heel tap"
+        },
+        {
+          "kind": "rest",
+          "id": "r3",
+          "seconds": 10
+        },
+        {
+          "kind": "exercise",
+          "id": "s4",
+          "exercise": "bw_kneel_to_stand",
+          "forMode": "seconds",
+          "forValue": 30,
+          "startSeconds": 124,
+          "note": "Kneeling-up side walks"
+        },
+        {
+          "kind": "rest",
+          "id": "r4",
+          "seconds": 10
+        },
+        {
+          "kind": "exercise",
+          "id": "s5",
+          "exercise": "bw_burpee",
+          "forMode": "seconds",
+          "forValue": 30,
+          "startSeconds": 164,
+          "note": "4 x fast feet + half burpee"
+        },
+        {
+          "kind": "rest",
+          "id": "r5",
+          "seconds": 10
+        },
+        {
+          "kind": "exercise",
+          "id": "s6",
+          "exercise": "bw_mountain_climber",
+          "forMode": "seconds",
+          "forValue": 30,
+          "startSeconds": 204
+        },
+        {
+          "kind": "rest",
+          "id": "r6",
+          "seconds": 10
+        },
+        {
+          "kind": "exercise",
+          "id": "s7",
+          "exercise": "bw_inchworm",
+          "forMode": "seconds",
+          "forValue": 30,
+          "startSeconds": 244,
+          "note": "Bear walk-out + push-up"
+        },
+        {
+          "kind": "rest",
+          "id": "r7",
+          "seconds": 10
+        },
+        {
+          "kind": "exercise",
+          "id": "s8",
+          "exercise": "bw_high_knees",
+          "forMode": "seconds",
+          "forValue": 30,
+          "startSeconds": 284
+        },
+        {
+          "kind": "rest",
+          "id": "r8",
+          "seconds": 10
+        },
+        {
+          "kind": "exercise",
+          "id": "s9",
+          "exercise": "bw_burpee",
+          "forMode": "seconds",
+          "forValue": 30,
+          "startSeconds": 324,
+          "note": "Half bear-hold squat burpees"
+        },
+        {
+          "kind": "rest",
+          "id": "r9",
+          "seconds": 10
+        },
+        {
+          "kind": "exercise",
+          "id": "s10",
+          "exercise": "bw_mountain_climber",
+          "forMode": "seconds",
+          "forValue": 30,
+          "startSeconds": 364,
+          "note": "Alternating leg raise + climber"
+        },
+        {
+          "kind": "rest",
+          "id": "r10",
+          "seconds": 10
+        },
+        {
+          "kind": "exercise",
+          "id": "s11",
+          "exercise": "bw_reverse_lunge",
+          "forMode": "seconds",
+          "forValue": 30,
+          "startSeconds": 404,
+          "note": "Lunge + knee drive, right"
+        },
+        {
+          "kind": "rest",
+          "id": "r11",
+          "seconds": 10
+        },
+        {
+          "kind": "exercise",
+          "id": "s12",
+          "exercise": "bw_reverse_lunge",
+          "forMode": "seconds",
+          "forValue": 30,
+          "startSeconds": 444,
+          "note": "Lunge + knee drive, left"
+        },
+        {
+          "kind": "rest",
+          "id": "r12",
+          "seconds": 10
+        },
+        {
+          "kind": "exercise",
+          "id": "s13",
+          "exercise": "bw_squat",
+          "forMode": "seconds",
+          "forValue": 30,
+          "startSeconds": 484,
+          "note": "Overhead reach squats"
+        },
+        {
+          "kind": "rest",
+          "id": "r13",
+          "seconds": 10
+        },
+        {
+          "kind": "exercise",
+          "id": "s14",
+          "exercise": "bw_plank_jack",
+          "forMode": "seconds",
+          "forValue": 30,
+          "startSeconds": 524,
+          "note": "Plank walk in-out + jack"
+        },
+        {
+          "kind": "rest",
+          "id": "r14",
+          "seconds": 10
+        },
+        {
+          "kind": "exercise",
+          "id": "s15",
+          "exercise": "bw_crab_toe_touch",
+          "forMode": "seconds",
+          "forValue": 30,
+          "startSeconds": 564,
+          "note": "Crab knee tap + toe tap"
+        },
+        {
+          "kind": "rest",
+          "id": "r15",
+          "seconds": 10
+        },
+        {
+          "kind": "exercise",
+          "id": "s16",
+          "exercise": "bw_in_out_squat",
+          "forMode": "seconds",
+          "forValue": 30,
+          "startSeconds": 604,
+          "note": "Squat power jack"
+        },
+        {
+          "kind": "rest",
+          "id": "r16",
+          "seconds": 10
+        },
+        {
+          "kind": "exercise",
+          "id": "s17",
+          "exercise": "bw_plank",
+          "forMode": "seconds",
+          "forValue": 30,
+          "startSeconds": 644,
+          "note": "Plank toe taps"
+        },
+        {
+          "kind": "rest",
+          "id": "r17",
+          "seconds": 10
+        },
+        {
+          "kind": "exercise",
+          "id": "s18",
+          "exercise": "bw_burpee",
+          "forMode": "seconds",
+          "forValue": 30,
+          "startSeconds": 684,
+          "note": "Half burpee cross-over jump"
+        },
+        {
+          "kind": "rest",
+          "id": "r18",
+          "seconds": 10
+        },
+        {
+          "kind": "exercise",
+          "id": "s19",
+          "exercise": "bw_squat",
+          "forMode": "seconds",
+          "forValue": 30,
+          "startSeconds": 724,
+          "note": "Squat + crunch"
+        },
+        {
+          "kind": "rest",
+          "id": "r19",
+          "seconds": 10
+        },
+        {
+          "kind": "exercise",
+          "id": "s20",
+          "exercise": "bw_plank",
+          "forMode": "seconds",
+          "forValue": 30,
+          "startSeconds": 764,
+          "note": "High plank arm raises"
+        },
+        {
+          "kind": "rest",
+          "id": "r20",
+          "seconds": 10
+        },
+        {
+          "kind": "exercise",
+          "id": "s21",
+          "exercise": "bw_in_out_squat",
+          "forMode": "seconds",
+          "forValue": 30,
+          "startSeconds": 804,
+          "note": "Predator squat jacks"
+        },
+        {
+          "kind": "rest",
+          "id": "r21",
+          "seconds": 10
+        },
+        {
+          "kind": "exercise",
+          "id": "s22",
+          "exercise": "bw_starfish_crunch",
+          "forMode": "seconds",
+          "forValue": 30,
+          "startSeconds": 844
+        },
+        {
+          "kind": "rest",
+          "id": "r22",
+          "seconds": 10
+        },
+        {
+          "kind": "exercise",
+          "id": "s23",
+          "exercise": "bw_reverse_crunch",
+          "forMode": "seconds",
+          "forValue": 30,
+          "startSeconds": 884
+        },
+        {
+          "kind": "rest",
+          "id": "r23",
+          "seconds": 10
+        },
+        {
+          "kind": "exercise",
+          "id": "s24",
+          "exercise": "bw_plank_jack",
+          "forMode": "seconds",
+          "forValue": 30,
+          "startSeconds": 924,
+          "note": "Plank jack + shoulder taps"
+        },
+        {
+          "kind": "rest",
+          "id": "r24",
+          "seconds": 10
+        },
+        {
+          "kind": "exercise",
+          "id": "s25",
+          "exercise": "bw_squat",
+          "forMode": "seconds",
+          "forValue": 30,
+          "startSeconds": 964,
+          "note": "Reach up + down"
+        },
+        {
+          "kind": "rest",
+          "id": "r25",
+          "seconds": 10
+        },
+        {
+          "kind": "exercise",
+          "id": "s26",
+          "exercise": "bw_pushup",
+          "forMode": "seconds",
+          "forValue": 30,
+          "startSeconds": 1004,
+          "note": "Walking push-up"
+        },
+        {
+          "kind": "rest",
+          "id": "r26",
+          "seconds": 10
+        },
+        {
+          "kind": "exercise",
+          "id": "s27",
+          "exercise": "bw_lateral_lunge",
+          "forMode": "seconds",
+          "forValue": 30,
+          "startSeconds": 1044,
+          "note": "Alternating side squats"
+        },
+        {
+          "kind": "rest",
+          "id": "r27",
+          "seconds": 10
+        },
+        {
+          "kind": "exercise",
+          "id": "s28",
+          "exercise": "bw_skater",
+          "forMode": "seconds",
+          "forValue": 30,
+          "startSeconds": 1084,
+          "note": "Low skater jumps"
+        },
+        {
+          "kind": "rest",
+          "id": "r28",
+          "seconds": 10
+        },
+        {
+          "kind": "exercise",
+          "id": "s29",
+          "exercise": "bw_burpee",
+          "forMode": "seconds",
+          "forValue": 30,
+          "startSeconds": 1124
+        },
+        {
+          "kind": "rest",
+          "id": "r29",
+          "seconds": 10
+        },
+        {
+          "kind": "exercise",
+          "id": "s30",
+          "exercise": "bw_jump_lunge",
+          "forMode": "seconds",
+          "forValue": 30,
+          "startSeconds": 1164
+        }
+      ],
+      "note": "startSeconds derived from the video's fixed interval grid (anchored on YouTube key moments), so may drift a few seconds; workout starts at 0:04 (FitlyCafe)"
+    }
+  ]
+}

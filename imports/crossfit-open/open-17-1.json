@@ -1,0 +1,181 @@
+{
+  "id": "cf-open-17-1",
+  "title": "Open 17.1",
+  "creator": "CrossFit Games",
+  "description": "For time: 10-20-30-40-50 dumbbell snatches at 50/35 lb with 15 burpee box jump-overs (24/20 in) after each set, 20-minute cap. The first Open workout with a dumbbell. Repeated as 21.2. Scaled used 35/20 lb, a 20 in box and step-ups.",
+  "source": {
+    "title": "CrossFit Games Open 2017 – Workout 17.1",
+    "url": "https://games.crossfit.com/workouts/open/2017/1",
+    "author": "CrossFit Games",
+    "kind": "benchmark",
+    "license": "Public competition workout; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "CrossFit",
+    "CrossFit Open",
+    "2017",
+    "For time",
+    "Ladder",
+    "Dumbbell"
+  ],
+  "level": "Hard",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "10 snatches",
+      "mode": "fortime",
+      "repeat": 1,
+      "timeCapSec": 1200,
+      "note": "10-20-30-40-50 dumbbell snatches with 15 burpee box jump-overs after each set. 20-minute cap covers the whole workout.",
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "db_snatch",
+          "target": 22.5,
+          "rx": {
+            "men": 22.5,
+            "women": 16.0
+          },
+          "forMode": "reps",
+          "forValue": 10,
+          "note": "50/35 lb"
+        },
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "bw_burpee_box_jump_over",
+          "forMode": "reps",
+          "forValue": 15,
+          "note": "24/20 in box"
+        }
+      ]
+    },
+    {
+      "kind": "block",
+      "id": "b2",
+      "name": "20 snatches",
+      "mode": "fortime",
+      "repeat": 1,
+      "note": "10-20-30-40-50 dumbbell snatches with 15 burpee box jump-overs after each set. 20-minute cap covers the whole workout.",
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s3",
+          "exercise": "db_snatch",
+          "target": 22.5,
+          "rx": {
+            "men": 22.5,
+            "women": 16.0
+          },
+          "forMode": "reps",
+          "forValue": 20,
+          "note": "50/35 lb"
+        },
+        {
+          "kind": "exercise",
+          "id": "s4",
+          "exercise": "bw_burpee_box_jump_over",
+          "forMode": "reps",
+          "forValue": 15,
+          "note": "24/20 in box"
+        }
+      ]
+    },
+    {
+      "kind": "block",
+      "id": "b3",
+      "name": "30 snatches",
+      "mode": "fortime",
+      "repeat": 1,
+      "note": "10-20-30-40-50 dumbbell snatches with 15 burpee box jump-overs after each set. 20-minute cap covers the whole workout.",
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s5",
+          "exercise": "db_snatch",
+          "target": 22.5,
+          "rx": {
+            "men": 22.5,
+            "women": 16.0
+          },
+          "forMode": "reps",
+          "forValue": 30,
+          "note": "50/35 lb"
+        },
+        {
+          "kind": "exercise",
+          "id": "s6",
+          "exercise": "bw_burpee_box_jump_over",
+          "forMode": "reps",
+          "forValue": 15,
+          "note": "24/20 in box"
+        }
+      ]
+    },
+    {
+      "kind": "block",
+      "id": "b4",
+      "name": "40 snatches",
+      "mode": "fortime",
+      "repeat": 1,
+      "note": "10-20-30-40-50 dumbbell snatches with 15 burpee box jump-overs after each set. 20-minute cap covers the whole workout.",
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s7",
+          "exercise": "db_snatch",
+          "target": 22.5,
+          "rx": {
+            "men": 22.5,
+            "women": 16.0
+          },
+          "forMode": "reps",
+          "forValue": 40,
+          "note": "50/35 lb"
+        },
+        {
+          "kind": "exercise",
+          "id": "s8",
+          "exercise": "bw_burpee_box_jump_over",
+          "forMode": "reps",
+          "forValue": 15,
+          "note": "24/20 in box"
+        }
+      ]
+    },
+    {
+      "kind": "block",
+      "id": "b5",
+      "name": "50 snatches",
+      "mode": "fortime",
+      "repeat": 1,
+      "note": "10-20-30-40-50 dumbbell snatches with 15 burpee box jump-overs after each set. 20-minute cap covers the whole workout.",
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s9",
+          "exercise": "db_snatch",
+          "target": 22.5,
+          "rx": {
+            "men": 22.5,
+            "women": 16.0
+          },
+          "forMode": "reps",
+          "forValue": 50,
+          "note": "50/35 lb"
+        },
+        {
+          "kind": "exercise",
+          "id": "s10",
+          "exercise": "bw_burpee_box_jump_over",
+          "forMode": "reps",
+          "forValue": 15,
+          "note": "24/20 in box"
+        }
+      ]
+    }
+  ]
+}

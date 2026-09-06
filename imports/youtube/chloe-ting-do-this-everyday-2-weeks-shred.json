@@ -1,0 +1,329 @@
+{
+  "id": "yt-chloe-ting-do-this-everyday-2-weeks-shred",
+  "title": "Do This Everyday To Lose Weight (2 Weeks Shred, 13-min HIIT)",
+  "creator": "Chloe Ting",
+  "description": "Episode 1 of Chloe Ting's 2019 2 Weeks Shred Challenge and her second most-watched video (230M+ views). Three sets of seven bodyweight moves at 30 seconds each with only 5 to 10 seconds between them and 15 seconds between sets, so it is short but relentless. Every jumping move has a low-impact alternative on screen, which makes it workable for beginners.",
+  "source": {
+    "title": "Do This Everyday To Lose Weight | 2 Weeks Shred Challenge",
+    "url": "https://www.youtube.com/watch?v=2MoGxae-zyo",
+    "author": "Chloe Ting",
+    "kind": "video",
+    "license": "Video © creator, linked not copied; exercise list is factual",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "Follow-along",
+    "HIIT",
+    "Full body",
+    "No equipment"
+  ],
+  "level": "Medium",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "Set 1",
+      "repeat": 1,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "bw_cross_body_mountain_climber",
+          "forMode": "seconds",
+          "forValue": 30,
+          "startSeconds": 44
+        },
+        {
+          "kind": "rest",
+          "id": "r1",
+          "seconds": 5
+        },
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "bw_burpee",
+          "forMode": "seconds",
+          "forValue": 30,
+          "startSeconds": 79,
+          "note": "Low-impact option shown"
+        },
+        {
+          "kind": "rest",
+          "id": "r2",
+          "seconds": 10
+        },
+        {
+          "kind": "exercise",
+          "id": "s3",
+          "exercise": "bw_high_knees",
+          "forMode": "seconds",
+          "forValue": 30,
+          "startSeconds": 114,
+          "note": "Low-impact option shown"
+        },
+        {
+          "kind": "rest",
+          "id": "r3",
+          "seconds": 5
+        },
+        {
+          "kind": "exercise",
+          "id": "s4",
+          "exercise": "bw_in_out_squat",
+          "forMode": "seconds",
+          "forValue": 30,
+          "startSeconds": 154,
+          "note": "Squat in & out"
+        },
+        {
+          "kind": "rest",
+          "id": "r4",
+          "seconds": 10
+        },
+        {
+          "kind": "exercise",
+          "id": "s5",
+          "exercise": "bw_pushup",
+          "forMode": "seconds",
+          "forValue": 30,
+          "startSeconds": 189,
+          "note": "Push-up then mountain climbers"
+        },
+        {
+          "kind": "rest",
+          "id": "r5",
+          "seconds": 5
+        },
+        {
+          "kind": "exercise",
+          "id": "s6",
+          "exercise": "bw_skater",
+          "forMode": "seconds",
+          "forValue": 30,
+          "startSeconds": 229,
+          "note": "Low-impact option shown"
+        },
+        {
+          "kind": "rest",
+          "id": "r6",
+          "seconds": 10
+        },
+        {
+          "kind": "exercise",
+          "id": "s7",
+          "exercise": "bw_spiderman_plank",
+          "forMode": "seconds",
+          "forValue": 30,
+          "startSeconds": 264
+        }
+      ]
+    },
+    {
+      "kind": "rest",
+      "id": "r19",
+      "seconds": 15
+    },
+    {
+      "kind": "block",
+      "id": "b2",
+      "name": "Set 2",
+      "repeat": 1,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s8",
+          "exercise": "bw_corkscrew",
+          "forMode": "seconds",
+          "forValue": 30,
+          "startSeconds": 304,
+          "note": "Low-impact option shown"
+        },
+        {
+          "kind": "rest",
+          "id": "r7",
+          "seconds": 5
+        },
+        {
+          "kind": "exercise",
+          "id": "s9",
+          "exercise": "bw_plank_jack",
+          "forMode": "seconds",
+          "forValue": 30,
+          "startSeconds": 349,
+          "note": "Low-impact option shown"
+        },
+        {
+          "kind": "rest",
+          "id": "r8",
+          "seconds": 10
+        },
+        {
+          "kind": "exercise",
+          "id": "s10",
+          "exercise": "bw_reverse_lunge",
+          "forMode": "seconds",
+          "forValue": 30,
+          "startSeconds": 384
+        },
+        {
+          "kind": "rest",
+          "id": "r9",
+          "seconds": 5
+        },
+        {
+          "kind": "exercise",
+          "id": "s11",
+          "exercise": "bw_jump_lunge",
+          "forMode": "seconds",
+          "forValue": 30,
+          "startSeconds": 424
+        },
+        {
+          "kind": "rest",
+          "id": "r10",
+          "seconds": 10
+        },
+        {
+          "kind": "exercise",
+          "id": "s12",
+          "exercise": "bw_up_down_plank",
+          "forMode": "seconds",
+          "forValue": 30,
+          "startSeconds": 459
+        },
+        {
+          "kind": "rest",
+          "id": "r11",
+          "seconds": 5
+        },
+        {
+          "kind": "exercise",
+          "id": "s13",
+          "exercise": "bw_crab_toe_touch",
+          "forMode": "seconds",
+          "forValue": 30,
+          "startSeconds": 499,
+          "note": "Triceps toe touch"
+        },
+        {
+          "kind": "rest",
+          "id": "r12",
+          "seconds": 10
+        },
+        {
+          "kind": "exercise",
+          "id": "s14",
+          "exercise": "bw_burpee",
+          "forMode": "seconds",
+          "forValue": 30,
+          "startSeconds": 534,
+          "note": "Low-impact option shown"
+        }
+      ]
+    },
+    {
+      "kind": "rest",
+      "id": "r20",
+      "seconds": 15
+    },
+    {
+      "kind": "block",
+      "id": "b3",
+      "name": "Set 3",
+      "repeat": 1,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s15",
+          "exercise": "bw_plank_bunny_hop",
+          "forMode": "seconds",
+          "forValue": 30,
+          "startSeconds": 575,
+          "note": "Low-impact option shown"
+        },
+        {
+          "kind": "rest",
+          "id": "r13",
+          "seconds": 5
+        },
+        {
+          "kind": "exercise",
+          "id": "s16",
+          "exercise": "bw_jumping_jack",
+          "forMode": "seconds",
+          "forValue": 30,
+          "startSeconds": 619,
+          "note": "Low-impact option shown"
+        },
+        {
+          "kind": "rest",
+          "id": "r14",
+          "seconds": 10
+        },
+        {
+          "kind": "exercise",
+          "id": "s17",
+          "exercise": "bw_lateral_lunge",
+          "forMode": "seconds",
+          "forValue": 30,
+          "startSeconds": 654,
+          "note": "Lateral lunge into curtsy, left"
+        },
+        {
+          "kind": "rest",
+          "id": "r15",
+          "seconds": 5
+        },
+        {
+          "kind": "exercise",
+          "id": "s18",
+          "exercise": "bw_lateral_lunge",
+          "forMode": "seconds",
+          "forValue": 30,
+          "startSeconds": 694,
+          "note": "Lateral lunge into curtsy, right"
+        },
+        {
+          "kind": "rest",
+          "id": "r16",
+          "seconds": 10
+        },
+        {
+          "kind": "exercise",
+          "id": "s19",
+          "exercise": "bw_heisman",
+          "forMode": "seconds",
+          "forValue": 30,
+          "startSeconds": 730,
+          "note": "Low-impact option shown"
+        },
+        {
+          "kind": "rest",
+          "id": "r17",
+          "seconds": 5
+        },
+        {
+          "kind": "exercise",
+          "id": "s20",
+          "exercise": "bw_bicycle_crunch",
+          "forMode": "seconds",
+          "forValue": 30,
+          "startSeconds": 769
+        },
+        {
+          "kind": "rest",
+          "id": "r18",
+          "seconds": 10
+        },
+        {
+          "kind": "exercise",
+          "id": "s21",
+          "exercise": "bw_high_knees",
+          "forMode": "seconds",
+          "forValue": 30,
+          "startSeconds": 804
+        }
+      ]
+    }
+  ]
+}

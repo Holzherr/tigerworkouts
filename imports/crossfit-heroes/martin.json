@@ -1,0 +1,111 @@
+{
+  "id": "cf-hero-martin",
+  "title": "Martin",
+  "creator": "CrossFit",
+  "description": "A partner chipper: descending rows split with 100 bodyweight deadlifts, 50 thrusters, 100 hand-release push-ups, 50 pull-ups, 100 sit-ups and 100 wall balls. Honours British Army Pvt. Martin Bell of 2 PARA, killed by an IED in Helmand in 2011 while going to help a wounded comrade. Share the work however you like; solo athletes can halve every number.",
+  "source": {
+    "title": "Martin – CrossFit Hero WOD",
+    "url": "https://www.crossfit.com/benchmark/martin",
+    "author": "CrossFit",
+    "kind": "benchmark",
+    "license": "Public benchmark; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "CrossFit",
+    "Hero WOD",
+    "For time",
+    "Partner",
+    "Barbell",
+    "Rower"
+  ],
+  "level": "Hard",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "Chipper (with a partner)",
+      "mode": "fortime",
+      "repeat": 1,
+      "note": "Partner workout: split the reps as you like",
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "cardio_rower",
+          "forMode": "meters",
+          "forValue": 2000
+        },
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "bb_deadlift",
+          "forMode": "reps",
+          "forValue": 100,
+          "note": "Bodyweight on the bar"
+        },
+        {
+          "kind": "exercise",
+          "id": "s3",
+          "exercise": "bb_thruster",
+          "forMode": "reps",
+          "forValue": 50,
+          "target": 43,
+          "rx": {
+            "men": 43,
+            "women": 29.5
+          },
+          "note": "95/65 lb"
+        },
+        {
+          "kind": "exercise",
+          "id": "s4",
+          "exercise": "cardio_rower",
+          "forMode": "meters",
+          "forValue": 1000
+        },
+        {
+          "kind": "exercise",
+          "id": "s5",
+          "exercise": "bw_hand_release_pushup",
+          "forMode": "reps",
+          "forValue": 100
+        },
+        {
+          "kind": "exercise",
+          "id": "s6",
+          "exercise": "bw_pullup",
+          "forMode": "reps",
+          "forValue": 50
+        },
+        {
+          "kind": "exercise",
+          "id": "s7",
+          "exercise": "cardio_rower",
+          "forMode": "meters",
+          "forValue": 500
+        },
+        {
+          "kind": "exercise",
+          "id": "s8",
+          "exercise": "bw_situp",
+          "forMode": "reps",
+          "forValue": 100
+        },
+        {
+          "kind": "exercise",
+          "id": "s9",
+          "exercise": "gym_wall_ball",
+          "forMode": "reps",
+          "forValue": 100,
+          "target": 9,
+          "rx": {
+            "men": 9,
+            "women": 6.5
+          },
+          "note": "20/14 lb"
+        }
+      ]
+    }
+  ]
+}

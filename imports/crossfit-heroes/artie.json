@@ -1,0 +1,75 @@
+{
+  "id": "cf-hero-artie",
+  "title": "Artie",
+  "creator": "CrossFit",
+  "description": "A 20-minute AMRAP of 5 pull-ups, 10 push-ups, 15 squats, 5 pull-ups and 10 thrusters at 95/65 lb. Honours Nassau County Police Officer Arthur \"Artie\" Lopez, killed in the line of duty in 2012. A Cindy-style pace with a barbell sting at the end of each round.",
+  "source": {
+    "title": "Artie – CrossFit Hero WOD",
+    "url": "https://www.crossfit.com/benchmark/artie",
+    "author": "CrossFit",
+    "kind": "benchmark",
+    "license": "Public benchmark; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "CrossFit",
+    "Hero",
+    "AMRAP",
+    "Bodyweight",
+    "Barbell"
+  ],
+  "level": "Hard",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "Artie",
+      "mode": "amrap",
+      "repeat": 1,
+      "timeCapSec": 1200,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "bw_pullup",
+          "forMode": "reps",
+          "forValue": 5
+        },
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "bw_pushup",
+          "forMode": "reps",
+          "forValue": 10
+        },
+        {
+          "kind": "exercise",
+          "id": "s3",
+          "exercise": "bw_squat",
+          "forMode": "reps",
+          "forValue": 15
+        },
+        {
+          "kind": "exercise",
+          "id": "s4",
+          "exercise": "bw_pullup",
+          "forMode": "reps",
+          "forValue": 5
+        },
+        {
+          "kind": "exercise",
+          "id": "s5",
+          "exercise": "bb_thruster",
+          "target": 43.0,
+          "rx": {
+            "men": 43.0,
+            "women": 29.5
+          },
+          "forMode": "reps",
+          "forValue": 10,
+          "note": "95/65 lb"
+        }
+      ]
+    }
+  ]
+}

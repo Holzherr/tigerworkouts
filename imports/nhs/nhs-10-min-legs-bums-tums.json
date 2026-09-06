@@ -1,0 +1,182 @@
+{
+  "id": "nhs-10-min-legs-bums-tums",
+  "title": "10-minute legs, bums and tums workout",
+  "creator": "NHS",
+  "description": "The NHS take on the classic LBT class: squats, lunges, calf raises, bridges, crunches, obliques and back raises with no equipment. Most moves are two sets of 15 to 24 reps and it counts towards the weekly strength target. Hold a wall for the calf raises or add water bottles to make them harder. Warm up first with the NHS 6-minute warm-up (nhs-6-min-warm-up) and finish with the 5-minute stretch (nhs-5-min-cool-down-stretch).",
+  "source": {
+    "title": "10-minute legs, bums and tums home workout",
+    "url": "https://web.archive.org/web/20220401/https://www.nhs.uk/live-well/exercise/10-minute-legs-bums-tums-home-workout/",
+    "author": "NHS",
+    "kind": "article",
+    "license": "Open Government Licence v3.0 (NHS)",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "NHS",
+    "Home workout",
+    "No equipment",
+    "Legs",
+    "Glutes",
+    "Core",
+    "10 minutes"
+  ],
+  "level": "Easy",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "Squats",
+      "repeat": 2,
+      "note": "2 sets of 15 to 24 reps",
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "bw_squat",
+          "forMode": "reps",
+          "forValue": 15
+        },
+        {
+          "kind": "rest",
+          "id": "r1",
+          "seconds": 20
+        }
+      ]
+    },
+    {
+      "kind": "block",
+      "id": "b2",
+      "name": "Lunges",
+      "repeat": 1,
+      "note": "1 set of 15 to 24 reps each leg",
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "bw_lunge",
+          "forMode": "reps",
+          "forValue": 15,
+          "note": "Static split stance, right leg forward"
+        },
+        {
+          "kind": "exercise",
+          "id": "s3",
+          "exercise": "bw_lunge",
+          "forMode": "reps",
+          "forValue": 15,
+          "note": "Left leg forward"
+        }
+      ]
+    },
+    {
+      "kind": "block",
+      "id": "b3",
+      "name": "Calf raises",
+      "repeat": 2,
+      "note": "2 sets of 15 reps",
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s4",
+          "exercise": "bw_calf_raise",
+          "forMode": "reps",
+          "forValue": 15,
+          "note": "Hands on a wall or chair; away from the wall with bottles for more"
+        },
+        {
+          "kind": "rest",
+          "id": "r2",
+          "seconds": 20
+        }
+      ]
+    },
+    {
+      "kind": "block",
+      "id": "b4",
+      "name": "Bridges",
+      "repeat": 2,
+      "note": "2 sets of 15 to 20 reps",
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s5",
+          "exercise": "bw_hip_bridge",
+          "forMode": "reps",
+          "forValue": 15
+        },
+        {
+          "kind": "rest",
+          "id": "r3",
+          "seconds": 20
+        }
+      ]
+    },
+    {
+      "kind": "block",
+      "id": "b5",
+      "name": "Stomach crunches",
+      "repeat": 2,
+      "note": "2 sets of 15 to 24 reps",
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s6",
+          "exercise": "bw_crunch",
+          "forMode": "reps",
+          "forValue": 15
+        },
+        {
+          "kind": "rest",
+          "id": "r4",
+          "seconds": 20
+        }
+      ]
+    },
+    {
+      "kind": "block",
+      "id": "b6",
+      "name": "Obliques",
+      "repeat": 1,
+      "note": "1 set of 12 to 24 reps each side",
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s7",
+          "exercise": "bw_oblique_crunch",
+          "forMode": "reps",
+          "forValue": 12,
+          "note": "Right hand behind the ear, curl towards the left knee"
+        },
+        {
+          "kind": "exercise",
+          "id": "s8",
+          "exercise": "bw_oblique_crunch",
+          "forMode": "reps",
+          "forValue": 12,
+          "note": "Left side"
+        }
+      ]
+    },
+    {
+      "kind": "block",
+      "id": "b7",
+      "name": "Back raises",
+      "repeat": 2,
+      "note": "2 sets of 15 to 24 reps",
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s9",
+          "exercise": "bw_back_raise",
+          "forMode": "reps",
+          "forValue": 15
+        },
+        {
+          "kind": "rest",
+          "id": "r5",
+          "seconds": 20
+        }
+      ]
+    }
+  ]
+}

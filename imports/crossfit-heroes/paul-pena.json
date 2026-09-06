@@ -1,0 +1,68 @@
+{
+  "id": "cf-hero-paul-pena",
+  "title": "Paul Pena",
+  "creator": "CrossFit",
+  "description": "Seven rounds, each for time, of a 100 m sprint, 19 heavy kettlebell swings and 10 burpee box jumps, with three minutes' rest between rounds. Honours U.S. Army Capt. Paul Pena, 82nd Airborne, killed by an IED while leading a patrol in the Arghandab River Valley, Afghanistan, in 2010. Score each round separately and try to hold the times level.",
+  "source": {
+    "title": "Paul Pena – CrossFit Hero WOD",
+    "url": "https://www.crossfit.com/workout/2017/01/19#/comments",
+    "author": "CrossFit",
+    "kind": "benchmark",
+    "license": "Public benchmark; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "CrossFit",
+    "Hero WOD",
+    "Intervals",
+    "Kettlebell",
+    "Running"
+  ],
+  "level": "Hard",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "7 rounds (each for time)",
+      "mode": "fortime",
+      "repeat": 7,
+      "note": "Rest 3 minutes between rounds; record each round time",
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "cardio_run",
+          "forMode": "meters",
+          "forValue": 100,
+          "note": "Sprint"
+        },
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "kb_swing",
+          "forMode": "reps",
+          "forValue": 19,
+          "target": 32,
+          "rx": {
+            "men": 32,
+            "women": 24
+          },
+          "note": "70/53 lb"
+        },
+        {
+          "kind": "exercise",
+          "id": "s3",
+          "exercise": "bw_burpee_box_jump",
+          "forMode": "reps",
+          "forValue": 10,
+          "note": "24/20 in box"
+        },
+        {
+          "kind": "rest",
+          "id": "r1",
+          "seconds": 180
+        }
+      ]
+    }
+  ]
+}

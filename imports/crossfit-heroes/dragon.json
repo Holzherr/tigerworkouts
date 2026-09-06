@@ -1,0 +1,64 @@
+{
+  "id": "cf-hero-dragon",
+  "title": "Dragon",
+  "creator": "CrossFit",
+  "description": "Run 5 km, take 4 minutes to find a 4-rep-max deadlift, run another 5 km, then 4 minutes for a 4-rep-max push jerk. Honours U.S. Army Capt. Nicholas Rozanski, Ohio National Guard, killed in Faryab Province, Afghanistan, in 2012. Score is time plus the two loads; have bars loaded and ready before you start.",
+  "source": {
+    "title": "Dragon – CrossFit Hero WOD",
+    "url": "https://www.crossfit.com/benchmark/dragon",
+    "author": "CrossFit",
+    "kind": "benchmark",
+    "license": "Public benchmark; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "CrossFit",
+    "Hero",
+    "For time",
+    "Run",
+    "Barbell",
+    "Long"
+  ],
+  "level": "Hard",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "Dragon",
+      "mode": "fortime",
+      "repeat": 1,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "cardio_run",
+          "forMode": "meters",
+          "forValue": 5000
+        },
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "bb_deadlift",
+          "forMode": "reps",
+          "forValue": 4,
+          "note": "4 minutes to find a 4-rep max"
+        },
+        {
+          "kind": "exercise",
+          "id": "s3",
+          "exercise": "cardio_run",
+          "forMode": "meters",
+          "forValue": 5000
+        },
+        {
+          "kind": "exercise",
+          "id": "s4",
+          "exercise": "bb_push_jerk",
+          "forMode": "reps",
+          "forValue": 4,
+          "note": "4 minutes to find a 4-rep-max push jerk"
+        }
+      ]
+    }
+  ]
+}

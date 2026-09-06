@@ -1,0 +1,150 @@
+{
+  "id": "yt-yoga-with-adriene-complete-beginners",
+  "title": "Yoga For Complete Beginners (20-Minute Home Yoga)",
+  "creator": "Yoga With Adriene",
+  "description": "Adriene Mishler's 2013 starter class, 55M+ views and the video most people begin yoga with. Twenty-three minutes from a seated breath check-in through cat-cow, puppy pose and downward dog to a short standing sequence of forward fold, warrior I and II. No prior yoga needed; the pace is slow and every shape is explained. Durations here are approximate segments, not timed intervals.",
+  "source": {
+    "title": "Yoga For Complete Beginners - 20 Minute Home Yoga Workout!",
+    "url": "https://www.youtube.com/watch?v=v7AYKMP6rOE",
+    "author": "Yoga With Adriene",
+    "kind": "video",
+    "license": "Video © creator, linked not copied; exercise list is factual",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "Follow-along",
+    "Yoga",
+    "Beginner",
+    "Mobility"
+  ],
+  "level": "Easy",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "Flow",
+      "repeat": 1,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "yoga_sukhasana",
+          "forMode": "seconds",
+          "forValue": 205,
+          "startSeconds": 38,
+          "note": "Cross-legged, hands at the heart (Anjali mudra); breathe"
+        },
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "yoga_seated_twist",
+          "forMode": "seconds",
+          "forValue": 90,
+          "startSeconds": 243,
+          "note": "Right then left"
+        },
+        {
+          "kind": "exercise",
+          "id": "s3",
+          "exercise": "yoga_side_stretch",
+          "forMode": "seconds",
+          "forValue": 90,
+          "startSeconds": 333
+        },
+        {
+          "kind": "exercise",
+          "id": "s4",
+          "exercise": "yoga_tabletop",
+          "forMode": "seconds",
+          "forValue": 45,
+          "startSeconds": 425
+        },
+        {
+          "kind": "exercise",
+          "id": "s5",
+          "exercise": "yoga_cat_cow",
+          "forMode": "seconds",
+          "forValue": 120,
+          "startSeconds": 470
+        },
+        {
+          "kind": "exercise",
+          "id": "s6",
+          "exercise": "yoga_wrist_circles",
+          "forMode": "seconds",
+          "forValue": 30,
+          "startSeconds": 590
+        },
+        {
+          "kind": "exercise",
+          "id": "s7",
+          "exercise": "yoga_puppy_pose",
+          "forMode": "seconds",
+          "forValue": 60,
+          "startSeconds": 620,
+          "note": "Melting heart"
+        },
+        {
+          "kind": "exercise",
+          "id": "s8",
+          "exercise": "yoga_downward_dog",
+          "forMode": "seconds",
+          "forValue": 120,
+          "startSeconds": 680
+        },
+        {
+          "kind": "exercise",
+          "id": "s9",
+          "exercise": "yoga_forward_fold",
+          "forMode": "seconds",
+          "forValue": 120,
+          "startSeconds": 800
+        },
+        {
+          "kind": "exercise",
+          "id": "s10",
+          "exercise": "yoga_mountain",
+          "forMode": "seconds",
+          "forValue": 70,
+          "startSeconds": 934,
+          "note": "Superhero stance, hands on hips"
+        },
+        {
+          "kind": "exercise",
+          "id": "s11",
+          "exercise": "yoga_upward_salute",
+          "forMode": "seconds",
+          "forValue": 60,
+          "startSeconds": 1004,
+          "note": "Volcano pose"
+        },
+        {
+          "kind": "exercise",
+          "id": "s12",
+          "exercise": "yoga_warrior_1",
+          "forMode": "seconds",
+          "forValue": 90,
+          "startSeconds": 1064
+        },
+        {
+          "kind": "exercise",
+          "id": "s13",
+          "exercise": "yoga_warrior_2",
+          "forMode": "seconds",
+          "forValue": 120,
+          "startSeconds": 1154
+        },
+        {
+          "kind": "exercise",
+          "id": "s14",
+          "exercise": "yoga_mountain",
+          "forMode": "seconds",
+          "forValue": 60,
+          "startSeconds": 1352,
+          "note": "Close with palms at the heart"
+        }
+      ],
+      "note": "Yoga flow: durations are approximate segment lengths; startSeconds where a key moment marks the pose, otherwise estimated."
+    }
+  ]
+}

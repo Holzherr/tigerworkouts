@@ -1,0 +1,72 @@
+{
+  "id": "cf-hero-nickman",
+  "title": "Nickman",
+  "creator": "CrossFit",
+  "description": "Ten rounds of a 200 m dumbbell farmers carry, 10 weighted pull-ups and 20 alternating dumbbell power snatches, for time. Honours U.S. Army Spc. Nicholas B. Burley, killed by indirect fire in Logar Province, Afghanistan, in 2013. Grip goes first: use two dumbbells for the carry and snatches and a lighter one for the pull-ups.",
+  "source": {
+    "title": "Nickman – CrossFit Hero WOD",
+    "url": "https://www.crossfit.com/benchmark/nickman",
+    "author": "CrossFit",
+    "kind": "benchmark",
+    "license": "Public benchmark; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "CrossFit",
+    "Hero WOD",
+    "For time",
+    "Dumbbell",
+    "Carry"
+  ],
+  "level": "Hard",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "10 rounds",
+      "mode": "fortime",
+      "repeat": 10,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "db_farmers_carry",
+          "forMode": "meters",
+          "forValue": 200,
+          "target": 25,
+          "rx": {
+            "men": 25,
+            "women": 18
+          },
+          "note": "55/40 lb"
+        },
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "bw_weighted_pullup",
+          "forMode": "reps",
+          "forValue": 10,
+          "target": 16,
+          "rx": {
+            "men": 16,
+            "women": 9
+          },
+          "note": "35/20 lb"
+        },
+        {
+          "kind": "exercise",
+          "id": "s3",
+          "exercise": "db_snatch",
+          "forMode": "reps",
+          "forValue": 20,
+          "target": 25,
+          "rx": {
+            "men": 25,
+            "women": 18
+          },
+          "note": "55/40 lb — Alternating arms"
+        }
+      ]
+    }
+  ]
+}

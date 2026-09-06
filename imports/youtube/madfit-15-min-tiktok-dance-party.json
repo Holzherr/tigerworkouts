@@ -1,0 +1,104 @@
+{
+  "id": "yt-madfit-15-min-tiktok-dance-party",
+  "title": "15 MIN TIKTOK DANCE PARTY WORKOUT",
+  "creator": "MadFit",
+  "description": "MadFit's lockdown-era dance cardio mash-up of eight 2020 TikTok hits, 25M+ views. Each song is a continuous choreographed cardio block of 1.5 to 2.5 minutes with no formal rests; the moves are simple repeated steps, jacks and arm patterns rather than named exercises. Good for anyone who wants cardio without a timer or a mat.",
+  "source": {
+    "title": "15 MIN TIKTOK DANCE PARTY WORKOUT - Full Body/No Equipment",
+    "url": "https://www.youtube.com/watch?v=SoRmqE7A_IE",
+    "author": "MadFit",
+    "kind": "video",
+    "license": "Video © creator, linked not copied; exercise list is factual",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "Follow-along",
+    "Dance",
+    "Cardio",
+    "No equipment"
+  ],
+  "level": "Easy",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "Dance cardio",
+      "repeat": 1,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "bw_dance_cardio",
+          "forMode": "seconds",
+          "forValue": 93,
+          "startSeconds": 0,
+          "note": "Arizona Zervas - Roxanne"
+        },
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "bw_dance_cardio",
+          "forMode": "seconds",
+          "forValue": 95,
+          "startSeconds": 93,
+          "note": "TIAGZ - They Call Me Tiago"
+        },
+        {
+          "kind": "exercise",
+          "id": "s3",
+          "exercise": "bw_dance_cardio",
+          "forMode": "seconds",
+          "forValue": 122,
+          "startSeconds": 188,
+          "note": "SAINt JHN - Roses (Imanbek Remix)"
+        },
+        {
+          "kind": "exercise",
+          "id": "s4",
+          "exercise": "bw_dance_cardio",
+          "forMode": "seconds",
+          "forValue": 122,
+          "startSeconds": 310,
+          "note": "Doja Cat - Say So"
+        },
+        {
+          "kind": "exercise",
+          "id": "s5",
+          "exercise": "bw_dance_cardio",
+          "forMode": "seconds",
+          "forValue": 103,
+          "startSeconds": 432,
+          "note": "Megan Thee Stallion - Savage"
+        },
+        {
+          "kind": "exercise",
+          "id": "s6",
+          "exercise": "bw_dance_cardio",
+          "forMode": "seconds",
+          "forValue": 123,
+          "startSeconds": 535,
+          "note": "Willow Smith - Wait a Minute"
+        },
+        {
+          "kind": "exercise",
+          "id": "s7",
+          "exercise": "bw_dance_cardio",
+          "forMode": "seconds",
+          "forValue": 141,
+          "startSeconds": 658,
+          "note": "Benee - Supalonely"
+        },
+        {
+          "kind": "exercise",
+          "id": "s8",
+          "exercise": "bw_dance_cardio",
+          "forMode": "seconds",
+          "forValue": 101,
+          "startSeconds": 799,
+          "note": "Doja Cat - Boss B*tch"
+        }
+      ],
+      "note": "One step per song; timestamps from the description."
+    }
+  ]
+}

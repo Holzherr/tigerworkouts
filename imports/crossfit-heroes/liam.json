@@ -1,0 +1,79 @@
+{
+  "id": "cf-hero-liam",
+  "title": "Liam",
+  "creator": "CrossFit",
+  "description": "An 800 m run with a 45/25 lb plate, then 100 toes-to-bars, 50 front squats at 155/105 lb and 10 rope climbs partitioned however you like, then another 800 m run with the plate. Honours U.S. Army Sgt. 1st Class Liam J. Nevins, 19th Special Forces Group, killed in Paktia Province, Afghanistan, in 2013. Start and finish with the run.",
+  "source": {
+    "title": "Liam – CrossFit Hero WOD",
+    "url": "https://www.crossfit.com/benchmark/liam",
+    "author": "CrossFit",
+    "kind": "benchmark",
+    "license": "Public benchmark; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "CrossFit",
+    "Hero",
+    "For time",
+    "Run",
+    "Barbell",
+    "Gymnastics"
+  ],
+  "level": "Hard",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "Liam",
+      "mode": "fortime",
+      "repeat": 1,
+      "note": "Partition the toes-to-bars, front squats and rope climbs as needed; start and finish with the run",
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "cardio_run",
+          "forMode": "meters",
+          "forValue": 800,
+          "note": "carry a 45/25 lb plate"
+        },
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "bw_toes_to_bar",
+          "forMode": "reps",
+          "forValue": 100
+        },
+        {
+          "kind": "exercise",
+          "id": "s3",
+          "exercise": "bb_front_squat",
+          "target": 70.5,
+          "rx": {
+            "men": 70.5,
+            "women": 47.5
+          },
+          "forMode": "reps",
+          "forValue": 50,
+          "note": "155/105 lb"
+        },
+        {
+          "kind": "exercise",
+          "id": "s4",
+          "exercise": "gym_rope_climb",
+          "forMode": "reps",
+          "forValue": 10,
+          "note": "15 ft"
+        },
+        {
+          "kind": "exercise",
+          "id": "s5",
+          "exercise": "cardio_run",
+          "forMode": "meters",
+          "forValue": 800,
+          "note": "carry a 45/25 lb plate"
+        }
+      ]
+    }
+  ]
+}

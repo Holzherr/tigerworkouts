@@ -1,0 +1,82 @@
+{
+  "id": "cf-hero-t",
+  "title": "T",
+  "creator": "CrossFit",
+  "description": "Five rounds of a 100 m sprint, 10 squat clean thrusters, 15 kettlebell swings and another 100 m sprint, with two minutes' rest between rounds. Honours U.S. Marine Master Sgt. Aaron Torian of MARSOC, killed in Helmand Province, Afghanistan, in 2014 on his sixth deployment. Each round is a sprint; the rest is there so you can keep it one.",
+  "source": {
+    "title": "T – CrossFit Hero WOD",
+    "url": "https://www.crossfit.com/benchmark/t",
+    "author": "CrossFit",
+    "kind": "benchmark",
+    "license": "Public benchmark; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "CrossFit",
+    "Hero WOD",
+    "For time",
+    "Barbell",
+    "Kettlebell",
+    "Running"
+  ],
+  "level": "Hard",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "5 rounds",
+      "mode": "fortime",
+      "repeat": 5,
+      "note": "Rest 2 minutes between rounds",
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "cardio_run",
+          "forMode": "meters",
+          "forValue": 100,
+          "note": "Sprint"
+        },
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "bb_squat_clean_thruster",
+          "forMode": "reps",
+          "forValue": 10,
+          "target": 52,
+          "rx": {
+            "men": 52,
+            "women": 34
+          },
+          "note": "115/75 lb"
+        },
+        {
+          "kind": "exercise",
+          "id": "s3",
+          "exercise": "kb_swing",
+          "forMode": "reps",
+          "forValue": 15,
+          "target": 24,
+          "rx": {
+            "men": 24,
+            "women": 16
+          },
+          "note": "53/35 lb"
+        },
+        {
+          "kind": "exercise",
+          "id": "s4",
+          "exercise": "cardio_run",
+          "forMode": "meters",
+          "forValue": 100,
+          "note": "Sprint"
+        },
+        {
+          "kind": "rest",
+          "id": "r1",
+          "seconds": 120
+        }
+      ]
+    }
+  ]
+}

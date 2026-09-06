@@ -1,0 +1,86 @@
+{
+  "id": "cf-hero-santora",
+  "title": "Santora",
+  "creator": "CrossFit",
+  "description": "Three rounds for reps: one minute each of squat cleans, deadlifts, burpees and jerks, with a minute's rest between rounds. Honours U.S. Army Ranger Sgt. Jason A. Santora, killed in a firefight in Logar Province, Afghanistan, in 2010. Score total reps; the bar loads change twice per round, so use two bars if you can.",
+  "source": {
+    "title": "Santora – CrossFit Hero WOD",
+    "url": "https://www.crossfit.com/benchmark/santora",
+    "author": "CrossFit",
+    "kind": "benchmark",
+    "license": "Public benchmark; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "CrossFit",
+    "Hero WOD",
+    "For reps",
+    "Intervals",
+    "Barbell"
+  ],
+  "level": "Hard",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "3 rounds",
+      "mode": "rounds",
+      "repeat": 3,
+      "note": "Score total reps; rest 1 minute between rounds",
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "bb_squat_clean",
+          "forMode": "minutes",
+          "forValue": 1,
+          "target": 70.5,
+          "rx": {
+            "men": 70.5,
+            "women": 47.5
+          },
+          "note": "155/105 lb — Max reps"
+        },
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "bb_deadlift",
+          "forMode": "minutes",
+          "forValue": 1,
+          "target": 111,
+          "rx": {
+            "men": 111,
+            "women": 75
+          },
+          "note": "245/165 lb — Max reps"
+        },
+        {
+          "kind": "exercise",
+          "id": "s3",
+          "exercise": "bw_burpee",
+          "forMode": "minutes",
+          "forValue": 1,
+          "note": "Max reps"
+        },
+        {
+          "kind": "exercise",
+          "id": "s4",
+          "exercise": "bb_push_jerk",
+          "forMode": "minutes",
+          "forValue": 1,
+          "target": 70.5,
+          "rx": {
+            "men": 70.5,
+            "women": 47.5
+          },
+          "note": "155/105 lb — Max reps, any jerk"
+        },
+        {
+          "kind": "rest",
+          "id": "r1",
+          "seconds": 60
+        }
+      ]
+    }
+  ]
+}

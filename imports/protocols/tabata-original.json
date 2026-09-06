@@ -1,0 +1,54 @@
+{
+  "id": "proto-tabata-original",
+  "title": "Tabata (original protocol)",
+  "creator": "Izumi Tabata",
+  "description": "The 1996 study protocol behind every \"Tabata\": eight 20-second bouts on a stationary bike at roughly 170% of VO2max, each followed by 10 seconds of rest, four minutes in total. Speed skaters doing it four days a week for six weeks matched the aerobic gains of an hour of steady cycling and improved anaerobic capacity too. The intensity is the point: if you can finish all eight rounds comfortably, it was not Tabata. Warm up first.",
+  "source": {
+    "title": "Tabata I. et al., Effects of moderate-intensity endurance and high-intensity intermittent training on anaerobic capacity and VO2max. Med Sci Sports Exerc 28(10):1327-30, 1996",
+    "url": "https://pubmed.ncbi.nlm.nih.gov/8897392/",
+    "author": "Izumi Tabata et al.",
+    "kind": "protocol",
+    "license": "Published protocol; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "Protocol",
+    "Tabata",
+    "HIIT",
+    "Bike"
+  ],
+  "level": "Hard",
+  "items": [
+    {
+      "kind": "exercise",
+      "id": "s1",
+      "exercise": "cardio_bike",
+      "forMode": "minutes",
+      "forValue": 10,
+      "note": "Warm-up, easy (~50% VO2max)"
+    },
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "Tabata",
+      "mode": "rounds",
+      "repeat": 8,
+      "note": "8 × (20 s on / 10 s off) = 4:00",
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "cardio_bike",
+          "forMode": "seconds",
+          "forValue": 20,
+          "note": "Max effort, ~170% VO2max; stop when cadence drops below 85 rpm"
+        },
+        {
+          "kind": "rest",
+          "id": "r3",
+          "seconds": 10
+        }
+      ]
+    }
+  ]
+}

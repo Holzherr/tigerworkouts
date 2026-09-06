@@ -1,0 +1,364 @@
+{
+  "id": "yt-pamela-reif-20-min-full-body",
+  "title": "20 MIN FULL BODY WORKOUT (No Equipment)",
+  "creator": "Pamela Reif",
+  "description": "Pamela Reif's original 2018 full-body video, 59M+ views and still one of the most-followed home workouts. Thirty-six exercises at 30 seconds each in three 6-minute sets with a 1-minute rest after the first two: jump squats, planks and push-ups, then floor work for back and legs, then glutes, core and triceps. No equipment; scale by taking the rests longer.",
+  "source": {
+    "title": "20 MIN FULL BODY WORKOUT // No Equipment | Pamela Reif",
+    "url": "https://www.youtube.com/watch?v=UBMk30rjy0o",
+    "author": "Pamela Reif",
+    "kind": "video",
+    "license": "Video © creator, linked not copied; exercise list is factual",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "Follow-along",
+    "Full body",
+    "No equipment"
+  ],
+  "level": "Medium",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "Set A",
+      "repeat": 1,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "bw_jump_squat",
+          "forMode": "seconds",
+          "forValue": 30,
+          "startSeconds": 0
+        },
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "bw_jumping_jack",
+          "forMode": "seconds",
+          "forValue": 30,
+          "startSeconds": 30
+        },
+        {
+          "kind": "exercise",
+          "id": "s3",
+          "exercise": "bw_plank_jack",
+          "forMode": "seconds",
+          "forValue": 30,
+          "startSeconds": 60
+        },
+        {
+          "kind": "exercise",
+          "id": "s4",
+          "exercise": "bw_mountain_climber",
+          "forMode": "seconds",
+          "forValue": 30,
+          "startSeconds": 90
+        },
+        {
+          "kind": "exercise",
+          "id": "s5",
+          "exercise": "bw_squat",
+          "forMode": "seconds",
+          "forValue": 30,
+          "startSeconds": 120,
+          "note": "Squat with side leg lift"
+        },
+        {
+          "kind": "exercise",
+          "id": "s6",
+          "exercise": "bw_jump_squat",
+          "forMode": "seconds",
+          "forValue": 30,
+          "startSeconds": 150
+        },
+        {
+          "kind": "exercise",
+          "id": "s7",
+          "exercise": "bw_pushup",
+          "forMode": "seconds",
+          "forValue": 30,
+          "startSeconds": 180
+        },
+        {
+          "kind": "exercise",
+          "id": "s8",
+          "exercise": "bw_up_down_plank",
+          "forMode": "seconds",
+          "forValue": 30,
+          "startSeconds": 210
+        },
+        {
+          "kind": "exercise",
+          "id": "s9",
+          "exercise": "bw_donkey_kick",
+          "forMode": "seconds",
+          "forValue": 30,
+          "startSeconds": 240,
+          "note": "Straight-leg kickback, right"
+        },
+        {
+          "kind": "exercise",
+          "id": "s10",
+          "exercise": "bw_donkey_kick",
+          "forMode": "seconds",
+          "forValue": 30,
+          "startSeconds": 270,
+          "note": "Straight-leg kickback, left"
+        },
+        {
+          "kind": "exercise",
+          "id": "s11",
+          "exercise": "bw_side_plank",
+          "forMode": "seconds",
+          "forValue": 30,
+          "startSeconds": 300,
+          "note": "Side plank with leg pull, right"
+        },
+        {
+          "kind": "exercise",
+          "id": "s12",
+          "exercise": "bw_side_plank",
+          "forMode": "seconds",
+          "forValue": 30,
+          "startSeconds": 330,
+          "note": "Side plank with leg pull, left"
+        }
+      ]
+    },
+    {
+      "kind": "rest",
+      "id": "r1",
+      "seconds": 60
+    },
+    {
+      "kind": "block",
+      "id": "b2",
+      "name": "Set B",
+      "repeat": 1,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s13",
+          "exercise": "bw_hand_release_pushup",
+          "forMode": "seconds",
+          "forValue": 30,
+          "startSeconds": 420,
+          "note": "Lay-down push-up"
+        },
+        {
+          "kind": "exercise",
+          "id": "s14",
+          "exercise": "bw_superman",
+          "forMode": "seconds",
+          "forValue": 30,
+          "startSeconds": 450
+        },
+        {
+          "kind": "exercise",
+          "id": "s15",
+          "exercise": "bw_superman",
+          "forMode": "seconds",
+          "forValue": 30,
+          "startSeconds": 480,
+          "note": "Superman pull"
+        },
+        {
+          "kind": "exercise",
+          "id": "s16",
+          "exercise": "bw_t_rotation",
+          "forMode": "seconds",
+          "forValue": 30,
+          "startSeconds": 510
+        },
+        {
+          "kind": "exercise",
+          "id": "s17",
+          "exercise": "bw_knee_pushup",
+          "forMode": "seconds",
+          "forValue": 30,
+          "startSeconds": 540
+        },
+        {
+          "kind": "exercise",
+          "id": "s18",
+          "exercise": "bw_side_lying_leg_raise",
+          "forMode": "seconds",
+          "forValue": 30,
+          "startSeconds": 570,
+          "note": "Inner leg lift, left"
+        },
+        {
+          "kind": "exercise",
+          "id": "s19",
+          "exercise": "bw_side_lying_leg_raise",
+          "forMode": "seconds",
+          "forValue": 30,
+          "startSeconds": 600,
+          "note": "Outer leg lift, right"
+        },
+        {
+          "kind": "exercise",
+          "id": "s20",
+          "exercise": "bw_side_lying_leg_raise",
+          "forMode": "seconds",
+          "forValue": 30,
+          "startSeconds": 630,
+          "note": "Inner leg lift, right"
+        },
+        {
+          "kind": "exercise",
+          "id": "s21",
+          "exercise": "bw_side_lying_leg_raise",
+          "forMode": "seconds",
+          "forValue": 30,
+          "startSeconds": 660,
+          "note": "Outer leg lift, left"
+        },
+        {
+          "kind": "exercise",
+          "id": "s22",
+          "exercise": "bw_t_rotation",
+          "forMode": "seconds",
+          "forValue": 30,
+          "startSeconds": 690
+        },
+        {
+          "kind": "exercise",
+          "id": "s23",
+          "exercise": "bw_superman",
+          "forMode": "seconds",
+          "forValue": 30,
+          "startSeconds": 720
+        },
+        {
+          "kind": "exercise",
+          "id": "s24",
+          "exercise": "bw_plank",
+          "forMode": "seconds",
+          "forValue": 30,
+          "startSeconds": 750
+        }
+      ]
+    },
+    {
+      "kind": "rest",
+      "id": "r2",
+      "seconds": 60
+    },
+    {
+      "kind": "block",
+      "id": "b3",
+      "name": "Set C",
+      "repeat": 1,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s25",
+          "exercise": "bw_hip_bridge",
+          "forMode": "seconds",
+          "forValue": 30,
+          "startSeconds": 840,
+          "note": "Single leg, right"
+        },
+        {
+          "kind": "exercise",
+          "id": "s26",
+          "exercise": "bw_hip_bridge",
+          "forMode": "seconds",
+          "forValue": 30,
+          "startSeconds": 870,
+          "note": "Single leg, left"
+        },
+        {
+          "kind": "exercise",
+          "id": "s27",
+          "exercise": "bw_hip_bridge",
+          "forMode": "seconds",
+          "forValue": 30,
+          "startSeconds": 900
+        },
+        {
+          "kind": "exercise",
+          "id": "s28",
+          "exercise": "bw_reverse_crunch",
+          "forMode": "seconds",
+          "forValue": 30,
+          "startSeconds": 930
+        },
+        {
+          "kind": "exercise",
+          "id": "s29",
+          "exercise": "bw_reverse_crunch",
+          "forMode": "seconds",
+          "forValue": 30,
+          "startSeconds": 960,
+          "note": "Roll-ins"
+        },
+        {
+          "kind": "exercise",
+          "id": "s30",
+          "exercise": "bw_bench_dip",
+          "forMode": "seconds",
+          "forValue": 30,
+          "startSeconds": 990,
+          "note": "Triceps dips with hands on the floor (crab position)"
+        },
+        {
+          "kind": "exercise",
+          "id": "s31",
+          "exercise": "bw_reverse_plank",
+          "forMode": "seconds",
+          "forValue": 30,
+          "startSeconds": 1020
+        },
+        {
+          "kind": "exercise",
+          "id": "s32",
+          "exercise": "bw_flutter_kick",
+          "forMode": "seconds",
+          "forValue": 30,
+          "startSeconds": 1050
+        },
+        {
+          "kind": "exercise",
+          "id": "s33",
+          "exercise": "bw_leg_raise",
+          "forMode": "seconds",
+          "forValue": 30,
+          "startSeconds": 1080,
+          "note": "Alternating toe taps to the floor"
+        },
+        {
+          "kind": "exercise",
+          "id": "s34",
+          "exercise": "bw_bench_dip",
+          "forMode": "seconds",
+          "forValue": 30,
+          "startSeconds": 1110,
+          "note": "Triceps dips with hands on the floor (crab position)"
+        },
+        {
+          "kind": "exercise",
+          "id": "s35",
+          "exercise": "bw_knee_pushup",
+          "forMode": "seconds",
+          "forValue": 30,
+          "startSeconds": 1140,
+          "note": "Triceps (narrow) push-up on knees"
+        },
+        {
+          "kind": "exercise",
+          "id": "s36",
+          "exercise": "bw_spiderman_plank",
+          "forMode": "seconds",
+          "forValue": 30,
+          "startSeconds": 1170,
+          "note": "Cross-mountain spider plank"
+        }
+      ],
+      "note": "startSeconds derived from the video's fixed interval grid (anchored on YouTube key moments), so may drift a few seconds; workout starts at 0:00, sets are 6 min with 1 min rests"
+    }
+  ]
+}

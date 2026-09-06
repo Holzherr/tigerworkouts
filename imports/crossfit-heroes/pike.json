@@ -1,0 +1,76 @@
+{
+  "id": "cf-hero-pike",
+  "title": "Pike",
+  "creator": "CrossFit",
+  "description": "Five rounds of 20 thrusters, 10 strict ring dips, 20 push-ups, 10 strict handstand push-ups and a 50 m bear crawl, for time. Honours Navy Chief Petty Officer Christian Michael Pike of Naval Special Warfare, who died in 2013 of wounds sustained in Kandahar. A pressing nightmare; scale the strict work to bands or boxes before cutting reps.",
+  "source": {
+    "title": "Pike – CrossFit Hero WOD",
+    "url": "https://www.crossfit.com/benchmark/pike",
+    "author": "CrossFit",
+    "kind": "benchmark",
+    "license": "Public benchmark; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "CrossFit",
+    "Hero WOD",
+    "For time",
+    "Barbell",
+    "Gymnastics"
+  ],
+  "level": "Hard",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "5 rounds",
+      "mode": "fortime",
+      "repeat": 5,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "bb_thruster",
+          "forMode": "reps",
+          "forValue": 20,
+          "target": 34,
+          "rx": {
+            "men": 34,
+            "women": 25
+          },
+          "note": "75/55 lb"
+        },
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "gym_ring_dip",
+          "forMode": "reps",
+          "forValue": 10,
+          "note": "Strict"
+        },
+        {
+          "kind": "exercise",
+          "id": "s3",
+          "exercise": "bw_pushup",
+          "forMode": "reps",
+          "forValue": 20
+        },
+        {
+          "kind": "exercise",
+          "id": "s4",
+          "exercise": "bw_handstand_pushup",
+          "forMode": "reps",
+          "forValue": 10,
+          "note": "Strict"
+        },
+        {
+          "kind": "exercise",
+          "id": "s5",
+          "exercise": "bw_bear_crawl",
+          "forMode": "meters",
+          "forValue": 50
+        }
+      ]
+    }
+  ]
+}

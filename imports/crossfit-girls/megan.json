@@ -1,0 +1,67 @@
+{
+  "id": "cf-girls-megan",
+  "title": "Megan",
+  "creator": "CrossFit",
+  "description": "21-15-9 reps of burpees, kettlebell swings at 1.5/1 pood and double-unders. A short, fast triplet usually done in under ten minutes; it appears in most Girl lists though it was never given an official crossfit.com benchmark page. Scale with single-unders and a lighter bell.",
+  "source": {
+    "title": "Megan – CrossFit benchmark WOD (\"The Girls\")",
+    "url": "https://wodwell.com/wod/megan/",
+    "author": "CrossFit",
+    "kind": "benchmark",
+    "license": "Public benchmark; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "CrossFit",
+    "Girls",
+    "For time",
+    "Kettlebell",
+    "Jump rope",
+    "Bodyweight"
+  ],
+  "level": "Medium",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "21-15-9",
+      "mode": "ladder",
+      "repeat": 1,
+      "note": "Rep scheme 21-15-9",
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "bw_burpee",
+          "forMode": "reps",
+          "forValue": 21
+        },
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "kb_swing",
+          "target": 24,
+          "rx": {
+            "men": 24,
+            "women": 16
+          },
+          "forMode": "reps",
+          "forValue": 21,
+          "note": "1.5/1 pood (53/35 lb)"
+        },
+        {
+          "kind": "exercise",
+          "id": "s3",
+          "exercise": "bw_double_under",
+          "forMode": "reps",
+          "forValue": 21
+        }
+      ],
+      "ladder": [
+        21,
+        15,
+        9
+      ]
+    }
+  ]
+}

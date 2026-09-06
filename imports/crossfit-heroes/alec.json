@@ -1,0 +1,128 @@
+{
+  "id": "cf-hero-alec",
+  "title": "Alec",
+  "creator": "CrossFit",
+  "description": "Three parts for time: 3 rounds of burpees, air squats and push-ups; then two 1,000 m runs around 25 sandbag cleans; then 5 rounds of deadlifts, box jumps and burpees. Honours U.S. Marine Lance Cpl. Alec E. Catherwood, killed in Helmand Province, Afghanistan, in 2010. Use a lighter sandbag or a heavy dumbbell if you have no bag.",
+  "source": {
+    "title": "Alec – CrossFit Hero WOD",
+    "url": "https://www.crossfit.com/benchmark/alec",
+    "author": "CrossFit",
+    "kind": "benchmark",
+    "license": "Public benchmark; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "CrossFit",
+    "Hero",
+    "For time",
+    "Run",
+    "Barbell",
+    "Sandbag"
+  ],
+  "level": "Hard",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "Part 1",
+      "mode": "fortime",
+      "repeat": 3,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "bw_burpee",
+          "forMode": "reps",
+          "forValue": 8
+        },
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "bw_squat",
+          "forMode": "reps",
+          "forValue": 28
+        },
+        {
+          "kind": "exercise",
+          "id": "s3",
+          "exercise": "bw_pushup",
+          "forMode": "reps",
+          "forValue": 9
+        }
+      ]
+    },
+    {
+      "kind": "block",
+      "id": "b2",
+      "name": "Part 2",
+      "mode": "fortime",
+      "repeat": 1,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s4",
+          "exercise": "cardio_run",
+          "forMode": "meters",
+          "forValue": 1000
+        },
+        {
+          "kind": "exercise",
+          "id": "s5",
+          "exercise": "gym_sandbag_over_shoulder",
+          "target": 45.5,
+          "rx": {
+            "men": 45.5,
+            "women": 34.0
+          },
+          "forMode": "reps",
+          "forValue": 25,
+          "note": "100/75 lb; over the shoulder"
+        },
+        {
+          "kind": "exercise",
+          "id": "s6",
+          "exercise": "cardio_run",
+          "forMode": "meters",
+          "forValue": 1000
+        }
+      ]
+    },
+    {
+      "kind": "block",
+      "id": "b3",
+      "name": "Part 3",
+      "mode": "fortime",
+      "repeat": 5,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s7",
+          "exercise": "bb_deadlift",
+          "target": 102.0,
+          "rx": {
+            "men": 102.0,
+            "women": 70.5
+          },
+          "forMode": "reps",
+          "forValue": 10,
+          "note": "225/155 lb"
+        },
+        {
+          "kind": "exercise",
+          "id": "s8",
+          "exercise": "bw_box_jump",
+          "forMode": "reps",
+          "forValue": 14,
+          "note": "24/20 in box"
+        },
+        {
+          "kind": "exercise",
+          "id": "s9",
+          "exercise": "bw_burpee",
+          "forMode": "reps",
+          "forValue": 10
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,31 @@
+{
+  "id": "proto-cooper-12-minute-run",
+  "title": "Cooper 12-Minute Run Test",
+  "creator": "Kenneth H. Cooper",
+  "description": "Run (or walk) as far as you can in exactly 12 minutes on a flat course or track. Devised by Dr Kenneth Cooper for the US Air Force in 1968, the distance predicts VO2max closely: VO2max ≈ (metres − 504.9) / 44.73. Around 2,800 m is excellent for men in their twenties and 2,700 m for women; record the distance, not the pace.",
+  "source": {
+    "title": "Cooper test (Cooper K.H., A Means of Assessing Maximal Oxygen Intake, JAMA 1968)",
+    "url": "https://en.wikipedia.org/wiki/Cooper_test",
+    "author": "Kenneth H. Cooper",
+    "kind": "protocol",
+    "license": "Published protocol; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "Fitness test",
+    "Running",
+    "VO2max",
+    "12 minutes"
+  ],
+  "level": "Medium",
+  "items": [
+    {
+      "kind": "exercise",
+      "id": "s1",
+      "exercise": "cardio_run",
+      "forMode": "minutes",
+      "forValue": 12,
+      "note": "Max distance in 12 min; score = metres"
+    }
+  ]
+}

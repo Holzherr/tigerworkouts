@@ -1,0 +1,197 @@
+{
+  "id": "yt-yoga-with-adriene-30-days-day-1",
+  "title": "Day 1 - Ease Into It (30 Days of Yoga)",
+  "creator": "Yoga With Adriene",
+  "description": "Day 1 of the original 30 Days of Yoga series (2015), 32M+ views. A 35-minute gentle full-body practice: seated breathing and neck circles, cat-cow and puppy pose, a first downward dog, runner's lunge, plank to cobra, then boat pose and a long savasana. Built for beginners and for restarting after a break. Durations are approximate segments.",
+  "source": {
+    "title": "Day 1 - Ease Into It - 30 Days of Yoga",
+    "url": "https://www.youtube.com/watch?v=oBu-pQG6sTY",
+    "author": "Yoga With Adriene",
+    "kind": "video",
+    "license": "Video © creator, linked not copied; exercise list is factual",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "Follow-along",
+    "Yoga",
+    "Beginner",
+    "Program"
+  ],
+  "level": "Easy",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "Practice",
+      "repeat": 1,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "yoga_sukhasana",
+          "forMode": "seconds",
+          "forValue": 187,
+          "startSeconds": 16,
+          "note": "Seated, settle the breath"
+        },
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "bw_neck_rotation",
+          "forMode": "seconds",
+          "forValue": 120,
+          "startSeconds": 203,
+          "note": "Neck circles, both ways"
+        },
+        {
+          "kind": "exercise",
+          "id": "s3",
+          "exercise": "yoga_side_stretch",
+          "forMode": "seconds",
+          "forValue": 150,
+          "startSeconds": 345,
+          "note": "Palms at the heart, then side body stretch"
+        },
+        {
+          "kind": "exercise",
+          "id": "s4",
+          "exercise": "yoga_chest_opener",
+          "forMode": "seconds",
+          "forValue": 90,
+          "startSeconds": 568,
+          "note": "Fingertips behind, spiral the heart up"
+        },
+        {
+          "kind": "exercise",
+          "id": "s5",
+          "exercise": "yoga_tabletop",
+          "forMode": "seconds",
+          "forValue": 20,
+          "startSeconds": 812
+        },
+        {
+          "kind": "exercise",
+          "id": "s6",
+          "exercise": "yoga_cat_cow",
+          "forMode": "seconds",
+          "forValue": 60,
+          "startSeconds": 832
+        },
+        {
+          "kind": "exercise",
+          "id": "s7",
+          "exercise": "yoga_puppy_pose",
+          "forMode": "seconds",
+          "forValue": 90,
+          "startSeconds": 894,
+          "note": "Crown of the head releases toward the earth"
+        },
+        {
+          "kind": "exercise",
+          "id": "s8",
+          "exercise": "yoga_sphinx",
+          "forMode": "seconds",
+          "forValue": 60,
+          "startSeconds": 984
+        },
+        {
+          "kind": "exercise",
+          "id": "s9",
+          "exercise": "yoga_downward_dog",
+          "forMode": "seconds",
+          "forValue": 120,
+          "startSeconds": 1044,
+          "note": "Five long breaths"
+        },
+        {
+          "kind": "exercise",
+          "id": "s10",
+          "exercise": "yoga_forward_fold",
+          "forMode": "seconds",
+          "forValue": 60,
+          "startSeconds": 1166,
+          "note": "Walk to the front of the mat, clasp the elbows"
+        },
+        {
+          "kind": "exercise",
+          "id": "s11",
+          "exercise": "yoga_mountain",
+          "forMode": "seconds",
+          "forValue": 100,
+          "startSeconds": 1218,
+          "note": "Roll up slowly, lift the sternum"
+        },
+        {
+          "kind": "exercise",
+          "id": "s12",
+          "exercise": "yoga_low_lunge",
+          "forMode": "seconds",
+          "forValue": 40,
+          "startSeconds": 1407,
+          "note": "Runner's lunge, right then left"
+        },
+        {
+          "kind": "exercise",
+          "id": "s13",
+          "exercise": "bw_plank",
+          "forMode": "seconds",
+          "forValue": 90,
+          "startSeconds": 1445,
+          "note": "Plant the palms, plank"
+        },
+        {
+          "kind": "exercise",
+          "id": "s14",
+          "exercise": "bw_pushup",
+          "forMode": "seconds",
+          "forValue": 30,
+          "startSeconds": 1595,
+          "note": "Lower halfway with elbows in (push-up pose)"
+        },
+        {
+          "kind": "exercise",
+          "id": "s15",
+          "exercise": "yoga_cobra",
+          "forMode": "seconds",
+          "forValue": 60,
+          "startSeconds": 1625
+        },
+        {
+          "kind": "exercise",
+          "id": "s16",
+          "exercise": "yoga_child_pose",
+          "forMode": "seconds",
+          "forValue": 40,
+          "startSeconds": 1685
+        },
+        {
+          "kind": "exercise",
+          "id": "s17",
+          "exercise": "yoga_shark_fin",
+          "forMode": "seconds",
+          "forValue": 50,
+          "startSeconds": 1725
+        },
+        {
+          "kind": "exercise",
+          "id": "s18",
+          "exercise": "yoga_boat",
+          "forMode": "seconds",
+          "forValue": 100,
+          "startSeconds": 1775,
+          "note": "Half boat, palms behind the knees"
+        },
+        {
+          "kind": "exercise",
+          "id": "s19",
+          "exercise": "yoga_savasana",
+          "forMode": "seconds",
+          "forValue": 200,
+          "startSeconds": 1878,
+          "note": "Full-body stretch, then rest"
+        }
+      ],
+      "note": "Yoga flow: durations approximate; startSeconds from key-moment cues that clearly mark the pose."
+    }
+  ]
+}

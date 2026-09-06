@@ -1,0 +1,53 @@
+{
+  "id": "nhs-c25k-w5r3",
+  "title": "Couch to 5K – Week 5 Run 3",
+  "creator": "NHS",
+  "description": "The first milestone: a continuous 20-minute run with no walking breaks, after a 5-minute warm-up walk and before a 5-minute cool-down walk. Total 30 minutes. Music or a podcast helps; keep the pace easy.",
+  "source": {
+    "title": "Couch to 5K running plan",
+    "url": "https://www.nhs.uk/better-health/get-active/get-running-with-couch-to-5k/couch-to-5k-running-plan/",
+    "author": "NHS",
+    "kind": "program",
+    "license": "Open Government Licence v3.0 (NHS)",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "NHS",
+    "Couch to 5K",
+    "Running",
+    "Beginner",
+    "Continuous run"
+  ],
+  "level": "Medium",
+  "program": {
+    "name": "Couch to 5K",
+    "day": "Week 5 Run 3",
+    "order": 7
+  },
+  "items": [
+    {
+      "kind": "exercise",
+      "id": "s1",
+      "exercise": "cardio_walk",
+      "forMode": "minutes",
+      "forValue": 5,
+      "note": "Brisk warm-up walk. Stretch before you start (see nhs-post-run-stretch or the NHS pre-run video)."
+    },
+    {
+      "kind": "exercise",
+      "id": "s2",
+      "exercise": "cardio_run",
+      "forMode": "minutes",
+      "forValue": 20,
+      "note": "First continuous 20-minute run"
+    },
+    {
+      "kind": "exercise",
+      "id": "s3",
+      "exercise": "cardio_walk",
+      "forMode": "minutes",
+      "forValue": 5,
+      "note": "Cool-down walk, then stretch (nhs-post-run-stretch)."
+    }
+  ]
+}

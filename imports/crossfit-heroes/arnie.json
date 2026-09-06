@@ -1,0 +1,124 @@
+{
+  "id": "cf-hero-arnie",
+  "title": "Arnie",
+  "creator": "CrossFit",
+  "description": "A single-kettlebell chipper: 21 Turkish get-ups per arm bracketing 50 swings, 21 single-arm overhead squats each side and two more sets of 50 swings, with a 70/53 lb bell. Honours Los Angeles County firefighter Arnaldo \"Arnie\" Quinones, killed in the 2009 Station Fire. Use a lighter bell for the get-ups and overhead squats than for the swings if you must.",
+  "source": {
+    "title": "Arnie – CrossFit Hero WOD",
+    "url": "https://www.crossfit.com/benchmark/arnie",
+    "author": "CrossFit",
+    "kind": "benchmark",
+    "license": "Public benchmark; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "CrossFit",
+    "Hero",
+    "For time",
+    "Kettlebell"
+  ],
+  "level": "Hard",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "Arnie",
+      "mode": "fortime",
+      "repeat": 1,
+      "note": "One kettlebell for everything",
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "kb_turkish_getup",
+          "target": 32,
+          "rx": {
+            "men": 32,
+            "women": 24
+          },
+          "forMode": "reps",
+          "forValue": 21,
+          "note": "70/53 lb; right arm"
+        },
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "kb_swing",
+          "target": 32,
+          "rx": {
+            "men": 32,
+            "women": 24
+          },
+          "forMode": "reps",
+          "forValue": 50,
+          "note": "70/53 lb"
+        },
+        {
+          "kind": "exercise",
+          "id": "s3",
+          "exercise": "kb_overhead_squat",
+          "target": 32,
+          "rx": {
+            "men": 32,
+            "women": 24
+          },
+          "forMode": "reps",
+          "forValue": 21,
+          "note": "70/53 lb; left arm"
+        },
+        {
+          "kind": "exercise",
+          "id": "s4",
+          "exercise": "kb_swing",
+          "target": 32,
+          "rx": {
+            "men": 32,
+            "women": 24
+          },
+          "forMode": "reps",
+          "forValue": 50,
+          "note": "70/53 lb"
+        },
+        {
+          "kind": "exercise",
+          "id": "s5",
+          "exercise": "kb_overhead_squat",
+          "target": 32,
+          "rx": {
+            "men": 32,
+            "women": 24
+          },
+          "forMode": "reps",
+          "forValue": 21,
+          "note": "70/53 lb; right arm"
+        },
+        {
+          "kind": "exercise",
+          "id": "s6",
+          "exercise": "kb_swing",
+          "target": 32,
+          "rx": {
+            "men": 32,
+            "women": 24
+          },
+          "forMode": "reps",
+          "forValue": 50,
+          "note": "70/53 lb"
+        },
+        {
+          "kind": "exercise",
+          "id": "s7",
+          "exercise": "kb_turkish_getup",
+          "target": 32,
+          "rx": {
+            "men": 32,
+            "women": 24
+          },
+          "forMode": "reps",
+          "forValue": 21,
+          "note": "70/53 lb; left arm"
+        }
+      ]
+    }
+  ]
+}

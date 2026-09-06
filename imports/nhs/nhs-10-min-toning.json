@@ -1,0 +1,245 @@
+{
+  "id": "nhs-10-min-toning",
+  "title": "10-minute home toning workout",
+  "creator": "NHS",
+  "description": "A full-body toning circuit from the NHS 10-minute series: press-ups, dips, band presses, curls and raises, squats, lunges, crunches and back raises, mostly two sets each. It needs a resistance band, or water bottles as a stand-in. Sets are 12 to 24 reps; drop to the three-quarter press-up and floor dips if the full versions are too hard. Warm up first with the NHS 6-minute warm-up (nhs-6-min-warm-up) and finish with the 5-minute stretch (nhs-5-min-cool-down-stretch).",
+  "source": {
+    "title": "10-minute home toning workout",
+    "url": "https://web.archive.org/web/20220401/https://www.nhs.uk/live-well/exercise/10-minute-home-toning-workout/",
+    "author": "NHS",
+    "kind": "article",
+    "license": "Open Government Licence v3.0 (NHS)",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "NHS",
+    "Home workout",
+    "Resistance band",
+    "Toning",
+    "Full body",
+    "10 minutes"
+  ],
+  "level": "Medium",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "Press-ups",
+      "repeat": 2,
+      "note": "2 sets of 12 to 15 reps",
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "bw_pushup",
+          "forMode": "reps",
+          "forValue": 12,
+          "note": "Full press-up, or the three-quarter (knees down) version"
+        },
+        {
+          "kind": "rest",
+          "id": "r1",
+          "seconds": 20
+        }
+      ]
+    },
+    {
+      "kind": "block",
+      "id": "b2",
+      "name": "Triceps dips",
+      "repeat": 2,
+      "note": "2 sets of 12 to 15 reps",
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "bw_bench_dip",
+          "forMode": "reps",
+          "forValue": 12,
+          "note": "Hands on the floor behind you, hips lifted; hands on a bench for more"
+        },
+        {
+          "kind": "rest",
+          "id": "r2",
+          "seconds": 20
+        }
+      ]
+    },
+    {
+      "kind": "block",
+      "id": "b3",
+      "name": "Shoulder press",
+      "repeat": 2,
+      "note": "2 sets of 12 to 24 reps",
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s3",
+          "exercise": "band_shoulder_press",
+          "forMode": "reps",
+          "forValue": 12
+        },
+        {
+          "kind": "rest",
+          "id": "r3",
+          "seconds": 20
+        }
+      ]
+    },
+    {
+      "kind": "block",
+      "id": "b4",
+      "name": "Shoulder press with lunge",
+      "repeat": 1,
+      "note": "1 set of 12 to 24 reps each side",
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s4",
+          "exercise": "band_lunge_press",
+          "forMode": "reps",
+          "forValue": 12,
+          "note": "Right foot forward"
+        },
+        {
+          "kind": "exercise",
+          "id": "s5",
+          "exercise": "band_lunge_press",
+          "forMode": "reps",
+          "forValue": 12,
+          "note": "Left foot forward"
+        }
+      ]
+    },
+    {
+      "kind": "block",
+      "id": "b5",
+      "name": "Biceps curl",
+      "repeat": 2,
+      "note": "2 sets of 12 to 24 reps",
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s6",
+          "exercise": "band_curl",
+          "forMode": "reps",
+          "forValue": 12
+        },
+        {
+          "kind": "rest",
+          "id": "r4",
+          "seconds": 20
+        }
+      ]
+    },
+    {
+      "kind": "block",
+      "id": "b6",
+      "name": "Lateral raise",
+      "repeat": 2,
+      "note": "2 sets of 12 to 24 reps",
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s7",
+          "exercise": "band_lat_raise",
+          "forMode": "reps",
+          "forValue": 12
+        },
+        {
+          "kind": "rest",
+          "id": "r5",
+          "seconds": 20
+        }
+      ]
+    },
+    {
+      "kind": "block",
+      "id": "b7",
+      "name": "Squat",
+      "repeat": 2,
+      "note": "2 sets of 15 to 24 reps",
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s8",
+          "exercise": "bw_squat",
+          "forMode": "reps",
+          "forValue": 15
+        },
+        {
+          "kind": "rest",
+          "id": "r6",
+          "seconds": 20
+        }
+      ]
+    },
+    {
+      "kind": "block",
+      "id": "b8",
+      "name": "Lunge",
+      "repeat": 1,
+      "note": "1 set of 15 to 24 reps each leg",
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s9",
+          "exercise": "bw_lunge",
+          "forMode": "reps",
+          "forValue": 15,
+          "note": "Static split stance, right leg forward"
+        },
+        {
+          "kind": "exercise",
+          "id": "s10",
+          "exercise": "bw_lunge",
+          "forMode": "reps",
+          "forValue": 15,
+          "note": "Left leg forward"
+        }
+      ]
+    },
+    {
+      "kind": "block",
+      "id": "b9",
+      "name": "Stomach crunch",
+      "repeat": 2,
+      "note": "2 sets of 15 to 24 reps",
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s11",
+          "exercise": "bw_crunch",
+          "forMode": "reps",
+          "forValue": 15
+        },
+        {
+          "kind": "rest",
+          "id": "r7",
+          "seconds": 20
+        }
+      ]
+    },
+    {
+      "kind": "block",
+      "id": "b10",
+      "name": "Back raise",
+      "repeat": 2,
+      "note": "2 sets of 15 to 24 reps",
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s12",
+          "exercise": "bw_back_raise",
+          "forMode": "reps",
+          "forValue": 15
+        },
+        {
+          "kind": "rest",
+          "id": "r8",
+          "seconds": 20
+        }
+      ]
+    }
+  ]
+}

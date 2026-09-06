@@ -1,0 +1,75 @@
+{
+  "id": "cf-hero-weaver",
+  "title": "Weaver",
+  "creator": "CrossFit",
+  "description": "Four rounds of 10 L pull-ups, 15 push-ups, 15 chest-to-bar pull-ups, 15 push-ups, 20 pull-ups and 15 push-ups, for time. Honours U.S. Army 1st Lt. Todd W. Weaver of the 101st Airborne, killed by a roadside bomb in Kandahar in 2010. 180 pull-ups of three kinds and 180 push-ups; no equipment beyond a bar.",
+  "source": {
+    "title": "Weaver – CrossFit Hero WOD",
+    "url": "https://www.crossfit.com/benchmark/weaver",
+    "author": "CrossFit",
+    "kind": "benchmark",
+    "license": "Public benchmark; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "CrossFit",
+    "Hero WOD",
+    "For time",
+    "Bodyweight",
+    "Gymnastics"
+  ],
+  "level": "Hard",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "4 rounds",
+      "mode": "fortime",
+      "repeat": 4,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "bw_l_pullup",
+          "forMode": "reps",
+          "forValue": 10
+        },
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "bw_pushup",
+          "forMode": "reps",
+          "forValue": 15
+        },
+        {
+          "kind": "exercise",
+          "id": "s3",
+          "exercise": "bw_chest_to_bar_pullup",
+          "forMode": "reps",
+          "forValue": 15
+        },
+        {
+          "kind": "exercise",
+          "id": "s4",
+          "exercise": "bw_pushup",
+          "forMode": "reps",
+          "forValue": 15
+        },
+        {
+          "kind": "exercise",
+          "id": "s5",
+          "exercise": "bw_pullup",
+          "forMode": "reps",
+          "forValue": 20
+        },
+        {
+          "kind": "exercise",
+          "id": "s6",
+          "exercise": "bw_pushup",
+          "forMode": "reps",
+          "forValue": 15
+        }
+      ]
+    }
+  ]
+}

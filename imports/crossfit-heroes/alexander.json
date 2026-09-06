@@ -1,0 +1,58 @@
+{
+  "id": "cf-hero-alexander",
+  "title": "Alexander",
+  "creator": "CrossFit",
+  "description": "Five rounds of 31 back squats at 135/95 lb and 12 power cleans at 185/125 lb. Honours U.S. Army Staff Sgt. Alexander G. Povilaitis, killed by an IED in Kandahar Province, Afghanistan, in 2012. The squats add up to 155 reps, so pick a bar you can rack and unrack quickly.",
+  "source": {
+    "title": "Alexander – CrossFit Hero WOD",
+    "url": "https://www.crossfit.com/benchmark/alexander",
+    "author": "CrossFit",
+    "kind": "benchmark",
+    "license": "Public benchmark; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "CrossFit",
+    "Hero",
+    "For time",
+    "Barbell"
+  ],
+  "level": "Hard",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "Alexander",
+      "mode": "fortime",
+      "repeat": 5,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "bb_back_squat",
+          "target": 61.0,
+          "rx": {
+            "men": 61.0,
+            "women": 43.0
+          },
+          "forMode": "reps",
+          "forValue": 31,
+          "note": "135/95 lb"
+        },
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "bb_power_clean",
+          "target": 84.0,
+          "rx": {
+            "men": 84.0,
+            "women": 56.5
+          },
+          "forMode": "reps",
+          "forValue": 12,
+          "note": "185/125 lb"
+        }
+      ]
+    }
+  ]
+}

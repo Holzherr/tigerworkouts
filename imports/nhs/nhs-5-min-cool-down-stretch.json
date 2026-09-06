@@ -1,0 +1,132 @@
+{
+  "id": "nhs-5-min-cool-down-stretch",
+  "title": "5-minute cool-down stretch",
+  "creator": "NHS",
+  "description": "The NHS post-workout stretch used after all its 10-minute workouts: buttock, hamstring, inner thigh, calf and thigh stretches held 15 to 20 seconds, one-sided ones on both sides. Takes about five minutes; stay longer on anything tight. Modelled as timed holds with the lower end of the range.",
+  "source": {
+    "title": "How to stretch after exercising",
+    "url": "https://www.nhs.uk/live-well/exercise/how-to-stretch-after-exercising/",
+    "author": "NHS",
+    "kind": "article",
+    "license": "Open Government Licence v3.0 (NHS)",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "NHS",
+    "Cool-down",
+    "Stretch",
+    "No equipment",
+    "5 minutes"
+  ],
+  "level": "Easy",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "Buttock stretch",
+      "repeat": 1,
+      "note": "Hold 15 to 20 s each side",
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "bw_stretch_buttock",
+          "forMode": "seconds",
+          "forValue": 15,
+          "note": "Right leg crossed"
+        },
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "bw_stretch_buttock",
+          "forMode": "seconds",
+          "forValue": 15,
+          "note": "Left leg crossed"
+        }
+      ]
+    },
+    {
+      "kind": "block",
+      "id": "b2",
+      "name": "Hamstring stretch",
+      "repeat": 1,
+      "note": "Hold 15 to 20 s each side",
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s3",
+          "exercise": "bw_stretch_hamstring_lying",
+          "forMode": "seconds",
+          "forValue": 15,
+          "note": "Right leg"
+        },
+        {
+          "kind": "exercise",
+          "id": "s4",
+          "exercise": "bw_stretch_hamstring_lying",
+          "forMode": "seconds",
+          "forValue": 15,
+          "note": "Left leg"
+        }
+      ]
+    },
+    {
+      "kind": "exercise",
+      "id": "s5",
+      "exercise": "bw_stretch_inner_thigh",
+      "forMode": "seconds",
+      "forValue": 15,
+      "note": "Hold 15 to 20 s"
+    },
+    {
+      "kind": "block",
+      "id": "b3",
+      "name": "Calf stretch",
+      "repeat": 1,
+      "note": "Hold 15 to 20 s each side",
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s6",
+          "exercise": "bw_stretch_calf",
+          "forMode": "seconds",
+          "forValue": 15,
+          "note": "Right leg forward, left calf"
+        },
+        {
+          "kind": "exercise",
+          "id": "s7",
+          "exercise": "bw_stretch_calf",
+          "forMode": "seconds",
+          "forValue": 15,
+          "note": "Other side"
+        }
+      ]
+    },
+    {
+      "kind": "block",
+      "id": "b4",
+      "name": "Thigh stretch",
+      "repeat": 1,
+      "note": "Hold 15 to 20 s each side",
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s8",
+          "exercise": "bw_stretch_thigh",
+          "forMode": "seconds",
+          "forValue": 15,
+          "note": "Lying on the right side, left thigh"
+        },
+        {
+          "kind": "exercise",
+          "id": "s9",
+          "exercise": "bw_stretch_thigh",
+          "forMode": "seconds",
+          "forValue": 15,
+          "note": "Other side"
+        }
+      ]
+    }
+  ]
+}

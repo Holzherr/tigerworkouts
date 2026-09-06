@@ -1,0 +1,78 @@
+{
+  "id": "cf-hero-gallant",
+  "title": "Gallant",
+  "creator": "CrossFit",
+  "description": "A mile run carrying a 20/14 lb medicine ball, 60 burpee pull-ups, an 800 m run with the ball, 30 burpee pull-ups, a 400 m run with the ball and 15 burpee pull-ups. Honours U.S. Navy EOD Petty Officer 2nd Class Taylor Gallant, killed during diving operations off North Carolina in 2012. 105 burpee pull-ups; scale to a bar you can jump to.",
+  "source": {
+    "title": "Gallant – CrossFit Hero WOD",
+    "url": "https://www.crossfit.com/benchmark/gallant",
+    "author": "CrossFit",
+    "kind": "benchmark",
+    "license": "Public benchmark; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "CrossFit",
+    "Hero",
+    "For time",
+    "Run",
+    "Bodyweight"
+  ],
+  "level": "Hard",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "Gallant",
+      "mode": "fortime",
+      "repeat": 1,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "cardio_run",
+          "forMode": "meters",
+          "forValue": 1609,
+          "note": "carry the 20/14 lb medicine ball"
+        },
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "bw_burpee_pullup",
+          "forMode": "reps",
+          "forValue": 60
+        },
+        {
+          "kind": "exercise",
+          "id": "s3",
+          "exercise": "cardio_run",
+          "forMode": "meters",
+          "forValue": 800,
+          "note": "carry the 20/14 lb medicine ball"
+        },
+        {
+          "kind": "exercise",
+          "id": "s4",
+          "exercise": "bw_burpee_pullup",
+          "forMode": "reps",
+          "forValue": 30
+        },
+        {
+          "kind": "exercise",
+          "id": "s5",
+          "exercise": "cardio_run",
+          "forMode": "meters",
+          "forValue": 400,
+          "note": "carry the 20/14 lb medicine ball"
+        },
+        {
+          "kind": "exercise",
+          "id": "s6",
+          "exercise": "bw_burpee_pullup",
+          "forMode": "reps",
+          "forValue": 15
+        }
+      ]
+    }
+  ]
+}

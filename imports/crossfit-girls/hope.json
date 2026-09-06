@@ -1,0 +1,90 @@
+{
+  "id": "cf-girls-hope",
+  "title": "Hope",
+  "creator": "CrossFit",
+  "description": "Three five-minute rounds in the Fight Gone Bad format: one minute each of burpees, power snatches at 75 lb, box jumps on a 24 in box, thrusters at 75 lb and chest-to-bar pull-ups, then one minute of rest. Every rep is a point and the score is the total. Created for the CrossFit for Hope fundraiser in 2012.",
+  "source": {
+    "title": "Hope – CrossFit benchmark WOD (\"The Girls\")",
+    "url": "https://www.crossfit.com/benchmark/hope",
+    "author": "CrossFit",
+    "kind": "benchmark",
+    "license": "Public benchmark; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "CrossFit",
+    "Girls",
+    "Intervals",
+    "Barbell",
+    "Bodyweight",
+    "Max reps"
+  ],
+  "level": "Hard",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "Hope",
+      "mode": "rounds",
+      "repeat": 3,
+      "note": "Score = total reps across all stations",
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "bw_burpee",
+          "forMode": "seconds",
+          "forValue": 60,
+          "note": "Max reps"
+        },
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "bb_power_snatch",
+          "target": 34,
+          "rx": {
+            "men": 34,
+            "women": 25
+          },
+          "forMode": "seconds",
+          "forValue": 60,
+          "note": "75/55 lb, max reps"
+        },
+        {
+          "kind": "exercise",
+          "id": "s3",
+          "exercise": "bw_box_jump",
+          "forMode": "seconds",
+          "forValue": 60,
+          "note": "24/20 in box, max reps"
+        },
+        {
+          "kind": "exercise",
+          "id": "s4",
+          "exercise": "bb_thruster",
+          "target": 34,
+          "rx": {
+            "men": 34,
+            "women": 25
+          },
+          "forMode": "seconds",
+          "forValue": 60,
+          "note": "75/55 lb, max reps"
+        },
+        {
+          "kind": "exercise",
+          "id": "s5",
+          "exercise": "bw_chest_to_bar_pullup",
+          "forMode": "seconds",
+          "forValue": 60,
+          "note": "Max reps"
+        },
+        {
+          "kind": "rest",
+          "id": "r1",
+          "seconds": 60
+        }
+      ]
+    }
+  ]
+}

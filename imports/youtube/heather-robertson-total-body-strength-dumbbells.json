@@ -1,0 +1,313 @@
+{
+  "id": "yt-heather-robertson-total-body-strength-dumbbells",
+  "title": "Total Body STRENGTH Workout (Dumbbells Only)",
+  "creator": "Heather Robertson",
+  "description": "A 40-minute dumbbell strength session from Heather Robertson, ~2M views. Four circuits of four moves at 40 seconds work and 20 seconds rest, each circuit done twice back to back: squats, deadlifts and push presses first, then lunges, bridges and skull crushers, then Cossack squats, swings and rear flys, finishing with renegade rows. She uses 10, 15 and 25 lb dumbbells.",
+  "source": {
+    "title": "Total Body STRENGTH Workout // Dumbbells Only",
+    "url": "https://www.youtube.com/watch?v=USi3LmPlj_0",
+    "author": "Heather Robertson",
+    "kind": "video",
+    "license": "Video © creator, linked not copied; exercise list is factual",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "Follow-along",
+    "Dumbbells",
+    "Strength",
+    "Full body"
+  ],
+  "level": "Medium",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b5",
+      "name": "Warm-up",
+      "repeat": 1,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s17",
+          "exercise": "bw_warm_up",
+          "forMode": "seconds",
+          "forValue": 216,
+          "startSeconds": 28
+        }
+      ]
+    },
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "Circuit 1",
+      "repeat": 2,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "db_goblet_squat",
+          "forMode": "seconds",
+          "forValue": 40,
+          "startSeconds": 244
+        },
+        {
+          "kind": "rest",
+          "id": "r1",
+          "seconds": 20
+        },
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "db_deadlift",
+          "forMode": "seconds",
+          "forValue": 40,
+          "startSeconds": 304
+        },
+        {
+          "kind": "rest",
+          "id": "r2",
+          "seconds": 20
+        },
+        {
+          "kind": "exercise",
+          "id": "s3",
+          "exercise": "db_push_press",
+          "forMode": "seconds",
+          "forValue": 40,
+          "startSeconds": 364
+        },
+        {
+          "kind": "rest",
+          "id": "r3",
+          "seconds": 20
+        },
+        {
+          "kind": "exercise",
+          "id": "s4",
+          "exercise": "db_row",
+          "forMode": "seconds",
+          "forValue": 40,
+          "startSeconds": 424,
+          "note": "Bent-over row, both arms"
+        },
+        {
+          "kind": "rest",
+          "id": "r4",
+          "seconds": 20
+        }
+      ],
+      "note": "40 s work + 20 s rest, 2 rounds; startSeconds for round 1 from the description."
+    },
+    {
+      "kind": "block",
+      "id": "b2",
+      "name": "Circuit 2",
+      "repeat": 2,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s5",
+          "exercise": "db_lunge",
+          "forMode": "seconds",
+          "forValue": 40,
+          "startSeconds": 724,
+          "note": "Reverse lunges"
+        },
+        {
+          "kind": "rest",
+          "id": "r5",
+          "seconds": 20
+        },
+        {
+          "kind": "exercise",
+          "id": "s6",
+          "exercise": "bw_hip_bridge",
+          "forMode": "seconds",
+          "forValue": 40,
+          "startSeconds": 784,
+          "note": "Dumbbell on the hips"
+        },
+        {
+          "kind": "rest",
+          "id": "r6",
+          "seconds": 20
+        },
+        {
+          "kind": "exercise",
+          "id": "s7",
+          "exercise": "db_skull_crusher",
+          "forMode": "seconds",
+          "forValue": 40,
+          "startSeconds": 844
+        },
+        {
+          "kind": "rest",
+          "id": "r7",
+          "seconds": 20
+        },
+        {
+          "kind": "exercise",
+          "id": "s8",
+          "exercise": "bw_pushup",
+          "forMode": "seconds",
+          "forValue": 40,
+          "startSeconds": 904
+        },
+        {
+          "kind": "rest",
+          "id": "r8",
+          "seconds": 20
+        }
+      ],
+      "note": "40 s work + 20 s rest, 2 rounds; startSeconds for round 1 from the description."
+    },
+    {
+      "kind": "rest",
+      "id": "r17",
+      "seconds": 12
+    },
+    {
+      "kind": "block",
+      "id": "b3",
+      "name": "Circuit 3",
+      "repeat": 2,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s9",
+          "exercise": "bw_cossack_squat",
+          "forMode": "seconds",
+          "forValue": 40,
+          "startSeconds": 1216,
+          "note": "Holding a dumbbell"
+        },
+        {
+          "kind": "rest",
+          "id": "r9",
+          "seconds": 20
+        },
+        {
+          "kind": "exercise",
+          "id": "s10",
+          "exercise": "db_rear_delt_fly",
+          "forMode": "seconds",
+          "forValue": 40,
+          "startSeconds": 1276
+        },
+        {
+          "kind": "rest",
+          "id": "r10",
+          "seconds": 20
+        },
+        {
+          "kind": "exercise",
+          "id": "s11",
+          "exercise": "db_tricep_ext",
+          "forMode": "seconds",
+          "forValue": 40,
+          "startSeconds": 1336,
+          "note": "Tricep press"
+        },
+        {
+          "kind": "rest",
+          "id": "r11",
+          "seconds": 20
+        },
+        {
+          "kind": "exercise",
+          "id": "s12",
+          "exercise": "db_swing",
+          "forMode": "seconds",
+          "forValue": 40,
+          "startSeconds": 1396,
+          "note": "1-arm swing"
+        },
+        {
+          "kind": "rest",
+          "id": "r12",
+          "seconds": 20
+        }
+      ],
+      "note": "40 s work + 20 s rest, 2 rounds; startSeconds for round 1 from the description."
+    },
+    {
+      "kind": "block",
+      "id": "b4",
+      "name": "Circuit 4",
+      "repeat": 2,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s13",
+          "exercise": "db_curl",
+          "forMode": "seconds",
+          "forValue": 40,
+          "startSeconds": 1696,
+          "note": "Sumo squat hold with curls"
+        },
+        {
+          "kind": "rest",
+          "id": "r13",
+          "seconds": 20
+        },
+        {
+          "kind": "exercise",
+          "id": "s14",
+          "exercise": "bw_situp",
+          "forMode": "seconds",
+          "forValue": 40,
+          "startSeconds": 1756,
+          "note": "Crunch twist + press with a dumbbell"
+        },
+        {
+          "kind": "rest",
+          "id": "r14",
+          "seconds": 20
+        },
+        {
+          "kind": "exercise",
+          "id": "s15",
+          "exercise": "db_renegade_row",
+          "forMode": "seconds",
+          "forValue": 40,
+          "startSeconds": 1816
+        },
+        {
+          "kind": "rest",
+          "id": "r15",
+          "seconds": 20
+        },
+        {
+          "kind": "exercise",
+          "id": "s16",
+          "exercise": "bw_jumping_jack",
+          "forMode": "seconds",
+          "forValue": 40,
+          "startSeconds": 1876,
+          "note": "1-arm jack with a dumbbell overhead"
+        },
+        {
+          "kind": "rest",
+          "id": "r16",
+          "seconds": 20
+        }
+      ],
+      "note": "40 s work + 20 s rest, 2 rounds; startSeconds for round 1 from the description."
+    },
+    {
+      "kind": "block",
+      "id": "b6",
+      "name": "Cool-down",
+      "repeat": 1,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s18",
+          "exercise": "bw_cool_down",
+          "forMode": "seconds",
+          "forValue": 220,
+          "startSeconds": 2176
+        }
+      ]
+    }
+  ]
+}

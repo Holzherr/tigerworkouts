@@ -1,0 +1,53 @@
+{
+  "id": "cf-hero-erin",
+  "title": "Erin",
+  "creator": "CrossFit",
+  "description": "Five rounds of 15 dumbbell split cleans with 40/30 lb dumbbells and 21 pull-ups. Honours Canadian Army Master Cpl. Erin Doyle, killed in a firefight in Kandahar Province, Afghanistan, in 2008. Alternate the lead leg on the split cleans.",
+  "source": {
+    "title": "Erin – CrossFit Hero WOD",
+    "url": "https://www.crossfit.com/benchmark/erin",
+    "author": "CrossFit",
+    "kind": "benchmark",
+    "license": "Public benchmark; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "CrossFit",
+    "Hero",
+    "For time",
+    "Dumbbell",
+    "Bodyweight"
+  ],
+  "level": "Hard",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "Erin",
+      "mode": "fortime",
+      "repeat": 5,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "db_split_clean",
+          "target": 18.0,
+          "rx": {
+            "men": 18.0,
+            "women": 13.5
+          },
+          "forMode": "reps",
+          "forValue": 15,
+          "note": "40/30 lb"
+        },
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "bw_pullup",
+          "forMode": "reps",
+          "forValue": 21
+        }
+      ]
+    }
+  ]
+}

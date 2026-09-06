@@ -1,0 +1,164 @@
+{
+  "id": "cf-hero-dallas-5",
+  "title": "Dallas 5",
+  "creator": "CrossFit",
+  "description": "Five 5-minute stations with a minute's rest between: max burpees; 7 deadlifts and 7 box jumps; Turkish get-ups; 7 snatches and 7 push-ups; rowing for calories. Score is total reps. Honours the five Dallas police officers killed in the July 2016 sniper ambush. Loads are 155/105 lb deadlift, 40/30 lb dumbbell get-up and 75/55 lb snatch.",
+  "source": {
+    "title": "Dallas 5 – CrossFit Hero WOD",
+    "url": "https://www.crossfit.com/benchmark/dallas-5",
+    "author": "CrossFit",
+    "kind": "benchmark",
+    "license": "Public benchmark; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "CrossFit",
+    "Hero",
+    "AMRAP",
+    "Intervals",
+    "Barbell",
+    "Row"
+  ],
+  "level": "Hard",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "Station 1",
+      "mode": "amrap",
+      "repeat": 1,
+      "timeCapSec": 300,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "bw_burpee",
+          "forMode": "max",
+          "forValue": 1
+        }
+      ]
+    },
+    {
+      "kind": "rest",
+      "id": "r1",
+      "seconds": 60
+    },
+    {
+      "kind": "block",
+      "id": "b2",
+      "name": "Station 2",
+      "mode": "amrap",
+      "repeat": 1,
+      "timeCapSec": 300,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "bb_deadlift",
+          "target": 70.5,
+          "rx": {
+            "men": 70.5,
+            "women": 47.5
+          },
+          "forMode": "reps",
+          "forValue": 7,
+          "note": "155/105 lb"
+        },
+        {
+          "kind": "exercise",
+          "id": "s3",
+          "exercise": "bw_box_jump",
+          "forMode": "reps",
+          "forValue": 7,
+          "note": "24/20 in box"
+        }
+      ]
+    },
+    {
+      "kind": "rest",
+      "id": "r2",
+      "seconds": 60
+    },
+    {
+      "kind": "block",
+      "id": "b3",
+      "name": "Station 3",
+      "mode": "amrap",
+      "repeat": 1,
+      "timeCapSec": 300,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s4",
+          "exercise": "kb_turkish_getup",
+          "target": 18.0,
+          "rx": {
+            "men": 18.0,
+            "women": 13.5
+          },
+          "forMode": "max",
+          "forValue": 1,
+          "note": "40/30 lb; dumbbell; alternate arms"
+        }
+      ]
+    },
+    {
+      "kind": "rest",
+      "id": "r3",
+      "seconds": 60
+    },
+    {
+      "kind": "block",
+      "id": "b4",
+      "name": "Station 4",
+      "mode": "amrap",
+      "repeat": 1,
+      "timeCapSec": 300,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s5",
+          "exercise": "bb_snatch",
+          "target": 34.0,
+          "rx": {
+            "men": 34.0,
+            "women": 25.0
+          },
+          "forMode": "reps",
+          "forValue": 7,
+          "note": "75/55 lb"
+        },
+        {
+          "kind": "exercise",
+          "id": "s6",
+          "exercise": "bw_pushup",
+          "forMode": "reps",
+          "forValue": 7
+        }
+      ]
+    },
+    {
+      "kind": "rest",
+      "id": "r4",
+      "seconds": 60
+    },
+    {
+      "kind": "block",
+      "id": "b5",
+      "name": "Station 5",
+      "mode": "amrap",
+      "repeat": 1,
+      "timeCapSec": 300,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s7",
+          "exercise": "cardio_rower",
+          "forMode": "max",
+          "forValue": 1,
+          "note": "max calories"
+        }
+      ]
+    }
+  ]
+}

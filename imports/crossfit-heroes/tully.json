@@ -1,0 +1,53 @@
+{
+  "id": "cf-hero-tully",
+  "title": "Tully",
+  "creator": "CrossFit",
+  "description": "Four rounds of a 200 m swim and 23 dumbbell squat cleans, for time. Honours U.S. Army Special Forces Sgt. 1st Class Michael J. Tully, who died of IED wounds in Baghdad in 2007. A pool workout; keep dumbbells on the deck.",
+  "source": {
+    "title": "Tully – CrossFit Hero WOD",
+    "url": "https://www.crossfit.com/benchmark/tully",
+    "author": "CrossFit",
+    "kind": "benchmark",
+    "license": "Public benchmark; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "CrossFit",
+    "Hero WOD",
+    "For time",
+    "Swim",
+    "Dumbbell"
+  ],
+  "level": "Hard",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "4 rounds",
+      "mode": "fortime",
+      "repeat": 4,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "cardio_swim",
+          "forMode": "meters",
+          "forValue": 200
+        },
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "db_squat_clean",
+          "forMode": "reps",
+          "forValue": 23,
+          "target": 18,
+          "rx": {
+            "men": 18,
+            "women": 13.5
+          },
+          "note": "40/30 lb"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,130 @@
+{
+  "id": "yt-chloe-ting-quick-warm-up",
+  "title": "Do This Warm Up Before Your Workouts (6-min)",
+  "creator": "Chloe Ting",
+  "description": "The 6-minute warm-up Chloe Ting schedules before every workout in her challenges; at 84M+ views it is one of the most-watched warm-ups anywhere. Twelve mobility and pulse-raising moves at 30 seconds each with no breaks: marching, toe touches, arm circles, inchworms, lunges and jacks. Use it on its own before any session in this app.",
+  "source": {
+    "title": "Do This Warm Up Before Your Workouts | Quick Warm Up Routine",
+    "url": "https://www.youtube.com/watch?v=-p0PA9Zt8zk",
+    "author": "Chloe Ting",
+    "kind": "video",
+    "license": "Video © creator, linked not copied; exercise list is factual",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "Follow-along",
+    "Warm-up",
+    "No equipment"
+  ],
+  "level": "Easy",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "Warm-up",
+      "repeat": 1,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "bw_march",
+          "forMode": "seconds",
+          "forValue": 30,
+          "startSeconds": 0
+        },
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "bw_cross_body_toe_touch",
+          "forMode": "seconds",
+          "forValue": 30,
+          "startSeconds": 38
+        },
+        {
+          "kind": "exercise",
+          "id": "s3",
+          "exercise": "bw_overhead_reach",
+          "forMode": "seconds",
+          "forValue": 30,
+          "startSeconds": 68
+        },
+        {
+          "kind": "exercise",
+          "id": "s4",
+          "exercise": "bw_arm_circle",
+          "forMode": "seconds",
+          "forValue": 30,
+          "startSeconds": 98
+        },
+        {
+          "kind": "exercise",
+          "id": "s5",
+          "exercise": "bw_inchworm",
+          "forMode": "seconds",
+          "forValue": 30,
+          "startSeconds": 129
+        },
+        {
+          "kind": "exercise",
+          "id": "s6",
+          "exercise": "bw_reverse_lunge",
+          "forMode": "seconds",
+          "forValue": 30,
+          "startSeconds": 159,
+          "note": "Lunge tap: reverse lunge with a toe tap"
+        },
+        {
+          "kind": "exercise",
+          "id": "s7",
+          "exercise": "bw_lateral_lunge",
+          "forMode": "seconds",
+          "forValue": 30,
+          "startSeconds": 189
+        },
+        {
+          "kind": "exercise",
+          "id": "s8",
+          "exercise": "bw_squat",
+          "forMode": "seconds",
+          "forValue": 30,
+          "startSeconds": 219,
+          "note": "Arms crossed at the chest"
+        },
+        {
+          "kind": "exercise",
+          "id": "s9",
+          "exercise": "bw_stretch_hip_flexor",
+          "forMode": "seconds",
+          "forValue": 30,
+          "startSeconds": 249,
+          "note": "Low lunge, hold each side"
+        },
+        {
+          "kind": "exercise",
+          "id": "s10",
+          "exercise": "bw_leg_circle",
+          "forMode": "seconds",
+          "forValue": 30,
+          "startSeconds": 279
+        },
+        {
+          "kind": "exercise",
+          "id": "s11",
+          "exercise": "bw_standing_crunch",
+          "forMode": "seconds",
+          "forValue": 30,
+          "startSeconds": 309
+        },
+        {
+          "kind": "exercise",
+          "id": "s12",
+          "exercise": "bw_cross_jack",
+          "forMode": "seconds",
+          "forValue": 30,
+          "startSeconds": 339
+        }
+      ],
+      "note": "Timestamps from YouTube key moments (on-screen captions)."
+    }
+  ]
+}

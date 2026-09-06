@@ -1,0 +1,403 @@
+{
+  "id": "yt-sydney-cummings-no-repeats-cardio-abs-30",
+  "title": "No-Repeats Bodyweight Cardio and Abs Workout (30 Mins)",
+  "creator": "Sydney Cummings",
+  "description": "A Summertime Fine bodyweight session from Sydney Cummings, ~110K views. Twenty-seven cardio and core moves done once each for 45 seconds with 15 seconds rest, from jacks and bear crawls to A-skips, broad jumps and single-leg bicycles. No equipment; the only load is the pace you choose.",
+  "source": {
+    "title": "No-Repeats Bodyweight Cardio and Abs Workout - 30 Mins of FUN CARDIO!",
+    "url": "https://www.youtube.com/watch?v=ZtTK8q1lTWA",
+    "author": "Sydney Cummings",
+    "kind": "video",
+    "license": "Video © creator, linked not copied; exercise list is factual",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "Follow-along",
+    "Cardio",
+    "Abs",
+    "No equipment",
+    "No repeat"
+  ],
+  "level": "Medium",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "Warm-up",
+      "repeat": 1,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "bw_warm_up",
+          "forMode": "seconds",
+          "forValue": 120
+        }
+      ]
+    },
+    {
+      "kind": "block",
+      "id": "b2",
+      "name": "27 exercises, 45 s on / 15 s off",
+      "repeat": 1,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "bw_jumping_jack",
+          "forMode": "seconds",
+          "forValue": 45
+        },
+        {
+          "kind": "rest",
+          "id": "r1",
+          "seconds": 15
+        },
+        {
+          "kind": "exercise",
+          "id": "s3",
+          "exercise": "bw_inchworm",
+          "forMode": "seconds",
+          "forValue": 45,
+          "note": "Inchworm and two jacks"
+        },
+        {
+          "kind": "rest",
+          "id": "r2",
+          "seconds": 15
+        },
+        {
+          "kind": "exercise",
+          "id": "s4",
+          "exercise": "bw_plank",
+          "forMode": "seconds",
+          "forValue": 45,
+          "note": "Plank circles"
+        },
+        {
+          "kind": "rest",
+          "id": "r3",
+          "seconds": 15
+        },
+        {
+          "kind": "exercise",
+          "id": "s5",
+          "exercise": "bw_reverse_lunge",
+          "forMode": "seconds",
+          "forValue": 45,
+          "note": "Lunge, knee drive and back leg lift, right"
+        },
+        {
+          "kind": "rest",
+          "id": "r4",
+          "seconds": 15
+        },
+        {
+          "kind": "exercise",
+          "id": "s6",
+          "exercise": "bw_reverse_lunge",
+          "forMode": "seconds",
+          "forValue": 45,
+          "note": "Lunge, knee drive and back leg lift, left"
+        },
+        {
+          "kind": "rest",
+          "id": "r5",
+          "seconds": 15
+        },
+        {
+          "kind": "exercise",
+          "id": "s7",
+          "exercise": "bw_squat",
+          "forMode": "seconds",
+          "forValue": 45,
+          "note": "Squat with middle hand placement shuffle"
+        },
+        {
+          "kind": "rest",
+          "id": "r6",
+          "seconds": 15
+        },
+        {
+          "kind": "exercise",
+          "id": "s8",
+          "exercise": "bw_bear_crawl",
+          "forMode": "seconds",
+          "forValue": 45
+        },
+        {
+          "kind": "rest",
+          "id": "r7",
+          "seconds": 15
+        },
+        {
+          "kind": "exercise",
+          "id": "s9",
+          "exercise": "bw_side_plank",
+          "forMode": "seconds",
+          "forValue": 45,
+          "note": "Leg kick and tuck, left"
+        },
+        {
+          "kind": "rest",
+          "id": "r8",
+          "seconds": 15
+        },
+        {
+          "kind": "exercise",
+          "id": "s10",
+          "exercise": "bw_side_plank",
+          "forMode": "seconds",
+          "forValue": 45,
+          "note": "Leg kick and tuck, right"
+        },
+        {
+          "kind": "rest",
+          "id": "r9",
+          "seconds": 15
+        },
+        {
+          "kind": "exercise",
+          "id": "s11",
+          "exercise": "bw_high_knees",
+          "forMode": "seconds",
+          "forValue": 45,
+          "note": "High knees and chop back"
+        },
+        {
+          "kind": "rest",
+          "id": "r10",
+          "seconds": 15
+        },
+        {
+          "kind": "exercise",
+          "id": "s12",
+          "exercise": "bw_in_out_squat",
+          "forMode": "seconds",
+          "forValue": 45,
+          "note": "Pop squats"
+        },
+        {
+          "kind": "rest",
+          "id": "r11",
+          "seconds": 15
+        },
+        {
+          "kind": "exercise",
+          "id": "s13",
+          "exercise": "bw_dead_bug",
+          "forMode": "seconds",
+          "forValue": 45,
+          "note": "Left"
+        },
+        {
+          "kind": "rest",
+          "id": "r12",
+          "seconds": 15
+        },
+        {
+          "kind": "exercise",
+          "id": "s14",
+          "exercise": "bw_dead_bug",
+          "forMode": "seconds",
+          "forValue": 45,
+          "note": "Right"
+        },
+        {
+          "kind": "rest",
+          "id": "r13",
+          "seconds": 15
+        },
+        {
+          "kind": "exercise",
+          "id": "s15",
+          "exercise": "bw_mountain_climber",
+          "forMode": "seconds",
+          "forValue": 45
+        },
+        {
+          "kind": "rest",
+          "id": "r14",
+          "seconds": 15
+        },
+        {
+          "kind": "exercise",
+          "id": "s16",
+          "exercise": "bw_squat",
+          "forMode": "seconds",
+          "forValue": 45,
+          "note": "Floor tap, sky tap"
+        },
+        {
+          "kind": "rest",
+          "id": "r15",
+          "seconds": 15
+        },
+        {
+          "kind": "exercise",
+          "id": "s17",
+          "exercise": "bw_plank",
+          "forMode": "seconds",
+          "forValue": 45,
+          "note": "Plank butt kicks"
+        },
+        {
+          "kind": "rest",
+          "id": "r16",
+          "seconds": 15
+        },
+        {
+          "kind": "exercise",
+          "id": "s18",
+          "exercise": "bw_high_knees",
+          "forMode": "seconds",
+          "forValue": 45
+        },
+        {
+          "kind": "rest",
+          "id": "r17",
+          "seconds": 15
+        },
+        {
+          "kind": "exercise",
+          "id": "s19",
+          "exercise": "bw_butt_kick",
+          "forMode": "seconds",
+          "forValue": 45
+        },
+        {
+          "kind": "rest",
+          "id": "r18",
+          "seconds": 15
+        },
+        {
+          "kind": "exercise",
+          "id": "s20",
+          "exercise": "bw_high_knees",
+          "forMode": "seconds",
+          "forValue": 45,
+          "note": "A-skips"
+        },
+        {
+          "kind": "rest",
+          "id": "r19",
+          "seconds": 15
+        },
+        {
+          "kind": "exercise",
+          "id": "s21",
+          "exercise": "bw_lateral_shuffle",
+          "forMode": "seconds",
+          "forValue": 45,
+          "note": "Side shuffles"
+        },
+        {
+          "kind": "rest",
+          "id": "r20",
+          "seconds": 15
+        },
+        {
+          "kind": "exercise",
+          "id": "s22",
+          "exercise": "bw_grapevine",
+          "forMode": "seconds",
+          "forValue": 45,
+          "note": "Karaoke step over and back"
+        },
+        {
+          "kind": "rest",
+          "id": "r21",
+          "seconds": 15
+        },
+        {
+          "kind": "exercise",
+          "id": "s23",
+          "exercise": "bw_step_up",
+          "forMode": "seconds",
+          "forValue": 45,
+          "note": "Step up and knee drive, left"
+        },
+        {
+          "kind": "rest",
+          "id": "r22",
+          "seconds": 15
+        },
+        {
+          "kind": "exercise",
+          "id": "s24",
+          "exercise": "bw_step_up",
+          "forMode": "seconds",
+          "forValue": 45,
+          "note": "Step up and knee drive, right"
+        },
+        {
+          "kind": "rest",
+          "id": "r23",
+          "seconds": 15
+        },
+        {
+          "kind": "exercise",
+          "id": "s25",
+          "exercise": "bw_broad_jump",
+          "forMode": "seconds",
+          "forValue": 45,
+          "note": "Backpedal, broad jump"
+        },
+        {
+          "kind": "rest",
+          "id": "r24",
+          "seconds": 15
+        },
+        {
+          "kind": "exercise",
+          "id": "s26",
+          "exercise": "bw_bicycle_crunch",
+          "forMode": "seconds",
+          "forValue": 45,
+          "note": "Slow, straight arms"
+        },
+        {
+          "kind": "rest",
+          "id": "r25",
+          "seconds": 15
+        },
+        {
+          "kind": "exercise",
+          "id": "s27",
+          "exercise": "bw_bicycle_crunch",
+          "forMode": "seconds",
+          "forValue": 45,
+          "note": "Left leg only"
+        },
+        {
+          "kind": "rest",
+          "id": "r26",
+          "seconds": 15
+        },
+        {
+          "kind": "exercise",
+          "id": "s28",
+          "exercise": "bw_bicycle_crunch",
+          "forMode": "seconds",
+          "forValue": 45,
+          "note": "Right leg only"
+        }
+      ]
+    },
+    {
+      "kind": "block",
+      "id": "b3",
+      "name": "Cool-down",
+      "repeat": 1,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s29",
+          "exercise": "bw_cool_down",
+          "forMode": "seconds",
+          "forValue": 120
+        }
+      ]
+    }
+  ]
+}

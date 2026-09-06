@@ -1,0 +1,268 @@
+{
+  "id": "prog-nsuns-531-lp-day-1",
+  "title": "nSuns 5/3/1 LP – Day 1 (Bench volume + OHP)",
+  "creator": "u/nSuns (r/Fitness)",
+  "description": "nSuns' high-volume take on 5/3/1: every day has a nine-set T1 lift (a 5/3/1+ ramp then six back-off sets) and an eight-set T2 lift, all as percentages of a training max (start at 90% of 1RM), plus 2–4 accessories of your choice. Four days a week: bench+OHP, squat+sumo, bench+close-grip, deadlift+front squat. Weekly TM bump depends on the 1+ set: 0–1 reps none, 2–3 reps +2.5 kg, 4–5 reps +2.5–5 kg, 6+ reps +5–7.5 kg. Long sessions; the source gives no rest times (3 min T1 / 2 min T2 used).",
+  "source": {
+    "title": "nSuns 5/3/1 LP (4-day)",
+    "url": "https://thefitness.wiki/routines/nsuns-lp/",
+    "author": "u/nSuns (r/Fitness)",
+    "kind": "program",
+    "license": "Freely published program; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "Program",
+    "Strength",
+    "Barbell",
+    "Percentage-based",
+    "5/3/1"
+  ],
+  "level": "Hard",
+  "program": {
+    "name": "nSuns 5/3/1 LP 4-day",
+    "day": "Day 1",
+    "order": 1
+  },
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "T1 Bench press (8/6/4 volume day)",
+      "repeat": 1,
+      "note": "No 1+ set today; bench TM moves on Day 3",
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "bb_bench",
+          "forMode": "reps",
+          "forValue": 8,
+          "note": "65% TM"
+        },
+        {
+          "kind": "rest",
+          "id": "r1",
+          "seconds": 180
+        },
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "bb_bench",
+          "forMode": "reps",
+          "forValue": 6,
+          "note": "75% TM"
+        },
+        {
+          "kind": "rest",
+          "id": "r2",
+          "seconds": 180
+        },
+        {
+          "kind": "exercise",
+          "id": "s3",
+          "exercise": "bb_bench",
+          "forMode": "reps",
+          "forValue": 4,
+          "note": "85% TM"
+        },
+        {
+          "kind": "rest",
+          "id": "r3",
+          "seconds": 180
+        },
+        {
+          "kind": "exercise",
+          "id": "s4",
+          "exercise": "bb_bench",
+          "forMode": "reps",
+          "forValue": 4,
+          "note": "85% TM"
+        },
+        {
+          "kind": "rest",
+          "id": "r4",
+          "seconds": 180
+        },
+        {
+          "kind": "exercise",
+          "id": "s5",
+          "exercise": "bb_bench",
+          "forMode": "reps",
+          "forValue": 4,
+          "note": "85% TM"
+        },
+        {
+          "kind": "rest",
+          "id": "r5",
+          "seconds": 180
+        },
+        {
+          "kind": "exercise",
+          "id": "s6",
+          "exercise": "bb_bench",
+          "forMode": "reps",
+          "forValue": 5,
+          "note": "80% TM"
+        },
+        {
+          "kind": "rest",
+          "id": "r6",
+          "seconds": 180
+        },
+        {
+          "kind": "exercise",
+          "id": "s7",
+          "exercise": "bb_bench",
+          "forMode": "reps",
+          "forValue": 6,
+          "note": "75% TM"
+        },
+        {
+          "kind": "rest",
+          "id": "r7",
+          "seconds": 180
+        },
+        {
+          "kind": "exercise",
+          "id": "s8",
+          "exercise": "bb_bench",
+          "forMode": "reps",
+          "forValue": 7,
+          "note": "70% TM"
+        },
+        {
+          "kind": "rest",
+          "id": "r8",
+          "seconds": 180
+        },
+        {
+          "kind": "exercise",
+          "id": "s9",
+          "exercise": "bb_bench",
+          "forMode": "reps",
+          "forValue": 8,
+          "note": "65% TM – 8+ AMRAP"
+        },
+        {
+          "kind": "rest",
+          "id": "r9",
+          "seconds": 180
+        }
+      ]
+    },
+    {
+      "kind": "block",
+      "id": "b2",
+      "name": "T2 Overhead press",
+      "repeat": 1,
+      "note": "T2 percentages are of the T2 lift's own training max; add 2.5 kg (upper) / 5 kg (lower) when all reps are made",
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s10",
+          "exercise": "bb_ohp",
+          "forMode": "reps",
+          "forValue": 6,
+          "note": "50% TM"
+        },
+        {
+          "kind": "rest",
+          "id": "r10",
+          "seconds": 120
+        },
+        {
+          "kind": "exercise",
+          "id": "s11",
+          "exercise": "bb_ohp",
+          "forMode": "reps",
+          "forValue": 5,
+          "note": "60% TM"
+        },
+        {
+          "kind": "rest",
+          "id": "r11",
+          "seconds": 120
+        },
+        {
+          "kind": "exercise",
+          "id": "s12",
+          "exercise": "bb_ohp",
+          "forMode": "reps",
+          "forValue": 3,
+          "note": "70% TM"
+        },
+        {
+          "kind": "rest",
+          "id": "r12",
+          "seconds": 120
+        },
+        {
+          "kind": "exercise",
+          "id": "s13",
+          "exercise": "bb_ohp",
+          "forMode": "reps",
+          "forValue": 5,
+          "note": "70% TM"
+        },
+        {
+          "kind": "rest",
+          "id": "r13",
+          "seconds": 120
+        },
+        {
+          "kind": "exercise",
+          "id": "s14",
+          "exercise": "bb_ohp",
+          "forMode": "reps",
+          "forValue": 7,
+          "note": "70% TM"
+        },
+        {
+          "kind": "rest",
+          "id": "r14",
+          "seconds": 120
+        },
+        {
+          "kind": "exercise",
+          "id": "s15",
+          "exercise": "bb_ohp",
+          "forMode": "reps",
+          "forValue": 4,
+          "note": "70% TM"
+        },
+        {
+          "kind": "rest",
+          "id": "r15",
+          "seconds": 120
+        },
+        {
+          "kind": "exercise",
+          "id": "s16",
+          "exercise": "bb_ohp",
+          "forMode": "reps",
+          "forValue": 6,
+          "note": "70% TM"
+        },
+        {
+          "kind": "rest",
+          "id": "r16",
+          "seconds": 120
+        },
+        {
+          "kind": "exercise",
+          "id": "s17",
+          "exercise": "bb_ohp",
+          "forMode": "reps",
+          "forValue": 8,
+          "note": "70% TM"
+        },
+        {
+          "kind": "rest",
+          "id": "r17",
+          "seconds": 120
+        }
+      ]
+    }
+  ]
+}

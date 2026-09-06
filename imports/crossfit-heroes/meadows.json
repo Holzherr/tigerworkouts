@@ -1,0 +1,70 @@
+{
+  "id": "cf-hero-meadows",
+  "title": "Meadows",
+  "creator": "CrossFit",
+  "description": "A rings-only chipper: 20 muscle-ups, 25 slow lowers from an inverted hang, 30 ring handstand push-ups, 35 ring rows and 40 ring push-ups, for time. Honours U.S. Marine Capt. Joshua S. Meadows of MARSOC, killed by enemy fire in Farah Province, Afghanistan, in 2009. Very advanced; most athletes should cut the rep counts and swap ring HSPU for wall HSPU or pike push-ups.",
+  "source": {
+    "title": "Meadows – CrossFit Hero WOD",
+    "url": "https://www.crossfit.com/benchmark/meadows",
+    "author": "CrossFit",
+    "kind": "benchmark",
+    "license": "Public benchmark; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "CrossFit",
+    "Hero WOD",
+    "For time",
+    "Gymnastics",
+    "Rings"
+  ],
+  "level": "Hard",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "Chipper",
+      "mode": "fortime",
+      "repeat": 1,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "gym_muscle_up",
+          "forMode": "reps",
+          "forValue": 20
+        },
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "gym_ring_inverted_lower",
+          "forMode": "reps",
+          "forValue": 25,
+          "note": "Slow, straight body and arms"
+        },
+        {
+          "kind": "exercise",
+          "id": "s3",
+          "exercise": "bw_handstand_pushup",
+          "forMode": "reps",
+          "forValue": 30,
+          "note": "On the rings"
+        },
+        {
+          "kind": "exercise",
+          "id": "s4",
+          "exercise": "gym_ring_row",
+          "forMode": "reps",
+          "forValue": 35
+        },
+        {
+          "kind": "exercise",
+          "id": "s5",
+          "exercise": "gym_ring_pushup",
+          "forMode": "reps",
+          "forValue": 40
+        }
+      ]
+    }
+  ]
+}

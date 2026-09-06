@@ -1,0 +1,104 @@
+{
+  "id": "nhs-c25k-w3",
+  "title": "Couch to 5K – Week 3",
+  "creator": "NHS",
+  "description": "Week 3 introduces 3-minute runs: run 90 s, walk 90 s, run 3 min, walk 3 min, then repeat the pattern once more, ending on a 3-minute run. Total 25 minutes including the walks. Same session for all three runs this week; bring a timer if you are not using the app.",
+  "source": {
+    "title": "Couch to 5K running plan",
+    "url": "https://www.nhs.uk/better-health/get-active/get-running-with-couch-to-5k/couch-to-5k-running-plan/",
+    "author": "NHS",
+    "kind": "program",
+    "license": "Open Government Licence v3.0 (NHS)",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "NHS",
+    "Couch to 5K",
+    "Running",
+    "Beginner",
+    "Intervals"
+  ],
+  "level": "Easy",
+  "program": {
+    "name": "Couch to 5K",
+    "day": "Week 3",
+    "order": 3
+  },
+  "items": [
+    {
+      "kind": "exercise",
+      "id": "s1",
+      "exercise": "cardio_walk",
+      "forMode": "minutes",
+      "forValue": 5,
+      "note": "Brisk warm-up walk. Stretch before you start (see nhs-post-run-stretch or the NHS pre-run video)."
+    },
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "Run/walk pattern",
+      "repeat": 1,
+      "note": "Pattern done twice, no walk after the final run",
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "cardio_run",
+          "forMode": "seconds",
+          "forValue": 90
+        },
+        {
+          "kind": "exercise",
+          "id": "s3",
+          "exercise": "cardio_walk",
+          "forMode": "seconds",
+          "forValue": 90
+        },
+        {
+          "kind": "exercise",
+          "id": "s4",
+          "exercise": "cardio_run",
+          "forMode": "seconds",
+          "forValue": 180
+        },
+        {
+          "kind": "exercise",
+          "id": "s5",
+          "exercise": "cardio_walk",
+          "forMode": "seconds",
+          "forValue": 180
+        },
+        {
+          "kind": "exercise",
+          "id": "s6",
+          "exercise": "cardio_run",
+          "forMode": "seconds",
+          "forValue": 90
+        },
+        {
+          "kind": "exercise",
+          "id": "s7",
+          "exercise": "cardio_walk",
+          "forMode": "seconds",
+          "forValue": 90
+        },
+        {
+          "kind": "exercise",
+          "id": "s8",
+          "exercise": "cardio_run",
+          "forMode": "seconds",
+          "forValue": 180,
+          "note": "Final run"
+        }
+      ]
+    },
+    {
+      "kind": "exercise",
+      "id": "s9",
+      "exercise": "cardio_walk",
+      "forMode": "minutes",
+      "forValue": 5,
+      "note": "Cool-down walk, then stretch (nhs-post-run-stretch)."
+    }
+  ]
+}

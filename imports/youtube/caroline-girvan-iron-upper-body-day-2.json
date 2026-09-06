@@ -1,0 +1,200 @@
+{
+  "id": "yt-caroline-girvan-iron-upper-body-day-2",
+  "title": "IRON Series 30 Min Upper Body Workout - Shoulders, Back, Chest (Day 2)",
+  "creator": "Caroline Girvan",
+  "description": "Day 2 of Caroline Girvan's IRON series and her most-watched video, 6.1M+ views. Heavy dumbbell hypertrophy work in straight sets: 60 seconds on, 30 seconds off, three sets each of floor chest press, flyes, renegade rows, pullovers and shoulder press, then rear delt flys alternated with lateral raises and a front-raise finisher. She lists her loads (17.5 / 10 / 4 kg per hand), used here as targets; no timestamps are published.",
+  "source": {
+    "title": "IRON Series 30 Min Upper Body Workout - Shoulders, Back, Chest | 2",
+    "url": "https://www.youtube.com/watch?v=tczVC2rRO7U",
+    "author": "Caroline Girvan",
+    "kind": "video",
+    "license": "Video © creator, linked not copied; exercise list is factual",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "Follow-along",
+    "Dumbbells",
+    "Upper body",
+    "Strength",
+    "Program"
+  ],
+  "level": "Hard",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "Chest press x3",
+      "repeat": 3,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "db_floor_press",
+          "forMode": "seconds",
+          "forValue": 60,
+          "target": 17.5
+        },
+        {
+          "kind": "rest",
+          "id": "r1",
+          "seconds": 30
+        }
+      ],
+      "note": "3 sets of 60 s with 30 s rest"
+    },
+    {
+      "kind": "block",
+      "id": "b2",
+      "name": "Flyes x3",
+      "repeat": 3,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "db_chest_fly",
+          "forMode": "seconds",
+          "forValue": 60,
+          "target": 10
+        },
+        {
+          "kind": "rest",
+          "id": "r2",
+          "seconds": 30
+        }
+      ],
+      "note": "3 sets of 60 s with 30 s rest"
+    },
+    {
+      "kind": "block",
+      "id": "b3",
+      "name": "Renegade row x3",
+      "repeat": 3,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s3",
+          "exercise": "db_renegade_row",
+          "forMode": "seconds",
+          "forValue": 60,
+          "target": 17.5
+        },
+        {
+          "kind": "rest",
+          "id": "r3",
+          "seconds": 30
+        }
+      ],
+      "note": "3 sets of 60 s with 30 s rest"
+    },
+    {
+      "kind": "block",
+      "id": "b4",
+      "name": "Pullover x3",
+      "repeat": 3,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s4",
+          "exercise": "db_pullover",
+          "forMode": "seconds",
+          "forValue": 60,
+          "target": 17.5
+        },
+        {
+          "kind": "rest",
+          "id": "r4",
+          "seconds": 30
+        }
+      ],
+      "note": "3 sets of 60 s with 30 s rest"
+    },
+    {
+      "kind": "block",
+      "id": "b5",
+      "name": "Shoulder press x3",
+      "repeat": 3,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s5",
+          "exercise": "db_shoulder_press",
+          "forMode": "seconds",
+          "forValue": 60,
+          "target": 10
+        },
+        {
+          "kind": "rest",
+          "id": "r5",
+          "seconds": 30
+        }
+      ],
+      "note": "3 sets of 60 s with 30 s rest"
+    },
+    {
+      "kind": "block",
+      "id": "b6",
+      "name": "Rear delt fly / lateral raise x2",
+      "repeat": 2,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s6",
+          "exercise": "db_rear_delt_fly",
+          "forMode": "seconds",
+          "forValue": 60,
+          "target": 4
+        },
+        {
+          "kind": "rest",
+          "id": "r6",
+          "seconds": 30
+        },
+        {
+          "kind": "exercise",
+          "id": "s7",
+          "exercise": "lat_raise",
+          "forMode": "seconds",
+          "forValue": 60,
+          "target": 4
+        },
+        {
+          "kind": "rest",
+          "id": "r7",
+          "seconds": 30
+        }
+      ],
+      "note": "Alternating, 60 s on / 30 s off"
+    },
+    {
+      "kind": "block",
+      "id": "b7",
+      "name": "Finisher",
+      "repeat": 1,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s8",
+          "exercise": "db_front_raise",
+          "forMode": "seconds",
+          "forValue": 60,
+          "target": 10,
+          "note": "Alternating frontal raise"
+        },
+        {
+          "kind": "rest",
+          "id": "r8",
+          "seconds": 30
+        },
+        {
+          "kind": "exercise",
+          "id": "s9",
+          "exercise": "db_front_raise",
+          "forMode": "seconds",
+          "forValue": 60,
+          "target": 10,
+          "note": "Frontal raise with one dumbbell, both hands"
+        }
+      ]
+    }
+  ]
+}

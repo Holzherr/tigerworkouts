@@ -1,0 +1,110 @@
+{
+  "id": "cf-hero-goose",
+  "title": "Goose",
+  "creator": "CrossFit",
+  "description": "A partner workout: 106 deadlifts at 135/95 lb, then 7 rounds of 3 rope climbs, 15 thrusters and 15 kettlebell swings at 70/53 lb, then a 400 m run with a 45/25 lb plate each. Honours U.S. Air Force Master Sgt. Chris Raguso, 106th Rescue Wing, killed in a Pave Hawk crash in western Iraq in 2018. Solo: halve the deadlifts and rounds.",
+  "source": {
+    "title": "Goose – CrossFit Hero WOD",
+    "url": "https://www.crossfit.com/benchmark/goose",
+    "author": "CrossFit",
+    "kind": "benchmark",
+    "license": "Public benchmark; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "CrossFit",
+    "Hero",
+    "For time",
+    "Partner",
+    "Barbell",
+    "Kettlebell",
+    "Run"
+  ],
+  "level": "Hard",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "Deadlifts",
+      "mode": "fortime",
+      "repeat": 1,
+      "note": "Partner workout: split the work",
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "bb_deadlift",
+          "target": 61.0,
+          "rx": {
+            "men": 61.0,
+            "women": 43.0
+          },
+          "forMode": "reps",
+          "forValue": 106,
+          "note": "135/95 lb; shared"
+        }
+      ]
+    },
+    {
+      "kind": "block",
+      "id": "b2",
+      "name": "7 rounds",
+      "mode": "fortime",
+      "repeat": 7,
+      "note": "Split with your partner",
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "gym_rope_climb",
+          "forMode": "reps",
+          "forValue": 3,
+          "note": "15 ft"
+        },
+        {
+          "kind": "exercise",
+          "id": "s3",
+          "exercise": "bb_thruster",
+          "target": 61.0,
+          "rx": {
+            "men": 61.0,
+            "women": 43.0
+          },
+          "forMode": "reps",
+          "forValue": 15,
+          "note": "135/95 lb"
+        },
+        {
+          "kind": "exercise",
+          "id": "s4",
+          "exercise": "kb_swing",
+          "target": 32,
+          "rx": {
+            "men": 32,
+            "women": 24
+          },
+          "forMode": "reps",
+          "forValue": 15,
+          "note": "70/53 lb"
+        }
+      ]
+    },
+    {
+      "kind": "block",
+      "id": "b3",
+      "name": "Run",
+      "mode": "fortime",
+      "repeat": 1,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s5",
+          "exercise": "cardio_run",
+          "forMode": "meters",
+          "forValue": 400,
+          "note": "both partners carry a 45/25 lb plate"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,63 @@
+{
+  "id": "cf-hero-spehar",
+  "title": "Spehar",
+  "creator": "CrossFit",
+  "description": "100 thrusters, 100 chest-to-bar pull-ups and a 6-mile run, partitioned however you like, for time. Honours Navy SEAL Petty Officer 2nd Class Nicholas Spehar, killed when his helicopter was shot down in Wardak Province, Afghanistan, in 2011. Most people break it into rounds with a chunk of the run in each.",
+  "source": {
+    "title": "Spehar – CrossFit Hero WOD",
+    "url": "https://www.crossfit.com/benchmark/spehar",
+    "author": "CrossFit",
+    "kind": "benchmark",
+    "license": "Public benchmark; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "CrossFit",
+    "Hero WOD",
+    "For time",
+    "Barbell",
+    "Gymnastics",
+    "Running"
+  ],
+  "level": "Hard",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "Chipper",
+      "mode": "fortime",
+      "repeat": 1,
+      "note": "Partition the thrusters, pull-ups and run as needed",
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "bb_thruster",
+          "forMode": "reps",
+          "forValue": 100,
+          "target": 61,
+          "rx": {
+            "men": 61,
+            "women": 43
+          },
+          "note": "135/95 lb"
+        },
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "bw_chest_to_bar_pullup",
+          "forMode": "reps",
+          "forValue": 100
+        },
+        {
+          "kind": "exercise",
+          "id": "s3",
+          "exercise": "cardio_run",
+          "forMode": "meters",
+          "forValue": 9656,
+          "note": "6 miles"
+        }
+      ]
+    }
+  ]
+}

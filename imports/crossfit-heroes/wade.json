@@ -1,0 +1,72 @@
+{
+  "id": "cf-hero-wade",
+  "title": "Wade",
+  "creator": "CrossFit",
+  "description": "Run 1,200 m, then four rounds of 12 strict pull-ups, 9 strict dips and 6 strict handstand push-ups, then run 1,200 m, in a 20 lb vest, for time. Honours U.S. Army Spc. Andrew Wade of 10th Mountain Division, who died at Bagram, Afghanistan, in 2011; he loved CrossFit and strict gymnastics. All strict: use bands rather than kipping.",
+  "source": {
+    "title": "Wade – CrossFit Hero WOD",
+    "url": "https://www.crossfit.com/benchmark/wade",
+    "author": "CrossFit",
+    "kind": "benchmark",
+    "license": "Public benchmark; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "CrossFit",
+    "Hero WOD",
+    "For time",
+    "Gymnastics",
+    "Running",
+    "Weight vest"
+  ],
+  "level": "Hard",
+  "items": [
+    {
+      "kind": "exercise",
+      "id": "s1",
+      "exercise": "cardio_run",
+      "forMode": "meters",
+      "forValue": 1200
+    },
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "4 rounds",
+      "mode": "fortime",
+      "repeat": 4,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "bw_pullup",
+          "forMode": "reps",
+          "forValue": 12,
+          "note": "Strict"
+        },
+        {
+          "kind": "exercise",
+          "id": "s3",
+          "exercise": "bw_dip",
+          "forMode": "reps",
+          "forValue": 9,
+          "note": "Strict"
+        },
+        {
+          "kind": "exercise",
+          "id": "s4",
+          "exercise": "bw_handstand_pushup",
+          "forMode": "reps",
+          "forValue": 6,
+          "note": "Strict"
+        }
+      ]
+    },
+    {
+      "kind": "exercise",
+      "id": "s5",
+      "exercise": "cardio_run",
+      "forMode": "meters",
+      "forValue": 1200
+    }
+  ]
+}

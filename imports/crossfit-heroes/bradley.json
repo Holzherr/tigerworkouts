@@ -1,0 +1,68 @@
+{
+  "id": "cf-hero-bradley",
+  "title": "Bradley",
+  "creator": "CrossFit",
+  "description": "Ten rounds of a 100 m sprint, 10 pull-ups, another 100 m sprint and 10 burpees, with 30 seconds rest after each round. Honours U.S. Air Force Senior Airman Bradley R. Smith, killed by an IED in Kandahar Province, Afghanistan, in 2010. Short and sharp; go hard every round.",
+  "source": {
+    "title": "Bradley – CrossFit Hero WOD",
+    "url": "https://www.crossfit.com/benchmark/bradley",
+    "author": "CrossFit",
+    "kind": "benchmark",
+    "license": "Public benchmark; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "CrossFit",
+    "Hero",
+    "For time",
+    "Run",
+    "Bodyweight"
+  ],
+  "level": "Hard",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "Bradley",
+      "mode": "fortime",
+      "repeat": 10,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "cardio_run",
+          "forMode": "meters",
+          "forValue": 100,
+          "note": "sprint"
+        },
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "bw_pullup",
+          "forMode": "reps",
+          "forValue": 10
+        },
+        {
+          "kind": "exercise",
+          "id": "s3",
+          "exercise": "cardio_run",
+          "forMode": "meters",
+          "forValue": 100,
+          "note": "sprint"
+        },
+        {
+          "kind": "exercise",
+          "id": "s4",
+          "exercise": "bw_burpee",
+          "forMode": "reps",
+          "forValue": 10
+        },
+        {
+          "kind": "rest",
+          "id": "r1",
+          "seconds": 30
+        }
+      ]
+    }
+  ]
+}

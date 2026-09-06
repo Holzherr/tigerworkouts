@@ -1,0 +1,42 @@
+{
+  "id": "proto-emom-12-power-cleans",
+  "title": "EMOM 12: 3 power cleans",
+  "creator": "Common EMOM template",
+  "description": "Twelve minutes of 3 power cleans on the minute, 36 quality reps at a moderately heavy load (around 70% of your 1RM). A strength-skill EMOM: the point is bar speed and position under a clock, not fatigue. Drop the load, not the reps, if the third rep gets ugly.",
+  "source": {
+    "title": "CrossFit Terms Explained – EMOM",
+    "url": "https://www.crossfit.com/essentials/crossfit-terms-explained",
+    "author": "CrossFit (format); common template",
+    "kind": "protocol",
+    "license": "Published protocol; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "EMOM",
+    "Barbell",
+    "Olympic lifting",
+    "Template"
+  ],
+  "level": "Hard",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "EMOM 12",
+      "mode": "emom",
+      "repeat": 12,
+      "everySec": 60,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "bb_power_clean",
+          "forMode": "reps",
+          "forValue": 3,
+          "target": 60,
+          "note": "~70% of 1RM; touch-and-go or singles"
+        }
+      ]
+    }
+  ]
+}

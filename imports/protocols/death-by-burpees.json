@@ -1,0 +1,54 @@
+{
+  "id": "proto-death-by-burpees",
+  "title": "Death by Burpees",
+  "creator": "CrossFit (common \"death by\" format)",
+  "description": "With a running clock, do 1 burpee in the first minute, 2 in the second, 3 in the third, adding one every minute until you can no longer finish the reps inside the minute. Your score is the last full minute plus the reps you got in the one you failed. Modelled here to minute 10 (55 burpees); most people fall off between 12 and 18.",
+  "source": {
+    "title": "\"Death by Burpee\" – SnoRidge CrossFit",
+    "url": "https://www.snoridgecrossfit.com/death-by-burpee-2/",
+    "author": "CrossFit community",
+    "kind": "protocol",
+    "license": "Published protocol; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "CrossFit",
+    "Ladder",
+    "Death by",
+    "Bodyweight",
+    "No equipment"
+  ],
+  "level": "Medium",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "Death by burpees",
+      "mode": "ladder",
+      "repeat": 1,
+      "ladder": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10
+      ],
+      "everySec": 60,
+      "note": "Each rung starts on the minute; rest = what is left of the minute. Continue +1 per minute past 10 until you fail a minute.",
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "bw_burpee",
+          "forMode": "reps",
+          "forValue": 1
+        }
+      ]
+    }
+  ]
+}

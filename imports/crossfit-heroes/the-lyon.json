@@ -1,0 +1,73 @@
+{
+  "id": "cf-hero-the-lyon",
+  "title": "The Lyon",
+  "creator": "CrossFit",
+  "description": "Five rounds, each for time, of 7 squat cleans, 7 shoulder-to-overhead and 7 burpee chest-to-bar pull-ups, with two minutes' rest between rounds. Honours U.S. Air Force Capt. David Lyon, killed by an IED in Kabul in 2013. Use a bar about six inches above your reach for the burpee pull-ups; record each round.",
+  "source": {
+    "title": "The Lyon – CrossFit Hero WOD",
+    "url": "https://www.crossfit.com/benchmark/the-lyon",
+    "author": "CrossFit",
+    "kind": "benchmark",
+    "license": "Public benchmark; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "CrossFit",
+    "Hero WOD",
+    "Intervals",
+    "Barbell",
+    "Gymnastics"
+  ],
+  "level": "Hard",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "5 rounds (each for time)",
+      "mode": "fortime",
+      "repeat": 5,
+      "note": "Rest 2 minutes between rounds; record each round time",
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "bb_squat_clean",
+          "forMode": "reps",
+          "forValue": 7,
+          "target": 75,
+          "rx": {
+            "men": 75,
+            "women": 52
+          },
+          "note": "165/115 lb"
+        },
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "bb_push_jerk",
+          "forMode": "reps",
+          "forValue": 7,
+          "target": 75,
+          "rx": {
+            "men": 75,
+            "women": 52
+          },
+          "note": "165/115 lb — Any shoulder-to-overhead"
+        },
+        {
+          "kind": "exercise",
+          "id": "s3",
+          "exercise": "bw_burpee_pullup",
+          "forMode": "reps",
+          "forValue": 7,
+          "note": "Chest-to-bar; bar ~6 in above standing reach"
+        },
+        {
+          "kind": "rest",
+          "id": "r1",
+          "seconds": 120
+        }
+      ]
+    }
+  ]
+}

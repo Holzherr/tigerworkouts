@@ -1,0 +1,364 @@
+{
+  "id": "yt-madfit-20-min-total-beginners",
+  "title": "20 min Fat Burning Workout for TOTAL BEGINNERS",
+  "creator": "MadFit",
+  "description": "Maddie Lymburner's most-watched video (39M+ views): a no-jumping, no-equipment full-body session built for people starting from zero. Four sets of four moves at 45 seconds with 15 seconds of active rest, bookended by a 2-minute warm-up and cool-down of marches and step jacks. Every move repeats once so you can fix form on the second go.",
+  "source": {
+    "title": "20 min Fat Burning Workout for TOTAL BEGINNERS (Achievable, No Equipment)",
+    "url": "https://www.youtube.com/watch?v=IT94xC35u6k",
+    "author": "MadFit",
+    "kind": "video",
+    "license": "Video © creator, linked not copied; exercise list is factual",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "Follow-along",
+    "Beginner",
+    "Full body",
+    "No equipment",
+    "Low impact"
+  ],
+  "level": "Easy",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "Warm-up",
+      "repeat": 1,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "bw_march",
+          "forMode": "seconds",
+          "forValue": 30,
+          "startSeconds": 29,
+          "note": "March with knee taps"
+        },
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "bw_butt_kick",
+          "forMode": "seconds",
+          "forValue": 30,
+          "startSeconds": 59
+        },
+        {
+          "kind": "exercise",
+          "id": "s3",
+          "exercise": "bw_side_reach",
+          "forMode": "seconds",
+          "forValue": 30,
+          "startSeconds": 89
+        },
+        {
+          "kind": "exercise",
+          "id": "s4",
+          "exercise": "bw_step_jack",
+          "forMode": "seconds",
+          "forValue": 30,
+          "startSeconds": 125
+        }
+      ]
+    },
+    {
+      "kind": "rest",
+      "id": "r13",
+      "seconds": 15
+    },
+    {
+      "kind": "block",
+      "id": "b2",
+      "name": "Set 1",
+      "repeat": 1,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s5",
+          "exercise": "bw_squat",
+          "forMode": "seconds",
+          "forValue": 45,
+          "startSeconds": 170
+        },
+        {
+          "kind": "rest",
+          "id": "r1",
+          "seconds": 15
+        },
+        {
+          "kind": "exercise",
+          "id": "s6",
+          "exercise": "bw_standing_crunch",
+          "forMode": "seconds",
+          "forValue": 45,
+          "startSeconds": 230,
+          "note": "Standing elbow to knee"
+        },
+        {
+          "kind": "rest",
+          "id": "r2",
+          "seconds": 15
+        },
+        {
+          "kind": "exercise",
+          "id": "s7",
+          "exercise": "bw_squat",
+          "forMode": "seconds",
+          "forValue": 45,
+          "startSeconds": 290
+        },
+        {
+          "kind": "rest",
+          "id": "r3",
+          "seconds": 15
+        },
+        {
+          "kind": "exercise",
+          "id": "s8",
+          "exercise": "bw_standing_crunch",
+          "forMode": "seconds",
+          "forValue": 45,
+          "startSeconds": 350,
+          "note": "Standing elbow to knee"
+        }
+      ],
+      "note": "15 s active rest between moves (keep marching)."
+    },
+    {
+      "kind": "rest",
+      "id": "r14",
+      "seconds": 15
+    },
+    {
+      "kind": "block",
+      "id": "b3",
+      "name": "Set 2",
+      "repeat": 1,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s9",
+          "exercise": "bw_squat",
+          "forMode": "seconds",
+          "forValue": 45,
+          "startSeconds": 414,
+          "note": "Rise with floor touch: squat, touch the floor, stand and reach up"
+        },
+        {
+          "kind": "rest",
+          "id": "r4",
+          "seconds": 15
+        },
+        {
+          "kind": "exercise",
+          "id": "s10",
+          "exercise": "bw_arm_circle",
+          "forMode": "seconds",
+          "forValue": 45,
+          "startSeconds": 474,
+          "note": "Tight circles, backward"
+        },
+        {
+          "kind": "rest",
+          "id": "r5",
+          "seconds": 15
+        },
+        {
+          "kind": "exercise",
+          "id": "s11",
+          "exercise": "bw_squat",
+          "forMode": "seconds",
+          "forValue": 45,
+          "startSeconds": 534,
+          "note": "Rise with floor touch"
+        },
+        {
+          "kind": "rest",
+          "id": "r6",
+          "seconds": 15
+        },
+        {
+          "kind": "exercise",
+          "id": "s12",
+          "exercise": "bw_arm_circle",
+          "forMode": "seconds",
+          "forValue": 45,
+          "startSeconds": 594,
+          "note": "Forward"
+        }
+      ],
+      "note": "15 s active rest between moves (keep marching)."
+    },
+    {
+      "kind": "rest",
+      "id": "r15",
+      "seconds": 15
+    },
+    {
+      "kind": "block",
+      "id": "b4",
+      "name": "Set 3",
+      "repeat": 1,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s13",
+          "exercise": "bw_hip_bridge",
+          "forMode": "seconds",
+          "forValue": 45,
+          "startSeconds": 668
+        },
+        {
+          "kind": "rest",
+          "id": "r7",
+          "seconds": 15
+        },
+        {
+          "kind": "exercise",
+          "id": "s14",
+          "exercise": "bw_crunch",
+          "forMode": "seconds",
+          "forValue": 45,
+          "startSeconds": 728
+        },
+        {
+          "kind": "rest",
+          "id": "r8",
+          "seconds": 15
+        },
+        {
+          "kind": "exercise",
+          "id": "s15",
+          "exercise": "bw_hip_bridge",
+          "forMode": "seconds",
+          "forValue": 45,
+          "startSeconds": 788
+        },
+        {
+          "kind": "rest",
+          "id": "r9",
+          "seconds": 15
+        },
+        {
+          "kind": "exercise",
+          "id": "s16",
+          "exercise": "bw_crunch",
+          "forMode": "seconds",
+          "forValue": 45,
+          "startSeconds": 848
+        }
+      ],
+      "note": "15 s active rest between moves (keep marching)."
+    },
+    {
+      "kind": "rest",
+      "id": "r16",
+      "seconds": 15
+    },
+    {
+      "kind": "block",
+      "id": "b5",
+      "name": "Set 4",
+      "repeat": 1,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s17",
+          "exercise": "bw_up_and_over",
+          "forMode": "seconds",
+          "forValue": 45,
+          "startSeconds": 913
+        },
+        {
+          "kind": "rest",
+          "id": "r10",
+          "seconds": 15
+        },
+        {
+          "kind": "exercise",
+          "id": "s18",
+          "exercise": "bw_arm_open_close",
+          "forMode": "seconds",
+          "forValue": 45,
+          "startSeconds": 973,
+          "note": "Front and side squeeze"
+        },
+        {
+          "kind": "rest",
+          "id": "r11",
+          "seconds": 15
+        },
+        {
+          "kind": "exercise",
+          "id": "s19",
+          "exercise": "bw_up_and_over",
+          "forMode": "seconds",
+          "forValue": 45,
+          "startSeconds": 1033
+        },
+        {
+          "kind": "rest",
+          "id": "r12",
+          "seconds": 15
+        },
+        {
+          "kind": "exercise",
+          "id": "s20",
+          "exercise": "bw_arm_open_close",
+          "forMode": "seconds",
+          "forValue": 45,
+          "startSeconds": 1093,
+          "note": "Front and side squeeze"
+        }
+      ],
+      "note": "15 s active rest between moves (keep marching)."
+    },
+    {
+      "kind": "rest",
+      "id": "r17",
+      "seconds": 15
+    },
+    {
+      "kind": "block",
+      "id": "b6",
+      "name": "Cool-down",
+      "repeat": 1,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s21",
+          "exercise": "bw_march",
+          "forMode": "seconds",
+          "forValue": 30,
+          "startSeconds": 1165,
+          "note": "March with knee taps"
+        },
+        {
+          "kind": "exercise",
+          "id": "s22",
+          "exercise": "bw_butt_kick",
+          "forMode": "seconds",
+          "forValue": 30,
+          "startSeconds": 1195,
+          "note": "With arm raises"
+        },
+        {
+          "kind": "exercise",
+          "id": "s23",
+          "exercise": "bw_side_reach",
+          "forMode": "seconds",
+          "forValue": 30,
+          "startSeconds": 1225
+        },
+        {
+          "kind": "exercise",
+          "id": "s24",
+          "exercise": "bw_step_jack",
+          "forMode": "seconds",
+          "forValue": 30,
+          "startSeconds": 1255
+        }
+      ]
+    }
+  ]
+}

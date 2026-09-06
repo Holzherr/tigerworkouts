@@ -1,0 +1,83 @@
+{
+  "id": "nhs-lower-back-pain-exercises",
+  "title": "Lower back pain exercises",
+  "creator": "NHS",
+  "description": "Five gentle floor exercises by physiotherapist Nick Sinfield for the NHS to ease lower back pain: bottom-to-heels stretch, knee rolls, back extensions, deep abdominal bracing and pelvic tilts. Meant daily, 8 to 15 slow reps each, with a cushion under the head. Only move as far as is comfortable.",
+  "source": {
+    "title": "Lower back pain exercises",
+    "url": "https://web.archive.org/web/20191223113415/https://www.nhs.uk/live-well/exercise/lower-back-pain-exercises/",
+    "author": "NHS",
+    "kind": "article",
+    "license": "Open Government Licence v3.0 (NHS)",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "NHS",
+    "Rehab",
+    "Back",
+    "Core",
+    "Mobility",
+    "No equipment"
+  ],
+  "level": "Easy",
+  "items": [
+    {
+      "kind": "exercise",
+      "id": "s1",
+      "exercise": "bw_child_pose",
+      "forMode": "reps",
+      "forValue": 8,
+      "note": "Hold each for one deep breath; 8 to 10 times"
+    },
+    {
+      "kind": "exercise",
+      "id": "s2",
+      "exercise": "bw_knee_roll",
+      "forMode": "reps",
+      "forValue": 8,
+      "note": "Alternate sides, one breath each; 8 to 10 times"
+    },
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "Back extensions",
+      "repeat": 8,
+      "note": "8 to 10 times",
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s3",
+          "exercise": "bw_cobra",
+          "forMode": "seconds",
+          "forValue": 5,
+          "note": "Hold 5 to 10 s"
+        }
+      ]
+    },
+    {
+      "kind": "block",
+      "id": "b2",
+      "name": "Deep abdominal strengthening",
+      "repeat": 5,
+      "note": "5 times",
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s4",
+          "exercise": "bw_deep_abdominal",
+          "forMode": "seconds",
+          "forValue": 20,
+          "note": "Hold for 5 to 10 breaths, then relax"
+        }
+      ]
+    },
+    {
+      "kind": "exercise",
+      "id": "s5",
+      "exercise": "bw_pelvic_tilt",
+      "forMode": "reps",
+      "forValue": 10,
+      "note": "10 to 15 slow rocks"
+    }
+  ]
+}

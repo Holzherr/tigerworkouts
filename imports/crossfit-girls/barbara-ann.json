@@ -1,0 +1,76 @@
+{
+  "id": "cf-girls-barbara-ann",
+  "title": "Barbara Ann",
+  "creator": "CrossFit",
+  "description": "Five rounds, each for time, of 20 handstand push-ups, 30 deadlifts at 135/95 lb, 40 sit-ups and 50 double-unders, with exactly three minutes of rest between rounds. One of the seven new Girls added in January 2021; Barbara's interval format with a barbell and a rope. Score is the total of the five work rounds.",
+  "source": {
+    "title": "Barbara Ann – CrossFit benchmark WOD (\"The Girls\")",
+    "url": "https://www.crossfit.com/benchmark/barbara-ann",
+    "author": "CrossFit",
+    "kind": "benchmark",
+    "license": "Public benchmark; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "CrossFit",
+    "Girls",
+    "For time",
+    "Barbell",
+    "Gymnastics",
+    "Jump rope",
+    "Intervals"
+  ],
+  "level": "Hard",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "Barbara Ann",
+      "mode": "fortime",
+      "repeat": 5,
+      "note": "Score = total time of the 5 work rounds",
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "bw_handstand_pushup",
+          "forMode": "reps",
+          "forValue": 20
+        },
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "bb_deadlift",
+          "target": 61,
+          "rx": {
+            "men": 61,
+            "women": 43
+          },
+          "forMode": "reps",
+          "forValue": 30,
+          "note": "135/95 lb"
+        },
+        {
+          "kind": "exercise",
+          "id": "s3",
+          "exercise": "bw_situp",
+          "forMode": "reps",
+          "forValue": 40
+        },
+        {
+          "kind": "exercise",
+          "id": "s4",
+          "exercise": "bw_double_under",
+          "forMode": "reps",
+          "forValue": 50
+        },
+        {
+          "kind": "rest",
+          "id": "r1",
+          "seconds": 180,
+          "note": "Rest exactly 3 minutes between rounds; final rest not counted"
+        }
+      ]
+    }
+  ]
+}

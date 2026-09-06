@@ -1,0 +1,90 @@
+{
+  "id": "cf-hero-restrepo",
+  "title": "Restrepo",
+  "creator": "CrossFit",
+  "description": "Five rounds of a 400 m run, 7 strict pull-ups, 7 strict handstand push-ups, 20 toes-to-bar, 22 alternating dumbbell snatches and a 200 m dumbbell carry, for time. Honours U.S. Army medic Pfc. Juan Restrepo, killed in the Korengal Valley, Afghanistan, in 2007 and remembered in the documentary 'Restrepo'. Strict gymnastics plus a long carry each round; keep the dumbbell moderate.",
+  "source": {
+    "title": "Restrepo – CrossFit Hero WOD",
+    "url": "https://www.crossfit.com/benchmark/restrepo",
+    "author": "CrossFit",
+    "kind": "benchmark",
+    "license": "Public benchmark; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "CrossFit",
+    "Hero WOD",
+    "For time",
+    "Dumbbell",
+    "Gymnastics",
+    "Running"
+  ],
+  "level": "Hard",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "5 rounds",
+      "mode": "fortime",
+      "repeat": 5,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "cardio_run",
+          "forMode": "meters",
+          "forValue": 400
+        },
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "bw_pullup",
+          "forMode": "reps",
+          "forValue": 7,
+          "note": "Strict"
+        },
+        {
+          "kind": "exercise",
+          "id": "s3",
+          "exercise": "bw_handstand_pushup",
+          "forMode": "reps",
+          "forValue": 7,
+          "note": "Strict"
+        },
+        {
+          "kind": "exercise",
+          "id": "s4",
+          "exercise": "bw_toes_to_bar",
+          "forMode": "reps",
+          "forValue": 20
+        },
+        {
+          "kind": "exercise",
+          "id": "s5",
+          "exercise": "db_snatch",
+          "forMode": "reps",
+          "forValue": 22,
+          "target": 22.5,
+          "rx": {
+            "men": 22.5,
+            "women": 16
+          },
+          "note": "50/35 lb — Alternating arms"
+        },
+        {
+          "kind": "exercise",
+          "id": "s6",
+          "exercise": "db_farmers_carry",
+          "forMode": "meters",
+          "forValue": 200,
+          "target": 22.5,
+          "rx": {
+            "men": 22.5,
+            "women": 16
+          },
+          "note": "50/35 lb — Single dumbbell, any carry"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,365 @@
+{
+  "id": "yt-fitness-blender-brutal-hiit-ladder",
+  "title": "Brutal HIIT Ladder Workout - 20 Minute HIIT Workout at Home",
+  "creator": "Fitness Blender",
+  "description": "Fitness Blender's descending-ladder HIIT, 21M+ views. After a 3-minute warm-up, the same four moves (flutter-kick squat, high knees, burpee, jumping jacks) are repeated in rungs of 60, 50, 40, 30, 20 and 10 seconds each with a 20-second rest after every rung. The intervals shrink as you tire, which is the point. No cool-down included.",
+  "source": {
+    "title": "Brutal HIIT Ladder Workout - 20 Minute HIIT Workout at Home",
+    "url": "https://www.youtube.com/watch?v=cZnsLVArIt8",
+    "author": "Fitness Blender",
+    "kind": "video",
+    "license": "Video © creator, linked not copied; exercise list is factual",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "Follow-along",
+    "HIIT",
+    "No equipment",
+    "Ladder"
+  ],
+  "level": "Hard",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "Warm-up (30 s each)",
+      "repeat": 1,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "bw_leg_swing",
+          "forMode": "seconds",
+          "forValue": 30,
+          "startSeconds": 30,
+          "note": "One side"
+        },
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "bw_leg_swing",
+          "forMode": "seconds",
+          "forValue": 30,
+          "startSeconds": 60,
+          "note": "Other side"
+        },
+        {
+          "kind": "exercise",
+          "id": "s3",
+          "exercise": "bw_standing_crunch",
+          "forMode": "seconds",
+          "forValue": 30,
+          "startSeconds": 85,
+          "note": "Knee-up twists"
+        },
+        {
+          "kind": "exercise",
+          "id": "s4",
+          "exercise": "bw_squat",
+          "forMode": "seconds",
+          "forValue": 30,
+          "startSeconds": 115,
+          "note": "Squat with toe touch"
+        },
+        {
+          "kind": "exercise",
+          "id": "s5",
+          "exercise": "bw_lateral_hop",
+          "forMode": "seconds",
+          "forValue": 30,
+          "startSeconds": 147,
+          "note": "Log jumps"
+        },
+        {
+          "kind": "exercise",
+          "id": "s6",
+          "exercise": "bw_jumping_jack",
+          "forMode": "seconds",
+          "forValue": 30,
+          "startSeconds": 180
+        }
+      ]
+    },
+    {
+      "kind": "rest",
+      "id": "r7",
+      "seconds": 45
+    },
+    {
+      "kind": "block",
+      "id": "b2",
+      "name": "60 s rung",
+      "repeat": 1,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s7",
+          "exercise": "bw_squat",
+          "forMode": "seconds",
+          "forValue": 60,
+          "startSeconds": 259,
+          "note": "Flutter kick squat"
+        },
+        {
+          "kind": "exercise",
+          "id": "s8",
+          "exercise": "bw_high_knees",
+          "forMode": "seconds",
+          "forValue": 60,
+          "startSeconds": 319
+        },
+        {
+          "kind": "exercise",
+          "id": "s9",
+          "exercise": "bw_burpee",
+          "forMode": "seconds",
+          "forValue": 60,
+          "startSeconds": 379
+        },
+        {
+          "kind": "exercise",
+          "id": "s10",
+          "exercise": "bw_jumping_jack",
+          "forMode": "seconds",
+          "forValue": 60,
+          "startSeconds": 439
+        },
+        {
+          "kind": "rest",
+          "id": "r1",
+          "seconds": 20
+        }
+      ]
+    },
+    {
+      "kind": "block",
+      "id": "b3",
+      "name": "50 s rung",
+      "repeat": 1,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s11",
+          "exercise": "bw_squat",
+          "forMode": "seconds",
+          "forValue": 50,
+          "startSeconds": 521,
+          "note": "Flutter kick squat"
+        },
+        {
+          "kind": "exercise",
+          "id": "s12",
+          "exercise": "bw_high_knees",
+          "forMode": "seconds",
+          "forValue": 50,
+          "startSeconds": 571
+        },
+        {
+          "kind": "exercise",
+          "id": "s13",
+          "exercise": "bw_burpee",
+          "forMode": "seconds",
+          "forValue": 50,
+          "startSeconds": 621
+        },
+        {
+          "kind": "exercise",
+          "id": "s14",
+          "exercise": "bw_jumping_jack",
+          "forMode": "seconds",
+          "forValue": 50,
+          "startSeconds": 671
+        },
+        {
+          "kind": "rest",
+          "id": "r2",
+          "seconds": 20
+        }
+      ]
+    },
+    {
+      "kind": "block",
+      "id": "b4",
+      "name": "40 s rung",
+      "repeat": 1,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s15",
+          "exercise": "bw_squat",
+          "forMode": "seconds",
+          "forValue": 40,
+          "startSeconds": 744,
+          "note": "Flutter kick squat"
+        },
+        {
+          "kind": "exercise",
+          "id": "s16",
+          "exercise": "bw_high_knees",
+          "forMode": "seconds",
+          "forValue": 40,
+          "startSeconds": 784
+        },
+        {
+          "kind": "exercise",
+          "id": "s17",
+          "exercise": "bw_burpee",
+          "forMode": "seconds",
+          "forValue": 40,
+          "startSeconds": 824
+        },
+        {
+          "kind": "exercise",
+          "id": "s18",
+          "exercise": "bw_jumping_jack",
+          "forMode": "seconds",
+          "forValue": 40,
+          "startSeconds": 864
+        },
+        {
+          "kind": "rest",
+          "id": "r3",
+          "seconds": 20
+        }
+      ]
+    },
+    {
+      "kind": "block",
+      "id": "b5",
+      "name": "30 s rung",
+      "repeat": 1,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s19",
+          "exercise": "bw_squat",
+          "forMode": "seconds",
+          "forValue": 30,
+          "startSeconds": 927,
+          "note": "Flutter kick squat"
+        },
+        {
+          "kind": "exercise",
+          "id": "s20",
+          "exercise": "bw_high_knees",
+          "forMode": "seconds",
+          "forValue": 30,
+          "startSeconds": 957
+        },
+        {
+          "kind": "exercise",
+          "id": "s21",
+          "exercise": "bw_burpee",
+          "forMode": "seconds",
+          "forValue": 30,
+          "startSeconds": 987
+        },
+        {
+          "kind": "exercise",
+          "id": "s22",
+          "exercise": "bw_jumping_jack",
+          "forMode": "seconds",
+          "forValue": 30,
+          "startSeconds": 1017
+        },
+        {
+          "kind": "rest",
+          "id": "r4",
+          "seconds": 20
+        }
+      ]
+    },
+    {
+      "kind": "block",
+      "id": "b6",
+      "name": "20 s rung",
+      "repeat": 1,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s23",
+          "exercise": "bw_squat",
+          "forMode": "seconds",
+          "forValue": 20,
+          "startSeconds": 1072,
+          "note": "Flutter kick squat"
+        },
+        {
+          "kind": "exercise",
+          "id": "s24",
+          "exercise": "bw_high_knees",
+          "forMode": "seconds",
+          "forValue": 20,
+          "startSeconds": 1092
+        },
+        {
+          "kind": "exercise",
+          "id": "s25",
+          "exercise": "bw_burpee",
+          "forMode": "seconds",
+          "forValue": 20,
+          "startSeconds": 1112
+        },
+        {
+          "kind": "exercise",
+          "id": "s26",
+          "exercise": "bw_jumping_jack",
+          "forMode": "seconds",
+          "forValue": 20,
+          "startSeconds": 1132
+        },
+        {
+          "kind": "rest",
+          "id": "r5",
+          "seconds": 20
+        }
+      ]
+    },
+    {
+      "kind": "block",
+      "id": "b7",
+      "name": "10 s rung",
+      "repeat": 1,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s27",
+          "exercise": "bw_squat",
+          "forMode": "seconds",
+          "forValue": 10,
+          "startSeconds": 1174,
+          "note": "Flutter kick squat"
+        },
+        {
+          "kind": "exercise",
+          "id": "s28",
+          "exercise": "bw_high_knees",
+          "forMode": "seconds",
+          "forValue": 10,
+          "startSeconds": 1184
+        },
+        {
+          "kind": "exercise",
+          "id": "s29",
+          "exercise": "bw_burpee",
+          "forMode": "seconds",
+          "forValue": 10,
+          "startSeconds": 1194
+        },
+        {
+          "kind": "exercise",
+          "id": "s30",
+          "exercise": "bw_jumping_jack",
+          "forMode": "seconds",
+          "forValue": 10,
+          "startSeconds": 1204
+        },
+        {
+          "kind": "rest",
+          "id": "r6",
+          "seconds": 20
+        }
+      ]
+    }
+  ]
+}

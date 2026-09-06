@@ -1,0 +1,85 @@
+{
+  "id": "proto-british-army-rft-soldier",
+  "title": "British Army Role Fitness Test (Soldier), Ground Close Combat",
+  "creator": "British Army",
+  "description": "The in-service test for infantry and armoured-corps soldiers introduced in 2019: a 4 km march with 40 kg in 50 minutes, then 2 km with 25 kg in 15 minutes, followed by fire-and-movement bounds with a crawl and sprint, a 110 kg casualty drag, a carry of two 22 kg water cans, a 70 kg vehicle casevac lift and a repeated lift-and-carry of 20 kg bags. Paras and 16 Air Assault get 35 and 12:30 minutes for the marches. Distances for the drag, carries and lift are not in the public description, so treat those as one effort each.",
+  "source": {
+    "title": "All You Need To Know About The British Army's Fitness Standards – Forces News, 24 Oct 2019",
+    "url": "https://www.forcesnews.com/services/army/all-you-need-know-about-british-armys-fitness-standards",
+    "author": "British Army (via Forces News)",
+    "kind": "protocol",
+    "license": "Published protocol; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "Fitness test",
+    "Military",
+    "Loaded carry",
+    "Endurance"
+  ],
+  "level": "Hard",
+  "items": [
+    {
+      "kind": "exercise",
+      "id": "s1",
+      "exercise": "gym_loaded_march",
+      "forMode": "meters",
+      "forValue": 4000,
+      "target": 40,
+      "note": "Within 50 min (Infantry/RAC); 35 min for Paras / 16 AAB"
+    },
+    {
+      "kind": "exercise",
+      "id": "s2",
+      "exercise": "gym_loaded_march",
+      "forMode": "meters",
+      "forValue": 2000,
+      "target": 25,
+      "note": "Within 15 min; 12:30 for Paras / 16 AAB"
+    },
+    {
+      "kind": "exercise",
+      "id": "s3",
+      "exercise": "bw_fire_and_movement",
+      "forMode": "reps",
+      "forValue": 1,
+      "note": "Tactical bounds, then crawl and sprint; distance not published"
+    },
+    {
+      "kind": "exercise",
+      "id": "s4",
+      "exercise": "gym_casualty_drag",
+      "forMode": "reps",
+      "forValue": 1,
+      "target": 110,
+      "note": "110 kg bag; distance not published"
+    },
+    {
+      "kind": "exercise",
+      "id": "s5",
+      "exercise": "gym_water_can_carry",
+      "forMode": "reps",
+      "forValue": 1,
+      "target": 22,
+      "note": "2 × 22 kg cans, simulates a stretcher carry; distance not published"
+    },
+    {
+      "kind": "exercise",
+      "id": "s6",
+      "exercise": "gym_casevac_lift",
+      "forMode": "reps",
+      "forValue": 1,
+      "target": 70,
+      "note": "70 kg lift into a vehicle"
+    },
+    {
+      "kind": "exercise",
+      "id": "s7",
+      "exercise": "gym_repeated_lift_carry",
+      "forMode": "reps",
+      "forValue": 1,
+      "target": 20,
+      "note": "20 kg bags over distance; reps and distance not published"
+    }
+  ]
+}

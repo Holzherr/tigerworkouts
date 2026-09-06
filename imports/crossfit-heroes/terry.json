@@ -1,0 +1,85 @@
+{
+  "id": "cf-hero-terry",
+  "title": "Terry",
+  "creator": "CrossFit",
+  "description": "Run a mile, 100 push-ups, 100 m bear crawl, run a mile, 100 m bear crawl, 100 push-ups, run a mile, for time. Honours DEA Special Agent James 'Terry' Watson, killed during a robbery attempt in Bogota, Colombia, in 2013. Bear crawling 100 m after 100 push-ups is slower than it sounds.",
+  "source": {
+    "title": "Terry – CrossFit Hero WOD",
+    "url": "https://www.crossfit.com/benchmark/terry",
+    "author": "CrossFit",
+    "kind": "benchmark",
+    "license": "Public benchmark; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "CrossFit",
+    "Hero WOD",
+    "For time",
+    "Bodyweight",
+    "Running"
+  ],
+  "level": "Hard",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "Chipper",
+      "mode": "fortime",
+      "repeat": 1,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "cardio_run",
+          "forMode": "meters",
+          "forValue": 1609,
+          "note": "1 mile"
+        },
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "bw_pushup",
+          "forMode": "reps",
+          "forValue": 100
+        },
+        {
+          "kind": "exercise",
+          "id": "s3",
+          "exercise": "bw_bear_crawl",
+          "forMode": "meters",
+          "forValue": 100
+        },
+        {
+          "kind": "exercise",
+          "id": "s4",
+          "exercise": "cardio_run",
+          "forMode": "meters",
+          "forValue": 1609,
+          "note": "1 mile"
+        },
+        {
+          "kind": "exercise",
+          "id": "s5",
+          "exercise": "bw_bear_crawl",
+          "forMode": "meters",
+          "forValue": 100
+        },
+        {
+          "kind": "exercise",
+          "id": "s6",
+          "exercise": "bw_pushup",
+          "forMode": "reps",
+          "forValue": 100
+        },
+        {
+          "kind": "exercise",
+          "id": "s7",
+          "exercise": "cardio_run",
+          "forMode": "meters",
+          "forValue": 1609,
+          "note": "1 mile"
+        }
+      ]
+    }
+  ]
+}

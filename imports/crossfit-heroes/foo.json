@@ -1,0 +1,90 @@
+{
+  "id": "cf-hero-foo",
+  "title": "Foo",
+  "creator": "CrossFit",
+  "description": "13 bench presses at 170/110 lb for time, then a 20-minute AMRAP of 7 chest-to-bar pull-ups, 77 double-unders, 2 squat clean thrusters and 28 sit-ups. Honours St. Lucie County Sgt. Gary \"Foo\" Morales, an Air Force veteran shot during a traffic stop in Florida in 2013. The clean thrusters use the bench bar; scale both to one load you can handle.",
+  "source": {
+    "title": "Foo – CrossFit Hero WOD",
+    "url": "https://www.crossfit.com/benchmark/foo",
+    "author": "CrossFit",
+    "kind": "benchmark",
+    "license": "Public benchmark; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "CrossFit",
+    "Hero",
+    "AMRAP",
+    "Barbell",
+    "Gymnastics"
+  ],
+  "level": "Hard",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "Bench",
+      "mode": "fortime",
+      "repeat": 1,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "bb_bench",
+          "target": 77.0,
+          "rx": {
+            "men": 77.0,
+            "women": 50.0
+          },
+          "forMode": "reps",
+          "forValue": 13,
+          "note": "170/110 lb"
+        }
+      ]
+    },
+    {
+      "kind": "block",
+      "id": "b2",
+      "name": "AMRAP",
+      "mode": "amrap",
+      "repeat": 1,
+      "timeCapSec": 1200,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "bw_chest_to_bar_pullup",
+          "forMode": "reps",
+          "forValue": 7
+        },
+        {
+          "kind": "exercise",
+          "id": "s3",
+          "exercise": "bw_double_under",
+          "forMode": "reps",
+          "forValue": 77
+        },
+        {
+          "kind": "exercise",
+          "id": "s4",
+          "exercise": "bb_squat_clean_thruster",
+          "target": 77.0,
+          "rx": {
+            "men": 77.0,
+            "women": 50.0
+          },
+          "forMode": "reps",
+          "forValue": 2,
+          "note": "170/110 lb"
+        },
+        {
+          "kind": "exercise",
+          "id": "s5",
+          "exercise": "bw_situp",
+          "forMode": "reps",
+          "forValue": 28
+        }
+      ]
+    }
+  ]
+}
