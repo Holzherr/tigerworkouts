@@ -1,0 +1,77 @@
+name: Build and deploy tigerworkouts.com
+
+# Builds the React app from nick-prototypes/workout-hub-next (base "/"), keeps the v0.9
+# single-file app at /legacy/, Storybook at /storybook/, and deploys the lot to GitHub Pages.
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: nick-prototypes ref to build
+        default: main
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout this repo (CNAME, workflow)
+        uses: actions/checkout@v4
+
+      - name: Checkout nick-prototypes
+        uses: actions/checkout@v4
+        with:
+          repository: Holzherr/nick-prototypes
+          ref: ${{ github.event.inputs.ref || 'main' }}
+          path: src
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: src/workout-hub-next/package-lock.json
+
+      - name: Build app and Storybook
+        working-directory: src/workout-hub-next
+        env:
+          VITE_BASE: /
+        run: |
+          npm ci
+          npm test
+          npm run build
+          npm run build-storybook
+
+      - name: Assemble site
+        run: |
+          mkdir -p _site/legacy
+          cp -r src/workout-hub-next/dist/. _site/
+          cp -r src/workout-hub/. _site/legacy/
+          rm -rf _site/legacy/supabase _site/legacy/tools _site/legacy/media/src
+          cp CNAME _site/CNAME
+          touch _site/.nojekyll
+          echo "app: $(grep -o '<title>[^<]*' _site/index.html)"
+          echo "legacy: $(grep -o '<title>[^<]*' _site/legacy/index.html)"
+
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
