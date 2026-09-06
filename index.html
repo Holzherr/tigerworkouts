@@ -11,7 +11,7 @@
 <link rel="apple-touch-icon" href="./icons/apple-touch-icon.png">
 <link rel="icon" type="image/png" sizes="192x192" href="./icons/icon-192.png">
 <meta name="apple-mobile-web-app-title" content="TigerWorkouts">
-<title>TigerWorkouts — v0.9.5</title>
+<title>TigerWorkouts — v0.9.6</title>
 <link rel="icon" type="image/svg+xml" href="./icons/icon.svg">
 <script src="https://cdn.tailwindcss.com"></script>
 <style>
@@ -786,6 +786,20 @@ function deleteSession(id) {
 
 // ───────────────────────── profile ─────────────────────────
 function renderProfile() {
+  // Signed out: the whole tab is the sign-in card, nothing else to look at yet.
+  if (window.cloud?.client && !window.cloud.user) {
+    const local = store.sessions.length;
+    return shell(`
+      <header class="safe-top px-5 pb-2 pt-6">
+        <div class="text-[26px] font-black tracking-tight text-slate-900 leading-tight">Sign in</div>
+        <div class="text-[13px] text-slate-500 mt-1">${local ? `${local} session${local === 1 ? '' : 's'} on this phone will back up the moment you sign in.` : 'Free. Takes 20 seconds.'}</div>
+      </header>
+      <div class="px-4 pb-8">
+        ${accountCard()}
+        <button class="btn btn-ghost btn-sm w-full mt-3" onclick="openSettings()">${I.gear}Name and avatar</button>
+      </div>
+    `, 'me');
+  }
   const ss = [...store.sessions].sort((a, b) => b.startedAt.localeCompare(a.startedAt));
   const weekAgo = Date.now() - 7 * 86400000;
   const thisWeek = ss.filter(s => new Date(s.startedAt) > weekAgo).length;
