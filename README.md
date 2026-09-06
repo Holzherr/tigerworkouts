@@ -1,4 +1,8 @@
-# Workout Hub (next)
+# TigerWorkouts (next)
+
+Branded TigerWorkouts on 6 Sep 2026 (was Workout Hub). Brand bricks live in `src/shared/brand/`
+(TigerMark, AppIcon, Logo) with stories under **Brand/** in Storybook; the rebrand plan is in
+[REBRAND.md](./REBRAND.md).
 
 React rebuild of `../workout-hub` as a component library first, app second. Every visual piece is a
 Storybook "brick" (props in, callbacks out, no data fetching) so it can be reviewed and iterated
@@ -20,6 +24,7 @@ React 19 · TypeScript · Vite · Tailwind 4 (tokens in `src/styles/tailwind.css
 
 ```
 src/
+  shared/brand/             TigerMark, AppIcon, Logo + the traced mark path
   shared/components/ui/     primitives: Button, Chip, Stepper, Dropdown, Sheet, Card, TabBar, ClipThumb
   shared/utils/             cn(), formatters
   features/runsheet/        the editor

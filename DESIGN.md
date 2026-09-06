@@ -1,12 +1,13 @@
 ---
-name: Workout Hub
-description: A gym-floor app — slate ink on near-white, one orange for the action that matters, rows you can hit with a chalky thumb.
+name: TigerWorkouts
+description: A gym-floor app — slate ink on near-white, one coral for the action that matters, rows you can hit with a chalky thumb. Mark is an outlined tiger head; the app icon puts it on two coral bands.
 colors:
-  brand: '#ee6f3a'
-  brand-hover: '#c1542a'
-  brand-soft: '#fff7ed'
-  brand-line: '#f5b899'
-  brand-ink: '#c2410c'
+  brand: '#ff4d2e'
+  brand-hover: '#e63c1e'
+  brand-soft: '#fff0ec'
+  brand-line: '#ffb4a3'
+  brand-ink: '#c42a12'
+  ink-pure: '#000000'
   rest: '#1e3a8a'
   ink: '#0f172a'
   body: '#475569'
@@ -75,8 +76,14 @@ components:
     background: '{colors.line-soft}'
     fontSize: '13px'
     fontWeight: 700
+brand:
+  mark: 'src/shared/brand/tiger-mark.tsx — one even-odd path, currentColor, min 24px'
+  app-icon: 'src/shared/brand/app-icon.tsx — white, two coral bands at 25%, black mark at 66%, radius 22.5%'
+  logo: 'src/shared/brand/logo.tsx — mark + TigerWorkouts, Workouts in coral'
+  favicon: 'public/favicon.svg, PNGs in public/icons/'
 rules:
-  - One brand-orange fill per screen: the primary action. Everything else is ink, grey, or orange text.
+  - One coral fill per screen: the primary action. Everything else is ink, grey, or coral text.
+  - The mark is always one colour (black, ink, white or coral). Stripes only ever sit behind it, never on it.
   - Units live in labels ("Weight (kg per arm)"), never inside a number control.
   - Every tap target is at least 44px tall. Rows are the tap target, not icons inside them.
   - No drag handles. Rows move by press-and-drag; blocks by their header.
