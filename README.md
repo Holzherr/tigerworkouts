@@ -8,11 +8,12 @@ React rebuild of `../workout-hub` as a component library first, app second. Ever
 Storybook "brick" (props in, callbacks out, no data fetching) so it can be reviewed and iterated
 in isolation before it touches real data. Conventions mirror GitLaw's front-law repo.
 
-- **App:** https://holzherr.github.io/nick-prototypes/workout-hub-next/
-- **Storybook:** https://holzherr.github.io/nick-prototypes/workout-hub-next/storybook/
+- **Live:** https://tigerworkouts.com (built by the workflow in Holzherr/tigerworkouts from this folder)
+- **Preview:** https://holzherr.github.io/nick-prototypes/workout-hub-next/
+- **Storybook:** https://tigerworkouts.com/storybook/
 
-The v0.9 single-file app at `/workout-hub/` keeps running until this one reaches parity, then the
-paths swap.
+The v0.9 single-file app (`../workout-hub`) is kept at https://tigerworkouts.com/legacy/ for a
+while after the cutover on 6 Sep 2026; it gets no new features.
 
 ## Stack
 
@@ -65,7 +66,11 @@ Storybook under Workouts → Imported. Verbatim originals live in the private as
 
 ## Status
 
-Done: tokens, primitives, runsheet editor with tap-to-expand, swipe-to-remove, drag-to-reorder,
-drop-to-group, seam and tile inserts, block modes (rounds, for time, AMRAP, EMOM, ladder), stills
-for every exercise, 472 imported workouts. Stub: exercise picker (prompt()), text-to-workout line.
-Not yet ported: Discover, timer, history, profile, auth/cloud sync.
+Live since 6 Sep 2026. Timer (rounds, for time, AMRAP, EMOM, ladders, resume after reload),
+Supabase sign-in and three-way sync (sessions, own workouts, favourites, prefs, custom
+exercises; v0.9 rows preserved), editor with drag-to-group and text commands, 472 imported
+workouts, scores and progression, follow-along videos, Discover with recommendations, settings,
+share links, quick log, offline via a service worker.
+
+Not yet: Google sign-in (provider not enabled), imperial units in the UI (stored only), Fitbit
+heart rate is read on the session page but not charted, Storybook stories for every screen state.
