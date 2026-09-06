@@ -11,7 +11,7 @@
 <link rel="apple-touch-icon" href="./icons/apple-touch-icon.png">
 <link rel="icon" type="image/png" sizes="192x192" href="./icons/icon-192.png">
 <meta name="apple-mobile-web-app-title" content="TigerWorkouts">
-<title>TigerWorkouts — v0.9.8</title>
+<title>TigerWorkouts — v0.9.9</title>
 <link rel="icon" type="image/svg+xml" href="./icons/icon.svg">
 <script src="https://cdn.tailwindcss.com"></script>
 <style>
@@ -114,6 +114,7 @@
 <body>
 <div id="app" class="app"></div>
 <script src="./data.js"></script>
+<script src="./imported.js"></script>
 <script src="./config.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.4/dist/umd/supabase.js"></script>
 <script>
@@ -132,16 +133,19 @@ const $ = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => [...r.querySelectorAll(s)];
 const app = $('#app');
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-const fmtNum = n => (Math.round(n * 100) / 100).toString();
+const fmtNum0 = n => (Math.round(n * 100) / 100).toString();
+const fmtNum = n => (n === undefined || n === null || !Number.isFinite(+n)) ? '' : fmtNum0(n);
 const pad = n => String(n).padStart(2, '0');
 const mmss = s => `${Math.floor(s / 60)}:${pad(Math.max(0, Math.ceil(s)) % 60)}`;
 const fmtDate = iso => new Date(iso).toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' });
 const fmtTime = iso => new Date(iso).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
 const ytThumb = id => `https://i.ytimg.com/vi/${id}/mqdefault.jpg`;
-const allWorkouts = () => [...store.workouts, ...(window.cloud?.remote?.workouts || []), ...WORKOUTS];
+const IMPORTED = typeof IMPORTED_WORKOUTS !== 'undefined' ? IMPORTED_WORKOUTS : [];
+const allWorkouts = () => [...store.workouts, ...(window.cloud?.remote?.workouts || []), ...WORKOUTS, ...IMPORTED];
 const wById = id => allWorkouts().find(w => w.id === id);
 const isUserWorkout = w => store.workouts.some(x => x.id === w.id);
 const ICON_COLORS = { kettlebell: '#f59e0b', dumbbell: '#a78bfa', treadmill: '#38bdf8', walk: '#34d399', barbell: '#fb7185', body: '#fbbf24', band: '#f472b6', bike: '#22d3ee', rower: '#60a5fa', core: '#c084fc', racket: '#4ade80', run: '#fb923c', swim: '#38bdf8', yoga: '#e879f9', hike: '#a3e635', football: '#facc15' };
+if (typeof IMPORTED_EXERCISES !== 'undefined') for (const k in IMPORTED_EXERCISES) if (!EXERCISES[k]) EXERCISES[k] = { ...IMPORTED_EXERCISES[k], color: ICON_COLORS[IMPORTED_EXERCISES[k].icon] || '#94a3b8' };
 const favIcon = f => `<span class="exicon" style="background:${ICON_COLORS[f.icon] || '#94a3b8'};color:#0f172a">${I[f.icon] || I.body}</span>`;
 const EX = key => EXERCISES[key] || store.exercises[key] || window.cloud?.remote?.exercises?.[key] || { name: key, unit: 'kg', step: 2.5, icon: 'body', color: ICON_COLORS.body, cue: '', video: '' };
 const exLib = () => ({ ...EXERCISES, ...(window.cloud?.remote?.exercises || {}), ...store.exercises });
@@ -316,31 +320,34 @@ function creatorsRow(ws) {
     </div>`;
 }
 function showCreator(c) { discoverCreator = c; discoverTag = 'All'; discoverTab = 'search'; renderDiscover(); window.scrollTo(0, 0); }
-let discoverTab = 'foryou', discoverQuery = '';
+let discoverTab = 'foryou', discoverQuery = '', discoverKind = 'All', discoverLimit = 40;
 // recommendations from what's been logged: same creators, not done in the last 3 days, beat-your-score for repeats
 function recommendWorkouts(ws) {
   const ss = [...store.sessions].sort((a, b) => b.startedAt.localeCompare(a.startedAt));
-  if (!ss.length) return ws.map(w => ({ w, reason: isUserWorkout(w) ? 'Made by you' : `By ${w.creator}` }));
+  if (!ss.length) return ws.filter(w => !w.source).map(w => ({ w, reason: isUserWorkout(w) ? 'Made by you' : `By ${w.creator}` })).concat([['cf-girls-cindy', 'A classic 20-minute AMRAP'], ['nhs-c25k-w1', 'Start running, three short sessions a week'], ['prog-stronglifts-5x5-a', 'The simplest strength program'], ['proto-7-minute-workout', 'Seven minutes, no equipment']].map(([id, reason]) => ({ w: wById(id), reason })).filter(x => x.w)).slice(0, 20);
   const creators = {}; ss.forEach(x => { const w = wById(x.workoutId); if (w) creators[w.creator] = (creators[w.creator] || 0) + 1; });
   const recent = new Set(ss.filter(x => Date.now() - new Date(x.startedAt) < 3 * 86400000).map(x => x.workoutId));
   const done = new Set(ss.map(x => x.workoutId));
   return ws.map(w => {
-    let score = (creators[w.creator] || 0) * 3, reason = `More from ${w.creator}`;
+    let score = (creators[w.creator] || 0) * 3 + (w.source ? 0 : 5), reason = `More from ${w.creator}`;
     if (done.has(w.id)) { score += 1; reason = 'Beat your last time'; }
     if (isSaved(w.id) && !done.has(w.id)) { score += 4; reason = 'Saved and not done yet'; }
     if (recent.has(w.id)) score -= 10;
     if (!creators[w.creator] && !done.has(w.id) && !isSaved(w.id)) reason = 'Something new';
     return { w, reason, score };
-  }).sort((a, b) => b.score - a.score);
+  }).sort((a, b) => b.score - a.score).slice(0, 20);
 }
 function discoverSearchDraw() {
   const ws = allWorkouts(); const q = discoverQuery.trim().toLowerCase();
-  const tags = ['All', ...new Set(ws.flatMap(w => w.tags || []))];
-  let shown = q ? ws.filter(w => `${w.title} ${w.creator} ${(w.tags || []).join(' ')}`.toLowerCase().includes(q)) : ws.filter(w => discoverTag === 'All' || (w.tags || []).includes(discoverTag));
+  const kinds = ['All', 'Mine', 'Benchmark', 'Program', 'Video', 'NHS', 'Protocol'];
+  const kindOf = w => !w.source ? 'Mine' : ({ benchmark: 'Benchmark', program: 'Program', video: 'Video', article: 'NHS', protocol: 'Protocol' })[w.source.kind] || 'Guide';
+  let shown = q ? ws.filter(w => `${w.title} ${w.creator} ${(w.tags || []).join(' ')} ${w.program?.name || ''} ${w.description || ''}`.toLowerCase().includes(q)) : ws.filter(w => discoverKind === 'All' || kindOf(w) === discoverKind);
   if (discoverCreator) shown = shown.filter(w => w.creator === discoverCreator);
   const el = $('#discover-results'); if (!el) return;
-  el.innerHTML = (q ? '' : `<div class="steps pb-2 -mx-1 px-1">${tags.map(t => `<button class="chip ${t === discoverTag ? 'bg-slate-900 text-white' : 'bg-slate-100 text-slate-600'}" style="padding:7px 13px;font-size:12px;flex:none" onclick="discoverTag='${esc(t)}'; discoverSearchDraw()">${esc(t)}</button>`).join('')}</div>${creatorsRow(ws)}`)
-    + (shown.map(heroCard).join('') || `<div class="card px-4 py-8 text-center text-slate-400 text-[14px]">${q ? `Nothing matches “${esc(discoverQuery)}”.` : 'Nothing here yet.'}</div>`);
+  const cards = shown.slice(0, discoverLimit).map(heroCard).join('');
+  const more = shown.length > discoverLimit ? `<button class="btn btn-ghost btn-sm w-full" onclick="discoverLimit += 40; discoverSearchDraw()">Show more (${shown.length - discoverLimit} left)</button>` : '';
+  el.innerHTML = (q ? '' : `<div class="steps pb-2 -mx-1 px-1">${kinds.map(t => `<button class="chip ${t === discoverKind ? 'bg-slate-900 text-white' : 'bg-slate-100 text-slate-600'}" style="padding:7px 13px;font-size:12px;flex:none" onclick="discoverKind='${t}'; discoverLimit=40; discoverSearchDraw()">${t}</button>`).join('')}</div>${discoverKind === 'All' || discoverKind === 'Mine' ? creatorsRow(ws.filter(w => !w.source)) : ''}<div class="text-[11px] uppercase tracking-widest text-slate-400 font-semibold px-1">${discoverKind === 'All' ? 'Everything' : discoverKind} · ${shown.length}</div>`)
+    + (cards || `<div class="card px-4 py-8 text-center text-slate-400 text-[14px]">${q ? `Nothing matches “${esc(discoverQuery)}”.` : 'Nothing here yet.'}</div>`) + more;
 }
 function renderDiscover() {
   const ws = allWorkouts();
@@ -376,17 +383,18 @@ function renderDiscover() {
 }
 
 // ───────────────────────── workout detail ─────────────────────────
+function sourceLine(w) { const KIND = { benchmark: 'Benchmark', program: 'Program', video: 'Video', article: 'NHS', protocol: 'Protocol' }; return w.source ? `<div class="px-4 pt-3 space-y-2"><div class="text-[12px] text-slate-500 px-1">${KIND[w.source.kind] || 'Guide'}${w.source.author ? ' · ' + esc(w.source.author) : ''}${w.program ? ' · ' + esc(w.program.name) + ', ' + esc(w.program.day) : ''}${w.source.url ? ` · <a class="underline" href="${esc(w.source.url)}" target="_blank" rel="noopener" style="color:var(--brand)">source</a>` : ''}</div>${w.description ? `<p class="text-[14px] text-slate-600 px-1 leading-relaxed">${esc(w.description)}</p>` : ''}${w.video ? `<a class="btn btn-ghost btn-sm w-full" href="${esc(w.video.url)}" target="_blank" rel="noopener">${I.video}Follow along on YouTube</a>` : ''}</div>` : ''; }
 function renderWorkout(w) {
   const last = lastSessionFor(w.id);
   const lastActual = (bi, ei) => last?.blocks?.[bi]?.exercises?.[ei];
   const blocks = w.blocks.map((b, bi) => {
     const rows = b.type === 'sets'
-      ? b.exercises.map((e, ei) => { const la = lastActual(bi, ei); const hint = la?.done?.length ? `Last: ${la.done.map(d => `${d.reps}×${fmtNum(d.weight)}`).join(', ')}` : ''; return exRow(e.ex, `${e.sets} × ${e.reps} reps · ${fmtNum(e.target)} ${EX(e.ex).unit}`, hint); }).join('')
+      ? b.exercises.map((e, ei) => { const la = lastActual(bi, ei); const hint = la?.done?.length ? `Last: ${la.done.map(d => `${d.reps}×${fmtNum(d.weight)}`).join(', ')}` : ''; return exRow(e.ex, `${e.sets} × ${e.reps} reps${e.note ? ' · ' + esc(e.note) : ''}${fmtNum(e.target) ? ' · ' + fmtNum(e.target) + ' ' + EX(e.ex).unit : ''}`, hint); }).join('')
       : b.type === 'interval'
       ? b.exercises.map((e, ei) => {
           const la = lastActual(bi, ei);
           const hint = la ? (la.removed ? 'Last: skipped' : `Last: ${la.actuals?.length ? runs(la.actuals, shortUnit(la.unit)) : fmtNum(la.actual) + ' ' + shortUnit(la.unit)}`) : '';
-          return exRow(e.ex, `${fmtNum(e.target)} ${EX(e.ex).unit}`, hint) + restRow(b.rest_s);
+          return exRow(e.ex, fmtNum(e.target) ? `${fmtNum(e.target)} ${EX(e.ex).unit}` : (e.note || 'bodyweight'), hint) + restRow(b.rest_s);
         }).join('')
       : exRow(b.ex, `${b.repeat} × (${b.segments.map(s => `${s.s / 60} min @ ${s.speed} kph`).join(' + ')}) · incline ${b.incline}`, '');
     return `
@@ -419,6 +427,7 @@ function renderWorkout(w) {
         ${isUserWorkout(w) ? `<button class="btn btn-sm" style="background:rgba(255,255,255,.2);color:#fff" onclick="deleteWorkout('${w.id}')">${I.trash}</button>` : ''}
       </div>
     </header>
+    ${sourceLine(w)}
     <div class="px-4 py-4 space-y-3 pb-32">${blocks}
       <p class="text-[12px] text-slate-400 px-1">Tap an exercise to watch the demo. In the timer, weights start at the target and you adjust with +/− as you go. Swipe a step left to drop it.</p>
     </div>
