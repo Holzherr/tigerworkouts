@@ -1,4 +1,4 @@
-// Workout Hub — cloud layer (Supabase). Loaded after the main script; the app
+// TigerWorkouts — cloud layer (Supabase). Loaded after the main script; the app
 // works fully offline without it. When config.js provides SB_URL/SB_KEY and the
 // user signs in, localStorage becomes a cache that syncs both ways.
 //

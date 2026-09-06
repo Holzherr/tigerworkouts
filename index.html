@@ -6,15 +6,16 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="theme-color" content="#ee6f3a">
+<meta name="theme-color" content="#ff4d2e">
 <link rel="manifest" href="./manifest.webmanifest">
 <link rel="apple-touch-icon" href="./icons/apple-touch-icon.png">
 <link rel="icon" type="image/png" sizes="192x192" href="./icons/icon-192.png">
-<meta name="apple-mobile-web-app-title" content="Workout Hub">
-<title>Workout Hub — v0.9.3</title>
+<meta name="apple-mobile-web-app-title" content="TigerWorkouts">
+<title>TigerWorkouts — v0.9.4</title>
+<link rel="icon" type="image/svg+xml" href="./icons/icon.svg">
 <script src="https://cdn.tailwindcss.com"></script>
 <style>
-  :root { --brand: #ee6f3a; --brand-dark: #c1542a; --rest: #1e3a8a; }
+  :root { --brand: #ff4d2e; --brand-dark: #e63c1e; --rest: #1e3a8a; }
   html, body { background: #0f172a; }
   body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; -webkit-font-smoothing: antialiased; margin: 0; }
   .app { max-width: 430px; margin: 0 auto; min-height: 100dvh; background: #fff; position: relative; display: flex; flex-direction: column; }
@@ -46,7 +47,7 @@
   .grid-cols-3 .stepper .val { min-width: 0; flex: 1; font-size: 15px; }
   .grid-cols-2 .stepper button { width: 38px; height: 42px; flex: none; }
   .grid-cols-2 .stepper .val { min-width: 0; flex: 1; }
-  .avatar { width: 36px; height: 36px; border-radius: 999px; background: linear-gradient(135deg,#f59e0b,#ee6f3a); color: #fff; display: inline-flex; align-items: center; justify-content: center; font-weight: 700; font-size: 14px; }
+  .avatar { width: 36px; height: 36px; border-radius: 999px; background: linear-gradient(135deg,#f59e0b,#ff4d2e); color: #fff; display: inline-flex; align-items: center; justify-content: center; font-weight: 700; font-size: 14px; }
   .exicon { width: 36px; height: 36px; border-radius: 10px; display: inline-flex; align-items: center; justify-content: center; flex: none; }
   .exicon svg { width: 22px; height: 22px; }
   .sheet-backdrop { position: fixed; inset: 0; background: rgba(15,23,42,.55); z-index: 40; }
@@ -120,7 +121,7 @@
 const LS_KEY = 'workout-hub:v1';
 const store = load();
 function load() {
-  const d = { sessions: [], name: 'Nick', units: 'metric', workouts: [], exercises: {}, favorites: [{ name: 'Game of padel', icon: 'racket', minutes: 60 }], saved: [], avatar: { emoji: '', color: '#ee6f3a' } };
+  const d = { sessions: [], name: 'Nick', units: 'metric', workouts: [], exercises: {}, favorites: [{ name: 'Game of padel', icon: 'racket', minutes: 60 }], saved: [], avatar: { emoji: '', color: '#ff4d2e' } };
   try { return Object.assign(d, JSON.parse(localStorage.getItem(LS_KEY) || '{}')); }
   catch { return d; }
 }
@@ -222,10 +223,10 @@ const I = {
   slope: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="14" height="14"><path d="M3 20L21 8v12z"/></svg>',
 };
 const exIcon = (key, size = '') => { const ex = EX(key); return `<span class="exicon ${size}" style="background:${ex.color || ICON_COLORS[ex.icon] || '#94a3b8'};color:#0f172a">${I[ex.icon] || I.body}</span>`; };
-const wColor = w => { const k = w.blocks[0]?.exercises ? w.blocks[0].exercises[0]?.ex : w.blocks[0]?.ex; const ex = k ? EX(k) : null; return ex?.color || ICON_COLORS[ex?.icon] || '#ee6f3a'; };
+const wColor = w => { const k = w.blocks[0]?.exercises ? w.blocks[0].exercises[0]?.ex : w.blocks[0]?.ex; const ex = k ? EX(k) : null; return ex?.color || ICON_COLORS[ex?.icon] || '#ff4d2e'; };
 const myAvatar = (size = 36) => store.avatar?.photo
   ? `<img class="avatar" src="${store.avatar.photo}" alt="" style="width:${size}px;height:${size}px;object-fit:cover;background:#e2e8f0">`
-  : `<span class="avatar" style="width:${size}px;height:${size}px;font-size:${Math.round(size * .42)}px;background:${store.avatar?.emoji ? '#fff7ed' : `linear-gradient(135deg,${store.avatar?.color || '#f59e0b'},#c1542a)`}">${store.avatar?.emoji || esc((store.name || 'N')[0])}</span>`;
+  : `<span class="avatar" style="width:${size}px;height:${size}px;font-size:${Math.round(size * .42)}px;background:${store.avatar?.emoji ? '#fff7ed' : `linear-gradient(135deg,${store.avatar?.color || '#f59e0b'},#e63c1e)`}">${store.avatar?.emoji || esc((store.name || 'N')[0])}</span>`;
 // resize a chosen photo to a small square JPEG data URL (stored in prefs, ~15–30 KB)
 function setAvatarPhoto(file) {
   if (!file) return;
@@ -837,7 +838,7 @@ async function inviteFriend() {
         <div class="sheet-handle"></div>
         <div class="px-4 pb-2 flex items-center justify-between"><div class="font-semibold text-slate-900 text-[17px]">Invite someone</div><button class="text-slate-400 p-1" onclick="closeSheet()">${I.x}</button></div>
         <div class="px-4 pb-4 space-y-3">
-          <p class="text-[13px] text-slate-600">They get an email with a sign-in link. Tapping it on their phone opens Workout Hub, signed in. Best if they add the app to their home screen first.</p>
+          <p class="text-[13px] text-slate-600">They get an email with a sign-in link. Tapping it on their phone opens TigerWorkouts, signed in. Best if they add the app to their home screen first.</p>
           <form class="flex gap-2" onsubmit="event.preventDefault(); const e=this.email.value.trim(); if(!e) return; const b=this.querySelector('button'); b.disabled=true; cloud.signIn(e).then(()=>{ closeSheet(); toast('Invite sent to ' + e); }).catch(err=>{ b.disabled=false; toast(err.message); })">
             <input name="email" type="email" required class="flex-1 border border-slate-200 rounded-xl px-3 py-2.5 text-[16px]" placeholder="their@email.com" autocomplete="off">
             <button class="btn btn-brand btn-sm" type="submit">Send invite</button>
@@ -852,8 +853,8 @@ async function inviteFriend() {
 }
 async function inviteShare() {
   const url = location.origin + location.pathname;
-  const text = `Join me on Workout Hub — creator workouts with a guided timer.\n1. Open ${url} in Safari\n2. Share → Add to Home Screen\n3. Profile → sign in with your email\nThen share me a workout and I'll see it in Discover.`;
-  if (navigator.share) { try { await navigator.share({ title: 'Workout Hub', text, url }); return; } catch {} }
+  const text = `Join me on TigerWorkouts — creator workouts with a guided timer.\n1. Open ${url} in Safari\n2. Share → Add to Home Screen\n3. Profile → sign in with your email\nThen share me a workout and I'll see it in Discover.`;
+  if (navigator.share) { try { await navigator.share({ title: 'TigerWorkouts', text, url }); return; } catch {} }
   copyText(text);
 }
 // shown on summaries when logged out: local-only warning + shortcut to sign in
@@ -898,7 +899,7 @@ function openSettings() {
   closeSheet();
   const c = window.cloud;
   const emojis = ['', '💪', '🏋️', '🏃', '🚴', '🧘', '🥊', '🎾', '⚽', '🏊', '🔥', '⚡', '🦁', '🐯', '🦊', '🐻'];
-  const colors = ['#ee6f3a', '#f59e0b', '#a78bfa', '#38bdf8', '#34d399', '#fb7185', '#4ade80', '#e879f9'];
+  const colors = ['#ff4d2e', '#f59e0b', '#a78bfa', '#38bdf8', '#34d399', '#fb7185', '#4ade80', '#e879f9'];
   const el = document.createElement('div'); el.id = 'sheet';
   const draw = () => { el.innerHTML = `
     <div class="sheet-backdrop" onclick="closeSheet(); renderProfile()"></div>
@@ -913,7 +914,7 @@ function openSettings() {
             ${store.avatar?.photo ? `<button class="btn btn-ghost btn-sm" onclick="store.avatar={...(store.avatar||{}),photo:''}; save(); _sdraw()">Remove photo</button>` : ''}
           </div>
           <div class="flex flex-wrap gap-1.5">${emojis.map(e => `<button class="exicon" style="width:40px;height:40px;background:${(store.avatar?.emoji || '') === e ? '#0f172a' : '#f1f5f9'};color:${(store.avatar?.emoji || '') === e ? '#fff' : '#0f172a'};font-size:20px" onclick="store.avatar={...(store.avatar||{}),emoji:'${e}'}; save(); _sdraw()">${e || esc((store.name || 'N')[0])}</button>`).join('')}</div>
-          <div class="flex flex-wrap gap-1.5 mt-2">${colors.map(col => `<button class="exicon" style="width:28px;height:28px;border-radius:999px;background:${col};outline:${(store.avatar?.color || '#ee6f3a') === col ? '3px solid #0f172a' : 'none'}" onclick="store.avatar={...(store.avatar||{}),color:'${col}'}; save(); _sdraw()"></button>`).join('')}</div>
+          <div class="flex flex-wrap gap-1.5 mt-2">${colors.map(col => `<button class="exicon" style="width:28px;height:28px;border-radius:999px;background:${col};outline:${(store.avatar?.color || '#ff4d2e') === col ? '3px solid #0f172a' : 'none'}" onclick="store.avatar={...(store.avatar||{}),color:'${col}'}; save(); _sdraw()"></button>`).join('')}</div>
         </div>
         <div class="flex items-center justify-between"><div class="text-[14px] text-slate-700">Units</div><div class="flex gap-1">${['metric', 'imperial'].map(u => `<button class="chip ${store.units === u ? 'bg-slate-900 text-white' : 'bg-slate-100 text-slate-600'}" onclick="store.units='${u}'; save(); _sdraw()">${u}</button>`).join('')}</div></div>
         <button class="btn btn-ghost w-full" onclick="closeSheet(); inviteFriend()">${I.invite}Invite someone</button>

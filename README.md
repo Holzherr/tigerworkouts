@@ -1,4 +1,7 @@
-# workout-hub — v0.9
+# workout-hub — v0.9 (TigerWorkouts)
+
+Branded **TigerWorkouts** on 6 Sep 2026: tiger mark, coral `#ff4d2e`, striped app icon (`icons/`).
+The rebuild in `../workout-hub-next` carries the brand as components; the plan is in `../workout-hub-next/REBRAND.md`.
 
 Phone-shaped "Sweat / F45"-style workout app: creators publish workouts, you
 discover one, do it with a guided interval timer, and log what you actually did.
