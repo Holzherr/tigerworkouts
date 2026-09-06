@@ -170,6 +170,7 @@ export default function App() {
   }
 
   const tab: Tab = route.name === 'tab' ? route.tab : 'discover';
+  const sub = route.name === 'tab' ? route.sub : undefined;
   if (tab === 'history') {
     return shell(
       'history',
@@ -178,8 +179,9 @@ export default function App() {
           <h1 className="text-[22px] font-extrabold">History</h1>
         </header>
         <div className="min-h-0 flex-1 space-y-2 overflow-y-auto px-3 py-3">
+          {sub === 'week' && <div className="px-1 text-[11px] font-bold tracking-widest text-muted uppercase">Last 7 days</div>}
           {st.results.length === 0 && <div className="py-10 text-center text-[13px] text-muted">No results yet. Open a workout and log one.</div>}
-          {st.results.map((res, i) => {
+          {st.results.filter(r => sub !== 'week' || Date.now() - Date.parse(r.startedAt) < 7 * 864e5).map((res, i) => {
             const r = byId.get(res.runsheetId);
             return (
               <button key={i} type="button" onClick={() => r && go(`/w/${encodeURIComponent(res.runsheetId)}`)} className="flex w-full items-center gap-3 rounded-card border border-line bg-surface px-3 py-2 text-left">
@@ -204,7 +206,7 @@ export default function App() {
           <div className="text-[12px] text-muted">{st.signedIn ? 'Signed in · logs back up to your account' : 'Not signed in · logs stay on this phone'}</div>
         </header>
         <div className="min-h-0 flex-1 space-y-2 overflow-y-auto px-3 py-3">
-          <StatTiles stats={[{ value: st.results.length, label: 'sessions' }, { value: st.results.filter(r => Date.now() - Date.parse(r.startedAt) < 7 * 864e5).length, label: 'this week' }, { value: st.saved.length, label: 'saved' }]} />
+          <StatTiles stats={[{ value: st.results.length, label: 'sessions', onClick: () => go('/history') }, { value: st.results.filter(r => Date.now() - Date.parse(r.startedAt) < 7 * 864e5).length, label: 'this week', onClick: () => go('/history/week') }, { value: st.saved.length, label: 'saved', onClick: () => go('/discover/saved') }]} />
           {!st.signedIn && (
             <SignInCard
               onSendCode={async () => {
@@ -237,7 +239,6 @@ export default function App() {
       </div>
     );
   }
-  const sub = route.name === 'tab' ? route.sub : undefined;
   if (!st.signedIn && sub !== 'search') {
     const clips = ['kb_swing', 'db_incline_press', 'sprint', 'lat_raise', 'db_shoulder_press', 'incline_walk'].map(k => ({ clip: EX[k].clip, poster: EX[k].poster, name: EX[k].name }));
     return (
