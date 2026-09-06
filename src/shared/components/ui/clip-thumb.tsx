@@ -5,7 +5,7 @@ export interface ClipThumbProps {
   /** Looping demo clip (mp4). Optional: rows without one show the icon. */
   clip?: string;
   poster?: string;
-  /** Fallback when there is no clip: an emoji or a lucide icon. */
+  /** Fallback when there is neither clip nor poster: an emoji or a lucide icon. */
   icon?: React.ReactNode;
   /** rest = grey well with a pause glyph */
   variant?: 'exercise' | 'rest';
@@ -17,7 +17,7 @@ const SIZE = { sm: 'size-[34px] rounded-[9px] text-[15px]', md: 'size-12 rounded
 
 /**
  * Square thumbnail for a step. With a clip it autoplays muted and loops (paused for reduced
- * motion, showing the poster); without one it shows an icon on white. The rest variant is a grey
+ * motion, showing the poster); with only a poster it shows that still; otherwise an icon on white. The rest variant is a grey
  * square with a pause glyph. Sizes 34 / 48 / 72px.
  */
 export const ClipThumb = ({ clip, poster, icon, variant = 'exercise', size = 'md', className }: ClipThumbProps) => {
@@ -34,6 +34,13 @@ export const ClipThumb = ({ clip, poster, icon, variant = 'exercise', size = 'md
       <div className={cn(base, 'border border-line-soft bg-surface')}>
         <video src={clip} poster={poster} autoPlay muted loop playsInline preload="metadata" className="size-full object-cover motion-reduce:hidden" aria-hidden />
         {poster && <img src={poster} alt="" className="hidden size-full object-cover motion-reduce:block" />}
+      </div>
+    );
+  }
+  if (poster) {
+    return (
+      <div className={cn(base, 'border border-line-soft bg-surface')}>
+        <img src={poster} alt="" className="size-full object-cover object-top" />
       </div>
     );
   }

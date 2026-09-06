@@ -18,6 +18,7 @@ export default meta;
 type Story = StoryObj<typeof meta>;
 
 export const WithClip: Story = { args: { clip: 'media/kb_swing.mp4', poster: 'media/kb_swing.jpg' } };
+export const StillOnly: Story = { args: { poster: 'media/bb_back_squat.jpg' } };
 export const IconFallback: Story = { args: { icon: '🏋️' } };
 export const Rest: Story = { args: { variant: 'rest' } };
 
