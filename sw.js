@@ -1,7 +1,7 @@
 // TigerWorkouts service worker — app shell cached for offline use in the gym.
 // Bump CACHE when shipping a new version so clients pick it up.
-const CACHE = 'workout-hub-v0.9.8';
-const SHELL = ['./', './index.html', './data.js', './manifest.webmanifest', './icons/icon-192.png', './icons/icon-512.png', './icons/apple-touch-icon.png'];
+const CACHE = 'workout-hub-v0.9.9';
+const SHELL = ['./', './index.html', './data.js', './imported.js', './manifest.webmanifest', './icons/icon-192.png', './icons/icon-512.png', './icons/apple-touch-icon.png'];
 
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(SHELL)).then(() => self.skipWaiting()));
