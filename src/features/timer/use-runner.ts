@@ -31,7 +31,9 @@ const vib = (p: number | number[]) => {
  * Drives the runner: 200 ms ticks, 3-2-1 beeps and an end tone, haptics on transitions, a screen
  * wake lock while running, persistence on every change so an iOS reload resumes where it was.
  */
-export const useRunner = (runsheet: Runsheet, opts: { resume?: boolean } = {}) => {
+export const useRunner = (runsheet: Runsheet, opts: { resume?: boolean; silent?: boolean; persist?: boolean } = {}) => {
+  const silent = !!opts.silent;
+  const persist = opts.persist !== false;
   const [state, setState] = useState<R.RunState>(() => {
     const saved = opts.resume ? R.loadPersisted() : null;
     return saved && saved.runsheetId === (runsheet.id ?? runsheet.title) ? saved : R.start(runsheet, Date.now());
@@ -60,19 +62,22 @@ export const useRunner = (runsheet: Runsheet, opts: { resume?: boolean } = {}) =
 
   // persistence + haptics on slot change
   useEffect(() => {
-    if (state.phase === 'done') R.clearPersisted();
-    else R.persist(state);
+    if (persist) {
+      if (state.phase === 'done') R.clearPersisted();
+      else R.persist(state);
+    }
     if (state.i !== prevSlot.current) {
       prevSlot.current = state.i;
-      if (state.phase === 'running') {
+      if (state.phase === 'running' && !silent) {
         vib(state.slots[state.i]?.kind === 'rest' ? 30 : [40, 40, 40]);
         beep(state.slots[state.i]?.kind === 'rest' ? 520 : 1040, 180);
       }
     }
-  }, [state]);
+  }, [state, persist, silent]);
 
   // countdown beeps
   useEffect(() => {
+    if (silent) return;
     const c = R.clock(state, now);
     if (state.phase !== 'running' && state.phase !== 'lead') return;
     if (c.left === undefined) return;
@@ -82,7 +87,7 @@ export const useRunner = (runsheet: Runsheet, opts: { resume?: boolean } = {}) =
       beep(660, 90);
     }
     if (sec > 3) lastBeep.current = -1;
-  }, [now, state]);
+  }, [now, state, silent]);
 
   // wake lock
   useEffect(() => {
@@ -97,13 +102,13 @@ export const useRunner = (runsheet: Runsheet, opts: { resume?: boolean } = {}) =
         /* denied */
       }
     };
-    if (state.phase === 'running' || state.phase === 'lead') req();
+    if (!silent && (state.phase === 'running' || state.phase === 'lead')) req();
     return () => {
       alive = false;
       wake.current?.release();
       wake.current = null;
     };
-  }, [state.phase]);
+  }, [state.phase, silent]);
 
   const act = {
     done: useCallback(() => setState(s => R.advance(s, Date.now())), []),

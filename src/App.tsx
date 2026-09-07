@@ -2,6 +2,7 @@ import { Flame, History, Settings, User } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { DiscoverScreen, type DiscoverTab } from '@/features/discover/components/discover-screen';
 import { LandingScreen } from '@/features/landing/components/landing-screen';
+import { TimerDemo } from '@/features/landing/components/timer-demo';
 import { SignInCard } from '@/features/auth/components/sign-in-card';
 import { StatTiles } from '@/shared/components/ui/stat-tiles';
 import { FULL_LIBRARY } from '@/features/workouts/imported';
@@ -126,17 +127,23 @@ export default function App() {
       {toast && <div className="pointer-events-none fixed inset-x-0 bottom-20 z-50 flex justify-center"><div className="rounded-full bg-ink px-4 py-2 text-[13px] font-semibold text-white shadow-lift">{toast}</div></div>}
     </>
   );
+  // phone-first screens sit in a centred 480px column on larger screens
+  const frame = 'mx-auto h-dvh w-full max-w-[480px] md:border-x md:border-line md:shadow-[0_0_60px_-20px_rgba(15,23,42,.25)]';
   const shell = (tab: Tab, body: React.ReactNode) => (
-    <div className="flex h-dvh flex-col">
-      <div className="min-h-0 flex-1">{body}</div>
-      <TabBar items={TABS} active={tab} onSelect={t => go(`/${t}`)} />
-      {overlay}
+    <div className="min-h-dvh bg-line-soft md:bg-[radial-gradient(circle_at_top,rgba(255,77,46,.08),transparent_60%)]">
+      <div className={`flex flex-col ${frame}`}>
+        <div className="min-h-0 flex-1">{body}</div>
+        <TabBar items={TABS} active={tab} onSelect={t => go(`/${t}`)} />
+        {overlay}
+      </div>
     </div>
   );
   const full = (body: React.ReactNode) => (
-    <div className="relative h-dvh">
-      {body}
-      {overlay}
+    <div className="min-h-dvh bg-line-soft">
+      <div className={`relative ${frame}`}>
+        {body}
+        {overlay}
+      </div>
     </div>
   );
   const tmSheet = (r?: Runsheet) => (
@@ -378,9 +385,10 @@ export default function App() {
   }
   if (!st.signedIn && !cloud.user && sub !== 'search') {
     const clips = ['kb_swing', 'db_incline_press', 'sprint', 'lat_raise', 'db_shoulder_press', 'incline_walk'].map(k => ({ clip: EX[k].clip, poster: EX[k].poster, name: EX[k].name }));
+    const stills = Object.values(LIB).filter(e => e.poster).slice(0, 28).map(e => e.poster!);
     return (
       <div className="h-dvh">
-        <LandingScreen onGetStarted={() => go('/me')} onBrowse={() => go('/discover/search')} workoutCount={all.length} exerciseCount={Object.keys(FULL_LIBRARY).length} clips={clips} />
+        <LandingScreen onGetStarted={() => go('/me')} onSignIn={() => go('/me')} onBrowse={() => go('/discover/search')} workoutCount={all.length} exerciseCount={Object.keys(FULL_LIBRARY).length} clips={clips} stills={stills} demo={<TimerDemo />} />
       </div>
     );
   }
