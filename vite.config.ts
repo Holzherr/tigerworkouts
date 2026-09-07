@@ -7,12 +7,14 @@ import path from 'node:path';
 
 // Served from GitHub Pages under the repo path; Storybook is built separately into dist/storybook.
 export default defineConfig({
+  define: { __BUILD__: JSON.stringify(Date.now().toString(36)) },
   base: process.env.VITE_BASE ?? '/nick-prototypes/workout-hub-next/',
   plugins: [
     react(),
     tailwindcss(),
     VitePWA({
       registerType: 'autoUpdate',
+      injectRegister: null, // registered by src/app/update-prompt.tsx with a per-build query so the CDN cannot serve a stale sw.js
       manifest: false, // public/manifest.webmanifest is hand-written
       workbox: { globPatterns: ['**/*.{js,css,html,svg,png,woff2}'], runtimeCaching: [{ urlPattern: /\/media\/.*\.(mp4|jpg)$/, handler: 'CacheFirst', options: { cacheName: 'media', expiration: { maxEntries: 200 } } }], navigateFallbackDenylist: [/^\/legacy/, /^\/storybook/] },
     }),
