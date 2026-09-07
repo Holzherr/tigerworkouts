@@ -31,6 +31,8 @@ import { IMPORTED } from '@/features/workouts/imported';
 import { Button } from '@/shared/components/ui/button';
 import { Sheet } from '@/shared/components/ui/sheet';
 import { TabBar } from '@/shared/components/ui/tab-bar';
+import { WorkoutIcon } from '@/shared/components/ui/workout-icon';
+import { defaultIcon } from '@/features/workouts/icon';
 import { useActions, useAppState } from './app/store';
 import { sendCode, signOut, verifyCode } from '@/features/cloud/client';
 import { deviceFor, fetchPublicWorkouts } from '@/features/cloud/sync';
@@ -157,7 +159,8 @@ export default function App() {
     const r: Runsheet = draft ?? { title: '', creator: st.name, items: [] };
     const saveMine = (): Runsheet => {
       const title = r.title.trim() || 'My workout';
-      const mine: Runsheet = { ...r, id: `u-${Date.now().toString(36)}`, title, creator: st.name, source: { title, author: st.name, kind: 'user' }, program: undefined };
+      const id = `u-${Date.now().toString(36)}`;
+      const mine: Runsheet = { ...r, id, title, creator: st.name, source: { title, author: st.name, kind: 'user' }, program: undefined, icon: r.icon ?? defaultIcon(id) };
       act.saveWorkout(mine);
       setDraft(null);
       return mine;
@@ -198,10 +201,14 @@ export default function App() {
           onReset={() => setDraft(base ? structuredClone(resolveRefs(base, lookup)) : null)}
           onStart={() => go(`/do/${encodeURIComponent(route.id)}`)}
           onSaveAsMine={() => {
-            const mine: Runsheet = { ...r, id: `u-${Date.now().toString(36)}`, creator: st.name, source: { title: r.title, url: r.source?.url, author: r.source?.author ?? r.creator, kind: 'user' }, program: undefined };
+            // Your own workout saves in place; anything else becomes a copy of yours.
+            const own = !!base?.id && st.workouts.some(w => w.id === base.id);
+            const id = own ? base!.id! : `u-${Date.now().toString(36)}`;
+            const mine: Runsheet = { ...r, id, creator: own ? r.creator : st.name, source: own ? r.source : { title: r.title, url: r.source?.url, author: r.source?.author ?? r.creator, kind: 'user' }, program: own ? r.program : undefined, icon: r.icon ?? defaultIcon(id) };
             act.saveWorkout(mine);
             setDraft(null);
-            go(`/w/${encodeURIComponent(mine.id!)}`);
+            say(own ? 'Saved' : 'Saved to My workouts');
+            go(`/w/${encodeURIComponent(id)}`);
           }}
           resolveTarget={resolve}
           refTitle={refTitle}
@@ -299,6 +306,7 @@ export default function App() {
             const r = byId.get(res.runsheetId);
             return (
               <button key={res.id ?? i} type="button" onClick={() => go(`/s/${encodeURIComponent(res.id ?? '')}`)} className="flex w-full items-center gap-3 rounded-card border border-line bg-surface px-3 py-2 text-left">
+                {r && <WorkoutIcon runsheet={r} size={36} />}
                 <div className="min-w-0 flex-1">
                   <div className="truncate text-[14px] font-bold">{res.title ?? r?.title ?? res.runsheetId}</div>
                   <div className="text-[12px] text-muted">{res.startedAt.slice(0, 10)}{res.durationSec ? ` · ${Math.round(res.durationSec / 60)} min` : res.activity ? ` · ${res.activity.minutes} min` : ''}{res.completed === false ? ' · stopped early' : ''}</div>

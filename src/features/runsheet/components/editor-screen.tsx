@@ -3,6 +3,9 @@ import { Button } from '@/shared/components/ui/button';
 import { useState } from 'react';
 import { Dropdown } from '@/shared/components/ui/dropdown';
 import { Stepper } from '@/shared/components/ui/stepper';
+import { WorkoutIcon } from '@/shared/components/ui/workout-icon';
+import { fileToSquareDataUrl } from '@/shared/utils/image';
+import { shuffleIcon } from '@/features/workouts/icon';
 import { runsheetMinutes, scoreType, type ExerciseStep, type Item, type Runsheet, type ScoreType } from '../model';
 
 const SCORE_OPTIONS = [
@@ -76,6 +79,24 @@ export const EditorScreen = ({ runsheet, onChange, onPickExercise, onSwapExercis
             <div className="flex items-center justify-between gap-3">
               <span className="text-[14px]">Time cap <span className="text-muted">(min, whole workout)</span></span>
               <Stepper aria-label="Time cap" value={Math.round((runsheet.timeCapSec ?? 0) / 60)} min={0} max={120} onChange={m => onChange({ ...runsheet, timeCapSec: m ? m * 60 : undefined })} />
+            </div>
+            <div className="flex items-center justify-between gap-3">
+              <span className="text-[14px]">Icon</span>
+              <div className="flex items-center gap-2">
+                <WorkoutIcon runsheet={runsheet} size={40} />
+                <Button variant="ghost" size="sm" onClick={() => onChange({ ...runsheet, icon: shuffleIcon(runsheet.icon) })}>
+                  Shuffle
+                </Button>
+                <label className="inline-flex h-9 cursor-pointer items-center rounded-control border border-line bg-surface px-3 text-[14px] font-semibold">
+                  Photo
+                  <input type="file" accept="image/*" className="hidden" onChange={e => { const f = e.target.files?.[0]; if (f) fileToSquareDataUrl(f).then(url => onChange({ ...runsheet, icon: { kind: 'image', url } })); e.target.value = ''; }} />
+                </label>
+                {runsheet.icon && (
+                  <Button variant="quiet" size="sm" onClick={() => onChange({ ...runsheet, icon: undefined })}>
+                    Reset
+                  </Button>
+                )}
+              </div>
             </div>
             <div className="flex items-center justify-between gap-3">
               <span className="text-[14px]">Scored on</span>

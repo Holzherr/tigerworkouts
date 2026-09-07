@@ -1,3 +1,4 @@
+import type { WorkoutIcon } from '@/features/workouts/icon';
 /**
  * Runsheet model: a workout is an ordered list of items. An item is a step (exercise or rest) or
  * a block (a named list of steps that repeats N times). Everything here is pure; components call
@@ -147,6 +148,8 @@ export interface Runsheet {
   score?: ScoreType;
   progression?: Progression;
   video?: Video;
+  /** Card icon: monogram on a gradient (default, derived from id) or an uploaded image. */
+  icon?: WorkoutIcon;
   items: Item[];
 }
 
