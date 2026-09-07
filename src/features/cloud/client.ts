@@ -30,7 +30,8 @@ export const verifyCode = async (email: string, token: string) => {
   if (error) throw error;
 };
 export const signInGoogle = async () => {
-  const { error } = await sb.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: location.origin + location.pathname + '#/me' } });
+  // Return to the app root (no hash): Supabase appends ?code=… and the client exchanges it on load.
+  const { error } = await sb.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: location.origin + location.pathname } });
   if (error) throw error;
 };
 export const signOut = async () => {

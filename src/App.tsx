@@ -34,7 +34,7 @@ import { TabBar } from '@/shared/components/ui/tab-bar';
 import { WorkoutIcon } from '@/shared/components/ui/workout-icon';
 import { defaultIcon } from '@/features/workouts/icon';
 import { useActions, useAppState } from './app/store';
-import { sendCode, signOut, verifyCode } from '@/features/cloud/client';
+import { providers, sendCode, signInGoogle, signOut, verifyCode } from '@/features/cloud/client';
 import { deviceFor, fetchPublicWorkouts } from '@/features/cloud/sync';
 import { useCloudSync } from '@/features/cloud/use-sync';
 import { SessionDetailScreen } from '@/features/results/components/session-detail-screen';
@@ -102,6 +102,14 @@ export default function App() {
   const pick = useCallback((): Promise<ExerciseStep | null> => new Promise(res => { pickResolve.current = e => res(e ? makeExercise(e) : null); setPickerOpen(true); }), []);
   const picker = <ExercisePicker open={pickerOpen} onOpenChange={o => { setPickerOpen(o); if (!o) { pickResolve.current?.(null); pickResolve.current = null; } }} library={library} usage={usage} onPick={e => { pickResolve.current?.(e); pickResolve.current = null; }} onCreate={act.addExercise} />;
   const [settingsOpen, setSettingsOpen] = useState(false);
+  // Google shows on the sign-in card only when the Supabase project has the provider enabled.
+  const [google, setGoogle] = useState(false);
+  useEffect(() => {
+    providers().then(p => setGoogle(!!p.google));
+  }, []);
+  useEffect(() => {
+    if (cloud.user) act.setSignedIn(true);
+  }, [cloud.user, act]);
   const [logging, setLogging] = useState<Favorite | null>(null);
   const [manageFavs, setManageFavs] = useState(false);
   const [pasteOpen, setPasteOpen] = useState(false);
@@ -338,7 +346,7 @@ export default function App() {
         <SettingsSheet open={settingsOpen} onOpenChange={setSettingsOpen} name={st.name} avatar={st.avatar} units={st.units} email={cloud.user?.email ?? undefined} onChange={act.setProfile} onInvite={invite} onSignOut={cloud.user ? () => signOut().then(() => (act.setSignedIn(false), setSettingsOpen(false), go('/discover'))) : undefined} />
         <div className="min-h-0 flex-1 space-y-2 overflow-y-auto px-3 py-3">
           <StatTiles stats={[{ value: st.results.length, label: 'sessions', onClick: () => go('/history') }, { value: st.results.filter(r => Date.now() - Date.parse(r.startedAt) < 7 * 864e5).length, label: 'this week', onClick: () => go('/history/week') }, { value: st.saved.length, label: 'saved', onClick: () => go('/discover/saved') }]} />
-          {!cloud.user && <SignInCard onSendCode={sendCode} onVerify={async (e, c) => { await verifyCode(e, c); act.setSignedIn(true); }} />}
+          {!cloud.user && <SignInCard onSendCode={sendCode} onVerify={async (e, c) => { await verifyCode(e, c); act.setSignedIn(true); }} onGoogle={google ? signInGoogle : undefined} />}
           {cloud.user && (
             <div className="flex items-center justify-between rounded-card border border-line bg-surface px-3 py-2 text-[13px]">
               <span className={st.syncError ? 'text-danger' : 'text-muted'}>{st.syncError ? `Sync error: ${st.syncError}` : st.lastSync ? `Synced ${new Date(st.lastSync).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })} · ${cloud.user.email}` : 'Syncing…'}</span>
