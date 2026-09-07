@@ -1,4 +1,4 @@
-import { ChevronLeft, ClipboardPaste, PenLine, Play } from 'lucide-react';
+import { ChevronLeft, ClipboardPaste, PenLine, Play, Save } from 'lucide-react';
 import { Button } from '@/shared/components/ui/button';
 import { useState } from 'react';
 import { Dropdown } from '@/shared/components/ui/dropdown';
@@ -38,7 +38,8 @@ export interface EditorScreenProps {
 /**
  * Edit-before-start screen: white header with the workout title, "Tonight's version · 23 min ·
  * 4 blocks", Reset on the right and the free-text change line under it; the runsheet fills the
- * body; Start and Save as mine are pinned above the tab bar.
+ * body; Start and Save as mine are pinned above the tab bar. In `author` mode (a new workout)
+ * the title is an input and the pinned bar is Save workout + Start.
  */
 export const EditorScreen = ({ runsheet, onChange, onPickExercise, onSwapExercise, onBack, onReset, onStart, onSaveAsMine, onPastePlan, onTextChange, mode = 'tonight', resolveTarget, refTitle }: EditorScreenProps) => {
   const setItems = (items: Item[]) => onChange({ ...runsheet, items });
@@ -59,7 +60,11 @@ export const EditorScreen = ({ runsheet, onChange, onPickExercise, onSwapExercis
             </Button>
           )}
         </div>
-        <h1 className="mt-1 text-[19px] leading-tight font-extrabold text-ink">{runsheet.title}</h1>
+        {mode === 'author' ? (
+          <input value={runsheet.title} onChange={e => onChange({ ...runsheet, title: e.target.value })} placeholder="Workout name" aria-label="Workout name" autoFocus={!runsheet.title} className="mt-1 w-full bg-transparent text-[19px] leading-tight font-extrabold text-ink outline-none placeholder:text-faint" />
+        ) : (
+          <h1 className="mt-1 text-[19px] leading-tight font-extrabold text-ink">{runsheet.title}</h1>
+        )}
         <button type="button" onClick={() => setSettings(x => !x)} className="mt-0.5 block text-left text-[12px] text-muted">
           {mode === 'tonight' ? "Tonight's version" : `By ${runsheet.creator ?? 'you'}`} · <b className="text-ink">{minutes} min</b> · {blocks} {blocks === 1 ? 'block' : 'blocks'}
           {runsheet.timeCapSec ? ` · cap ${Math.round(runsheet.timeCapSec / 60)}:00` : ''}
@@ -103,13 +108,25 @@ export const EditorScreen = ({ runsheet, onChange, onPickExercise, onSwapExercis
       </div>
       <div className="safe-bottom shrink-0 border-t border-line bg-surface p-3">
         <div className="flex gap-2">
-          <Button block onClick={onStart}>
-            <Play /> {mode === 'tonight' ? `Start · ${minutes} min` : 'Save workout'}
-          </Button>
-          {mode === 'tonight' && (
+          {mode === 'tonight' ? (
+            <Button block onClick={onStart}>
+              <Play /> Start · {minutes} min
+            </Button>
+          ) : (
+            <Button block onClick={onSaveAsMine} disabled={!runsheet.items.length}>
+              <Save /> Save workout
+            </Button>
+          )}
+          {mode === 'tonight' ? (
             <Button variant="ghost" onClick={onSaveAsMine}>
               Save as mine
             </Button>
+          ) : (
+            onStart && (
+              <Button variant="ghost" onClick={onStart} disabled={!runsheet.items.length}>
+                <Play /> Start
+              </Button>
+            )
           )}
         </div>
       </div>

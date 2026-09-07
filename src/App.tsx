@@ -46,11 +46,12 @@ const TABS = [
 ] as const;
 type Tab = (typeof TABS)[number]['id'];
 
-type Route = { name: 'tab'; tab: Tab; sub?: string } | { name: 'workout' | 'edit' | 'follow' | 'result' | 'do' | 'session' | 'import'; id: string };
+type Route = { name: 'tab'; tab: Tab; sub?: string } | { name: 'new' } | { name: 'workout' | 'edit' | 'follow' | 'result' | 'do' | 'session' | 'import'; id: string };
 
 const parse = (hash: string): Route => {
   const seg = hash.replace(/^#\/?/, '').split('/');
   const id = seg[1] ? decodeURIComponent(seg[1]) : '';
+  if (seg[0] === 'new') return { name: 'new' };
   if (seg[0] === 'w' && id) return { name: 'workout', id };
   if (seg[0] === 'edit' && id) return { name: 'edit', id };
   if (seg[0] === 'follow' && id) return { name: 'follow', id };
@@ -150,6 +151,36 @@ export default function App() {
           saved={st.saved.includes(route.id)}
           onShare={async () => { const out = await shareLink(r.title, shareUrl(r)); say(out === 'copied' ? 'Link copied' : out === 'shared' ? 'Shared' : 'Could not share'); }}
         />
+    );
+  }
+  if (route.name === 'new') {
+    const r: Runsheet = draft ?? { title: '', creator: st.name, items: [] };
+    const saveMine = (): Runsheet => {
+      const title = r.title.trim() || 'My workout';
+      const mine: Runsheet = { ...r, id: `u-${Date.now().toString(36)}`, title, creator: st.name, source: { title, author: st.name, kind: 'user' }, program: undefined };
+      act.saveWorkout(mine);
+      setDraft(null);
+      return mine;
+    };
+    return full(
+      <>
+        <EditorScreen
+          runsheet={r}
+          onChange={setDraft}
+          onPickExercise={pick}
+          onSwapExercise={pick}
+          onBack={() => (setDraft(null), go('/discover/saved'))}
+          onReset={() => setDraft(null)}
+          onSaveAsMine={() => { const m = saveMine(); say('Saved to My workouts'); go(`/w/${encodeURIComponent(m.id!)}`); }}
+          onStart={() => { const m = saveMine(); go(`/do/${encodeURIComponent(m.id!)}`); }}
+          resolveTarget={resolve}
+          refTitle={refTitle}
+          mode="author"
+          onTextChange={t => { const out = applyCommands(r, t, library); setDraft(out.runsheet); say(out.applied.length ? out.applied.join(' · ') : `Didn't understand “${t}”`); }}
+          onPastePlan={() => setPasteOpen(true)}
+        />
+        <PasteSheet open={pasteOpen} onOpenChange={setPasteOpen} library={library} onUse={items => { setDraft({ ...r, items }); setPasteOpen(false); }} />
+      </>
     );
   }
   if (route.name === 'edit') {
@@ -259,8 +290,11 @@ export default function App() {
           <h1 className="text-[22px] font-extrabold">History</h1>
         </header>
         <div className="min-h-0 flex-1 space-y-2 overflow-y-auto px-3 py-3">
-          {sub === 'week' && <div className="px-1 text-[11px] font-bold tracking-widest text-muted uppercase">Last 7 days</div>}
-          {st.results.length === 0 && <div className="py-10 text-center text-[13px] text-muted">No results yet. Open a workout and log one.</div>}
+          <QuickLogRow favorites={st.favorites} onLog={setLogging} onManage={() => setManageFavs(true)} />
+          <QuickLogSheet favorite={logging} onClose={() => setLogging(null)} onSave={res => { act.addResult(res); setLogging(null); say(`Logged ${res.title}`); }} />
+          <ManageFavoritesSheet open={manageFavs} onOpenChange={setManageFavs} favorites={st.favorites} onChange={act.setFavorites} />
+          <div className="px-1 pt-2 text-[11px] font-bold tracking-widest text-muted uppercase">{sub === 'week' ? 'Last 7 days' : 'Sessions'}</div>
+          {st.results.length === 0 && <div className="py-10 text-center text-[13px] text-muted">No sessions yet. Do a workout, or tap a favourite above to log one.</div>}
           {st.results.filter(r => sub !== 'week' || Date.now() - Date.parse(r.startedAt) < 7 * 864e5).map((res, i) => {
             const r = byId.get(res.runsheetId);
             return (
@@ -349,12 +383,9 @@ export default function App() {
           </Button>
         </button>
       )}
-      <QuickLogRow favorites={st.favorites} onLog={setLogging} onManage={() => setManageFavs(true)} />
-      <QuickLogSheet favorite={logging} onClose={() => setLogging(null)} onSave={res => { act.addResult(res); setLogging(null); say(`Logged ${res.title}`); }} />
-      <ManageFavoritesSheet open={manageFavs} onOpenChange={setManageFavs} favorites={st.favorites} onChange={act.setFavorites} />
     </>
   );
-  return shell('discover', <DiscoverScreen key={initialTab} initialTab={initialTab} workouts={all} results={st.results} savedIds={st.saved} above={above} onOpen={r => go(`/w/${encodeURIComponent(wid(r))}`)} onOpenProgram={(_, days) => go(`/w/${encodeURIComponent(wid(days[0]))}`)} />);
+  return shell('discover', <DiscoverScreen key={initialTab} initialTab={initialTab} workouts={all} results={st.results} savedIds={st.saved} above={above} onCreate={() => (setDraft(null), go('/new'))} onOpen={r => go(`/w/${encodeURIComponent(wid(r))}`)} onOpenProgram={(_, days) => go(`/w/${encodeURIComponent(wid(days[0]))}`)} />);
 }
 
 const RunRoute = ({ runsheet, onFinish, onExit }: { runsheet: Runsheet; onFinish: (r: Partial<SessionResult>) => void; onExit: () => void }) => {

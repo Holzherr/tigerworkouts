@@ -1,5 +1,6 @@
-import { Bookmark, ChevronRight, Search, Sparkles } from 'lucide-react';
+import { Bookmark, ChevronRight, Plus, Search, Sparkles } from 'lucide-react';
 import { useMemo, useState } from 'react';
+import { Button } from '@/shared/components/ui/button';
 import { Chip } from '@/shared/components/ui/chip';
 import { EmptyState } from '@/shared/components/ui/empty-state';
 import { SegmentedControl } from '@/shared/components/ui/segmented-control';
@@ -33,6 +34,8 @@ export interface DiscoverScreenProps {
   savedIds?: string[];
   onOpen: (r: Runsheet) => void;
   onOpenProgram?: (name: string, days: Runsheet[]) => void;
+  /** Start a new workout from scratch. Shows the Create button in the header and the tile in Saved. */
+  onCreate?: () => void;
   initialTab?: DiscoverTab;
   initialFilter?: DiscoverFilter;
   title?: string;
@@ -53,13 +56,13 @@ const groupRecs = (recs: ReturnType<typeof recommend>) => {
 };
 
 /**
- * Home feed with three tabs in a segmented control under the title. Saved: the user's own and
- * bookmarked workouts. For you: ranked recommendations from history, each card with a one-line
+ * Home feed with three tabs in a segmented control under the title, and a Create button top
+ * right. Saved: a Create tile, then the user's own and bookmarked workouts. For you: ranked recommendations from history, each card with a one-line
  * reason ("Next in StrongLifts 5×5", "Because you did Fran"). Search: the search field first;
  * with no query it shows filter chips and the full catalogue (programs collapsed to one row each),
  * with a query it shows matches only.
  */
-export const DiscoverScreen = ({ workouts, results = [], savedIds = [], onOpen, onOpenProgram, initialTab = 'recommended', initialFilter = 'all', title = 'Discover', above }: DiscoverScreenProps) => {
+export const DiscoverScreen = ({ workouts, results = [], savedIds = [], onOpen, onOpenProgram, onCreate, initialTab = 'recommended', initialFilter = 'all', title = 'Discover', above }: DiscoverScreenProps) => {
   const [tab, setTab] = useState<DiscoverTab>(initialTab);
   const [q, setQ] = useState('');
   const [filter, setFilter] = useState<DiscoverFilter>(initialFilter);
@@ -94,7 +97,14 @@ export const DiscoverScreen = ({ workouts, results = [], savedIds = [], onOpen, 
   return (
     <div className="flex h-full min-h-0 flex-col bg-canvas">
       <header className="safe-top shrink-0 bg-surface px-4 pt-3 pb-2">
-        <h1 className="text-[22px] font-extrabold">{title}</h1>
+        <div className="flex items-center justify-between gap-3">
+          <h1 className="text-[22px] font-extrabold">{title}</h1>
+          {onCreate && (
+            <Button size="sm" onClick={onCreate}>
+              <Plus /> Create
+            </Button>
+          )}
+        </div>
         <SegmentedControl aria-label="Feed" className="mt-2" options={TABS} value={tab} onChange={setTab} />
         {tab === 'search' && (
           <>
@@ -118,10 +128,21 @@ export const DiscoverScreen = ({ workouts, results = [], savedIds = [], onOpen, 
       <div className="min-h-0 flex-1 space-y-2 overflow-y-auto px-3 py-3">
         {tab === 'saved' && (
           <>
+            {onCreate && (
+              <button type="button" onClick={onCreate} className="flex w-full items-center gap-3 rounded-card border border-dashed border-brand-line bg-surface px-3 py-2.5 text-left active:bg-brand-soft">
+                <span className="grid size-10 shrink-0 place-items-center rounded-control bg-brand-soft text-brand">
+                  <Plus className="size-5" />
+                </span>
+                <span className="min-w-0 flex-1">
+                  <span className="block text-[15px] font-bold">Create a workout</span>
+                  <span className="block text-[12px] text-muted">Build your own from the exercise library, or paste a plan.</span>
+                </span>
+              </button>
+            )}
             {saved.map(r => (
               <WorkoutCard key={wid(r)} runsheet={r} onOpen={onOpen} />
             ))}
-            {saved.length === 0 && <EmptyState icon={<Bookmark />} title="Nothing saved yet" body="Tap Save on any workout, or Save as mine after editing one." action={{ label: 'Browse workouts', onClick: () => setTab('search') }} />}
+            {saved.length === 0 && <EmptyState icon={<Bookmark />} title="Nothing saved yet" body="Tap Save on any workout, or create your own above." action={{ label: 'Browse workouts', onClick: () => setTab('search') }} />}
           </>
         )}
 

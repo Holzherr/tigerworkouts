@@ -20,7 +20,7 @@ const meta = {
   title: 'Discover/DiscoverScreen',
   component: DiscoverScreen,
   parameters: { layout: 'fullscreen', docs: { description: { component: 'Home feed at phone size: title, a three-way segmented control (Saved / For you / Search). Saved lists bookmarked and own workouts. For you lists ranked recommendations with an orange reason line above each card. Search puts the field first; empty query shows filter chips and the catalogue with programs as orange rows, a query shows matches only.' } } },
-  args: { workouts: ALL, onOpen: () => {} },
+  args: { workouts: ALL, onOpen: () => {}, onCreate: () => {} },
   decorators: [S => <div className="mx-auto h-[820px] w-[393px] overflow-hidden border-x border-line"><S /></div>],
 } satisfies Meta<typeof DiscoverScreen>;
 
@@ -30,7 +30,7 @@ type Story = StoryObj<typeof meta>;
 const Flow = () => {
   const [sel, setSel] = useState<Runsheet | null>(null);
   if (sel) return <WorkoutPreviewScreen runsheet={sel} onBack={() => setSel(null)} onStart={() => alert('start')} onEditAndStart={() => alert('edit')} onFollowAlong={() => alert('follow')} onLogOnly={() => alert('log')} onSave={() => alert('save')} history={HISTORY.filter(h => h.runsheetId === sel.id)} />;
-  return <DiscoverScreen workouts={ALL} results={HISTORY} savedIds={SAVED} onOpen={setSel} onOpenProgram={(_n, d) => setSel(d[0])} />;
+  return <DiscoverScreen workouts={ALL} results={HISTORY} savedIds={SAVED} onOpen={setSel} onOpenProgram={(_n, d) => setSel(d[0])} onCreate={() => alert('create')} />;
 };
 
 export const ForYou: Story = { render: () => <Flow /> };
