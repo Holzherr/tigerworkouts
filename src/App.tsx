@@ -290,6 +290,7 @@ export default function App() {
             act.setTrainingMaxes(tm);
             setDraft(null);
             setPending(null);
+            say('Workout saved');
             go('/history');
           }}
         />
