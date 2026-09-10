@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { flatten, fromLegacy, groupOnto, insertAfter, makeExercise, makeRest, moveRow, rebuild, removeStep, runsheetSeconds, type Block, type ExerciseRef, type Item } from './model';
+import { flatten, fromLegacy, groupOnto, insertAfter, makeExercise, makeRest, moveRow, moveRowTo, moveToTopLevel, rebuild, removeStep, runsheetSeconds, type Block, type ExerciseRef, type Item } from './model';
 
 const KB: ExerciseRef = { key: 'kb_swing', name: 'Kettlebell swings', unit: 'kg', step: 4 };
 const PRESS: ExerciseRef = { key: 'db_incline_press', name: 'Incline chest press', unit: 'kg per arm', step: 2.5 };
@@ -131,5 +131,27 @@ describe('ladder and max', () => {
   });
   it('max steps estimate a minute', () => {
     expect(runsheetSeconds({ items: [makeExercise(KB, { forMode: 'max', forValue: 0 })] })).toBe(60);
+  });
+});
+
+
+describe('moveRowTo / moveToTopLevel', () => {
+  // blocks keep at least two steps so they do not dissolve on rebuild
+  const two = (): Item[] => [
+    { kind: 'block', id: 'b1', name: 'A', repeat: 2, steps: [{ ...makeExercise(KB), id: 's1' }, { ...makeExercise(PRESS), id: 's2' }, { ...makeRest(30), id: 'r1' }] },
+    { kind: 'block', id: 'b2', name: 'B', repeat: 2, steps: [{ ...makeExercise(SPRINT), id: 's3' }, { ...makeRest(30), id: 'r2' }] },
+  ];
+  it('moves a step out after its block', () => {
+    const out = moveRowTo(two(), 's2', 'b1:end', 'after');
+    expect(out.map(i => i.id)).toEqual(['b1', 's2', 'b2']);
+    expect((out[0] as Block).steps.map(s => s.id)).toEqual(['s1', 'r1']);
+  });
+  it('moves a step to the top level after a block', () => {
+    const out = moveToTopLevel(two(), 's1', 'b2');
+    expect(out.map(i => i.id)).toEqual(['b1', 'b2', 's1']);
+  });
+  it('moves a step to the very start', () => {
+    const out = moveToTopLevel(two(), 's1', null);
+    expect(out[0].id).toBe('s1');
   });
 });

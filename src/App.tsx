@@ -9,6 +9,7 @@ import { FULL_LIBRARY } from '@/features/workouts/imported';
 import { WorkoutCard } from '@/features/discover/components/workout-card';
 import { WorkoutPreviewScreen } from '@/features/discover/components/workout-preview-screen';
 import { EditorScreen } from '@/features/runsheet/components/editor-screen';
+import type { DndVariant } from '@/features/runsheet/components/runsheet-list';
 import { EX, priyanka } from '@/features/runsheet/fixtures';
 import { makeExercise, resolveRefs, scoreType, type ExerciseStep, type Runsheet } from '@/features/runsheet/model';
 import { applyCommands, parsePlan } from '@/features/runsheet/parse-text';
@@ -103,6 +104,8 @@ export default function App() {
   const picker = <ExercisePicker open={pickerOpen} onOpenChange={o => { setPickerOpen(o); if (!o) { pickResolve.current?.(null); pickResolve.current = null; } }} library={library} usage={usage} onPick={e => { pickResolve.current?.(e); pickResolve.current = null; }} onCreate={act.addExercise} />;
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [volume, setVol] = useState(getVolume);
+  const [dnd, setDndState] = useState<DndVariant>(() => { try { return (localStorage.getItem('tiger:dnd') as DndVariant) || 'classic'; } catch { return 'classic'; } });
+  const setDnd = (v: DndVariant) => { setDndState(v); try { localStorage.setItem('tiger:dnd', v); } catch { /* ignore */ } };
   // Google shows on the sign-in card only when the Supabase project has the provider enabled.
   const [google, setGoogle] = useState(false);
   useEffect(() => {
@@ -192,6 +195,7 @@ export default function App() {
           resolveTarget={resolve}
           refTitle={refTitle}
           mode="author"
+          dndVariant={dnd}
           onTextChange={t => { const out = applyCommands(r, t, library); setDraft(out.runsheet); say(out.applied.length ? out.applied.join(' · ') : `Didn't understand “${t}”`); }}
           onPastePlan={() => setPasteOpen(true)}
         />
@@ -226,6 +230,7 @@ export default function App() {
           resolveTarget={resolve}
           refTitle={refTitle}
           mode="tonight"
+          dndVariant={dnd}
           onTextChange={t => { const out = applyCommands(r, t, library); setDraft(out.runsheet); say(out.applied.length ? out.applied.join(' · ') : `Didn't understand “${t}”`); }}
           onPastePlan={() => setPasteOpen(true)}
         />
@@ -345,7 +350,7 @@ export default function App() {
             </Button>
           </div>
         </header>
-        <SettingsSheet open={settingsOpen} onOpenChange={setSettingsOpen} name={st.name} avatar={st.avatar} units={st.units} email={cloud.user?.email ?? undefined} volume={volume} onVolume={v => { setVolume(v); setVol(v); }} onChange={act.setProfile} onInvite={invite} onSignOut={cloud.user ? () => signOut().then(() => (act.setSignedIn(false), setSettingsOpen(false), go('/discover'))) : undefined} />
+        <SettingsSheet open={settingsOpen} onOpenChange={setSettingsOpen} name={st.name} avatar={st.avatar} units={st.units} email={cloud.user?.email ?? undefined} volume={volume} onVolume={v => { setVolume(v); setVol(v); }} dnd={dnd} onDnd={setDnd} onChange={act.setProfile} onInvite={invite} onSignOut={cloud.user ? () => signOut().then(() => (act.setSignedIn(false), setSettingsOpen(false), go('/discover'))) : undefined} />
         <div className="min-h-0 flex-1 space-y-2 overflow-y-auto px-3 py-3">
           <StatTiles stats={[{ value: st.results.length, label: 'sessions', onClick: () => go('/history') }, { value: st.results.filter(r => Date.now() - Date.parse(r.startedAt) < 7 * 864e5).length, label: 'this week', onClick: () => go('/history/week') }, { value: st.saved.length, label: 'saved', onClick: () => go('/discover/saved') }]} />
           {!cloud.user && <SignInCard onSendCode={sendCode} onVerify={async (e, c) => { await verifyCode(e, c); act.setSignedIn(true); }} onGoogle={google ? signInGoogle : undefined} />}

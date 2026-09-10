@@ -383,6 +383,53 @@ export const rebuild = (rows: Row[]): Item[] => {
  * Move the row `activeId` so that it lands at `overId`'s position (before it when moving up,
  * after it when moving down, like a sortable list). Block heads carry their whole block.
  */
+/** Remove the active row (a block moves as a chunk) and return the remaining rows plus the chunk. */
+const liftRow = (items: Item[], activeId: string): { chunk: Row[]; rest: Row[]; active: Row } | null => {
+  const rows = flatten(items);
+  const from = rows.findIndex(r => r.id === activeId);
+  if (from < 0) return null;
+  const active = rows[from];
+  const chunkLen = active.type === 'block-head' ? rows.findIndex(r => r.type === 'block-end' && r.blockId === active.id) - from + 1 : 1;
+  return { chunk: rows.slice(from, from + chunkLen), rest: [...rows.slice(0, from), ...rows.slice(from + chunkLen)], active };
+};
+const placeRow = (lift: NonNullable<ReturnType<typeof liftRow>>, insertAt: number): Item[] => {
+  const { chunk, rest, active } = lift;
+  let at = Math.max(0, Math.min(rest.length, insertAt));
+  if (active.type === 'block-head') {
+    let depth = 0;
+    for (let i = 0; i < at; i++) {
+      if (rest[i].type === 'block-head') depth++;
+      if (rest[i].type === 'block-end') depth--;
+    }
+    if (depth > 0) {
+      while (at < rest.length && rest[at].type !== 'block-end') at++;
+      at++;
+    }
+  }
+  rest.splice(at, 0, ...chunk);
+  return rebuild(rest);
+};
+/** Put the active row immediately before or after a specific row (a block's `:end` row = just after that block). */
+export const moveRowTo = (items: Item[], activeId: string, rowId: string, where: 'before' | 'after'): Item[] => {
+  if (activeId === rowId) return items;
+  const lift = liftRow(items, activeId);
+  if (!lift) return items;
+  const idx = lift.rest.findIndex(r => r.id === rowId);
+  if (idx < 0) return items;
+  return placeRow(lift, where === 'after' ? idx + 1 : idx);
+};
+/** Put the active row at the top level, after item `afterId` (null = first). */
+export const moveToTopLevel = (items: Item[], activeId: string, afterId: string | null): Item[] => {
+  const lift = liftRow(items, activeId);
+  if (!lift) return items;
+  if (afterId === null) return placeRow(lift, 0);
+  const it = items.find(x => x.id === afterId);
+  const endId = it?.kind === 'block' ? `${afterId}:end` : afterId;
+  const idx = lift.rest.findIndex(r => r.id === endId);
+  if (idx < 0) return items;
+  return placeRow(lift, idx + 1);
+};
+
 export const moveRow = (items: Item[], activeId: string, overId: string): Item[] => {
   if (activeId === overId) return items;
   const rows = flatten(items);
