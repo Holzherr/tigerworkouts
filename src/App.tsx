@@ -17,8 +17,6 @@ import type { LibraryExercise } from '@/features/exercises/library';
 import { AvatarView, SettingsSheet } from '@/features/profile/components/settings-sheet';
 import { ImportScreen } from '@/features/share/components/import-screen';
 import { decodeShared, shareLink, shareUrl } from '@/features/share/share';
-import { ManageFavoritesSheet, QuickLogRow, QuickLogSheet } from '@/features/results/components/quick-log';
-import type { Favorite } from '@/features/cloud/sync';
 import { useCallback, useRef } from 'react';
 import { fmtScore, resolveTarget } from '@/features/runsheet/progression';
 import { ResultSheet } from '@/features/results/components/result-sheet';
@@ -36,6 +34,7 @@ import { WorkoutIcon } from '@/shared/components/ui/workout-icon';
 import { defaultIcon } from '@/features/workouts/icon';
 import { useActions, useAppState } from './app/store';
 import { providers, sendCode, signInGoogle, signOut, verifyCode } from '@/features/cloud/client';
+import { getVolume, setVolume } from '@/features/timer/use-runner';
 import { deviceFor, fetchPublicWorkouts } from '@/features/cloud/sync';
 import { useCloudSync } from '@/features/cloud/use-sync';
 import { SessionDetailScreen } from '@/features/results/components/session-detail-screen';
@@ -103,6 +102,7 @@ export default function App() {
   const pick = useCallback((): Promise<ExerciseStep | null> => new Promise(res => { pickResolve.current = e => res(e ? makeExercise(e) : null); setPickerOpen(true); }), []);
   const picker = <ExercisePicker open={pickerOpen} onOpenChange={o => { setPickerOpen(o); if (!o) { pickResolve.current?.(null); pickResolve.current = null; } }} library={library} usage={usage} onPick={e => { pickResolve.current?.(e); pickResolve.current = null; }} onCreate={act.addExercise} />;
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [volume, setVol] = useState(getVolume);
   // Google shows on the sign-in card only when the Supabase project has the provider enabled.
   const [google, setGoogle] = useState(false);
   useEffect(() => {
@@ -111,8 +111,6 @@ export default function App() {
   useEffect(() => {
     if (cloud.user) act.setSignedIn(true);
   }, [cloud.user, act]);
-  const [logging, setLogging] = useState<Favorite | null>(null);
-  const [manageFavs, setManageFavs] = useState(false);
   const [pasteOpen, setPasteOpen] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
   const say = (m: string) => { setToast(m); setTimeout(() => setToast(null), 2500); };
@@ -312,11 +310,8 @@ export default function App() {
           <h1 className="text-[22px] font-extrabold">History</h1>
         </header>
         <div className="min-h-0 flex-1 space-y-2 overflow-y-auto px-3 py-3">
-          <QuickLogRow favorites={st.favorites} onLog={setLogging} onManage={() => setManageFavs(true)} />
-          <QuickLogSheet favorite={logging} onClose={() => setLogging(null)} onSave={res => { act.addResult(res); setLogging(null); say(`Logged ${res.title}`); }} />
-          <ManageFavoritesSheet open={manageFavs} onOpenChange={setManageFavs} favorites={st.favorites} onChange={act.setFavorites} />
-          <div className="px-1 pt-2 text-[11px] font-bold tracking-widest text-muted uppercase">{sub === 'week' ? 'Last 7 days' : 'Sessions'}</div>
-          {st.results.length === 0 && <div className="py-10 text-center text-[13px] text-muted">No sessions yet. Do a workout, or tap a favourite above to log one.</div>}
+          <div className="px-1 text-[11px] font-bold tracking-widest text-muted uppercase">{sub === 'week' ? 'Last 7 days' : 'Sessions'}</div>
+          {st.results.length === 0 && <div className="py-10 text-center text-[13px] text-muted">No sessions yet. Open a workout and log one.</div>}
           {st.results.filter(r => sub !== 'week' || Date.now() - Date.parse(r.startedAt) < 7 * 864e5).map((res, i) => {
             const r = byId.get(res.runsheetId);
             return (
@@ -350,7 +345,7 @@ export default function App() {
             </Button>
           </div>
         </header>
-        <SettingsSheet open={settingsOpen} onOpenChange={setSettingsOpen} name={st.name} avatar={st.avatar} units={st.units} email={cloud.user?.email ?? undefined} onChange={act.setProfile} onInvite={invite} onSignOut={cloud.user ? () => signOut().then(() => (act.setSignedIn(false), setSettingsOpen(false), go('/discover'))) : undefined} />
+        <SettingsSheet open={settingsOpen} onOpenChange={setSettingsOpen} name={st.name} avatar={st.avatar} units={st.units} email={cloud.user?.email ?? undefined} volume={volume} onVolume={v => { setVolume(v); setVol(v); }} onChange={act.setProfile} onInvite={invite} onSignOut={cloud.user ? () => signOut().then(() => (act.setSignedIn(false), setSettingsOpen(false), go('/discover'))) : undefined} />
         <div className="min-h-0 flex-1 space-y-2 overflow-y-auto px-3 py-3">
           <StatTiles stats={[{ value: st.results.length, label: 'sessions', onClick: () => go('/history') }, { value: st.results.filter(r => Date.now() - Date.parse(r.startedAt) < 7 * 864e5).length, label: 'this week', onClick: () => go('/history/week') }, { value: st.saved.length, label: 'saved', onClick: () => go('/discover/saved') }]} />
           {!cloud.user && <SignInCard onSendCode={sendCode} onVerify={async (e, c) => { await verifyCode(e, c); act.setSignedIn(true); }} onGoogle={google ? signInGoogle : undefined} />}
@@ -392,7 +387,7 @@ export default function App() {
       </div>
     );
   }
-  const initialTab: DiscoverTab = sub === 'search' ? 'search' : sub === 'saved' ? 'saved' : 'recommended';
+  const initialTab: DiscoverTab = sub === 'search' ? 'search' : sub === 'foryou' ? 'recommended' : 'saved';
   const saved = Runner.loadPersisted();
   const above = (
     <>
@@ -416,7 +411,7 @@ const RunRoute = ({ runsheet, onFinish, onExit }: { runsheet: Runsheet; onFinish
   const { state, now, act } = useRunner(runsheet, { resume: true });
   return (
     <div className="relative h-dvh">
-      <TimerScreen runsheet={runsheet} state={state} now={now} onDone={act.done} onSkip={act.skip} onBack={act.back} onPause={act.pause} onResume={act.resume} onAdjust={act.adjust} onSetReps={act.setReps} onDrop={act.drop} onFinish={() => { const done = Runner.finish(state, Date.now()); Runner.clearPersisted(); onFinish(Runner.toResult(done, runsheet, Date.now())); }} onExit={onExit} />
+      <TimerScreen runsheet={runsheet} state={state} now={now} onDone={act.done} onSkip={act.skip} onBack={act.back} onPause={act.pause} onResume={act.resume} onAdjust={act.adjust} onAdjustIncline={act.adjustIncline} onSetReps={act.setReps} onDrop={act.drop} onStartBlock={act.startBlock} onFinish={() => { const done = Runner.finish(state, Date.now()); Runner.clearPersisted(); onFinish(Runner.toResult(done, runsheet, Date.now())); }} onExit={onExit} />
     </div>
   );
 };

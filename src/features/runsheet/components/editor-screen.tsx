@@ -63,11 +63,7 @@ export const EditorScreen = ({ runsheet, onChange, onPickExercise, onSwapExercis
             </Button>
           )}
         </div>
-        {mode === 'author' ? (
-          <input value={runsheet.title} onChange={e => onChange({ ...runsheet, title: e.target.value })} placeholder="Workout name" aria-label="Workout name" autoFocus={!runsheet.title} className="mt-1 w-full bg-transparent text-[19px] leading-tight font-extrabold text-ink outline-none placeholder:text-faint" />
-        ) : (
-          <h1 className="mt-1 text-[19px] leading-tight font-extrabold text-ink">{runsheet.title}</h1>
-        )}
+        <input value={runsheet.title} onChange={e => onChange({ ...runsheet, title: e.target.value })} placeholder="Workout name" aria-label="Workout name" autoFocus={mode === 'author' && !runsheet.title} className="mt-1 w-full rounded-control bg-transparent text-[19px] leading-tight font-extrabold text-ink outline-none placeholder:text-faint focus:bg-canvas" />
         <button type="button" onClick={() => setSettings(x => !x)} className="mt-0.5 block text-left text-[12px] text-muted">
           {mode === 'tonight' ? "Tonight's version" : `By ${runsheet.creator ?? 'you'}`} · <b className="text-ink">{minutes} min</b> · {blocks} {blocks === 1 ? 'block' : 'blocks'}
           {runsheet.timeCapSec ? ` · cap ${Math.round(runsheet.timeCapSec / 60)}:00` : ''}

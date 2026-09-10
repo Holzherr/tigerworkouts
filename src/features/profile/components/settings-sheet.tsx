@@ -1,6 +1,7 @@
 import { Camera, Share2 } from 'lucide-react';
 import { useRef } from 'react';
 import { Button } from '@/shared/components/ui/button';
+import { Stepper } from '@/shared/components/ui/stepper';
 import { Chip } from '@/shared/components/ui/chip';
 import { Dropdown } from '@/shared/components/ui/dropdown';
 import { Sheet } from '@/shared/components/ui/sheet';
@@ -23,6 +24,9 @@ export interface SettingsSheetProps {
   onChange: (p: { name?: string; avatar?: Avatar; units?: 'metric' | 'imperial' }) => void;
   onInvite: () => void;
   onSignOut?: () => void;
+  /** Timer beep volume 0–1. */
+  volume?: number;
+  onVolume?: (v: number) => void;
 }
 
 /** 56px avatar: photo, or an emoji / initial on a coloured disc. */
@@ -39,7 +43,7 @@ export const AvatarView = ({ name, avatar, size = 56 }: { name: string; avatar?:
  * Settings sheet: avatar preview with name field, emoji and colour chips, photo upload (resized
  * to 256px and stored as a data URL), units dropdown, Invite someone, Sign out.
  */
-export const SettingsSheet = ({ open, onOpenChange, name, avatar, units, email, onChange, onInvite, onSignOut }: SettingsSheetProps) => {
+export const SettingsSheet = ({ open, onOpenChange, name, avatar, units, email, onChange, onInvite, onSignOut, volume, onVolume }: SettingsSheetProps) => {
   const file = useRef<HTMLInputElement>(null);
   const onPhoto = (f: File) => {
     const img = new Image();
@@ -83,7 +87,13 @@ export const SettingsSheet = ({ open, onOpenChange, name, avatar, units, email, 
           <span className="text-[14px]">Units</span>
           <Dropdown aria-label="Units" value={units} options={UNITS} onValueChange={u => onChange({ units: u })} />
         </div>
-        <Button variant="ghost" block onClick={onInvite}>
+        {onVolume && (
+        <div className="flex items-center justify-between gap-3">
+          <span className="text-[14px]">Timer volume</span>
+          <Stepper aria-label="Timer volume" value={Math.round((volume ?? 0.8) * 10)} min={0} max={10} step={1} onChange={v => onVolume(v / 10)} />
+        </div>
+      )}
+      <Button variant="ghost" block onClick={onInvite}>
           <Share2 /> Invite someone
         </Button>
         {onSignOut && (

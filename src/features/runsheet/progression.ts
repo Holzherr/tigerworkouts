@@ -26,6 +26,8 @@ export interface StepResult {
   exerciseKey: string;
   /** Load actually used, kg (or the exercise unit). */
   target?: number;
+  /** Treadmill incline actually used. */
+  incline?: number;
   /** Reps achieved on the last set (amrap / max) or per set. */
   reps?: number[];
   /** Every prescribed set hit its reps. */

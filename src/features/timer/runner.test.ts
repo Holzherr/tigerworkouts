@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { EX } from '@/features/runsheet/fixtures';
 import { makeExercise, makeRest, type Block, type Runsheet } from '@/features/runsheet/model';
 import { adjust, advance, drop, elapsed, expand, pause, resume, start, tick, toResult } from './runner';
+import * as R from './runner';
 
 const swings = () => ({ ...makeExercise(EX.kb_swing, { target: 28 }), id: 'sw' });
 const press = () => ({ ...makeExercise(EX.db_incline_press, { target: 20 }), id: 'pr' });
@@ -81,5 +82,40 @@ describe('run', () => {
     s = advance(s, 35000);
     const res = toResult(s, interval(), 40000);
     expect(res.steps.find(x => x.stepId === 'sw')?.target).toBe(32);
+  });
+});
+
+
+describe('load changes carry forward and blocks gate', () => {
+  const two = (): Runsheet => ({
+    id: 'two',
+    title: 'Two blocks',
+    items: [
+      { kind: 'block', id: 'b1', name: 'Press', repeat: 2, steps: [{ kind: 'exercise', id: 'e1', exercise: { key: 'db_incline_press', name: 'Press', unit: 'kg', step: 2.5 }, target: 15, forMode: 'seconds', forValue: 30 }] },
+      { kind: 'block', id: 'b2', name: 'Walk', repeat: 1, steps: [{ kind: 'exercise', id: 'e2', exercise: { key: 'incline_walk', name: 'Walk', unit: 'kph', step: 0.5 }, target: 6, incline: 6, forMode: 'seconds', forValue: 60 }] },
+    ],
+  });
+  it('an adjustment in round 1 is the recorded load after round 2 at the plan', () => {
+    let s = R.start(two(), 0);
+    s = R.advance(s, 5000); // lead → slot 0
+    s = R.adjust(s, 6000, 20);
+    s = R.advance(s, 40000); // slot 1 (round 2, no adjustment)
+    expect(R.effectiveTarget(s, 1)).toBe(20);
+    s = R.advance(s, 80000); // → block 2 gate
+    expect(s.phase).toBe('ready');
+    s = R.startBlock(s, 90000);
+    expect(s.phase).toBe('running');
+    s = R.adjustIncline(s, 5);
+    s = R.advance(s, 150000);
+    const res = R.toResult(s, two(), 150000);
+    expect(res.steps.find(x => x.stepId === 'e1')?.target).toBe(20);
+    expect(res.steps.find(x => x.stepId === 'e2')?.incline).toBe(5);
+  });
+  it('overall progress reaches 1 when done', () => {
+    let s = R.start(two(), 0);
+    s = R.advance(s, 5000);
+    expect(R.overall(s, 5000)).toBeGreaterThanOrEqual(0);
+    s = R.finish(s, 9000);
+    expect(R.overall(s, 9000)).toBe(1);
   });
 });

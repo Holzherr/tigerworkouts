@@ -24,12 +24,16 @@ export interface Slot {
   rung?: number;
   /** amrap/fortime: the cap on the whole block, seconds. */
   capSec?: number;
+  /** Which top-level item (block or loose step) this slot belongs to, 0-based, and how many there are. */
+  part: number;
+  parts: number;
 }
 
 export type Phase = 'ready' | 'lead' | 'running' | 'paused' | 'done';
 
 export interface Actual {
   target?: number;
+  incline?: number;
   reps?: number;
   changes: { atSec: number; target: number }[];
   doneAt?: number;
@@ -77,12 +81,15 @@ export const expand = (r: Runsheet, dropped: string[] = []): Slot[] => {
   const out: Slot[] = [];
   const skip = new Set(dropped);
   let n = 0;
+  const parts = r.items.filter(i => i.kind !== 'ref').length;
+  let part = -1;
   const push = (step: Step, extra: Partial<Slot> & Pick<Slot, 'mode' | 'round' | 'rounds'>) => {
     if (skip.has(step.id)) return;
-    out.push({ id: `${step.id}#${n++}`, kind: step.kind === 'rest' ? 'rest' : 'work', step, seconds: slotSeconds(step), ...extra });
+    out.push({ id: `${step.id}#${n++}`, kind: step.kind === 'rest' ? 'rest' : 'work', step, seconds: slotSeconds(step), part, parts, ...extra });
   };
   for (const it of r.items) {
     if (it.kind === 'ref') continue;
+    part++;
     if (it.kind !== 'block') {
       push(it, { mode: 'loose', round: 0, rounds: 1 });
       continue;
@@ -91,7 +98,7 @@ export const expand = (r: Runsheet, dropped: string[] = []): Slot[] => {
     const mode = b.mode ?? 'rounds';
     const base = { blockId: b.id, blockName: b.name, mode } as const;
     const between = (round: number, rounds: number) => {
-      if (b.restBetweenSec && round < rounds - 1) out.push({ id: `${b.id}:between#${n++}`, kind: 'rest', step: { kind: 'rest', id: `${b.id}:between`, seconds: b.restBetweenSec }, seconds: b.restBetweenSec, ...base, round, rounds });
+      if (b.restBetweenSec && round < rounds - 1) out.push({ id: `${b.id}:between#${n++}`, kind: 'rest', step: { kind: 'rest', id: `${b.id}:between`, seconds: b.restBetweenSec }, seconds: b.restBetweenSec, part, parts, ...base, round, rounds });
     };
     if (mode === 'ladder') {
       const rungs = b.ladder ?? [b.repeat];
@@ -105,7 +112,7 @@ export const expand = (r: Runsheet, dropped: string[] = []): Slot[] => {
       const every = b.everySec ?? 60;
       for (let m = 0; m < b.repeat; m++) {
         for (const s of b.steps) if (s.kind === 'exercise') push(s, { ...base, round: m, rounds: b.repeat, everySec: every });
-        out.push({ id: `${b.id}:wait#${n++}`, kind: 'rest', step: { kind: 'rest', id: `${b.id}:wait`, seconds: every }, seconds: every, untilBoundary: true, everySec: every, ...base, round: m, rounds: b.repeat });
+        out.push({ id: `${b.id}:wait#${n++}`, kind: 'rest', step: { kind: 'rest', id: `${b.id}:wait`, seconds: every }, seconds: every, untilBoundary: true, everySec: every, part, parts, ...base, round: m, rounds: b.repeat });
       }
       continue;
     }
@@ -143,6 +150,7 @@ export const next = (s: RunState): Slot | undefined => s.slots[s.i + 1];
 export const elapsed = (s: RunState, now: number) => Math.max(0, ((s.endedAt ?? (s.phase === 'paused' && s.pausedAt ? s.pausedAt : now)) - s.startedAt - s.pausedMs) / 1000);
 /** Seconds left in the current countdown, or seconds elapsed in a user-paced slot (negative sign convention: returns {left} or {spent}). */
 export const clock = (s: RunState, now: number): { left?: number; spent: number } => {
+  if (s.phase === 'ready') return { left: current(s)?.seconds, spent: 0 };
   if (s.phase === 'paused') return { left: s.remainingMs !== undefined ? s.remainingMs / 1000 : undefined, spent: ((s.pausedAt ?? now) - s.slotStartedAt) / 1000 };
   const spent = (now - s.slotStartedAt) / 1000;
   return { left: s.endsAt !== undefined ? Math.max(0, (s.endsAt - now) / 1000) : undefined, spent };
@@ -157,8 +165,17 @@ export const blockElapsed = (s: RunState, now: number) => {
 // pauses are tracked globally; approximate per-block by ignoring pauses before the block started
 const pausedSince = (s: RunState, _sinceMs: number) => s.pausedMs;
 
+/** Move to slot i. Entering a new part (block or loose step) going forward parks the timer in
+ * `ready` until the user taps Start block, so equipment changes don't eat the countdown. */
 const enter = (s: RunState, i: number, now: number): RunState => {
   if (i >= s.slots.length) return { ...s, i, phase: 'done', endsAt: undefined, endedAt: now };
+  const slot = s.slots[i];
+  if (i > 0 && i > s.i && slot.part !== s.slots[i - 1].part) return { ...s, i, phase: 'ready', slotStartedAt: now, endsAt: undefined, remainingMs: undefined };
+  return activate(s, i, now);
+};
+/** Start the block the timer is parked on. */
+export const startBlock = (s: RunState, now: number): RunState => (s.phase === 'ready' ? activate(s, s.i, now) : s);
+const activate = (s: RunState, i: number, now: number): RunState => {
   const slot = s.slots[i];
   const blockStart = { ...s.blockStart };
   if (slot.blockId && blockStart[slot.blockId] === undefined) blockStart[slot.blockId] = now;
@@ -184,6 +201,7 @@ const enter = (s: RunState, i: number, now: number): RunState => {
 export const advance = (s: RunState, now: number, opts: { skipped?: boolean } = {}): RunState => {
   if (s.phase === 'done') return s;
   if (s.phase === 'lead') return enter(s, 0, now);
+  if (s.phase === 'ready') return activate(s, s.i + 1 < s.slots.length && s.slots[s.i + 1].part === s.slots[s.i].part ? s.i + 1 : s.i, now);
   const c = current(s);
   const actuals = { ...s.actuals };
   const blockDone = { ...s.blockDone };
@@ -227,6 +245,12 @@ export const adjust = (s: RunState, now: number, target: number): RunState => {
   const atSec = Math.round((now - s.slotStartedAt) / 1000);
   return { ...s, actuals: { ...s.actuals, [c.id]: { ...a, target, changes: [...a.changes, { atSec, target }] } } };
 };
+/** Change the incline of the current treadmill step; carried forward like a load change. */
+export const adjustIncline = (s: RunState, incline: number): RunState => {
+  const c = current(s);
+  if (!c || c.kind !== 'work') return s;
+  return { ...s, actuals: { ...s.actuals, [c.id]: { ...(s.actuals[c.id] ?? { changes: [] }), incline } } };
+};
 export const setReps = (s: RunState, reps: number): RunState => {
   const c = current(s);
   if (!c || c.kind !== 'work') return s;
@@ -243,22 +267,62 @@ export const drop = (s: RunState, now: number, stepId: string): RunState => {
 
 export const finish = (s: RunState, now: number): RunState => ({ ...s, phase: 'done', endedAt: now, endsAt: undefined });
 
-/** Everything a slot's step resolved to: the last adjusted target or the plan. */
-export const targetOf = (s: RunState, slot: Slot): number | undefined => s.actuals[slot.id]?.target ?? (slot.step.kind === 'exercise' ? slot.step.target : undefined);
+/** The load in force at slot index idx: the latest adjustment made on any earlier round of the same step, else the plan. */
+export const effectiveTarget = (s: RunState, idx: number): number | undefined => {
+  const slot = s.slots[idx];
+  if (!slot) return undefined;
+  for (let j = idx; j >= 0; j--) {
+    const sl = s.slots[j];
+    if (sl.step.id !== slot.step.id) continue;
+    const t = s.actuals[sl.id]?.target;
+    if (t !== undefined) return t;
+  }
+  return slot.step.kind === 'exercise' ? slot.step.target : undefined;
+};
+export const effectiveIncline = (s: RunState, idx: number): number | undefined => {
+  const slot = s.slots[idx];
+  if (!slot) return undefined;
+  for (let j = idx; j >= 0; j--) {
+    const sl = s.slots[j];
+    if (sl.step.id !== slot.step.id) continue;
+    const t = s.actuals[sl.id]?.incline;
+    if (t !== undefined) return t;
+  }
+  return slot.step.kind === 'exercise' ? slot.step.incline : undefined;
+};
+/** Everything a slot's step resolved to: the last adjusted target (from this or an earlier round) or the plan. */
+export const targetOf = (s: RunState, slot: Slot): number | undefined => effectiveTarget(s, s.slots.findIndex(x => x.id === slot.id));
+/** Estimated length of a slot in seconds, for overall progress. */
+export const slotEstimate = (slot: Slot) => slot.seconds ?? estimate(slot.step);
+/** Fraction of the whole session done, weighted by slot length, including progress through the current slot. */
+export const overall = (s: RunState, now: number): number => {
+  const total = s.slots.reduce((t, sl) => t + slotEstimate(sl), 0) || 1;
+  if (s.phase === 'done') return 1;
+  let done = 0;
+  for (let j = 0; j < s.i; j++) done += slotEstimate(s.slots[j]);
+  const c = current(s);
+  if (c && (s.phase === 'running' || s.phase === 'paused')) {
+    const cl = clock(s, now);
+    const est = slotEstimate(c);
+    done += cl.left !== undefined && c.seconds ? est * (1 - cl.left / c.seconds) : Math.min(est, cl.spent);
+  }
+  return Math.min(1, done / total);
+};
 
 /** Build the result to log. Score follows the runsheet's score type: time = session elapsed, rounds = AMRAP rounds + reps. */
 export const toResult = (s: RunState, r: Runsheet, now: number): SessionResult => {
   const type = scoreType(r);
   const durationSec = Math.round(elapsed(s, now));
   const steps = new Map<string, StepResult>();
-  for (const slot of s.slots) {
+  for (const [idx, slot] of s.slots.entries()) {
     if (slot.kind !== 'work' || slot.step.kind !== 'exercise') continue;
     const a = s.actuals[slot.id];
     if (!a?.doneAt) continue;
     const key = slot.step.id;
     const prev = steps.get(key);
-    const target = a.target ?? slot.step.target;
-    steps.set(key, { stepId: key, exerciseKey: slot.step.exercise.key, target, reps: [...(prev?.reps ?? []), ...(a.reps !== undefined ? [a.reps] : slot.step.forMode === 'reps' ? [slot.step.forValue] : [])], success: prev?.success ?? true });
+    const target = effectiveTarget(s, idx);
+    const incline = effectiveIncline(s, idx);
+    steps.set(key, { stepId: key, exerciseKey: slot.step.exercise.key, target, ...(incline !== undefined ? { incline } : {}), reps: [...(prev?.reps ?? []), ...(a.reps !== undefined ? [a.reps] : slot.step.forMode === 'reps' ? [slot.step.forValue] : [])], success: prev?.success ?? true });
   }
   let score: number | undefined;
   if (type === 'time') score = durationSec;

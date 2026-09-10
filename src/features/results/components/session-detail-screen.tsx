@@ -41,7 +41,7 @@ export const SessionDetailScreen = ({ result: r, runsheet, exercise, loadDevice,
   }, [loadDevice]);
   const type = runsheet ? scoreType(runsheet) : 'none';
   const dur = r.durationSec ?? (r.activity ? r.activity.minutes * 60 : undefined);
-  const text = [`${r.title ?? r.runsheetId} · ${r.startedAt.slice(0, 16).replace('T', ' ')}`, r.scoreText ? `Score: ${r.scoreText}` : '', dur ? `Duration: ${Math.round(dur / 60)} min` : '', ...r.steps.map(s => `- ${exercise(s.exerciseKey).name}: ${s.target !== undefined ? `${s.target} ${exercise(s.exerciseKey).unit}` : ''}${s.reps?.length ? ` × ${s.reps.join(', ')} reps` : ''}`), r.notes ? `Notes: ${r.notes}` : ''].filter(Boolean).join('\n');
+  const text = [`${r.title ?? r.runsheetId} · ${r.startedAt.slice(0, 16).replace('T', ' ')}`, r.scoreText ? `Score: ${r.scoreText}` : '', dur ? `Duration: ${Math.round(dur / 60)} min` : '', ...r.steps.map(s => `- ${exercise(s.exerciseKey).name}: ${s.target !== undefined ? `${s.target} ${exercise(s.exerciseKey).unit}` : ''}${s.incline !== undefined ? `, incline ${s.incline}` : ''}${s.reps?.length ? ` × ${s.reps.join(', ')} reps` : ''}`), r.notes ? `Notes: ${r.notes}` : ''].filter(Boolean).join('\n');
   return (
     <div className="flex h-full min-h-0 flex-col bg-canvas">
       <header className="safe-top shrink-0 bg-surface px-4 pt-2 pb-3">

@@ -9,7 +9,7 @@ const cindy = (): Runsheet => ({ id: 'cindy', title: 'Cindy', items: [{ kind: 'b
 
 const Live = ({ runsheet }: { runsheet: Runsheet }) => {
   const { state, now, act } = useRunner(runsheet);
-  return <TimerScreen runsheet={runsheet} state={state} now={now} onDone={act.done} onSkip={act.skip} onBack={act.back} onPause={act.pause} onResume={act.resume} onAdjust={act.adjust} onSetReps={act.setReps} onDrop={act.drop} onFinish={() => alert(JSON.stringify(R.toResult(state, runsheet, Date.now()), null, 1))} onExit={() => alert('exit')} />;
+  return <TimerScreen runsheet={runsheet} state={state} now={now} onDone={act.done} onSkip={act.skip} onBack={act.back} onPause={act.pause} onResume={act.resume} onAdjust={act.adjust} onSetReps={act.setReps} onDrop={act.drop} onStartBlock={act.startBlock} onAdjustIncline={act.adjustIncline} onFinish={() => alert(JSON.stringify(R.toResult(state, runsheet, Date.now()), null, 1))} onExit={() => alert('exit')} />;
 };
 
 const meta = {

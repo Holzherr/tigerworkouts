@@ -57,12 +57,13 @@ const groupRecs = (recs: ReturnType<typeof recommend>) => {
 
 /**
  * Home feed with three tabs in a segmented control under the title, and a Create button top
- * right. Saved: a Create tile, then the user's own and bookmarked workouts. For you: ranked recommendations from history, each card with a one-line
+ * right. Saved (default): a Create tile, then the user's own and bookmarked workouts, most recently
+ * done first. For you: ranked recommendations from history, each card with a one-line
  * reason ("Next in StrongLifts 5×5", "Because you did Fran"). Search: the search field first;
  * with no query it shows filter chips and the full catalogue (programs collapsed to one row each),
  * with a query it shows matches only.
  */
-export const DiscoverScreen = ({ workouts, results = [], savedIds = [], onOpen, onOpenProgram, onCreate, initialTab = 'recommended', initialFilter = 'all', title = 'Discover', above }: DiscoverScreenProps) => {
+export const DiscoverScreen = ({ workouts, results = [], savedIds = [], onOpen, onOpenProgram, onCreate, initialTab = 'saved', initialFilter = 'all', title = 'Discover', above }: DiscoverScreenProps) => {
   const [tab, setTab] = useState<DiscoverTab>(initialTab);
   const [q, setQ] = useState('');
   const [filter, setFilter] = useState<DiscoverFilter>(initialFilter);
@@ -71,8 +72,10 @@ export const DiscoverScreen = ({ workouts, results = [], savedIds = [], onOpen, 
   const recs = useMemo(() => recommend(workouts, results, savedIds), [workouts, results, savedIds]);
   const saved = useMemo(() => {
     const set = new Set(savedIds);
-    return workouts.filter(r => set.has(wid(r)) || (r.source?.kind ?? 'user') === 'user');
-  }, [workouts, savedIds]);
+    const lastDone = new Map<string, string>();
+    for (const res of results) if (!lastDone.has(res.runsheetId)) lastDone.set(res.runsheetId, res.startedAt);
+    return workouts.filter(r => set.has(wid(r)) || (r.source?.kind ?? 'user') === 'user').sort((a, b) => (lastDone.get(wid(b)) ?? '').localeCompare(lastDone.get(wid(a)) ?? ''));
+  }, [workouts, savedIds, results]);
 
   const { programs, singles } = useMemo(() => {
     const ql = q.trim().toLowerCase();

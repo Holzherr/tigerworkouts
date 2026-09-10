@@ -3,6 +3,23 @@ import type { Runsheet } from '@/features/runsheet/model';
 import * as R from './runner';
 
 let actx: AudioContext | null = null;
+const VOL_KEY = 'tiger:volume';
+/** Timer volume 0–1. Loud by default (gym); Settings can turn it down. */
+export const getVolume = () => {
+  try {
+    const v = localStorage.getItem(VOL_KEY);
+    return v === null ? 0.8 : Math.min(1, Math.max(0, Number(v)));
+  } catch {
+    return 0.8;
+  }
+};
+export const setVolume = (v: number) => {
+  try {
+    localStorage.setItem(VOL_KEY, String(Math.min(1, Math.max(0, v))));
+  } catch {
+    /* ignore */
+  }
+};
 const beep = (freq = 880, ms = 120) => {
   try {
     actx = actx ?? new (window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext)();
@@ -11,7 +28,9 @@ const beep = (freq = 880, ms = 120) => {
     o.frequency.value = freq;
     o.connect(g);
     g.connect(actx.destination);
-    g.gain.setValueAtTime(0.2, actx.currentTime);
+    const vol = getVolume();
+    if (vol <= 0) return;
+    g.gain.setValueAtTime(vol, actx.currentTime);
     g.gain.exponentialRampToValueAtTime(0.001, actx.currentTime + ms / 1000);
     o.start();
     o.stop(actx.currentTime + ms / 1000);
@@ -117,6 +136,8 @@ export const useRunner = (runsheet: Runsheet, opts: { resume?: boolean; silent?:
     pause: useCallback(() => setState(s => R.pause(s, Date.now())), []),
     resume: useCallback(() => setState(s => R.resume(s, Date.now())), []),
     adjust: useCallback((t: number) => setState(s => R.adjust(s, Date.now(), t)), []),
+    adjustIncline: useCallback((n: number) => setState(s => R.adjustIncline(s, n)), []),
+    startBlock: useCallback(() => setState(s => R.startBlock(s, Date.now())), []),
     setReps: useCallback((n: number) => setState(s => R.setReps(s, n)), []),
     drop: useCallback((stepId: string) => setState(s => R.drop(s, Date.now(), stepId)), []),
     finish: useCallback(() => setState(s => R.finish(s, Date.now())), []),
