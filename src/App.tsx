@@ -17,7 +17,8 @@ import { ExercisePicker } from '@/features/exercises/components/exercise-picker'
 import type { LibraryExercise } from '@/features/exercises/library';
 import { AvatarView, SettingsSheet } from '@/features/profile/components/settings-sheet';
 import { ImportScreen } from '@/features/share/components/import-screen';
-import { decodeShared, shareLink, shareUrl } from '@/features/share/share';
+import { LogImportScreen } from '@/features/results/components/log-import-screen';
+import { decodeLogged, decodeShared, shareLink, shareUrl } from '@/features/share/share';
 import { useCallback, useRef } from 'react';
 import { fmtScore, resolveTarget } from '@/features/runsheet/progression';
 import { ResultSheet } from '@/features/results/components/result-sheet';
@@ -49,7 +50,7 @@ const TABS = [
 ] as const;
 type Tab = (typeof TABS)[number]['id'];
 
-type Route = { name: 'tab'; tab: Tab; sub?: string } | { name: 'new' } | { name: 'workout' | 'edit' | 'follow' | 'result' | 'do' | 'session' | 'import'; id: string };
+type Route = { name: 'tab'; tab: Tab; sub?: string } | { name: 'new' } | { name: 'workout' | 'edit' | 'follow' | 'result' | 'do' | 'session' | 'import' | 'log'; id: string };
 
 const parse = (hash: string): Route => {
   const seg = hash.replace(/^#\/?/, '').split('/');
@@ -62,6 +63,7 @@ const parse = (hash: string): Route => {
   if (seg[0] === 'do' && id) return { name: 'do', id };
   if (seg[0] === 's' && id) return { name: 'session', id };
   if (seg[0] === 'import' && seg[1]) return { name: 'import', id: seg.slice(1).join('/') };
+  if (seg[0] === 'log' && seg[1]) return { name: 'log', id: seg.slice(1).join('/') };
   return { name: 'tab', tab: seg[0] === 'history' || seg[0] === 'me' ? seg[0] : 'discover', sub: seg[1] };
 };
 const go = (path: string) => {
@@ -248,6 +250,21 @@ export default function App() {
   if (route.name === 'import') {
     const shared = decodeShared(route.id);
     return full(<ImportScreen runsheet={shared} onSave={r => { const mine = { ...r, id: `u-${Date.now().toString(36)}`, source: { ...(r.source ?? { title: r.title, kind: 'user' as const }), kind: 'user' as const, author: r.creator } }; act.saveWorkout(mine); go(`/w/${encodeURIComponent(mine.id!)}`); }} onDiscard={() => go('/discover')} />);
+  }
+  if (route.name === 'log') {
+    const logged = decodeLogged(route.id);
+    return full(
+      <LogImportScreen
+        result={logged}
+        exercise={k => LIB[k] ?? { key: k, name: k, unit: '', step: 1 }}
+        onSave={res => {
+          act.addResult(res);
+          say('Workout saved');
+          go('/history');
+        }}
+        onDiscard={() => go('/history')}
+      />
+    );
   }
   if (route.name === 'do') {
     const r = draft ?? byId.get(route.id);

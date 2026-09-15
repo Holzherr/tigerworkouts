@@ -1,4 +1,5 @@
 /** Share a workout as a link: the runsheet, base64 in the hash, no server needed. */
+import type { SessionResult } from '@/features/runsheet/progression';
 import type { Runsheet, Step } from '@/features/runsheet/model';
 
 const enc = (s: string) => btoa(unescape(encodeURIComponent(s))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
@@ -37,5 +38,17 @@ export const shareLink = async (title: string, url: string): Promise<'shared' | 
     return 'copied';
   } catch {
     return 'failed';
+  }
+};
+
+/** A session someone did away from the timer, as a link that lands on a confirm-and-save screen. */
+export const logUrl = (r: SessionResult, base = location.origin + location.pathname) => `${base}#/log/${enc(JSON.stringify(r))}`;
+
+export const decodeLogged = (payload: string): SessionResult | null => {
+  try {
+    const r = JSON.parse(dec(payload)) as SessionResult;
+    return r && typeof r.startedAt === 'string' && Array.isArray(r.steps) ? r : null;
+  } catch {
+    return null;
   }
 };
