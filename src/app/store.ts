@@ -2,7 +2,7 @@
  * Local-first app state: the user's own workouts, results, training maxes, saved ids.
  * One localStorage key, read once, written on every change. Cloud sync comes later.
  */
-import { useCallback, useSyncExternalStore } from 'react';
+import { useSyncExternalStore } from 'react';
 import type { Runsheet } from '@/features/runsheet/model';
 import type { SessionResult, TrainingMaxes } from '@/features/runsheet/progression';
 import type { Avatar, Favorite } from '@/features/cloud/sync';
@@ -62,7 +62,12 @@ const listeners = new Set<() => void>();
 const emit = () => listeners.forEach(l => l());
 
 export const setState = (patch: Partial<AppState> | ((s: AppState) => Partial<AppState>)) => {
-  state = { ...state, ...(typeof patch === 'function' ? patch(state) : patch) };
+  const next = typeof patch === 'function' ? patch(state) : patch;
+  // A write that changes nothing must not notify: subscribers re-render, and an effect that
+  // re-sets a value it already holds would otherwise loop until React gives up (#185).
+  const keys = Object.keys(next) as (keyof AppState)[];
+  if (keys.every(k => Object.is(state[k], next[k]))) return;
+  state = { ...state, ...next };
   try {
     localStorage.setItem(KEY, JSON.stringify(state));
   } catch {
@@ -71,19 +76,27 @@ export const setState = (patch: Partial<AppState> | ((s: AppState) => Partial<Ap
   emit();
 };
 
-export const useAppState = () => useSyncExternalStore(cb => (listeners.add(cb), () => listeners.delete(cb)), () => state);
+export const subscribe = (cb: () => void) => {
+  listeners.add(cb);
+  return () => void listeners.delete(cb);
+};
 
-export const useActions = () => ({
-  saveWorkout: useCallback((r: Runsheet) => setState(s => ({ workouts: [r, ...s.workouts.filter(w => w.id !== r.id)] })), []),
-  deleteWorkout: useCallback((id: string) => setState(s => ({ workouts: s.workouts.filter(w => w.id !== id) })), []),
-  addResult: useCallback((res: SessionResult) => setState(s => ({ results: [{ ...res, id: res.id ?? 's-' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6) }, ...s.results] })), []),
-  setTrainingMaxes: useCallback((tm: TrainingMaxes) => setState({ trainingMaxes: tm }), []),
-  setBodyweight: useCallback((kg: number) => setState({ bodyweightKg: kg }), []),
-  setSignedIn: useCallback((signedIn: boolean) => setState({ signedIn }), []),
-  updateResult: useCallback((id: string, patch: Partial<SessionResult>) => setState(s => ({ results: s.results.map(r => (r.id === id ? { ...r, ...patch } : r)) })), []),
-  deleteResult: useCallback((id: string) => setState(s => ({ results: s.results.filter(r => r.id !== id) })), []),
-  setProfile: useCallback((p: Partial<Pick<AppState, 'name' | 'avatar' | 'units'>>) => setState(p), []),
-  setFavorites: useCallback((favorites: Favorite[]) => setState({ favorites }), []),
-  addExercise: useCallback((e: LibraryExercise) => setState(s => ({ exercises: { ...s.exercises, [e.key]: e } })), []),
-  toggleSaved: useCallback((id: string) => setState(s => ({ saved: s.saved.includes(id) ? s.saved.filter(x => x !== id) : [...s.saved, id] })), []),
-});
+export const useAppState = () => useSyncExternalStore(subscribe, () => state);
+
+const ACTIONS = {
+  saveWorkout: (r: Runsheet) => setState(s => ({ workouts: [r, ...s.workouts.filter(w => w.id !== r.id)] })),
+  deleteWorkout: (id: string) => setState(s => ({ workouts: s.workouts.filter(w => w.id !== id) })),
+  addResult: (res: SessionResult) => setState(s => ({ results: [{ ...res, id: res.id ?? 's-' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6) }, ...s.results] })),
+  setTrainingMaxes: (tm: TrainingMaxes) => setState({ trainingMaxes: tm }),
+  setBodyweight: (kg: number) => setState({ bodyweightKg: kg }),
+  setSignedIn: (signedIn: boolean) => setState({ signedIn }),
+  updateResult: (id: string, patch: Partial<SessionResult>) => setState(s => ({ results: s.results.map(r => (r.id === id ? { ...r, ...patch } : r)) })),
+  deleteResult: (id: string) => setState(s => ({ results: s.results.filter(r => r.id !== id) })),
+  setProfile: (p: Partial<Pick<AppState, 'name' | 'avatar' | 'units'>>) => setState(p),
+  setFavorites: (favorites: Favorite[]) => setState({ favorites }),
+  addExercise: (e: LibraryExercise) => setState(s => ({ exercises: { ...s.exercises, [e.key]: e } })),
+  toggleSaved: (id: string) => setState(s => ({ saved: s.saved.includes(id) ? s.saved.filter(x => x !== id) : [...s.saved, id] })),
+};
+
+/** One frozen object for the life of the app, so it is safe in an effect's dependency list. */
+export const useActions = () => ACTIONS;

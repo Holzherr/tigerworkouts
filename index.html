@@ -15,53 +15,63 @@
   <body>
     <div id="root"></div>
     <script>
-      // A white screen tells the user nothing and tells us nothing. Two jobs here, both running
-      // before the bundle so they survive a bundle that never loads: heal once (a stale precached
-      // shell asking for assets a deploy has replaced), and if the second attempt is still blank,
-      // put the error on screen where it can be read off a phone.
+      // A white screen tells the user nothing and tells us nothing. Two jobs, both ahead of the
+      // bundle so they survive a bundle that never loads: heal once (a stale precached shell asking
+      // for assets a deploy has replaced), and if the second attempt is still blank, put the error
+      // on screen with a way to copy or report it.
       (function () {
         var errs = [];
         var healed = /[?&]r=/.test(location.search);
         var shown = false;
 
-        function note(what) {
-          errs.push(what);
-          if (healed) show();
+        function note(what) { errs.push(what); if (healed) show(); }
+        function clear(then) {
+          var jobs = [];
+          try { jobs.push(navigator.serviceWorker.getRegistrations().then(function (rs) { return Promise.all(rs.map(function (r) { return r.unregister(); })); })); } catch (e) { /* unsupported */ }
+          try { jobs.push(caches.keys().then(function (ks) { return Promise.all(ks.map(function (k) { return caches.delete(k); })); })); } catch (e) { /* unsupported */ }
+          Promise.all(jobs).then(then, then);
         }
         function heal() {
           if (healed) return show();
           healed = true;
-          var go = function () { location.replace(location.origin + location.pathname + '?r=' + Date.now()); };
-          var jobs = [];
-          try { jobs.push(navigator.serviceWorker.getRegistrations().then(function (rs) { return Promise.all(rs.map(function (r) { return r.unregister(); })); })); } catch (e) { /* unsupported */ }
-          try { jobs.push(caches.keys().then(function (ks) { return Promise.all(ks.map(function (k) { return caches.delete(k); })); })); } catch (e) { /* unsupported */ }
-          Promise.all(jobs).then(go, go);
+          clear(function () { location.replace(location.origin + location.pathname + '?r=' + Date.now()); });
         }
         function show() {
           var root = document.getElementById('root');
           if (shown || !root || root.firstChild) return;
           shown = true;
-          root.innerHTML =
-            '<div style="font:14px/1.5 -apple-system,BlinkMacSystemFont,sans-serif;color:#0f172a;max-width:32rem;margin:0 auto;padding:2rem 1.25rem">' +
-            '<h1 style="font-size:19px;margin:0 0 .5rem">TigerWorkouts did not start</h1>' +
-            '<p style="color:#64748b;margin:0 0 1rem">Send this text over and it says exactly what broke. Your workouts and logs are on your account, not in anything this clears.</p>' +
-            '<button id="tw-reset" style="border:0;border-radius:12px;background:#ff4d2e;color:#fff;font:600 15px/1 -apple-system,sans-serif;padding:.9rem 1.1rem">Clear and reload</button>' +
-            '<pre id="tw-err" style="white-space:pre-wrap;word-break:break-word;background:#eef2f7;border-radius:10px;padding:.75rem;margin-top:1rem;font-size:11px;color:#475569"></pre>' +
-            '</div>';
-          document.getElementById('tw-err').textContent =
-            (errs.length ? errs.join('\n\n') : 'Nothing rendered and no error was reported.') +
+          var report = (errs.length ? errs.join('\n\n') : 'Nothing rendered and no error was reported.') +
             '\n\n' + location.href + '\n' + navigator.userAgent;
-          document.getElementById('tw-reset').onclick = function () {
-            var go = function () { location.replace(location.origin + location.pathname); };
-            var jobs = [];
-            try { jobs.push(navigator.serviceWorker.getRegistrations().then(function (rs) { return Promise.all(rs.map(function (r) { return r.unregister(); })); })); } catch (e) { /* unsupported */ }
-            try { jobs.push(caches.keys().then(function (ks) { return Promise.all(ks.map(function (k) { return caches.delete(k); })); })); } catch (e) { /* unsupported */ }
-            Promise.all(jobs).then(go, go);
+          var issue = 'https://github.com/Holzherr/nick-prototypes/issues/new?title=' +
+            encodeURIComponent('Crash: ' + (errs[0] || 'blank screen').slice(0, 80)) +
+            '&body=' + encodeURIComponent('```\n' + report + '\n```');
+          var btn = 'border:0;border-radius:12px;font:600 15px/1 -apple-system,sans-serif;padding:.9rem 1.1rem;text-align:center;text-decoration:none;display:block';
+          root.innerHTML =
+            '<div style="font:14px/1.5 -apple-system,BlinkMacSystemFont,sans-serif;color:#0f172a;max-width:32rem;margin:0 auto;padding:2rem 1.25rem;display:grid;gap:.75rem">' +
+            '<h1 style="font-size:19px;margin:0;text-align:center">TigerWorkouts did not start</h1>' +
+            '<p style="color:#64748b;margin:0 0 .25rem;text-align:center">Your workouts and logs are on your account, not in anything this clears.</p>' +
+            '<button id="tw-reset" style="' + btn + ';background:#ff4d2e;color:#fff">Clear and reload</button>' +
+            '<div style="display:flex;gap:.5rem">' +
+            '<button id="tw-copy" style="' + btn + ';flex:1;background:#fff;color:#0f172a;border:1px solid #e2e8f0">Copy details</button>' +
+            '<a id="tw-report-link" href="' + issue + '" target="_blank" rel="noreferrer" style="' + btn + ';flex:1;background:#fff;color:#0f172a;border:1px solid #e2e8f0">Report</a>' +
+            '</div>' +
+            '<pre id="tw-report" style="white-space:pre-wrap;word-break:break-word;background:#eef2f7;border-radius:10px;padding:.75rem;margin:0;font-size:11px;color:#475569;-webkit-user-select:all;user-select:all"></pre>' +
+            '</div>';
+          document.getElementById('tw-report').textContent = report;
+          document.getElementById('tw-reset').onclick = function () { clear(function () { location.replace(location.origin + location.pathname); }); };
+          document.getElementById('tw-copy').onclick = function () {
+            var b = this;
+            var ok = function () { b.textContent = 'Copied'; setTimeout(function () { b.textContent = 'Copy details'; }, 2000); };
+            try {
+              navigator.clipboard.writeText(report).then(ok, function () { getSelection().selectAllChildren(document.getElementById('tw-report')); });
+            } catch (e) {
+              getSelection().selectAllChildren(document.getElementById('tw-report'));
+            }
           };
         }
 
         addEventListener('error', function (e) {
-          if (e.target && e.target.tagName === 'SCRIPT') return note('Failed to load ' + (e.target.src || 'a script')), heal();
+          if (e.target && e.target.tagName === 'SCRIPT') { note('Failed to load ' + (e.target.src || 'a script')); return heal(); }
           note(e.message + (e.filename ? '\n' + e.filename + ':' + e.lineno + ':' + e.colno : ''));
         }, true);
         addEventListener('unhandledrejection', function (e) { note('Unhandled rejection: ' + ((e.reason && (e.reason.stack || e.reason.message)) || e.reason)); });
@@ -74,7 +84,6 @@
             else heal();
           }, 8000);
         });
-        window.__twErrors = errs;
       })();
     </script>
     <script type="module" src="/src/main.tsx"></script>
