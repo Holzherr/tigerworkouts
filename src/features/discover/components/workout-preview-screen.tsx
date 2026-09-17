@@ -1,9 +1,11 @@
-import { ChevronLeft, ExternalLink, Pencil, Play, Share2, Video } from 'lucide-react';
+import { ChevronLeft, ChevronRight, ExternalLink, Pencil, Play, Share2, Video } from 'lucide-react';
+import { useState } from 'react';
 import { Button } from '@/shared/components/ui/button';
 import { Chip } from '@/shared/components/ui/chip';
 import { ClipThumb } from '@/shared/components/ui/clip-thumb';
 import { fmtClock } from '@/shared/utils/ui-utils';
-import { blockSeconds, forLabel, loadLabel, modeLabel, ROLE_LABEL, runsheetMinutes, scoreType, type Runsheet } from '@/features/runsheet/model';
+import { blockSeconds, forLabel, loadLabel, modeLabel, ROLE_LABEL, runsheetMinutes, scoreType, type ExerciseStep, type Runsheet } from '@/features/runsheet/model';
+import { ExerciseSheet } from '@/features/runsheet/components/exercise-sheet';
 import type { SessionResult } from '@/features/runsheet/progression';
 import { fmtScore } from '@/features/runsheet/progression';
 import { KIND_LABEL } from './workout-card';
@@ -19,16 +21,20 @@ export interface WorkoutPreviewScreenProps {
   onSave?: () => void;
   saved?: boolean;
   onShare?: () => void;
+  /** Given, every exercise on the page is editable where it is read — no edit mode. */
+  onStepChange?: (stepId: string, patch: { target?: number; incline?: number }) => void;
 }
 
 const SCORE_TEXT: Record<string, string> = { time: 'For time', rounds: 'AMRAP: rounds + reps', reps: 'Total reps', load: 'For load', distance: 'For distance' };
 
 /**
- * Read-only workout page: title, attribution line with a source link, description, chips for
- * length / mode / score, a plain list of blocks and steps (no editing), the user's best and
- * last results, and the actions: Start, Edit & start, Follow along for videos, Save.
+ * Workout page: title, attribution line with a source link, description, chips for length / mode
+ * / score, the blocks and steps, the user's best and last results, and the actions: Start,
+ * Edit & start, Follow along for videos, Save. Tapping any exercise opens it — the clip, the cue,
+ * and its numbers as steppers when the host can save them.
  */
-export const WorkoutPreviewScreen = ({ runsheet: r, history = [], onBack, onStart, onEditAndStart, onFollowAlong, onLogOnly, onSave, saved, onShare }: WorkoutPreviewScreenProps) => {
+export const WorkoutPreviewScreen = ({ runsheet: r, history = [], onBack, onStart, onEditAndStart, onFollowAlong, onLogOnly, onSave, saved, onShare, onStepChange }: WorkoutPreviewScreenProps) => {
+  const [open, setOpen] = useState<ExerciseStep | null>(null);
   const kind = r.source?.kind ?? 'user';
   const score = scoreType(r);
   const scored = history.filter(h => h.score !== undefined);
@@ -102,29 +108,54 @@ export const WorkoutPreviewScreen = ({ runsheet: r, history = [], onBack, onStar
                   </Chip>
                 </div>
                 <div className="[&>*+*]:border-t [&>*+*]:border-line-soft">
-                  {it.steps.map(s => (
-                    <div key={s.id} className="flex items-center gap-2.5 px-3 py-1.5">
-                      {s.kind === 'rest' ? <ClipThumb size="sm" variant="rest" /> : <ClipThumb size="sm" clip={s.exercise.clip} poster={s.exercise.poster} icon={s.exercise.icon} />}
-                      <div className="min-w-0 flex-1 truncate text-[14px]">{s.kind === 'rest' ? <span className="text-body">Rest</span> : s.exercise.name}</div>
-                      <span className="text-[13px] font-semibold tabular-nums">{s.kind === 'rest' ? `${s.seconds}s` : [loadLabel(s), forLabel(s)].filter(Boolean).join(' · ')}</span>
-                    </div>
-                  ))}
+                  {it.steps.map(s =>
+                    s.kind === 'rest' ? (
+                      <div key={s.id} className="flex items-center gap-2.5 px-3 py-1.5">
+                        <ClipThumb size="sm" variant="rest" />
+                        <div className="min-w-0 flex-1 truncate text-[14px] text-body">Rest</div>
+                        <span className="text-[13px] font-semibold tabular-nums">{s.seconds}s</span>
+                      </div>
+                    ) : (
+                      <button key={s.id} type="button" onClick={() => setOpen(s)} className="flex w-full items-center gap-2.5 px-3 py-1.5 text-left active:bg-line-soft">
+                        <ClipThumb size="sm" clip={s.exercise.clip} poster={s.exercise.poster} icon={s.exercise.icon} />
+                        <div className="min-w-0 flex-1 truncate text-[14px]">{s.exercise.name}</div>
+                        <span className="text-[13px] font-semibold tabular-nums">{[loadLabel(s), forLabel(s)].filter(Boolean).join(' · ')}</span>
+                        <ChevronRight className="size-4 shrink-0 text-faint" />
+                      </button>
+                    )
+                  )}
                 </div>
               </section>
             );
           }
+          if (it.kind === 'rest')
+            return (
+              <div key={it.id ?? i} className="flex items-center gap-2.5 rounded-card border border-line bg-surface px-3 py-2">
+                <ClipThumb size="sm" variant="rest" />
+                <div className="min-w-0 flex-1 truncate text-[14px] font-semibold">Rest</div>
+                <span className="text-[13px] font-semibold tabular-nums">{it.seconds}s</span>
+              </div>
+            );
           return (
-            <div key={it.id ?? i} className="flex items-center gap-2.5 rounded-card border border-line bg-surface px-3 py-2">
-              {it.kind === 'rest' ? <ClipThumb size="sm" variant="rest" /> : <ClipThumb size="sm" clip={it.exercise.clip} poster={it.exercise.poster} icon={it.exercise.icon} />}
+            <button key={it.id ?? i} type="button" onClick={() => setOpen(it)} className="flex w-full items-center gap-2.5 rounded-card border border-line bg-surface px-3 py-2 text-left active:bg-line-soft">
+              <ClipThumb size="sm" clip={it.exercise.clip} poster={it.exercise.poster} icon={it.exercise.icon} />
               <div className="min-w-0 flex-1">
-                <div className="truncate text-[14px] font-semibold">{it.kind === 'rest' ? 'Rest' : it.exercise.name}</div>
+                <div className="truncate text-[14px] font-semibold">{it.exercise.name}</div>
                 {role && <div className="text-[12px] text-muted">{role}</div>}
               </div>
-              <span className="text-[13px] font-semibold tabular-nums">{it.kind === 'rest' ? `${it.seconds}s` : [loadLabel(it), forLabel(it)].filter(Boolean).join(' · ')}</span>
-            </div>
+              <span className="text-[13px] font-semibold tabular-nums">{[loadLabel(it), forLabel(it)].filter(Boolean).join(' · ')}</span>
+              <ChevronRight className="size-4 shrink-0 text-faint" />
+            </button>
           );
         })}
         {r.source?.license && <p className="px-1 text-[11px] text-faint">{r.source.license}</p>}
+        <ExerciseSheet
+          step={open}
+          onOpenChange={o => !o && setOpen(null)}
+          onTarget={onStepChange && open ? t => (onStepChange(open.id, { target: t }), setOpen({ ...open, target: t })) : undefined}
+          onIncline={onStepChange && open ? v => (onStepChange(open.id, { incline: v }), setOpen({ ...open, incline: v })) : undefined}
+          note={onStepChange ? 'Saved to this workout.' : undefined}
+        />
       </div>
       <div className="safe-bottom shrink-0 border-t border-line bg-surface p-3">
         <div className="flex gap-2">

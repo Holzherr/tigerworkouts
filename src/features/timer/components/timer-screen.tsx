@@ -7,6 +7,7 @@ import { Stepper } from '@/shared/components/ui/stepper';
 import { cn, fmtClock, fmtNum } from '@/shared/utils/ui-utils';
 import { forLabel, shortUnit, type Block, type ExerciseStep, type Item, type Runsheet } from '@/features/runsheet/model';
 import { SwipeToRemove } from '@/features/runsheet/components/swipe-to-remove';
+import { ExerciseSheet } from '@/features/runsheet/components/exercise-sheet';
 import * as R from '../runner';
 
 export interface TimerScreenProps {
@@ -23,6 +24,8 @@ export interface TimerScreenProps {
   onSetReps: (reps: number) => void;
   onDrop: (stepId: string) => void;
   onStartBlock?: () => void;
+  /** Change a step from the overview, before it comes round. Applies to the rest of the session. */
+  onAdjustStep?: (stepId: string, patch: { target?: number; incline?: number }) => void;
   onFinish: () => void;
   onExit: () => void;
 }
@@ -43,11 +46,12 @@ const stepLine = (s: ExerciseStep) => [forLabel(s), s.target !== undefined ? `${
  * a ⋯ menu (previous, overview, stop), Pause and Skip/Done at equal size. Tap the Next row to see
  * what the coming block asks for; the overview sheet lists every part with progress.
  */
-export const TimerScreen = ({ runsheet, state, now, onDone, onSkip, onBack, onPause, onResume, onAdjust, onAdjustIncline, onSetReps, onDrop, onStartBlock, onFinish, onExit }: TimerScreenProps) => {
+export const TimerScreen = ({ runsheet, state, now, onDone, onSkip, onBack, onPause, onResume, onAdjust, onAdjustIncline, onSetReps, onDrop, onStartBlock, onAdjustStep, onFinish, onExit }: TimerScreenProps) => {
   const [confirmExit, setConfirmExit] = useState(false);
   const [menu, setMenu] = useState(false);
   const [overview, setOverview] = useState(false);
   const [peek, setPeek] = useState<number | null>(null);
+  const [look, setLook] = useState<ExerciseStep | null>(null);
   const slot = R.current(state);
   const nxt = R.next(state);
   const clock = R.clock(state, now);
@@ -278,9 +282,19 @@ export const TimerScreen = ({ runsheet, state, now, onDone, onSkip, onBack, onPa
                     <div className="truncate text-[14px] font-bold">
                       {p + 1}. {partTitle(it)}
                     </div>
-                    <div className="text-[12px] text-muted">{it.kind === 'block' ? `${(it as Block).repeat} rounds · ${stepsOf(it).map(s => s.exercise.name).join(', ')}` : it.kind === 'exercise' ? stepLine(it) : ''}</div>
+                    <div className="text-[12px] text-muted">{it.kind === 'block' ? `${(it as Block).repeat} rounds` : ''}</div>
                   </div>
                   <span className={cn('shrink-0 text-[11px] font-bold tracking-widest uppercase', status === 'now' ? 'text-brand' : status === 'done' ? 'text-muted' : 'text-faint')}>{status === 'now' ? 'Now' : status === 'done' ? 'Done' : ''}</span>
+                </div>
+                <div className="mt-1.5 space-y-1">
+                  {stepsOf(it).map(es => (
+                    <button key={es.id} type="button" onClick={() => setLook(es)} className="flex w-full items-center gap-2 rounded-lg bg-canvas px-2 py-1.5 text-left active:bg-line-soft">
+                      <ClipThumb size="sm" clip={es.exercise.clip} poster={es.exercise.poster} icon={es.exercise.icon} />
+                      <span className="min-w-0 flex-1 truncate text-[13px] font-semibold">{es.exercise.name}</span>
+                      <span className="shrink-0 text-[12px] text-muted tabular-nums">{stepLine(es)}</span>
+                      <ChevronRight className="size-4 shrink-0 text-faint" />
+                    </button>
+                  ))}
                 </div>
               </div>
             );
@@ -304,6 +318,16 @@ export const TimerScreen = ({ runsheet, state, now, onDone, onSkip, onBack, onPa
           </div>
         )}
       </Sheet>
+
+      <ExerciseSheet
+        step={look}
+        onOpenChange={o => !o && setLook(null)}
+        target={look ? R.plannedTarget(state, look.id) : undefined}
+        incline={look ? R.plannedIncline(state, look.id) : undefined}
+        onTarget={onAdjustStep && look ? t => (onAdjustStep(look.id, { target: t }), setLook({ ...look })) : undefined}
+        onIncline={onAdjustStep && look ? v => (onAdjustStep(look.id, { incline: v }), setLook({ ...look })) : undefined}
+        note={onAdjustStep ? 'Applies from here to the end of the session.' : undefined}
+      />
 
       {confirmExit && (
         <div className="absolute inset-0 z-20 flex items-end bg-ink/70 p-4" onClick={() => setConfirmExit(false)}>

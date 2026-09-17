@@ -251,6 +251,26 @@ export const adjustIncline = (s: RunState, incline: number): RunState => {
   if (!c || c.kind !== 'work') return s;
   return { ...s, actuals: { ...s.actuals, [c.id]: { ...(s.actuals[c.id] ?? { changes: [] }), incline } } };
 };
+/**
+ * Change a step that has not come round yet, from the overview. The load lands on the step's
+ * first slot from here on, and effectiveTarget's backward scan carries it to every later round —
+ * so setting the bench from the overview at block one holds when block three arrives.
+ */
+const firstUpcoming = (s: RunState, stepId: string) => s.slots.findIndex((sl, i) => i >= s.i && sl.step.id === stepId && sl.kind === 'work');
+export const adjustStep = (s: RunState, stepId: string, target: number): RunState => {
+  const idx = firstUpcoming(s, stepId);
+  if (idx < 0) return s;
+  const id = s.slots[idx].id;
+  const a = s.actuals[id] ?? { changes: [] };
+  return { ...s, actuals: { ...s.actuals, [id]: { ...a, target, changes: [...a.changes, { atSec: 0, target }] } } };
+};
+export const adjustStepIncline = (s: RunState, stepId: string, incline: number): RunState => {
+  const idx = firstUpcoming(s, stepId);
+  if (idx < 0) return s;
+  const id = s.slots[idx].id;
+  return { ...s, actuals: { ...s.actuals, [id]: { ...(s.actuals[id] ?? { changes: [] }), incline } } };
+};
+
 export const setReps = (s: RunState, reps: number): RunState => {
   const c = current(s);
   if (!c || c.kind !== 'work') return s;
@@ -292,6 +312,15 @@ export const effectiveIncline = (s: RunState, idx: number): number | undefined =
 };
 /** Everything a slot's step resolved to: the last adjusted target (from this or an earlier round) or the plan. */
 export const targetOf = (s: RunState, slot: Slot): number | undefined => effectiveTarget(s, s.slots.findIndex(x => x.id === slot.id));
+/** What a step will be lifted at when it next comes round, for the overview. */
+export const plannedTarget = (s: RunState, stepId: string): number | undefined => {
+  const idx = s.slots.findIndex((sl, i) => i >= s.i && sl.step.id === stepId);
+  return idx < 0 ? undefined : effectiveTarget(s, idx);
+};
+export const plannedIncline = (s: RunState, stepId: string): number | undefined => {
+  const idx = s.slots.findIndex((sl, i) => i >= s.i && sl.step.id === stepId);
+  return idx < 0 ? undefined : effectiveIncline(s, idx);
+};
 /** Estimated length of a slot in seconds, for overall progress. */
 export const slotEstimate = (slot: Slot) => slot.seconds ?? estimate(slot.step);
 /** Fraction of the whole session done, weighted by slot length, including progress through the current slot. */

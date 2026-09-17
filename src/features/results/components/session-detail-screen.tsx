@@ -4,6 +4,9 @@ import { Button } from '@/shared/components/ui/button';
 import { Chip } from '@/shared/components/ui/chip';
 import { ClipThumb } from '@/shared/components/ui/clip-thumb';
 import { StatTiles } from '@/shared/components/ui/stat-tiles';
+import { FULL_LIBRARY as LIB } from '@/features/workouts/imported';
+import { workedFrom } from '../effort';
+import { SessionStats } from './session-stats';
 import { fmtClock } from '@/shared/utils/ui-utils';
 import { scoreType, type ExerciseRef, type Runsheet } from '@/features/runsheet/model';
 import { fmtScore, type SessionResult } from '@/features/runsheet/progression';
@@ -18,6 +21,9 @@ export interface SessionDetailScreenProps {
   onChange: (patch: Partial<SessionResult>) => void;
   onDelete: () => void;
   onRepeat?: () => void;
+  /** Every session, for the streak line under the stats. */
+  history?: SessionResult[];
+  bodyweightKg?: number;
 }
 
 const hr = (d: Record<string, unknown>) => {
@@ -30,7 +36,7 @@ const hr = (d: Record<string, unknown>) => {
  * (load, reps, dropped), heart rate from a matched watch record when there is one, editable
  * date and notes, Repeat, and a Copy for pasting to a coach. Delete at the bottom.
  */
-export const SessionDetailScreen = ({ result: r, runsheet, exercise, loadDevice, onBack, onChange, onDelete, onRepeat }: SessionDetailScreenProps) => {
+export const SessionDetailScreen = ({ result: r, runsheet, exercise, loadDevice, onBack, onChange, onDelete, onRepeat, history = [], bodyweightKg }: SessionDetailScreenProps) => {
   const [device, setDevice] = useState<ReturnType<typeof hr>[] | null>(null);
   useEffect(() => {
     let alive = true;
@@ -57,6 +63,7 @@ export const SessionDetailScreen = ({ result: r, runsheet, exercise, loadDevice,
       </header>
       <div className="min-h-0 flex-1 space-y-3 overflow-y-auto px-3 py-3">
         <StatTiles stats={[{ value: r.scoreText ?? (r.score !== undefined ? fmtScore(type, r.score) : '–'), label: type === 'none' ? 'score' : type }, { value: dur ? fmtClock(dur) : '–', label: 'duration' }, { value: device?.[0]?.avg ?? r.device?.avgHr ?? '–', label: 'avg HR' }]} />
+        <SessionStats result={r} worked={workedFrom(r, runsheet, k => ({ name: exercise(k).name, group: LIB[k]?.group }))} history={history} bodyweightKg={bodyweightKg} />
         {device && device.length > 0 && (
           <div className="flex items-center gap-2 rounded-card border border-line bg-surface px-3 py-2 text-[13px]">
             <HeartPulse className="size-4 text-brand" />

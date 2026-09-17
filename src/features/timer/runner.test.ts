@@ -119,3 +119,25 @@ describe('load changes carry forward and blocks gate', () => {
     expect(R.overall(s, 9000)).toBe(1);
   });
 });
+
+describe('adjusting a step from the overview', () => {
+  it('carries to every later round of that step', () => {
+    let s = R.start(interval(), 0);
+    s = R.adjustStep(s, 'sw', 32);
+    const loads = s.slots.map((sl, i) => (sl.step.id === 'sw' ? R.effectiveTarget(s, i) : null)).filter(x => x !== null);
+    expect(loads.length).toBeGreaterThan(1);
+    expect(new Set(loads)).toEqual(new Set([32]));
+  });
+
+  it('sets the incline of a step that has not started', () => {
+    let s = R.start(interval(), 0);
+    s = R.adjustStepIncline(s, 'pr', 6);
+    const i = s.slots.findIndex(sl => sl.step.id === 'pr');
+    expect(R.effectiveIncline(s, i)).toBe(6);
+  });
+
+  it('ignores a step that is not in the session', () => {
+    const s = R.start(interval(), 0);
+    expect(R.adjustStep(s, 'nope', 10)).toBe(s);
+  });
+});

@@ -151,6 +151,12 @@ export const useRunner = (runsheet: Runsheet, opts: { resume?: boolean; silent?:
     resume: useCallback(() => setState(s => R.resume(s, Date.now())), []),
     adjust: useCallback((t: number) => setState(s => R.adjust(s, Date.now(), t)), []),
     adjustIncline: useCallback((n: number) => setState(s => R.adjustIncline(s, n)), []),
+    adjustStep: useCallback((stepId: string, patch: { target?: number; incline?: number }) => setState(s => {
+      let next = s;
+      if (patch.target !== undefined) next = R.adjustStep(next, stepId, patch.target);
+      if (patch.incline !== undefined) next = R.adjustStepIncline(next, stepId, patch.incline);
+      return next;
+    }), []),
     startBlock: useCallback(() => setState(s => R.startBlock(s, Date.now())), []),
     setReps: useCallback((n: number) => setState(s => R.setReps(s, n)), []),
     drop: useCallback((stepId: string) => setState(s => R.drop(s, Date.now(), stepId)), []),

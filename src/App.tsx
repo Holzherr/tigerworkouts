@@ -13,6 +13,7 @@ import type { DndVariant } from '@/features/runsheet/components/runsheet-list';
 import { EX, priyanka } from '@/features/runsheet/fixtures';
 import { makeExercise, resolveRefs, scoreType, type ExerciseStep, type Runsheet } from '@/features/runsheet/model';
 import { withLastUsed } from '@/features/runsheet/last-used';
+import { patchStep } from '@/features/runsheet/patch-step';
 import { applyCommands, parsePlan } from '@/features/runsheet/parse-text';
 import { ExercisePicker } from '@/features/exercises/components/exercise-picker';
 import type { LibraryExercise } from '@/features/exercises/library';
@@ -171,6 +172,7 @@ export default function App() {
           onSave={() => act.toggleSaved(route.id)}
           saved={st.saved.includes(route.id)}
           onShare={async () => { const out = await shareLink(r.title, shareUrl(r)); say(out === 'copied' ? 'Link copied' : out === 'shared' ? 'Shared' : 'Could not share'); }}
+          onStepChange={st.workouts.some(w => w.id === wid(r)) ? (stepId, patch) => act.saveWorkout(patchStep(r, stepId, patch)) : undefined}
         />
     );
   }
@@ -281,6 +283,8 @@ export default function App() {
           result={res}
           runsheet={r}
           exercise={k => LIB[k] ?? { key: k, name: k, unit: '', step: 1 }}
+          history={st.results}
+          bodyweightKg={st.bodyweightKg}
           loadDevice={cloud.user ? () => deviceFor(res) : undefined}
           onBack={() => go('/history')}
           onChange={p => act.updateResult(res.id!, p)}
@@ -435,7 +439,7 @@ const RunRoute = ({ runsheet, onFinish, onExit }: { runsheet: Runsheet; onFinish
   const { state, now, act } = useRunner(runsheet, { resume: true });
   return (
     <div className="relative h-dvh">
-      <TimerScreen runsheet={runsheet} state={state} now={now} onDone={act.done} onSkip={act.skip} onBack={act.back} onPause={act.pause} onResume={act.resume} onAdjust={act.adjust} onAdjustIncline={act.adjustIncline} onSetReps={act.setReps} onDrop={act.drop} onStartBlock={act.startBlock} onFinish={() => { const done = Runner.finish(state, Date.now()); Runner.clearPersisted(); onFinish(Runner.toResult(done, runsheet, Date.now())); }} onExit={onExit} />
+      <TimerScreen runsheet={runsheet} state={state} now={now} onDone={act.done} onSkip={act.skip} onBack={act.back} onPause={act.pause} onResume={act.resume} onAdjust={act.adjust} onAdjustIncline={act.adjustIncline} onSetReps={act.setReps} onDrop={act.drop} onStartBlock={act.startBlock} onAdjustStep={act.adjustStep} onFinish={() => { const done = Runner.finish(state, Date.now()); Runner.clearPersisted(); onFinish(Runner.toResult(done, runsheet, Date.now())); }} onExit={onExit} />
     </div>
   );
 };

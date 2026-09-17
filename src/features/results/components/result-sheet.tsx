@@ -3,6 +3,9 @@ import { useMemo, useState } from 'react';
 import { Button } from '@/shared/components/ui/button';
 import { Chip } from '@/shared/components/ui/chip';
 import { ClipThumb } from '@/shared/components/ui/clip-thumb';
+import { FULL_LIBRARY as LIB } from '@/features/workouts/imported';
+import { workedFrom } from '../effort';
+import { SessionStats } from './session-stats';
 import { Stepper } from '@/shared/components/ui/stepper';
 import { cn } from '@/shared/utils/ui-utils';
 import { scoreType, type ExerciseStep, type Runsheet } from '@/features/runsheet/model';
@@ -58,6 +61,7 @@ export const ResultSheet = ({ runsheet, history = [], trainingMaxes = {}, bodywe
         {type !== 'none' && <ScoreEntry type={type} value={score} onChange={setScore} className="mt-3" />}
       </header>
       <div className="min-h-0 flex-1 space-y-2 overflow-y-auto px-3 py-3">
+        <SessionStats result={result} worked={workedFrom(result, runsheet, k => ({ name: LIB[k]?.name ?? k, group: LIB[k]?.group }))} history={history} bodyweightKg={bodyweightKg} />
         {steps.map(s => {
           if (seen.has(s.exercise.key) && s.forMode !== 'amrap' && s.forMode !== 'max') return null;
           seen.add(s.exercise.key);
