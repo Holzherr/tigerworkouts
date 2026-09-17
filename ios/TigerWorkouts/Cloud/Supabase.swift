@@ -91,8 +91,15 @@ actor Supabase {
 
     // MARK: - Requests
 
+    /// `path` carries its own query string, so it is appended as text: appending it as a path
+    /// component would percent-encode the `?`, and PostgREST would see a table called
+    /// `sessions?select=id,data`.
+    static func endpoint(_ path: String) -> URL {
+        URL(string: SupabaseConfig.url.absoluteString + "/" + path)!
+    }
+
     private func request(_ path: String, method: String = "GET", body: Any? = nil, headers: [String: String] = [:], authed: Bool = true) async throws -> (Data, HTTPURLResponse) {
-        var req = URLRequest(url: SupabaseConfig.url.appendingPathComponent(path))
+        var req = URLRequest(url: Self.endpoint(path))
         req.httpMethod = method
         req.setValue(SupabaseConfig.anonKey, forHTTPHeaderField: "apikey")
         req.setValue("application/json", forHTTPHeaderField: "Content-Type")
@@ -131,8 +138,7 @@ actor Supabase {
 
     @discardableResult
     private func refresh(_ token: String) async throws -> String? {
-        var req = URLRequest(url: SupabaseConfig.url.appendingPathComponent("auth/v1/token"))
-        req.url = URL(string: req.url!.absoluteString + "?grant_type=refresh_token")
+        var req = URLRequest(url: Self.endpoint("auth/v1/token?grant_type=refresh_token"))
         req.httpMethod = "POST"
         req.setValue(SupabaseConfig.anonKey, forHTTPHeaderField: "apikey")
         req.setValue("application/json", forHTTPHeaderField: "Content-Type")
@@ -174,7 +180,7 @@ actor Supabase {
         let verifier = Self.randomVerifier()
         pendingVerifier = verifier
         let challenge = Data(SHA256.hash(data: Data(verifier.utf8))).base64URLEncoded
-        var c = URLComponents(url: SupabaseConfig.url.appendingPathComponent("auth/v1/authorize"), resolvingAgainstBaseURL: false)!
+        var c = URLComponents(url: Self.endpoint("auth/v1/authorize"), resolvingAgainstBaseURL: false)!
         c.queryItems = [
             .init(name: "provider", value: "google"),
             .init(name: "redirect_to", value: SupabaseConfig.redirect),
@@ -190,7 +196,7 @@ actor Supabase {
         if let code = query.first(where: { $0.name == "code" })?.value {
             guard let verifier = pendingVerifier else { throw SupabaseError(message: "Sign-in expired, try again") }
             pendingVerifier = nil
-            var req = URLRequest(url: URL(string: SupabaseConfig.url.appendingPathComponent("auth/v1/token").absoluteString + "?grant_type=pkce")!)
+            var req = URLRequest(url: Self.endpoint("auth/v1/token?grant_type=pkce"))
             req.httpMethod = "POST"
             req.setValue(SupabaseConfig.anonKey, forHTTPHeaderField: "apikey")
             req.setValue("application/json", forHTTPHeaderField: "Content-Type")
@@ -228,7 +234,7 @@ actor Supabase {
     }
 
     private func userInfo(accessToken: String) async throws -> [String: Any] {
-        var req = URLRequest(url: SupabaseConfig.url.appendingPathComponent("auth/v1/user"))
+        var req = URLRequest(url: Self.endpoint("auth/v1/user"))
         req.setValue(SupabaseConfig.anonKey, forHTTPHeaderField: "apikey")
         req.setValue("Bearer \(accessToken)", forHTTPHeaderField: "Authorization")
         let (data, _) = try await URLSession.shared.data(for: req)

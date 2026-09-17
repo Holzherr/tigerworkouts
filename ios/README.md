@@ -70,8 +70,8 @@ Two things are yours to do once, because they need credentials or admin rights:
 
 ## Tests
 
-29 tests: the engine ported one for one from `runner.test.ts`, the muscle and effort models, the
-last-used carry-over, the whole catalogue decoding, and the `sessions` row format both apps share.
+30 tests: the engine ported one for one from `runner.test.ts`, the muscle and effort models, the
+last-used carry-over, the whole catalogue decoding, and the `sessions` row and URL formats the two apps share.
 
 Run them from Xcode (⌘U).
 

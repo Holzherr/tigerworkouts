@@ -395,8 +395,11 @@ enum Runner {
     /// Drop a step for the rest of the session: remove every remaining slot of it.
     static func drop(_ s: RunState, now: Double, stepId: String) -> RunState {
         let c = current(s)
+        // Read the cursor before mutating: `s.i` inside a closure that is assigning `s.slots` is a
+        // simultaneous access to the same value, which traps under exclusivity checking.
+        let cursor = s.i
         var s = s
-        s.slots = s.slots.enumerated().filter { idx, sl in idx < s.i || sl.step.id != stepId }.map(\.element)
+        s.slots = s.slots.enumerated().filter { idx, sl in idx < cursor || sl.step.id != stepId }.map(\.element)
         s.dropped.append(stepId)
         return c?.step.id == stepId ? enter(s, s.i, now) : s
     }

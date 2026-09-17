@@ -75,6 +75,16 @@ struct SyncTests {
         #expect(r?.steps.first?.target == 32)
     }
 
+    @Test("a table URL keeps its query string")
+    func endpoints() {
+        // The bug this guards: appending a path component percent-encodes the "?", and PostgREST
+        // answers 404 for a table called "sessions?select=id,data".
+        let url = Supabase.endpoint("rest/v1/sessions?select=id,data&owner=eq.abc")
+        #expect(url.absoluteString == "https://icpdzjohsvlpyaluxgbt.supabase.co/rest/v1/sessions?select=id,data&owner=eq.abc")
+        #expect(url.query == "select=id,data&owner=eq.abc")
+        #expect(Supabase.endpoint("auth/v1/token?grant_type=pkce").query == "grant_type=pkce")
+    }
+
     @Test("dates parse whichever way Postgres hands them back")
     func dates() {
         #expect(ISO8601.date("2026-09-06T10:00:00.000Z") != nil)

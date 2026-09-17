@@ -28,7 +28,9 @@ struct RootView: View {
             }
         }
         .task {
-            // Offer to pick up a session the app was killed in the middle of.
+            // Offer to pick up a session the app was killed in the middle of. The catalogue has
+            // to be in before the lookup, and loading it twice is a no-op.
+            await Task.detached(priority: .userInitiated) { Library.shared.load() }.value
             guard running == nil, let saved = SessionRunner.readSaved(),
                   let sheet = store.workout(id: saved.runsheetId) else { return }
             running = SessionRunner(resuming: sheet)

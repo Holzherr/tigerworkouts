@@ -38,7 +38,7 @@ final class Store {
     // MARK: - Lifecycle
 
     func load() async {
-        Library.shared.load()
+        await Task.detached(priority: .userInitiated) { Library.shared.load() }.value
         readCache()
         user = await Supabase.shared.user
         await sync()
