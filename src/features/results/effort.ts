@@ -101,8 +101,11 @@ export const workedFrom = (
 ): { name: string; group?: ExerciseGroup; seconds: number; reps: number; load?: number }[] => {
   const found = new Map<string, { step: ExerciseStep; rounds: number }>();
   for (const it of runsheet?.items ?? []) {
-    if (it.kind === 'block') for (const s of it.steps) if (s.kind === 'exercise') found.set(s.id, { step: s, rounds: it.repeat ?? 1 });
-    else if (it.kind === 'exercise') found.set(it.id, { step: it, rounds: 1 });
+    if (it.kind === 'block') {
+      for (const s of it.steps) if (s.kind === 'exercise') found.set(s.id, { step: s, rounds: it.repeat ?? 1 });
+    } else if (it.kind === 'exercise') {
+      found.set(it.id, { step: it, rounds: 1 });
+    }
   }
   const fallback = r.durationSec && r.steps.length ? Math.round((r.durationSec * 0.5) / r.steps.length) : 45;
   return r.steps.flatMap(s => {

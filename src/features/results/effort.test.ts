@@ -89,3 +89,16 @@ describe('sets from a logged session', () => {
     expect(w[0].seconds).toBeGreaterThan(0);
   });
 });
+
+describe('a loose top-level exercise', () => {
+  it('is found, so its own length is used and not the fallback', () => {
+    const sheet = {
+      id: 'u-2',
+      title: 'Walk',
+      items: [{ kind: 'exercise' as const, id: 'w1', exercise: { key: 'incline_walk', name: 'Incline walk', unit: 'kph', step: 0.5 }, target: 6, forMode: 'minutes' as const, forValue: 10 }],
+    };
+    const w = workedFrom({ ...res('2026-09-17T17:00:00Z'), durationSec: 600, steps: [{ stepId: 'w1', exerciseKey: 'incline_walk', target: 6 }] }, sheet, k => ({ name: k, group: 'walk' as const }));
+    expect(w).toHaveLength(1);
+    expect(w[0].seconds).toBe(600);
+  });
+});
