@@ -72,6 +72,10 @@ export const TimerScreen = ({ runsheet, state, now, onDone, onSkip, onBack, onPa
   const nextIsNewPart = !!nxt && !!slot && nxt.part !== slot.part;
   const partOf = (p: number) => items[p];
 
+  const blockSteps = slot ? stepsOf(partOf(slot.part)) : [];
+  const stepPos = slot && stepOf?.kind === 'exercise' ? blockSteps.findIndex(s => s.id === stepOf.id) : -1;
+  const showPos = blockSteps.length > 1 && stepPos >= 0;
+
   const partLabel = slot ? `${slot.parts > 1 ? `Block ${slot.part + 1} of ${slot.parts}` : ''}${slot.mode !== 'loose' ? `${slot.parts > 1 ? ' · ' : ''}${MODE_LABEL[slot.mode]} ${slot.round + 1}${slot.mode === 'amrap' ? '' : ` of ${slot.rounds}`}` : ''}` : runsheet.title;
 
   return (
@@ -118,7 +122,14 @@ export const TimerScreen = ({ runsheet, state, now, onDone, onSkip, onBack, onPa
           </div>
         ) : (
           <>
-            <div className={cn('py-4 text-center font-black tabular-nums tracking-tight', lead ? 'text-[96px] leading-none text-brand' : 'text-[72px] leading-none')}>{bigNumber}</div>
+            <div className={cn('pt-4 text-center font-black tabular-nums tracking-tight', lead ? 'text-[96px] leading-none text-brand' : 'text-[72px] leading-none')}>{bigNumber}</div>
+            {!lead && !done && timed && slot?.seconds ? (
+              <div className="pb-3 text-center text-[13px] tabular-nums text-white/50">
+                {fmtClock(clock.spent)} of {fmtClock(slot.seconds)}
+              </div>
+            ) : (
+              <div className="pb-1" />
+            )}
             {lead && <div className="-mt-2 pb-3 text-center text-[13px] text-white/60">Get ready</div>}
             {!timed && !lead && !done && slot && <div className="-mt-2 pb-3 text-center text-[13px] text-white/60">{isRest ? 'Rest' : 'Tap Done when finished'}</div>}
 
@@ -128,7 +139,12 @@ export const TimerScreen = ({ runsheet, state, now, onDone, onSkip, onBack, onPa
                   <div className="flex items-center gap-3">
                     {stepOf?.kind === 'exercise' ? <ClipThumb size="lg" clip={stepOf.exercise.clip} poster={stepOf.exercise.poster} icon={stepOf.exercise.icon} /> : <ClipThumb size="lg" variant="rest" className="bg-white/20 text-white" />}
                     <div className="min-w-0 flex-1">
-                      <div className="text-[18px] leading-tight font-extrabold">{stepOf?.kind === 'exercise' ? stepOf.exercise.name : 'Rest'}</div>
+                      {showPos && (
+                        <div className={cn('text-[11px] font-bold tracking-widest uppercase', isRest ? 'text-white/60' : 'text-brand')}>
+                          Exercise {stepPos + 1} of {blockSteps.length}
+                        </div>
+                      )}
+                      <div className="text-[22px] leading-tight font-extrabold">{stepOf?.kind === 'exercise' ? stepOf.exercise.name : 'Rest'}</div>
                       <div className={cn('text-[13px]', isRest ? 'text-white/70' : 'text-muted')}>
                         {stepOf?.kind === 'exercise' ? forLabel(stepOf) : `${slot.seconds ?? 0}s`}
                         {stepOf?.kind === 'exercise' && stepOf.exercise.cue ? ` · ${stepOf.exercise.cue}` : ''}
@@ -164,6 +180,16 @@ export const TimerScreen = ({ runsheet, state, now, onDone, onSkip, onBack, onPa
               </SwipeToRemove>
             )}
 
+            {showPos && !done && (
+              <div className="mt-3 flex gap-1.5">
+                {blockSteps.map((bs, i) => (
+                  <div key={bs.id} className={cn('min-w-0 flex-1 rounded-full px-2 py-1 text-center text-[11px] font-semibold', i === stepPos ? 'bg-brand text-white' : i < stepPos ? 'bg-white/20 text-white/70' : 'bg-white/10 text-white/50')}>
+                    <span className="block truncate">{bs.exercise.name}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+
             {nxt && !done && (
               <button type="button" onClick={() => setPeek(nxt.part)} className={cn('mt-3 flex w-full items-center gap-2.5 rounded-card px-3 py-2 text-left', nextIsNewPart ? 'border border-brand/60 bg-brand/15' : 'bg-white/5')}>
                 {nxt.step.kind === 'exercise' ? <ClipThumb size="sm" clip={nxt.step.exercise.clip} poster={nxt.step.exercise.poster} icon={nxt.step.exercise.icon} /> : <ClipThumb size="sm" variant="rest" className="bg-white/20 text-white" />}
@@ -188,32 +214,32 @@ export const TimerScreen = ({ runsheet, state, now, onDone, onSkip, onBack, onPa
 
       <div className="safe-bottom shrink-0 px-4 pt-2 pb-3">
         {done ? (
-          <Button block variant="brand" onClick={onFinish}>
+          <Button block size="xl" variant="brand" onClick={onFinish}>
             <Check /> Log result
           </Button>
         ) : ready ? (
           <div className="flex gap-2">
-            <Button variant="dark" size="icon" onClick={() => setMenu(true)} aria-label="More" className="shrink-0 bg-white/10">
+            <Button variant="dark" size="icon" onClick={() => setMenu(true)} aria-label="More" className="h-16 shrink-0 bg-white/10">
               <MoreHorizontal />
             </Button>
-            <Button block variant="brand" onClick={onStartBlock}>
+            <Button block size="xl" variant="brand" onClick={onStartBlock}>
               <Play /> Start block
             </Button>
           </div>
         ) : (
           <div className="flex gap-2">
-            <Button variant="dark" size="icon" onClick={() => setMenu(true)} aria-label="More" className="shrink-0 bg-white/10">
+            <Button variant="dark" size="icon" onClick={() => setMenu(true)} aria-label="More" className="h-16 shrink-0 bg-white/10">
               <MoreHorizontal />
             </Button>
-            <Button block variant="dark" onClick={paused ? onResume : onPause} className={cn('bg-white/10', paused && 'bg-white text-ink')}>
+            <Button block size="xl" variant="dark" onClick={paused ? onResume : onPause} className={cn('bg-white/10', paused && 'bg-white text-ink')}>
               {paused ? <Play /> : <Pause />} {paused ? 'Resume' : 'Pause'}
             </Button>
             {timed || lead ? (
-              <Button block variant="ghost" onClick={onSkip} className="border-white/20 bg-white/10 text-white">
+              <Button block size="xl" variant="ghost" onClick={onSkip} className="border-white/20 bg-white/10 text-white">
                 <SkipForward /> Skip{isRest ? ' rest' : ''}
               </Button>
             ) : (
-              <Button block variant="brand" onClick={onDone}>
+              <Button block size="xl" variant="brand" onClick={onDone}>
                 <Check /> Done
               </Button>
             )}

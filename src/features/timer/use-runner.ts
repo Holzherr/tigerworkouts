@@ -38,6 +38,7 @@ const beep = (freq = 880, ms = 120) => {
     /* no audio */
   }
 };
+/** Android and desktop Chrome buzz; iOS Safari has no Vibration API, so there it is a no-op. */
 const vib = (p: number | number[]) => {
   try {
     navigator.vibrate?.(p);
@@ -61,6 +62,7 @@ export const useRunner = (runsheet: Runsheet, opts: { resume?: boolean; silent?:
   const lastBeep = useRef<number>(-1);
   const wake = useRef<{ release: () => Promise<void> } | null>(null);
   const prevSlot = useRef<number>(-1);
+  const finished = useRef(false);
 
   // tick
   useEffect(() => {
@@ -92,6 +94,18 @@ export const useRunner = (runsheet: Runsheet, opts: { resume?: boolean; silent?:
         beep(state.slots[state.i]?.kind === 'rest' ? 520 : 1040, 180);
       }
     }
+    // The end of the whole session gets its own long buzz and a three-note tone, so you know
+    // it is over without looking at the phone.
+    if (state.phase === 'done' && !finished.current) {
+      finished.current = true;
+      if (!silent) {
+        vib([120, 80, 120, 80, 300]);
+        beep(880, 160);
+        setTimeout(() => beep(1100, 160), 200);
+        setTimeout(() => beep(1320, 420), 400);
+      }
+    }
+    if (state.phase !== 'done') finished.current = false;
   }, [state, persist, silent]);
 
   // countdown beeps

@@ -12,6 +12,7 @@ import { EditorScreen } from '@/features/runsheet/components/editor-screen';
 import type { DndVariant } from '@/features/runsheet/components/runsheet-list';
 import { EX, priyanka } from '@/features/runsheet/fixtures';
 import { makeExercise, resolveRefs, scoreType, type ExerciseStep, type Runsheet } from '@/features/runsheet/model';
+import { withLastUsed } from '@/features/runsheet/last-used';
 import { applyCommands, parsePlan } from '@/features/runsheet/parse-text';
 import { ExercisePicker } from '@/features/exercises/components/exercise-picker';
 import type { LibraryExercise } from '@/features/exercises/library';
@@ -269,7 +270,7 @@ export default function App() {
   if (route.name === 'do') {
     const r = draft ?? byId.get(route.id);
     if (!r) return shell('discover', <Missing />);
-    return <RunRoute key={route.id} runsheet={resolveRefs(r, lookup)} onFinish={res => (setPending(res), go(`/result/${encodeURIComponent(route.id)}`))} onExit={() => (Runner.clearPersisted(), go(`/w/${encodeURIComponent(route.id)}`))} />;
+    return <RunRoute key={route.id} runsheet={withLastUsed(resolveRefs(r, lookup), st.results)} onFinish={res => (setPending(res), go(`/result/${encodeURIComponent(route.id)}`))} onExit={() => (Runner.clearPersisted(), go(`/w/${encodeURIComponent(route.id)}`))} />;
   }
   if (route.name === 'session') {
     const res = st.results.find(x => x.id === route.id);

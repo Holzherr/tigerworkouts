@@ -70,6 +70,13 @@ export const DiscoverScreen = ({ workouts, results = [], savedIds = [], onOpen, 
   const [limit, setLimit] = useState(60);
 
   const recs = useMemo(() => recommend(workouts, results, savedIds), [workouts, results, savedIds]);
+
+  /** How many sessions each workout has, so a favourite reads at a glance. */
+  const doneCount = useMemo(() => {
+    const m = new Map<string, number>();
+    for (const res of results) m.set(res.runsheetId, (m.get(res.runsheetId) ?? 0) + 1);
+    return m;
+  }, [results]);
   const saved = useMemo(() => {
     const set = new Set(savedIds);
     const lastDone = new Map<string, string>();
@@ -143,7 +150,7 @@ export const DiscoverScreen = ({ workouts, results = [], savedIds = [], onOpen, 
               </button>
             )}
             {saved.map(r => (
-              <WorkoutCard key={wid(r)} runsheet={r} onOpen={onOpen} />
+              <WorkoutCard key={wid(r)} runsheet={r} onOpen={onOpen} done={doneCount.get(wid(r)) ?? 0} />
             ))}
             {saved.length === 0 && <EmptyState icon={<Bookmark />} title="Nothing saved yet" body="Tap Save on any workout, or create your own above." action={{ label: 'Browse workouts', onClick: () => setTab('search') }} />}
           </>
@@ -159,7 +166,7 @@ export const DiscoverScreen = ({ workouts, results = [], savedIds = [], onOpen, 
                   <Sparkles className="size-3.5" /> {reason}
                 </div>
                 {list.map(rec => (
-                  <WorkoutCard key={wid(rec.runsheet)} runsheet={rec.runsheet} onOpen={onOpen} />
+                  <WorkoutCard key={wid(rec.runsheet)} runsheet={rec.runsheet} onOpen={onOpen} done={doneCount.get(wid(rec.runsheet)) ?? 0} />
                 ))}
               </section>
             ))}
@@ -185,7 +192,7 @@ export const DiscoverScreen = ({ workouts, results = [], savedIds = [], onOpen, 
               </button>
             ))}
             {shown.map(r => (
-              <WorkoutCard key={wid(r)} runsheet={r} onOpen={onOpen} />
+              <WorkoutCard key={wid(r)} runsheet={r} onOpen={onOpen} done={doneCount.get(wid(r)) ?? 0} />
             ))}
             {singles.length > shown.length && (
               <button type="button" onClick={() => setLimit(l => l + 60)} className="w-full py-3 text-center text-[13px] font-bold text-brand">

@@ -19,6 +19,7 @@ export const buttonVariants = cva(
         default: 'h-11 px-4 text-[15px] [&_svg]:size-5',
         sm: 'h-9 px-3 text-[13px] [&_svg]:size-4',
         lg: 'h-13 px-5 text-[17px] [&_svg]:size-5',
+        xl: 'h-16 px-5 text-[18px] [&_svg]:size-6',
         icon: 'size-11 [&_svg]:size-5',
         'icon-sm': 'size-8 [&_svg]:size-4',
         inline: 'h-auto px-1 py-0.5 text-[13px] [&_svg]:size-4',
@@ -31,7 +32,8 @@ export const buttonVariants = cva(
 
 export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement>, VariantProps<typeof buttonVariants> {}
 
-/** Tap target for every action in the app. Touch-first: default height is 44px. */
+/** Tap target for every action in the app. Touch-first: default height is 44px, xl is 64px
+ * for the controls you hit mid-exercise, when you are moving and not looking carefully. */
 export const Button = forwardRef<HTMLButtonElement, ButtonProps>(({ className, variant, size, block, type = 'button', ...props }, ref) => (
   <button ref={ref} type={type} className={cn(buttonVariants({ variant, size, block }), className)} {...props} />
 ));

@@ -16,15 +16,18 @@ export interface WorkoutCardProps {
   onOpen: (r: Runsheet) => void;
   /** Compact = one line row for program day lists. */
   compact?: boolean;
+  /** Sessions logged against this workout; shown as a chip so a favourite is obvious. */
+  done?: number;
   className?: string;
 }
 
 /**
  * Card for a workout in Discover: the workout's icon (monogram or uploaded image) on the left, title, one-line attribution
  * ("Benchmark · CrossFit" / "Program · StrongLifts 5×5 · Workout A" / "Video · Pamela Reif"),
- * then chips for length, first block mode and score type. Compact variant is a single row.
+ * then chips for length, how many times it has been done, first block mode and score type.
+ * Compact variant is a single row.
  */
-export const WorkoutCard = ({ runsheet: r, onOpen, compact, className }: WorkoutCardProps) => {
+export const WorkoutCard = ({ runsheet: r, onOpen, compact, done = 0, className }: WorkoutCardProps) => {
   const kind = r.source?.kind ?? 'user';
   const who = r.program ? `${r.program.name} · ${r.program.day}` : (r.source?.author ?? r.creator ?? '');
   const firstBlock = r.items.find(i => i.kind === 'block');
@@ -43,6 +46,11 @@ export const WorkoutCard = ({ runsheet: r, onOpen, compact, className }: Workout
             <Chip size="sm" variant="value">
               {runsheetMinutes(r)} min
             </Chip>
+            {done > 0 && (
+              <Chip size="sm" variant="value">
+                done {done}×
+              </Chip>
+            )}
             {firstBlock && (
               <Chip size="sm" variant="brand">
                 {modeLabel(firstBlock)}
