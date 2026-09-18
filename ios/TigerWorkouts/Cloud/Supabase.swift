@@ -11,6 +11,8 @@ enum SupabaseConfig {
     static let anonKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImljcGR6am9oc3ZscHlhbHV4Z2J0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODg0MzQ2ODksImV4cCI6MjEwNDAxMDY4OX0.14vYnhI3VRQ3gr0V8hIIYCo0_mnpTugVwYRJLXKRh14"
     /// Registered in Info.plist; Supabase must list it under Authentication → URL Configuration.
     static let redirect = "tigerworkouts://auth"
+    /// public/app-signin.html on the website; it fixes provider, redirect and method itself.
+    static let signInStart = "https://tigerworkouts.com/app-signin.html"
 }
 
 struct AuthUser: Codable, Hashable, Sendable {
@@ -180,13 +182,10 @@ actor Supabase {
         let verifier = Self.randomVerifier()
         pendingVerifier = verifier
         let challenge = Data(SHA256.hash(data: Data(verifier.utf8))).base64URLEncoded
-        var c = URLComponents(url: Self.endpoint("auth/v1/authorize"), resolvingAgainstBaseURL: false)!
-        c.queryItems = [
-            .init(name: "provider", value: "google"),
-            .init(name: "redirect_to", value: SupabaseConfig.redirect),
-            .init(name: "code_challenge", value: challenge),
-            .init(name: "code_challenge_method", value: "s256"),
-        ]
+        // Start on tigerworkouts.com, which forwards to Supabase: iOS names the first page's host in
+        // its "wants to use … to sign in" prompt, and the Supabase project address means nothing.
+        var c = URLComponents(string: SupabaseConfig.signInStart)!
+        c.queryItems = [.init(name: "code_challenge", value: challenge)]
         return c.url!
     }
 

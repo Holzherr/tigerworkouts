@@ -12,17 +12,38 @@ struct MeView: View {
     var body: some View {
         NavigationStack {
             Form {
-                Section("Account") {
+                Section {
                     if let user = store.user {
-                        LabeledContent("Signed in", value: user.email ?? "—")
+                        HStack(spacing: 14) {
+                            Text(initials(user.email))
+                                .font(.system(size: 20, weight: .heavy, design: .rounded))
+                                .foregroundStyle(.white)
+                                .frame(width: 52, height: 52)
+                                .background(Brand.coral, in: Circle())
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text(user.email ?? "Signed in").font(.headline).foregroundStyle(Brand.ink)
+                                Text(store.syncing ? "Syncing…" : "\(store.results.count) session\(store.results.count == 1 ? "" : "s") · synced with tigerworkouts.com")
+                                    .font(.footnote)
+                                    .foregroundStyle(Brand.muted)
+                            }
+                        }
+                        .padding(.vertical, 4)
                         Button("Sync now") { Task { await store.sync() } }
                             .disabled(store.syncing)
                         Button("Sign out", role: .destructive) { Task { await store.signOut() } }
                     } else {
-                        Text("Sign in with the same account as tigerworkouts.com and your history is one list on both.")
-                            .font(.footnote)
-                            .foregroundStyle(Brand.muted)
-                        Button("Sign in") { signingIn = true }
+                        VStack(alignment: .leading, spacing: 12) {
+                            HStack(spacing: 12) {
+                                Stripes().frame(width: 30, height: 26)
+                                Text("Sign in to sync").font(.headline).foregroundStyle(Brand.ink)
+                            }
+                            Text("Same account as tigerworkouts.com, so your workouts and history are one list on both.")
+                                .font(.footnote)
+                                .foregroundStyle(Brand.muted)
+                            Button("Sign in") { signingIn = true }
+                                .buttonStyle(BigButtonStyle())
+                        }
+                        .padding(.vertical, 6)
                     }
                 }
 
@@ -33,7 +54,7 @@ struct MeView: View {
                 } header: {
                     Text("In the gym")
                 } footer: {
-                    Text("Tones carry when the screen has locked; the buzz is a foreground-only API on iOS, so it reaches you while the app is open. Both fire on every work, rest and block change, and at the finish. The Lock Screen card shows the exercise and the countdown without unlocking.")
+                    Text("Every change of exercise, rest or block. Tones still play with the phone locked; the buzz works while Tiger is open.")
                 }
 
                 Section {
@@ -44,7 +65,7 @@ struct MeView: View {
                 } header: {
                     Text("Health")
                 } footer: {
-                    Text("Saves each workout to Health so it counts towards your rings, and reads back your bodyweight and your heart rate over the session — which turns the calorie figure from an estimate into a measurement.")
+                    Text("Workouts count towards your rings, and your heart rate turns the calorie estimate into a measurement.")
                 }
 
                 Section {
@@ -61,7 +82,7 @@ struct MeView: View {
                 } header: {
                     Text("You")
                 } footer: {
-                    Text("Calories after a workout are a METs estimate built from time, effort type and this number. Without a heart rate it is a scale to beat, not a measurement.")
+                    Text("Used for the calorie estimate after a workout.")
                 }
 
                 Section {
@@ -73,6 +94,8 @@ struct MeView: View {
             .sheet(isPresented: $signingIn) {
                 SignInView { await store.sync() }
             }
+            .scrollContentBackground(.hidden)
+            .background(Brand.canvas)
             .onChange(of: haptics, initial: true) { _, on in Haptics.shared.enabled = on }
             .onChange(of: sound, initial: true) { _, on in Cues.shared.enabled = on }
             .onChange(of: liveActivity, initial: true) { _, on in SessionActivityController.shared.enabled = on }
@@ -91,5 +114,10 @@ struct MeView: View {
                 }
             }
         }
+    }
+
+    private func initials(_ email: String?) -> String {
+        guard let email, let first = email.first else { return "?" }
+        return String(first).uppercased()
     }
 }
