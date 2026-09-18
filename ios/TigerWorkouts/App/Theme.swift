@@ -1,16 +1,48 @@
 import SwiftUI
+import UIKit
 
-/// The brand, carried over from the web app's tokens so the two read as one product.
+/// The brand, carried over from the web app's tokens so the two read as one product — and
+/// given a dark twin for each, because iPhones run in Dark Mode and the web app never had to.
+/// Every token resolves per appearance; nothing in a view should hard-code a light-only colour.
 enum Brand {
-    static let coral = Color(red: 1.0, green: 0.302, blue: 0.180)      // #ff4d2e
-    static let coralInk = Color(red: 0.769, green: 0.165, blue: 0.071) // #c42a12
-    static let coralSoft = Color(red: 1.0, green: 0.941, blue: 0.925)  // #fff0ec
-    static let rest = Color(red: 0.118, green: 0.227, blue: 0.541)     // #1e3a8a
-    static let ink = Color(red: 0.059, green: 0.090, blue: 0.165)      // #0f172a
-    static let body = Color(red: 0.278, green: 0.333, blue: 0.412)     // #475569
-    static let muted = Color(red: 0.392, green: 0.455, blue: 0.545)    // #64748b
-    static let line = Color(red: 0.886, green: 0.910, blue: 0.941)     // #e2e8f0
-    static let canvas = Color(red: 0.973, green: 0.980, blue: 0.988)   // #f8fafc
+    static let coral = Color(hex: 0xFF4D2E)
+    /// Coral as text: deep on white, lifted on dark so it keeps its contrast.
+    static let coralInk = Color(light: 0xC42A12, dark: 0xFF8A73)
+    static let coralSoft = Color(light: 0xFFF0EC, dark: 0x3B1E18)
+    static let brandLine = Color(light: 0xFFB4A3, dark: 0x7A3325)
+    static let rest = Color(light: 0x1E3A8A, dark: 0x93A8FF)
+
+    static let ink = Color(light: 0x0F172A, dark: 0xF1F5F9)
+    static let body = Color(light: 0x475569, dark: 0xCBD5E1)
+    static let muted = Color(light: 0x64748B, dark: 0x94A3B8)
+    static let faint = Color(light: 0x94A3B8, dark: 0x64748B)
+    static let line = Color(light: 0xE2E8F0, dark: 0x263041)
+    static let lineSoft = Color(light: 0xF1F5F9, dark: 0x1C2431)
+
+    /// The page, the cards on it, and the wells inside those.
+    static let canvas = Color(light: 0xF8FAFC, dark: 0x0B1019)
+    static let surface = Color(light: 0xFFFFFF, dark: 0x151C27)
+    static let well = Color(light: 0xEEF2F7, dark: 0x1E2733)
+
+    /// The timer is dark in either appearance, as on the web: slate, not black, so the white
+    /// clock reads at a glance in a bright gym and an hour on screen is easy on the battery.
+    enum Night {
+        static let ground = Color(hex: 0x0F172A)
+        static let raised = Color(hex: 0x1E293B)
+        static let line = Color(hex: 0x334155)
+        static let text = Color.white
+        static let muted = Color(hex: 0x94A3B8)
+        static let rest = Color(hex: 0x6B8CFF)
+    }
+}
+
+extension Color {
+    /// One colour per appearance, resolved by the system as the trait collection changes.
+    init(light: UInt32, dark: UInt32) {
+        self.init(UIColor { traits in
+            UIColor(Color(hex: traits.userInterfaceStyle == .dark ? dark : light))
+        })
+    }
 }
 
 /// Buttons you can hit while moving. Nick's note from the gym was that 44pt is not enough when
@@ -31,6 +63,21 @@ struct BigButtonStyle: ButtonStyle {
             .foregroundStyle(filled ? .white : tint)
             .background(filled ? tint : tint.opacity(0.12), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
             .overlay(RoundedRectangle(cornerRadius: 16, style: .continuous).strokeBorder(filled ? .clear : tint.opacity(0.35)))
+            .opacity(configuration.isPressed ? 0.75 : 1)
+            .scaleEffect(configuration.isPressed ? 0.98 : 1)
+            .animation(.easeOut(duration: 0.12), value: configuration.isPressed)
+    }
+}
+
+/// A secondary control on the dark timer: raised slate, white label, the same 64pt target.
+struct NightButtonStyle: ButtonStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .font(.system(size: 18, weight: .semibold))
+            .frame(maxWidth: .infinity, minHeight: Tap.big)
+            .foregroundStyle(Brand.Night.text)
+            .background(Brand.Night.raised, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+            .overlay(RoundedRectangle(cornerRadius: 16, style: .continuous).strokeBorder(Brand.Night.line))
             .opacity(configuration.isPressed ? 0.75 : 1)
             .scaleEffect(configuration.isPressed ? 0.98 : 1)
             .animation(.easeOut(duration: 0.12), value: configuration.isPressed)
@@ -69,7 +116,7 @@ struct StripesShape: Shape {
 
 extension View {
     func cardSurface() -> some View {
-        background(Color(.systemBackground), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+        background(Brand.surface, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
             .overlay(RoundedRectangle(cornerRadius: 16, style: .continuous).strokeBorder(Brand.line))
     }
 }

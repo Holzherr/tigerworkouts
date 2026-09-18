@@ -1,5 +1,7 @@
 import SwiftUI
 
+/// A workout before you start it: what it is, where it came from, and every step with its photo.
+/// Any exercise opens with its steppers — there is no edit mode to find.
 struct WorkoutDetailView: View {
     @Environment(Store.self) private var store
     @State var runsheet: Runsheet
@@ -8,10 +10,19 @@ struct WorkoutDetailView: View {
     @State private var editing: ExerciseStep?
     @State private var writing: Runsheet?
 
+    private var saved: Bool { store.saved.contains(runsheet.key) }
+
     var body: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: 20) {
+            VStack(alignment: .leading, spacing: 16) {
                 header
+                if let description = runsheet.description, !description.isEmpty {
+                    Text(description)
+                        .font(.callout)
+                        .foregroundStyle(Brand.body)
+                        .lineSpacing(3)
+                        .padding(.horizontal, 4)
+                }
                 ForEach(Array(runsheet.items.enumerated()), id: \.offset) { _, item in
                     switch item {
                     case .block(let b): blockCard(b)
@@ -21,7 +32,7 @@ struct WorkoutDetailView: View {
                 }
             }
             .padding(16)
-            .padding(.bottom, 96)
+            .padding(.bottom, 24)
         }
         .background(Brand.canvas)
         .navigationTitle(runsheet.title)
@@ -43,11 +54,10 @@ struct WorkoutDetailView: View {
                             Label("Make a copy I can edit", systemImage: "doc.on.doc")
                         }
                     }
-                    Button {
-                        Task { await store.toggleSaved(runsheet.key) }
-                    } label: {
-                        Label(store.saved.contains(runsheet.key) ? "Remove from saved" : "Save to my list",
-                              systemImage: store.saved.contains(runsheet.key) ? "bookmark.slash" : "bookmark")
+                    if let url = runsheet.source?.url.flatMap(URL.init(string:)) {
+                        Link(destination: url) {
+                            Label("Open the original", systemImage: "arrow.up.right.square")
+                        }
                     }
                 } label: {
                     Image(systemName: "ellipsis.circle")
@@ -60,14 +70,7 @@ struct WorkoutDetailView: View {
                 if saved.key == runsheet.key { runsheet = saved }
             }
         }
-        .safeAreaInset(edge: .bottom) {
-            Button("Start workout") {
-                onStart(Settings.withLastUsed(runsheet, results: store.results))
-            }
-            .buttonStyle(BigButtonStyle())
-            .padding(16)
-            .background(.bar)
-        }
+        .safeAreaInset(edge: .bottom) { bottomBar }
         .sheet(item: $editing) { step in
             // Steppers are here because this screen passes handlers — there is no separate edit
             // mode to find, on any screen that shows an exercise.
@@ -81,36 +84,98 @@ struct WorkoutDetailView: View {
     }
 
     private var header: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            Stripes().frame(width: 26, height: 22)
-            HStack(spacing: 10) {
-                Label("\(runsheet.minutes) min", systemImage: "clock")
-                if let creator = runsheet.creator { Text(creator) }
-                if store.doneCount(runsheet.key) > 0 { Text("done \(store.doneCount(runsheet.key))×") }
-            }
-            .font(.subheadline)
-            .foregroundStyle(Brand.muted)
-            if let description = runsheet.description {
-                Text(description).font(.callout).foregroundStyle(Brand.body)
+        HStack(alignment: .top, spacing: 14) {
+            WorkoutIcon(runsheet: runsheet, size: 64)
+            VStack(alignment: .leading, spacing: 8) {
+                Text(runsheet.title)
+                    .font(.system(size: 26, weight: .heavy))
+                    .foregroundStyle(Brand.ink)
+                    .fixedSize(horizontal: false, vertical: true)
+                if !meta.isEmpty {
+                    Text(meta).font(.subheadline).foregroundStyle(Brand.muted)
+                }
+                HStack(spacing: 6) {
+                    pill("\(runsheet.minutes) min", filled: true)
+                    if let level = runsheet.level { pill(level, filled: false) }
+                    if store.doneCount(runsheet.key) > 0 { pill("done \(store.doneCount(runsheet.key))×", filled: false, brand: true) }
+                }
             }
         }
+        .padding(.bottom, 4)
+    }
+
+    /// "Benchmark · CrossFit", "Program · StrongLifts · Day A" — what it is, and whose.
+    private var meta: String {
+        var parts: [String] = []
+        switch runsheet.source?.kind {
+        case "benchmark": parts.append("Benchmark")
+        case "program": parts.append("Program")
+        case "protocol": parts.append("Protocol")
+        case "article": parts.append("NHS")
+        case "video": parts.append("Follow-along")
+        case "user": parts.append("Yours")
+        default: break
+        }
+        if let creator = runsheet.creator { parts.append(creator) }
+        if let program = runsheet.program, !program.day.isEmpty { parts.append(program.day) }
+        return parts.joined(separator: " · ")
+    }
+
+    private func pill(_ text: String, filled: Bool, brand: Bool = false) -> some View {
+        Text(text)
+            .font(.subheadline.weight(.bold))
+            .padding(.horizontal, 12)
+            .frame(height: 30)
+            .background(brand ? Brand.coralSoft : (filled ? Brand.lineSoft : Brand.surface), in: Capsule())
+            .overlay(Capsule().strokeBorder(filled || brand ? .clear : Brand.line))
+            .foregroundStyle(brand ? Brand.coralInk : Brand.ink)
+    }
+
+    private var bottomBar: some View {
+        HStack(spacing: 10) {
+            Button {
+                onStart(Settings.withLastUsed(runsheet, results: store.results))
+            } label: {
+                Label("Start workout", systemImage: "play.fill")
+            }
+            .buttonStyle(BigButtonStyle())
+
+            Button {
+                Task { await store.toggleSaved(runsheet.key) }
+            } label: {
+                Image(systemName: saved ? "bookmark.fill" : "bookmark")
+                    .font(.system(size: 20, weight: .semibold))
+                    .frame(width: Tap.big, height: Tap.big)
+                    .background(Brand.surface, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+                    .overlay(RoundedRectangle(cornerRadius: 16, style: .continuous).strokeBorder(Brand.line))
+                    .foregroundStyle(saved ? Brand.coral : Brand.ink)
+            }
+            .accessibilityLabel(saved ? "Remove from saved" : "Save to my list")
+        }
+        .padding(.horizontal, 16)
+        .padding(.top, 10)
+        .padding(.bottom, 6)
+        .background(.bar)
     }
 
     private func blockCard(_ b: Block) -> some View {
         VStack(alignment: .leading, spacing: 0) {
-            HStack {
-                Text(b.name).font(.headline)
+            HStack(alignment: .top) {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(b.name).font(.headline).foregroundStyle(Brand.ink)
+                    Text(Format.duration(b.estimatedSeconds)).font(.footnote).foregroundStyle(Brand.muted)
+                }
                 Spacer()
                 Text(b.modeLabel)
-                    .font(.caption.weight(.semibold))
-                    .padding(.horizontal, 8).padding(.vertical, 3)
+                    .font(.subheadline.weight(.bold))
+                    .padding(.horizontal, 10).frame(height: 28)
                     .background(Brand.coralSoft, in: Capsule())
                     .foregroundStyle(Brand.coralInk)
             }
             .padding(14)
 
             ForEach(b.steps) { step in
-                Divider().padding(.leading, 14)
+                Divider().padding(.leading, 76)
                 stepRow(step)
             }
         }
@@ -125,35 +190,45 @@ struct WorkoutDetailView: View {
     private func stepRow(_ step: Step) -> some View {
         switch step {
         case .rest(let r):
-            HStack {
-                Label("Rest", systemImage: "pause.circle").foregroundStyle(Brand.rest)
+            HStack(spacing: 14) {
+                Image(systemName: "pause.fill")
+                    .font(.system(size: 16, weight: .bold))
+                    .frame(width: 48, height: 48)
+                    .background(Brand.well, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+                    .foregroundStyle(Brand.rest.opacity(0.7))
+                Text("Rest").foregroundStyle(Brand.body)
                 Spacer()
-                Text(Format.clock(r.seconds)).foregroundStyle(Brand.muted)
+                Text(Format.clock(r.seconds)).font(.body.weight(.semibold)).monospacedDigit().foregroundStyle(Brand.ink)
             }
-            .font(.subheadline)
-            .padding(14)
+            .padding(.horizontal, 14)
+            .padding(.vertical, 10)
         case .exercise(let e):
             Button { editing = e } label: {
-                HStack(spacing: 12) {
+                HStack(spacing: 14) {
+                    ExerciseThumb(ref: e.exercise, size: 48)
                     VStack(alignment: .leading, spacing: 3) {
                         Text(e.exercise.name).font(.body.weight(.medium)).foregroundStyle(Brand.ink)
-                        HStack(spacing: 6) {
-                            Text(e.forLabel)
-                            if !e.loadLabel.isEmpty { Text("· \(e.loadLabel)") }
-                            if let incline = e.incline { Text("· \(Format.number(incline))% incline") }
+                        if !settingSummary(e).isEmpty {
+                            Text(settingSummary(e)).font(.footnote).foregroundStyle(Brand.muted)
                         }
-                        .font(.footnote)
-                        .foregroundStyle(Brand.muted)
                     }
-                    Spacer()
-                    Image(systemName: "slider.horizontal.3").foregroundStyle(Brand.muted)
+                    Spacer(minLength: 8)
+                    Text(e.forLabel).font(.body.weight(.semibold)).monospacedDigit().foregroundStyle(Brand.ink)
+                    Image(systemName: "chevron.right").font(.footnote.weight(.semibold)).foregroundStyle(Brand.faint)
                 }
-                .frame(minHeight: Tap.regular)
                 .padding(.horizontal, 14)
+                .padding(.vertical, 10)
                 .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
         }
+    }
+
+    private func settingSummary(_ e: ExerciseStep) -> String {
+        var parts: [String] = []
+        if !e.loadLabel.isEmpty { parts.append(e.loadLabel) }
+        if let incline = e.incline { parts.append("\(Format.number(incline))% incline") }
+        return parts.joined(separator: " · ")
     }
 
     /// Edits land on this screen's own copy and go into the session that starts from it.
