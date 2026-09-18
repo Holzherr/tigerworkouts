@@ -20,6 +20,14 @@ What you get that the PWA cannot do:
   foreground-only API on iOS and no app can work around that.
 - **The timer survives a locked screen.** `UIBackgroundModes: audio` plus a near-silent keep-alive
   loop, held open only for the length of a session.
+- **The session on the Lock Screen.** A Live Activity with the exercise, the countdown and the
+  progress bar, plus the Dynamic Island. The clock is sent as the instant it ends rather than as a
+  number, so iOS ticks it down itself and the app only pushes on a real transition.
+- **Apple Health, both ways.** A finished session becomes an `HKWorkout` typed by what the session
+  mostly was, so it counts towards the rings. Coming back the other way: your bodyweight, so the
+  calorie figure stops assuming 80 kg, and your heart rate across the session, which turns that
+  estimate into a measurement. The heart rate is written to the same `device` field the web app
+  already reads.
 - **Crash safety.** The run state is written to disk on every transition; reopening within six
   hours picks the session back up where it stopped.
 
@@ -27,13 +35,18 @@ What you get that the PWA cannot do:
 
 ```
 TigerWorkouts/
-  Model/      Runsheet, Library, SessionResult, LastUsed — Codable mirrors of the TS model
+  Model/      Runsheet, Library, SessionResult, LastUsed, Editing — Codable mirrors of the TS model
   Engine/     Runner (a port of runner.ts, pure), SessionRunner (tick, haptics, sound, disk)
   Results/    Effort (METs, streak, tonnage), Muscles (name-first matcher)
   Cloud/      Supabase (GoTrue + PostgREST over URLSession), Store, Keychain
-  Feedback/   Haptics (Core Haptics), Cues (AVAudioEngine)
-  Features/   Discover, WorkoutDetail, Timer, ExerciseSheet, History, SessionStats, BodyMap, Me, SignIn
+  Health/     Health (HKWorkout out; bodyweight and heart rate in)
+  Feedback/   Haptics (Core Haptics), Cues (AVAudioEngine), SessionActivityController
+  Shared/     SessionActivity — the Lock Screen contract, compiled into both targets
+  Features/   Discover, WorkoutDetail, WorkoutEditor, StepEditor, ExercisePicker, Timer,
+              ExerciseSheet, History, SessionStats, BodyMap, Me, SignIn
   Resources/  exercises.json, workouts.json — generated, never hand-edited
+TigerWorkoutsWidgets/
+              SessionLiveActivity — the Lock Screen and Dynamic Island views
 ```
 
 No third-party dependencies. The Supabase client is four endpoints hand-rolled on URLSession
@@ -70,8 +83,9 @@ Two things are yours to do once, because they need credentials or admin rights:
 
 ## Tests
 
-30 tests: the engine ported one for one from `runner.test.ts`, the muscle and effort models, the
-last-used carry-over, the whole catalogue decoding, and the `sessions` row and URL formats the two apps share.
+38 tests: the engine ported one for one from `runner.test.ts`, the muscle and effort models, the
+last-used carry-over, the editing operations, the whole catalogue decoding, and the `sessions` row
+and URL formats the two apps share.
 
 Run them from Xcode (⌘U).
 
@@ -88,9 +102,20 @@ Run them from Xcode (⌘U).
 > SDK (clean, no warnings) and by running the whole test suite on macOS through a SwiftPM harness
 > over the platform-free sources. The UI has not been run on a device or simulator yet.
 
+## Writing workouts
+
+Tap ＋ on the Workouts tab, or open any catalogue workout and pick "Make a copy I can edit" — a
+catalogue workout is never written over, and a copy gets fresh step ids, because a logged session
+keys its loads by step id and two workouts must not share them.
+
+Blocks hold steps and run as rounds, for time, AMRAP or EMOM. Steps are measured in seconds, reps,
+minutes, metres, calories or max reps, with load, incline and each-side where they apply. Nothing
+is sent anywhere until Save; the screen holds one runsheet value and every edit returns a new one.
+Workouts go up with `public: true`, the same as the web app writes them, so one written on the
+phone shows up there too.
+
 ## What is not in it yet
 
-- Editing or creating workouts. The app reads the catalogue and your own saved workouts; it writes
-  sessions only. Build workouts on the web, run them here.
-- A Lock Screen Live Activity. The obvious next native win, and a separate piece of work.
-- Apple Health. Sessions go to Supabase only.
+- An Apple Watch app. The phone is the timer; a watch face would be the next real piece of work.
+- Follow-along video. The catalogue's YouTube-backed workouts run as timed steps without the clip.
+- Editing a past session. History is read-only here; correct a session on the web.

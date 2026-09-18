@@ -6,6 +6,7 @@ struct WorkoutDetailView: View {
     var onStart: (Runsheet) -> Void
 
     @State private var editing: ExerciseStep?
+    @State private var writing: Runsheet?
 
     var body: some View {
         ScrollView {
@@ -25,6 +26,40 @@ struct WorkoutDetailView: View {
         .background(Brand.canvas)
         .navigationTitle(runsheet.title)
         .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            ToolbarItem(placement: .topBarTrailing) {
+                Menu {
+                    if store.isMine(runsheet) {
+                        Button {
+                            writing = runsheet
+                        } label: {
+                            Label("Edit workout", systemImage: "square.and.pencil")
+                        }
+                    } else {
+                        // A catalogue workout is never written over: you get a copy of your own.
+                        Button {
+                            writing = Edit.duplicate(runsheet, creator: store.user?.email)
+                        } label: {
+                            Label("Make a copy I can edit", systemImage: "doc.on.doc")
+                        }
+                    }
+                    Button {
+                        Task { await store.toggleSaved(runsheet.key) }
+                    } label: {
+                        Label(store.saved.contains(runsheet.key) ? "Remove from saved" : "Save to my list",
+                              systemImage: store.saved.contains(runsheet.key) ? "bookmark.slash" : "bookmark")
+                    }
+                } label: {
+                    Image(systemName: "ellipsis.circle")
+                }
+            }
+        }
+        .sheet(item: $writing) { sheet in
+            WorkoutEditorView(runsheet: sheet, isExisting: store.isMine(sheet)) { saved in
+                // Editing in place should leave this screen showing what was just saved.
+                if saved.key == runsheet.key { runsheet = saved }
+            }
+        }
         .safeAreaInset(edge: .bottom) {
             Button("Start workout") {
                 onStart(Settings.withLastUsed(runsheet, results: store.results))

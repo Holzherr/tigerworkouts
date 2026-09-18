@@ -15,6 +15,15 @@ struct StepResult: Codable, Hashable, Sendable, Identifiable {
     var id: String { stepId }
 }
 
+/// Heart-rate summary attached after a workout, from Apple Health or another device. The web app
+/// reads the same field, so a session logged on the phone shows its heart rate there too.
+struct DeviceSummary: Codable, Hashable, Sendable {
+    var avgHr: Double?
+    var maxHr: Double?
+    var calories: Double?
+    var source: String?
+}
+
 struct ActivityLog: Codable, Hashable, Sendable {
     var name: String
     var icon: String?
@@ -33,6 +42,7 @@ struct SessionResult: Codable, Hashable, Sendable, Identifiable {
     var durationSec: Double?
     var completed: Bool?
     var activity: ActivityLog?
+    var device: DeviceSummary?
     var score: Double?
     var scoreText: String?
     var steps: [StepResult] = []
@@ -65,6 +75,7 @@ struct SessionResult: Codable, Hashable, Sendable, Identifiable {
         durationSec = try c.decodeIfPresent(Double.self, forKey: .durationSec)
         completed = try c.decodeIfPresent(Bool.self, forKey: .completed)
         activity = try c.decodeIfPresent(ActivityLog.self, forKey: .activity)
+        device = try c.decodeIfPresent(DeviceSummary.self, forKey: .device)
         score = try c.decodeIfPresent(Double.self, forKey: .score)
         scoreText = try c.decodeIfPresent(String.self, forKey: .scoreText)
         steps = try c.decodeIfPresent([StepResult].self, forKey: .steps) ?? []

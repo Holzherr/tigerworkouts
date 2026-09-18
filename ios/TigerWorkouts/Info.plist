@@ -21,6 +21,15 @@
   <array>
     <string>audio</string>
   </array>
+  <!-- The session card on the Lock Screen and in the Dynamic Island. -->
+  <key>NSSupportsLiveActivities</key>
+  <true/>
+  <key>NSSupportsLiveActivitiesFrequentUpdates</key>
+  <true/>
+  <key>NSHealthShareUsageDescription</key>
+  <string>Tiger reads your bodyweight so the calories after a workout are yours rather than an assumption, and your heart rate over the session so the figure is measured rather than estimated.</string>
+  <key>NSHealthUpdateUsageDescription</key>
+  <string>Tiger saves each finished workout to Health, so it counts towards your rings and sits alongside everything else you do.</string>
   <key>CFBundleURLTypes</key>
   <array>
     <dict>

@@ -6,6 +6,7 @@ struct DiscoverView: View {
 
     @State private var query = ""
     @State private var savedOnly = false
+    @State private var writing: Runsheet?
 
     private var shown: [Runsheet] {
         let all = savedOnly ? store.allWorkouts.filter { store.saved.contains($0.key) } : store.allWorkouts
@@ -22,6 +23,15 @@ struct DiscoverView: View {
     var body: some View {
         NavigationStack {
             List {
+                if !store.myWorkouts.isEmpty && query.isEmpty && !savedOnly {
+                    Section {
+                        ForEach(store.myWorkouts, id: \.key) { sheet in
+                            row(sheet)
+                        }
+                    } header: {
+                        Text("Mine")
+                    }
+                }
                 if !store.results.isEmpty {
                     Section {
                         ForEach(recent, id: \.key) { sheet in
@@ -51,6 +61,17 @@ struct DiscoverView: View {
                     }
                     .accessibilityLabel(savedOnly ? "Show all workouts" : "Show saved only")
                 }
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button {
+                        writing = Edit.newRunsheet(creator: store.user?.email)
+                    } label: {
+                        Image(systemName: "plus")
+                    }
+                    .accessibilityLabel("Write a workout")
+                }
+            }
+            .sheet(item: $writing) { sheet in
+                WorkoutEditorView(runsheet: sheet, isExisting: false) { _ in }
             }
         }
     }

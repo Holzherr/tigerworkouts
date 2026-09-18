@@ -10,6 +10,8 @@ struct SessionStatsView: View {
 
     private var worked: [WorkedSet] { EffortModel.workedFrom(result, runsheet: runsheet) }
     private var effort: Effort { EffortModel.effort(result, worked: worked, bodyweightKg: bodyweightKg) }
+    /// Health's figure when the watch was on, ours when it was not.
+    private var measuredKcal: Int? { result.device?.calories.map { Int($0) } }
     private var load: MuscleShare { Muscles.load(worked) }
     private var streak: Streak { EffortModel.streak(history.contains { $0.rowId == result.rowId } ? history : history + [result]) }
 
@@ -17,7 +19,7 @@ struct SessionStatsView: View {
         VStack(spacing: 16) {
             HStack(spacing: 10) {
                 tile(title: "Work", value: Format.duration(effort.workSec), note: "\(effort.sets) set\(effort.sets == 1 ? "" : "s")")
-                tile(title: "Burn", value: "\(effort.kcal)", note: "kcal estimate")
+                tile(title: "Burn", value: "\(measuredKcal ?? effort.kcal)", note: measuredKcal != nil ? "kcal measured" : "kcal estimate")
                 tile(
                     title: effort.tonnage > 0 ? "Moved" : "Session",
                     value: effort.tonnage > 0 ? "\(Int(effort.tonnage / 1000 >= 1 ? (effort.tonnage / 1000).rounded() : effort.tonnage))" : Format.duration(result.durationSec ?? 0),
@@ -25,8 +27,19 @@ struct SessionStatsView: View {
                 )
             }
 
-            if effort.estimatedWeight {
-                Text("Calories assume \(Int(EffortModel.defaultBodyweightKg)) kg. Set your bodyweight under Me for a closer figure.")
+            if let device = result.device, device.avgHr != nil || device.maxHr != nil {
+                HStack(spacing: 14) {
+                    Image(systemName: "heart.fill").foregroundStyle(Brand.coral)
+                    if let avg = device.avgHr { Text("\(Int(avg)) bpm average").font(.subheadline) }
+                    if let peak = device.maxHr { Text("· \(Int(peak)) peak").font(.subheadline).foregroundStyle(Brand.muted) }
+                    Spacer()
+                    if let source = device.source { Text(source).font(.caption2).foregroundStyle(Brand.muted) }
+                }
+                .padding(14)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .cardSurface()
+            } else if effort.estimatedWeight {
+                Text("Calories assume \(Int(EffortModel.defaultBodyweightKg)) kg. Set your bodyweight under Me, or turn on Health, for a closer figure.")
                     .font(.caption)
                     .foregroundStyle(Brand.muted)
                     .frame(maxWidth: .infinity, alignment: .leading)

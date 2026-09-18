@@ -64,6 +64,8 @@ final class SessionRunner {
 
     func begin() {
         Cues.shared.begin()
+        SessionActivityController.shared.clearStale()
+        SessionActivityController.shared.start(title: runsheet.title, state: activityState)
         UIApplication.shared.isIdleTimerDisabled = true
         timer?.invalidate()
         // 10 Hz: the countdown reads smoothly and a cue never lands more than 100 ms late.
@@ -78,6 +80,7 @@ final class SessionRunner {
         timer = nil
         UIApplication.shared.isIdleTimerDisabled = false
         Cues.shared.end()
+        SessionActivityController.shared.end(activityState)
         SessionRunner.clearSaved()
     }
 
@@ -87,7 +90,49 @@ final class SessionRunner {
         state = Runner.tick(state, now: now)
         if state != before { save() }
         fireCues()
+        SessionActivityController.shared.update(activityState)
     }
+
+    /// What the Lock Screen shows. Built fresh each time and compared by value, so the controller
+    /// pushes an update only when something a person would notice has changed.
+    private var activityState: SessionActivityAttributes.ContentState {
+        let headline: String
+        var detail = slot?.blockName ?? runsheet.title
+        switch state.phase {
+        case .lead:
+            headline = "Get ready"
+            detail = slot?.exercise.map { "First up: \($0.exercise.name)" } ?? runsheet.title
+        case .ready:
+            headline = "Start \(slot?.blockName ?? "block")"
+            detail = slot?.exercise?.exercise.name ?? detail
+        case .done:
+            headline = "Done"
+            detail = Format.duration(elapsed)
+        default:
+            if isRestSlot {
+                headline = "Rest"
+                detail = nextSlot?.exercise.map { "Next: \($0.exercise.name)" } ?? detail
+            } else {
+                headline = slot?.exercise?.exercise.name ?? runsheet.title
+                if let position = stepPosition {
+                    detail = "Exercise \(position.index) of \(position.count)"
+                } else if let slot, slot.rounds > 1 {
+                    detail = "Round \(slot.round + 1) of \(slot.rounds)"
+                }
+            }
+        }
+        return SessionActivityAttributes.ContentState(
+            headline: headline,
+            detail: state.phase == .paused ? "Paused · \(detail)" : detail,
+            isRest: isRestSlot,
+            isPaused: state.phase == .paused,
+            endsAt: state.endsAt.map { Date(timeIntervalSince1970: $0 / 1000) },
+            startedAt: Date(timeIntervalSince1970: state.slotStartedAt / 1000),
+            progress: overall
+        )
+    }
+
+    private var isRestSlot: Bool { slot?.kind == .rest }
 
     /// Every transition gets both a buzz and a tone: the buzz is what you feel with the phone in a
     /// pocket, the tone is what still reaches you when the screen has locked and haptics cannot.
@@ -132,6 +177,7 @@ final class SessionRunner {
         state = change(state, now)
         save()
         fireCues()
+        SessionActivityController.shared.update(activityState)
     }
 
     func startBlock() { apply { Runner.startBlock($0, now: $1) } }

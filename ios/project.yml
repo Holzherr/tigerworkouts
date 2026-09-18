@@ -20,14 +20,33 @@ targets:
     sources:
       - path: TigerWorkouts
         excludes: ["**/.DS_Store"]
+    dependencies:
+      - target: TigerWorkoutsWidgets
+        embed: true
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.holzherr.tigerworkouts
         INFOPLIST_FILE: TigerWorkouts/Info.plist
+        CODE_SIGN_ENTITLEMENTS: TigerWorkouts/TigerWorkouts.entitlements
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
         ENABLE_PREVIEWS: YES
         TARGETED_DEVICE_FAMILY: "1"
         SUPPORTS_MACCATALYST: NO
+
+  TigerWorkoutsWidgets:
+    type: app-extension
+    platform: iOS
+    sources:
+      - TigerWorkoutsWidgets
+      # The activity's shape is shared with the app rather than duplicated.
+      - path: TigerWorkouts/Shared/SessionActivity.swift
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.holzherr.tigerworkouts.widgets
+        INFOPLIST_FILE: TigerWorkoutsWidgets/Info.plist
+        SKIP_INSTALL: YES
+        TARGETED_DEVICE_FAMILY: "1"
+
   TigerWorkoutsTests:
     type: bundle.unit-test
     platform: iOS
@@ -42,11 +61,13 @@ targets:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.holzherr.tigerworkouts.tests
         GENERATE_INFOPLIST_FILE: YES
+
 schemes:
   TigerWorkouts:
     build:
       targets:
         TigerWorkouts: all
+        TigerWorkoutsWidgets: all
         TigerWorkoutsTests: [test]
     test:
       targets: [TigerWorkoutsTests]

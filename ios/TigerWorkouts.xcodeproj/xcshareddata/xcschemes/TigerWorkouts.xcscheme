@@ -35,6 +35,20 @@
                ReferencedContainer = "container:TigerWorkouts.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
+         <BuildActionEntry
+            buildForTesting = "YES"
+            buildForRunning = "YES"
+            buildForProfiling = "YES"
+            buildForArchiving = "YES"
+            buildForAnalyzing = "YES">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "468477449C5DAA84F47F353F"
+               BuildableName = "TigerWorkoutsWidgets.appex"
+               BlueprintName = "TigerWorkoutsWidgets"
+               ReferencedContainer = "container:TigerWorkouts.xcodeproj">
+            </BuildableReference>
+         </BuildActionEntry>
       </BuildActionEntries>
    </BuildAction>
    <TestAction

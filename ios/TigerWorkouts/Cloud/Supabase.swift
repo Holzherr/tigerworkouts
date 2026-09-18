@@ -288,6 +288,58 @@ actor Supabase {
         }
     }
 
+    /// Writes a workout this account owns. `public: true` matches what the web app writes, so a
+    /// workout made on the phone shows up there as well.
+    func saveWorkout(_ r: Runsheet) async throws {
+        guard let uid = session?.user.id else { throw SupabaseError(message: "Not signed in") }
+        guard let id = r.id else { throw SupabaseError(message: "Workout has no id") }
+        let body = try JSONEncoder().encode(r)
+        let data = try JSONSerialization.jsonObject(with: body)
+        _ = try await request(
+            "rest/v1/workouts?on_conflict=id",
+            method: "POST",
+            body: [[
+                "id": id,
+                "owner": uid,
+                "creator": r.creator.map { $0 as Any } ?? NSNull(),
+                "title": r.title,
+                "public": true,
+                "data": data,
+            ]],
+            headers: ["Prefer": "resolution=merge-duplicates,return=minimal"]
+        )
+    }
+
+    func deleteWorkout(id: String) async throws {
+        guard let uid = session?.user.id else { throw SupabaseError(message: "Not signed in") }
+        let key = id.addingPercentEncoding(withAllowedCharacters: .alphanumerics) ?? id
+        _ = try await request(
+            "rest/v1/workouts?id=eq.\(key)&owner=eq.\(uid)",
+            method: "DELETE",
+            headers: ["Prefer": "return=minimal"]
+        )
+    }
+
+    /// Writes back the two prefs this app owns, merged into whatever else is on the row — the web
+    /// app keeps the name, units and training maxes in the same JSON and must not lose them.
+    func savePrefs(bodyweightKg: Double?, saved: [String]) async throws {
+        guard let uid = session?.user.id else { throw SupabaseError(message: "Not signed in") }
+        var prefs: [String: Any] = [:]
+        if let (data, _) = try? await request("rest/v1/user_state?select=prefs&owner=eq.\(uid)"),
+           let rows = try? JSONSerialization.jsonObject(with: data) as? [[String: Any]],
+           let existing = rows.first?["prefs"] as? [String: Any] {
+            prefs = existing
+        }
+        prefs["saved"] = saved
+        if let bodyweightKg { prefs["bodyweightKg"] = bodyweightKg }
+        _ = try await request(
+            "rest/v1/user_state?on_conflict=owner",
+            method: "POST",
+            body: [["owner": uid, "prefs": prefs]],
+            headers: ["Prefer": "resolution=merge-duplicates,return=minimal"]
+        )
+    }
+
     /// Bodyweight and the saved list, kept on `user_state.prefs` by the web app.
     func prefs() async throws -> (bodyweightKg: Double?, saved: [String]) {
         guard let uid = session?.user.id else { return (nil, []) }
