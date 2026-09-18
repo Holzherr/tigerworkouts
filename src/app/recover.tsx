@@ -1,6 +1,6 @@
 import { Component, useState, type ErrorInfo, type ReactNode } from 'react';
 
-const ISSUES = 'https://github.com/Holzherr/nick-prototypes/issues/new';
+const ISSUES = 'https://github.com/Holzherr/tigerworkouts/issues/new';
 
 /** Wipes everything a stale build can leave behind, then reloads onto the current one. */
 export const resetApp = async () => {

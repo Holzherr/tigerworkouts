@@ -1,14 +1,14 @@
 # workout-hub — v0.9 (TigerWorkouts)
 
 Branded **TigerWorkouts** on 6 Sep 2026: tiger mark, coral `#ff4d2e`, striped app icon (`icons/`).
-The rebuild in `../workout-hub-next` carries the brand as components; the plan is in `../workout-hub-next/REBRAND.md`.
+The rebuild at the root of this repo carries the brand as components; the plan is in `../REBRAND.md`.
 
 Phone-shaped "Sweat / F45"-style workout app: creators publish workouts, you
 discover one, do it with a guided interval timer, and log what you actually did.
 No accounts, no backend. Everything lives in the phone's localStorage; workouts
 travel between phones as share links.
 
-Live: https://holzherr.github.io/nick-prototypes/workout-hub/
+Live: https://tigerworkouts.com/legacy/
 
 ## What's in v0.9 — resume, library, usage stats
 

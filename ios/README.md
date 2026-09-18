@@ -57,7 +57,7 @@ rather than the SDK, which would otherwise be the only package in the project.
 `Resources/*.json` is the same library the web app builds at compile time, exported by:
 
 ```sh
-npm run export:ios      # from workout-hub-next/
+npm run export:ios      # from the repo root
 ```
 
 472 workouts and 349 exercises, about 900 KB. Edit `imports/` and re-run — never edit the JSON.

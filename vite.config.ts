@@ -5,10 +5,10 @@ import { defineConfig } from 'vite';
 import { VitePWA } from 'vite-plugin-pwa';
 import path from 'node:path';
 
-// Served from GitHub Pages under the repo path; Storybook is built separately into dist/storybook.
+// Served from the root of tigerworkouts.com; Storybook is built separately into dist/storybook.
 export default defineConfig({
   define: { __BUILD__: JSON.stringify(Date.now().toString(36)) },
-  base: process.env.VITE_BASE ?? '/nick-prototypes/workout-hub-next/',
+  base: process.env.VITE_BASE ?? '/',
   plugins: [
     react(),
     tailwindcss(),

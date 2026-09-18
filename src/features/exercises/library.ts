@@ -1,4 +1,4 @@
-// Generated from ../../../../workout-hub/data.js by tools/port-library.mjs. Edit there, then re-run.
+// Generated from legacy/data.js by tools/port-library.mjs. Edit there, then re-run.
 import type { ExerciseRef } from '@/features/runsheet/model';
 
 export type ExerciseGroup = "kettlebell" | "dumbbell" | "treadmill" | "walk" | "barbell" | "body" | "core" | "band" | "rower" | "bike" | "run" | "swim" | "gym";
