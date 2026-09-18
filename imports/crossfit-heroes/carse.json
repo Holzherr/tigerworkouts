@@ -1,0 +1,91 @@
+{
+  "id": "cf-hero-carse",
+  "title": "Carse",
+  "creator": "CrossFit",
+  "description": "A 21-18-15-12-9-6-3 ladder of squat cleans at 135/95 lb, double-unders, deadlifts at 185/125 lb and box jumps, each round starting with a 50 m bear crawl. Honours U.S. Army Cpl. Nathan B. Carse, killed by an IED in Kandahar, Afghanistan, in 2011. Long; scale loads so you can keep moving.",
+  "source": {
+    "title": "Carse – CrossFit Hero WOD",
+    "url": "https://www.crossfit.com/benchmark/carse",
+    "author": "CrossFit",
+    "kind": "benchmark",
+    "license": "Public benchmark; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "CrossFit",
+    "Hero",
+    "For time",
+    "Ladder",
+    "Barbell"
+  ],
+  "level": "Hard",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "21-18-15-12-9-6-3",
+      "mode": "ladder",
+      "repeat": 1,
+      "note": "Rep scheme 21-18-15-12-9-6-3; begin each round with a 50 m bear crawl",
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "bw_bear_crawl",
+          "forMode": "meters",
+          "forValue": 50
+        },
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "bb_squat_clean",
+          "target": 61,
+          "rx": {
+            "men": 61,
+            "women": 43
+          },
+          "forMode": "reps",
+          "forValue": 21,
+          "note": "135/95 lb"
+        },
+        {
+          "kind": "exercise",
+          "id": "s3",
+          "exercise": "bw_double_under",
+          "forMode": "reps",
+          "forValue": 21
+        },
+        {
+          "kind": "exercise",
+          "id": "s4",
+          "exercise": "bb_deadlift",
+          "target": 84,
+          "rx": {
+            "men": 84,
+            "women": 56.5
+          },
+          "forMode": "reps",
+          "forValue": 21,
+          "note": "185/125 lb"
+        },
+        {
+          "kind": "exercise",
+          "id": "s5",
+          "exercise": "bw_box_jump",
+          "forMode": "reps",
+          "forValue": 21,
+          "note": "24/20 in box"
+        }
+      ],
+      "ladder": [
+        21,
+        18,
+        15,
+        12,
+        9,
+        6,
+        3
+      ]
+    }
+  ]
+}

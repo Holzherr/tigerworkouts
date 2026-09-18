@@ -1,0 +1,55 @@
+{
+  "id": "cf-hero-garrett",
+  "title": "Garrett",
+  "creator": "CrossFit",
+  "description": "Three rounds of 75 squats, 25 ring handstand push-ups and 25 L pull-ups. Honours U.S. Marine Capt. Garrett T. \"Tubes\" Lawton, killed by an IED in Herat Province, Afghanistan, in 2008. Ring handstand push-ups are elite; do them on the wall or as pike push-ups.",
+  "source": {
+    "title": "Garrett – CrossFit Hero WOD",
+    "url": "https://www.crossfit.com/benchmark/garrett",
+    "author": "CrossFit",
+    "kind": "benchmark",
+    "license": "Public benchmark; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "CrossFit",
+    "Hero",
+    "For time",
+    "Bodyweight",
+    "Gymnastics"
+  ],
+  "level": "Hard",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "Garrett",
+      "mode": "fortime",
+      "repeat": 3,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "bw_squat",
+          "forMode": "reps",
+          "forValue": 75
+        },
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "bw_handstand_pushup",
+          "forMode": "reps",
+          "forValue": 25,
+          "note": "on rings"
+        },
+        {
+          "kind": "exercise",
+          "id": "s3",
+          "exercise": "bw_l_pullup",
+          "forMode": "reps",
+          "forValue": 25
+        }
+      ]
+    }
+  ]
+}

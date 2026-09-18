@@ -1,0 +1,125 @@
+{
+  "id": "cf-hero-pikey",
+  "title": "Pikey",
+  "creator": "CrossFit",
+  "description": "Run 400 m, then 12 burpee bar muscle-ups and 15 squat snatches; run 800 m, 12 burpee bar muscle-ups and 20 clean and jerks; run 800 m, 12 burpee bar muscle-ups and 18 thrusters; run 400 m, for time. Honours U.S. Air Force pararescueman Master Sgt. William 'Pikey' Posch, killed in a helicopter crash in Anbar Province, Iraq, in 2018. Scale bar muscle-ups to burpee pull-ups.",
+  "source": {
+    "title": "Pikey – CrossFit Hero WOD",
+    "url": "https://www.crossfit.com/benchmark/pikey",
+    "author": "CrossFit",
+    "kind": "benchmark",
+    "license": "Public benchmark; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "CrossFit",
+    "Hero WOD",
+    "For time",
+    "Barbell",
+    "Gymnastics",
+    "Running"
+  ],
+  "level": "Hard",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "Chipper",
+      "mode": "fortime",
+      "repeat": 1,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "cardio_run",
+          "forMode": "meters",
+          "forValue": 400
+        },
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "bw_bar_muscle_up",
+          "forMode": "reps",
+          "forValue": 12,
+          "note": "Burpee bar muscle-ups"
+        },
+        {
+          "kind": "exercise",
+          "id": "s3",
+          "exercise": "bb_snatch",
+          "forMode": "reps",
+          "forValue": 15,
+          "target": 70.5,
+          "rx": {
+            "men": 70.5,
+            "women": 47.5
+          },
+          "note": "155/105 lb"
+        },
+        {
+          "kind": "exercise",
+          "id": "s4",
+          "exercise": "cardio_run",
+          "forMode": "meters",
+          "forValue": 800
+        },
+        {
+          "kind": "exercise",
+          "id": "s5",
+          "exercise": "bw_bar_muscle_up",
+          "forMode": "reps",
+          "forValue": 12,
+          "note": "Burpee bar muscle-ups"
+        },
+        {
+          "kind": "exercise",
+          "id": "s6",
+          "exercise": "bb_clean_and_jerk",
+          "forMode": "reps",
+          "forValue": 20,
+          "target": 70.5,
+          "rx": {
+            "men": 70.5,
+            "women": 47.5
+          },
+          "note": "155/105 lb"
+        },
+        {
+          "kind": "exercise",
+          "id": "s7",
+          "exercise": "cardio_run",
+          "forMode": "meters",
+          "forValue": 800
+        },
+        {
+          "kind": "exercise",
+          "id": "s8",
+          "exercise": "bw_bar_muscle_up",
+          "forMode": "reps",
+          "forValue": 12,
+          "note": "Burpee bar muscle-ups"
+        },
+        {
+          "kind": "exercise",
+          "id": "s9",
+          "exercise": "bb_thruster",
+          "forMode": "reps",
+          "forValue": 18,
+          "target": 70.5,
+          "rx": {
+            "men": 70.5,
+            "women": 47.5
+          },
+          "note": "155/105 lb"
+        },
+        {
+          "kind": "exercise",
+          "id": "s10",
+          "exercise": "cardio_run",
+          "forMode": "meters",
+          "forValue": 400
+        }
+      ]
+    }
+  ]
+}

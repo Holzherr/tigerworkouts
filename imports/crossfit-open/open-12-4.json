@@ -1,0 +1,63 @@
+{
+  "id": "cf-open-12-4",
+  "title": "Open 12.4",
+  "creator": "CrossFit Games",
+  "description": "Twelve-minute AMRAP of 150 wall balls (20/14 lb to 10/9 ft), 90 double-unders and 30 muscle-ups. Karen followed by a rope and rings; most of the field never left the wall. Repeated as 13.3. Masters 55+ used a 9 ft target and 20/10 lb balls.",
+  "source": {
+    "title": "CrossFit Games Open 2012 – Workout 12.4",
+    "url": "https://games.crossfit.com/workouts/open/2012",
+    "author": "CrossFit Games",
+    "kind": "benchmark",
+    "license": "Public competition workout; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "CrossFit",
+    "CrossFit Open",
+    "2012",
+    "AMRAP",
+    "Wall ball",
+    "Gymnastics"
+  ],
+  "level": "Hard",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "AMRAP 12",
+      "mode": "amrap",
+      "repeat": 1,
+      "timeCapSec": 720,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "gym_wall_ball",
+          "target": 9.0,
+          "rx": {
+            "men": 9.0,
+            "women": 6.5
+          },
+          "forMode": "reps",
+          "forValue": 150,
+          "note": "20/14 lb. 10/9 ft target"
+        },
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "bw_double_under",
+          "forMode": "reps",
+          "forValue": 90
+        },
+        {
+          "kind": "exercise",
+          "id": "s3",
+          "exercise": "gym_muscle_up",
+          "forMode": "reps",
+          "forValue": 30,
+          "note": "ring muscle-up"
+        }
+      ]
+    }
+  ]
+}

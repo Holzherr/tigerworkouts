@@ -1,0 +1,68 @@
+{
+  "id": "cf-hero-t-j",
+  "title": "T.J.",
+  "creator": "CrossFit",
+  "description": "Repeat 10 bench presses, 10 strict pull-ups and a max set of thrusters until you have done 100 thrusters, for time. Honours U.S. Marine Pfc. Anthony 'TJ' Antell Jr., owner of CrossFit Abattoir, shot in 2016 while trying to disarm a gunman. The bigger your thruster sets, the fewer rounds of bench and pull-ups you owe.",
+  "source": {
+    "title": "T.J. – CrossFit Hero WOD",
+    "url": "https://www.crossfit.com/benchmark/t-j",
+    "author": "CrossFit",
+    "kind": "benchmark",
+    "license": "Public benchmark; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "CrossFit",
+    "Hero WOD",
+    "For time",
+    "Barbell",
+    "Gymnastics"
+  ],
+  "level": "Hard",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "Until 100 thrusters",
+      "mode": "fortime",
+      "repeat": 1,
+      "note": "Repeat the triplet until 100 thrusters are complete; the round count depends on your set sizes",
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "bb_bench",
+          "forMode": "reps",
+          "forValue": 10,
+          "target": 84,
+          "rx": {
+            "men": 84,
+            "women": 56.5
+          },
+          "note": "185/125 lb"
+        },
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "bw_pullup",
+          "forMode": "reps",
+          "forValue": 10,
+          "note": "Strict"
+        },
+        {
+          "kind": "exercise",
+          "id": "s3",
+          "exercise": "bb_thruster",
+          "forMode": "reps",
+          "forValue": 100,
+          "target": 61,
+          "rx": {
+            "men": 61,
+            "women": 43
+          },
+          "note": "135/95 lb — One max-effort set per round; 100 total ends the workout"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,79 @@
+{
+  "id": "cf-hero-gale-force",
+  "title": "Gale Force",
+  "creator": "CrossFit",
+  "description": "A 30-minute AMRAP of 20 box step-ups with a 50/35 lb backpack, 23 burpees over the backpack and 19 air squats, then one more set of 19 squats together at the end. Honours Devyn Gale, 19, of the British Columbia Wildfire Service, killed by a falling tree on a wildfire in 2023. Lighten the pack rather than the box.",
+  "source": {
+    "title": "Gale Force – CrossFit Hero WOD",
+    "url": "https://www.crossfit.com/benchmark/gale-force",
+    "author": "CrossFit",
+    "kind": "benchmark",
+    "license": "Public benchmark; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "CrossFit",
+    "Hero",
+    "AMRAP",
+    "Ruck",
+    "Bodyweight"
+  ],
+  "level": "Hard",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "Gale Force",
+      "mode": "amrap",
+      "repeat": 1,
+      "timeCapSec": 1800,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "gym_ruck_step_up",
+          "target": 22.5,
+          "rx": {
+            "men": 22.5,
+            "women": 16.0
+          },
+          "forMode": "reps",
+          "forValue": 20,
+          "note": "50/35 lb; 24/20 in box; weighted backpack"
+        },
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "bw_burpee",
+          "forMode": "reps",
+          "forValue": 23,
+          "note": "over the backpack"
+        },
+        {
+          "kind": "exercise",
+          "id": "s3",
+          "exercise": "bw_squat",
+          "forMode": "reps",
+          "forValue": 19
+        }
+      ]
+    },
+    {
+      "kind": "block",
+      "id": "b2",
+      "name": "Finisher",
+      "mode": "rounds",
+      "repeat": 1,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s4",
+          "exercise": "bw_squat",
+          "forMode": "reps",
+          "forValue": 19,
+          "note": "together as a group after the clock"
+        }
+      ]
+    }
+  ]
+}

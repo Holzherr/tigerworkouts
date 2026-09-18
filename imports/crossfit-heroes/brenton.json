@@ -1,0 +1,50 @@
+{
+  "id": "cf-hero-brenton",
+  "title": "Brenton",
+  "creator": "CrossFit",
+  "description": "Five rounds of a 100 ft bear crawl and 100 ft of standing broad jumps, doing 3 burpees after every 5 jumps, in a 20 lb vest or body armour if you have one. Honours Seattle Police Field Training Officer Timothy Q. Brenton, shot and killed on duty in 2009. Awkward and humbling rather than heavy.",
+  "source": {
+    "title": "Brenton – CrossFit Hero WOD",
+    "url": "https://www.crossfit.com/benchmark/brenton",
+    "author": "CrossFit",
+    "kind": "benchmark",
+    "license": "Public benchmark; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "CrossFit",
+    "Hero",
+    "For time",
+    "Bodyweight",
+    "Weight vest"
+  ],
+  "level": "Hard",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "Brenton",
+      "mode": "fortime",
+      "repeat": 5,
+      "note": "If you have a 20 lb vest or body armour, wear it",
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "bw_bear_crawl",
+          "forMode": "meters",
+          "forValue": 30,
+          "note": "100 ft"
+        },
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "bw_broad_jump",
+          "forMode": "meters",
+          "forValue": 30,
+          "note": "100 ft; 3 burpees after every 5 jumps"
+        }
+      ]
+    }
+  ]
+}

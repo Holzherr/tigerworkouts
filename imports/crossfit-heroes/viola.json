@@ -1,0 +1,73 @@
+{
+  "id": "cf-hero-viola",
+  "title": "Viola",
+  "creator": "CrossFit",
+  "description": "A 20-minute AMRAP of a 400 m run, 11 power snatches, 17 pull-ups and 13 power cleans. Honours U.S. Army Special Forces Staff Sgt. Alex Viola, killed by an IED in Kandahar Province, Afghanistan, in 2013. Light bar, long rounds; three rounds is a solid score.",
+  "source": {
+    "title": "Viola – CrossFit Hero WOD",
+    "url": "https://www.crossfit.com/benchmark/viola",
+    "author": "CrossFit",
+    "kind": "benchmark",
+    "license": "Public benchmark; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "CrossFit",
+    "Hero WOD",
+    "AMRAP",
+    "Barbell",
+    "Running"
+  ],
+  "level": "Hard",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "AMRAP 20",
+      "mode": "amrap",
+      "timeCapSec": 1200,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "cardio_run",
+          "forMode": "meters",
+          "forValue": 400
+        },
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "bb_power_snatch",
+          "forMode": "reps",
+          "forValue": 11,
+          "target": 43,
+          "rx": {
+            "men": 43,
+            "women": 29.5
+          },
+          "note": "95/65 lb"
+        },
+        {
+          "kind": "exercise",
+          "id": "s3",
+          "exercise": "bw_pullup",
+          "forMode": "reps",
+          "forValue": 17
+        },
+        {
+          "kind": "exercise",
+          "id": "s4",
+          "exercise": "bb_power_clean",
+          "forMode": "reps",
+          "forValue": 13,
+          "target": 43,
+          "rx": {
+            "men": 43,
+            "women": 29.5
+          },
+          "note": "95/65 lb"
+        }
+      ]
+    }
+  ]
+}

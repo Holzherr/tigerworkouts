@@ -1,0 +1,230 @@
+{
+  "id": "prog-bwf-recommended-routine",
+  "title": "BWF Recommended Routine",
+  "creator": "r/bodyweightfitness",
+  "description": "The r/bodyweightfitness Recommended Routine (2018 revision): a warm-up, then three supersets of a pull and a push/leg progression (pull-up/squat, dip/hinge, row/push-up) for 3×5–8, and a core triplet for 3×8–12. Three times a week, about an hour. Progress by adding a rep per set until 3×8, then move to the next harder variation at 3×5; static holds progress at 3×30 s. Pick the variation you can do for 5 reps with good form; rows and pull-ups are non-negotiable.",
+  "source": {
+    "title": "r/bodyweightfitness Recommended Routine",
+    "url": "https://old.reddit.com/r/bodyweightfitness/wiki/kb/recommended_routine",
+    "author": "r/bodyweightfitness",
+    "kind": "program",
+    "license": "Freely published program; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "Program",
+    "Bodyweight",
+    "Calisthenics",
+    "Full body"
+  ],
+  "level": "Medium",
+  "program": {
+    "name": "r/bodyweightfitness Recommended Routine",
+    "day": "Full body (3× per week)",
+    "order": 1
+  },
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "Warm-up",
+      "repeat": 1,
+      "note": "5–10 min dynamic warm-up; later also 10 reps of an easier squat and hinge progression",
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "cable_band_dislocate",
+          "forMode": "reps",
+          "forValue": 10,
+          "note": "Yuri's shoulder band warm-up, 5–10 reps (or stick dislocates)"
+        },
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "bw_squat",
+          "forMode": "reps",
+          "forValue": 10,
+          "note": "Squat sky reaches, 5–10 reps (assisted is fine); add GMB wrist prep, 10+ reps"
+        },
+        {
+          "kind": "exercise",
+          "id": "s3",
+          "exercise": "bw_deadbug",
+          "forMode": "seconds",
+          "forValue": 30,
+          "note": "30 s"
+        },
+        {
+          "kind": "exercise",
+          "id": "s4",
+          "exercise": "bw_arch_hang",
+          "forMode": "reps",
+          "forValue": 10,
+          "note": "Once you reach negative pull-ups"
+        },
+        {
+          "kind": "exercise",
+          "id": "s5",
+          "exercise": "bw_support_hold",
+          "forMode": "seconds",
+          "forValue": 30,
+          "note": "Once you reach negative dips"
+        }
+      ]
+    },
+    {
+      "kind": "block",
+      "id": "b2",
+      "name": "First pair: pull-up / squat",
+      "repeat": 3,
+      "note": "Add one rep per set each session; at 3×8 move to the next progression at 3×5; rest 90 s (up to 3 min)",
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s6",
+          "exercise": "bw_pullup",
+          "forMode": "reps",
+          "forValue": 5,
+          "note": "Pull-up progression: scapular pulls → arch hangs → negative pull-ups → pull-ups → weighted. 5–8 reps"
+        },
+        {
+          "kind": "rest",
+          "id": "r1",
+          "seconds": 90
+        },
+        {
+          "kind": "exercise",
+          "id": "s7",
+          "exercise": "bw_squat",
+          "forMode": "reps",
+          "forValue": 5,
+          "note": "Squat progression: assisted squat → squat → split squat → Bulgarian split squat → beginner shrimp → shrimp. 5–8 reps (or barbell squats 3×5)"
+        },
+        {
+          "kind": "rest",
+          "id": "r2",
+          "seconds": 90
+        }
+      ]
+    },
+    {
+      "kind": "block",
+      "id": "b3",
+      "name": "Second pair: dip / hinge",
+      "repeat": 3,
+      "note": "Add one rep per set each session; at 3×8 move to the next progression at 3×5; rest 90 s (up to 3 min)",
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s8",
+          "exercise": "bw_dip",
+          "forMode": "reps",
+          "forValue": 5,
+          "note": "Dip progression: parallel bar support → negative dips → dips → weighted. 5–8 reps"
+        },
+        {
+          "kind": "rest",
+          "id": "r3",
+          "seconds": 90
+        },
+        {
+          "kind": "exercise",
+          "id": "s9",
+          "exercise": "bw_nordic_curl",
+          "forMode": "reps",
+          "forValue": 5,
+          "note": "Hinge progression: Romanian deadlift → single-leg RDL → banded Nordic curl → Nordic curl. 5–8 reps (or barbell RDL 3×8 / deadlift 3×5)"
+        },
+        {
+          "kind": "rest",
+          "id": "r4",
+          "seconds": 90
+        }
+      ]
+    },
+    {
+      "kind": "block",
+      "id": "b4",
+      "name": "Third pair: row / push-up",
+      "repeat": 3,
+      "note": "Add one rep per set each session; at 3×8 move to the next progression at 3×5; rest 90 s (up to 3 min)",
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s10",
+          "exercise": "bw_inverted_row",
+          "forMode": "reps",
+          "forValue": 5,
+          "note": "Row progression: vertical → incline → horizontal → wide → weighted rows. 5–8 reps"
+        },
+        {
+          "kind": "rest",
+          "id": "r5",
+          "seconds": 90
+        },
+        {
+          "kind": "exercise",
+          "id": "s11",
+          "exercise": "bw_pushup",
+          "forMode": "reps",
+          "forValue": 5,
+          "note": "Push-up progression: vertical → incline → full → diamond → pseudo-planche push-up. 5–8 reps"
+        },
+        {
+          "kind": "rest",
+          "id": "r6",
+          "seconds": 90
+        }
+      ]
+    },
+    {
+      "kind": "block",
+      "id": "b5",
+      "name": "Core triplet",
+      "repeat": 3,
+      "note": "3×8–12 (holds 3×10–30 s); rest 60 s",
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s12",
+          "exercise": "bw_plank",
+          "forMode": "seconds",
+          "forValue": 30,
+          "note": "Anti-extension progression: plank (hold 10–30 s) → ring/ab-wheel rollouts 8–12 reps"
+        },
+        {
+          "kind": "rest",
+          "id": "r7",
+          "seconds": 60
+        },
+        {
+          "kind": "exercise",
+          "id": "s13",
+          "exercise": "cable_pallof_press",
+          "forMode": "reps",
+          "forValue": 12,
+          "note": "Anti-rotation progression: banded Pallof press, 8–12 reps per side"
+        },
+        {
+          "kind": "rest",
+          "id": "r8",
+          "seconds": 60
+        },
+        {
+          "kind": "exercise",
+          "id": "s14",
+          "exercise": "bw_reverse_hyper",
+          "forMode": "reps",
+          "forValue": 12,
+          "note": "Extension progression: reverse hyperextension → arch raises, 8–12 reps"
+        },
+        {
+          "kind": "rest",
+          "id": "r9",
+          "seconds": 60
+        }
+      ]
+    }
+  ]
+}

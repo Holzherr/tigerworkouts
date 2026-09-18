@@ -1,0 +1,117 @@
+{
+  "id": "cf-hero-hidalgo",
+  "title": "Hidalgo",
+  "creator": "CrossFit",
+  "description": "A 2-mile run, 2 minutes rest, then 20 squat cleans at 135/95 lb, 20 box jumps, 20 overhead walking lunges with a 45/25 lb plate, 20 box jumps and 20 squat cleans, 2 minutes rest and another 2-mile run, in a vest if you have one. Honours U.S. Army 1st Lt. Daren M. Hidalgo, killed by an IED in Kandahar Province, Afghanistan, in 2011. Four miles of running; cut to 1-mile runs to scale.",
+  "source": {
+    "title": "Hidalgo – CrossFit Hero WOD",
+    "url": "https://www.crossfit.com/benchmark/hidalgo",
+    "author": "CrossFit",
+    "kind": "benchmark",
+    "license": "Public benchmark; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "CrossFit",
+    "Hero",
+    "For time",
+    "Run",
+    "Barbell",
+    "Weight vest",
+    "Long"
+  ],
+  "level": "Hard",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "Hidalgo",
+      "mode": "fortime",
+      "repeat": 1,
+      "note": "If you have a 20 lb vest or body armour, wear it",
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "cardio_run",
+          "forMode": "meters",
+          "forValue": 3219,
+          "note": "2 miles"
+        },
+        {
+          "kind": "rest",
+          "id": "r1",
+          "seconds": 120
+        },
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "bb_squat_clean",
+          "target": 61.0,
+          "rx": {
+            "men": 61.0,
+            "women": 43.0
+          },
+          "forMode": "reps",
+          "forValue": 20,
+          "note": "135/95 lb"
+        },
+        {
+          "kind": "exercise",
+          "id": "s3",
+          "exercise": "bw_box_jump",
+          "forMode": "reps",
+          "forValue": 20,
+          "note": "24/20 in box"
+        },
+        {
+          "kind": "exercise",
+          "id": "s4",
+          "exercise": "gym_plate_overhead_lunge",
+          "target": 20.5,
+          "rx": {
+            "men": 20.5,
+            "women": 11.5
+          },
+          "forMode": "reps",
+          "forValue": 20,
+          "note": "45/25 lb"
+        },
+        {
+          "kind": "exercise",
+          "id": "s5",
+          "exercise": "bw_box_jump",
+          "forMode": "reps",
+          "forValue": 20,
+          "note": "24/20 in box"
+        },
+        {
+          "kind": "exercise",
+          "id": "s6",
+          "exercise": "bb_squat_clean",
+          "target": 61.0,
+          "rx": {
+            "men": 61.0,
+            "women": 43.0
+          },
+          "forMode": "reps",
+          "forValue": 20,
+          "note": "135/95 lb"
+        },
+        {
+          "kind": "rest",
+          "id": "r2",
+          "seconds": 120
+        },
+        {
+          "kind": "exercise",
+          "id": "s7",
+          "exercise": "cardio_run",
+          "forMode": "meters",
+          "forValue": 3219,
+          "note": "2 miles"
+        }
+      ]
+    }
+  ]
+}

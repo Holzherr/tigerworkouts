@@ -1,0 +1,88 @@
+{
+  "id": "cf-hero-willy",
+  "title": "Willy",
+  "creator": "CrossFit",
+  "description": "Three rounds of an 800 m run, 5 heavy front squats, a 200 m run, 11 chest-to-bar pull-ups, a 400 m run and 12 heavy kettlebell swings, for time. Honours U.S. Marine Sgt. Wade D. Wilson, killed in Helmand Province, Afghanistan, in 2012. Heavy fives and a heavy bell between runs; keep the running relaxed.",
+  "source": {
+    "title": "Willy – CrossFit Hero WOD",
+    "url": "https://www.crossfit.com/benchmark/willy",
+    "author": "CrossFit",
+    "kind": "benchmark",
+    "license": "Public benchmark; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "CrossFit",
+    "Hero WOD",
+    "For time",
+    "Barbell",
+    "Kettlebell",
+    "Running"
+  ],
+  "level": "Hard",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "3 rounds",
+      "mode": "fortime",
+      "repeat": 3,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "cardio_run",
+          "forMode": "meters",
+          "forValue": 800
+        },
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "bb_front_squat",
+          "forMode": "reps",
+          "forValue": 5,
+          "target": 102,
+          "rx": {
+            "men": 102,
+            "women": 70.5
+          },
+          "note": "225/155 lb"
+        },
+        {
+          "kind": "exercise",
+          "id": "s3",
+          "exercise": "cardio_run",
+          "forMode": "meters",
+          "forValue": 200
+        },
+        {
+          "kind": "exercise",
+          "id": "s4",
+          "exercise": "bw_chest_to_bar_pullup",
+          "forMode": "reps",
+          "forValue": 11
+        },
+        {
+          "kind": "exercise",
+          "id": "s5",
+          "exercise": "cardio_run",
+          "forMode": "meters",
+          "forValue": 400
+        },
+        {
+          "kind": "exercise",
+          "id": "s6",
+          "exercise": "kb_swing",
+          "forMode": "reps",
+          "forValue": 12,
+          "target": 32,
+          "rx": {
+            "men": 32,
+            "women": 24
+          },
+          "note": "70/53 lb"
+        }
+      ]
+    }
+  ]
+}

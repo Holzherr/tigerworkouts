@@ -1,0 +1,67 @@
+{
+  "id": "cf-hero-scotty",
+  "title": "Scotty",
+  "creator": "CrossFit",
+  "description": "An 11-minute AMRAP of 5 heavy deadlifts, 18 wall balls and 17 burpees over the bar. Honours San Antonio firefighter Scott 'Scotty' Deem, killed in a structure fire in 2017; the 11 minutes match the time before his mayday call. The deadlift is near-max for most, so load conservatively.",
+  "source": {
+    "title": "Scotty – CrossFit Hero WOD",
+    "url": "https://www.crossfit.com/benchmark/scotty",
+    "author": "CrossFit",
+    "kind": "benchmark",
+    "license": "Public benchmark; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "CrossFit",
+    "Hero WOD",
+    "AMRAP",
+    "Barbell",
+    "Wall ball"
+  ],
+  "level": "Hard",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "AMRAP 11",
+      "mode": "amrap",
+      "timeCapSec": 660,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "bb_deadlift",
+          "forMode": "reps",
+          "forValue": 5,
+          "target": 143,
+          "rx": {
+            "men": 143,
+            "women": 93
+          },
+          "note": "315/205 lb"
+        },
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "gym_wall_ball",
+          "forMode": "reps",
+          "forValue": 18,
+          "target": 9,
+          "rx": {
+            "men": 9,
+            "women": 6.5
+          },
+          "note": "20/14 lb — 10/9 ft target"
+        },
+        {
+          "kind": "exercise",
+          "id": "s3",
+          "exercise": "bw_bar_facing_burpee",
+          "forMode": "reps",
+          "forValue": 17,
+          "note": "Over the bar, any direction"
+        }
+      ]
+    }
+  ]
+}

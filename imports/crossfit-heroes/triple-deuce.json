@@ -1,0 +1,76 @@
+{
+  "id": "cf-hero-triple-deuce",
+  "title": "Triple Deuce",
+  "creator": "CrossFit",
+  "description": "A 20-minute AMRAP of 22 burpees, 22 air squats, 22 pull-ups, 22 sandbag ground-to-over-shoulder and a 722 m sprint. Honours U.S. Army Special Forces Sgt. 1st Class Jamie Nicholas, Sgt. 1st Class Gary Vasquez and Capt. Richard Cliff Jr. of 1st Battalion, 7th SFG, killed by an IED in Yakhchal, Afghanistan, in 2008. Rounds are long, so two to three is a strong score.",
+  "source": {
+    "title": "Triple Deuce – CrossFit Hero WOD",
+    "url": "https://www.crossfit.com/benchmark/triple-deuce",
+    "author": "CrossFit",
+    "kind": "benchmark",
+    "license": "Public benchmark; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "CrossFit",
+    "Hero WOD",
+    "AMRAP",
+    "Bodyweight",
+    "Sandbag",
+    "Running"
+  ],
+  "level": "Hard",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "AMRAP 20",
+      "mode": "amrap",
+      "timeCapSec": 1200,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "bw_burpee",
+          "forMode": "reps",
+          "forValue": 22
+        },
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "bw_squat",
+          "forMode": "reps",
+          "forValue": 22
+        },
+        {
+          "kind": "exercise",
+          "id": "s3",
+          "exercise": "bw_pullup",
+          "forMode": "reps",
+          "forValue": 22
+        },
+        {
+          "kind": "exercise",
+          "id": "s4",
+          "exercise": "gym_sandbag_over_shoulder",
+          "forMode": "reps",
+          "forValue": 22,
+          "target": 27,
+          "rx": {
+            "men": 27,
+            "women": 18
+          },
+          "note": "60/40 lb"
+        },
+        {
+          "kind": "exercise",
+          "id": "s5",
+          "exercise": "cardio_run",
+          "forMode": "meters",
+          "forValue": 722,
+          "note": "Sprint"
+        }
+      ]
+    }
+  ]
+}

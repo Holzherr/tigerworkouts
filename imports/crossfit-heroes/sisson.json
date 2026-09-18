@@ -1,0 +1,57 @@
+{
+  "id": "cf-hero-sisson",
+  "title": "Sisson",
+  "creator": "CrossFit",
+  "description": "A 20-minute AMRAP of one rope climb, 5 burpees and a 200 m run, in a vest. Honours U.S. Army 2nd Lt. Justin Sisson, killed by a suicide bomber in Chamkani, Afghanistan, in 2013. Simple triplet, aim for a steady round every 90 seconds or so.",
+  "source": {
+    "title": "Sisson – CrossFit Hero WOD",
+    "url": "https://www.crossfit.com/benchmark/sisson",
+    "author": "CrossFit",
+    "kind": "benchmark",
+    "license": "Public benchmark; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "CrossFit",
+    "Hero WOD",
+    "AMRAP",
+    "Rope climb",
+    "Running",
+    "Weight vest"
+  ],
+  "level": "Medium",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "AMRAP 20",
+      "mode": "amrap",
+      "timeCapSec": 1200,
+      "note": "20/14 lb (9/6.5 kg) vest",
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "gym_rope_climb",
+          "forMode": "reps",
+          "forValue": 1,
+          "note": "15 ft"
+        },
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "bw_burpee",
+          "forMode": "reps",
+          "forValue": 5
+        },
+        {
+          "kind": "exercise",
+          "id": "s3",
+          "exercise": "cardio_run",
+          "forMode": "meters",
+          "forValue": 200
+        }
+      ]
+    }
+  ]
+}

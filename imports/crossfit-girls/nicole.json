@@ -1,0 +1,50 @@
+{
+  "id": "cf-girls-nicole",
+  "title": "Nicole",
+  "creator": "CrossFit",
+  "description": "As many rounds as possible in 20 minutes of a 400 m run and a max set of pull-ups. Named after Nicole Carroll; each round you run, then hang on the bar until you drop, and the score is total pull-ups plus rounds. Scale with a shorter run or jumping pull-ups.",
+  "source": {
+    "title": "Nicole – CrossFit benchmark WOD (\"The Girls\")",
+    "url": "https://www.crossfit.com/benchmark/nicole",
+    "author": "CrossFit",
+    "kind": "benchmark",
+    "license": "Public benchmark; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "CrossFit",
+    "Girls",
+    "AMRAP",
+    "Run",
+    "Bodyweight",
+    "Max reps"
+  ],
+  "level": "Medium",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "Nicole",
+      "mode": "amrap",
+      "repeat": 1,
+      "timeCapSec": 1200,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "cardio_run",
+          "forMode": "meters",
+          "forValue": 400
+        },
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "bw_pullup",
+          "forMode": "reps",
+          "forValue": 1,
+          "note": "Max reps: one set until you drop off the bar; score = total pull-ups"
+        }
+      ]
+    }
+  ]
+}

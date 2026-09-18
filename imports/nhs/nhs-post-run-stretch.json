@@ -1,0 +1,200 @@
+{
+  "id": "nhs-post-run-stretch",
+  "title": "Post-run stretch routine",
+  "creator": "NHS",
+  "description": "Seven runner stretches from the old NHS running pages: hip flexor, thigh, hamstring, ITB, calf, lower back and buttock, each held 15 seconds per side. Best done straight after a run while the muscles are warm; pairs with any Couch to 5K session. Stretch to tightness, never to pain.",
+  "source": {
+    "title": "How to stretch after a run",
+    "url": "https://web.archive.org/web/20220401/https://www.nhs.uk/live-well/exercise/how-to-stretch-after-a-run/",
+    "author": "NHS",
+    "kind": "article",
+    "license": "Open Government Licence v3.0 (NHS)",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "NHS",
+    "Cool-down",
+    "Stretch",
+    "Running",
+    "No equipment"
+  ],
+  "level": "Easy",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "Hip flexor stretch",
+      "repeat": 1,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "bw_stretch_hip_flexor",
+          "forMode": "seconds",
+          "forValue": 15,
+          "note": "Left leg forward, right hip"
+        },
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "bw_stretch_hip_flexor",
+          "forMode": "seconds",
+          "forValue": 15,
+          "note": "Other side"
+        }
+      ]
+    },
+    {
+      "kind": "block",
+      "id": "b2",
+      "name": "Thigh stretch",
+      "repeat": 1,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s3",
+          "exercise": "bw_stretch_thigh",
+          "forMode": "seconds",
+          "forValue": 15,
+          "note": "Standing, left foot"
+        },
+        {
+          "kind": "exercise",
+          "id": "s4",
+          "exercise": "bw_stretch_thigh",
+          "forMode": "seconds",
+          "forValue": 15,
+          "note": "Right foot"
+        }
+      ]
+    },
+    {
+      "kind": "block",
+      "id": "b3",
+      "name": "Hamstring stretch",
+      "repeat": 1,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s5",
+          "exercise": "bw_stretch_hamstring_standing",
+          "forMode": "seconds",
+          "forValue": 15,
+          "note": "Right leg forward"
+        },
+        {
+          "kind": "exercise",
+          "id": "s6",
+          "exercise": "bw_stretch_hamstring_standing",
+          "forMode": "seconds",
+          "forValue": 15,
+          "note": "Left leg forward"
+        }
+      ]
+    },
+    {
+      "kind": "block",
+      "id": "b4",
+      "name": "ITB stretch",
+      "repeat": 1,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s7",
+          "exercise": "bw_stretch_itb",
+          "forMode": "seconds",
+          "forValue": 15,
+          "note": "Right leg crossed behind"
+        },
+        {
+          "kind": "exercise",
+          "id": "s8",
+          "exercise": "bw_stretch_itb",
+          "forMode": "seconds",
+          "forValue": 15,
+          "note": "Left leg crossed behind"
+        }
+      ]
+    },
+    {
+      "kind": "block",
+      "id": "b5",
+      "name": "Calf stretch",
+      "repeat": 1,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s9",
+          "exercise": "bw_stretch_calf",
+          "forMode": "seconds",
+          "forValue": 15,
+          "note": "Right leg forward, left calf"
+        },
+        {
+          "kind": "exercise",
+          "id": "s10",
+          "exercise": "bw_stretch_calf",
+          "forMode": "seconds",
+          "forValue": 15,
+          "note": "Other side"
+        }
+      ]
+    },
+    {
+      "kind": "block",
+      "id": "b6",
+      "name": "Lower back stretch",
+      "repeat": 1,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s11",
+          "exercise": "bw_stretch_knee_to_chest",
+          "forMode": "seconds",
+          "forValue": 15,
+          "note": "Right knee"
+        },
+        {
+          "kind": "exercise",
+          "id": "s12",
+          "exercise": "bw_stretch_knee_to_chest",
+          "forMode": "seconds",
+          "forValue": 15,
+          "note": "Left knee"
+        },
+        {
+          "kind": "exercise",
+          "id": "s13",
+          "exercise": "bw_stretch_knee_to_chest",
+          "forMode": "seconds",
+          "forValue": 15,
+          "note": "Both knees"
+        }
+      ]
+    },
+    {
+      "kind": "block",
+      "id": "b7",
+      "name": "Buttock stretch",
+      "repeat": 1,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s14",
+          "exercise": "bw_stretch_buttock",
+          "forMode": "seconds",
+          "forValue": 15,
+          "note": "Right leg crossed"
+        },
+        {
+          "kind": "exercise",
+          "id": "s15",
+          "exercise": "bw_stretch_buttock",
+          "forMode": "seconds",
+          "forValue": 15,
+          "note": "Left leg crossed"
+        }
+      ]
+    }
+  ]
+}

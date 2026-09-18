@@ -1,15 +1,13 @@
 name: Build and deploy tigerworkouts.com
 
-# Builds the React app from nick-prototypes/workout-hub-next (base "/"), keeps the v0.9
-# single-file app at /legacy/, Storybook at /storybook/, and deploys the lot to GitHub Pages.
+# Builds the React app from this repo (base "/"), keeps the v0.9 single-file app at /legacy/ and
+# Storybook at /storybook/, and deploys the lot to GitHub Pages. Pull requests build and test
+# without deploying, so a broken build is caught before it reaches main.
 on:
   push:
     branches: [main]
+  pull_request:
   workflow_dispatch:
-    inputs:
-      ref:
-        description: nick-prototypes ref to build
-        default: main
 
 permissions:
   contents: read
@@ -17,31 +15,21 @@ permissions:
   id-token: write
 
 concurrency:
-  group: pages
+  group: pages-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout this repo (CNAME, workflow)
-        uses: actions/checkout@v4
-
-      - name: Checkout nick-prototypes
-        uses: actions/checkout@v4
-        with:
-          repository: Holzherr/nick-prototypes
-          ref: ${{ github.event.inputs.ref || 'main' }}
-          path: src
+      - uses: actions/checkout@v4
 
       - uses: actions/setup-node@v4
         with:
           node-version: '24'
           cache: npm
-          cache-dependency-path: src/workout-hub-next/package-lock.json
 
-      - name: Build app and Storybook
-        working-directory: src/workout-hub-next
+      - name: Test and build app and Storybook
         env:
           VITE_BASE: /
         run: |
@@ -53,8 +41,8 @@ jobs:
       - name: Assemble site
         run: |
           mkdir -p _site/legacy
-          cp -r src/workout-hub-next/dist/. _site/
-          cp -r src/workout-hub/. _site/legacy/
+          cp -r dist/. _site/
+          cp -r legacy/. _site/legacy/
           rm -rf _site/legacy/supabase _site/legacy/tools _site/legacy/media/src
           cp CNAME _site/CNAME
           touch _site/.nojekyll
@@ -62,11 +50,14 @@ jobs:
           echo "legacy: $(grep -o '<title>[^<]*' _site/legacy/index.html)"
 
       - uses: actions/configure-pages@v5
+        if: github.event_name != 'pull_request'
       - uses: actions/upload-pages-artifact@v3
+        if: github.event_name != 'pull_request'
         with:
           path: _site
 
   deploy:
+    if: github.event_name != 'pull_request'
     needs: build
     runs-on: ubuntu-latest
     environment:

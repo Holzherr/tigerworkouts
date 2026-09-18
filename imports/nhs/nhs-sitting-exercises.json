@@ -1,0 +1,141 @@
+{
+  "id": "nhs-sitting-exercises",
+  "title": "Sitting exercises",
+  "creator": "NHS",
+  "description": "A seated routine from the NHS for anyone who cannot stand for long: chest stretch, upper-body twist, hip marching, ankle pumps and neck rotations, all done on a sturdy chair without arms. Five reps or five-second holds per move, a few minutes in total. Good as a desk break or for limited mobility.",
+  "source": {
+    "title": "Sitting exercises",
+    "url": "https://www.nhs.uk/live-well/exercise/sitting-exercises/",
+    "author": "NHS",
+    "kind": "article",
+    "license": "Open Government Licence v3.0 (NHS)",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "NHS",
+    "Seated",
+    "Chair",
+    "Mobility",
+    "Older adults",
+    "Desk"
+  ],
+  "level": "Easy",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "Chest stretch",
+      "repeat": 5,
+      "note": "5 holds",
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "bw_stretch_chest",
+          "forMode": "seconds",
+          "forValue": 5,
+          "note": "Seated, arms out to the sides, hold 5 to 10 s"
+        }
+      ]
+    },
+    {
+      "kind": "block",
+      "id": "b2",
+      "name": "Upper-body twist",
+      "repeat": 5,
+      "note": "5 each side",
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "bw_seated_twist",
+          "forMode": "seconds",
+          "forValue": 5,
+          "note": "Turn left, hold 5 s"
+        },
+        {
+          "kind": "exercise",
+          "id": "s3",
+          "exercise": "bw_seated_twist",
+          "forMode": "seconds",
+          "forValue": 5,
+          "note": "Turn right"
+        }
+      ]
+    },
+    {
+      "kind": "block",
+      "id": "b3",
+      "name": "Hip marching",
+      "repeat": 1,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s4",
+          "exercise": "bw_hip_march",
+          "forMode": "reps",
+          "forValue": 5,
+          "note": "Left leg"
+        },
+        {
+          "kind": "exercise",
+          "id": "s5",
+          "exercise": "bw_hip_march",
+          "forMode": "reps",
+          "forValue": 5,
+          "note": "Right leg"
+        }
+      ]
+    },
+    {
+      "kind": "block",
+      "id": "b4",
+      "name": "Ankle stretch",
+      "repeat": 2,
+      "note": "2 sets of 5 each foot",
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s6",
+          "exercise": "bw_ankle_pump",
+          "forMode": "reps",
+          "forValue": 5,
+          "note": "Left foot: point away, then back"
+        },
+        {
+          "kind": "exercise",
+          "id": "s7",
+          "exercise": "bw_ankle_pump",
+          "forMode": "reps",
+          "forValue": 5,
+          "note": "Right foot"
+        }
+      ]
+    },
+    {
+      "kind": "block",
+      "id": "b5",
+      "name": "Neck rotation",
+      "repeat": 3,
+      "note": "3 each side",
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s8",
+          "exercise": "bw_neck_rotation",
+          "forMode": "seconds",
+          "forValue": 5,
+          "note": "Turn left, hold 5 s"
+        },
+        {
+          "kind": "exercise",
+          "id": "s9",
+          "exercise": "bw_neck_rotation",
+          "forMode": "seconds",
+          "forValue": 5,
+          "note": "Turn right"
+        }
+      ]
+    }
+  ]
+}

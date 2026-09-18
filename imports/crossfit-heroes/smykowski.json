@@ -1,0 +1,39 @@
+{
+  "id": "cf-hero-smykowski",
+  "title": "Smykowski",
+  "creator": "CrossFit",
+  "description": "Run 6 km, then 60 burpee pull-ups, ideally in a 30 lb vest or body armour, for time. Honours U.S. Marine Sgt. Mark T. Smykowski of 2nd Reconnaissance Battalion, killed in Al Anbar Province, Iraq, in 2006. The heavy vest is the point, but a 20 lb one is fine.",
+  "source": {
+    "title": "Smykowski – CrossFit Hero WOD",
+    "url": "https://www.crossfit.com/benchmark/smykowski",
+    "author": "CrossFit",
+    "kind": "benchmark",
+    "license": "Public benchmark; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "CrossFit",
+    "Hero WOD",
+    "For time",
+    "Running",
+    "Bodyweight",
+    "Weight vest"
+  ],
+  "level": "Hard",
+  "items": [
+    {
+      "kind": "exercise",
+      "id": "s1",
+      "exercise": "cardio_run",
+      "forMode": "meters",
+      "forValue": 6000
+    },
+    {
+      "kind": "exercise",
+      "id": "s2",
+      "exercise": "bw_burpee_pullup",
+      "forMode": "reps",
+      "forValue": 60
+    }
+  ]
+}

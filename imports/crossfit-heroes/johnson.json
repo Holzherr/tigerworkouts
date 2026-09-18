@@ -1,0 +1,67 @@
+{
+  "id": "cf-hero-johnson",
+  "title": "Johnson",
+  "creator": "CrossFit",
+  "description": "A 20-minute AMRAP of 9 deadlifts at 245/165 lb, 8 muscle-ups and 9 squat cleans at 155/105 lb. Honours U.S. Marine 1st Lt. Michael E. Johnson, killed in Kunar Province, Afghanistan, in 2009. Heavy and skilled; scale the muscle-ups first.",
+  "source": {
+    "title": "Johnson – CrossFit Hero WOD",
+    "url": "https://www.crossfit.com/benchmark/johnson",
+    "author": "CrossFit",
+    "kind": "benchmark",
+    "license": "Public benchmark; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "CrossFit",
+    "Hero",
+    "AMRAP",
+    "Barbell",
+    "Gymnastics"
+  ],
+  "level": "Hard",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "Johnson",
+      "mode": "amrap",
+      "repeat": 1,
+      "timeCapSec": 1200,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "bb_deadlift",
+          "target": 111.0,
+          "rx": {
+            "men": 111.0,
+            "women": 75.0
+          },
+          "forMode": "reps",
+          "forValue": 9,
+          "note": "245/165 lb"
+        },
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "gym_muscle_up",
+          "forMode": "reps",
+          "forValue": 8
+        },
+        {
+          "kind": "exercise",
+          "id": "s3",
+          "exercise": "bb_squat_clean",
+          "target": 70.5,
+          "rx": {
+            "men": 70.5,
+            "women": 47.5
+          },
+          "forMode": "reps",
+          "forValue": 9,
+          "note": "155/105 lb"
+        }
+      ]
+    }
+  ]
+}

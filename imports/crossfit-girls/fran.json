@@ -1,0 +1,59 @@
+{
+  "id": "cf-girls-fran",
+  "title": "Fran",
+  "creator": "CrossFit",
+  "description": "21-15-9 reps of thrusters at 95/65 lb and pull-ups. Posted in August 2003, Fran is the most famous CrossFit benchmark: short, brutal and a test of how long you can keep moving under a burning heart rate. Elite times are under two minutes; scale with a lighter bar and ring rows or 12-9-6 pull-ups.",
+  "source": {
+    "title": "Fran – CrossFit benchmark WOD (\"The Girls\")",
+    "url": "https://www.crossfit.com/benchmark/fran",
+    "author": "CrossFit",
+    "kind": "benchmark",
+    "license": "Public benchmark; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "CrossFit",
+    "Girls",
+    "For time",
+    "Barbell",
+    "Bodyweight"
+  ],
+  "level": "Hard",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "21-15-9",
+      "mode": "ladder",
+      "repeat": 1,
+      "note": "Rep scheme 21-15-9",
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "bb_thruster",
+          "target": 43,
+          "rx": {
+            "men": 43,
+            "women": 29.5
+          },
+          "forMode": "reps",
+          "forValue": 21,
+          "note": "95/65 lb"
+        },
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "bw_pullup",
+          "forMode": "reps",
+          "forValue": 21
+        }
+      ],
+      "ladder": [
+        21,
+        15,
+        9
+      ]
+    }
+  ]
+}

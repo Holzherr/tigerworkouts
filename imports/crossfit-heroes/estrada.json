@@ -1,0 +1,84 @@
+{
+  "id": "cf-hero-estrada",
+  "title": "Estrada",
+  "creator": "CrossFit",
+  "description": "100 box step-ups with a 50/35 lb backpack, then 3 rounds of an 800 m run, a 17-calorie bike and 25 front squats at 185/135 lb. Honours Officer Eric Estrada of the Tremonton Garland Police Department, Utah, killed responding to an active shooter in 2025. The front squat load is heavy; scale to something you can do in sets of 10.",
+  "source": {
+    "title": "Estrada – CrossFit Hero WOD",
+    "url": "https://www.crossfit.com/benchmark/estrada",
+    "author": "CrossFit",
+    "kind": "benchmark",
+    "license": "Public benchmark; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "CrossFit",
+    "Hero",
+    "For time",
+    "Run",
+    "Bike",
+    "Barbell",
+    "Ruck"
+  ],
+  "level": "Hard",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "Step-ups",
+      "mode": "fortime",
+      "repeat": 1,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "gym_ruck_step_up",
+          "target": 22.5,
+          "rx": {
+            "men": 22.5,
+            "women": 16.0
+          },
+          "forMode": "reps",
+          "forValue": 100,
+          "note": "50/35 lb; 20 in box; weighted backpack"
+        }
+      ]
+    },
+    {
+      "kind": "block",
+      "id": "b2",
+      "name": "3 rounds",
+      "mode": "fortime",
+      "repeat": 3,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "cardio_run",
+          "forMode": "meters",
+          "forValue": 800
+        },
+        {
+          "kind": "exercise",
+          "id": "s3",
+          "exercise": "cardio_assault_bike",
+          "forMode": "calories",
+          "forValue": 17
+        },
+        {
+          "kind": "exercise",
+          "id": "s4",
+          "exercise": "bb_front_squat",
+          "target": 84.0,
+          "rx": {
+            "men": 84.0,
+            "women": 61.0
+          },
+          "forMode": "reps",
+          "forValue": 25,
+          "note": "185/135 lb"
+        }
+      ]
+    }
+  ]
+}

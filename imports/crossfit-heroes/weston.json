@@ -1,0 +1,80 @@
+{
+  "id": "cf-hero-weston",
+  "title": "Weston",
+  "creator": "CrossFit",
+  "description": "Five rounds of a 1,000 m row, 200 m dumbbell farmers carry and 50 m single-dumbbell waiters walk on each arm, for time. Honours DEA Special Agent Michael E. Weston, killed in a helicopter crash in western Afghanistan in 2009. Five kilometres of rowing between carries; keep the overhead arm locked.",
+  "source": {
+    "title": "Weston – CrossFit Hero WOD",
+    "url": "https://www.crossfit.com/benchmark/weston",
+    "author": "CrossFit",
+    "kind": "benchmark",
+    "license": "Public benchmark; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "CrossFit",
+    "Hero WOD",
+    "For time",
+    "Rower",
+    "Dumbbell",
+    "Carry"
+  ],
+  "level": "Hard",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "5 rounds",
+      "mode": "fortime",
+      "repeat": 5,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "cardio_rower",
+          "forMode": "meters",
+          "forValue": 1000
+        },
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "db_farmers_carry",
+          "forMode": "meters",
+          "forValue": 200,
+          "target": 20.5,
+          "rx": {
+            "men": 20.5,
+            "women": 13.5
+          },
+          "note": "45/30 lb"
+        },
+        {
+          "kind": "exercise",
+          "id": "s3",
+          "exercise": "db_waiters_walk",
+          "forMode": "meters",
+          "forValue": 50,
+          "target": 20.5,
+          "rx": {
+            "men": 20.5,
+            "women": 13.5
+          },
+          "note": "45/30 lb — Right arm"
+        },
+        {
+          "kind": "exercise",
+          "id": "s4",
+          "exercise": "db_waiters_walk",
+          "forMode": "meters",
+          "forValue": 50,
+          "target": 20.5,
+          "rx": {
+            "men": 20.5,
+            "women": 13.5
+          },
+          "note": "45/30 lb — Left arm"
+        }
+      ]
+    }
+  ]
+}

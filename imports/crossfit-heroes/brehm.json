@@ -1,0 +1,69 @@
+{
+  "id": "cf-hero-brehm",
+  "title": "Brehm",
+  "creator": "CrossFit",
+  "description": "A short chipper: 10 rope climbs to 15 ft, 20 back squats at 225/155 lb, 30 handstand push-ups and a 40-calorie row. Honours U.S. Army Sgt. Dale G. Brehm, 75th Ranger Regiment, killed in Ar Ramadi, Iraq, in 2006. Scale rope climbs to rope pulls from the floor.",
+  "source": {
+    "title": "Brehm – CrossFit Hero WOD",
+    "url": "https://www.crossfit.com/benchmark/brehm",
+    "author": "CrossFit",
+    "kind": "benchmark",
+    "license": "Public benchmark; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "CrossFit",
+    "Hero",
+    "For time",
+    "Barbell",
+    "Gymnastics",
+    "Row"
+  ],
+  "level": "Hard",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "Brehm",
+      "mode": "fortime",
+      "repeat": 1,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "gym_rope_climb",
+          "forMode": "reps",
+          "forValue": 10,
+          "note": "15 ft"
+        },
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "bb_back_squat",
+          "target": 102.0,
+          "rx": {
+            "men": 102.0,
+            "women": 70.5
+          },
+          "forMode": "reps",
+          "forValue": 20,
+          "note": "225/155 lb"
+        },
+        {
+          "kind": "exercise",
+          "id": "s3",
+          "exercise": "bw_handstand_pushup",
+          "forMode": "reps",
+          "forValue": 30
+        },
+        {
+          "kind": "exercise",
+          "id": "s4",
+          "exercise": "cardio_rower",
+          "forMode": "calories",
+          "forValue": 40
+        }
+      ]
+    }
+  ]
+}

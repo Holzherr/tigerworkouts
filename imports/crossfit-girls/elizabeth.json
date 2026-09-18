@@ -1,0 +1,59 @@
+{
+  "id": "cf-girls-elizabeth",
+  "title": "Elizabeth",
+  "creator": "CrossFit",
+  "description": "21-15-9 reps of cleans at 135/95 lb and ring dips. An original 2003 Girl; the cleans are usually done as squat cleans, and the ring dips are the movement that most people underestimate. Scale with power cleans, a lighter bar and box or bar dips.",
+  "source": {
+    "title": "Elizabeth – CrossFit benchmark WOD (\"The Girls\")",
+    "url": "https://www.crossfit.com/benchmark/elizabeth",
+    "author": "CrossFit",
+    "kind": "benchmark",
+    "license": "Public benchmark; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "CrossFit",
+    "Girls",
+    "For time",
+    "Barbell",
+    "Gymnastics"
+  ],
+  "level": "Hard",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "21-15-9",
+      "mode": "ladder",
+      "repeat": 1,
+      "note": "Rep scheme 21-15-9",
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "bb_squat_clean",
+          "target": 61,
+          "rx": {
+            "men": 61,
+            "women": 43
+          },
+          "forMode": "reps",
+          "forValue": 21,
+          "note": "135/95 lb; squat clean intended"
+        },
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "gym_ring_dip",
+          "forMode": "reps",
+          "forValue": 21
+        }
+      ],
+      "ladder": [
+        21,
+        15,
+        9
+      ]
+    }
+  ]
+}

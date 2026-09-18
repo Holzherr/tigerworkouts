@@ -1,0 +1,63 @@
+{
+  "id": "cf-hero-donny",
+  "title": "Donny",
+  "creator": "CrossFit",
+  "description": "A 21-15-9-9-15-21 ladder of deadlifts at 225/155 lb and burpees. Honours U.S. Army Spc. Donald L. Nichols, Iowa National Guard, killed by an IED in Laghman Province, Afghanistan, in 2011. 90 deadlifts and 90 burpees; the pyramid means the back half is a grind.",
+  "source": {
+    "title": "Donny – CrossFit Hero WOD",
+    "url": "https://www.crossfit.com/benchmark/donny",
+    "author": "CrossFit",
+    "kind": "benchmark",
+    "license": "Public benchmark; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "CrossFit",
+    "Hero",
+    "For time",
+    "Ladder",
+    "Barbell",
+    "Bodyweight"
+  ],
+  "level": "Hard",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "21-15-9-9-15-21",
+      "mode": "ladder",
+      "repeat": 1,
+      "note": "Rep scheme 21-15-9-9-15-21",
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "bb_deadlift",
+          "target": 102,
+          "rx": {
+            "men": 102,
+            "women": 70.5
+          },
+          "forMode": "reps",
+          "forValue": 21,
+          "note": "225/155 lb"
+        },
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "bw_burpee",
+          "forMode": "reps",
+          "forValue": 21
+        }
+      ],
+      "ladder": [
+        21,
+        15,
+        9,
+        9,
+        15,
+        21
+      ]
+    }
+  ]
+}

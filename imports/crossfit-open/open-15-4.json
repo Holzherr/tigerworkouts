@@ -1,0 +1,177 @@
+{
+  "id": "cf-open-15-4",
+  "title": "Open 15.4",
+  "creator": "CrossFit Games",
+  "description": "Eight-minute AMRAP where the handstand push-ups climb by 3 each round (3, 6, 9…) and the cleans at 185/125 lb climb by 3 every third round (3, 3, 3, 6, 6, 6, 9…). A strict-standard HSPU test with a heavy bar for recovery. Scaled was a simple AMRAP of 10 push presses and 10 cleans at 95/65 and 115/75 lb.",
+  "source": {
+    "title": "CrossFit Games Open 2015 – Workout 15.4",
+    "url": "https://games.crossfit.com/workouts/open/2015",
+    "author": "CrossFit Games",
+    "kind": "benchmark",
+    "license": "Public competition workout; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "CrossFit",
+    "CrossFit Open",
+    "2015",
+    "AMRAP",
+    "Ladder",
+    "Barbell",
+    "Gymnastics"
+  ],
+  "level": "Hard",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "Ladder",
+      "mode": "amrap",
+      "repeat": 1,
+      "timeCapSec": 480,
+      "note": "Add 3 handstand push-ups every round and 3 cleans every third round; listed to 21 HSPU. Score = total reps.",
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "bw_handstand_pushup",
+          "forMode": "reps",
+          "forValue": 3
+        },
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "bb_clean",
+          "target": 84.0,
+          "rx": {
+            "men": 84.0,
+            "women": 56.5
+          },
+          "forMode": "reps",
+          "forValue": 3,
+          "note": "185/125 lb. any style"
+        },
+        {
+          "kind": "exercise",
+          "id": "s3",
+          "exercise": "bw_handstand_pushup",
+          "forMode": "reps",
+          "forValue": 6
+        },
+        {
+          "kind": "exercise",
+          "id": "s4",
+          "exercise": "bb_clean",
+          "target": 84.0,
+          "rx": {
+            "men": 84.0,
+            "women": 56.5
+          },
+          "forMode": "reps",
+          "forValue": 3,
+          "note": "185/125 lb. any style"
+        },
+        {
+          "kind": "exercise",
+          "id": "s5",
+          "exercise": "bw_handstand_pushup",
+          "forMode": "reps",
+          "forValue": 9
+        },
+        {
+          "kind": "exercise",
+          "id": "s6",
+          "exercise": "bb_clean",
+          "target": 84.0,
+          "rx": {
+            "men": 84.0,
+            "women": 56.5
+          },
+          "forMode": "reps",
+          "forValue": 3,
+          "note": "185/125 lb. any style"
+        },
+        {
+          "kind": "exercise",
+          "id": "s7",
+          "exercise": "bw_handstand_pushup",
+          "forMode": "reps",
+          "forValue": 12
+        },
+        {
+          "kind": "exercise",
+          "id": "s8",
+          "exercise": "bb_clean",
+          "target": 84.0,
+          "rx": {
+            "men": 84.0,
+            "women": 56.5
+          },
+          "forMode": "reps",
+          "forValue": 6,
+          "note": "185/125 lb. any style"
+        },
+        {
+          "kind": "exercise",
+          "id": "s9",
+          "exercise": "bw_handstand_pushup",
+          "forMode": "reps",
+          "forValue": 15
+        },
+        {
+          "kind": "exercise",
+          "id": "s10",
+          "exercise": "bb_clean",
+          "target": 84.0,
+          "rx": {
+            "men": 84.0,
+            "women": 56.5
+          },
+          "forMode": "reps",
+          "forValue": 6,
+          "note": "185/125 lb. any style"
+        },
+        {
+          "kind": "exercise",
+          "id": "s11",
+          "exercise": "bw_handstand_pushup",
+          "forMode": "reps",
+          "forValue": 18
+        },
+        {
+          "kind": "exercise",
+          "id": "s12",
+          "exercise": "bb_clean",
+          "target": 84.0,
+          "rx": {
+            "men": 84.0,
+            "women": 56.5
+          },
+          "forMode": "reps",
+          "forValue": 6,
+          "note": "185/125 lb. any style"
+        },
+        {
+          "kind": "exercise",
+          "id": "s13",
+          "exercise": "bw_handstand_pushup",
+          "forMode": "reps",
+          "forValue": 21
+        },
+        {
+          "kind": "exercise",
+          "id": "s14",
+          "exercise": "bb_clean",
+          "target": 84.0,
+          "rx": {
+            "men": 84.0,
+            "women": 56.5
+          },
+          "forMode": "reps",
+          "forValue": 9,
+          "note": "185/125 lb. any style"
+        }
+      ]
+    }
+  ]
+}

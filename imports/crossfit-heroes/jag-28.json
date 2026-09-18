@@ -1,0 +1,88 @@
+{
+  "id": "cf-hero-jag-28",
+  "title": "Jag 28",
+  "creator": "CrossFit",
+  "description": "An 800 m run, 28 kettlebell swings, 28 strict pull-ups, 28 kettlebell clean and jerks, 28 strict pull-ups and another 800 m run with a 70/53 lb bell. Honours U.S. Air Force Senior Airman Mark Forester, 21st Special Tactics Squadron, killed in Uruzgan Province, Afghanistan, in 2010. 56 strict pull-ups; scale to kipping or banded.",
+  "source": {
+    "title": "Jag 28 – CrossFit Hero WOD",
+    "url": "https://www.crossfit.com/benchmark/jag-28",
+    "author": "CrossFit",
+    "kind": "benchmark",
+    "license": "Public benchmark; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "CrossFit",
+    "Hero",
+    "For time",
+    "Run",
+    "Kettlebell",
+    "Bodyweight"
+  ],
+  "level": "Hard",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "Jag 28",
+      "mode": "fortime",
+      "repeat": 1,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "cardio_run",
+          "forMode": "meters",
+          "forValue": 800
+        },
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "kb_swing",
+          "target": 32,
+          "rx": {
+            "men": 32,
+            "women": 24
+          },
+          "forMode": "reps",
+          "forValue": 28,
+          "note": "70/53 lb"
+        },
+        {
+          "kind": "exercise",
+          "id": "s3",
+          "exercise": "bw_strict_pullup",
+          "forMode": "reps",
+          "forValue": 28
+        },
+        {
+          "kind": "exercise",
+          "id": "s4",
+          "exercise": "kb_clean_and_jerk",
+          "target": 32,
+          "rx": {
+            "men": 32,
+            "women": 24
+          },
+          "forMode": "reps",
+          "forValue": 28,
+          "note": "70/53 lb"
+        },
+        {
+          "kind": "exercise",
+          "id": "s5",
+          "exercise": "bw_strict_pullup",
+          "forMode": "reps",
+          "forValue": 28
+        },
+        {
+          "kind": "exercise",
+          "id": "s6",
+          "exercise": "cardio_run",
+          "forMode": "meters",
+          "forValue": 800
+        }
+      ]
+    }
+  ]
+}

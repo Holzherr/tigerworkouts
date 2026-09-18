@@ -1,0 +1,63 @@
+{
+  "id": "cf-hero-ledesma",
+  "title": "Ledesma",
+  "creator": "CrossFit",
+  "description": "A 20-minute AMRAP of 5 parallette handstand push-ups, 10 toes-to-rings and 15 medicine-ball cleans with a 20/14 lb ball. Honours Chandler Police Narcotics Detective Carlos Ledesma, shot during an undercover operation in Phoenix in 2010. Scale the handstand push-ups to the floor and toes-to-rings to toes-to-bar.",
+  "source": {
+    "title": "Ledesma – CrossFit Hero WOD",
+    "url": "https://www.crossfit.com/benchmark/ledesma",
+    "author": "CrossFit",
+    "kind": "benchmark",
+    "license": "Public benchmark; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "CrossFit",
+    "Hero",
+    "AMRAP",
+    "Gymnastics",
+    "Wall ball"
+  ],
+  "level": "Hard",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "Ledesma",
+      "mode": "amrap",
+      "repeat": 1,
+      "timeCapSec": 1200,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "bw_handstand_pushup",
+          "forMode": "reps",
+          "forValue": 5,
+          "note": "on parallettes"
+        },
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "bw_toes_to_bar",
+          "forMode": "reps",
+          "forValue": 10,
+          "note": "toes to rings"
+        },
+        {
+          "kind": "exercise",
+          "id": "s3",
+          "exercise": "gym_medball_clean",
+          "target": 9.0,
+          "rx": {
+            "men": 9.0,
+            "women": 6.5
+          },
+          "forMode": "reps",
+          "forValue": 15,
+          "note": "20/14 lb"
+        }
+      ]
+    }
+  ]
+}

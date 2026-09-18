@@ -1,0 +1,81 @@
+{
+  "id": "cf-hero-t-u-p",
+  "title": "T.U.P.",
+  "creator": "CrossFit",
+  "description": "A 15-12-9-6-3 ladder of power cleans, pull-ups, front squats and pull-ups again, for time. Honours U.S. Army Special Forces Staff Sgt. Michael H. Simpson, 'The Unquiet Professional', who died of IED wounds sustained in Arian, Afghanistan, in 2013. Ninety pull-ups in total; the barbell can stay on the floor between movements.",
+  "source": {
+    "title": "T.U.P. – CrossFit Hero WOD",
+    "url": "https://www.crossfit.com/benchmark/t-u-p",
+    "author": "CrossFit",
+    "kind": "benchmark",
+    "license": "Public benchmark; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "CrossFit",
+    "Hero WOD",
+    "For time",
+    "Ladder",
+    "Barbell",
+    "Gymnastics"
+  ],
+  "level": "Hard",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "15-12-9-6-3",
+      "mode": "ladder",
+      "repeat": 1,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "bb_power_clean",
+          "forMode": "reps",
+          "forValue": 15,
+          "target": 61,
+          "rx": {
+            "men": 61,
+            "women": 43
+          },
+          "note": "135/95 lb"
+        },
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "bw_pullup",
+          "forMode": "reps",
+          "forValue": 15
+        },
+        {
+          "kind": "exercise",
+          "id": "s3",
+          "exercise": "bb_front_squat",
+          "forMode": "reps",
+          "forValue": 15,
+          "target": 61,
+          "rx": {
+            "men": 61,
+            "women": 43
+          },
+          "note": "135/95 lb"
+        },
+        {
+          "kind": "exercise",
+          "id": "s4",
+          "exercise": "bw_pullup",
+          "forMode": "reps",
+          "forValue": 15
+        }
+      ],
+      "ladder": [
+        15,
+        12,
+        9,
+        6,
+        3
+      ]
+    }
+  ]
+}

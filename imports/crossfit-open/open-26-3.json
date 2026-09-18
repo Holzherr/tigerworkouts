@@ -1,0 +1,174 @@
+{
+  "id": "cf-open-26-3",
+  "title": "Open 26.3",
+  "creator": "CrossFit Games",
+  "description": "For time: two rounds each at three rising loads of 12 burpees over the bar, 12 cleans, 12 burpees over the bar and 12 thrusters, at 95/65, 115/75 and 135/85 lb, 16-minute cap. 144 burpees in all. Scaled used 65/45 to 95/65 lb and allowed stepping over the bar; Foundations 45/25 to 65/45 lb with regular burpees.",
+  "source": {
+    "title": "CrossFit Games Open 2026 – Workout 26.3",
+    "url": "https://games.crossfit.com/workouts/open/2026/3",
+    "author": "CrossFit Games",
+    "kind": "benchmark",
+    "license": "Public competition workout; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "CrossFit",
+    "CrossFit Open",
+    "2026",
+    "For time",
+    "Barbell",
+    "Bodyweight"
+  ],
+  "level": "Hard",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "2 rounds · weight 1",
+      "mode": "fortime",
+      "repeat": 2,
+      "timeCapSec": 960,
+      "note": "16-minute cap covers all three couplets",
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "bw_bar_facing_burpee",
+          "forMode": "reps",
+          "forValue": 12
+        },
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "bb_clean",
+          "target": 43.0,
+          "rx": {
+            "men": 43.0,
+            "women": 29.5
+          },
+          "forMode": "reps",
+          "forValue": 12,
+          "note": "95/65 lb. any style"
+        },
+        {
+          "kind": "exercise",
+          "id": "s3",
+          "exercise": "bw_bar_facing_burpee",
+          "forMode": "reps",
+          "forValue": 12
+        },
+        {
+          "kind": "exercise",
+          "id": "s4",
+          "exercise": "bb_thruster",
+          "target": 43.0,
+          "rx": {
+            "men": 43.0,
+            "women": 29.5
+          },
+          "forMode": "reps",
+          "forValue": 12,
+          "note": "95/65 lb"
+        }
+      ]
+    },
+    {
+      "kind": "block",
+      "id": "b2",
+      "name": "2 rounds · weight 2",
+      "mode": "fortime",
+      "repeat": 2,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s5",
+          "exercise": "bw_bar_facing_burpee",
+          "forMode": "reps",
+          "forValue": 12
+        },
+        {
+          "kind": "exercise",
+          "id": "s6",
+          "exercise": "bb_clean",
+          "target": 52.0,
+          "rx": {
+            "men": 52.0,
+            "women": 34.0
+          },
+          "forMode": "reps",
+          "forValue": 12,
+          "note": "115/75 lb. any style"
+        },
+        {
+          "kind": "exercise",
+          "id": "s7",
+          "exercise": "bw_bar_facing_burpee",
+          "forMode": "reps",
+          "forValue": 12
+        },
+        {
+          "kind": "exercise",
+          "id": "s8",
+          "exercise": "bb_thruster",
+          "target": 52.0,
+          "rx": {
+            "men": 52.0,
+            "women": 34.0
+          },
+          "forMode": "reps",
+          "forValue": 12,
+          "note": "115/75 lb"
+        }
+      ]
+    },
+    {
+      "kind": "block",
+      "id": "b3",
+      "name": "2 rounds · weight 3",
+      "mode": "fortime",
+      "repeat": 2,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s9",
+          "exercise": "bw_bar_facing_burpee",
+          "forMode": "reps",
+          "forValue": 12
+        },
+        {
+          "kind": "exercise",
+          "id": "s10",
+          "exercise": "bb_clean",
+          "target": 61.0,
+          "rx": {
+            "men": 61.0,
+            "women": 38.5
+          },
+          "forMode": "reps",
+          "forValue": 12,
+          "note": "135/85 lb. any style"
+        },
+        {
+          "kind": "exercise",
+          "id": "s11",
+          "exercise": "bw_bar_facing_burpee",
+          "forMode": "reps",
+          "forValue": 12
+        },
+        {
+          "kind": "exercise",
+          "id": "s12",
+          "exercise": "bb_thruster",
+          "target": 61.0,
+          "rx": {
+            "men": 61.0,
+            "women": 38.5
+          },
+          "forMode": "reps",
+          "forValue": 12,
+          "note": "135/85 lb"
+        }
+      ]
+    }
+  ]
+}

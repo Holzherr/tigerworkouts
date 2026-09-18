@@ -1,0 +1,60 @@
+{
+  "id": "cf-hero-zimmerman",
+  "title": "Zimmerman",
+  "creator": "CrossFit",
+  "description": "A 25-minute AMRAP of 11 chest-to-bar pull-ups, 2 very heavy deadlifts and 10 handstand push-ups. Honours U.S. Marine 1st Lt. James R. Zimmerman, killed in Helmand Province, Afghanistan, in 2010. The deadlift is near-max; two clean singles per round.",
+  "source": {
+    "title": "Zimmerman – CrossFit Hero WOD",
+    "url": "https://www.crossfit.com/benchmark/zimmerman",
+    "author": "CrossFit",
+    "kind": "benchmark",
+    "license": "Public benchmark; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "CrossFit",
+    "Hero WOD",
+    "AMRAP",
+    "Barbell",
+    "Gymnastics"
+  ],
+  "level": "Hard",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "AMRAP 25",
+      "mode": "amrap",
+      "timeCapSec": 1500,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "bw_chest_to_bar_pullup",
+          "forMode": "reps",
+          "forValue": 11
+        },
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "bb_deadlift",
+          "forMode": "reps",
+          "forValue": 2,
+          "target": 143,
+          "rx": {
+            "men": 143,
+            "women": 93
+          },
+          "note": "315/205 lb"
+        },
+        {
+          "kind": "exercise",
+          "id": "s3",
+          "exercise": "bw_handstand_pushup",
+          "forMode": "reps",
+          "forValue": 10
+        }
+      ]
+    }
+  ]
+}

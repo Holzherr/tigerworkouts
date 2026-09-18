@@ -1,0 +1,61 @@
+{
+  "id": "cf-hero-mr-joshua",
+  "title": "Mr. Joshua",
+  "creator": "CrossFit",
+  "description": "Five rounds of a 400 m run, 30 GHD sit-ups and 15 heavy deadlifts, for time. Honours Navy SEAL Special Warfare Operator 1st Class Joshua Thomas Harris, who drowned during combat operations in Afghanistan in 2008. 150 GHD sit-ups is a lot of hip flexor and spine work: newer athletes should do fewer or use floor sit-ups.",
+  "source": {
+    "title": "Mr. Joshua – CrossFit Hero WOD",
+    "url": "https://www.crossfit.com/benchmark/mr-joshua",
+    "author": "CrossFit",
+    "kind": "benchmark",
+    "license": "Public benchmark; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "CrossFit",
+    "Hero WOD",
+    "For time",
+    "Barbell",
+    "Running",
+    "Core"
+  ],
+  "level": "Hard",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "5 rounds",
+      "mode": "fortime",
+      "repeat": 5,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "cardio_run",
+          "forMode": "meters",
+          "forValue": 400
+        },
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "gym_ghd_situp",
+          "forMode": "reps",
+          "forValue": 30
+        },
+        {
+          "kind": "exercise",
+          "id": "s3",
+          "exercise": "bb_deadlift",
+          "forMode": "reps",
+          "forValue": 15,
+          "target": 113.5,
+          "rx": {
+            "men": 113.5,
+            "women": 79.5
+          },
+          "note": "250/175 lb"
+        }
+      ]
+    }
+  ]
+}

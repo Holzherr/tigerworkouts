@@ -1,0 +1,58 @@
+{
+  "id": "proto-hyrox-roxlyfe-ski-sled-push",
+  "title": "Hyrox SkiErg + sled push superset",
+  "creator": "Greg Williams (Rox Lyfe)",
+  "description": "Three rounds of 800 m on the SkiErg straight into a 40 m sled push, the way the two stations follow each other in the race. Rox Lyfe suggests adding a run between rounds to make it more race-like. Rest a couple of minutes between rounds if you are not adding the run.",
+  "source": {
+    "title": "HYROX Training Plan Fundamentals – Rox Lyfe",
+    "url": "https://roxlyfe.com/hyrox-training-plan-fundamentals/",
+    "author": "Greg Williams",
+    "kind": "article",
+    "license": "Published protocol; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "Hyrox",
+    "Rounds",
+    "Ski erg",
+    "Sled"
+  ],
+  "level": "Medium",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "Ski + sled push",
+      "mode": "rounds",
+      "repeat": 3,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "cardio_skierg",
+          "forMode": "meters",
+          "forValue": 800
+        },
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "gym_sled_push",
+          "forMode": "meters",
+          "forValue": 40,
+          "target": 152,
+          "rx": {
+            "men": 152,
+            "women": 102
+          },
+          "note": "Race weight; weight includes sled"
+        },
+        {
+          "kind": "rest",
+          "id": "r3",
+          "seconds": 120,
+          "note": "Or run 500-1000 m instead of resting"
+        }
+      ]
+    }
+  ]
+}

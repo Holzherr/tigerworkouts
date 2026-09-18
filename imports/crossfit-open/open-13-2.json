@@ -1,0 +1,69 @@
+{
+  "id": "cf-open-13-2",
+  "title": "Open 13.2",
+  "creator": "CrossFit Games",
+  "description": "Ten-minute AMRAP of 5 shoulder-to-overheads and 10 deadlifts at 115/75 lb, then 15 box jumps (24/20 in). Light and fast; the box jumps are where the rounds are won. Masters 55+ used 95/55 lb and could step up.",
+  "source": {
+    "title": "CrossFit Games Open 2013 – Workout 13.2",
+    "url": "https://games.crossfit.com/workouts/open/2013",
+    "author": "CrossFit Games",
+    "kind": "benchmark",
+    "license": "Public competition workout; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "CrossFit",
+    "CrossFit Open",
+    "2013",
+    "AMRAP",
+    "Barbell",
+    "Bodyweight"
+  ],
+  "level": "Hard",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "AMRAP 10",
+      "mode": "amrap",
+      "repeat": 1,
+      "timeCapSec": 600,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "bb_shoulder_to_overhead",
+          "target": 52.0,
+          "rx": {
+            "men": 52.0,
+            "women": 34.0
+          },
+          "forMode": "reps",
+          "forValue": 5,
+          "note": "115/75 lb"
+        },
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "bb_deadlift",
+          "target": 52.0,
+          "rx": {
+            "men": 52.0,
+            "women": 34.0
+          },
+          "forMode": "reps",
+          "forValue": 10,
+          "note": "115/75 lb"
+        },
+        {
+          "kind": "exercise",
+          "id": "s3",
+          "exercise": "bw_box_jump",
+          "forMode": "reps",
+          "forValue": 15,
+          "note": "24/20 in box; jump or step down"
+        }
+      ]
+    }
+  ]
+}

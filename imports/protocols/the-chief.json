@@ -1,0 +1,233 @@
+{
+  "id": "proto-the-chief",
+  "title": "The Chief",
+  "creator": "CrossFit",
+  "description": "Five 3-minute AMRAPs of 3 power cleans, 6 push-ups and 9 air squats with one minute of rest between them, 19 minutes in total. You record rounds for each of the five cycles, so the game is holding the same pace from the first to the last. Posted in September 2008 in honour of US Navy Chief Petty Officers; it is not on the official Hero list.",
+  "source": {
+    "title": "The Chief – CrossFit Workout of the Day 080914",
+    "url": "https://www.crossfit.com/workout/2008/09/14",
+    "author": "CrossFit",
+    "kind": "benchmark",
+    "license": "Published protocol; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "CrossFit",
+    "AMRAP",
+    "Barbell",
+    "Intervals"
+  ],
+  "level": "Hard",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "Cycle 1",
+      "mode": "amrap",
+      "repeat": 1,
+      "timeCapSec": 180,
+      "note": "Score rounds completed; continue where you left off next cycle",
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "bb_power_clean",
+          "forMode": "reps",
+          "forValue": 3,
+          "target": 61,
+          "rx": {
+            "men": 61,
+            "women": 43
+          },
+          "note": "135 lb; women's 95 lb is common practice, not on crossfit.com"
+        },
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "bw_pushup",
+          "forMode": "reps",
+          "forValue": 6
+        },
+        {
+          "kind": "exercise",
+          "id": "s3",
+          "exercise": "bw_squat",
+          "forMode": "reps",
+          "forValue": 9
+        }
+      ]
+    },
+    {
+      "kind": "rest",
+      "id": "r4",
+      "seconds": 60
+    },
+    {
+      "kind": "block",
+      "id": "b2",
+      "name": "Cycle 2",
+      "mode": "amrap",
+      "repeat": 1,
+      "timeCapSec": 180,
+      "note": "Score rounds completed; continue where you left off next cycle",
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s5",
+          "exercise": "bb_power_clean",
+          "forMode": "reps",
+          "forValue": 3,
+          "target": 61,
+          "rx": {
+            "men": 61,
+            "women": 43
+          },
+          "note": "135 lb; women's 95 lb is common practice, not on crossfit.com"
+        },
+        {
+          "kind": "exercise",
+          "id": "s6",
+          "exercise": "bw_pushup",
+          "forMode": "reps",
+          "forValue": 6
+        },
+        {
+          "kind": "exercise",
+          "id": "s7",
+          "exercise": "bw_squat",
+          "forMode": "reps",
+          "forValue": 9
+        }
+      ]
+    },
+    {
+      "kind": "rest",
+      "id": "r8",
+      "seconds": 60
+    },
+    {
+      "kind": "block",
+      "id": "b3",
+      "name": "Cycle 3",
+      "mode": "amrap",
+      "repeat": 1,
+      "timeCapSec": 180,
+      "note": "Score rounds completed; continue where you left off next cycle",
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s9",
+          "exercise": "bb_power_clean",
+          "forMode": "reps",
+          "forValue": 3,
+          "target": 61,
+          "rx": {
+            "men": 61,
+            "women": 43
+          },
+          "note": "135 lb; women's 95 lb is common practice, not on crossfit.com"
+        },
+        {
+          "kind": "exercise",
+          "id": "s10",
+          "exercise": "bw_pushup",
+          "forMode": "reps",
+          "forValue": 6
+        },
+        {
+          "kind": "exercise",
+          "id": "s11",
+          "exercise": "bw_squat",
+          "forMode": "reps",
+          "forValue": 9
+        }
+      ]
+    },
+    {
+      "kind": "rest",
+      "id": "r12",
+      "seconds": 60
+    },
+    {
+      "kind": "block",
+      "id": "b4",
+      "name": "Cycle 4",
+      "mode": "amrap",
+      "repeat": 1,
+      "timeCapSec": 180,
+      "note": "Score rounds completed; continue where you left off next cycle",
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s13",
+          "exercise": "bb_power_clean",
+          "forMode": "reps",
+          "forValue": 3,
+          "target": 61,
+          "rx": {
+            "men": 61,
+            "women": 43
+          },
+          "note": "135 lb; women's 95 lb is common practice, not on crossfit.com"
+        },
+        {
+          "kind": "exercise",
+          "id": "s14",
+          "exercise": "bw_pushup",
+          "forMode": "reps",
+          "forValue": 6
+        },
+        {
+          "kind": "exercise",
+          "id": "s15",
+          "exercise": "bw_squat",
+          "forMode": "reps",
+          "forValue": 9
+        }
+      ]
+    },
+    {
+      "kind": "rest",
+      "id": "r16",
+      "seconds": 60
+    },
+    {
+      "kind": "block",
+      "id": "b5",
+      "name": "Cycle 5",
+      "mode": "amrap",
+      "repeat": 1,
+      "timeCapSec": 180,
+      "note": "Score rounds completed; continue where you left off next cycle",
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s17",
+          "exercise": "bb_power_clean",
+          "forMode": "reps",
+          "forValue": 3,
+          "target": 61,
+          "rx": {
+            "men": 61,
+            "women": 43
+          },
+          "note": "135 lb; women's 95 lb is common practice, not on crossfit.com"
+        },
+        {
+          "kind": "exercise",
+          "id": "s18",
+          "exercise": "bw_pushup",
+          "forMode": "reps",
+          "forValue": 6
+        },
+        {
+          "kind": "exercise",
+          "id": "s19",
+          "exercise": "bw_squat",
+          "forMode": "reps",
+          "forValue": 9
+        }
+      ]
+    }
+  ]
+}

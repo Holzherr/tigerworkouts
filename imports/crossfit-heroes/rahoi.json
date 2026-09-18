@@ -1,0 +1,61 @@
+{
+  "id": "cf-hero-rahoi",
+  "title": "Rahoi",
+  "creator": "CrossFit",
+  "description": "A 12-minute AMRAP of 12 box jumps, 6 thrusters and 6 bar-facing burpees. Honours FBI Supervisory Special Agent Gregory J. Rahoi of the Hostage Rescue Team, killed in a live-fire training exercise in 2006. Short and fast; a good first Hero WOD.",
+  "source": {
+    "title": "Rahoi – CrossFit Hero WOD",
+    "url": "https://www.crossfit.com/benchmark/rahoi",
+    "author": "CrossFit",
+    "kind": "benchmark",
+    "license": "Public benchmark; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "CrossFit",
+    "Hero WOD",
+    "AMRAP",
+    "Barbell",
+    "Bodyweight"
+  ],
+  "level": "Medium",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "AMRAP 12",
+      "mode": "amrap",
+      "timeCapSec": 720,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "bw_box_jump",
+          "forMode": "reps",
+          "forValue": 12,
+          "note": "24/20 in box"
+        },
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "bb_thruster",
+          "forMode": "reps",
+          "forValue": 6,
+          "target": 43,
+          "rx": {
+            "men": 43,
+            "women": 29.5
+          },
+          "note": "95/65 lb"
+        },
+        {
+          "kind": "exercise",
+          "id": "s3",
+          "exercise": "bw_bar_facing_burpee",
+          "forMode": "reps",
+          "forValue": 6
+        }
+      ]
+    }
+  ]
+}

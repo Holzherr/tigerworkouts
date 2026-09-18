@@ -1,0 +1,48 @@
+{
+  "id": "cf-hero-ozzy",
+  "title": "Ozzy",
+  "creator": "CrossFit",
+  "description": "Seven rounds of 11 deficit handstand push-ups and a 1,000 m run, for time. Honours U.S. Air Force Master Sgt. Thomas 'Ozzy' Crowell, an OSI special agent killed by an IED near Balad, Iraq, in 2007. Seven kilometres of running with 77 deficit HSPU; reduce the deficit or go to the wall if you must.",
+  "source": {
+    "title": "Ozzy – CrossFit Hero WOD",
+    "url": "https://www.crossfit.com/benchmark/ozzy",
+    "author": "CrossFit",
+    "kind": "benchmark",
+    "license": "Public benchmark; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "CrossFit",
+    "Hero WOD",
+    "For time",
+    "Gymnastics",
+    "Running"
+  ],
+  "level": "Hard",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "7 rounds",
+      "mode": "fortime",
+      "repeat": 7,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "bw_handstand_pushup",
+          "forMode": "reps",
+          "forValue": 11,
+          "note": "Deficit (hands on plates or parallettes)"
+        },
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "cardio_run",
+          "forMode": "meters",
+          "forValue": 1000
+        }
+      ]
+    }
+  ]
+}

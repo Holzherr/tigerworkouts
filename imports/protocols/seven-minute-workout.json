@@ -1,0 +1,185 @@
+{
+  "id": "proto-seven-minute-workout",
+  "title": "The Scientific 7-Minute Workout",
+  "creator": "ACSM (Brett Klika & Chris Jordan)",
+  "description": "Twelve bodyweight exercises done for 30 seconds each with 10 seconds between them, in an order that alternates upper body, lower body and core so one muscle group recovers while the next works. Published in ACSM's Health & Fitness Journal in 2013 and made famous by the New York Times, it needs only a wall and a chair. Work at a hard effort (8 out of 10); repeat the circuit two or three times if you have the time.",
+  "source": {
+    "title": "High-Intensity Circuit Training Using Body Weight: Maximum Results With Minimal Investment (ACSM's Health & Fitness Journal 17(3), May/June 2013)",
+    "url": "https://journals.lww.com/acsm-healthfitness/fulltext/2013/05000/high_intensity_circuit_training_using_body_weight_.5.aspx",
+    "author": "Brett Klika, Chris Jordan",
+    "kind": "protocol",
+    "license": "Published protocol; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "Protocol",
+    "HICT",
+    "Bodyweight",
+    "7 minutes",
+    "No equipment"
+  ],
+  "level": "Medium",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "7-minute circuit",
+      "mode": "rounds",
+      "repeat": 1,
+      "note": "30 s work / 10 s transition. Repeat the whole circuit 2-3 times if time allows.",
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "bw_jumping_jack",
+          "forMode": "seconds",
+          "forValue": 30,
+          "note": "Jumping jacks"
+        },
+        {
+          "kind": "rest",
+          "id": "r2",
+          "seconds": 10
+        },
+        {
+          "kind": "exercise",
+          "id": "s3",
+          "exercise": "bw_wall_sit",
+          "forMode": "seconds",
+          "forValue": 30,
+          "note": "Wall sit"
+        },
+        {
+          "kind": "rest",
+          "id": "r4",
+          "seconds": 10
+        },
+        {
+          "kind": "exercise",
+          "id": "s5",
+          "exercise": "bw_pushup",
+          "forMode": "seconds",
+          "forValue": 30,
+          "note": "Push-up"
+        },
+        {
+          "kind": "rest",
+          "id": "r6",
+          "seconds": 10
+        },
+        {
+          "kind": "exercise",
+          "id": "s7",
+          "exercise": "bw_crunch",
+          "forMode": "seconds",
+          "forValue": 30,
+          "note": "Abdominal crunch"
+        },
+        {
+          "kind": "rest",
+          "id": "r8",
+          "seconds": 10
+        },
+        {
+          "kind": "exercise",
+          "id": "s9",
+          "exercise": "bw_step_up",
+          "forMode": "seconds",
+          "forValue": 30,
+          "note": "Step-up onto chair"
+        },
+        {
+          "kind": "rest",
+          "id": "r10",
+          "seconds": 10
+        },
+        {
+          "kind": "exercise",
+          "id": "s11",
+          "exercise": "bw_squat",
+          "forMode": "seconds",
+          "forValue": 30,
+          "note": "Squat"
+        },
+        {
+          "kind": "rest",
+          "id": "r12",
+          "seconds": 10
+        },
+        {
+          "kind": "exercise",
+          "id": "s13",
+          "exercise": "bw_bench_dip",
+          "forMode": "seconds",
+          "forValue": 30,
+          "note": "Triceps dip on chair"
+        },
+        {
+          "kind": "rest",
+          "id": "r14",
+          "seconds": 10
+        },
+        {
+          "kind": "exercise",
+          "id": "s15",
+          "exercise": "bw_plank",
+          "forMode": "seconds",
+          "forValue": 30,
+          "note": "Plank"
+        },
+        {
+          "kind": "rest",
+          "id": "r16",
+          "seconds": 10
+        },
+        {
+          "kind": "exercise",
+          "id": "s17",
+          "exercise": "bw_high_knees",
+          "forMode": "seconds",
+          "forValue": 30,
+          "note": "High knees, running in place"
+        },
+        {
+          "kind": "rest",
+          "id": "r18",
+          "seconds": 10
+        },
+        {
+          "kind": "exercise",
+          "id": "s19",
+          "exercise": "bw_lunge",
+          "forMode": "seconds",
+          "forValue": 30,
+          "note": "Lunge"
+        },
+        {
+          "kind": "rest",
+          "id": "r20",
+          "seconds": 10
+        },
+        {
+          "kind": "exercise",
+          "id": "s21",
+          "exercise": "bw_pushup_rotation",
+          "forMode": "seconds",
+          "forValue": 30,
+          "note": "Push-up and rotation"
+        },
+        {
+          "kind": "rest",
+          "id": "r22",
+          "seconds": 10
+        },
+        {
+          "kind": "exercise",
+          "id": "s23",
+          "exercise": "bw_side_plank",
+          "forMode": "seconds",
+          "forValue": 30,
+          "note": "Side plank"
+        }
+      ]
+    }
+  ]
+}

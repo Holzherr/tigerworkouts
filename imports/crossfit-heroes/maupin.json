@@ -1,0 +1,61 @@
+{
+  "id": "cf-hero-maupin",
+  "title": "Maupin",
+  "creator": "CrossFit",
+  "description": "Four rounds of an 800 m run and 49 push-ups, 49 sit-ups and 49 squats, for time. Honours U.S. Army Staff Sgt. Keith 'Matt' Maupin, captured in an ambush near Baghdad in 2004. No equipment needed; cut the reps to 25 per movement if 49 push-ups a round is out of reach.",
+  "source": {
+    "title": "Maupin – CrossFit Hero WOD",
+    "url": "https://www.crossfit.com/benchmark/maupin",
+    "author": "CrossFit",
+    "kind": "benchmark",
+    "license": "Public benchmark; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "CrossFit",
+    "Hero WOD",
+    "For time",
+    "Bodyweight",
+    "Running"
+  ],
+  "level": "Hard",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "4 rounds",
+      "mode": "fortime",
+      "repeat": 4,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "cardio_run",
+          "forMode": "meters",
+          "forValue": 800
+        },
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "bw_pushup",
+          "forMode": "reps",
+          "forValue": 49
+        },
+        {
+          "kind": "exercise",
+          "id": "s3",
+          "exercise": "bw_situp",
+          "forMode": "reps",
+          "forValue": 49
+        },
+        {
+          "kind": "exercise",
+          "id": "s4",
+          "exercise": "bw_squat",
+          "forMode": "reps",
+          "forValue": 49
+        }
+      ]
+    }
+  ]
+}

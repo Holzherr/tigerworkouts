@@ -1,0 +1,61 @@
+{
+  "id": "cf-girls-jackie",
+  "title": "Jackie",
+  "creator": "CrossFit",
+  "description": "Row 1,000 m, then 50 thrusters with an empty 45/35 lb bar, then 30 pull-ups, for time. Introduced in 2004, it looks easy on paper and is not; the light thrusters should ideally be unbroken. Scale the row distance, the thruster reps or the pull-ups to ring rows.",
+  "source": {
+    "title": "Jackie – CrossFit benchmark WOD (\"The Girls\")",
+    "url": "https://www.crossfit.com/benchmark/jackie",
+    "author": "CrossFit",
+    "kind": "benchmark",
+    "license": "Public benchmark; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "CrossFit",
+    "Girls",
+    "For time",
+    "Rower",
+    "Barbell",
+    "Bodyweight"
+  ],
+  "level": "Hard",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "Jackie",
+      "mode": "fortime",
+      "repeat": 1,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "cardio_rower",
+          "forMode": "meters",
+          "forValue": 1000
+        },
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "bb_thruster",
+          "target": 20.5,
+          "rx": {
+            "men": 20.5,
+            "women": 16
+          },
+          "forMode": "reps",
+          "forValue": 50,
+          "note": "45/35 lb (empty bar)"
+        },
+        {
+          "kind": "exercise",
+          "id": "s3",
+          "exercise": "bw_pullup",
+          "forMode": "reps",
+          "forValue": 30
+        }
+      ]
+    }
+  ]
+}

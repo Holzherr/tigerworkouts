@@ -1,0 +1,53 @@
+{
+  "id": "cf-girls-nancy",
+  "title": "Nancy",
+  "creator": "CrossFit",
+  "description": "Five rounds of a 400 m run and 15 overhead squats at 95/65 lb. Programmed since December 2004, it asks for control and balance overhead while the heart rate is high from the run. Scale the load so the overhead squats can be unbroken.",
+  "source": {
+    "title": "Nancy – CrossFit benchmark WOD (\"The Girls\")",
+    "url": "https://www.crossfit.com/benchmark/nancy",
+    "author": "CrossFit",
+    "kind": "benchmark",
+    "license": "Public benchmark; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "CrossFit",
+    "Girls",
+    "For time",
+    "Run",
+    "Barbell"
+  ],
+  "level": "Hard",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "Nancy",
+      "mode": "fortime",
+      "repeat": 5,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "cardio_run",
+          "forMode": "meters",
+          "forValue": 400
+        },
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "bb_overhead_squat",
+          "target": 43,
+          "rx": {
+            "men": 43,
+            "women": 29.5
+          },
+          "forMode": "reps",
+          "forValue": 15,
+          "note": "95/65 lb"
+        }
+      ]
+    }
+  ]
+}

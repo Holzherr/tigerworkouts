@@ -1,0 +1,159 @@
+{
+  "id": "cf-hero-lumberjack-20",
+  "title": "Lumberjack 20",
+  "creator": "CrossFit",
+  "description": "Seven 400 m runs after 20 reps each of deadlifts at 275/185 lb, kettlebell swings at 70/53 lb, overhead squats at 115/75 lb, burpees, chest-to-bar pull-ups, box jumps and dumbbell squat cleans with 45/30 lb dumbbells. Honours the 13 people killed in the 2009 Fort Hood shooting in Texas. Lots of equipment; scale each load to something you can do in two sets.",
+  "source": {
+    "title": "Lumberjack 20 – CrossFit Hero WOD",
+    "url": "https://www.crossfit.com/benchmark/lumberjack-20",
+    "author": "CrossFit",
+    "kind": "benchmark",
+    "license": "Public benchmark; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "CrossFit",
+    "Hero",
+    "For time",
+    "Run",
+    "Barbell",
+    "Kettlebell",
+    "Dumbbell",
+    "Long"
+  ],
+  "level": "Hard",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "Lumberjack 20",
+      "mode": "fortime",
+      "repeat": 1,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "bb_deadlift",
+          "target": 124.5,
+          "rx": {
+            "men": 124.5,
+            "women": 84.0
+          },
+          "forMode": "reps",
+          "forValue": 20,
+          "note": "275/185 lb"
+        },
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "cardio_run",
+          "forMode": "meters",
+          "forValue": 400
+        },
+        {
+          "kind": "exercise",
+          "id": "s3",
+          "exercise": "kb_swing",
+          "target": 32,
+          "rx": {
+            "men": 32,
+            "women": 24
+          },
+          "forMode": "reps",
+          "forValue": 20,
+          "note": "70/53 lb"
+        },
+        {
+          "kind": "exercise",
+          "id": "s4",
+          "exercise": "cardio_run",
+          "forMode": "meters",
+          "forValue": 400
+        },
+        {
+          "kind": "exercise",
+          "id": "s5",
+          "exercise": "bb_overhead_squat",
+          "target": 52.0,
+          "rx": {
+            "men": 52.0,
+            "women": 34.0
+          },
+          "forMode": "reps",
+          "forValue": 20,
+          "note": "115/75 lb"
+        },
+        {
+          "kind": "exercise",
+          "id": "s6",
+          "exercise": "cardio_run",
+          "forMode": "meters",
+          "forValue": 400
+        },
+        {
+          "kind": "exercise",
+          "id": "s7",
+          "exercise": "bw_burpee",
+          "forMode": "reps",
+          "forValue": 20
+        },
+        {
+          "kind": "exercise",
+          "id": "s8",
+          "exercise": "cardio_run",
+          "forMode": "meters",
+          "forValue": 400
+        },
+        {
+          "kind": "exercise",
+          "id": "s9",
+          "exercise": "bw_chest_to_bar_pullup",
+          "forMode": "reps",
+          "forValue": 20
+        },
+        {
+          "kind": "exercise",
+          "id": "s10",
+          "exercise": "cardio_run",
+          "forMode": "meters",
+          "forValue": 400
+        },
+        {
+          "kind": "exercise",
+          "id": "s11",
+          "exercise": "bw_box_jump",
+          "forMode": "reps",
+          "forValue": 20,
+          "note": "24/20 in box"
+        },
+        {
+          "kind": "exercise",
+          "id": "s12",
+          "exercise": "cardio_run",
+          "forMode": "meters",
+          "forValue": 400
+        },
+        {
+          "kind": "exercise",
+          "id": "s13",
+          "exercise": "db_squat_clean",
+          "target": 20.5,
+          "rx": {
+            "men": 20.5,
+            "women": 13.5
+          },
+          "forMode": "reps",
+          "forValue": 20,
+          "note": "45/30 lb"
+        },
+        {
+          "kind": "exercise",
+          "id": "s14",
+          "exercise": "cardio_run",
+          "forMode": "meters",
+          "forValue": 400
+        }
+      ]
+    }
+  ]
+}

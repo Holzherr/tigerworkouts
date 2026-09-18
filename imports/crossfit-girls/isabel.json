@@ -1,0 +1,45 @@
+{
+  "id": "cf-girls-isabel",
+  "title": "Isabel",
+  "creator": "CrossFit",
+  "description": "Thirty snatches at 135/95 lb for time. Introduced in 2004 as Grace's companion, it is a fast test of snatch technique and stamina; power snatches are fine. Scale the bar until you can cycle singles or small sets without breaking form.",
+  "source": {
+    "title": "Isabel – CrossFit benchmark WOD (\"The Girls\")",
+    "url": "https://www.crossfit.com/benchmark/isabel",
+    "author": "CrossFit",
+    "kind": "benchmark",
+    "license": "Public benchmark; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "CrossFit",
+    "Girls",
+    "For time",
+    "Barbell"
+  ],
+  "level": "Hard",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "Isabel",
+      "mode": "fortime",
+      "repeat": 1,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "bb_snatch",
+          "target": 61,
+          "rx": {
+            "men": 61,
+            "women": 43
+          },
+          "forMode": "reps",
+          "forValue": 30,
+          "note": "135/95 lb"
+        }
+      ]
+    }
+  ]
+}

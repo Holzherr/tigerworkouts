@@ -1,0 +1,60 @@
+{
+  "id": "cf-hero-dork",
+  "title": "Dork",
+  "creator": "CrossFit",
+  "description": "Six rounds of 60 double-unders, 30 kettlebell swings at 53/35 lb and 15 burpees. Honours Boston firefighter and Marine veteran Michael Kennedy, killed fighting a nine-alarm fire in 2014. 360 double-unders in total; singles at double the count if needed.",
+  "source": {
+    "title": "Dork – CrossFit Hero WOD",
+    "url": "https://www.crossfit.com/benchmark/dork",
+    "author": "CrossFit",
+    "kind": "benchmark",
+    "license": "Public benchmark; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "CrossFit",
+    "Hero",
+    "For time",
+    "Kettlebell",
+    "Bodyweight"
+  ],
+  "level": "Hard",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "Dork",
+      "mode": "fortime",
+      "repeat": 6,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "bw_double_under",
+          "forMode": "reps",
+          "forValue": 60
+        },
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "kb_swing",
+          "target": 24,
+          "rx": {
+            "men": 24,
+            "women": 16
+          },
+          "forMode": "reps",
+          "forValue": 30,
+          "note": "53/35 lb"
+        },
+        {
+          "kind": "exercise",
+          "id": "s3",
+          "exercise": "bw_burpee",
+          "forMode": "reps",
+          "forValue": 15
+        }
+      ]
+    }
+  ]
+}

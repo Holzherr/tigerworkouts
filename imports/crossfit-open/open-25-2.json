@@ -1,0 +1,136 @@
+{
+  "id": "cf-open-25-2",
+  "title": "Open 25.2",
+  "creator": "CrossFit Games",
+  "description": "Repeat of 22.3: 21 pull-ups, 42 double-unders, 21 thrusters at 95/65 lb; 18 chest-to-bar pull-ups, 36 double-unders, 18 thrusters at 115/75; 15 bar muscle-ups, 30 double-unders, 15 thrusters at 135/85, 12-minute cap. Scaled used jumping, regular and chest-to-bar pull-ups with single-unders and 65/45 to 105/65 lb.",
+  "source": {
+    "title": "CrossFit Games Open 2025 – Workout 25.2",
+    "url": "https://games.crossfit.com/workouts/open/2025/2",
+    "author": "CrossFit Games",
+    "kind": "benchmark",
+    "license": "Public competition workout; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "CrossFit",
+    "CrossFit Open",
+    "2025",
+    "For time",
+    "Ladder",
+    "Barbell",
+    "Gymnastics"
+  ],
+  "level": "Hard",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "21",
+      "mode": "fortime",
+      "repeat": 1,
+      "timeCapSec": 720,
+      "note": "12-minute cap covers the whole workout",
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "bw_pullup",
+          "forMode": "reps",
+          "forValue": 21
+        },
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "bw_double_under",
+          "forMode": "reps",
+          "forValue": 42
+        },
+        {
+          "kind": "exercise",
+          "id": "s3",
+          "exercise": "bb_thruster",
+          "target": 43.0,
+          "rx": {
+            "men": 43.0,
+            "women": 29.5
+          },
+          "forMode": "reps",
+          "forValue": 21,
+          "note": "95/65 lb"
+        }
+      ]
+    },
+    {
+      "kind": "block",
+      "id": "b2",
+      "name": "18",
+      "mode": "fortime",
+      "repeat": 1,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s4",
+          "exercise": "bw_chest_to_bar_pullup",
+          "forMode": "reps",
+          "forValue": 18
+        },
+        {
+          "kind": "exercise",
+          "id": "s5",
+          "exercise": "bw_double_under",
+          "forMode": "reps",
+          "forValue": 36
+        },
+        {
+          "kind": "exercise",
+          "id": "s6",
+          "exercise": "bb_thruster",
+          "target": 52.0,
+          "rx": {
+            "men": 52.0,
+            "women": 34.0
+          },
+          "forMode": "reps",
+          "forValue": 18,
+          "note": "115/75 lb"
+        }
+      ]
+    },
+    {
+      "kind": "block",
+      "id": "b3",
+      "name": "15",
+      "mode": "fortime",
+      "repeat": 1,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s7",
+          "exercise": "bw_bar_muscle_up",
+          "forMode": "reps",
+          "forValue": 15
+        },
+        {
+          "kind": "exercise",
+          "id": "s8",
+          "exercise": "bw_double_under",
+          "forMode": "reps",
+          "forValue": 30
+        },
+        {
+          "kind": "exercise",
+          "id": "s9",
+          "exercise": "bb_thruster",
+          "target": 61.0,
+          "rx": {
+            "men": 61.0,
+            "women": 38.5
+          },
+          "forMode": "reps",
+          "forValue": 15,
+          "note": "135/85 lb"
+        }
+      ]
+    }
+  ]
+}

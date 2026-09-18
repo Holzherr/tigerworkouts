@@ -1,0 +1,71 @@
+{
+  "id": "cf-hero-wesley",
+  "title": "Wesley",
+  "creator": "CrossFit",
+  "description": "On a 35-minute clock, run 800 m then as many rounds as possible of 8 box jumps, 6 strict pull-ups and a 21-yard walking lunge with a 45 lb plate overhead. Honours U.S. Air Force Tech. Sgt. Wesley Kubie of the Kansas Air National Guard, killed in a vehicle accident during training in 2021. Long AMRAP with strict pulling, so pace the pull-ups from round one.",
+  "source": {
+    "title": "Wesley – CrossFit Hero WOD",
+    "url": "https://www.crossfit.com/benchmark/wesley",
+    "author": "CrossFit",
+    "kind": "benchmark",
+    "license": "Public benchmark; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "CrossFit",
+    "Hero WOD",
+    "AMRAP",
+    "Bodyweight",
+    "Running"
+  ],
+  "level": "Hard",
+  "items": [
+    {
+      "kind": "exercise",
+      "id": "s1",
+      "exercise": "cardio_run",
+      "forMode": "meters",
+      "forValue": 800,
+      "note": "The 35-minute clock starts here"
+    },
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "AMRAP (remaining time)",
+      "mode": "amrap",
+      "timeCapSec": 2100,
+      "note": "Time cap is the 35-minute total clock, including the run",
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "bw_box_jump",
+          "forMode": "reps",
+          "forValue": 8,
+          "note": "24/20 in box"
+        },
+        {
+          "kind": "exercise",
+          "id": "s3",
+          "exercise": "bw_pullup",
+          "forMode": "reps",
+          "forValue": 6,
+          "note": "Strict"
+        },
+        {
+          "kind": "exercise",
+          "id": "s4",
+          "exercise": "gym_plate_overhead_lunge",
+          "forMode": "meters",
+          "forValue": 19,
+          "target": 20.5,
+          "rx": {
+            "men": 20.5,
+            "women": 11.5
+          },
+          "note": "45/25 lb — 21 yards, plate overhead"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,53 @@
+{
+  "id": "cf-hero-sean",
+  "title": "Sean",
+  "creator": "CrossFit",
+  "description": "Ten rounds of 11 chest-to-bar pull-ups and 22 front squats with a light bar, for time. Honours U.S. Army Staff Sgt. Sean M. Flannery, killed by an IED in Kandahar Province, Afghanistan, in 2010. 220 front squats: the bar is light on purpose.",
+  "source": {
+    "title": "Sean – CrossFit Hero WOD",
+    "url": "https://www.crossfit.com/benchmark/sean",
+    "author": "CrossFit",
+    "kind": "benchmark",
+    "license": "Public benchmark; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "CrossFit",
+    "Hero WOD",
+    "For time",
+    "Barbell",
+    "Gymnastics"
+  ],
+  "level": "Hard",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "10 rounds",
+      "mode": "fortime",
+      "repeat": 10,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "bw_chest_to_bar_pullup",
+          "forMode": "reps",
+          "forValue": 11
+        },
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "bb_front_squat",
+          "forMode": "reps",
+          "forValue": 22,
+          "target": 34,
+          "rx": {
+            "men": 34,
+            "women": 25
+          },
+          "note": "75/55 lb"
+        }
+      ]
+    }
+  ]
+}

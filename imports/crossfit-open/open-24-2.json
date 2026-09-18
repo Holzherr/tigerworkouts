@@ -1,0 +1,63 @@
+{
+  "id": "cf-open-24-2",
+  "title": "Open 24.2",
+  "creator": "CrossFit Games",
+  "description": "Twenty-minute AMRAP of a 300 m row, 10 deadlifts at 185/125 lb and 50 double-unders. Long, even and mostly aerobic. Scaled used 135/95 lb and single-unders; Foundations 30 rower strokes and 75/55 lb.",
+  "source": {
+    "title": "CrossFit Games Open 2024 – Workout 24.2",
+    "url": "https://games.crossfit.com/workouts/open/2024/2",
+    "author": "CrossFit Games",
+    "kind": "benchmark",
+    "license": "Public competition workout; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "CrossFit",
+    "CrossFit Open",
+    "2024",
+    "AMRAP",
+    "Rower",
+    "Barbell",
+    "Jump rope"
+  ],
+  "level": "Medium",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "AMRAP 20",
+      "mode": "amrap",
+      "repeat": 1,
+      "timeCapSec": 1200,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "cardio_rower",
+          "forMode": "meters",
+          "forValue": 300
+        },
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "bb_deadlift",
+          "target": 84.0,
+          "rx": {
+            "men": 84.0,
+            "women": 56.5
+          },
+          "forMode": "reps",
+          "forValue": 10,
+          "note": "185/125 lb"
+        },
+        {
+          "kind": "exercise",
+          "id": "s3",
+          "exercise": "bw_double_under",
+          "forMode": "reps",
+          "forValue": 50
+        }
+      ]
+    }
+  ]
+}

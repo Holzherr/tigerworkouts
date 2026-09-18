@@ -1,0 +1,63 @@
+{
+  "id": "cf-open-11-2",
+  "title": "Open 11.2",
+  "creator": "CrossFit Games",
+  "description": "Fifteen-minute AMRAP of 9 deadlifts at 155/100 lb, 12 push-ups and 15 box jumps to a 24/20 in box. Moderate loads and simple movements, so it turns into a pacing test. Masters 55+ used 145/90 lb and a 20 in box.",
+  "source": {
+    "title": "CrossFit Games Open 2011 – Workout 11.2",
+    "url": "https://games.crossfit.com/workouts/open/2011",
+    "author": "CrossFit Games",
+    "kind": "benchmark",
+    "license": "Public competition workout; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "CrossFit",
+    "CrossFit Open",
+    "2011",
+    "AMRAP",
+    "Barbell",
+    "Bodyweight"
+  ],
+  "level": "Medium",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "AMRAP 15",
+      "mode": "amrap",
+      "repeat": 1,
+      "timeCapSec": 900,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "bb_deadlift",
+          "target": 70.5,
+          "rx": {
+            "men": 70.5,
+            "women": 45.5
+          },
+          "forMode": "reps",
+          "forValue": 9,
+          "note": "155/100 lb"
+        },
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "bw_pushup",
+          "forMode": "reps",
+          "forValue": 12
+        },
+        {
+          "kind": "exercise",
+          "id": "s3",
+          "exercise": "bw_box_jump",
+          "forMode": "reps",
+          "forValue": 15,
+          "note": "24/20 in box"
+        }
+      ]
+    }
+  ]
+}

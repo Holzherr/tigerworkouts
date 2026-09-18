@@ -1,0 +1,54 @@
+{
+  "id": "cf-hero-jerry",
+  "title": "Jerry",
+  "creator": "CrossFit",
+  "description": "Run a mile, row 2 km, run a mile. Honours U.S. Army Sgt. Maj. Jerry D. Patton, killed during high-altitude parachute training in 2008. Pure engine; a good Hero WOD when the body needs a break from lifting.",
+  "source": {
+    "title": "Jerry – CrossFit Hero WOD",
+    "url": "https://www.crossfit.com/benchmark/jerry",
+    "author": "CrossFit",
+    "kind": "benchmark",
+    "license": "Public benchmark; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "CrossFit",
+    "Hero",
+    "For time",
+    "Run",
+    "Row"
+  ],
+  "level": "Medium",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "Jerry",
+      "mode": "fortime",
+      "repeat": 1,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "cardio_run",
+          "forMode": "meters",
+          "forValue": 1609
+        },
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "cardio_rower",
+          "forMode": "meters",
+          "forValue": 2000
+        },
+        {
+          "kind": "exercise",
+          "id": "s3",
+          "exercise": "cardio_run",
+          "forMode": "meters",
+          "forValue": 1609
+        }
+      ]
+    }
+  ]
+}

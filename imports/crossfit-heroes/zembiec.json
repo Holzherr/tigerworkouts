@@ -1,0 +1,62 @@
+{
+  "id": "cf-hero-zembiec",
+  "title": "Zembiec",
+  "creator": "CrossFit",
+  "description": "Five rounds of 11 back squats, 7 strict burpee pull-ups and a 400 m run, for time. Honours U.S. Marine Maj. Douglas A. Zembiec, the 'Lion of Fallujah', killed in a firefight in Baghdad in 2007. Each burpee pull-up is a strict push-up, a jump to a bar about 12 inches above your reach, and a strict pull-up.",
+  "source": {
+    "title": "Zembiec – CrossFit Hero WOD",
+    "url": "https://www.crossfit.com/benchmark/zembiec",
+    "author": "CrossFit",
+    "kind": "benchmark",
+    "license": "Public benchmark; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "CrossFit",
+    "Hero WOD",
+    "For time",
+    "Barbell",
+    "Gymnastics",
+    "Running"
+  ],
+  "level": "Hard",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "5 rounds",
+      "mode": "fortime",
+      "repeat": 5,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "bb_back_squat",
+          "forMode": "reps",
+          "forValue": 11,
+          "target": 84,
+          "rx": {
+            "men": 84,
+            "women": 56.5
+          },
+          "note": "185/125 lb"
+        },
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "bw_burpee_pullup",
+          "forMode": "reps",
+          "forValue": 7,
+          "note": "Strict push-up, jump to a bar ~12 in above reach, strict pull-up"
+        },
+        {
+          "kind": "exercise",
+          "id": "s3",
+          "exercise": "cardio_run",
+          "forMode": "meters",
+          "forValue": 400
+        }
+      ]
+    }
+  ]
+}

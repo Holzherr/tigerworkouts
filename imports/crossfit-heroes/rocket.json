@@ -1,0 +1,55 @@
+{
+  "id": "cf-hero-rocket",
+  "title": "Rocket",
+  "creator": "CrossFit",
+  "description": "A 30-minute AMRAP of a 50-yard swim, 10 push-ups and 15 squats. Honours U.S. Army Special Forces Sgt. 1st Class Aaron 'Rocket' Henderson, who died of IED wounds at Bagram, Afghanistan, in 2012. A pool workout; do it in a 25 m pool as a length out and back.",
+  "source": {
+    "title": "Rocket – CrossFit Hero WOD",
+    "url": "https://www.crossfit.com/benchmark/rocket",
+    "author": "CrossFit",
+    "kind": "benchmark",
+    "license": "Public benchmark; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "CrossFit",
+    "Hero WOD",
+    "AMRAP",
+    "Swim",
+    "Bodyweight"
+  ],
+  "level": "Medium",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "AMRAP 30",
+      "mode": "amrap",
+      "timeCapSec": 1800,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "cardio_swim",
+          "forMode": "meters",
+          "forValue": 46,
+          "note": "50 yards"
+        },
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "bw_pushup",
+          "forMode": "reps",
+          "forValue": 10
+        },
+        {
+          "kind": "exercise",
+          "id": "s3",
+          "exercise": "bw_squat",
+          "forMode": "reps",
+          "forValue": 15
+        }
+      ]
+    }
+  ]
+}

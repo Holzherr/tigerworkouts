@@ -1,0 +1,131 @@
+{
+  "id": "cf-hero-matt-16",
+  "title": "Matt 16",
+  "creator": "CrossFit",
+  "description": "Three passes of 16 deadlifts, 16 hang power cleans and 16 push presses, with an 800 m run between passes, for time. Honours U.S. Army Chief Warrant Officer Matt Ruffner, killed in an Apache helicopter crash in Afghanistan in 2013. Three different loads on one bar means stripping plates mid-workout, so set up beforehand.",
+  "source": {
+    "title": "Matt 16 – CrossFit Hero WOD",
+    "url": "https://www.crossfit.com/benchmark/matt-16",
+    "author": "CrossFit",
+    "kind": "benchmark",
+    "license": "Public benchmark; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "CrossFit",
+    "Hero WOD",
+    "For time",
+    "Barbell",
+    "Running"
+  ],
+  "level": "Hard",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "16-16",
+      "mode": "ladder",
+      "repeat": 1,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "bb_deadlift",
+          "forMode": "reps",
+          "forValue": 16,
+          "target": 124.5,
+          "rx": {
+            "men": 124.5,
+            "women": 84
+          },
+          "note": "275/185 lb"
+        },
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "bb_hang_power_clean",
+          "forMode": "reps",
+          "forValue": 16,
+          "target": 84,
+          "rx": {
+            "men": 84,
+            "women": 56.5
+          },
+          "note": "185/125 lb"
+        },
+        {
+          "kind": "exercise",
+          "id": "s3",
+          "exercise": "bb_push_press",
+          "forMode": "reps",
+          "forValue": 16,
+          "target": 61,
+          "rx": {
+            "men": 61,
+            "women": 43
+          },
+          "note": "135/95 lb"
+        },
+        {
+          "kind": "exercise",
+          "id": "s4",
+          "exercise": "cardio_run",
+          "forMode": "meters",
+          "forValue": 800
+        }
+      ],
+      "ladder": [
+        16,
+        16
+      ]
+    },
+    {
+      "kind": "block",
+      "id": "b3",
+      "name": "Round 3",
+      "mode": "fortime",
+      "repeat": 1,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s9",
+          "exercise": "bb_deadlift",
+          "forMode": "reps",
+          "forValue": 16,
+          "target": 124.5,
+          "rx": {
+            "men": 124.5,
+            "women": 84
+          },
+          "note": "275/185 lb"
+        },
+        {
+          "kind": "exercise",
+          "id": "s10",
+          "exercise": "bb_hang_power_clean",
+          "forMode": "reps",
+          "forValue": 16,
+          "target": 84,
+          "rx": {
+            "men": 84,
+            "women": 56.5
+          },
+          "note": "185/125 lb"
+        },
+        {
+          "kind": "exercise",
+          "id": "s11",
+          "exercise": "bb_push_press",
+          "forMode": "reps",
+          "forValue": 16,
+          "target": 61,
+          "rx": {
+            "men": 61,
+            "women": 43
+          },
+          "note": "135/95 lb"
+        }
+      ]
+    }
+  ]
+}

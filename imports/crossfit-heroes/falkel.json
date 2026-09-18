@@ -1,0 +1,57 @@
+{
+  "id": "cf-hero-falkel",
+  "title": "Falkel",
+  "creator": "CrossFit",
+  "description": "A 25-minute AMRAP of 8 handstand push-ups, 8 box jumps to a 30/24 in box and 1 rope climb to 15 ft. Honours U.S. Army Staff Sgt. Chris Falkel, 3rd Special Forces Group, killed by small-arms fire in Deh Afghan, Afghanistan, in 2005. Lower the box and scale handstand push-ups to keep rounds under two minutes.",
+  "source": {
+    "title": "Falkel – CrossFit Hero WOD",
+    "url": "https://www.crossfit.com/benchmark/falkel",
+    "author": "CrossFit",
+    "kind": "benchmark",
+    "license": "Public benchmark; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "CrossFit",
+    "Hero",
+    "AMRAP",
+    "Gymnastics",
+    "Bodyweight"
+  ],
+  "level": "Hard",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "Falkel",
+      "mode": "amrap",
+      "repeat": 1,
+      "timeCapSec": 1500,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "bw_handstand_pushup",
+          "forMode": "reps",
+          "forValue": 8
+        },
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "bw_box_jump",
+          "forMode": "reps",
+          "forValue": 8,
+          "note": "30/24 in box"
+        },
+        {
+          "kind": "exercise",
+          "id": "s3",
+          "exercise": "gym_rope_climb",
+          "forMode": "reps",
+          "forValue": 1,
+          "note": "15 ft"
+        }
+      ]
+    }
+  ]
+}

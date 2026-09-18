@@ -1,0 +1,93 @@
+{
+  "id": "cf-hero-roney",
+  "title": "Roney",
+  "creator": "CrossFit",
+  "description": "Four rounds of three 200 m runs, each followed by 11 thrusters, 11 push presses or 11 bench presses at the same load, for time. Honours Police Service of Northern Ireland Constable Ronan Kerr, killed by a car bomb outside his home in Omagh in 2011. Bench press in a metcon is unusual: use a spotter or a safe bar height.",
+  "source": {
+    "title": "Roney – CrossFit Hero WOD",
+    "url": "https://www.crossfit.com/benchmark/roney",
+    "author": "CrossFit",
+    "kind": "benchmark",
+    "license": "Public benchmark; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "CrossFit",
+    "Hero WOD",
+    "For time",
+    "Barbell",
+    "Running"
+  ],
+  "level": "Hard",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "4 rounds",
+      "mode": "fortime",
+      "repeat": 4,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "cardio_run",
+          "forMode": "meters",
+          "forValue": 200
+        },
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "bb_thruster",
+          "forMode": "reps",
+          "forValue": 11,
+          "target": 61,
+          "rx": {
+            "men": 61,
+            "women": 43
+          },
+          "note": "135/95 lb"
+        },
+        {
+          "kind": "exercise",
+          "id": "s3",
+          "exercise": "cardio_run",
+          "forMode": "meters",
+          "forValue": 200
+        },
+        {
+          "kind": "exercise",
+          "id": "s4",
+          "exercise": "bb_push_press",
+          "forMode": "reps",
+          "forValue": 11,
+          "target": 61,
+          "rx": {
+            "men": 61,
+            "women": 43
+          },
+          "note": "135/95 lb"
+        },
+        {
+          "kind": "exercise",
+          "id": "s5",
+          "exercise": "cardio_run",
+          "forMode": "meters",
+          "forValue": 200
+        },
+        {
+          "kind": "exercise",
+          "id": "s6",
+          "exercise": "bb_bench",
+          "forMode": "reps",
+          "forValue": 11,
+          "target": 61,
+          "rx": {
+            "men": 61,
+            "women": 43
+          },
+          "note": "135/95 lb"
+        }
+      ]
+    }
+  ]
+}

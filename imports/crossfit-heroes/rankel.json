@@ -1,0 +1,74 @@
+{
+  "id": "cf-hero-rankel",
+  "title": "Rankel",
+  "creator": "CrossFit",
+  "description": "A 20-minute AMRAP of 6 heavy deadlifts, 7 burpee pull-ups, 10 kettlebell swings and a 200 m run. Honours U.S. Marine Sgt. John Rankel, killed in Helmand Province, Afghanistan, in 2010. The deadlift is heavy for a metcon; drop to touch-and-go weight if form slips.",
+  "source": {
+    "title": "Rankel – CrossFit Hero WOD",
+    "url": "https://www.crossfit.com/benchmark/rankel",
+    "author": "CrossFit",
+    "kind": "benchmark",
+    "license": "Public benchmark; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "CrossFit",
+    "Hero WOD",
+    "AMRAP",
+    "Barbell",
+    "Kettlebell",
+    "Running"
+  ],
+  "level": "Hard",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "AMRAP 20",
+      "mode": "amrap",
+      "timeCapSec": 1200,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "bb_deadlift",
+          "forMode": "reps",
+          "forValue": 6,
+          "target": 102,
+          "rx": {
+            "men": 102,
+            "women": 70.5
+          },
+          "note": "225/155 lb"
+        },
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "bw_burpee_pullup",
+          "forMode": "reps",
+          "forValue": 7
+        },
+        {
+          "kind": "exercise",
+          "id": "s3",
+          "exercise": "kb_swing",
+          "forMode": "reps",
+          "forValue": 10,
+          "target": 32,
+          "rx": {
+            "men": 32,
+            "women": 24
+          },
+          "note": "70/53 lb"
+        },
+        {
+          "kind": "exercise",
+          "id": "s4",
+          "exercise": "cardio_run",
+          "forMode": "meters",
+          "forValue": 200
+        }
+      ]
+    }
+  ]
+}

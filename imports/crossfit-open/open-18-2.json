@@ -1,0 +1,87 @@
+{
+  "id": "cf-open-18-2",
+  "title": "Open 18.2 & 18.2a",
+  "creator": "CrossFit Games",
+  "description": "1-2-3-4-5-6-7-8-9-10 dumbbell squats with two 50/35 lb dumbbells and bar-facing burpees, then a one-rep-max clean (18.2a) in whatever is left of the 12-minute cap. Two scores: your time for 18.2 and your best clean. Scaled used 35/20 lb and stepping burpees.",
+  "source": {
+    "title": "CrossFit Games Open 2018 – Workout 18.2",
+    "url": "https://games.crossfit.com/workouts/open/2018/2",
+    "author": "CrossFit Games",
+    "kind": "benchmark",
+    "license": "Public competition workout; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "CrossFit",
+    "CrossFit Open",
+    "2018",
+    "For time",
+    "Ladder",
+    "Max lift",
+    "Dumbbell"
+  ],
+  "level": "Hard",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "1-2-3…10",
+      "mode": "ladder",
+      "repeat": 1,
+      "ladder": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10
+      ],
+      "timeCapSec": 720,
+      "note": "The 12-minute cap covers 18.2 and 18.2a together.",
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "db_squat",
+          "target": 22.5,
+          "rx": {
+            "men": 22.5,
+            "women": 16.0
+          },
+          "forMode": "reps",
+          "forValue": 1,
+          "note": "50/35 lb. two dumbbells"
+        },
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "bw_bar_facing_burpee",
+          "forMode": "reps",
+          "forValue": 1
+        }
+      ]
+    },
+    {
+      "kind": "block",
+      "id": "b2",
+      "name": "18.2a · 1-rep-max clean",
+      "mode": "rounds",
+      "repeat": 1,
+      "note": "Score = heaviest successful clean",
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s3",
+          "exercise": "bb_clean",
+          "forMode": "reps",
+          "forValue": 1,
+          "note": "Build to a 1-rep max in whatever time is left of the 12 minutes"
+        }
+      ]
+    }
+  ]
+}

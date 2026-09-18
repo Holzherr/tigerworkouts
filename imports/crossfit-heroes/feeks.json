@@ -1,0 +1,66 @@
+{
+  "id": "cf-hero-feeks",
+  "title": "Feeks",
+  "creator": "CrossFit",
+  "description": "An ascending ladder of 2, 4, 6, up to 16 100 m shuttle sprints and dumbbell squat clean thrusters with 65/45 lb dumbbells. Honours U.S. Navy SEAL Petty Officer 1st Class Patrick D. Feeks, killed in a helicopter crash near Kandahar, Afghanistan, in 2012. 72 sprints and 72 thrusters; scale the dumbbells before the distance.",
+  "source": {
+    "title": "Feeks – CrossFit Hero WOD",
+    "url": "https://www.crossfit.com/benchmark/feeks",
+    "author": "CrossFit",
+    "kind": "benchmark",
+    "license": "Public benchmark; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "CrossFit",
+    "Hero",
+    "For time",
+    "Ladder",
+    "Dumbbell",
+    "Run"
+  ],
+  "level": "Hard",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "2-4-6-8-10-12-14-16",
+      "mode": "ladder",
+      "repeat": 1,
+      "note": "Rep scheme 2-4-6-8-10-12-14-16",
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "cardio_shuttle_run",
+          "forMode": "reps",
+          "forValue": 2,
+          "note": "100 m shuttle sprints"
+        },
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "db_squat_clean_thruster",
+          "target": 29.5,
+          "rx": {
+            "men": 29.5,
+            "women": 20.5
+          },
+          "forMode": "reps",
+          "forValue": 2,
+          "note": "65/45 lb"
+        }
+      ],
+      "ladder": [
+        2,
+        4,
+        6,
+        8,
+        10,
+        12,
+        14,
+        16
+      ]
+    }
+  ]
+}

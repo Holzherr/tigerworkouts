@@ -1,0 +1,74 @@
+{
+  "id": "cf-hero-blake",
+  "title": "Blake",
+  "creator": "CrossFit",
+  "description": "Four rounds of a 100 ft overhead walking lunge with a 45/25 lb plate, 30 box jumps, 20 wall balls and 10 handstand push-ups. Honours U.S. Navy Senior Chief David Blake McLendon, killed in a helicopter crash in Zabul Province, Afghanistan, in 2010. Scale handstand push-ups to pike push-ups.",
+  "source": {
+    "title": "Blake – CrossFit Hero WOD",
+    "url": "https://www.crossfit.com/benchmark/blake",
+    "author": "CrossFit",
+    "kind": "benchmark",
+    "license": "Public benchmark; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "CrossFit",
+    "Hero",
+    "For time",
+    "Wall ball",
+    "Gymnastics"
+  ],
+  "level": "Hard",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "Blake",
+      "mode": "fortime",
+      "repeat": 4,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "gym_plate_overhead_lunge",
+          "target": 20.5,
+          "rx": {
+            "men": 20.5,
+            "women": 11.5
+          },
+          "forMode": "meters",
+          "forValue": 30,
+          "note": "45/25 lb; 100 ft"
+        },
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "bw_box_jump",
+          "forMode": "reps",
+          "forValue": 30,
+          "note": "24/20 in box"
+        },
+        {
+          "kind": "exercise",
+          "id": "s3",
+          "exercise": "gym_wall_ball",
+          "target": 9.0,
+          "rx": {
+            "men": 9.0,
+            "women": 6.5
+          },
+          "forMode": "reps",
+          "forValue": 20,
+          "note": "20/14 lb; 10/9 ft target"
+        },
+        {
+          "kind": "exercise",
+          "id": "s4",
+          "exercise": "bw_handstand_pushup",
+          "forMode": "reps",
+          "forValue": 10
+        }
+      ]
+    }
+  ]
+}

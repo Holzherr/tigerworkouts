@@ -1,0 +1,97 @@
+{
+  "id": "cf-hero-maxim-56",
+  "title": "Maxim 56",
+  "creator": "CrossFit",
+  "description": "Partner workout: each partner buys in with a 56-second handstand hold or wall sit, then each completes 56 burpees, flutter kicks, walking lunges, hand-release push-ups and air squats before a shared 5,600 m run cash-out. Honours Chief Warrant Officers 2 Kirk Fuchigami and David Knadle, Apache pilots killed in a helicopter crash in Afghanistan in 2019. Solo athletes just do the whole thing.",
+  "source": {
+    "title": "Maxim 56 – CrossFit Hero WOD",
+    "url": "https://www.crossfit.com/benchmark/maxim-56",
+    "author": "CrossFit",
+    "kind": "benchmark",
+    "license": "Public benchmark; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "CrossFit",
+    "Hero WOD",
+    "For time",
+    "Partner",
+    "Bodyweight",
+    "Running"
+  ],
+  "level": "Hard",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "Buy-in",
+      "mode": "fortime",
+      "repeat": 1,
+      "note": "Each partner",
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "bw_handstand",
+          "forMode": "seconds",
+          "forValue": 56,
+          "note": "Or a 56-second wall sit; each partner"
+        }
+      ]
+    },
+    {
+      "kind": "block",
+      "id": "b2",
+      "name": "56s (each athlete)",
+      "mode": "fortime",
+      "repeat": 1,
+      "note": "Each athlete completes all reps",
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "bw_burpee",
+          "forMode": "reps",
+          "forValue": 56
+        },
+        {
+          "kind": "exercise",
+          "id": "s3",
+          "exercise": "bw_flutter_kick",
+          "forMode": "reps",
+          "forValue": 56,
+          "note": "4-count"
+        },
+        {
+          "kind": "exercise",
+          "id": "s4",
+          "exercise": "bw_lunge",
+          "forMode": "reps",
+          "forValue": 56
+        },
+        {
+          "kind": "exercise",
+          "id": "s5",
+          "exercise": "bw_hand_release_pushup",
+          "forMode": "reps",
+          "forValue": 56
+        },
+        {
+          "kind": "exercise",
+          "id": "s6",
+          "exercise": "bw_squat",
+          "forMode": "reps",
+          "forValue": 56
+        }
+      ]
+    },
+    {
+      "kind": "exercise",
+      "id": "s7",
+      "exercise": "cardio_run",
+      "forMode": "meters",
+      "forValue": 5600,
+      "note": "Cash-out"
+    }
+  ]
+}

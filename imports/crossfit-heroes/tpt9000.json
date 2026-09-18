@@ -1,0 +1,82 @@
+{
+  "id": "cf-hero-tpt9000",
+  "title": "TPT9000",
+  "creator": "CrossFit",
+  "description": "Run 100 m, then nine rounds of 8 burpees, 26 kettlebell swings, 21 wall balls and a 100 m run, for time. Honours U.S. Army Staff Sgt. Ryan Knauss of the 8th Psychological Operations Group, killed in the Kabul airport attack in 2021. A vest is optional; the wall balls add up to 189.",
+  "source": {
+    "title": "TPT9000 – CrossFit Hero WOD",
+    "url": "https://www.crossfit.com/benchmark/tpt9000-hero",
+    "author": "CrossFit",
+    "kind": "benchmark",
+    "license": "Public benchmark; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "CrossFit",
+    "Hero WOD",
+    "For time",
+    "Kettlebell",
+    "Wall ball",
+    "Running"
+  ],
+  "level": "Hard",
+  "items": [
+    {
+      "kind": "exercise",
+      "id": "s1",
+      "exercise": "cardio_run",
+      "forMode": "meters",
+      "forValue": 100
+    },
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "9 rounds",
+      "mode": "fortime",
+      "repeat": 9,
+      "note": "Optional 20/14 lb vest",
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "bw_burpee",
+          "forMode": "reps",
+          "forValue": 8
+        },
+        {
+          "kind": "exercise",
+          "id": "s3",
+          "exercise": "kb_swing",
+          "forMode": "reps",
+          "forValue": 26,
+          "target": 20,
+          "rx": {
+            "men": 20,
+            "women": 16
+          },
+          "note": "44/35 lb"
+        },
+        {
+          "kind": "exercise",
+          "id": "s4",
+          "exercise": "gym_wall_ball",
+          "forMode": "reps",
+          "forValue": 21,
+          "target": 9,
+          "rx": {
+            "men": 9,
+            "women": 6.5
+          },
+          "note": "20/14 lb — 10/9 ft target"
+        },
+        {
+          "kind": "exercise",
+          "id": "s5",
+          "exercise": "cardio_run",
+          "forMode": "meters",
+          "forValue": 100
+        }
+      ]
+    }
+  ]
+}

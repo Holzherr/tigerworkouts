@@ -1,0 +1,125 @@
+{
+  "id": "cf-open-25-3",
+  "title": "Open 25.3",
+  "creator": "CrossFit Games",
+  "description": "For time: 5 wall walks between every station of a 50-calorie row, 25 deadlifts at 225/155 lb, 25 cleans at 135/85, 25 snatches at 95/65 and a second 50-calorie row, 20-minute cap. 25 wall walks in total. Scaled used shorter wall walks and 135/95, 95/65 and 65/45 lb.",
+  "source": {
+    "title": "CrossFit Games Open 2025 – Workout 25.3",
+    "url": "https://games.crossfit.com/workouts/open/2025/3",
+    "author": "CrossFit Games",
+    "kind": "benchmark",
+    "license": "Public competition workout; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "CrossFit",
+    "CrossFit Open",
+    "2025",
+    "For time",
+    "Chipper",
+    "Barbell",
+    "Rower",
+    "Gymnastics"
+  ],
+  "level": "Hard",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "For time",
+      "mode": "fortime",
+      "repeat": 1,
+      "timeCapSec": 1200,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "bw_wall_walk",
+          "forMode": "reps",
+          "forValue": 5
+        },
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "cardio_rower",
+          "forMode": "calories",
+          "forValue": 50
+        },
+        {
+          "kind": "exercise",
+          "id": "s3",
+          "exercise": "bw_wall_walk",
+          "forMode": "reps",
+          "forValue": 5
+        },
+        {
+          "kind": "exercise",
+          "id": "s4",
+          "exercise": "bb_deadlift",
+          "target": 102.0,
+          "rx": {
+            "men": 102.0,
+            "women": 70.5
+          },
+          "forMode": "reps",
+          "forValue": 25,
+          "note": "225/155 lb"
+        },
+        {
+          "kind": "exercise",
+          "id": "s5",
+          "exercise": "bw_wall_walk",
+          "forMode": "reps",
+          "forValue": 5
+        },
+        {
+          "kind": "exercise",
+          "id": "s6",
+          "exercise": "bb_clean",
+          "target": 61.0,
+          "rx": {
+            "men": 61.0,
+            "women": 38.5
+          },
+          "forMode": "reps",
+          "forValue": 25,
+          "note": "135/85 lb. any style"
+        },
+        {
+          "kind": "exercise",
+          "id": "s7",
+          "exercise": "bw_wall_walk",
+          "forMode": "reps",
+          "forValue": 5
+        },
+        {
+          "kind": "exercise",
+          "id": "s8",
+          "exercise": "bb_snatch",
+          "target": 43.0,
+          "rx": {
+            "men": 43.0,
+            "women": 29.5
+          },
+          "forMode": "reps",
+          "forValue": 25,
+          "note": "95/65 lb. any style"
+        },
+        {
+          "kind": "exercise",
+          "id": "s9",
+          "exercise": "bw_wall_walk",
+          "forMode": "reps",
+          "forValue": 5
+        },
+        {
+          "kind": "exercise",
+          "id": "s10",
+          "exercise": "cardio_rower",
+          "forMode": "calories",
+          "forValue": 50
+        }
+      ]
+    }
+  ]
+}

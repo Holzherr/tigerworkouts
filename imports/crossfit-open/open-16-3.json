@@ -1,0 +1,55 @@
+{
+  "id": "cf-open-16-3",
+  "title": "Open 16.3",
+  "creator": "CrossFit Games",
+  "description": "Seven-minute AMRAP of 10 power snatches at 75/55 lb and 3 bar muscle-ups. Light bar, high heart rate, and a bar muscle-up you have to be able to do. Scaled swapped in 5 jumping chest-to-bar pull-ups and 45/35 lb.",
+  "source": {
+    "title": "CrossFit Games Open 2016 – Workout 16.3",
+    "url": "https://games.crossfit.com/workouts/open/2016",
+    "author": "CrossFit Games",
+    "kind": "benchmark",
+    "license": "Public competition workout; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "CrossFit",
+    "CrossFit Open",
+    "2016",
+    "AMRAP",
+    "Barbell",
+    "Gymnastics"
+  ],
+  "level": "Hard",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "AMRAP 7",
+      "mode": "amrap",
+      "repeat": 1,
+      "timeCapSec": 420,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "bb_power_snatch",
+          "target": 34.0,
+          "rx": {
+            "men": 34.0,
+            "women": 25.0
+          },
+          "forMode": "reps",
+          "forValue": 10,
+          "note": "75/55 lb"
+        },
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "bw_bar_muscle_up",
+          "forMode": "reps",
+          "forValue": 3
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,88 @@
+{
+  "id": "cf-hero-lorenzo",
+  "title": "Lorenzo",
+  "creator": "CrossFit",
+  "description": "A 1,000 m run, 5 rounds of 15 push-ups, 20 medicine-ball cleans and 21 burpees, then another 1,000 m run. Honours Lorenzo Zanetti, CrossFit Level 2 trainer and owner of Mad Tortuga CrossFit in Rovereto, Italy, who died of a heart attack in 2021. No load is prescribed for the ball; 20/14 lb is standard.",
+  "source": {
+    "title": "Lorenzo – CrossFit Hero WOD",
+    "url": "https://www.crossfit.com/benchmark/lorenzo",
+    "author": "CrossFit",
+    "kind": "benchmark",
+    "license": "Public benchmark; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "CrossFit",
+    "Hero",
+    "For time",
+    "Run",
+    "Bodyweight",
+    "Wall ball"
+  ],
+  "level": "Hard",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "Run",
+      "mode": "fortime",
+      "repeat": 1,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "cardio_run",
+          "forMode": "meters",
+          "forValue": 1000
+        }
+      ]
+    },
+    {
+      "kind": "block",
+      "id": "b2",
+      "name": "5 rounds",
+      "mode": "fortime",
+      "repeat": 5,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "bw_pushup",
+          "forMode": "reps",
+          "forValue": 15
+        },
+        {
+          "kind": "exercise",
+          "id": "s3",
+          "exercise": "gym_medball_clean",
+          "forMode": "reps",
+          "forValue": 20,
+          "note": "no load prescribed; 20/14 lb typical"
+        },
+        {
+          "kind": "exercise",
+          "id": "s4",
+          "exercise": "bw_burpee",
+          "forMode": "reps",
+          "forValue": 21
+        }
+      ]
+    },
+    {
+      "kind": "block",
+      "id": "b3",
+      "name": "Run",
+      "mode": "fortime",
+      "repeat": 1,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s5",
+          "exercise": "cardio_run",
+          "forMode": "meters",
+          "forValue": 1000
+        }
+      ]
+    }
+  ]
+}

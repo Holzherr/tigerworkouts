@@ -1,0 +1,115 @@
+{
+  "id": "cf-hero-josh",
+  "title": "Josh",
+  "creator": "CrossFit",
+  "description": "21 overhead squats at 95/65 lb and 42 pull-ups, 15 and 30, then 9 and 18. Honours U.S. Army Staff Sgt. Joshua Hager, killed by an IED in Ramadi, Iraq, in 2007. 90 pull-ups; scale to half the reps or a band.",
+  "source": {
+    "title": "Josh – CrossFit Hero WOD",
+    "url": "https://www.crossfit.com/benchmark/josh",
+    "author": "CrossFit",
+    "kind": "benchmark",
+    "license": "Public benchmark; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "CrossFit",
+    "Hero",
+    "For time",
+    "Ladder",
+    "Barbell",
+    "Bodyweight"
+  ],
+  "level": "Hard",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "21 / 42",
+      "mode": "fortime",
+      "repeat": 1,
+      "note": "Overhead squats 21-15-9, pull-ups 42-30-18",
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "bb_overhead_squat",
+          "target": 43.0,
+          "rx": {
+            "men": 43.0,
+            "women": 29.5
+          },
+          "forMode": "reps",
+          "forValue": 21,
+          "note": "95/65 lb"
+        },
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "bw_pullup",
+          "forMode": "reps",
+          "forValue": 42
+        }
+      ]
+    },
+    {
+      "kind": "block",
+      "id": "b2",
+      "name": "15 / 30",
+      "mode": "fortime",
+      "repeat": 1,
+      "note": "Overhead squats 21-15-9, pull-ups 42-30-18",
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s3",
+          "exercise": "bb_overhead_squat",
+          "target": 43.0,
+          "rx": {
+            "men": 43.0,
+            "women": 29.5
+          },
+          "forMode": "reps",
+          "forValue": 15,
+          "note": "95/65 lb"
+        },
+        {
+          "kind": "exercise",
+          "id": "s4",
+          "exercise": "bw_pullup",
+          "forMode": "reps",
+          "forValue": 30
+        }
+      ]
+    },
+    {
+      "kind": "block",
+      "id": "b3",
+      "name": "9 / 18",
+      "mode": "fortime",
+      "repeat": 1,
+      "note": "Overhead squats 21-15-9, pull-ups 42-30-18",
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s5",
+          "exercise": "bb_overhead_squat",
+          "target": 43.0,
+          "rx": {
+            "men": 43.0,
+            "women": 29.5
+          },
+          "forMode": "reps",
+          "forValue": 9,
+          "note": "95/65 lb"
+        },
+        {
+          "kind": "exercise",
+          "id": "s6",
+          "exercise": "bw_pullup",
+          "forMode": "reps",
+          "forValue": 18
+        }
+      ]
+    }
+  ]
+}

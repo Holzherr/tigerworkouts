@@ -1,0 +1,64 @@
+{
+  "id": "cf-open-18-1",
+  "title": "Open 18.1",
+  "creator": "CrossFit Games",
+  "description": "Twenty-minute AMRAP of 8 toes-to-bars, 10 dumbbell hang clean and jerks at 50/35 lb (5 per arm) and a 14/12-calorie row. Steady and honest; the rower calories decide most scores. Scaled used hanging knee raises and 35/20 lb.",
+  "source": {
+    "title": "CrossFit Games Open 2018 – Workout 18.1",
+    "url": "https://games.crossfit.com/workouts/open/2018/1",
+    "author": "CrossFit Games",
+    "kind": "benchmark",
+    "license": "Public competition workout; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "CrossFit",
+    "CrossFit Open",
+    "2018",
+    "AMRAP",
+    "Dumbbell",
+    "Rower"
+  ],
+  "level": "Hard",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "AMRAP 20",
+      "mode": "amrap",
+      "repeat": 1,
+      "timeCapSec": 1200,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "bw_toes_to_bar",
+          "forMode": "reps",
+          "forValue": 8
+        },
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "db_hang_clean_and_jerk",
+          "perSide": true,
+          "target": 22.5,
+          "rx": {
+            "men": 22.5,
+            "women": 16.0
+          },
+          "forMode": "reps",
+          "forValue": 5,
+          "note": "50/35 lb. single dumbbell, 5 per arm = 10 reps"
+        },
+        {
+          "kind": "exercise",
+          "id": "s3",
+          "exercise": "cardio_rower",
+          "forMode": "calories",
+          "forValue": 14,
+          "note": "14 cal men / 12 cal women"
+        }
+      ]
+    }
+  ]
+}

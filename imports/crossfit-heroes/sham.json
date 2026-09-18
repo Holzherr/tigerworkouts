@@ -1,0 +1,49 @@
+{
+  "id": "cf-hero-sham",
+  "title": "Sham",
+  "creator": "CrossFit",
+  "description": "Seven rounds of 11 bodyweight deadlifts and a 100 m sprint, for time. Honours U.S. Air Force Staff Sgt. David 'Sham' Wieger, an OSI special agent killed by an IED near Balad, Iraq, in 2007. Short and sharp; bodyweight on the bar should be unbroken every round.",
+  "source": {
+    "title": "Sham – CrossFit Hero WOD",
+    "url": "https://www.crossfit.com/benchmark/sham",
+    "author": "CrossFit",
+    "kind": "benchmark",
+    "license": "Public benchmark; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "CrossFit",
+    "Hero WOD",
+    "For time",
+    "Barbell",
+    "Running"
+  ],
+  "level": "Medium",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "7 rounds",
+      "mode": "fortime",
+      "repeat": 7,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "bb_deadlift",
+          "forMode": "reps",
+          "forValue": 11,
+          "note": "Bodyweight on the bar"
+        },
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "cardio_run",
+          "forMode": "meters",
+          "forValue": 100,
+          "note": "Sprint"
+        }
+      ]
+    }
+  ]
+}

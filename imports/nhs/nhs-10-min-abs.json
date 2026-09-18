@@ -1,0 +1,111 @@
+{
+  "id": "nhs-10-min-abs",
+  "title": "10-minute abs workout",
+  "creator": "NHS",
+  "description": "Five floor exercises for the core from the NHS 10-minute series: crunches, oblique crunches, plank and side plank holds, and a reverse crunch. Planks are short 5 to 10 second holds repeated 8 to 10 times rather than one long hold, which suits beginners. Do fewer holds or shorter ones if your form goes. Warm up first with the NHS 6-minute warm-up (nhs-6-min-warm-up) and finish with the 5-minute stretch (nhs-5-min-cool-down-stretch).",
+  "source": {
+    "title": "10-minute abs workout",
+    "url": "https://web.archive.org/web/20220401/https://www.nhs.uk/live-well/exercise/10-minute-abs-workout/",
+    "author": "NHS",
+    "kind": "article",
+    "license": "Open Government Licence v3.0 (NHS)",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "NHS",
+    "Home workout",
+    "No equipment",
+    "Core",
+    "10 minutes"
+  ],
+  "level": "Easy",
+  "items": [
+    {
+      "kind": "exercise",
+      "id": "s1",
+      "exercise": "bw_crunch",
+      "forMode": "reps",
+      "forValue": 12,
+      "note": "Hold a few seconds at the top, lower slowly"
+    },
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "Oblique crunches",
+      "repeat": 1,
+      "note": "12 each side",
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "bw_oblique_crunch",
+          "forMode": "reps",
+          "forValue": 12,
+          "note": "Knees rolled to the right"
+        },
+        {
+          "kind": "exercise",
+          "id": "s3",
+          "exercise": "bw_oblique_crunch",
+          "forMode": "reps",
+          "forValue": 12,
+          "note": "Knees rolled to the left"
+        }
+      ]
+    },
+    {
+      "kind": "block",
+      "id": "b2",
+      "name": "Plank",
+      "repeat": 8,
+      "note": "Hold 5 to 10 s, repeat 8 to 10 times",
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s4",
+          "exercise": "bw_plank",
+          "forMode": "seconds",
+          "forValue": 10
+        },
+        {
+          "kind": "rest",
+          "id": "r1",
+          "seconds": 5
+        }
+      ]
+    },
+    {
+      "kind": "block",
+      "id": "b3",
+      "name": "Side plank",
+      "repeat": 8,
+      "note": "Hold 5 to 10 s, 8 to 10 times each side (source does all one side first)",
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s5",
+          "exercise": "bw_side_plank",
+          "forMode": "seconds",
+          "forValue": 10,
+          "note": "Right side"
+        },
+        {
+          "kind": "exercise",
+          "id": "s6",
+          "exercise": "bw_side_plank",
+          "forMode": "seconds",
+          "forValue": 10,
+          "note": "Left side"
+        }
+      ]
+    },
+    {
+      "kind": "exercise",
+      "id": "s7",
+      "exercise": "bw_reverse_crunch",
+      "forMode": "reps",
+      "forValue": 12,
+      "note": "Stomach crunch with legs raised: knees at 90 degrees, tailbone lifts off the floor"
+    }
+  ]
+}

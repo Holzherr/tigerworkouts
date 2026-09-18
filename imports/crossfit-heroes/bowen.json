@@ -1,0 +1,82 @@
+{
+  "id": "cf-hero-bowen",
+  "title": "Bowen",
+  "creator": "CrossFit",
+  "description": "Three rounds of an 800 m run, 7 heavy deadlifts, 10 burpee pull-ups, 14 single-arm kettlebell thrusters and 20 box jumps. Honours Asheville Fire Department Captain Jeffrey Bowen, fatally injured fighting a four-alarm fire in 2011. Deadlift is 275/185 lb; scale that first.",
+  "source": {
+    "title": "Bowen – CrossFit Hero WOD",
+    "url": "https://www.crossfit.com/benchmark/bowen",
+    "author": "CrossFit",
+    "kind": "benchmark",
+    "license": "Public benchmark; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "CrossFit",
+    "Hero",
+    "For time",
+    "Run",
+    "Barbell",
+    "Kettlebell"
+  ],
+  "level": "Hard",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "Bowen",
+      "mode": "fortime",
+      "repeat": 3,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "cardio_run",
+          "forMode": "meters",
+          "forValue": 800
+        },
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "bb_deadlift",
+          "target": 124.5,
+          "rx": {
+            "men": 124.5,
+            "women": 84.0
+          },
+          "forMode": "reps",
+          "forValue": 7,
+          "note": "275/185 lb"
+        },
+        {
+          "kind": "exercise",
+          "id": "s3",
+          "exercise": "bw_burpee_pullup",
+          "forMode": "reps",
+          "forValue": 10
+        },
+        {
+          "kind": "exercise",
+          "id": "s4",
+          "exercise": "kb_thruster",
+          "target": 24,
+          "rx": {
+            "men": 24,
+            "women": 16
+          },
+          "forMode": "reps",
+          "forValue": 14,
+          "note": "53/35 lb; single arm, 7 each side"
+        },
+        {
+          "kind": "exercise",
+          "id": "s5",
+          "exercise": "bw_box_jump",
+          "forMode": "reps",
+          "forValue": 20,
+          "note": "24/20 in box"
+        }
+      ]
+    }
+  ]
+}

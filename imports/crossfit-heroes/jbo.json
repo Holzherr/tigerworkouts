@@ -1,0 +1,59 @@
+{
+  "id": "cf-hero-jbo",
+  "title": "JBo",
+  "creator": "CrossFit",
+  "description": "A 28-minute AMRAP of 9 overhead squats and 12 bench presses at 115/75 lb. Honours U.S. Army Staff Sgt. Jeremie \"JBo\" Border, 1st Special Forces Group, killed by small-arms fire in Batur Village, Afghanistan, in 2012. Long and shoulder-heavy; one bar can serve both if you have a rack nearby.",
+  "source": {
+    "title": "JBo – CrossFit Hero WOD",
+    "url": "https://www.crossfit.com/benchmark/jbo",
+    "author": "CrossFit",
+    "kind": "benchmark",
+    "license": "Public benchmark; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "CrossFit",
+    "Hero",
+    "AMRAP",
+    "Barbell"
+  ],
+  "level": "Hard",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "JBo",
+      "mode": "amrap",
+      "repeat": 1,
+      "timeCapSec": 1680,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "bb_overhead_squat",
+          "target": 52.0,
+          "rx": {
+            "men": 52.0,
+            "women": 34.0
+          },
+          "forMode": "reps",
+          "forValue": 9,
+          "note": "115/75 lb"
+        },
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "bb_bench",
+          "target": 52.0,
+          "rx": {
+            "men": 52.0,
+            "women": 34.0
+          },
+          "forMode": "reps",
+          "forValue": 12,
+          "note": "115/75 lb"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,68 @@
+{
+  "id": "cf-hero-thompson",
+  "title": "Thompson",
+  "creator": "CrossFit",
+  "description": "Ten rounds of one rope climb starting from seated on the floor, 29 back squats and a 10 m barbell farmers carry with two heavy bars, for time. Honours U.S. Army Special Forces Capt. David J. Thompson, commander of ODA 3334, killed in Wardak Province, Afghanistan, in 2010. 290 squats, so the bar is deliberately light.",
+  "source": {
+    "title": "Thompson – CrossFit Hero WOD",
+    "url": "https://www.crossfit.com/benchmark/thompson",
+    "author": "CrossFit",
+    "kind": "benchmark",
+    "license": "Public benchmark; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "CrossFit",
+    "Hero WOD",
+    "For time",
+    "Barbell",
+    "Rope climb",
+    "Carry"
+  ],
+  "level": "Hard",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "10 rounds",
+      "mode": "fortime",
+      "repeat": 10,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "gym_rope_climb",
+          "forMode": "reps",
+          "forValue": 1,
+          "note": "15 ft, start seated on the floor"
+        },
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "bb_back_squat",
+          "forMode": "reps",
+          "forValue": 29,
+          "target": 43,
+          "rx": {
+            "men": 43,
+            "women": 29.5
+          },
+          "note": "95/65 lb"
+        },
+        {
+          "kind": "exercise",
+          "id": "s3",
+          "exercise": "bb_farmers_carry",
+          "forMode": "meters",
+          "forValue": 10,
+          "target": 61,
+          "rx": {
+            "men": 61,
+            "women": 43
+          },
+          "note": "135/95 lb — One barbell in each hand"
+        }
+      ]
+    }
+  ]
+}

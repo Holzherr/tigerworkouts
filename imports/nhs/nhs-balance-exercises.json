@@ -1,0 +1,130 @@
+{
+  "id": "nhs-balance-exercises",
+  "title": "Balance exercises",
+  "creator": "NHS",
+  "description": "Five balance drills from the NHS for older adults and fall prevention: sideways walking, grapevine, heel-to-toe walk, one-leg stand and slow step-ups. Counts are small (5 to 10 steps, 5 to 10 second holds) and a wall or rail is allowed for support. Move away from the wall as it gets easier.",
+  "source": {
+    "title": "Balance exercises",
+    "url": "https://www.nhs.uk/live-well/exercise/balance-exercises/",
+    "author": "NHS",
+    "kind": "article",
+    "license": "Open Government Licence v3.0 (NHS)",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "NHS",
+    "Balance",
+    "Older adults",
+    "No equipment",
+    "Fall prevention"
+  ],
+  "level": "Easy",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "Sideways walking",
+      "repeat": 1,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "bw_sideways_walk",
+          "forMode": "reps",
+          "forValue": 10,
+          "note": "10 steps to the right"
+        },
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "bw_sideways_walk",
+          "forMode": "reps",
+          "forValue": 10,
+          "note": "10 steps to the left"
+        }
+      ]
+    },
+    {
+      "kind": "block",
+      "id": "b2",
+      "name": "Simple grapevine",
+      "repeat": 1,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s3",
+          "exercise": "bw_grapevine",
+          "forMode": "reps",
+          "forValue": 5,
+          "note": "5 cross-steps to the left"
+        },
+        {
+          "kind": "exercise",
+          "id": "s4",
+          "exercise": "bw_grapevine",
+          "forMode": "reps",
+          "forValue": 5,
+          "note": "5 cross-steps to the right"
+        }
+      ]
+    },
+    {
+      "kind": "exercise",
+      "id": "s5",
+      "exercise": "bw_heel_to_toe_walk",
+      "forMode": "reps",
+      "forValue": 5,
+      "note": "At least 5 steps, look forward"
+    },
+    {
+      "kind": "block",
+      "id": "b3",
+      "name": "One-leg stand",
+      "repeat": 3,
+      "note": "3 each side",
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s6",
+          "exercise": "bw_one_leg_stand",
+          "forMode": "seconds",
+          "forValue": 5,
+          "note": "Left leg lifted, hold 5 to 10 s"
+        },
+        {
+          "kind": "exercise",
+          "id": "s7",
+          "exercise": "bw_one_leg_stand",
+          "forMode": "seconds",
+          "forValue": 5,
+          "note": "Right leg lifted"
+        }
+      ]
+    },
+    {
+      "kind": "block",
+      "id": "b4",
+      "name": "Step-up",
+      "repeat": 1,
+      "note": "Up to 5 with each leg, use a rail",
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s8",
+          "exercise": "bw_step_up",
+          "forMode": "reps",
+          "forValue": 5,
+          "note": "Lead with the right leg, slow and controlled"
+        },
+        {
+          "kind": "exercise",
+          "id": "s9",
+          "exercise": "bw_step_up",
+          "forMode": "reps",
+          "forValue": 5,
+          "note": "Lead with the left leg"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,53 @@
+{
+  "id": "cf-girls-grettel",
+  "title": "Grettel",
+  "creator": "CrossFit",
+  "description": "Ten rounds of 3 clean and jerks at 135/95 lb and 3 burpees over the bar. A 2021 Girl that is essentially Grace with burpees between every three reps, so the barbell never gets to feel fresh. Scale the load so every set can be touch-and-go.",
+  "source": {
+    "title": "Grettel – CrossFit benchmark WOD (\"The Girls\")",
+    "url": "https://www.crossfit.com/benchmark/grettel",
+    "author": "CrossFit",
+    "kind": "benchmark",
+    "license": "Public benchmark; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "CrossFit",
+    "Girls",
+    "For time",
+    "Barbell",
+    "Bodyweight"
+  ],
+  "level": "Hard",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "Grettel",
+      "mode": "fortime",
+      "repeat": 10,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "bb_clean_and_jerk",
+          "target": 61,
+          "rx": {
+            "men": 61,
+            "women": 43
+          },
+          "forMode": "reps",
+          "forValue": 3,
+          "note": "135/95 lb"
+        },
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "bw_bar_facing_burpee",
+          "forMode": "reps",
+          "forValue": 3
+        }
+      ]
+    }
+  ]
+}

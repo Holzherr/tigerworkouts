@@ -1,0 +1,146 @@
+{
+  "id": "cf-hero-coffey",
+  "title": "Coffey",
+  "creator": "CrossFit",
+  "description": "Four 800 m runs separated by descending sets of back squats and bench presses (50, 35, 20) at 135/95 lb, finished with a single muscle-up. Honours U.S. Marine Cpl. Keaton G. Coffey, killed in Helmand Province, Afghanistan, in 2012. Scale the bench to a load you can press for 15s.",
+  "source": {
+    "title": "Coffey – CrossFit Hero WOD",
+    "url": "https://www.crossfit.com/benchmark/coffey",
+    "author": "CrossFit",
+    "kind": "benchmark",
+    "license": "Public benchmark; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "CrossFit",
+    "Hero",
+    "For time",
+    "Run",
+    "Barbell"
+  ],
+  "level": "Hard",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "Coffey",
+      "mode": "fortime",
+      "repeat": 1,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "cardio_run",
+          "forMode": "meters",
+          "forValue": 800
+        },
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "bb_back_squat",
+          "target": 61.0,
+          "rx": {
+            "men": 61.0,
+            "women": 43.0
+          },
+          "forMode": "reps",
+          "forValue": 50,
+          "note": "135/95 lb"
+        },
+        {
+          "kind": "exercise",
+          "id": "s3",
+          "exercise": "bb_bench",
+          "target": 61.0,
+          "rx": {
+            "men": 61.0,
+            "women": 43.0
+          },
+          "forMode": "reps",
+          "forValue": 50,
+          "note": "135/95 lb"
+        },
+        {
+          "kind": "exercise",
+          "id": "s4",
+          "exercise": "cardio_run",
+          "forMode": "meters",
+          "forValue": 800
+        },
+        {
+          "kind": "exercise",
+          "id": "s5",
+          "exercise": "bb_back_squat",
+          "target": 61.0,
+          "rx": {
+            "men": 61.0,
+            "women": 43.0
+          },
+          "forMode": "reps",
+          "forValue": 35,
+          "note": "135/95 lb"
+        },
+        {
+          "kind": "exercise",
+          "id": "s6",
+          "exercise": "bb_bench",
+          "target": 61.0,
+          "rx": {
+            "men": 61.0,
+            "women": 43.0
+          },
+          "forMode": "reps",
+          "forValue": 35,
+          "note": "135/95 lb"
+        },
+        {
+          "kind": "exercise",
+          "id": "s7",
+          "exercise": "cardio_run",
+          "forMode": "meters",
+          "forValue": 800
+        },
+        {
+          "kind": "exercise",
+          "id": "s8",
+          "exercise": "bb_back_squat",
+          "target": 61.0,
+          "rx": {
+            "men": 61.0,
+            "women": 43.0
+          },
+          "forMode": "reps",
+          "forValue": 20,
+          "note": "135/95 lb"
+        },
+        {
+          "kind": "exercise",
+          "id": "s9",
+          "exercise": "bb_bench",
+          "target": 61.0,
+          "rx": {
+            "men": 61.0,
+            "women": 43.0
+          },
+          "forMode": "reps",
+          "forValue": 20,
+          "note": "135/95 lb"
+        },
+        {
+          "kind": "exercise",
+          "id": "s10",
+          "exercise": "cardio_run",
+          "forMode": "meters",
+          "forValue": 800
+        },
+        {
+          "kind": "exercise",
+          "id": "s11",
+          "exercise": "gym_muscle_up",
+          "forMode": "reps",
+          "forValue": 1
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,167 @@
+{
+  "id": "cf-open-23-3",
+  "title": "Open 23.3",
+  "creator": "CrossFit Games",
+  "description": "Starting on a 6-minute clock: 5 wall walks, 50 double-unders, 15 snatches at 95/65 lb, 5 wall walks, 50 double-unders, 12 snatches at 135/95. Finish and you get 3 more minutes for 20 strict handstand push-ups, 50 double-unders and 9 snatches at 185/125, then 3 more for the same with 6 at 225/155. Scaled used shorter wall walks, single-unders, hand-release push-ups and 65/45 to 135/85 lb.",
+  "source": {
+    "title": "CrossFit Games Open 2023 – Workout 23.3",
+    "url": "https://games.crossfit.com/workouts/open/2023/3",
+    "author": "CrossFit Games",
+    "kind": "benchmark",
+    "license": "Public competition workout; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "CrossFit",
+    "CrossFit Open",
+    "2023",
+    "For time",
+    "Intervals",
+    "Barbell",
+    "Gymnastics"
+  ],
+  "level": "Hard",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "0:00–6:00",
+      "mode": "fortime",
+      "repeat": 1,
+      "timeCapSec": 360,
+      "note": "Finish inside the cap to unlock the next section",
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "bw_wall_walk",
+          "forMode": "reps",
+          "forValue": 5
+        },
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "bw_double_under",
+          "forMode": "reps",
+          "forValue": 50
+        },
+        {
+          "kind": "exercise",
+          "id": "s3",
+          "exercise": "bb_snatch",
+          "target": 43.0,
+          "rx": {
+            "men": 43.0,
+            "women": 29.5
+          },
+          "forMode": "reps",
+          "forValue": 15,
+          "note": "95/65 lb"
+        },
+        {
+          "kind": "exercise",
+          "id": "s4",
+          "exercise": "bw_wall_walk",
+          "forMode": "reps",
+          "forValue": 5
+        },
+        {
+          "kind": "exercise",
+          "id": "s5",
+          "exercise": "bw_double_under",
+          "forMode": "reps",
+          "forValue": 50
+        },
+        {
+          "kind": "exercise",
+          "id": "s6",
+          "exercise": "bb_snatch",
+          "target": 61.0,
+          "rx": {
+            "men": 61.0,
+            "women": 43.0
+          },
+          "forMode": "reps",
+          "forValue": 12,
+          "note": "135/95 lb"
+        }
+      ]
+    },
+    {
+      "kind": "block",
+      "id": "b2",
+      "name": "6:00–9:00",
+      "mode": "fortime",
+      "repeat": 1,
+      "timeCapSec": 180,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s7",
+          "exercise": "bw_handstand_pushup",
+          "forMode": "reps",
+          "forValue": 20,
+          "note": "strict"
+        },
+        {
+          "kind": "exercise",
+          "id": "s8",
+          "exercise": "bw_double_under",
+          "forMode": "reps",
+          "forValue": 50
+        },
+        {
+          "kind": "exercise",
+          "id": "s9",
+          "exercise": "bb_snatch",
+          "target": 84.0,
+          "rx": {
+            "men": 84.0,
+            "women": 56.5
+          },
+          "forMode": "reps",
+          "forValue": 9,
+          "note": "185/125 lb"
+        }
+      ]
+    },
+    {
+      "kind": "block",
+      "id": "b3",
+      "name": "9:00–12:00",
+      "mode": "fortime",
+      "repeat": 1,
+      "timeCapSec": 180,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s10",
+          "exercise": "bw_handstand_pushup",
+          "forMode": "reps",
+          "forValue": 20,
+          "note": "strict"
+        },
+        {
+          "kind": "exercise",
+          "id": "s11",
+          "exercise": "bw_double_under",
+          "forMode": "reps",
+          "forValue": 50
+        },
+        {
+          "kind": "exercise",
+          "id": "s12",
+          "exercise": "bb_snatch",
+          "target": 102.0,
+          "rx": {
+            "men": 102.0,
+            "women": 70.5
+          },
+          "forMode": "reps",
+          "forValue": 6,
+          "note": "225/155 lb"
+        }
+      ]
+    }
+  ]
+}

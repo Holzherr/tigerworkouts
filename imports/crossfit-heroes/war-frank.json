@@ -1,0 +1,55 @@
+{
+  "id": "cf-hero-war-frank",
+  "title": "War Frank",
+  "creator": "CrossFit",
+  "description": "Three rounds of 25 muscle-ups, 100 squats and 35 GHD sit-ups, for time. Honours U.S. Marine Capt. Warren A. Frank, killed supporting combat operations in Ninewa Province, Iraq, in 2008. Seventy-five muscle-ups: one of the highest-skill Hero WODs, so scale to pull-ups and dips.",
+  "source": {
+    "title": "War Frank – CrossFit Hero WOD",
+    "url": "https://www.crossfit.com/benchmark/war-frank",
+    "author": "CrossFit",
+    "kind": "benchmark",
+    "license": "Public benchmark; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "CrossFit",
+    "Hero WOD",
+    "For time",
+    "Gymnastics",
+    "Bodyweight",
+    "Core"
+  ],
+  "level": "Hard",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "3 rounds",
+      "mode": "fortime",
+      "repeat": 3,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "gym_muscle_up",
+          "forMode": "reps",
+          "forValue": 25
+        },
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "bw_squat",
+          "forMode": "reps",
+          "forValue": 100
+        },
+        {
+          "kind": "exercise",
+          "id": "s3",
+          "exercise": "gym_ghd_situp",
+          "forMode": "reps",
+          "forValue": 35
+        }
+      ]
+    }
+  ]
+}

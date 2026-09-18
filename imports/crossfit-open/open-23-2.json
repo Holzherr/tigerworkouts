@@ -1,0 +1,117 @@
+{
+  "id": "cf-open-23-2",
+  "title": "Open 23.2 A & B",
+  "creator": "CrossFit Games",
+  "description": "23.2A is a 15-minute AMRAP of burpee pull-ups and 10 shuttle runs (25 ft out and back), with the burpee pull-ups climbing by 5 each round. 23.2B follows straight away: five minutes to find a one-rep-max thruster from the floor. Scaled replaced burpee pull-ups with burpees.",
+  "source": {
+    "title": "CrossFit Games Open 2023 – Workout 23.2",
+    "url": "https://games.crossfit.com/workouts/open/2023/2",
+    "author": "CrossFit Games",
+    "kind": "benchmark",
+    "license": "Public competition workout; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "CrossFit",
+    "CrossFit Open",
+    "2023",
+    "AMRAP",
+    "Ladder",
+    "Max lift",
+    "Run",
+    "Barbell"
+  ],
+  "level": "Hard",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "23.2A · AMRAP 15",
+      "mode": "amrap",
+      "repeat": 1,
+      "timeCapSec": 900,
+      "note": "Add 5 burpee pull-ups each round (5, 10, 15, 20…); listed to round 4. Score = total reps.",
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "bw_burpee_pullup",
+          "forMode": "reps",
+          "forValue": 5
+        },
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "cardio_shuttle_run",
+          "forMode": "reps",
+          "forValue": 10,
+          "note": "1 rep = 25 ft out and 25 ft back"
+        },
+        {
+          "kind": "exercise",
+          "id": "s3",
+          "exercise": "bw_burpee_pullup",
+          "forMode": "reps",
+          "forValue": 10
+        },
+        {
+          "kind": "exercise",
+          "id": "s4",
+          "exercise": "cardio_shuttle_run",
+          "forMode": "reps",
+          "forValue": 10,
+          "note": "1 rep = 25 ft out and 25 ft back"
+        },
+        {
+          "kind": "exercise",
+          "id": "s5",
+          "exercise": "bw_burpee_pullup",
+          "forMode": "reps",
+          "forValue": 15
+        },
+        {
+          "kind": "exercise",
+          "id": "s6",
+          "exercise": "cardio_shuttle_run",
+          "forMode": "reps",
+          "forValue": 10,
+          "note": "1 rep = 25 ft out and 25 ft back"
+        },
+        {
+          "kind": "exercise",
+          "id": "s7",
+          "exercise": "bw_burpee_pullup",
+          "forMode": "reps",
+          "forValue": 20
+        },
+        {
+          "kind": "exercise",
+          "id": "s8",
+          "exercise": "cardio_shuttle_run",
+          "forMode": "reps",
+          "forValue": 10,
+          "note": "1 rep = 25 ft out and 25 ft back"
+        }
+      ]
+    },
+    {
+      "kind": "block",
+      "id": "b2",
+      "name": "23.2B · 1-rep-max thruster",
+      "mode": "fortime",
+      "repeat": 1,
+      "timeCapSec": 300,
+      "note": "Starts immediately after 23.2A; 5 minutes",
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s9",
+          "exercise": "bb_thruster",
+          "forMode": "reps",
+          "forValue": 1,
+          "note": "From the floor; build to a 1-rep max"
+        }
+      ]
+    }
+  ]
+}

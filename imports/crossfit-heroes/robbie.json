@@ -1,0 +1,49 @@
+{
+  "id": "cf-hero-robbie",
+  "title": "Robbie",
+  "creator": "CrossFit",
+  "description": "A 25-minute AMRAP of 8 freestanding handstand push-ups and 1 L-sit rope climb. Honours U.S. Army Special Forces Staff Sgt. Robert J. Miller, Medal of Honor recipient, killed in Bari Kowt, Afghanistan, in 2008. Extremely high skill; substitute wall HSPU and legs-tucked rope climbs.",
+  "source": {
+    "title": "Robbie – CrossFit Hero WOD",
+    "url": "https://www.crossfit.com/benchmark/robbie",
+    "author": "CrossFit",
+    "kind": "benchmark",
+    "license": "Public benchmark; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "CrossFit",
+    "Hero WOD",
+    "AMRAP",
+    "Gymnastics",
+    "Rope climb"
+  ],
+  "level": "Hard",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "AMRAP 25",
+      "mode": "amrap",
+      "timeCapSec": 1500,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "bw_handstand_pushup",
+          "forMode": "reps",
+          "forValue": 8,
+          "note": "Freestanding"
+        },
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "gym_rope_climb",
+          "forMode": "reps",
+          "forValue": 1,
+          "note": "L-sit, 15 ft"
+        }
+      ]
+    }
+  ]
+}

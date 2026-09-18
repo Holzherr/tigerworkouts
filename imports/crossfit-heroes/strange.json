@@ -1,0 +1,79 @@
+{
+  "id": "cf-hero-strange",
+  "title": "Strange",
+  "creator": "CrossFit",
+  "description": "Eight rounds of a 600 m run, 11 weighted pull-ups, 11 walking lunges with two kettlebells and 11 kettlebell thrusters, for time. Honours Navy Cryptologic Technician Petty Officer 1st Class Michael J. Strange, killed in the same 2011 helicopter crash in Wardak Province. Two kettlebells at 53/35 lb throughout; a single-bell version is a fair scale.",
+  "source": {
+    "title": "Strange – CrossFit Hero WOD",
+    "url": "https://www.crossfit.com/benchmark/strange",
+    "author": "CrossFit",
+    "kind": "benchmark",
+    "license": "Public benchmark; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "CrossFit",
+    "Hero WOD",
+    "For time",
+    "Kettlebell",
+    "Running"
+  ],
+  "level": "Hard",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "8 rounds",
+      "mode": "fortime",
+      "repeat": 8,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "cardio_run",
+          "forMode": "meters",
+          "forValue": 600
+        },
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "bw_weighted_pullup",
+          "forMode": "reps",
+          "forValue": 11,
+          "target": 24,
+          "rx": {
+            "men": 24,
+            "women": 16
+          },
+          "note": "53/35 lb — Kettlebell"
+        },
+        {
+          "kind": "exercise",
+          "id": "s3",
+          "exercise": "kb_lunge",
+          "forMode": "reps",
+          "forValue": 11,
+          "target": 24,
+          "rx": {
+            "men": 24,
+            "women": 16
+          },
+          "note": "53/35 lb — Two kettlebells"
+        },
+        {
+          "kind": "exercise",
+          "id": "s4",
+          "exercise": "kb_thruster",
+          "forMode": "reps",
+          "forValue": 11,
+          "target": 24,
+          "rx": {
+            "men": 24,
+            "women": 16
+          },
+          "note": "53/35 lb — Two kettlebells"
+        }
+      ]
+    }
+  ]
+}

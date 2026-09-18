@@ -1,0 +1,93 @@
+{
+  "id": "cf-hero-big-sexy",
+  "title": "Big Sexy",
+  "creator": "CrossFit",
+  "description": "Five rounds of 6 deadlifts at 315/205 lb, 6 burpees, 5 cleans at 225/155 lb, 5 chest-to-bar pull-ups, 4 thrusters at 155/105 lb and 4 muscle-ups. Honours Hood County SWAT Sgt. Lance \"Big Sexy\" McLean, shot in the line of duty in Texas in 2013. Three bars and heavy loads; scale each to about 70% of the Rx.",
+  "source": {
+    "title": "Big Sexy – CrossFit Hero WOD",
+    "url": "https://www.crossfit.com/benchmark/big-sexy",
+    "author": "CrossFit",
+    "kind": "benchmark",
+    "license": "Public benchmark; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "CrossFit",
+    "Hero",
+    "For time",
+    "Barbell",
+    "Gymnastics"
+  ],
+  "level": "Hard",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "Big Sexy",
+      "mode": "fortime",
+      "repeat": 5,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "bb_deadlift",
+          "target": 143.0,
+          "rx": {
+            "men": 143.0,
+            "women": 93.0
+          },
+          "forMode": "reps",
+          "forValue": 6,
+          "note": "315/205 lb"
+        },
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "bw_burpee",
+          "forMode": "reps",
+          "forValue": 6
+        },
+        {
+          "kind": "exercise",
+          "id": "s3",
+          "exercise": "bb_squat_clean",
+          "target": 102.0,
+          "rx": {
+            "men": 102.0,
+            "women": 70.5
+          },
+          "forMode": "reps",
+          "forValue": 5,
+          "note": "225/155 lb"
+        },
+        {
+          "kind": "exercise",
+          "id": "s4",
+          "exercise": "bw_chest_to_bar_pullup",
+          "forMode": "reps",
+          "forValue": 5
+        },
+        {
+          "kind": "exercise",
+          "id": "s5",
+          "exercise": "bb_thruster",
+          "target": 70.5,
+          "rx": {
+            "men": 70.5,
+            "women": 47.5
+          },
+          "forMode": "reps",
+          "forValue": 4,
+          "note": "155/105 lb"
+        },
+        {
+          "kind": "exercise",
+          "id": "s6",
+          "exercise": "gym_muscle_up",
+          "forMode": "reps",
+          "forValue": 4
+        }
+      ]
+    }
+  ]
+}

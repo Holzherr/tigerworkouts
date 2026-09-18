@@ -1,0 +1,55 @@
+{
+  "id": "proto-emom-20-swings-pushups",
+  "title": "EMOM 20: 10 kettlebell swings / 10 push-ups",
+  "creator": "Common EMOM template",
+  "description": "Twenty minutes alternating minutes: odd minutes 10 kettlebell swings, even minutes 10 push-ups. Each movement gets almost two minutes to recover, so the reps should stay crisp. Modelled as ten 2-minute rounds; start the swings on the minute and the push-ups at the top of the next.",
+  "source": {
+    "title": "CrossFit Terms Explained – EMOM",
+    "url": "https://www.crossfit.com/essentials/crossfit-terms-explained",
+    "author": "CrossFit (format); common template",
+    "kind": "protocol",
+    "license": "Published protocol; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "EMOM",
+    "Kettlebell",
+    "Bodyweight",
+    "Template"
+  ],
+  "level": "Medium",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "EMOM 20 (alternating)",
+      "mode": "emom",
+      "repeat": 10,
+      "everySec": 120,
+      "note": "Alternate: swings on odd minutes, push-ups on even minutes. everySec 120 = one pair of minutes.",
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "kb_swing",
+          "forMode": "reps",
+          "forValue": 10,
+          "target": 24,
+          "rx": {
+            "men": 24,
+            "women": 16
+          },
+          "note": "Odd minutes"
+        },
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "bw_pushup",
+          "forMode": "reps",
+          "forValue": 10,
+          "note": "Even minutes"
+        }
+      ]
+    }
+  ]
+}

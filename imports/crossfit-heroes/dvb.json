@@ -1,0 +1,166 @@
+{
+  "id": "cf-hero-dvb",
+  "title": "DVB",
+  "creator": "CrossFit",
+  "description": "Runs of 1 mile, 800 m and 400 m carrying a 20/14 lb medicine ball, each followed by 8, 4 and 2 rounds of 10 wall balls and a rope climb. Honours Las Vegas Metropolitan Police Officer David Vanbuskirk, killed in a 2013 aerial rescue. Scale rope climbs to rope pulls.",
+  "source": {
+    "title": "DVB – CrossFit Hero WOD",
+    "url": "https://www.crossfit.com/benchmark/dvb",
+    "author": "CrossFit",
+    "kind": "benchmark",
+    "license": "Public benchmark; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "CrossFit",
+    "Hero",
+    "For time",
+    "Run",
+    "Wall ball",
+    "Gymnastics"
+  ],
+  "level": "Hard",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "Run",
+      "mode": "fortime",
+      "repeat": 1,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "cardio_run",
+          "forMode": "meters",
+          "forValue": 1609,
+          "note": "carry the 20/14 lb medicine ball"
+        }
+      ]
+    },
+    {
+      "kind": "block",
+      "id": "b2",
+      "name": "8 rounds",
+      "mode": "fortime",
+      "repeat": 8,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "gym_wall_ball",
+          "target": 9.0,
+          "rx": {
+            "men": 9.0,
+            "women": 6.5
+          },
+          "forMode": "reps",
+          "forValue": 10,
+          "note": "20/14 lb; 10/9 ft target"
+        },
+        {
+          "kind": "exercise",
+          "id": "s3",
+          "exercise": "gym_rope_climb",
+          "forMode": "reps",
+          "forValue": 1,
+          "note": "15 ft"
+        }
+      ]
+    },
+    {
+      "kind": "block",
+      "id": "b3",
+      "name": "Run",
+      "mode": "fortime",
+      "repeat": 1,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s4",
+          "exercise": "cardio_run",
+          "forMode": "meters",
+          "forValue": 800,
+          "note": "carry the 20/14 lb medicine ball"
+        }
+      ]
+    },
+    {
+      "kind": "block",
+      "id": "b4",
+      "name": "4 rounds",
+      "mode": "fortime",
+      "repeat": 4,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s5",
+          "exercise": "gym_wall_ball",
+          "target": 9.0,
+          "rx": {
+            "men": 9.0,
+            "women": 6.5
+          },
+          "forMode": "reps",
+          "forValue": 10,
+          "note": "20/14 lb; 10/9 ft target"
+        },
+        {
+          "kind": "exercise",
+          "id": "s6",
+          "exercise": "gym_rope_climb",
+          "forMode": "reps",
+          "forValue": 1,
+          "note": "15 ft"
+        }
+      ]
+    },
+    {
+      "kind": "block",
+      "id": "b5",
+      "name": "Run",
+      "mode": "fortime",
+      "repeat": 1,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s7",
+          "exercise": "cardio_run",
+          "forMode": "meters",
+          "forValue": 400,
+          "note": "carry the 20/14 lb medicine ball"
+        }
+      ]
+    },
+    {
+      "kind": "block",
+      "id": "b6",
+      "name": "2 rounds",
+      "mode": "fortime",
+      "repeat": 2,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s8",
+          "exercise": "gym_wall_ball",
+          "target": 9.0,
+          "rx": {
+            "men": 9.0,
+            "women": 6.5
+          },
+          "forMode": "reps",
+          "forValue": 10,
+          "note": "20/14 lb; 10/9 ft target"
+        },
+        {
+          "kind": "exercise",
+          "id": "s9",
+          "exercise": "gym_rope_climb",
+          "forMode": "reps",
+          "forValue": 1,
+          "note": "15 ft"
+        }
+      ]
+    }
+  ]
+}

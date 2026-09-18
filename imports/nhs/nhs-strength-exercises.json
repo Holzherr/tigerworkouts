@@ -1,0 +1,140 @@
+{
+  "id": "nhs-strength-exercises",
+  "title": "Strength exercises (chair-supported)",
+  "creator": "NHS",
+  "description": "Seven gentle strength moves from the NHS pages aimed at older adults or anyone starting out: sit-to-stand, mini squats, calf raises, sideways leg lifts, standing leg extensions, wall press-ups and biceps curls with light weights or water bottles. Most are 5 slow reps with a chair for support. Progress by removing the support or adding weight.",
+  "source": {
+    "title": "Strength exercises",
+    "url": "https://www.nhs.uk/live-well/exercise/strength-exercises/",
+    "author": "NHS",
+    "kind": "article",
+    "license": "Open Government Licence v3.0 (NHS)",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "NHS",
+    "Strength",
+    "Older adults",
+    "Chair",
+    "Beginner",
+    "Home workout"
+  ],
+  "level": "Easy",
+  "items": [
+    {
+      "kind": "exercise",
+      "id": "s1",
+      "exercise": "bw_sit_to_stand",
+      "forMode": "reps",
+      "forValue": 5,
+      "note": "Slow; the slower the better"
+    },
+    {
+      "kind": "exercise",
+      "id": "s2",
+      "exercise": "bw_mini_squat",
+      "forMode": "reps",
+      "forValue": 5,
+      "note": "Hands on the back of a chair, knees over the big toe"
+    },
+    {
+      "kind": "exercise",
+      "id": "s3",
+      "exercise": "bw_calf_raise",
+      "forMode": "reps",
+      "forValue": 5,
+      "note": "Hands on a chair; without support for more"
+    },
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "Sideways leg lift",
+      "repeat": 1,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s4",
+          "exercise": "bw_standing_side_leg_lift",
+          "forMode": "reps",
+          "forValue": 5,
+          "note": "Right leg"
+        },
+        {
+          "kind": "exercise",
+          "id": "s5",
+          "exercise": "bw_standing_side_leg_lift",
+          "forMode": "reps",
+          "forValue": 5,
+          "note": "Left leg"
+        }
+      ]
+    },
+    {
+      "kind": "block",
+      "id": "b2",
+      "name": "Leg extension",
+      "repeat": 1,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s6",
+          "exercise": "bw_standing_leg_extension",
+          "forMode": "reps",
+          "forValue": 5,
+          "note": "Left leg, hold up to 5 s"
+        },
+        {
+          "kind": "exercise",
+          "id": "s7",
+          "exercise": "bw_standing_leg_extension",
+          "forMode": "reps",
+          "forValue": 5,
+          "note": "Right leg, hold up to 5 s"
+        }
+      ]
+    },
+    {
+      "kind": "block",
+      "id": "b3",
+      "name": "Wall press-up",
+      "repeat": 3,
+      "note": "3 sets of 5 to 10",
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s8",
+          "exercise": "bw_wall_pushup",
+          "forMode": "reps",
+          "forValue": 5
+        },
+        {
+          "kind": "rest",
+          "id": "r1",
+          "seconds": 30
+        }
+      ]
+    },
+    {
+      "kind": "block",
+      "id": "b4",
+      "name": "Biceps curls",
+      "repeat": 3,
+      "note": "3 sets of 5 with each arm",
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s9",
+          "exercise": "db_curl",
+          "forMode": "reps",
+          "forValue": 5,
+          "note": "Light weights or filled water bottles; standing or seated"
+        },
+        {
+          "kind": "rest",
+          "id": "r2",
+          "seconds": 30
+        }
+      ]
+    }
+  ]
+}

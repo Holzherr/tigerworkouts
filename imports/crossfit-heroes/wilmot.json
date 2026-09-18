@@ -1,0 +1,47 @@
+{
+  "id": "cf-hero-wilmot",
+  "title": "Wilmot",
+  "creator": "CrossFit",
+  "description": "Six rounds of 50 squats and 25 ring dips, for time. Honours Canadian Forces Pvt. Colin Wilmot of 2 PPCLI, killed by an explosive device in Panjwaii District, Afghanistan, in 2008. 150 ring dips; banded dips or bench dips are a reasonable scale.",
+  "source": {
+    "title": "Wilmot – CrossFit Hero WOD",
+    "url": "https://www.crossfit.com/benchmark/wilmot",
+    "author": "CrossFit",
+    "kind": "benchmark",
+    "license": "Public benchmark; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "CrossFit",
+    "Hero WOD",
+    "For time",
+    "Bodyweight",
+    "Rings"
+  ],
+  "level": "Hard",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "6 rounds",
+      "mode": "fortime",
+      "repeat": 6,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "bw_squat",
+          "forMode": "reps",
+          "forValue": 50
+        },
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "gym_ring_dip",
+          "forMode": "reps",
+          "forValue": 25
+        }
+      ]
+    }
+  ]
+}

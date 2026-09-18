@@ -1,0 +1,72 @@
+{
+  "id": "cf-hero-murph",
+  "title": "Murph",
+  "creator": "CrossFit",
+  "description": "Run a mile, then 100 pull-ups, 200 push-ups and 300 squats partitioned however you like, then run another mile, ideally in a 20 lb vest. Honours Navy Lt. Michael Murphy, killed in Afghanistan in June 2005; he called the workout 'Body Armor'. The most famous Hero WOD: scale by halving the reps or dropping the vest before dropping the runs.",
+  "source": {
+    "title": "Murph – CrossFit Hero WOD",
+    "url": "https://www.crossfit.com/benchmark/murph",
+    "author": "CrossFit",
+    "kind": "benchmark",
+    "license": "Public benchmark; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "CrossFit",
+    "Hero WOD",
+    "For time",
+    "Bodyweight",
+    "Running",
+    "Weight vest"
+  ],
+  "level": "Hard",
+  "items": [
+    {
+      "kind": "exercise",
+      "id": "s1",
+      "exercise": "cardio_run",
+      "forMode": "meters",
+      "forValue": 1609,
+      "note": "1 mile"
+    },
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "100-200-300",
+      "mode": "fortime",
+      "repeat": 1,
+      "note": "Partition the pull-ups, push-ups and squats as needed (20 rounds of 5-10-15 is common). 20/14 lb (9/6.5 kg) vest if you have one.",
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "bw_pullup",
+          "forMode": "reps",
+          "forValue": 100
+        },
+        {
+          "kind": "exercise",
+          "id": "s3",
+          "exercise": "bw_pushup",
+          "forMode": "reps",
+          "forValue": 200
+        },
+        {
+          "kind": "exercise",
+          "id": "s4",
+          "exercise": "bw_squat",
+          "forMode": "reps",
+          "forValue": 300
+        }
+      ]
+    },
+    {
+      "kind": "exercise",
+      "id": "s5",
+      "exercise": "cardio_run",
+      "forMode": "meters",
+      "forValue": 1609,
+      "note": "1 mile"
+    }
+  ]
+}

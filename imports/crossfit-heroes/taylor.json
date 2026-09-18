@@ -1,0 +1,49 @@
+{
+  "id": "cf-hero-taylor",
+  "title": "Taylor",
+  "creator": "CrossFit",
+  "description": "Four rounds of a 400 m run and 5 burpee muscle-ups, in a vest, for time. Honours U.S. Army Spc. David Wayne Taylor, 82nd Airborne, killed in an accident at an ammunition supply point in Kandahar in 2012. Only 20 muscle-ups, so this is fast if you have them.",
+  "source": {
+    "title": "Taylor – CrossFit Hero WOD",
+    "url": "https://www.crossfit.com/benchmark/taylor",
+    "author": "CrossFit",
+    "kind": "benchmark",
+    "license": "Public benchmark; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "CrossFit",
+    "Hero WOD",
+    "For time",
+    "Gymnastics",
+    "Running",
+    "Weight vest"
+  ],
+  "level": "Medium",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "4 rounds",
+      "mode": "fortime",
+      "repeat": 4,
+      "note": "20/14 lb (9/6.5 kg) vest",
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "cardio_run",
+          "forMode": "meters",
+          "forValue": 400
+        },
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "bw_burpee_muscle_up",
+          "forMode": "reps",
+          "forValue": 5
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,64 @@
+{
+  "id": "cf-hero-larry",
+  "title": "Larry",
+  "creator": "CrossFit",
+  "description": "A 21-18-15-12-9-6-3 ladder of front squats at 115/75 lb and bar-facing burpees. Honours U.S. Marine Cpl. Larry D. Harris Jr., killed in a firefight in Helmand Province, Afghanistan, in 2010. 84 of each; the burpees set the pace.",
+  "source": {
+    "title": "Larry – CrossFit Hero WOD",
+    "url": "https://www.crossfit.com/benchmark/larry",
+    "author": "CrossFit",
+    "kind": "benchmark",
+    "license": "Public benchmark; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "CrossFit",
+    "Hero",
+    "For time",
+    "Ladder",
+    "Barbell",
+    "Bodyweight"
+  ],
+  "level": "Hard",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "21-18-15-12-9-6-3",
+      "mode": "ladder",
+      "repeat": 1,
+      "note": "Rep scheme 21-18-15-12-9-6-3",
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "bb_front_squat",
+          "target": 52,
+          "rx": {
+            "men": 52,
+            "women": 34
+          },
+          "forMode": "reps",
+          "forValue": 21,
+          "note": "115/75 lb"
+        },
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "bw_bar_facing_burpee",
+          "forMode": "reps",
+          "forValue": 21
+        }
+      ],
+      "ladder": [
+        21,
+        18,
+        15,
+        12,
+        9,
+        6,
+        3
+      ]
+    }
+  ]
+}

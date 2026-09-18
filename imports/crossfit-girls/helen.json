@@ -1,0 +1,61 @@
+{
+  "id": "cf-girls-helen",
+  "title": "Helen",
+  "creator": "CrossFit",
+  "description": "Three rounds of a 400 m run, 21 kettlebell swings at 53/35 lb and 12 pull-ups. Programmed since 2003 and the first Girl with running, it mixes all three CrossFit modalities in a roughly ten-minute effort. Scale with a lighter bell, a shorter run and jumping pull-ups.",
+  "source": {
+    "title": "Helen – CrossFit benchmark WOD (\"The Girls\")",
+    "url": "https://www.crossfit.com/benchmark/helen",
+    "author": "CrossFit",
+    "kind": "benchmark",
+    "license": "Public benchmark; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "CrossFit",
+    "Girls",
+    "For time",
+    "Run",
+    "Kettlebell",
+    "Bodyweight"
+  ],
+  "level": "Hard",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "Helen",
+      "mode": "fortime",
+      "repeat": 3,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "cardio_run",
+          "forMode": "meters",
+          "forValue": 400
+        },
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "kb_swing",
+          "target": 24,
+          "rx": {
+            "men": 24,
+            "women": 16
+          },
+          "forMode": "reps",
+          "forValue": 21,
+          "note": "53/35 lb (1.5/1 pood)"
+        },
+        {
+          "kind": "exercise",
+          "id": "s3",
+          "exercise": "bw_pullup",
+          "forMode": "reps",
+          "forValue": 12
+        }
+      ]
+    }
+  ]
+}

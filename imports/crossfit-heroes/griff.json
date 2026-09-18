@@ -1,0 +1,62 @@
+{
+  "id": "cf-hero-griff",
+  "title": "Griff",
+  "creator": "CrossFit",
+  "description": "Run 800 m, run 400 m backwards, run 800 m, run 400 m backwards. Honours U.S. Air Force Staff Sgt. Travis L. Griffin, killed by an IED in Baghdad in 2008. Running only; find a clear track for the backwards sections.",
+  "source": {
+    "title": "Griff – CrossFit Hero WOD",
+    "url": "https://www.crossfit.com/benchmark/griff",
+    "author": "CrossFit",
+    "kind": "benchmark",
+    "license": "Public benchmark; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "CrossFit",
+    "Hero",
+    "For time",
+    "Run"
+  ],
+  "level": "Medium",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "Griff",
+      "mode": "fortime",
+      "repeat": 1,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "cardio_run",
+          "forMode": "meters",
+          "forValue": 800
+        },
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "cardio_run",
+          "forMode": "meters",
+          "forValue": 400,
+          "note": "backwards"
+        },
+        {
+          "kind": "exercise",
+          "id": "s3",
+          "exercise": "cardio_run",
+          "forMode": "meters",
+          "forValue": 800
+        },
+        {
+          "kind": "exercise",
+          "id": "s4",
+          "exercise": "cardio_run",
+          "forMode": "meters",
+          "forValue": 400,
+          "note": "backwards"
+        }
+      ]
+    }
+  ]
+}

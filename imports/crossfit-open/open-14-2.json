@@ -1,0 +1,212 @@
+{
+  "id": "cf-open-14-2",
+  "title": "Open 14.2",
+  "creator": "CrossFit Games",
+  "description": "Every 3 minutes, two rounds of overhead squats at 95/65 lb and chest-to-bar pull-ups, starting at 10 reps and adding 2 reps each window. You keep going only while you finish both rounds inside the window. Modelled here to the 20-rep window; repeated as 15.2. Masters 55+ used 65/45 lb and chin-over-bar pull-ups.",
+  "source": {
+    "title": "CrossFit Games Open 2014 – Workout 14.2",
+    "url": "https://games.crossfit.com/workouts/open/2014",
+    "author": "CrossFit Games",
+    "kind": "benchmark",
+    "license": "Public competition workout; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "CrossFit",
+    "CrossFit Open",
+    "2014",
+    "Intervals",
+    "Ladder",
+    "Barbell",
+    "Gymnastics"
+  ],
+  "level": "Hard",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "0:00–3:00 · 2 rounds of 10",
+      "mode": "fortime",
+      "repeat": 2,
+      "timeCapSec": 180,
+      "note": "Finish both rounds inside the 3-minute window to earn the next one (+2 reps). Continue past 20 if you are still alive.",
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "bb_overhead_squat",
+          "target": 43.0,
+          "rx": {
+            "men": 43.0,
+            "women": 29.5
+          },
+          "forMode": "reps",
+          "forValue": 10,
+          "note": "95/65 lb"
+        },
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "bw_chest_to_bar_pullup",
+          "forMode": "reps",
+          "forValue": 10
+        }
+      ]
+    },
+    {
+      "kind": "block",
+      "id": "b2",
+      "name": "3:00–6:00 · 2 rounds of 12",
+      "mode": "fortime",
+      "repeat": 2,
+      "timeCapSec": 180,
+      "note": "Finish both rounds inside the 3-minute window to earn the next one (+2 reps). Continue past 20 if you are still alive.",
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s3",
+          "exercise": "bb_overhead_squat",
+          "target": 43.0,
+          "rx": {
+            "men": 43.0,
+            "women": 29.5
+          },
+          "forMode": "reps",
+          "forValue": 12,
+          "note": "95/65 lb"
+        },
+        {
+          "kind": "exercise",
+          "id": "s4",
+          "exercise": "bw_chest_to_bar_pullup",
+          "forMode": "reps",
+          "forValue": 12
+        }
+      ]
+    },
+    {
+      "kind": "block",
+      "id": "b3",
+      "name": "6:00–9:00 · 2 rounds of 14",
+      "mode": "fortime",
+      "repeat": 2,
+      "timeCapSec": 180,
+      "note": "Finish both rounds inside the 3-minute window to earn the next one (+2 reps). Continue past 20 if you are still alive.",
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s5",
+          "exercise": "bb_overhead_squat",
+          "target": 43.0,
+          "rx": {
+            "men": 43.0,
+            "women": 29.5
+          },
+          "forMode": "reps",
+          "forValue": 14,
+          "note": "95/65 lb"
+        },
+        {
+          "kind": "exercise",
+          "id": "s6",
+          "exercise": "bw_chest_to_bar_pullup",
+          "forMode": "reps",
+          "forValue": 14
+        }
+      ]
+    },
+    {
+      "kind": "block",
+      "id": "b4",
+      "name": "9:00–12:00 · 2 rounds of 16",
+      "mode": "fortime",
+      "repeat": 2,
+      "timeCapSec": 180,
+      "note": "Finish both rounds inside the 3-minute window to earn the next one (+2 reps). Continue past 20 if you are still alive.",
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s7",
+          "exercise": "bb_overhead_squat",
+          "target": 43.0,
+          "rx": {
+            "men": 43.0,
+            "women": 29.5
+          },
+          "forMode": "reps",
+          "forValue": 16,
+          "note": "95/65 lb"
+        },
+        {
+          "kind": "exercise",
+          "id": "s8",
+          "exercise": "bw_chest_to_bar_pullup",
+          "forMode": "reps",
+          "forValue": 16
+        }
+      ]
+    },
+    {
+      "kind": "block",
+      "id": "b5",
+      "name": "12:00–15:00 · 2 rounds of 18",
+      "mode": "fortime",
+      "repeat": 2,
+      "timeCapSec": 180,
+      "note": "Finish both rounds inside the 3-minute window to earn the next one (+2 reps). Continue past 20 if you are still alive.",
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s9",
+          "exercise": "bb_overhead_squat",
+          "target": 43.0,
+          "rx": {
+            "men": 43.0,
+            "women": 29.5
+          },
+          "forMode": "reps",
+          "forValue": 18,
+          "note": "95/65 lb"
+        },
+        {
+          "kind": "exercise",
+          "id": "s10",
+          "exercise": "bw_chest_to_bar_pullup",
+          "forMode": "reps",
+          "forValue": 18
+        }
+      ]
+    },
+    {
+      "kind": "block",
+      "id": "b6",
+      "name": "15:00–18:00 · 2 rounds of 20",
+      "mode": "fortime",
+      "repeat": 2,
+      "timeCapSec": 180,
+      "note": "Finish both rounds inside the 3-minute window to earn the next one (+2 reps). Continue past 20 if you are still alive.",
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s11",
+          "exercise": "bb_overhead_squat",
+          "target": 43.0,
+          "rx": {
+            "men": 43.0,
+            "women": 29.5
+          },
+          "forMode": "reps",
+          "forValue": 20,
+          "note": "95/65 lb"
+        },
+        {
+          "kind": "exercise",
+          "id": "s12",
+          "exercise": "bw_chest_to_bar_pullup",
+          "forMode": "reps",
+          "forValue": 20
+        }
+      ]
+    }
+  ]
+}

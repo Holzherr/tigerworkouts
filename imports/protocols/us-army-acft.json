@@ -1,0 +1,102 @@
+{
+  "id": "proto-us-army-acft",
+  "title": "US Army Combat Fitness Test (ACFT)",
+  "creator": "US Army",
+  "description": "The six-event Army fitness test of record from 2022 to mid-2025: a 3-rep-max hex-bar deadlift, a backward overhead throw of a 10 lb ball, two minutes of hand-release push-ups, the sprint-drag-carry shuttle, a maximum plank hold and a two-mile run, in that order. Rest between events is 2-5 minutes. In June 2025 the Army Fitness Test (AFT) dropped the power throw and kept the other five.",
+  "source": {
+    "title": "Army Combat Fitness Test – U.S. Army",
+    "url": "https://www.army.mil/acft/",
+    "author": "US Army",
+    "kind": "protocol",
+    "license": "Published protocol; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "Fitness test",
+    "Military",
+    "Strength",
+    "Running"
+  ],
+  "level": "Hard",
+  "items": [
+    {
+      "kind": "exercise",
+      "id": "s1",
+      "exercise": "bb_deadlift",
+      "forMode": "reps",
+      "forValue": 3,
+      "note": "3RM on a hex bar: 3 reps at a chosen load, one increase allowed (140-340 lb range)"
+    },
+    {
+      "kind": "rest",
+      "id": "r2",
+      "seconds": 180,
+      "note": "2-5 min between events"
+    },
+    {
+      "kind": "exercise",
+      "id": "s3",
+      "exercise": "gym_standing_power_throw",
+      "forMode": "reps",
+      "forValue": 2,
+      "target": 4.5,
+      "note": "Best of 2 throws, backward overhead, 10 lb ball"
+    },
+    {
+      "kind": "rest",
+      "id": "r4",
+      "seconds": 180,
+      "note": "2-5 min between events"
+    },
+    {
+      "kind": "exercise",
+      "id": "s5",
+      "exercise": "bw_hand_release_pushup",
+      "forMode": "seconds",
+      "forValue": 120,
+      "note": "Max reps in 2 min"
+    },
+    {
+      "kind": "rest",
+      "id": "r6",
+      "seconds": 180,
+      "note": "2-5 min between events"
+    },
+    {
+      "kind": "exercise",
+      "id": "s7",
+      "exercise": "gym_sprint_drag_carry",
+      "forMode": "meters",
+      "forValue": 250,
+      "note": "5 × 50 m shuttle (25 m out and back): sprint, drag 90 lb / 41 kg sled, lateral, carry 2 × 40 lb / 18 kg kettlebells, sprint; for time"
+    },
+    {
+      "kind": "rest",
+      "id": "r8",
+      "seconds": 180,
+      "note": "2-5 min between events"
+    },
+    {
+      "kind": "exercise",
+      "id": "s9",
+      "exercise": "bw_plank",
+      "forMode": "max",
+      "forValue": 0,
+      "note": "Max hold; 3:40 = 100 points"
+    },
+    {
+      "kind": "rest",
+      "id": "r10",
+      "seconds": 600,
+      "note": "Up to 10 min before the run"
+    },
+    {
+      "kind": "exercise",
+      "id": "s11",
+      "exercise": "cardio_run",
+      "forMode": "meters",
+      "forValue": 3219,
+      "note": "2 miles for time"
+    }
+  ]
+}

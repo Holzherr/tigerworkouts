@@ -1,0 +1,87 @@
+{
+  "id": "cf-hero-gunny",
+  "title": "Gunny",
+  "creator": "CrossFit",
+  "description": "Three 1-mile runs loaded with 50 lb (vest, body armour or pack), with 50 push-ups and 50 sit-ups between them. Honours U.S. Army Command Sgt. Maj. Martin \"Gunny\" Barreras, who died in 2014 of wounds from an attack on his unit in Afghanistan. Use whatever you can carry; a 20 lb vest is a reasonable scale.",
+  "source": {
+    "title": "Gunny – CrossFit Hero WOD",
+    "url": "https://www.crossfit.com/benchmark/gunny",
+    "author": "CrossFit",
+    "kind": "benchmark",
+    "license": "Public benchmark; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "CrossFit",
+    "Hero",
+    "For time",
+    "Run",
+    "Bodyweight",
+    "Weight vest"
+  ],
+  "level": "Hard",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "Gunny",
+      "mode": "fortime",
+      "repeat": 1,
+      "note": "Load yourself with 50 lb for the runs: vest, body armour or loaded pack",
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "cardio_run",
+          "forMode": "meters",
+          "forValue": 1609,
+          "note": "weighted run"
+        },
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "bw_pushup",
+          "forMode": "reps",
+          "forValue": 50
+        },
+        {
+          "kind": "exercise",
+          "id": "s3",
+          "exercise": "bw_situp",
+          "forMode": "reps",
+          "forValue": 50
+        },
+        {
+          "kind": "exercise",
+          "id": "s4",
+          "exercise": "cardio_run",
+          "forMode": "meters",
+          "forValue": 1609,
+          "note": "weighted run"
+        },
+        {
+          "kind": "exercise",
+          "id": "s5",
+          "exercise": "bw_pushup",
+          "forMode": "reps",
+          "forValue": 50
+        },
+        {
+          "kind": "exercise",
+          "id": "s6",
+          "exercise": "bw_situp",
+          "forMode": "reps",
+          "forValue": 50
+        },
+        {
+          "kind": "exercise",
+          "id": "s7",
+          "exercise": "cardio_run",
+          "forMode": "meters",
+          "forValue": 1609,
+          "note": "weighted run"
+        }
+      ]
+    }
+  ]
+}

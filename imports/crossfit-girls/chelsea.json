@@ -1,0 +1,55 @@
+{
+  "id": "cf-girls-chelsea",
+  "title": "Chelsea",
+  "creator": "CrossFit",
+  "description": "Every minute on the minute for 30 minutes: 5 pull-ups, 10 push-ups, 15 squats. The same triplet as Cindy but with the clock forcing a strict pace; the rest shrinks as you slow down. If you fall behind, keep going for the full 30 minutes and count rounds; if you have finished it before, add a rep to each movement.",
+  "source": {
+    "title": "Chelsea – CrossFit benchmark WOD (\"The Girls\")",
+    "url": "https://www.crossfit.com/benchmark/chelsea",
+    "author": "CrossFit",
+    "kind": "benchmark",
+    "license": "Public benchmark; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "CrossFit",
+    "Girls",
+    "EMOM",
+    "Bodyweight"
+  ],
+  "level": "Hard",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "Chelsea",
+      "mode": "emom",
+      "repeat": 30,
+      "everySec": 60,
+      "note": "If you fall behind, keep going and count rounds",
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "bw_pullup",
+          "forMode": "reps",
+          "forValue": 5
+        },
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "bw_pushup",
+          "forMode": "reps",
+          "forValue": 10
+        },
+        {
+          "kind": "exercise",
+          "id": "s3",
+          "exercise": "bw_squat",
+          "forMode": "reps",
+          "forValue": 15
+        }
+      ]
+    }
+  ]
+}

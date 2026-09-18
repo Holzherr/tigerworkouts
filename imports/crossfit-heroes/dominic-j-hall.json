@@ -1,0 +1,88 @@
+{
+  "id": "cf-hero-dominic-j-hall",
+  "title": "Dominic J. Hall",
+  "creator": "CrossFit",
+  "description": "On a 48-minute clock in a weight vest: max box step-ups until 12:23, rest until 15:00, then an AMRAP of 9 deadlifts at 275/185 lb, a 400 m run and 22 push-ups until 48:00. The timestamps mark the date of his death. Honours Dominic J. Hall, U.S. Marine Corps and Army Special Forces veteran, who died in 2022 of service-related cancer.",
+  "source": {
+    "title": "Dominic J. Hall – CrossFit Hero WOD",
+    "url": "https://www.crossfit.com/benchmark/dominic-j-hall",
+    "author": "CrossFit",
+    "kind": "benchmark",
+    "license": "Public benchmark; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "CrossFit",
+    "Hero",
+    "AMRAP",
+    "Weight vest",
+    "Barbell",
+    "Run"
+  ],
+  "level": "Hard",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "Step-ups (0:00-12:23)",
+      "mode": "amrap",
+      "repeat": 1,
+      "timeCapSec": 743,
+      "note": "Wear a 20/14 lb weight vest",
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "bw_box_step_up",
+          "forMode": "max",
+          "forValue": 1,
+          "note": "20 in box"
+        }
+      ]
+    },
+    {
+      "kind": "rest",
+      "id": "r1",
+      "seconds": 157,
+      "note": "12:23-15:00"
+    },
+    {
+      "kind": "block",
+      "id": "b2",
+      "name": "AMRAP (15:00-48:00)",
+      "mode": "amrap",
+      "repeat": 1,
+      "timeCapSec": 1980,
+      "note": "Wear a 20/14 lb weight vest",
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "bb_deadlift",
+          "target": 124.5,
+          "rx": {
+            "men": 124.5,
+            "women": 84.0
+          },
+          "forMode": "reps",
+          "forValue": 9,
+          "note": "275/185 lb"
+        },
+        {
+          "kind": "exercise",
+          "id": "s3",
+          "exercise": "cardio_run",
+          "forMode": "meters",
+          "forValue": 400
+        },
+        {
+          "kind": "exercise",
+          "id": "s4",
+          "exercise": "bw_pushup",
+          "forMode": "reps",
+          "forValue": 22
+        }
+      ]
+    }
+  ]
+}

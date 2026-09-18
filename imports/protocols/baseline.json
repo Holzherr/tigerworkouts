@@ -1,0 +1,69 @@
+{
+  "id": "proto-baseline",
+  "title": "Baseline",
+  "creator": "CrossFit",
+  "description": "A 500 m row, then 40 air squats, 30 sit-ups, 20 push-ups and 10 pull-ups for time. Often the first workout a new CrossFitter does and repeated later to see the change; under 6 minutes is advanced, under 4 elite. Substitute a 400 m run for the row if there is no rower.",
+  "source": {
+    "title": "Baseline – CrossFit benchmark WOD (WODwell)",
+    "url": "https://wodwell.com/wod/baseline/",
+    "author": "CrossFit community",
+    "kind": "benchmark",
+    "license": "Published protocol; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "CrossFit",
+    "For time",
+    "Bodyweight",
+    "Rower",
+    "Beginner test"
+  ],
+  "level": "Medium",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "Baseline",
+      "mode": "fortime",
+      "repeat": 1,
+      "timeCapSec": 900,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "cardio_rower",
+          "forMode": "meters",
+          "forValue": 500
+        },
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "bw_squat",
+          "forMode": "reps",
+          "forValue": 40
+        },
+        {
+          "kind": "exercise",
+          "id": "s3",
+          "exercise": "bw_situp",
+          "forMode": "reps",
+          "forValue": 30
+        },
+        {
+          "kind": "exercise",
+          "id": "s4",
+          "exercise": "bw_pushup",
+          "forMode": "reps",
+          "forValue": 20
+        },
+        {
+          "kind": "exercise",
+          "id": "s5",
+          "exercise": "bw_pullup",
+          "forMode": "reps",
+          "forValue": 10
+        }
+      ]
+    }
+  ]
+}

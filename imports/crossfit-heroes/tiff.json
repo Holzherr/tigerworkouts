@@ -1,0 +1,76 @@
+{
+  "id": "cf-hero-tiff",
+  "title": "Tiff",
+  "creator": "CrossFit",
+  "description": "On a 25-minute clock, run 1.5 miles then use the remaining time for as many rounds as possible of 11 chest-to-bar pull-ups, 7 hang squat cleans and 7 push presses. Honours U.S. Army Capt. Benjamin David Tiffner, killed by an IED in Baghdad in 2007. A fast run buys more rounds, but the barbell work punishes a run you cannot recover from.",
+  "source": {
+    "title": "Tiff – CrossFit Hero WOD",
+    "url": "https://www.crossfit.com/benchmark/tiff",
+    "author": "CrossFit",
+    "kind": "benchmark",
+    "license": "Public benchmark; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "CrossFit",
+    "Hero WOD",
+    "AMRAP",
+    "Barbell",
+    "Gymnastics",
+    "Running"
+  ],
+  "level": "Hard",
+  "items": [
+    {
+      "kind": "exercise",
+      "id": "s1",
+      "exercise": "cardio_run",
+      "forMode": "meters",
+      "forValue": 2414,
+      "note": "1.5 miles; the 25-minute clock starts here"
+    },
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "AMRAP (remaining time)",
+      "mode": "amrap",
+      "timeCapSec": 1500,
+      "note": "Time cap is the 25-minute total clock, including the run",
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "bw_chest_to_bar_pullup",
+          "forMode": "reps",
+          "forValue": 11
+        },
+        {
+          "kind": "exercise",
+          "id": "s3",
+          "exercise": "bb_hang_squat_clean",
+          "forMode": "reps",
+          "forValue": 7,
+          "target": 70.5,
+          "rx": {
+            "men": 70.5,
+            "women": 47.5
+          },
+          "note": "155/105 lb"
+        },
+        {
+          "kind": "exercise",
+          "id": "s4",
+          "exercise": "bb_push_press",
+          "forMode": "reps",
+          "forValue": 7,
+          "target": 70.5,
+          "rx": {
+            "men": 70.5,
+            "women": 47.5
+          },
+          "note": "155/105 lb"
+        }
+      ]
+    }
+  ]
+}

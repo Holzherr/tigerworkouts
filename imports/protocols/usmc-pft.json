@@ -1,0 +1,59 @@
+{
+  "id": "proto-usmc-pft",
+  "title": "US Marine Corps Physical Fitness Test (PFT)",
+  "creator": "US Marine Corps",
+  "description": "The twice-yearly Marine PFT: maximum dead-hang pull-ups (or push-ups in two minutes, capped at 70 of the 100 points), a maximum plank hold, and a 3-mile run. Each event scores up to 100 points; the plank maxes out at 3:45 and passes at 1:10, and 18:00 for the run is 100 points for the youngest men. Events are done in this order on the same day.",
+  "source": {
+    "title": "Marine Corps Physical Fitness Test (PFT) – Military.com",
+    "url": "https://www.military.com/military-fitness/marine-corps-fitness-requirements/usmc-physical-fitness-test",
+    "author": "US Marine Corps (via Military.com)",
+    "kind": "protocol",
+    "license": "Published protocol; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "Fitness test",
+    "Military",
+    "Bodyweight",
+    "Running"
+  ],
+  "level": "Hard",
+  "items": [
+    {
+      "kind": "exercise",
+      "id": "s1",
+      "exercise": "bw_pullup",
+      "forMode": "max",
+      "forValue": 0,
+      "note": "Max reps, dead hang; alternative: max push-ups in 2 min (caps the event at 70 points)"
+    },
+    {
+      "kind": "rest",
+      "id": "r2",
+      "seconds": 300,
+      "note": "Rest between events as scheduled"
+    },
+    {
+      "kind": "exercise",
+      "id": "s3",
+      "exercise": "bw_plank",
+      "forMode": "max",
+      "forValue": 0,
+      "note": "Max hold; 3:45 = 100 points, 1:10 minimum"
+    },
+    {
+      "kind": "rest",
+      "id": "r4",
+      "seconds": 300,
+      "note": "Rest between events as scheduled"
+    },
+    {
+      "kind": "exercise",
+      "id": "s5",
+      "exercise": "cardio_run",
+      "forMode": "meters",
+      "forValue": 4828,
+      "note": "3 miles for time; 18:00 = 100 points (men 17-40)"
+    }
+  ]
+}

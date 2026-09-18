@@ -1,0 +1,122 @@
+[
+  {
+    "key": "bb_sumo_deadlift",
+    "name": "Sumo deadlift",
+    "unit": "kg",
+    "step": 5,
+    "group": "barbell",
+    "cue": "Wide stance, toes out, hands inside the knees; push the knees out and the floor away, hips through at the top."
+  },
+  {
+    "key": "bb_close_grip_bench",
+    "name": "Close-grip bench press",
+    "unit": "kg",
+    "step": 2.5,
+    "group": "barbell",
+    "cue": "Hands just inside shoulder width, elbows tucked, bar to the lower chest, press to lockout."
+  },
+  {
+    "key": "bb_skullcrusher",
+    "name": "Skullcrusher (lying triceps extension)",
+    "unit": "kg",
+    "step": 2.5,
+    "group": "barbell",
+    "cue": "Lying on a bench, bar or EZ bar over the face, lower to the forehead by bending only the elbows, extend."
+  },
+  {
+    "key": "db_chest_fly",
+    "name": "Dumbbell chest fly",
+    "unit": "kg per arm",
+    "step": 2.5,
+    "group": "dumbbell",
+    "cue": "Flat bench, slight elbow bend, open the arms wide to a chest stretch, squeeze back up in an arc."
+  },
+  {
+    "key": "machine_calf_raise",
+    "name": "Calf raise",
+    "unit": "kg",
+    "step": 5,
+    "group": "barbell",
+    "cue": "Standing on a block or machine, full stretch at the bottom, pause on the toes at the top."
+  },
+  {
+    "key": "machine_seated_calf_raise",
+    "name": "Seated calf raise",
+    "unit": "kg",
+    "step": 5,
+    "group": "barbell",
+    "cue": "Knees bent under the pad, drop the heels for a full stretch, rise onto the toes and pause."
+  },
+  {
+    "key": "machine_calf_press",
+    "name": "Calf press (leg press)",
+    "unit": "kg",
+    "step": 5,
+    "group": "barbell",
+    "cue": "Feet low on the leg-press plate, legs straight, push through the balls of the feet, full stretch at the bottom."
+  },
+  {
+    "key": "bw_inverted_row",
+    "name": "Inverted row",
+    "unit": "",
+    "step": 1,
+    "group": "body",
+    "cue": "Hang under a bar or rings, body straight, pull the chest to the bar and lower under control. Lower the bar or raise the feet to make it harder."
+  },
+  {
+    "key": "bw_nordic_curl",
+    "name": "Nordic curl",
+    "unit": "",
+    "step": 1,
+    "group": "body",
+    "cue": "Kneel with the ankles anchored, lower the body forward with straight hips as slowly as possible, pull back up (use a band or a push off the floor to assist)."
+  },
+  {
+    "key": "bw_deadbug",
+    "name": "Deadbug",
+    "unit": "",
+    "step": 5,
+    "group": "core",
+    "cue": "On the back, arms up and knees over hips; lower the opposite arm and leg while keeping the lower back pressed into the floor."
+  },
+  {
+    "key": "bw_arch_hang",
+    "name": "Arch hang",
+    "unit": "",
+    "step": 1,
+    "group": "body",
+    "cue": "Hang from the bar, pull the shoulder blades down and back, chest up into an arch, hold or repeat."
+  },
+  {
+    "key": "bw_support_hold",
+    "name": "Support hold (parallel bars)",
+    "unit": "",
+    "step": 5,
+    "group": "body",
+    "cue": "Lock the arms out on parallel bars or rings, shoulders pushed down away from the ears, hold."
+  },
+  {
+    "key": "bw_reverse_hyper",
+    "name": "Reverse hyperextension",
+    "unit": "",
+    "step": 2,
+    "group": "core",
+    "cue": "Hips on the edge of a bench or box, upper body supported, lift straight legs up to horizontal with the glutes and lower back, lower slowly."
+  },
+  {
+    "key": "cable_pallof_press",
+    "name": "Pallof press",
+    "unit": "kg",
+    "step": 2.5,
+    "group": "band",
+    "cue": "Cable or band at chest height from the side, press the hands straight out and hold against the twist, bring back. Both sides."
+  },
+  {
+    "key": "cable_band_dislocate",
+    "name": "Band shoulder dislocates",
+    "unit": "",
+    "step": 1,
+    "group": "band",
+    "cue": "Wide grip on a band or stick, arms straight, take it over the head and behind, then back to the front."
+  }
+]

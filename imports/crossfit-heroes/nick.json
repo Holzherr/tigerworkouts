@@ -1,0 +1,54 @@
+{
+  "id": "cf-hero-nick",
+  "title": "Nick",
+  "creator": "CrossFit",
+  "description": "Twelve rounds of 10 dumbbell hang squat cleans and 6 handstand push-ups with hands on the dumbbells, for time. Honours U.S. Army Spc. Nicholas P. Steinbacher, killed by an IED in Baghdad in 2006. The deficit from the dumbbell handles makes the HSPU harder than they look.",
+  "source": {
+    "title": "Nick – CrossFit Hero WOD",
+    "url": "https://www.crossfit.com/benchmark/nick",
+    "author": "CrossFit",
+    "kind": "benchmark",
+    "license": "Public benchmark; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "CrossFit",
+    "Hero WOD",
+    "For time",
+    "Dumbbell",
+    "Gymnastics"
+  ],
+  "level": "Hard",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "12 rounds",
+      "mode": "fortime",
+      "repeat": 12,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "db_hang_squat_clean",
+          "forMode": "reps",
+          "forValue": 10,
+          "target": 20.5,
+          "rx": {
+            "men": 20.5,
+            "women": 13.5
+          },
+          "note": "45/30 lb"
+        },
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "bw_handstand_pushup",
+          "forMode": "reps",
+          "forValue": 6,
+          "note": "Hands on the dumbbells (deficit)"
+        }
+      ]
+    }
+  ]
+}

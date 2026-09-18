@@ -1,0 +1,59 @@
+{
+  "id": "cf-girls-amanda",
+  "title": "Amanda",
+  "creator": "CrossFit",
+  "description": "9-7-5 reps of muscle-ups and squat snatches at 135/95 lb. Named after Amanda Miller and made famous at the 2010 CrossFit Games; only 42 reps, but two of the highest-skill movements in the sport. Scale with a lighter bar and pull-up-plus-dip substitutions for the muscle-ups.",
+  "source": {
+    "title": "Amanda – CrossFit benchmark WOD (\"The Girls\")",
+    "url": "https://www.crossfit.com/benchmark/amanda",
+    "author": "CrossFit",
+    "kind": "benchmark",
+    "license": "Public benchmark; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "CrossFit",
+    "Girls",
+    "For time",
+    "Barbell",
+    "Gymnastics"
+  ],
+  "level": "Hard",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "9-7-5",
+      "mode": "ladder",
+      "repeat": 1,
+      "note": "Rep scheme 9-7-5",
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "gym_muscle_up",
+          "forMode": "reps",
+          "forValue": 9
+        },
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "bb_snatch",
+          "target": 61,
+          "rx": {
+            "men": 61,
+            "women": 43
+          },
+          "forMode": "reps",
+          "forValue": 9,
+          "note": "135/95 lb; squat snatch"
+        }
+      ],
+      "ladder": [
+        9,
+        7,
+        5
+      ]
+    }
+  ]
+}

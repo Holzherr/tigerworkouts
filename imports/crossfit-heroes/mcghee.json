@@ -1,0 +1,61 @@
+{
+  "id": "cf-hero-mcghee",
+  "title": "McGhee",
+  "creator": "CrossFit",
+  "description": "A 30-minute AMRAP of 5 heavy deadlifts, 13 push-ups and 9 box jumps. Honours U.S. Army Ranger Cpl. Ryan C. McGhee, killed in action in central Iraq in 2009 on his fourth deployment. Long and grinding; choose a deadlift you can touch-and-go for all five reps deep into the half hour.",
+  "source": {
+    "title": "McGhee – CrossFit Hero WOD",
+    "url": "https://www.crossfit.com/benchmark/mcghee",
+    "author": "CrossFit",
+    "kind": "benchmark",
+    "license": "Public benchmark; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "CrossFit",
+    "Hero WOD",
+    "AMRAP",
+    "Barbell",
+    "Bodyweight"
+  ],
+  "level": "Hard",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "AMRAP 30",
+      "mode": "amrap",
+      "timeCapSec": 1800,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "bb_deadlift",
+          "forMode": "reps",
+          "forValue": 5,
+          "target": 124.5,
+          "rx": {
+            "men": 124.5,
+            "women": 84
+          },
+          "note": "275/185 lb"
+        },
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "bw_pushup",
+          "forMode": "reps",
+          "forValue": 13
+        },
+        {
+          "kind": "exercise",
+          "id": "s3",
+          "exercise": "bw_box_jump",
+          "forMode": "reps",
+          "forValue": 9,
+          "note": "24/20 in box"
+        }
+      ]
+    }
+  ]
+}

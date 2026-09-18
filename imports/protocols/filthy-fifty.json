@@ -1,0 +1,123 @@
+{
+  "id": "proto-filthy-fifty",
+  "title": "Filthy Fifty",
+  "creator": "CrossFit",
+  "description": "A chipper of ten movements, 50 reps each, done in order for time: box jumps, jumping pull-ups, kettlebell swings, walking lunges, knees-to-elbows, push presses, back extensions, wall balls, burpees and double-unders. First posted in June 2005, it is the archetype of the long CrossFit grind; good times are under 20 minutes. The \"Dirty Thirty\" (30 reps each) is the standard scale.",
+  "source": {
+    "title": "Filthy Fifty – CrossFit WOD demo",
+    "url": "https://www.crossfit.com/essentials/workout-demo-for-221211",
+    "author": "CrossFit",
+    "kind": "benchmark",
+    "license": "Published protocol; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "CrossFit",
+    "Chipper",
+    "For time",
+    "Kettlebell",
+    "Barbell"
+  ],
+  "level": "Hard",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "Filthy Fifty",
+      "mode": "fortime",
+      "repeat": 1,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "bw_box_jump",
+          "forMode": "reps",
+          "forValue": 50,
+          "note": "24/20 in box"
+        },
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "bw_jumping_pullup",
+          "forMode": "reps",
+          "forValue": 50
+        },
+        {
+          "kind": "exercise",
+          "id": "s3",
+          "exercise": "kb_swing",
+          "forMode": "reps",
+          "forValue": 50,
+          "target": 16,
+          "rx": {
+            "men": 16,
+            "women": 12
+          }
+        },
+        {
+          "kind": "exercise",
+          "id": "s4",
+          "exercise": "bw_lunge",
+          "forMode": "reps",
+          "forValue": 50,
+          "note": "Walking lunge steps"
+        },
+        {
+          "kind": "exercise",
+          "id": "s5",
+          "exercise": "bw_knees_to_elbows",
+          "forMode": "reps",
+          "forValue": 50
+        },
+        {
+          "kind": "exercise",
+          "id": "s6",
+          "exercise": "bb_push_press",
+          "forMode": "reps",
+          "forValue": 50,
+          "target": 20.5,
+          "rx": {
+            "men": 20.5,
+            "women": 16
+          },
+          "note": "45/35 lb"
+        },
+        {
+          "kind": "exercise",
+          "id": "s7",
+          "exercise": "bw_back_raise",
+          "forMode": "reps",
+          "forValue": 50,
+          "note": "Back extensions (GHD or floor)"
+        },
+        {
+          "kind": "exercise",
+          "id": "s8",
+          "exercise": "gym_wall_ball",
+          "forMode": "reps",
+          "forValue": 50,
+          "target": 9,
+          "rx": {
+            "men": 9,
+            "women": 6.5
+          },
+          "note": "20/14 lb ball, 10 ft target"
+        },
+        {
+          "kind": "exercise",
+          "id": "s9",
+          "exercise": "bw_burpee",
+          "forMode": "reps",
+          "forValue": 50
+        },
+        {
+          "kind": "exercise",
+          "id": "s10",
+          "exercise": "bw_double_under",
+          "forMode": "reps",
+          "forValue": 50
+        }
+      ]
+    }
+  ]
+}

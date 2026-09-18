@@ -1,0 +1,71 @@
+@import 'tailwindcss';
+
+/* Design tokens. Mirrors DESIGN.md; every component takes colour and radius from here. */
+@theme {
+  --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+
+  --color-brand: #ff4d2e;
+  --color-brand-hover: #e63c1e;
+  --color-brand-soft: #fff0ec;
+  --color-brand-line: #ffb4a3;
+  --color-brand-ink: #c42a12;
+  --color-ink-pure: #000000;
+  --color-rest: #1e3a8a;
+
+  --color-ink: #0f172a;
+  --color-body: #475569;
+  --color-muted: #64748b;
+  --color-faint: #94a3b8;
+  --color-hint: #cbd5e1;
+  --color-line: #e2e8f0;
+  --color-line-soft: #f1f5f9;
+  --color-surface: #ffffff;
+  --color-canvas: #f8fafc;
+  --color-well: #eef2f7;
+  --color-danger: #b91c1c;
+  --color-danger-soft: #fee2e2;
+  --color-warn: #b45309;
+  --color-warn-soft: #fffbeb;
+
+  --radius-card: 16px;
+  --radius-control: 12px;
+  --radius-tile: 14px;
+  --radius-sheet: 24px;
+
+  --shadow-lift: 0 16px 30px -10px rgb(15 23 42 / 0.4);
+}
+
+@layer base {
+  html {
+    -webkit-text-size-adjust: 100%;
+  }
+  body {
+    @apply bg-canvas text-ink font-sans antialiased;
+  }
+  button {
+    @apply cursor-pointer;
+  }
+  /* iOS zooms into inputs under 16px; keep every field at 16px. */
+  input,
+  select,
+  textarea {
+    font-size: 16px;
+  }
+}
+
+/* App-icon ground: white with two centred coral bands, 25% each. */
+@utility bg-stripes {
+  background-image: linear-gradient(90deg, #fff 0 12.5%, #ff4d2e 12.5% 37.5%, #fff 37.5% 62.5%, #ff4d2e 62.5% 87.5%, #fff 87.5% 100%);
+}
+
+@utility safe-top {
+  padding-top: env(safe-area-inset-top);
+}
+@utility safe-bottom {
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+@keyframes marquee {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}

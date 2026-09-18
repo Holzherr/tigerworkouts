@@ -1,0 +1,115 @@
+{
+  "id": "cf-hero-daniel-ray",
+  "title": "Daniel Ray",
+  "creator": "CrossFit",
+  "description": "Five rounds of double-kettlebell carries and lunges (front-rack lunge 25 ft, overhead carry 50 ft, front-rack carry 75 ft, farmers carry 100 ft) woven with 9 strict pull-ups, 16 hand-release push-ups, 23 air squats and a 400 m run, in a vest if you have one. Honours U.S. Air Force combat controller Senior Airman Daniel R. Sanchez, killed in Kajran District, Afghanistan, in 2010. Use 53/35 lb bells; scale to one bell if needed.",
+  "source": {
+    "title": "Daniel Ray – CrossFit Hero WOD",
+    "url": "https://www.crossfit.com/benchmark/daniel-ray",
+    "author": "CrossFit",
+    "kind": "benchmark",
+    "license": "Public benchmark; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "CrossFit",
+    "Hero",
+    "For time",
+    "Kettlebell",
+    "Run",
+    "Weight vest"
+  ],
+  "level": "Hard",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "Daniel Ray",
+      "mode": "fortime",
+      "repeat": 5,
+      "note": "If you have a weight vest or body armour, wear it",
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "kb_front_rack_lunge",
+          "target": 24,
+          "rx": {
+            "men": 24,
+            "women": 16
+          },
+          "forMode": "meters",
+          "forValue": 8,
+          "note": "53/35 lb; two bells; 25 ft"
+        },
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "bw_strict_pullup",
+          "forMode": "reps",
+          "forValue": 9
+        },
+        {
+          "kind": "exercise",
+          "id": "s3",
+          "exercise": "kb_overhead_carry",
+          "target": 24,
+          "rx": {
+            "men": 24,
+            "women": 16
+          },
+          "forMode": "meters",
+          "forValue": 15,
+          "note": "53/35 lb; two bells; 50 ft"
+        },
+        {
+          "kind": "exercise",
+          "id": "s4",
+          "exercise": "bw_hand_release_pushup",
+          "forMode": "reps",
+          "forValue": 16
+        },
+        {
+          "kind": "exercise",
+          "id": "s5",
+          "exercise": "kb_front_rack_carry",
+          "target": 24,
+          "rx": {
+            "men": 24,
+            "women": 16
+          },
+          "forMode": "meters",
+          "forValue": 23,
+          "note": "53/35 lb; two bells; 75 ft"
+        },
+        {
+          "kind": "exercise",
+          "id": "s6",
+          "exercise": "bw_squat",
+          "forMode": "reps",
+          "forValue": 23
+        },
+        {
+          "kind": "exercise",
+          "id": "s7",
+          "exercise": "db_farmers_carry",
+          "target": 24,
+          "rx": {
+            "men": 24,
+            "women": 16
+          },
+          "forMode": "meters",
+          "forValue": 30,
+          "note": "53/35 lb; two kettlebells; 100 ft"
+        },
+        {
+          "kind": "exercise",
+          "id": "s8",
+          "exercise": "cardio_run",
+          "forMode": "meters",
+          "forValue": 400
+        }
+      ]
+    }
+  ]
+}

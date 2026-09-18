@@ -1,0 +1,75 @@
+{
+  "id": "cf-hero-moon",
+  "title": "Moon",
+  "creator": "CrossFit",
+  "description": "Seven rounds of 10 dumbbell hang split snatches on each arm, each followed by a rope climb, for time. Honours U.S. Army Spc. Christopher Moon, 82nd Airborne, who died of wounds from an IED attack in Arghandab, Afghanistan, in 2010. Alternate feet on the split snatches; sub 3 strict pull-ups plus 3 knees-to-chest per rope climb if you have no rope.",
+  "source": {
+    "title": "Moon – CrossFit Hero WOD",
+    "url": "https://www.crossfit.com/benchmark/moon",
+    "author": "CrossFit",
+    "kind": "benchmark",
+    "license": "Public benchmark; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "CrossFit",
+    "Hero WOD",
+    "For time",
+    "Dumbbell",
+    "Rope climb"
+  ],
+  "level": "Hard",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "7 rounds",
+      "mode": "fortime",
+      "repeat": 7,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "db_hang_split_snatch",
+          "forMode": "reps",
+          "forValue": 10,
+          "target": 18,
+          "rx": {
+            "men": 18,
+            "women": 13.5
+          },
+          "note": "40/30 lb — Right arm, alternate feet"
+        },
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "gym_rope_climb",
+          "forMode": "reps",
+          "forValue": 1,
+          "note": "15 ft"
+        },
+        {
+          "kind": "exercise",
+          "id": "s3",
+          "exercise": "db_hang_split_snatch",
+          "forMode": "reps",
+          "forValue": 10,
+          "target": 18,
+          "rx": {
+            "men": 18,
+            "women": 13.5
+          },
+          "note": "40/30 lb — Left arm, alternate feet"
+        },
+        {
+          "kind": "exercise",
+          "id": "s4",
+          "exercise": "gym_rope_climb",
+          "forMode": "reps",
+          "forValue": 1,
+          "note": "15 ft"
+        }
+      ]
+    }
+  ]
+}

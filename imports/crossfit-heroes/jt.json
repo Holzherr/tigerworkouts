@@ -1,0 +1,61 @@
+{
+  "id": "cf-hero-jt",
+  "title": "JT",
+  "creator": "CrossFit",
+  "description": "21-15-9 reps of handstand push-ups, ring dips and push-ups. Honours U.S. Navy SEAL Petty Officer 1st Class Jeff Taylor, killed near Asadabad, Afghanistan, in 2005; the first Hero WOD ever posted. All pressing, so the last push-ups are the hardest reps. Scale handstand push-ups to pike and ring dips to bench dips.",
+  "source": {
+    "title": "JT – CrossFit Hero WOD",
+    "url": "https://www.crossfit.com/benchmark/jt",
+    "author": "CrossFit",
+    "kind": "benchmark",
+    "license": "Public benchmark; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "CrossFit",
+    "Hero",
+    "For time",
+    "Ladder",
+    "Bodyweight",
+    "Gymnastics"
+  ],
+  "level": "Hard",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "21-15-9",
+      "mode": "ladder",
+      "repeat": 1,
+      "note": "Rep scheme 21-15-9",
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "bw_handstand_pushup",
+          "forMode": "reps",
+          "forValue": 21
+        },
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "gym_ring_dip",
+          "forMode": "reps",
+          "forValue": 21
+        },
+        {
+          "kind": "exercise",
+          "id": "s3",
+          "exercise": "bw_pushup",
+          "forMode": "reps",
+          "forValue": 21
+        }
+      ],
+      "ladder": [
+        21,
+        15,
+        9
+      ]
+    }
+  ]
+}

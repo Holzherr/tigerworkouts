@@ -1,0 +1,62 @@
+{
+  "id": "cf-girls-nasty-girls-v2",
+  "title": "Nasty Girls V2",
+  "creator": "CrossFit",
+  "description": "The heavier remake of Nasty Girls used at the 2014 Regionals: three rounds of 50 alternating pistols, 7 muscle-ups and 10 hang power cleans at 175/125 lb. Same shape as the original with the skill and load both turned up. Scale back to the original version.",
+  "source": {
+    "title": "Nasty Girls V2 – CrossFit benchmark WOD (\"The Girls\")",
+    "url": "https://www.crossfit.com/workout/2014/05/01",
+    "author": "CrossFit",
+    "kind": "benchmark",
+    "license": "Public benchmark; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "CrossFit",
+    "Girls",
+    "For time",
+    "Barbell",
+    "Gymnastics",
+    "Bodyweight"
+  ],
+  "level": "Hard",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "Nasty Girls V2",
+      "mode": "fortime",
+      "repeat": 3,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "bw_pistol",
+          "forMode": "reps",
+          "forValue": 50,
+          "note": "Alternating legs"
+        },
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "gym_muscle_up",
+          "forMode": "reps",
+          "forValue": 7
+        },
+        {
+          "kind": "exercise",
+          "id": "s3",
+          "exercise": "bb_hang_power_clean",
+          "target": 79.5,
+          "rx": {
+            "men": 79.5,
+            "women": 56.5
+          },
+          "forMode": "reps",
+          "forValue": 10,
+          "note": "175/125 lb"
+        }
+      ]
+    }
+  ]
+}

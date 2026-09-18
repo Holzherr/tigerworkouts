@@ -1,0 +1,71 @@
+{
+  "id": "cf-hero-peyton",
+  "title": "Peyton",
+  "creator": "CrossFit",
+  "description": "A 20-minute AMRAP of 10 chest-to-bar pull-ups and 10 dumbbell thrusters, interrupted every two minutes (starting at 0:00) by 40 double-unders, followed at the 20-minute mark by a 2-mile run. Honours U.S. Army veteran Chad Robert Peyton, who took his own life in 2021 after struggling with depression. Score AMRAP rounds and the run time separately.",
+  "source": {
+    "title": "Peyton – CrossFit Hero WOD",
+    "url": "https://www.crossfit.com/benchmark/peyton",
+    "author": "CrossFit",
+    "kind": "benchmark",
+    "license": "Public benchmark; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "CrossFit",
+    "Hero WOD",
+    "AMRAP",
+    "Dumbbell",
+    "Gymnastics",
+    "Running"
+  ],
+  "level": "Hard",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "AMRAP 20",
+      "mode": "amrap",
+      "timeCapSec": 1200,
+      "note": "Stop every 2 minutes for the 40 double-unders",
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "bw_double_under",
+          "forMode": "reps",
+          "forValue": 40,
+          "note": "Every 2 minutes, including at 0:00"
+        },
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "bw_chest_to_bar_pullup",
+          "forMode": "reps",
+          "forValue": 10
+        },
+        {
+          "kind": "exercise",
+          "id": "s3",
+          "exercise": "db_thruster",
+          "forMode": "reps",
+          "forValue": 10,
+          "target": 22.5,
+          "rx": {
+            "men": 22.5,
+            "women": 16
+          },
+          "note": "50/35 lb"
+        }
+      ]
+    },
+    {
+      "kind": "exercise",
+      "id": "s4",
+      "exercise": "cardio_run",
+      "forMode": "meters",
+      "forValue": 3219,
+      "note": "2 miles, starting at 20:00"
+    }
+  ]
+}

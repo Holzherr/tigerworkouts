@@ -1,0 +1,135 @@
+{
+  "id": "cf-open-26-2",
+  "title": "Open 26.2",
+  "creator": "CrossFit Games",
+  "description": "For time: three rounds of an 80 ft dumbbell overhead walking lunge at 50/35 lb and 20 alternating dumbbell snatches, followed by 20 pull-ups, then 20 chest-to-bar pull-ups, then 20 ring muscle-ups, 15-minute cap. Scaled used 35/20 lb with jumping, regular and chest-to-bar pull-ups; Foundations used unweighted lunges, bent-over rows, ring rows and jumping pull-ups.",
+  "source": {
+    "title": "CrossFit Games Open 2026 – Workout 26.2",
+    "url": "https://games.crossfit.com/workouts/open/2026/2",
+    "author": "CrossFit Games",
+    "kind": "benchmark",
+    "license": "Public competition workout; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "CrossFit",
+    "CrossFit Open",
+    "2026",
+    "For time",
+    "Dumbbell",
+    "Gymnastics"
+  ],
+  "level": "Hard",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "For time",
+      "mode": "fortime",
+      "repeat": 1,
+      "timeCapSec": 900,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "db_overhead_lunge",
+          "target": 22.5,
+          "rx": {
+            "men": 22.5,
+            "women": 16.0
+          },
+          "forMode": "meters",
+          "forValue": 24,
+          "note": "50/35 lb. 80 ft, single dumbbell overhead"
+        },
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "db_snatch",
+          "target": 22.5,
+          "rx": {
+            "men": 22.5,
+            "women": 16.0
+          },
+          "forMode": "reps",
+          "forValue": 20,
+          "note": "50/35 lb. alternating"
+        },
+        {
+          "kind": "exercise",
+          "id": "s3",
+          "exercise": "bw_pullup",
+          "forMode": "reps",
+          "forValue": 20
+        },
+        {
+          "kind": "exercise",
+          "id": "s4",
+          "exercise": "db_overhead_lunge",
+          "target": 22.5,
+          "rx": {
+            "men": 22.5,
+            "women": 16.0
+          },
+          "forMode": "meters",
+          "forValue": 24,
+          "note": "50/35 lb. 80 ft"
+        },
+        {
+          "kind": "exercise",
+          "id": "s5",
+          "exercise": "db_snatch",
+          "target": 22.5,
+          "rx": {
+            "men": 22.5,
+            "women": 16.0
+          },
+          "forMode": "reps",
+          "forValue": 20,
+          "note": "50/35 lb. alternating"
+        },
+        {
+          "kind": "exercise",
+          "id": "s6",
+          "exercise": "bw_chest_to_bar_pullup",
+          "forMode": "reps",
+          "forValue": 20
+        },
+        {
+          "kind": "exercise",
+          "id": "s7",
+          "exercise": "db_overhead_lunge",
+          "target": 22.5,
+          "rx": {
+            "men": 22.5,
+            "women": 16.0
+          },
+          "forMode": "meters",
+          "forValue": 24,
+          "note": "50/35 lb. 80 ft"
+        },
+        {
+          "kind": "exercise",
+          "id": "s8",
+          "exercise": "db_snatch",
+          "target": 22.5,
+          "rx": {
+            "men": 22.5,
+            "women": 16.0
+          },
+          "forMode": "reps",
+          "forValue": 20,
+          "note": "50/35 lb. alternating"
+        },
+        {
+          "kind": "exercise",
+          "id": "s9",
+          "exercise": "gym_muscle_up",
+          "forMode": "reps",
+          "forValue": 20,
+          "note": "ring muscle-up"
+        }
+      ]
+    }
+  ]
+}

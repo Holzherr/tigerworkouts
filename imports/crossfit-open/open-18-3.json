@@ -1,0 +1,105 @@
+{
+  "id": "cf-open-18-3",
+  "title": "Open 18.3",
+  "creator": "CrossFit Games",
+  "description": "Two rounds for time of 100 double-unders, 20 overhead squats at 115/80 lb, 100 double-unders, 12 ring muscle-ups, 100 double-unders, 20 dumbbell snatches at 50/35 lb, 100 double-unders and 12 bar muscle-ups, 14-minute cap. Scaled used single-unders, 45/35 lb, chin-over-bar pull-ups and 35/20 lb dumbbells.",
+  "source": {
+    "title": "CrossFit Games Open 2018 – Workout 18.3",
+    "url": "https://games.crossfit.com/workouts/open/2018/3",
+    "author": "CrossFit Games",
+    "kind": "benchmark",
+    "license": "Public competition workout; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "CrossFit",
+    "CrossFit Open",
+    "2018",
+    "For time",
+    "Barbell",
+    "Gymnastics",
+    "Jump rope"
+  ],
+  "level": "Hard",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "2 rounds",
+      "mode": "fortime",
+      "repeat": 2,
+      "timeCapSec": 840,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "bw_double_under",
+          "forMode": "reps",
+          "forValue": 100
+        },
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "bb_overhead_squat",
+          "target": 52.0,
+          "rx": {
+            "men": 52.0,
+            "women": 36.5
+          },
+          "forMode": "reps",
+          "forValue": 20,
+          "note": "115/80 lb"
+        },
+        {
+          "kind": "exercise",
+          "id": "s3",
+          "exercise": "bw_double_under",
+          "forMode": "reps",
+          "forValue": 100
+        },
+        {
+          "kind": "exercise",
+          "id": "s4",
+          "exercise": "gym_muscle_up",
+          "forMode": "reps",
+          "forValue": 12,
+          "note": "ring muscle-up"
+        },
+        {
+          "kind": "exercise",
+          "id": "s5",
+          "exercise": "bw_double_under",
+          "forMode": "reps",
+          "forValue": 100
+        },
+        {
+          "kind": "exercise",
+          "id": "s6",
+          "exercise": "db_snatch",
+          "target": 22.5,
+          "rx": {
+            "men": 22.5,
+            "women": 16.0
+          },
+          "forMode": "reps",
+          "forValue": 20,
+          "note": "50/35 lb"
+        },
+        {
+          "kind": "exercise",
+          "id": "s7",
+          "exercise": "bw_double_under",
+          "forMode": "reps",
+          "forValue": 100
+        },
+        {
+          "kind": "exercise",
+          "id": "s8",
+          "exercise": "bw_bar_muscle_up",
+          "forMode": "reps",
+          "forValue": 12
+        }
+      ]
+    }
+  ]
+}
