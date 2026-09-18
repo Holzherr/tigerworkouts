@@ -1,0 +1,69 @@
+{
+  "id": "cf-hero-harper",
+  "title": "Harper",
+  "creator": "CrossFit",
+  "description": "A 23-minute AMRAP of 9 chest-to-bar pull-ups, 15 power cleans at 135/95 lb, 21 squats and a 400 m run with a 45/25 lb plate. Honours Phoenix firefighter Brad Harper, killed at a two-alarm fire in 2013. Carry the plate however you like.",
+  "source": {
+    "title": "Harper – CrossFit Hero WOD",
+    "url": "https://www.crossfit.com/benchmark/harper",
+    "author": "CrossFit",
+    "kind": "benchmark",
+    "license": "Public benchmark; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "CrossFit",
+    "Hero",
+    "AMRAP",
+    "Barbell",
+    "Run"
+  ],
+  "level": "Hard",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "Harper",
+      "mode": "amrap",
+      "repeat": 1,
+      "timeCapSec": 1380,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "bw_chest_to_bar_pullup",
+          "forMode": "reps",
+          "forValue": 9
+        },
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "bb_power_clean",
+          "target": 61.0,
+          "rx": {
+            "men": 61.0,
+            "women": 43.0
+          },
+          "forMode": "reps",
+          "forValue": 15,
+          "note": "135/95 lb"
+        },
+        {
+          "kind": "exercise",
+          "id": "s3",
+          "exercise": "bw_squat",
+          "forMode": "reps",
+          "forValue": 21
+        },
+        {
+          "kind": "exercise",
+          "id": "s4",
+          "exercise": "cardio_run",
+          "forMode": "meters",
+          "forValue": 400,
+          "note": "carry a 45/25 lb plate"
+        }
+      ]
+    }
+  ]
+}

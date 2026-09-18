@@ -1,0 +1,58 @@
+{
+  "id": "cf-hero-kutschbach",
+  "title": "Kutschbach",
+  "creator": "CrossFit",
+  "description": "Seven rounds of 11 back squats at 185/125 lb and 10 jerks at 135/95 lb. Honours U.S. Army Staff Sgt. Patrick Kutschbach, 10th Special Forces Group, killed by an RPG in Tagab Valley, Afghanistan, in 2007. Two bars or fast plate changes; pick loads you can do unbroken early.",
+  "source": {
+    "title": "Kutschbach – CrossFit Hero WOD",
+    "url": "https://www.crossfit.com/benchmark/kutschbach",
+    "author": "CrossFit",
+    "kind": "benchmark",
+    "license": "Public benchmark; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "CrossFit",
+    "Hero",
+    "For time",
+    "Barbell"
+  ],
+  "level": "Hard",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "Kutschbach",
+      "mode": "fortime",
+      "repeat": 7,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "bb_back_squat",
+          "target": 84.0,
+          "rx": {
+            "men": 84.0,
+            "women": 56.5
+          },
+          "forMode": "reps",
+          "forValue": 11,
+          "note": "185/125 lb"
+        },
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "bb_push_jerk",
+          "target": 61.0,
+          "rx": {
+            "men": 61.0,
+            "women": 43.0
+          },
+          "forMode": "reps",
+          "forValue": 10,
+          "note": "135/95 lb"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,53 @@
+{
+  "id": "cf-hero-manion",
+  "title": "Manion",
+  "creator": "CrossFit",
+  "description": "Seven rounds of a 400 m run and 29 back squats at a light bar, for time. Honours U.S. Marine 1st Lt. Travis Manion, killed by sniper fire in Anbar Province, Iraq, in 2007. Two hundred squats in total, so pick a load you can move for big sets.",
+  "source": {
+    "title": "Manion – CrossFit Hero WOD",
+    "url": "https://www.crossfit.com/benchmark/manion",
+    "author": "CrossFit",
+    "kind": "benchmark",
+    "license": "Public benchmark; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "CrossFit",
+    "Hero WOD",
+    "For time",
+    "Barbell",
+    "Running"
+  ],
+  "level": "Hard",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "7 rounds",
+      "mode": "fortime",
+      "repeat": 7,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "cardio_run",
+          "forMode": "meters",
+          "forValue": 400
+        },
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "bb_back_squat",
+          "forMode": "reps",
+          "forValue": 29,
+          "target": 61,
+          "rx": {
+            "men": 61,
+            "women": 43
+          },
+          "note": "135/95 lb"
+        }
+      ]
+    }
+  ]
+}

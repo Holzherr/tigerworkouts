@@ -1,0 +1,76 @@
+{
+  "id": "cf-open-16-4",
+  "title": "Open 16.4",
+  "creator": "CrossFit Games",
+  "description": "Thirteen-minute AMRAP chipper: 55 deadlifts at 225/155 lb, 55 wall balls (20/14 lb), 55-calorie row and 55 handstand push-ups. Repeated as 17.4. Scaled used 135/95 lb, a 9 ft target and hand-release push-ups.",
+  "source": {
+    "title": "CrossFit Games Open 2016 – Workout 16.4",
+    "url": "https://games.crossfit.com/workouts/open/2016",
+    "author": "CrossFit Games",
+    "kind": "benchmark",
+    "license": "Public competition workout; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "CrossFit",
+    "CrossFit Open",
+    "2016",
+    "AMRAP",
+    "Chipper",
+    "Barbell",
+    "Rower"
+  ],
+  "level": "Hard",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "AMRAP 13",
+      "mode": "amrap",
+      "repeat": 1,
+      "timeCapSec": 780,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "bb_deadlift",
+          "target": 102.0,
+          "rx": {
+            "men": 102.0,
+            "women": 70.5
+          },
+          "forMode": "reps",
+          "forValue": 55,
+          "note": "225/155 lb"
+        },
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "gym_wall_ball",
+          "target": 9.0,
+          "rx": {
+            "men": 9.0,
+            "women": 6.5
+          },
+          "forMode": "reps",
+          "forValue": 55,
+          "note": "20/14 lb. 10/9 ft target"
+        },
+        {
+          "kind": "exercise",
+          "id": "s3",
+          "exercise": "cardio_rower",
+          "forMode": "calories",
+          "forValue": 55
+        },
+        {
+          "kind": "exercise",
+          "id": "s4",
+          "exercise": "bw_handstand_pushup",
+          "forMode": "reps",
+          "forValue": 55
+        }
+      ]
+    }
+  ]
+}

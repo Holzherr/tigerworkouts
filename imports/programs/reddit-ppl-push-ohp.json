@@ -1,0 +1,176 @@
+{
+  "id": "prog-reddit-ppl-push-ohp",
+  "title": "Reddit PPL – Push (OHP week)",
+  "creator": "u/Metallicadpa (r/Fitness)",
+  "description": "Metallicadpa's six-day push/pull/legs: each day opens with a barbell lift progressed linearly (4×5 then a 5+ AMRAP set), followed by 8–12 rep accessories and high-rep isolation work. Run PPLPPLR or PPLRPPL; the pull and push main lifts alternate weekly (deadlift/row, bench/OHP), so a two-week rotation covers both variants. Add 2.5 kg to upper lifts and squat and 5 kg to deadlift each session; deload 10% after failing the same weight three sessions running; accessories go up once you hit 3×12.",
+  "source": {
+    "title": "A Linear Progression Based PPL Program for Beginners",
+    "url": "https://thefitness.wiki/reddit-archive/a-linear-progression-based-ppl-program-for-beginners/",
+    "author": "u/Metallicadpa (r/Fitness)",
+    "kind": "program",
+    "license": "Freely published program; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "Program",
+    "Hypertrophy",
+    "Strength",
+    "Barbell",
+    "PPL"
+  ],
+  "level": "Medium",
+  "program": {
+    "name": "Reddit PPL (Metallicadpa)",
+    "day": "Push (OHP week)",
+    "order": 5
+  },
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "Overhead press 4×5, 1×5+",
+      "repeat": 4,
+      "note": "Rest 3–5 min; +2.5 kg per session (+5 kg deadlift); 3 fails at a weight → drop 10%",
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "bb_ohp",
+          "forMode": "reps",
+          "forValue": 5
+        },
+        {
+          "kind": "rest",
+          "id": "r1",
+          "seconds": 180
+        }
+      ]
+    },
+    {
+      "kind": "block",
+      "id": "b2",
+      "name": "Overhead press 4×5, 1×5+ – AMRAP",
+      "repeat": 1,
+      "note": "AMRAP set",
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "bb_ohp",
+          "forMode": "reps",
+          "forValue": 5,
+          "note": "5+ reps: as many as possible with good form"
+        },
+        {
+          "kind": "rest",
+          "id": "r2",
+          "seconds": 180
+        }
+      ]
+    },
+    {
+      "kind": "block",
+      "id": "b3",
+      "name": "Bench press 3×8–12",
+      "repeat": 3,
+      "note": "Add weight when you get 3×12 with good form",
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s3",
+          "exercise": "bb_bench",
+          "forMode": "reps",
+          "forValue": 12,
+          "note": "8–12 reps"
+        },
+        {
+          "kind": "rest",
+          "id": "r3",
+          "seconds": 90
+        }
+      ]
+    },
+    {
+      "kind": "block",
+      "id": "b4",
+      "name": "Incline dumbbell press 3×8–12",
+      "repeat": 3,
+      "note": "Add weight when you get 3×12 with good form",
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s4",
+          "exercise": "db_incline_press",
+          "forMode": "reps",
+          "forValue": 12,
+          "note": "8–12 reps"
+        },
+        {
+          "kind": "rest",
+          "id": "r4",
+          "seconds": 90
+        }
+      ]
+    },
+    {
+      "kind": "block",
+      "id": "b5",
+      "name": "Triceps pushdown + lateral raise superset",
+      "repeat": 3,
+      "note": "Superset: 3 rounds; Add weight when you get 3×12 with good form",
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s5",
+          "exercise": "cable_tricep_pushdown",
+          "forMode": "reps",
+          "forValue": 12,
+          "note": "8–12 reps"
+        },
+        {
+          "kind": "exercise",
+          "id": "s6",
+          "exercise": "lat_raise",
+          "forMode": "reps",
+          "forValue": 20,
+          "note": "15–20 reps"
+        },
+        {
+          "kind": "rest",
+          "id": "r5",
+          "seconds": 60
+        }
+      ]
+    },
+    {
+      "kind": "block",
+      "id": "b6",
+      "name": "Overhead triceps extension + lateral raise superset",
+      "repeat": 3,
+      "note": "Superset: 3 rounds; Add weight when you get 3×12 with good form",
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s7",
+          "exercise": "db_tricep_ext",
+          "forMode": "reps",
+          "forValue": 12,
+          "note": "8–12 reps"
+        },
+        {
+          "kind": "exercise",
+          "id": "s8",
+          "exercise": "lat_raise",
+          "forMode": "reps",
+          "forValue": 20,
+          "note": "15–20 reps"
+        },
+        {
+          "kind": "rest",
+          "id": "r6",
+          "seconds": 60
+        }
+      ]
+    }
+  ]
+}

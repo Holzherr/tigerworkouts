@@ -1,0 +1,89 @@
+{
+  "id": "cf-hero-capoot",
+  "title": "Capoot",
+  "creator": "CrossFit",
+  "description": "Descending push-ups with ascending runs: 100 push-ups, 800 m, 75 push-ups, 1,200 m, 50 push-ups, 1,600 m, 25 push-ups, 2,000 m. Honours Vallejo Police Officer James L. Capoot, killed in 2011 while chasing an armed robbery suspect. 250 push-ups and 5.6 km of running; scale the push-ups to knees rather than cutting the runs.",
+  "source": {
+    "title": "Capoot – CrossFit Hero WOD",
+    "url": "https://www.crossfit.com/benchmark/capoot",
+    "author": "CrossFit",
+    "kind": "benchmark",
+    "license": "Public benchmark; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "CrossFit",
+    "Hero",
+    "For time",
+    "Run",
+    "Bodyweight"
+  ],
+  "level": "Hard",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "Capoot",
+      "mode": "fortime",
+      "repeat": 1,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "bw_pushup",
+          "forMode": "reps",
+          "forValue": 100
+        },
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "cardio_run",
+          "forMode": "meters",
+          "forValue": 800
+        },
+        {
+          "kind": "exercise",
+          "id": "s3",
+          "exercise": "bw_pushup",
+          "forMode": "reps",
+          "forValue": 75
+        },
+        {
+          "kind": "exercise",
+          "id": "s4",
+          "exercise": "cardio_run",
+          "forMode": "meters",
+          "forValue": 1200
+        },
+        {
+          "kind": "exercise",
+          "id": "s5",
+          "exercise": "bw_pushup",
+          "forMode": "reps",
+          "forValue": 50
+        },
+        {
+          "kind": "exercise",
+          "id": "s6",
+          "exercise": "cardio_run",
+          "forMode": "meters",
+          "forValue": 1600
+        },
+        {
+          "kind": "exercise",
+          "id": "s7",
+          "exercise": "bw_pushup",
+          "forMode": "reps",
+          "forValue": 25
+        },
+        {
+          "kind": "exercise",
+          "id": "s8",
+          "exercise": "cardio_run",
+          "forMode": "meters",
+          "forValue": 2000
+        }
+      ]
+    }
+  ]
+}

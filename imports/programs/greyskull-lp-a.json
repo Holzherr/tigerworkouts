@@ -1,0 +1,158 @@
+{
+  "id": "prog-greyskull-lp-a",
+  "title": "GreySkull LP (Phrak's) – Workout A",
+  "creator": "John Sheaffer (GreySkull); variant by u/Phrakture",
+  "description": "John Sheaffer's GreySkull LP in Phrak's popular variant, which adds a pull to every session: two sets of five then an AMRAP set on each lift, three days a week alternating A and B (A/B/A, then B/A/B). Add 1 kg (2.5 lb) to upper lifts and 2.5 kg (5 lb) to squat/deadlift each session; if the AMRAP set hits 10+ reps double the jump; if it falls under 5 reps take 10% off that lift and build back. The base programme instead pairs bench+squat (A) and press+deadlift (B) with curls, chins and neck work.",
+  "source": {
+    "title": "GreySkull LP (base and Phrak's variant)",
+    "url": "https://liftvault.com/programs/strength/greyskull-linear-progression-spreadsheet/",
+    "author": "John Sheaffer (GreySkull); variant by u/Phrakture",
+    "kind": "program",
+    "license": "Freely published program; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "Program",
+    "Strength",
+    "Barbell",
+    "Full body"
+  ],
+  "level": "Medium",
+  "program": {
+    "name": "GreySkull LP (Phrak's variant)",
+    "day": "Workout A",
+    "order": 1
+  },
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "Overhead press 2×5, 1×5+",
+      "repeat": 2,
+      "note": "Rest 2–3 min. +2.5 lb upper / +5 lb lower per session; 10+ on the AMRAP → double it; <5 → drop 10%",
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "bb_ohp",
+          "forMode": "reps",
+          "forValue": 5
+        },
+        {
+          "kind": "rest",
+          "id": "r1",
+          "seconds": 180
+        }
+      ]
+    },
+    {
+      "kind": "block",
+      "id": "b2",
+      "name": "Overhead press 2×5, 1×5+ – AMRAP",
+      "repeat": 1,
+      "note": "AMRAP set, stop 1–2 reps short of failure",
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "bb_ohp",
+          "forMode": "reps",
+          "forValue": 5,
+          "note": "5+ reps: as many as possible with good form"
+        },
+        {
+          "kind": "rest",
+          "id": "r2",
+          "seconds": 180
+        }
+      ]
+    },
+    {
+      "kind": "block",
+      "id": "b3",
+      "name": "Chin-ups 2×5, 1×5+",
+      "repeat": 2,
+      "note": "Rest 2–3 min. +2.5 lb upper / +5 lb lower per session; 10+ on the AMRAP → double it; <5 → drop 10%",
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s3",
+          "exercise": "bw_chinup",
+          "forMode": "reps",
+          "forValue": 5,
+          "note": "Bodyweight; add 2.5 lb on a belt once all sets are made"
+        },
+        {
+          "kind": "rest",
+          "id": "r3",
+          "seconds": 180
+        }
+      ]
+    },
+    {
+      "kind": "block",
+      "id": "b4",
+      "name": "Chin-ups 2×5, 1×5+ – AMRAP",
+      "repeat": 1,
+      "note": "AMRAP set",
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s4",
+          "exercise": "bw_chinup",
+          "forMode": "reps",
+          "forValue": 5,
+          "note": "5+ reps: as many as possible with good form; Bodyweight; add 2.5 lb on a belt once all sets are made"
+        },
+        {
+          "kind": "rest",
+          "id": "r4",
+          "seconds": 180
+        }
+      ]
+    },
+    {
+      "kind": "block",
+      "id": "b5",
+      "name": "Squat 2×5, 1×5+",
+      "repeat": 2,
+      "note": "Rest 2–3 min. +2.5 lb upper / +5 lb lower per session; 10+ on the AMRAP → double it; <5 → drop 10%",
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s5",
+          "exercise": "bb_back_squat",
+          "forMode": "reps",
+          "forValue": 5
+        },
+        {
+          "kind": "rest",
+          "id": "r5",
+          "seconds": 180
+        }
+      ]
+    },
+    {
+      "kind": "block",
+      "id": "b6",
+      "name": "Squat 2×5, 1×5+ – AMRAP",
+      "repeat": 1,
+      "note": "AMRAP set, stop 1–2 reps short of failure",
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s6",
+          "exercise": "bb_back_squat",
+          "forMode": "reps",
+          "forValue": 5,
+          "note": "5+ reps: as many as possible with good form"
+        },
+        {
+          "kind": "rest",
+          "id": "r6",
+          "seconds": 180
+        }
+      ]
+    }
+  ]
+}

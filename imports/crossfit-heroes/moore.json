@@ -1,0 +1,57 @@
+{
+  "id": "cf-hero-moore",
+  "title": "Moore",
+  "creator": "CrossFit",
+  "description": "A 20-minute AMRAP of one rope climb, a 400 m run and a max set of handstand push-ups; score is total HSPU reps. Honours Officer David S. Moore of the Indianapolis Metropolitan Police Department, shot during a traffic stop in 2011. Each max set ends the moment you come off the wall, so pace the first ones.",
+  "source": {
+    "title": "Moore – CrossFit Hero WOD",
+    "url": "https://www.crossfit.com/benchmark/moore",
+    "author": "CrossFit",
+    "kind": "benchmark",
+    "license": "Public benchmark; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "CrossFit",
+    "Hero WOD",
+    "AMRAP",
+    "Gymnastics",
+    "Running"
+  ],
+  "level": "Hard",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "AMRAP 20",
+      "mode": "amrap",
+      "timeCapSec": 1200,
+      "note": "Score is total handstand push-ups",
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "gym_rope_climb",
+          "forMode": "reps",
+          "forValue": 1,
+          "note": "15 ft"
+        },
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "cardio_run",
+          "forMode": "meters",
+          "forValue": 400
+        },
+        {
+          "kind": "exercise",
+          "id": "s3",
+          "exercise": "bw_handstand_pushup",
+          "forMode": "reps",
+          "forValue": 1,
+          "note": "Max reps in one unbroken set; score total HSPU"
+        }
+      ]
+    }
+  ]
+}

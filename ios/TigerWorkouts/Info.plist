@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>CFBundleIdentifier</key>
+  <string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
+  <key>CFBundleExecutable</key>
+  <string>$(EXECUTABLE_NAME)</string>
+  <key>CFBundlePackageType</key>
+  <string>$(PRODUCT_BUNDLE_PACKAGE_TYPE)</string>
+  <key>CFBundleInfoDictionaryVersion</key>
+  <string>6.0</string>
+  <key>CFBundleDevelopmentRegion</key>
+  <string>$(DEVELOPMENT_LANGUAGE)</string>
+  <key>CFBundleDisplayName</key>
+  <string>Tiger</string>
+  <key>CFBundleName</key>
+  <string>TigerWorkouts</string>
+  <key>CFBundleShortVersionString</key>
+  <string>$(MARKETING_VERSION)</string>
+  <key>CFBundleVersion</key>
+  <string>$(CURRENT_PROJECT_VERSION)</string>
+  <key>UILaunchScreen</key>
+  <dict/>
+  <key>UISupportedInterfaceOrientations</key>
+  <array>
+    <string>UIInterfaceOrientationPortrait</string>
+  </array>
+  <!-- The timer has to keep counting, beeping and buzzing with the phone locked in a pocket. -->
+  <key>UIBackgroundModes</key>
+  <array>
+    <string>audio</string>
+  </array>
+  <!-- The session card on the Lock Screen and in the Dynamic Island. -->
+  <key>NSSupportsLiveActivities</key>
+  <true/>
+  <key>NSSupportsLiveActivitiesFrequentUpdates</key>
+  <true/>
+  <key>NSHealthShareUsageDescription</key>
+  <string>Tiger reads your bodyweight so the calories after a workout are yours rather than an assumption, and your heart rate over the session so the figure is measured rather than estimated.</string>
+  <key>NSHealthUpdateUsageDescription</key>
+  <string>Tiger saves each finished workout to Health, so it counts towards your rings and sits alongside everything else you do.</string>
+  <key>CFBundleURLTypes</key>
+  <array>
+    <dict>
+      <key>CFBundleURLName</key>
+      <string>com.holzherr.tigerworkouts.auth</string>
+      <key>CFBundleURLSchemes</key>
+      <array><string>tigerworkouts</string></array>
+    </dict>
+  </array>
+</dict>
+</plist>

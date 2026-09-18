@@ -1,0 +1,97 @@
+{
+  "id": "cf-hero-nutts",
+  "title": "Nutts",
+  "creator": "CrossFit",
+  "description": "A chipper of 10 handstand push-ups, 15 heavy deadlifts, 25 box jumps, 50 pull-ups, 100 wall balls, 200 double-unders and a 400 m run carrying a plate, for time. Honours Canadian Lt. Andrew Richard Nuttall of 1 PPCLI, killed by an IED in Panjwaii, Afghanistan, in 2009. The 100 wall balls are the middle of the grind; break them early.",
+  "source": {
+    "title": "Nutts – CrossFit Hero WOD",
+    "url": "https://www.crossfit.com/benchmark/nutts",
+    "author": "CrossFit",
+    "kind": "benchmark",
+    "license": "Public benchmark; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "CrossFit",
+    "Hero WOD",
+    "For time",
+    "Chipper",
+    "Barbell",
+    "Gymnastics"
+  ],
+  "level": "Hard",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "Chipper",
+      "mode": "fortime",
+      "repeat": 1,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "bw_handstand_pushup",
+          "forMode": "reps",
+          "forValue": 10
+        },
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "bb_deadlift",
+          "forMode": "reps",
+          "forValue": 15,
+          "target": 113.5,
+          "rx": {
+            "men": 113.5,
+            "women": 79.5
+          },
+          "note": "250/175 lb"
+        },
+        {
+          "kind": "exercise",
+          "id": "s3",
+          "exercise": "bw_box_jump",
+          "forMode": "reps",
+          "forValue": 25,
+          "note": "30/24 in box"
+        },
+        {
+          "kind": "exercise",
+          "id": "s4",
+          "exercise": "bw_pullup",
+          "forMode": "reps",
+          "forValue": 50
+        },
+        {
+          "kind": "exercise",
+          "id": "s5",
+          "exercise": "gym_wall_ball",
+          "forMode": "reps",
+          "forValue": 100,
+          "target": 9,
+          "rx": {
+            "men": 9,
+            "women": 6.5
+          },
+          "note": "20/14 lb — 10/9 ft target"
+        },
+        {
+          "kind": "exercise",
+          "id": "s6",
+          "exercise": "bw_double_under",
+          "forMode": "reps",
+          "forValue": 200
+        },
+        {
+          "kind": "exercise",
+          "id": "s7",
+          "exercise": "cardio_run",
+          "forMode": "meters",
+          "forValue": 400,
+          "note": "Carrying a 45/25 lb (20.5/11.5 kg) plate"
+        }
+      ]
+    }
+  ]
+}

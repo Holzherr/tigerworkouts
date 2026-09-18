@@ -1,0 +1,88 @@
+{
+  "id": "cf-open-12-2",
+  "title": "Open 12.2",
+  "creator": "CrossFit Games",
+  "description": "Ten-minute snatch ladder: 30 reps at 75/45 lb, 30 at 135/75, 30 at 165/100, then as many as possible at 210/120. Any style of snatch counts. Few athletes reached the last bar; the scaled route is simply to stop where the weight stops. Masters 55+ started at 45/35 lb.",
+  "source": {
+    "title": "CrossFit Games Open 2012 – Workout 12.2",
+    "url": "https://games.crossfit.com/workouts/open/2012",
+    "author": "CrossFit Games",
+    "kind": "benchmark",
+    "license": "Public competition workout; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "CrossFit",
+    "CrossFit Open",
+    "2012",
+    "AMRAP",
+    "Barbell",
+    "Olympic lifting"
+  ],
+  "level": "Hard",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "Snatch ladder",
+      "mode": "amrap",
+      "repeat": 1,
+      "timeCapSec": 600,
+      "note": "Move through the loads in order; score = total reps in 10 minutes.",
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "bb_snatch",
+          "target": 34.0,
+          "rx": {
+            "men": 34.0,
+            "women": 20.5
+          },
+          "forMode": "reps",
+          "forValue": 30,
+          "note": "75/45 lb"
+        },
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "bb_snatch",
+          "target": 61.0,
+          "rx": {
+            "men": 61.0,
+            "women": 34.0
+          },
+          "forMode": "reps",
+          "forValue": 30,
+          "note": "135/75 lb"
+        },
+        {
+          "kind": "exercise",
+          "id": "s3",
+          "exercise": "bb_snatch",
+          "target": 75.0,
+          "rx": {
+            "men": 75.0,
+            "women": 45.5
+          },
+          "forMode": "reps",
+          "forValue": 30,
+          "note": "165/100 lb"
+        },
+        {
+          "kind": "exercise",
+          "id": "s4",
+          "exercise": "bb_snatch",
+          "target": 95.5,
+          "rx": {
+            "men": 95.5,
+            "women": 54.5
+          },
+          "forMode": "max",
+          "forValue": 0,
+          "note": "210/120 lb. as many reps as possible at this load until time runs out"
+        }
+      ]
+    }
+  ]
+}

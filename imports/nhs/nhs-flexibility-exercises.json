@@ -1,0 +1,124 @@
+{
+  "id": "nhs-flexibility-exercises",
+  "title": "Flexibility exercises",
+  "creator": "NHS",
+  "description": "Four short mobility stretches from the NHS: neck rotations, neck stretches, sideways bends and a calf stretch, 3 each side with holds of 2 to 5 seconds. It takes only a few minutes and is written for older adults but suits anyone stiff from sitting. Do it daily alongside the balance and strength sets.",
+  "source": {
+    "title": "Flexibility exercises",
+    "url": "https://www.nhs.uk/live-well/exercise/flexibility-exercises/",
+    "author": "NHS",
+    "kind": "article",
+    "license": "Open Government Licence v3.0 (NHS)",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "NHS",
+    "Stretch",
+    "Mobility",
+    "Older adults",
+    "No equipment"
+  ],
+  "level": "Easy",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "Neck rotation",
+      "repeat": 3,
+      "note": "3 each side",
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "bw_neck_rotation",
+          "forMode": "seconds",
+          "forValue": 5,
+          "note": "Turn to the left, hold 5 s"
+        },
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "bw_neck_rotation",
+          "forMode": "seconds",
+          "forValue": 5,
+          "note": "Turn to the right"
+        }
+      ]
+    },
+    {
+      "kind": "block",
+      "id": "b2",
+      "name": "Neck stretch",
+      "repeat": 3,
+      "note": "3 each side",
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s3",
+          "exercise": "bw_neck_stretch",
+          "forMode": "seconds",
+          "forValue": 5,
+          "note": "Hold the left shoulder down, tilt right"
+        },
+        {
+          "kind": "exercise",
+          "id": "s4",
+          "exercise": "bw_neck_stretch",
+          "forMode": "seconds",
+          "forValue": 5,
+          "note": "Other side"
+        }
+      ]
+    },
+    {
+      "kind": "block",
+      "id": "b3",
+      "name": "Sideways bend",
+      "repeat": 3,
+      "note": "Hold 2 s, 3 each side",
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s5",
+          "exercise": "bw_stretch_side",
+          "forMode": "seconds",
+          "forValue": 2,
+          "note": "Slide the left arm down the side"
+        },
+        {
+          "kind": "exercise",
+          "id": "s6",
+          "exercise": "bw_stretch_side",
+          "forMode": "seconds",
+          "forValue": 2,
+          "note": "Right arm"
+        }
+      ]
+    },
+    {
+      "kind": "block",
+      "id": "b4",
+      "name": "Calf stretch",
+      "repeat": 3,
+      "note": "3 each side",
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s7",
+          "exercise": "bw_stretch_calf",
+          "forMode": "seconds",
+          "forValue": 10,
+          "note": "Left leg back; the source gives no hold time"
+        },
+        {
+          "kind": "exercise",
+          "id": "s8",
+          "exercise": "bw_stretch_calf",
+          "forMode": "seconds",
+          "forValue": 10,
+          "note": "Right leg back"
+        }
+      ]
+    }
+  ]
+}

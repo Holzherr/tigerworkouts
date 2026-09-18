@@ -1,0 +1,69 @@
+{
+  "id": "cf-hero-white",
+  "title": "White",
+  "creator": "CrossFit",
+  "description": "Five rounds of 3 rope climbs, 10 toes-to-bar, 21 overhead walking lunges with a plate and a 400 m run, for time. Honours U.S. Army 1st Lt. Ashley White of the Cultural Support Team, killed by an IED in Kandahar Province in 2011. Fifteen rope climbs in total; sub towel pull-ups if you have no rope.",
+  "source": {
+    "title": "White – CrossFit Hero WOD",
+    "url": "https://www.crossfit.com/benchmark/white-hero",
+    "author": "CrossFit",
+    "kind": "benchmark",
+    "license": "Public benchmark; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "CrossFit",
+    "Hero WOD",
+    "For time",
+    "Rope climb",
+    "Gymnastics",
+    "Running"
+  ],
+  "level": "Hard",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "5 rounds",
+      "mode": "fortime",
+      "repeat": 5,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "gym_rope_climb",
+          "forMode": "reps",
+          "forValue": 3,
+          "note": "15 ft"
+        },
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "bw_toes_to_bar",
+          "forMode": "reps",
+          "forValue": 10
+        },
+        {
+          "kind": "exercise",
+          "id": "s3",
+          "exercise": "gym_plate_overhead_lunge",
+          "forMode": "reps",
+          "forValue": 21,
+          "target": 20.5,
+          "rx": {
+            "men": 20.5,
+            "women": 11.5
+          },
+          "note": "45/25 lb"
+        },
+        {
+          "kind": "exercise",
+          "id": "s4",
+          "exercise": "cardio_run",
+          "forMode": "meters",
+          "forValue": 400
+        }
+      ]
+    }
+  ]
+}

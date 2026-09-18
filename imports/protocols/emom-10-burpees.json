@@ -1,0 +1,40 @@
+{
+  "id": "proto-emom-10-burpees",
+  "title": "EMOM 10: 5 burpees",
+  "creator": "Common EMOM template",
+  "description": "Every minute on the minute for 10 minutes, do 5 burpees and rest for whatever is left of the minute. The classic starter EMOM: the work is fixed, the rest shrinks as you slow down. Scale the reps (3 or 4) rather than the minutes.",
+  "source": {
+    "title": "CrossFit Terms Explained – EMOM",
+    "url": "https://www.crossfit.com/essentials/crossfit-terms-explained",
+    "author": "CrossFit (format); common template",
+    "kind": "protocol",
+    "license": "Published protocol; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "EMOM",
+    "Bodyweight",
+    "No equipment",
+    "Template"
+  ],
+  "level": "Medium",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "EMOM 10",
+      "mode": "emom",
+      "repeat": 10,
+      "everySec": 60,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "bw_burpee",
+          "forMode": "reps",
+          "forValue": 5
+        }
+      ]
+    }
+  ]
+}

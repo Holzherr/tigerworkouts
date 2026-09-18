@@ -1,0 +1,69 @@
+{
+  "id": "cf-hero-hoover",
+  "title": "Hoover",
+  "creator": "CrossFit",
+  "description": "Eight rounds of a 400 m run, 15 burpee box jump-overs, a 10-calorie bike and 6 alternating dumbbell snatches with a 75/50 lb dumbbell. Honours U.S. Marine Staff Sgt. Taylor Hoover, killed in the 2021 Abbey Gate bombing in Kabul, Afghanistan. The heavy dumbbell is the point; scale to 50/35 lb if needed.",
+  "source": {
+    "title": "Hoover – CrossFit Hero WOD",
+    "url": "https://www.crossfit.com/benchmark/hoover-hero",
+    "author": "CrossFit",
+    "kind": "benchmark",
+    "license": "Public benchmark; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "CrossFit",
+    "Hero",
+    "For time",
+    "Run",
+    "Bike",
+    "Dumbbell"
+  ],
+  "level": "Hard",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "Hoover",
+      "mode": "fortime",
+      "repeat": 8,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "cardio_run",
+          "forMode": "meters",
+          "forValue": 400
+        },
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "bw_burpee_box_jump_over",
+          "forMode": "reps",
+          "forValue": 15,
+          "note": "24/20 in box"
+        },
+        {
+          "kind": "exercise",
+          "id": "s3",
+          "exercise": "cardio_assault_bike",
+          "forMode": "calories",
+          "forValue": 10
+        },
+        {
+          "kind": "exercise",
+          "id": "s4",
+          "exercise": "db_snatch",
+          "target": 34.0,
+          "rx": {
+            "men": 34.0,
+            "women": 22.5
+          },
+          "forMode": "reps",
+          "forValue": 6,
+          "note": "75/50 lb; alternating"
+        }
+      ]
+    }
+  ]
+}

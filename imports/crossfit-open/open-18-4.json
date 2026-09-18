@@ -1,0 +1,98 @@
+{
+  "id": "cf-open-18-4",
+  "title": "Open 18.4",
+  "creator": "CrossFit Games",
+  "description": "21-15-9 deadlifts at 225/155 lb and handstand push-ups, then 21-15-9 deadlifts at 315/205 lb with a 50 ft handstand walk after each set, 9-minute cap. Diane with a heavier second half. Repeated as 20.3. Scaled used 135/95 and 185/135 lb, hand-release push-ups and bear crawls.",
+  "source": {
+    "title": "CrossFit Games Open 2018 – Workout 18.4",
+    "url": "https://games.crossfit.com/workouts/open/2018/4",
+    "author": "CrossFit Games",
+    "kind": "benchmark",
+    "license": "Public competition workout; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "CrossFit",
+    "CrossFit Open",
+    "2018",
+    "For time",
+    "Ladder",
+    "Barbell",
+    "Gymnastics"
+  ],
+  "level": "Hard",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "21-15-9 light",
+      "mode": "ladder",
+      "repeat": 1,
+      "ladder": [
+        21,
+        15,
+        9
+      ],
+      "timeCapSec": 540,
+      "note": "9-minute cap covers both halves",
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "bb_deadlift",
+          "target": 102.0,
+          "rx": {
+            "men": 102.0,
+            "women": 70.5
+          },
+          "forMode": "reps",
+          "forValue": 21,
+          "note": "225/155 lb"
+        },
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "bw_handstand_pushup",
+          "forMode": "reps",
+          "forValue": 21
+        }
+      ]
+    },
+    {
+      "kind": "block",
+      "id": "b2",
+      "name": "21-15-9 heavy",
+      "mode": "ladder",
+      "repeat": 1,
+      "ladder": [
+        21,
+        15,
+        9
+      ],
+      "note": "50 ft handstand walk after every set",
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s3",
+          "exercise": "bb_deadlift",
+          "target": 143.0,
+          "rx": {
+            "men": 143.0,
+            "women": 93.0
+          },
+          "forMode": "reps",
+          "forValue": 21,
+          "note": "315/205 lb"
+        },
+        {
+          "kind": "exercise",
+          "id": "s4",
+          "exercise": "bw_handstand_walk",
+          "forMode": "meters",
+          "forValue": 15,
+          "note": "50 ft; each 5 ft = 1 rep"
+        }
+      ]
+    }
+  ]
+}

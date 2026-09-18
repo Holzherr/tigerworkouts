@@ -1,0 +1,47 @@
+{
+  "id": "cf-hero-ryan",
+  "title": "Ryan",
+  "creator": "CrossFit",
+  "description": "Five rounds of 7 muscle-ups and 21 burpees, for time. Honours Maplewood, Missouri, firefighter Ryan Hummert, 22, shot by a sniper while responding to a call in 2008. Scale muscle-ups to 7 pull-ups plus 7 ring dips per round.",
+  "source": {
+    "title": "Ryan – CrossFit Hero WOD",
+    "url": "https://www.crossfit.com/benchmark/ryan",
+    "author": "CrossFit",
+    "kind": "benchmark",
+    "license": "Public benchmark; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "CrossFit",
+    "Hero WOD",
+    "For time",
+    "Gymnastics",
+    "Bodyweight"
+  ],
+  "level": "Hard",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "5 rounds",
+      "mode": "fortime",
+      "repeat": 5,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "gym_muscle_up",
+          "forMode": "reps",
+          "forValue": 7
+        },
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "bw_burpee",
+          "forMode": "reps",
+          "forValue": 21
+        }
+      ]
+    }
+  ]
+}

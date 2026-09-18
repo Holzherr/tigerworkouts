@@ -1,0 +1,55 @@
+{
+  "id": "cf-girls-annie",
+  "title": "Annie",
+  "creator": "CrossFit",
+  "description": "A descending ladder of double-unders and sit-ups: 50 of each, then 40, 30, 20 and 10. Named after CrossFit original Annie Sakamoto and first posted in 2005, it is short, fast and mostly a test of how clean your rope skills are. Scale with single-unders at double the count or a lower rep scheme.",
+  "source": {
+    "title": "Annie – CrossFit benchmark WOD (\"The Girls\")",
+    "url": "https://www.crossfit.com/benchmark/annie",
+    "author": "CrossFit",
+    "kind": "benchmark",
+    "license": "Public benchmark; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "CrossFit",
+    "Girls",
+    "For time",
+    "Jump rope",
+    "Core"
+  ],
+  "level": "Medium",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "50-40-30-20-10",
+      "mode": "ladder",
+      "repeat": 1,
+      "note": "Rep scheme 50-40-30-20-10",
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "bw_double_under",
+          "forMode": "reps",
+          "forValue": 50
+        },
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "bw_situp",
+          "forMode": "reps",
+          "forValue": 50
+        }
+      ],
+      "ladder": [
+        50,
+        40,
+        30,
+        20,
+        10
+      ]
+    }
+  ]
+}

@@ -1,0 +1,60 @@
+{
+  "id": "cf-hero-badger",
+  "title": "Badger",
+  "creator": "CrossFit",
+  "description": "Three rounds of 30 squat cleans at 95/65 lb, 30 pull-ups and an 800 m run. Honours U.S. Navy Chief Petty Officer Mark Carter, killed in Iraq in 2007. The volume (90 cleans, 90 pull-ups) is the challenge; a light bar and steady singles work best.",
+  "source": {
+    "title": "Badger – CrossFit Hero WOD",
+    "url": "https://www.crossfit.com/benchmark/badger",
+    "author": "CrossFit",
+    "kind": "benchmark",
+    "license": "Public benchmark; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "CrossFit",
+    "Hero",
+    "For time",
+    "Run",
+    "Barbell"
+  ],
+  "level": "Hard",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "Badger",
+      "mode": "fortime",
+      "repeat": 3,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "bb_squat_clean",
+          "target": 43.0,
+          "rx": {
+            "men": 43.0,
+            "women": 29.5
+          },
+          "forMode": "reps",
+          "forValue": 30,
+          "note": "95/65 lb"
+        },
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "bw_pullup",
+          "forMode": "reps",
+          "forValue": 30
+        },
+        {
+          "kind": "exercise",
+          "id": "s3",
+          "exercise": "cardio_run",
+          "forMode": "meters",
+          "forValue": 800
+        }
+      ]
+    }
+  ]
+}

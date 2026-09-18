@@ -1,0 +1,62 @@
+{
+  "id": "cf-hero-hamilton",
+  "title": "Hamilton",
+  "creator": "CrossFit",
+  "description": "Three rounds of a 1,000 m row, 50 push-ups, a 1,000 m run and 50 pull-ups. Honours U.S. Army Spc. Adam Hamilton, killed by an IED in Haji Ruf, Afghanistan, in 2011. 150 pull-ups and 150 push-ups; scale to 30 each per round.",
+  "source": {
+    "title": "Hamilton – CrossFit Hero WOD",
+    "url": "https://www.crossfit.com/benchmark/hamilton",
+    "author": "CrossFit",
+    "kind": "benchmark",
+    "license": "Public benchmark; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "CrossFit",
+    "Hero",
+    "For time",
+    "Row",
+    "Run",
+    "Bodyweight"
+  ],
+  "level": "Hard",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "Hamilton",
+      "mode": "fortime",
+      "repeat": 3,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "cardio_rower",
+          "forMode": "meters",
+          "forValue": 1000
+        },
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "bw_pushup",
+          "forMode": "reps",
+          "forValue": 50
+        },
+        {
+          "kind": "exercise",
+          "id": "s3",
+          "exercise": "cardio_run",
+          "forMode": "meters",
+          "forValue": 1000
+        },
+        {
+          "kind": "exercise",
+          "id": "s4",
+          "exercise": "bw_pullup",
+          "forMode": "reps",
+          "forValue": 50
+        }
+      ]
+    }
+  ]
+}

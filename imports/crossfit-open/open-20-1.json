@@ -1,0 +1,55 @@
+{
+  "id": "cf-open-20-1",
+  "title": "Open 20.1",
+  "creator": "CrossFit Games",
+  "description": "Ten rounds for time of 8 ground-to-overheads at 95/65 lb and 10 bar-facing burpees, 15-minute cap. Any way from floor to lockout counts. Scaled used 65/45 lb and step-over burpees.",
+  "source": {
+    "title": "CrossFit Games Open 2020 – Workout 20.1",
+    "url": "https://games.crossfit.com/workouts/open/2020/1",
+    "author": "CrossFit Games",
+    "kind": "benchmark",
+    "license": "Public competition workout; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "CrossFit",
+    "CrossFit Open",
+    "2020",
+    "For time",
+    "Barbell",
+    "Bodyweight"
+  ],
+  "level": "Hard",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "10 rounds",
+      "mode": "fortime",
+      "repeat": 10,
+      "timeCapSec": 900,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "bb_ground_to_overhead",
+          "target": 43.0,
+          "rx": {
+            "men": 43.0,
+            "women": 29.5
+          },
+          "forMode": "reps",
+          "forValue": 8,
+          "note": "95/65 lb"
+        },
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "bw_bar_facing_burpee",
+          "forMode": "reps",
+          "forValue": 10
+        }
+      ]
+    }
+  ]
+}

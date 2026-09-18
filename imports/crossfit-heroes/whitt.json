@@ -1,0 +1,67 @@
+{
+  "id": "cf-hero-whitt",
+  "title": "Whitt",
+  "creator": "CrossFit",
+  "description": "Three rounds of an 800 m run carrying a medicine ball, 30 wall balls and 30 ball slams with the same ball, for time. Honours U.S. Army Spc. Jeffery Ryan Whitt of the Iowa National Guard, who died by suicide in 2015 from the effects of combat injuries and PTSD. One heavy ball for everything; a 20/14 lb ball is a fair scale.",
+  "source": {
+    "title": "Whitt – CrossFit Hero WOD",
+    "url": "https://www.crossfit.com/benchmark/whitt-hero",
+    "author": "CrossFit",
+    "kind": "benchmark",
+    "license": "Public benchmark; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "CrossFit",
+    "Hero WOD",
+    "For time",
+    "Wall ball",
+    "Running"
+  ],
+  "level": "Hard",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "3 rounds",
+      "mode": "fortime",
+      "repeat": 3,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "cardio_run",
+          "forMode": "meters",
+          "forValue": 800,
+          "note": "Carrying a 30/20 lb (13.5/9 kg) medicine ball"
+        },
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "gym_wall_ball",
+          "forMode": "reps",
+          "forValue": 30,
+          "target": 13.5,
+          "rx": {
+            "men": 13.5,
+            "women": 9
+          },
+          "note": "30/20 lb"
+        },
+        {
+          "kind": "exercise",
+          "id": "s3",
+          "exercise": "gym_ball_slam",
+          "forMode": "reps",
+          "forValue": 30,
+          "target": 13.5,
+          "rx": {
+            "men": 13.5,
+            "women": 9
+          },
+          "note": "30/20 lb"
+        }
+      ]
+    }
+  ]
+}

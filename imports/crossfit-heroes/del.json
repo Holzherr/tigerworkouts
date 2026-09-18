@@ -1,0 +1,106 @@
+{
+  "id": "cf-hero-del",
+  "title": "Del",
+  "creator": "CrossFit",
+  "description": "25 burpees, then four 400 m runs carrying a 20/14 lb medicine ball, separated by 25 dumbbell-weighted pull-ups, 25 handstand push-ups and 25 chest-to-bar pull-ups, finishing with 25 burpees. Honours U.S. Army 1st Lt. Dimitri Del Castillo, killed by small-arms fire in Kunar Province, Afghanistan, in 2011. Scale weighted pull-ups to strict, and handstand push-ups to pike.",
+  "source": {
+    "title": "Del – CrossFit Hero WOD",
+    "url": "https://www.crossfit.com/benchmark/del",
+    "author": "CrossFit",
+    "kind": "benchmark",
+    "license": "Public benchmark; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "CrossFit",
+    "Hero",
+    "For time",
+    "Run",
+    "Gymnastics"
+  ],
+  "level": "Hard",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "Del",
+      "mode": "fortime",
+      "repeat": 1,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "bw_burpee",
+          "forMode": "reps",
+          "forValue": 25
+        },
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "cardio_run",
+          "forMode": "meters",
+          "forValue": 400,
+          "note": "carry a 20/14 lb medicine ball"
+        },
+        {
+          "kind": "exercise",
+          "id": "s3",
+          "exercise": "bw_weighted_pullup",
+          "target": 9.0,
+          "rx": {
+            "men": 9.0,
+            "women": 7.0
+          },
+          "forMode": "reps",
+          "forValue": 25,
+          "note": "20/15 lb; hold a dumbbell between the feet"
+        },
+        {
+          "kind": "exercise",
+          "id": "s4",
+          "exercise": "cardio_run",
+          "forMode": "meters",
+          "forValue": 400,
+          "note": "carry a 20/14 lb medicine ball"
+        },
+        {
+          "kind": "exercise",
+          "id": "s5",
+          "exercise": "bw_handstand_pushup",
+          "forMode": "reps",
+          "forValue": 25
+        },
+        {
+          "kind": "exercise",
+          "id": "s6",
+          "exercise": "cardio_run",
+          "forMode": "meters",
+          "forValue": 400,
+          "note": "carry a 20/14 lb medicine ball"
+        },
+        {
+          "kind": "exercise",
+          "id": "s7",
+          "exercise": "bw_chest_to_bar_pullup",
+          "forMode": "reps",
+          "forValue": 25
+        },
+        {
+          "kind": "exercise",
+          "id": "s8",
+          "exercise": "cardio_run",
+          "forMode": "meters",
+          "forValue": 400,
+          "note": "carry a 20/14 lb medicine ball"
+        },
+        {
+          "kind": "exercise",
+          "id": "s9",
+          "exercise": "bw_burpee",
+          "forMode": "reps",
+          "forValue": 25
+        }
+      ]
+    }
+  ]
+}

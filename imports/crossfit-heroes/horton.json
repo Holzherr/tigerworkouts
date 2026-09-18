@@ -1,0 +1,63 @@
+{
+  "id": "cf-hero-horton",
+  "title": "Horton",
+  "creator": "CrossFit",
+  "description": "With a partner, 9 rounds of 9 bar muscle-ups, 11 clean and jerks at 155/105 lb and a 50-yard buddy carry, one person working at a time. Honours U.S. Army Spc. Christopher D. Horton, Oklahoma National Guard, killed by small-arms fire in Zurmat District, Afghanistan, in 2011. Solo: 5 reps of each per round and carry a heavy sandbag.",
+  "source": {
+    "title": "Horton – CrossFit Hero WOD",
+    "url": "https://www.crossfit.com/benchmark/horton",
+    "author": "CrossFit",
+    "kind": "benchmark",
+    "license": "Public benchmark; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "CrossFit",
+    "Hero",
+    "For time",
+    "Partner",
+    "Barbell",
+    "Gymnastics"
+  ],
+  "level": "Hard",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "Horton",
+      "mode": "fortime",
+      "repeat": 9,
+      "note": "Partner workout: share the work, one person works at a time. Solo: 5 reps of each and carry a heavy sandbag",
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "bw_bar_muscle_up",
+          "forMode": "reps",
+          "forValue": 9
+        },
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "bb_clean_and_jerk",
+          "target": 70.5,
+          "rx": {
+            "men": 70.5,
+            "women": 47.5
+          },
+          "forMode": "reps",
+          "forValue": 11,
+          "note": "155/105 lb"
+        },
+        {
+          "kind": "exercise",
+          "id": "s3",
+          "exercise": "gym_partner_carry",
+          "forMode": "meters",
+          "forValue": 46,
+          "note": "50 yd buddy carry"
+        }
+      ]
+    }
+  ]
+}

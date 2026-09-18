@@ -1,0 +1,70 @@
+{
+  "id": "cf-girls-marguerita",
+  "title": "Marguerita",
+  "creator": "CrossFit",
+  "description": "Fifty rounds of one burpee, one push-up, one jumping jack, one sit-up and one handstand, for time. Every rep involves getting up or down off the floor, so it is far more tiring than the numbers suggest, usually 15 to 25 minutes. Scale the handstand to a wall walk or a plank.",
+  "source": {
+    "title": "Marguerita – CrossFit benchmark WOD (\"The Girls\")",
+    "url": "https://www.crossfit.com/benchmark/marguerita",
+    "author": "CrossFit",
+    "kind": "benchmark",
+    "license": "Public benchmark; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "CrossFit",
+    "Girls",
+    "For time",
+    "Bodyweight",
+    "Gymnastics"
+  ],
+  "level": "Medium",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "Marguerita",
+      "mode": "fortime",
+      "repeat": 50,
+      "note": "50 rounds of one rep each",
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "bw_burpee",
+          "forMode": "reps",
+          "forValue": 1
+        },
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "bw_pushup",
+          "forMode": "reps",
+          "forValue": 1
+        },
+        {
+          "kind": "exercise",
+          "id": "s3",
+          "exercise": "bw_jumping_jack",
+          "forMode": "reps",
+          "forValue": 1
+        },
+        {
+          "kind": "exercise",
+          "id": "s4",
+          "exercise": "bw_situp",
+          "forMode": "reps",
+          "forValue": 1
+        },
+        {
+          "kind": "exercise",
+          "id": "s5",
+          "exercise": "bw_handstand",
+          "forMode": "reps",
+          "forValue": 1,
+          "note": "Kick up to a handstand, then come down"
+        }
+      ]
+    }
+  ]
+}

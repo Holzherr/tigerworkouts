@@ -1,0 +1,68 @@
+{
+  "id": "cf-hero-kevin",
+  "title": "Kevin",
+  "creator": "CrossFit",
+  "description": "Three rounds of 32 deadlifts at 185/125 lb, 32 hanging hip touches alternating arms and an 800 m running farmers carry with 15/10 lb dumbbells. Honours U.S. Navy SEAL Special Warfare Operator 1st Class Kevin Ebbert, killed in Uruzgan Province, Afghanistan, in 2012. Hanging hip touches are a grip test; scale to knees-to-elbows.",
+  "source": {
+    "title": "Kevin – CrossFit Hero WOD",
+    "url": "https://www.crossfit.com/benchmark/kevin",
+    "author": "CrossFit",
+    "kind": "benchmark",
+    "license": "Public benchmark; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "CrossFit",
+    "Hero",
+    "For time",
+    "Barbell",
+    "Gymnastics",
+    "Run"
+  ],
+  "level": "Hard",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "Kevin",
+      "mode": "fortime",
+      "repeat": 3,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "bb_deadlift",
+          "target": 84.0,
+          "rx": {
+            "men": 84.0,
+            "women": 56.5
+          },
+          "forMode": "reps",
+          "forValue": 32,
+          "note": "185/125 lb"
+        },
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "bw_hanging_hip_touch",
+          "forMode": "reps",
+          "forValue": 32,
+          "note": "alternate arms"
+        },
+        {
+          "kind": "exercise",
+          "id": "s3",
+          "exercise": "db_farmers_carry",
+          "target": 7.0,
+          "rx": {
+            "men": 7.0,
+            "women": 4.5
+          },
+          "forMode": "meters",
+          "forValue": 800,
+          "note": "15/10 lb; dumbbells; running"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,67 @@
+{
+  "id": "cf-hero-dg",
+  "title": "DG",
+  "creator": "CrossFit",
+  "description": "A 10-minute AMRAP of 8 toes-to-bars, 8 dumbbell thrusters and 12 dumbbell walking lunges with 35/20 lb dumbbells. Honours U.S. Air Force Maj. Walter David Gray, killed by a suicide bomb in Kunar Province, Afghanistan, in 2012. Short and fast; a good first Hero WOD.",
+  "source": {
+    "title": "DG – CrossFit Hero WOD",
+    "url": "https://www.crossfit.com/benchmark/dg",
+    "author": "CrossFit",
+    "kind": "benchmark",
+    "license": "Public benchmark; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "CrossFit",
+    "Hero",
+    "AMRAP",
+    "Dumbbell",
+    "Gymnastics"
+  ],
+  "level": "Medium",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "DG",
+      "mode": "amrap",
+      "repeat": 1,
+      "timeCapSec": 600,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "bw_toes_to_bar",
+          "forMode": "reps",
+          "forValue": 8
+        },
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "db_thruster",
+          "target": 16.0,
+          "rx": {
+            "men": 16.0,
+            "women": 9.0
+          },
+          "forMode": "reps",
+          "forValue": 8,
+          "note": "35/20 lb"
+        },
+        {
+          "kind": "exercise",
+          "id": "s3",
+          "exercise": "db_lunge",
+          "target": 16.0,
+          "rx": {
+            "men": 16.0,
+            "women": 9.0
+          },
+          "forMode": "reps",
+          "forValue": 12,
+          "note": "35/20 lb"
+        }
+      ]
+    }
+  ]
+}

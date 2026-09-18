@@ -1,0 +1,75 @@
+{
+  "id": "cf-hero-wes",
+  "title": "Wes",
+  "creator": "CrossFit",
+  "description": "Run 800 m with a plate, then 14 rounds of 5 strict pull-ups, 4 burpee box jumps and 3 heavy cleans, then run 800 m with the plate again, for time. Honours Navy Lt. J. Wesley 'Wes' Van Dorn, killed in a helicopter crash off Virginia in 2014. Same shape as Pat with a heavier clean; the source only gives a men's load.",
+  "source": {
+    "title": "Wes – CrossFit Hero WOD",
+    "url": "https://www.crossfit.com/benchmark/wes",
+    "author": "CrossFit",
+    "kind": "benchmark",
+    "license": "Public benchmark; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "CrossFit",
+    "Hero WOD",
+    "For time",
+    "Barbell",
+    "Running",
+    "Gymnastics"
+  ],
+  "level": "Hard",
+  "items": [
+    {
+      "kind": "exercise",
+      "id": "s1",
+      "exercise": "cardio_run",
+      "forMode": "meters",
+      "forValue": 800,
+      "note": "Carrying a 25 lb (11.5 kg) plate"
+    },
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "14 rounds",
+      "mode": "fortime",
+      "repeat": 14,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "bw_pullup",
+          "forMode": "reps",
+          "forValue": 5,
+          "note": "Strict"
+        },
+        {
+          "kind": "exercise",
+          "id": "s3",
+          "exercise": "bw_burpee_box_jump",
+          "forMode": "reps",
+          "forValue": 4,
+          "note": "24 in box"
+        },
+        {
+          "kind": "exercise",
+          "id": "s4",
+          "exercise": "bb_squat_clean",
+          "forMode": "reps",
+          "forValue": 3,
+          "target": 84,
+          "note": "185 lb — men's load only in the source"
+        }
+      ]
+    },
+    {
+      "kind": "exercise",
+      "id": "s5",
+      "exercise": "cardio_run",
+      "forMode": "meters",
+      "forValue": 800,
+      "note": "Carrying a 25 lb (11.5 kg) plate"
+    }
+  ]
+}

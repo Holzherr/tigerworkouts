@@ -1,0 +1,56 @@
+{
+  "id": "cf-girls-mary",
+  "title": "Mary",
+  "creator": "CrossFit",
+  "description": "As many rounds as possible in 20 minutes of 5 handstand push-ups, 10 alternating pistols and 15 pull-ups. Introduced in 2004 as the advanced sibling of Cindy; the same time domain but with three high-skill gymnastics movements. Scale to pike push-ups, box pistols and ring rows.",
+  "source": {
+    "title": "Mary – CrossFit benchmark WOD (\"The Girls\")",
+    "url": "https://www.crossfit.com/benchmark/mary",
+    "author": "CrossFit",
+    "kind": "benchmark",
+    "license": "Public benchmark; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "CrossFit",
+    "Girls",
+    "AMRAP",
+    "Gymnastics",
+    "Bodyweight"
+  ],
+  "level": "Hard",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "Mary",
+      "mode": "amrap",
+      "repeat": 1,
+      "timeCapSec": 1200,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "bw_handstand_pushup",
+          "forMode": "reps",
+          "forValue": 5
+        },
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "bw_pistol",
+          "forMode": "reps",
+          "forValue": 10,
+          "note": "Alternating legs"
+        },
+        {
+          "kind": "exercise",
+          "id": "s3",
+          "exercise": "bw_pullup",
+          "forMode": "reps",
+          "forValue": 15
+        }
+      ]
+    }
+  ]
+}

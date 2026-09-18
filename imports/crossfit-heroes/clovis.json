@@ -1,0 +1,50 @@
+{
+  "id": "cf-hero-clovis",
+  "title": "Clovis",
+  "creator": "CrossFit",
+  "description": "Run 10 miles and complete 150 burpee pull-ups, partitioned however you like. Honours U.S. Army 2nd Lt. Clovis T. Ray, killed by an IED in Kunar Province, Afghanistan, in 2012. A two-hour undertaking; halve both numbers for a still-serious session.",
+  "source": {
+    "title": "Clovis – CrossFit Hero WOD",
+    "url": "https://www.crossfit.com/benchmark/clovis",
+    "author": "CrossFit",
+    "kind": "benchmark",
+    "license": "Public benchmark; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "CrossFit",
+    "Hero",
+    "For time",
+    "Run",
+    "Bodyweight",
+    "Long"
+  ],
+  "level": "Hard",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "Clovis",
+      "mode": "fortime",
+      "repeat": 1,
+      "note": "Partition the run and burpee pull-ups as needed",
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "cardio_run",
+          "forMode": "meters",
+          "forValue": 16093,
+          "note": "10 miles"
+        },
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "bw_burpee_pullup",
+          "forMode": "reps",
+          "forValue": 150
+        }
+      ]
+    }
+  ]
+}

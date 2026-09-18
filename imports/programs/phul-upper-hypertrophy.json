@@ -1,0 +1,175 @@
+{
+  "id": "prog-phul-upper-hypertrophy",
+  "title": "PHUL – Upper Hypertrophy",
+  "creator": "Brandon Campbell",
+  "description": "Brandon Campbell's four-day upper/lower split: two heavy power days (3–5 reps on the big compounds) and two hypertrophy days (8–12 reps, more isolation), so every muscle is hit twice a week. Run Mon/Tue/Thu/Fri. Progress by adding weight when you hit the top of the rep range with a rep in reserve; the source gives no rest times, so 3 min is used on the 3–5 rep lifts and 90 s elsewhere. Set ranges (3–4) are modelled at the lower number, which the author suggests when starting.",
+  "source": {
+    "title": "Power Hypertrophy Upper Lower (P.H.U.L.) Workout",
+    "url": "https://www.muscleandstrength.com/workouts/phul-workout",
+    "author": "Brandon Campbell",
+    "kind": "program",
+    "license": "Freely published program; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "Program",
+    "Hypertrophy",
+    "Strength",
+    "Upper/lower"
+  ],
+  "level": "Medium",
+  "program": {
+    "name": "PHUL",
+    "day": "Upper Hypertrophy",
+    "order": 3
+  },
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "Incline barbell bench press 3–4×8–12",
+      "repeat": 3,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "bb_incline_bench",
+          "forMode": "reps",
+          "forValue": 12,
+          "note": "8–12 reps"
+        },
+        {
+          "kind": "rest",
+          "id": "r1",
+          "seconds": 90
+        }
+      ]
+    },
+    {
+      "kind": "block",
+      "id": "b2",
+      "name": "Flat dumbbell fly 3–4×8–12",
+      "repeat": 3,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "db_chest_fly",
+          "forMode": "reps",
+          "forValue": 12,
+          "note": "8–12 reps"
+        },
+        {
+          "kind": "rest",
+          "id": "r2",
+          "seconds": 90
+        }
+      ]
+    },
+    {
+      "kind": "block",
+      "id": "b3",
+      "name": "Seated cable row 3–4×8–12",
+      "repeat": 3,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s3",
+          "exercise": "cable_row",
+          "forMode": "reps",
+          "forValue": 12,
+          "note": "8–12 reps"
+        },
+        {
+          "kind": "rest",
+          "id": "r3",
+          "seconds": 90
+        }
+      ]
+    },
+    {
+      "kind": "block",
+      "id": "b4",
+      "name": "One-arm dumbbell row 3–4×8–12",
+      "repeat": 3,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s4",
+          "exercise": "db_row",
+          "forMode": "reps",
+          "forValue": 12,
+          "note": "8–12 reps per arm"
+        },
+        {
+          "kind": "rest",
+          "id": "r4",
+          "seconds": 90
+        }
+      ]
+    },
+    {
+      "kind": "block",
+      "id": "b5",
+      "name": "Dumbbell lateral raise 3–4×8–12",
+      "repeat": 3,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s5",
+          "exercise": "lat_raise",
+          "forMode": "reps",
+          "forValue": 12,
+          "note": "8–12 reps"
+        },
+        {
+          "kind": "rest",
+          "id": "r5",
+          "seconds": 60
+        }
+      ]
+    },
+    {
+      "kind": "block",
+      "id": "b6",
+      "name": "Seated incline dumbbell curl 3–4×8–12",
+      "repeat": 3,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s6",
+          "exercise": "db_curl",
+          "forMode": "reps",
+          "forValue": 12,
+          "note": "8–12 reps, seated on an incline bench"
+        },
+        {
+          "kind": "rest",
+          "id": "r6",
+          "seconds": 60
+        }
+      ]
+    },
+    {
+      "kind": "block",
+      "id": "b7",
+      "name": "Cable triceps extension 3–4×8–12",
+      "repeat": 3,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s7",
+          "exercise": "cable_tricep_pushdown",
+          "forMode": "reps",
+          "forValue": 12,
+          "note": "8–12 reps"
+        },
+        {
+          "kind": "rest",
+          "id": "r7",
+          "seconds": 60
+        }
+      ]
+    }
+  ]
+}

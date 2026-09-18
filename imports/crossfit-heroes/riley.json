@@ -1,0 +1,48 @@
+{
+  "id": "cf-hero-riley",
+  "title": "Riley",
+  "creator": "CrossFit",
+  "description": "Run 1.5 miles, 150 burpees, run 1.5 miles, ideally in a vest, for time. Honours U.S. Army Special Forces Sgt. 1st Class Riley G. Stephens, killed by small-arms fire in Wardak, Afghanistan, in 2012. Nothing technical, just long; pace the first run.",
+  "source": {
+    "title": "Riley – CrossFit Hero WOD",
+    "url": "https://www.crossfit.com/benchmark/riley",
+    "author": "CrossFit",
+    "kind": "benchmark",
+    "license": "Public benchmark; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "CrossFit",
+    "Hero WOD",
+    "For time",
+    "Bodyweight",
+    "Running",
+    "Weight vest"
+  ],
+  "level": "Hard",
+  "items": [
+    {
+      "kind": "exercise",
+      "id": "s1",
+      "exercise": "cardio_run",
+      "forMode": "meters",
+      "forValue": 2414,
+      "note": "1.5 miles"
+    },
+    {
+      "kind": "exercise",
+      "id": "s2",
+      "exercise": "bw_burpee",
+      "forMode": "reps",
+      "forValue": 150
+    },
+    {
+      "kind": "exercise",
+      "id": "s3",
+      "exercise": "cardio_run",
+      "forMode": "meters",
+      "forValue": 2414,
+      "note": "1.5 miles"
+    }
+  ]
+}

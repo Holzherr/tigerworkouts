@@ -1,0 +1,61 @@
+{
+  "id": "cf-hero-loredo",
+  "title": "Loredo",
+  "creator": "CrossFit",
+  "description": "Six rounds of 24 squats, 24 push-ups, 24 walking lunges and a 400 m run. Honours U.S. Army Staff Sgt. Edwardo Loredo, 82nd Airborne, killed by an IED in Jelewar, Afghanistan, in 2010. No equipment; a good travel Hero WOD.",
+  "source": {
+    "title": "Loredo – CrossFit Hero WOD",
+    "url": "https://www.crossfit.com/benchmark/loredo",
+    "author": "CrossFit",
+    "kind": "benchmark",
+    "license": "Public benchmark; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "CrossFit",
+    "Hero",
+    "For time",
+    "Bodyweight",
+    "Run"
+  ],
+  "level": "Medium",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "Loredo",
+      "mode": "fortime",
+      "repeat": 6,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "bw_squat",
+          "forMode": "reps",
+          "forValue": 24
+        },
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "bw_pushup",
+          "forMode": "reps",
+          "forValue": 24
+        },
+        {
+          "kind": "exercise",
+          "id": "s3",
+          "exercise": "bw_lunge",
+          "forMode": "reps",
+          "forValue": 24
+        },
+        {
+          "kind": "exercise",
+          "id": "s4",
+          "exercise": "cardio_run",
+          "forMode": "meters",
+          "forValue": 400
+        }
+      ]
+    }
+  ]
+}

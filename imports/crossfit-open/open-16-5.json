@@ -1,0 +1,64 @@
+{
+  "id": "cf-open-16-5",
+  "title": "Open 16.5",
+  "creator": "CrossFit Games",
+  "description": "Repeat of 14.5: 21-18-15-12-9-6-3 thrusters at 95/65 lb and bar-facing burpees for time, no cap. Scaled used 65/45 lb.",
+  "source": {
+    "title": "CrossFit Games Open 2016 – Workout 16.5",
+    "url": "https://games.crossfit.com/workouts/open/2016",
+    "author": "CrossFit Games",
+    "kind": "benchmark",
+    "license": "Public competition workout; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "CrossFit",
+    "CrossFit Open",
+    "2016",
+    "For time",
+    "Ladder",
+    "Barbell"
+  ],
+  "level": "Hard",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "21-18-15-12-9-6-3",
+      "mode": "ladder",
+      "repeat": 1,
+      "ladder": [
+        21,
+        18,
+        15,
+        12,
+        9,
+        6,
+        3
+      ],
+      "note": "No time cap",
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "bb_thruster",
+          "target": 43.0,
+          "rx": {
+            "men": 43.0,
+            "women": 29.5
+          },
+          "forMode": "reps",
+          "forValue": 21,
+          "note": "95/65 lb"
+        },
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "bw_bar_facing_burpee",
+          "forMode": "reps",
+          "forValue": 21
+        }
+      ]
+    }
+  ]
+}

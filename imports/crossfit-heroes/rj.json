@@ -1,0 +1,56 @@
+{
+  "id": "cf-hero-rj",
+  "title": "RJ",
+  "creator": "CrossFit",
+  "description": "Five rounds of an 800 m run, 5 rope climbs and 50 push-ups, for time. Honours LAPD officer and Marine Reservist Sgt. Maj. Robert J. Cottle, killed by an IED in southern Afghanistan in 2010. Twenty-five rope climbs and 250 push-ups; break the push-ups early.",
+  "source": {
+    "title": "RJ – CrossFit Hero WOD",
+    "url": "https://www.crossfit.com/benchmark/rj",
+    "author": "CrossFit",
+    "kind": "benchmark",
+    "license": "Public benchmark; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "CrossFit",
+    "Hero WOD",
+    "For time",
+    "Running",
+    "Rope climb",
+    "Bodyweight"
+  ],
+  "level": "Hard",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "5 rounds",
+      "mode": "fortime",
+      "repeat": 5,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "cardio_run",
+          "forMode": "meters",
+          "forValue": 800
+        },
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "gym_rope_climb",
+          "forMode": "reps",
+          "forValue": 5,
+          "note": "15 ft"
+        },
+        {
+          "kind": "exercise",
+          "id": "s3",
+          "exercise": "bw_pushup",
+          "forMode": "reps",
+          "forValue": 50
+        }
+      ]
+    }
+  ]
+}

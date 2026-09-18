@@ -1,0 +1,53 @@
+{
+  "id": "cf-hero-dobogai",
+  "title": "Dobogai",
+  "creator": "CrossFit",
+  "description": "Seven rounds of 8 muscle-ups and a 22-yard farmers carry with 50/35 lb dumbbells. Honours U.S. Army Capt. Derek A. Dobogai, killed in a helicopter crash in Multaka, Iraq, in 2007. 56 muscle-ups; scale to 8 pull-ups plus 8 dips, or 4 muscle-ups a round.",
+  "source": {
+    "title": "Dobogai – CrossFit Hero WOD",
+    "url": "https://www.crossfit.com/benchmark/dobogai",
+    "author": "CrossFit",
+    "kind": "benchmark",
+    "license": "Public benchmark; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "CrossFit",
+    "Hero",
+    "For time",
+    "Gymnastics",
+    "Dumbbell"
+  ],
+  "level": "Hard",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "Dobogai",
+      "mode": "fortime",
+      "repeat": 7,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "gym_muscle_up",
+          "forMode": "reps",
+          "forValue": 8
+        },
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "db_farmers_carry",
+          "target": 22.5,
+          "rx": {
+            "men": 22.5,
+            "women": 16.0
+          },
+          "forMode": "meters",
+          "forValue": 20,
+          "note": "50/35 lb; dumbbells; 22 yd"
+        }
+      ]
+    }
+  ]
+}

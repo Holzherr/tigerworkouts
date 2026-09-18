@@ -1,0 +1,93 @@
+{
+  "id": "cf-hero-pheezy",
+  "title": "Pheezy",
+  "creator": "CrossFit",
+  "description": "Three rounds of 5 front squats, 18 pull-ups, 5 deadlifts, 18 toes-to-bar, 5 push jerks and 18 hand-release push-ups, for time. Honours U.S. Marine Lance Cpl. Philip P. Clark, killed in Helmand Province, Afghanistan, in 2010. Heavy fives between big gymnastics sets; two loads on the bar.",
+  "source": {
+    "title": "Pheezy – CrossFit Hero WOD",
+    "url": "https://www.crossfit.com/benchmark/pheezy",
+    "author": "CrossFit",
+    "kind": "benchmark",
+    "license": "Public benchmark; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "CrossFit",
+    "Hero WOD",
+    "For time",
+    "Barbell",
+    "Gymnastics"
+  ],
+  "level": "Hard",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "3 rounds",
+      "mode": "fortime",
+      "repeat": 3,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "bb_front_squat",
+          "forMode": "reps",
+          "forValue": 5,
+          "target": 75,
+          "rx": {
+            "men": 75,
+            "women": 52
+          },
+          "note": "165/115 lb"
+        },
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "bw_pullup",
+          "forMode": "reps",
+          "forValue": 18
+        },
+        {
+          "kind": "exercise",
+          "id": "s3",
+          "exercise": "bb_deadlift",
+          "forMode": "reps",
+          "forValue": 5,
+          "target": 102,
+          "rx": {
+            "men": 102,
+            "women": 70.5
+          },
+          "note": "225/155 lb"
+        },
+        {
+          "kind": "exercise",
+          "id": "s4",
+          "exercise": "bw_toes_to_bar",
+          "forMode": "reps",
+          "forValue": 18
+        },
+        {
+          "kind": "exercise",
+          "id": "s5",
+          "exercise": "bb_push_jerk",
+          "forMode": "reps",
+          "forValue": 5,
+          "target": 75,
+          "rx": {
+            "men": 75,
+            "women": 52
+          },
+          "note": "165/115 lb"
+        },
+        {
+          "kind": "exercise",
+          "id": "s6",
+          "exercise": "bw_hand_release_pushup",
+          "forMode": "reps",
+          "forValue": 18
+        }
+      ]
+    }
+  ]
+}

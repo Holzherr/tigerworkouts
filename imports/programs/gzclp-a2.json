@@ -1,0 +1,139 @@
+{
+  "id": "prog-gzclp-a2",
+  "title": "GZCLP – Day 3 (A2)",
+  "creator": "Cody Lefever (GZCL)",
+  "description": "Cody Lefever's linear-progression entry to the GZCL method: each session has a heavy T1 lift (5×3, last set AMRAP), a moderate T2 lift (3×10) and a T3 back accessory (3×15, last set AMRAP). Four workouts rotate over three days a week (A1, B1, A2, B2, A1…), adding 2.5 kg to upper and 5 kg to lower lifts each time a lift comes round. When you miss the rep target, keep the weight and drop a stage: T1 5×3+ → 6×2+ → 10×1+ then retest a 5RM; T2 3×10 → 3×8 → 3×6 then restart heavier; T3 adds weight at 25 AMRAP reps.",
+  "source": {
+    "title": "GZCL Applications & Adaptations – GZCLP",
+    "url": "http://swoleateveryheight.blogspot.com/2016/02/gzcl-applications-adaptations.html",
+    "author": "Cody Lefever (GZCL)",
+    "kind": "program",
+    "license": "Freely published program; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "Program",
+    "Strength",
+    "Barbell",
+    "Full body",
+    "GZCL"
+  ],
+  "level": "Medium",
+  "program": {
+    "name": "GZCLP",
+    "day": "Day 3 (A2)",
+    "order": 3
+  },
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "T1 bench press 5×3+",
+      "repeat": 4,
+      "note": "T1: +5 lb / 2.5 kg (press) or +10 lb / 5 kg (squat, deadlift) per workout; miss the reps → same weight, next stage (6×2+, then 10×1+)",
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "bb_bench",
+          "forMode": "reps",
+          "forValue": 3,
+          "note": "Rest 3–5 min"
+        },
+        {
+          "kind": "rest",
+          "id": "r1",
+          "seconds": 180
+        }
+      ]
+    },
+    {
+      "kind": "block",
+      "id": "b2",
+      "name": "T1 bench press 5×3+ – AMRAP",
+      "repeat": 1,
+      "note": "AMRAP set (stop 1–2 reps short of failure; cap at 10 reps)",
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "bb_bench",
+          "forMode": "reps",
+          "forValue": 3,
+          "note": "3+ reps: as many as possible with good form; Rest 3–5 min"
+        },
+        {
+          "kind": "rest",
+          "id": "r2",
+          "seconds": 180
+        }
+      ]
+    },
+    {
+      "kind": "block",
+      "id": "b3",
+      "name": "T2 squat 3×10",
+      "repeat": 3,
+      "note": "T2: same increments per workout; miss 30 total reps → same weight, next stage (3×8, then 3×6)",
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s3",
+          "exercise": "bb_back_squat",
+          "forMode": "reps",
+          "forValue": 10,
+          "note": "Rest 2–3 min"
+        },
+        {
+          "kind": "rest",
+          "id": "r3",
+          "seconds": 150
+        }
+      ]
+    },
+    {
+      "kind": "block",
+      "id": "b4",
+      "name": "T3 lat pulldown 3×15+",
+      "repeat": 2,
+      "note": "T3: add weight once the AMRAP set reaches 25 reps",
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s4",
+          "exercise": "cable_lat_pulldown",
+          "forMode": "reps",
+          "forValue": 15,
+          "note": "Rest 60–90 s"
+        },
+        {
+          "kind": "rest",
+          "id": "r4",
+          "seconds": 75
+        }
+      ]
+    },
+    {
+      "kind": "block",
+      "id": "b5",
+      "name": "T3 lat pulldown 3×15+ – AMRAP",
+      "repeat": 1,
+      "note": "AMRAP set",
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s5",
+          "exercise": "cable_lat_pulldown",
+          "forMode": "reps",
+          "forValue": 15,
+          "note": "15+ reps: as many as possible with good form; Rest 60–90 s"
+        },
+        {
+          "kind": "rest",
+          "id": "r5",
+          "seconds": 75
+        }
+      ]
+    }
+  ]
+}

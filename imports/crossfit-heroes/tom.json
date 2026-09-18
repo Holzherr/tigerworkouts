@@ -1,0 +1,60 @@
+{
+  "id": "cf-hero-tom",
+  "title": "Tom",
+  "creator": "CrossFit",
+  "description": "A 25-minute AMRAP of 7 muscle-ups, 11 thrusters and 14 toes-to-bar. Honours U.S. Army 1st Lt. Thomas M. Martin, killed by small-arms fire in Al Busayifi, Iraq, in 2007. Heavy thrusters for a long AMRAP; scale muscle-ups to chest-to-bar pull-ups.",
+  "source": {
+    "title": "Tom – CrossFit Hero WOD",
+    "url": "https://www.crossfit.com/benchmark/tom",
+    "author": "CrossFit",
+    "kind": "benchmark",
+    "license": "Public benchmark; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "CrossFit",
+    "Hero WOD",
+    "AMRAP",
+    "Barbell",
+    "Gymnastics"
+  ],
+  "level": "Hard",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "AMRAP 25",
+      "mode": "amrap",
+      "timeCapSec": 1500,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "gym_muscle_up",
+          "forMode": "reps",
+          "forValue": 7
+        },
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "bb_thruster",
+          "forMode": "reps",
+          "forValue": 11,
+          "target": 70.5,
+          "rx": {
+            "men": 70.5,
+            "women": 47.5
+          },
+          "note": "155/105 lb"
+        },
+        {
+          "kind": "exercise",
+          "id": "s3",
+          "exercise": "bw_toes_to_bar",
+          "forMode": "reps",
+          "forValue": 14
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,65 @@
+{
+  "id": "cf-hero-justin",
+  "title": "Justin",
+  "creator": "CrossFit",
+  "description": "30-20-10 reps of bodyweight back squats, bodyweight bench presses and strict pull-ups. Honours U.S. Marine Sgt. Justin M. Hansen, 2nd Marine Special Operations Battalion, killed in Badghis Province, Afghanistan, in 2012. Set targets to your bodyweight; scale to 75% if 30 unbroken is out of reach.",
+  "source": {
+    "title": "Justin – CrossFit Hero WOD",
+    "url": "https://www.crossfit.com/benchmark/justin",
+    "author": "CrossFit",
+    "kind": "benchmark",
+    "license": "Public benchmark; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "CrossFit",
+    "Hero",
+    "For time",
+    "Ladder",
+    "Barbell",
+    "Bodyweight"
+  ],
+  "level": "Hard",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "30-20-10",
+      "mode": "ladder",
+      "repeat": 1,
+      "note": "Rep scheme 30-20-10; barbell loads are your bodyweight",
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "bb_back_squat",
+          "loadFactor": 1,
+          "forMode": "reps",
+          "forValue": 30,
+          "note": "bodyweight"
+        },
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "bb_bench",
+          "loadFactor": 1,
+          "forMode": "reps",
+          "forValue": 30,
+          "note": "bodyweight"
+        },
+        {
+          "kind": "exercise",
+          "id": "s3",
+          "exercise": "bw_strict_pullup",
+          "forMode": "reps",
+          "forValue": 30
+        }
+      ],
+      "ladder": [
+        30,
+        20,
+        10
+      ]
+    }
+  ]
+}

@@ -1,0 +1,94 @@
+{
+  "id": "prog-stronglifts-5x5-a",
+  "title": "StrongLifts 5×5 – Workout A",
+  "creator": "Mehdi Hadim (Stronglifts)",
+  "description": "Three full-body barbell workouts a week, alternating A and B, five sets of five on every lift except a single set of five deadlifts. Start light (empty bar), add 2.5 kg every workout (5 kg on deadlift), deload 10% after three failed workouts on a lift. The most popular beginner barbell programme on the internet; it works because the load rises every session.",
+  "source": {
+    "title": "Stronglifts 5×5 Workout Program: Quick Start Guide",
+    "url": "https://stronglifts.com/stronglifts-5x5/",
+    "author": "Mehdi Hadim (Stronglifts)",
+    "kind": "program",
+    "license": "Freely published program; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "Program",
+    "Strength",
+    "Barbell",
+    "Full body"
+  ],
+  "level": "Medium",
+  "program": {
+    "name": "StrongLifts 5×5",
+    "day": "Workout A",
+    "order": 1
+  },
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "Squat 5×5",
+      "repeat": 5,
+      "note": "Rest 90 s if the last set was easy, 3 min if hard, 5 min after a failed set",
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "bb_back_squat",
+          "forMode": "reps",
+          "forValue": 5,
+          "note": "Add 2.5 kg next workout if you got 5/5/5/5/5"
+        },
+        {
+          "kind": "rest",
+          "id": "r1",
+          "seconds": 180
+        }
+      ]
+    },
+    {
+      "kind": "block",
+      "id": "b2",
+      "name": "Bench press 5×5",
+      "repeat": 5,
+      "note": "Rest 90 s if the last set was easy, 3 min if hard, 5 min after a failed set",
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "bb_bench",
+          "forMode": "reps",
+          "forValue": 5,
+          "note": "Add 2.5 kg next workout if you got 5/5/5/5/5"
+        },
+        {
+          "kind": "rest",
+          "id": "r2",
+          "seconds": 180
+        }
+      ]
+    },
+    {
+      "kind": "block",
+      "id": "b3",
+      "name": "Barbell row 5×5",
+      "repeat": 5,
+      "note": "Rest 90 s if the last set was easy, 3 min if hard, 5 min after a failed set",
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s3",
+          "exercise": "bb_row",
+          "forMode": "reps",
+          "forValue": 5,
+          "note": "Add 2.5 kg next workout if you got 5/5/5/5/5 (start at 30 kg, bar from the floor each rep)"
+        },
+        {
+          "kind": "rest",
+          "id": "r3",
+          "seconds": 180
+        }
+      ]
+    }
+  ]
+}

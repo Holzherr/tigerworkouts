@@ -1,0 +1,94 @@
+{
+  "id": "prog-starting-strength-b",
+  "title": "Starting Strength – Workout B",
+  "creator": "Mark Rippetoe (Starting Strength)",
+  "description": "Rippetoe's novice linear progression: squat, a press and a pull, three sets of five, three days a week on alternating A/B days, adding weight every single session. Phase 1 deadlifts every day; Phase 2 (modelled here) swaps in 5×3 power cleans on day B; Phase 3 alternates deadlift/clean on A and does chin-ups on B. Press and bench also alternate each session independently of the A/B day, so in practice you press one workout and bench the next.",
+  "source": {
+    "title": "The Starting Strength Novice Program",
+    "url": "https://startingstrength.com/get-started/programs",
+    "author": "Mark Rippetoe (Starting Strength)",
+    "kind": "program",
+    "license": "Freely published program; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "Program",
+    "Strength",
+    "Barbell",
+    "Full body"
+  ],
+  "level": "Medium",
+  "program": {
+    "name": "Starting Strength",
+    "day": "Workout B",
+    "order": 2
+  },
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "Squat 3×5",
+      "repeat": 3,
+      "note": "Source gives no rest time; 3 min used (3–5 min between heavy sets is the norm)",
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "bb_back_squat",
+          "forMode": "reps",
+          "forValue": 5,
+          "note": "Work sets only, after warm-up sets. +10 lb (5 kg) per session at first, then +5 lb (2.5 kg)"
+        },
+        {
+          "kind": "rest",
+          "id": "r1",
+          "seconds": 180
+        }
+      ]
+    },
+    {
+      "kind": "block",
+      "id": "b2",
+      "name": "Bench press 3×5",
+      "repeat": 3,
+      "note": "Source gives no rest time; 3 min used (3–5 min between heavy sets is the norm)",
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "bb_bench",
+          "forMode": "reps",
+          "forValue": 5,
+          "note": "Alternates with the press every session. +5 lb (2.5 kg), micro-load to 2.5 lb (1 kg) later"
+        },
+        {
+          "kind": "rest",
+          "id": "r2",
+          "seconds": 180
+        }
+      ]
+    },
+    {
+      "kind": "block",
+      "id": "b3",
+      "name": "Power clean 5×3",
+      "repeat": 5,
+      "note": "Source gives no rest time; 3 min used (3–5 min between heavy sets is the norm)",
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s3",
+          "exercise": "bb_power_clean",
+          "forMode": "reps",
+          "forValue": 3,
+          "note": "Phase 2 onward (Phase 1: deadlift 1×5 here too). +5 lb (2.5 kg) per session"
+        },
+        {
+          "kind": "rest",
+          "id": "r3",
+          "seconds": 180
+        }
+      ]
+    }
+  ]
+}

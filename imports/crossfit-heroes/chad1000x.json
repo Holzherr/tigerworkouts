@@ -1,0 +1,46 @@
+{
+  "id": "cf-hero-chad1000x",
+  "title": "Chad1000X",
+  "creator": "CrossFit",
+  "description": "1,000 weighted box step-ups on a 20 in box with a 45/35 lb ruck, for time. Honours U.S. Navy SEAL Senior Chief Chad Wilkinson, who died by suicide in 2018 after service-related brain injuries and PTSD; the CrossFit community repeats it every Veterans Day for veteran mental health. Intermediate is a 30/20 lb ruck; beginner is 500 unweighted step-ups on a 12 in box.",
+  "source": {
+    "title": "Chad1000X – CrossFit Hero WOD",
+    "url": "https://www.crossfit.com/benchmark/chad1000x",
+    "author": "CrossFit",
+    "kind": "benchmark",
+    "license": "Public benchmark; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "CrossFit",
+    "Hero",
+    "For time",
+    "Step-ups",
+    "Ruck"
+  ],
+  "level": "Hard",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "Chad1000X",
+      "mode": "fortime",
+      "repeat": 1,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "gym_ruck_step_up",
+          "target": 20.5,
+          "rx": {
+            "men": 20.5,
+            "women": 16.0
+          },
+          "forMode": "reps",
+          "forValue": 1000,
+          "note": "45/35 lb; 20 in box; ruck or weighted pack"
+        }
+      ]
+    }
+  ]
+}

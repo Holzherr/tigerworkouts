@@ -1,0 +1,76 @@
+{
+  "id": "cf-hero-stephen",
+  "title": "Stephen",
+  "creator": "CrossFit",
+  "description": "A 30-25-20-15-10-5 ladder of GHD sit-ups, back extensions, knees-to-elbows and stiff-legged deadlifts, for time. Honours Canadian Forces Cpl. Stephen Bouzane of 3 PPCLI, killed by an IED in Panjwaii District, Afghanistan, in 2007. 105 GHD sit-ups is a lot for the unaccustomed; do them to parallel or use sit-ups.",
+  "source": {
+    "title": "Stephen – CrossFit Hero WOD",
+    "url": "https://www.crossfit.com/benchmark/stephen",
+    "author": "CrossFit",
+    "kind": "benchmark",
+    "license": "Public benchmark; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "CrossFit",
+    "Hero WOD",
+    "For time",
+    "Ladder",
+    "Core",
+    "Barbell"
+  ],
+  "level": "Hard",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "30-25-20-15-10-5",
+      "mode": "ladder",
+      "repeat": 1,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "gym_ghd_situp",
+          "forMode": "reps",
+          "forValue": 30
+        },
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "gym_back_extension",
+          "forMode": "reps",
+          "forValue": 30
+        },
+        {
+          "kind": "exercise",
+          "id": "s3",
+          "exercise": "bw_knees_to_elbows",
+          "forMode": "reps",
+          "forValue": 30
+        },
+        {
+          "kind": "exercise",
+          "id": "s4",
+          "exercise": "bb_rdl",
+          "forMode": "reps",
+          "forValue": 30,
+          "target": 43,
+          "rx": {
+            "men": 43,
+            "women": 29.5
+          },
+          "note": "95/65 lb — Stiff-legged deadlift"
+        }
+      ],
+      "ladder": [
+        30,
+        25,
+        20,
+        15,
+        10,
+        5
+      ]
+    }
+  ]
+}

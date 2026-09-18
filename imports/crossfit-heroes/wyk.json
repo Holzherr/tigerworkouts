@@ -1,0 +1,63 @@
+{
+  "id": "cf-hero-wyk",
+  "title": "Wyk",
+  "creator": "CrossFit",
+  "description": "Five rounds of 5 heavy front squats, 5 rope climbs and a 400 m run carrying a plate, for time. Honours U.S. Army Pfc. Jacob H. 'Wyk' Wykstra, killed in an aircraft accident in Kandahar Province, Afghanistan, in 2014. Heavy squats and 25 rope climbs; scale the climbs to 3 per round first.",
+  "source": {
+    "title": "Wyk – CrossFit Hero WOD",
+    "url": "https://www.crossfit.com/benchmark/wyk",
+    "author": "CrossFit",
+    "kind": "benchmark",
+    "license": "Public benchmark; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "CrossFit",
+    "Hero WOD",
+    "For time",
+    "Barbell",
+    "Rope climb",
+    "Running"
+  ],
+  "level": "Hard",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "5 rounds",
+      "mode": "fortime",
+      "repeat": 5,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "bb_front_squat",
+          "forMode": "reps",
+          "forValue": 5,
+          "target": 102,
+          "rx": {
+            "men": 102,
+            "women": 70.5
+          },
+          "note": "225/155 lb"
+        },
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "gym_rope_climb",
+          "forMode": "reps",
+          "forValue": 5,
+          "note": "15 ft"
+        },
+        {
+          "kind": "exercise",
+          "id": "s3",
+          "exercise": "cardio_run",
+          "forMode": "meters",
+          "forValue": 400,
+          "note": "Carrying a 45/25 lb (20.5/11.5 kg) plate"
+        }
+      ]
+    }
+  ]
+}

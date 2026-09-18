@@ -1,0 +1,54 @@
+{
+  "id": "cf-hero-michael",
+  "title": "Michael",
+  "creator": "CrossFit",
+  "description": "Three rounds of an 800 m run, 50 back extensions and 50 sit-ups, for time. Honours Navy Lt. Michael McGreevy, 30, killed in Afghanistan in June 2005 in the same operation as Michael Murphy. Simple and long on the trunk; GHD or floor back extensions both work.",
+  "source": {
+    "title": "Michael – CrossFit Hero WOD",
+    "url": "https://www.crossfit.com/benchmark/michael",
+    "author": "CrossFit",
+    "kind": "benchmark",
+    "license": "Public benchmark; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "CrossFit",
+    "Hero WOD",
+    "For time",
+    "Running",
+    "Core"
+  ],
+  "level": "Medium",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "3 rounds",
+      "mode": "fortime",
+      "repeat": 3,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "cardio_run",
+          "forMode": "meters",
+          "forValue": 800
+        },
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "gym_back_extension",
+          "forMode": "reps",
+          "forValue": 50
+        },
+        {
+          "kind": "exercise",
+          "id": "s3",
+          "exercise": "bw_situp",
+          "forMode": "reps",
+          "forValue": 50
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,212 @@
+{
+  "id": "cf-open-16-2",
+  "title": "Open 16.2",
+  "creator": "CrossFit Games",
+  "description": "Starting on a 4-minute clock: 25 toes-to-bars, 50 double-unders and 15 squat cleans at 135/85 lb. Finish and you get 4 more minutes for the same with 13 cleans at 185/115, then 11 at 225/145, 9 at 275/175, 7 at 315/205, up to 20 minutes. Repeated with an 8-minute opening window as 19.2. Scaled used knee raises, single-unders and 95/55 lb.",
+  "source": {
+    "title": "CrossFit Games Open 2016 – Workout 16.2",
+    "url": "https://games.crossfit.com/workouts/open/2016",
+    "author": "CrossFit Games",
+    "kind": "benchmark",
+    "license": "Public competition workout; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "CrossFit",
+    "CrossFit Open",
+    "2016",
+    "For time",
+    "Intervals",
+    "Barbell",
+    "Gymnastics"
+  ],
+  "level": "Hard",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "0:00–4:00",
+      "mode": "fortime",
+      "repeat": 1,
+      "timeCapSec": 240,
+      "note": "Finish inside the cap to unlock the next section",
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "bw_toes_to_bar",
+          "forMode": "reps",
+          "forValue": 25
+        },
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "bw_double_under",
+          "forMode": "reps",
+          "forValue": 50
+        },
+        {
+          "kind": "exercise",
+          "id": "s3",
+          "exercise": "bb_squat_clean",
+          "target": 61.0,
+          "rx": {
+            "men": 61.0,
+            "women": 38.5
+          },
+          "forMode": "reps",
+          "forValue": 15,
+          "note": "135/85 lb"
+        }
+      ]
+    },
+    {
+      "kind": "block",
+      "id": "b2",
+      "name": "4:00–8:00",
+      "mode": "fortime",
+      "repeat": 1,
+      "timeCapSec": 240,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s4",
+          "exercise": "bw_toes_to_bar",
+          "forMode": "reps",
+          "forValue": 25
+        },
+        {
+          "kind": "exercise",
+          "id": "s5",
+          "exercise": "bw_double_under",
+          "forMode": "reps",
+          "forValue": 50
+        },
+        {
+          "kind": "exercise",
+          "id": "s6",
+          "exercise": "bb_squat_clean",
+          "target": 84.0,
+          "rx": {
+            "men": 84.0,
+            "women": 52.0
+          },
+          "forMode": "reps",
+          "forValue": 13,
+          "note": "185/115 lb"
+        }
+      ]
+    },
+    {
+      "kind": "block",
+      "id": "b3",
+      "name": "8:00–12:00",
+      "mode": "fortime",
+      "repeat": 1,
+      "timeCapSec": 240,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s7",
+          "exercise": "bw_toes_to_bar",
+          "forMode": "reps",
+          "forValue": 25
+        },
+        {
+          "kind": "exercise",
+          "id": "s8",
+          "exercise": "bw_double_under",
+          "forMode": "reps",
+          "forValue": 50
+        },
+        {
+          "kind": "exercise",
+          "id": "s9",
+          "exercise": "bb_squat_clean",
+          "target": 102.0,
+          "rx": {
+            "men": 102.0,
+            "women": 66.0
+          },
+          "forMode": "reps",
+          "forValue": 11,
+          "note": "225/145 lb"
+        }
+      ]
+    },
+    {
+      "kind": "block",
+      "id": "b4",
+      "name": "12:00–16:00",
+      "mode": "fortime",
+      "repeat": 1,
+      "timeCapSec": 240,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s10",
+          "exercise": "bw_toes_to_bar",
+          "forMode": "reps",
+          "forValue": 25
+        },
+        {
+          "kind": "exercise",
+          "id": "s11",
+          "exercise": "bw_double_under",
+          "forMode": "reps",
+          "forValue": 50
+        },
+        {
+          "kind": "exercise",
+          "id": "s12",
+          "exercise": "bb_squat_clean",
+          "target": 124.5,
+          "rx": {
+            "men": 124.5,
+            "women": 79.5
+          },
+          "forMode": "reps",
+          "forValue": 9,
+          "note": "275/175 lb"
+        }
+      ]
+    },
+    {
+      "kind": "block",
+      "id": "b5",
+      "name": "16:00–20:00",
+      "mode": "fortime",
+      "repeat": 1,
+      "timeCapSec": 240,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s13",
+          "exercise": "bw_toes_to_bar",
+          "forMode": "reps",
+          "forValue": 25
+        },
+        {
+          "kind": "exercise",
+          "id": "s14",
+          "exercise": "bw_double_under",
+          "forMode": "reps",
+          "forValue": 50
+        },
+        {
+          "kind": "exercise",
+          "id": "s15",
+          "exercise": "bb_squat_clean",
+          "target": 143.0,
+          "rx": {
+            "men": 143.0,
+            "women": 93.0
+          },
+          "forMode": "reps",
+          "forValue": 7,
+          "note": "315/205 lb"
+        }
+      ]
+    }
+  ]
+}

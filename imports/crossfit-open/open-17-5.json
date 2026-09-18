@@ -1,0 +1,55 @@
+{
+  "id": "cf-open-17-5",
+  "title": "Open 17.5",
+  "creator": "CrossFit Games",
+  "description": "Ten rounds for time of 9 thrusters at 95/65 lb and 35 double-unders, 40-minute cap. 90 thrusters and 350 double-unders; a pure engine test that rewards unbroken sets. Scaled used 65/45 lb and single-unders.",
+  "source": {
+    "title": "CrossFit Games Open 2017 – Workout 17.5",
+    "url": "https://games.crossfit.com/workouts/open/2017/5",
+    "author": "CrossFit Games",
+    "kind": "benchmark",
+    "license": "Public competition workout; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "CrossFit",
+    "CrossFit Open",
+    "2017",
+    "For time",
+    "Barbell",
+    "Jump rope"
+  ],
+  "level": "Hard",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "10 rounds",
+      "mode": "fortime",
+      "repeat": 10,
+      "timeCapSec": 2400,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "bb_thruster",
+          "target": 43.0,
+          "rx": {
+            "men": 43.0,
+            "women": 29.5
+          },
+          "forMode": "reps",
+          "forValue": 9,
+          "note": "95/65 lb"
+        },
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "bw_double_under",
+          "forMode": "reps",
+          "forValue": 35
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,84 @@
+{
+  "id": "cf-open-14-4",
+  "title": "Open 14.4",
+  "creator": "CrossFit Games",
+  "description": "Fourteen-minute AMRAP chipper: 60-calorie row, 50 toes-to-bars, 40 wall balls (20/14 lb), 30 cleans at 135/95 lb and 20 muscle-ups, then back to the rower if you finish. Repeated as 23.1. Masters 55+ used 115/65 lb and a 9 ft target.",
+  "source": {
+    "title": "CrossFit Games Open 2014 – Workout 14.4",
+    "url": "https://games.crossfit.com/workouts/open/2014",
+    "author": "CrossFit Games",
+    "kind": "benchmark",
+    "license": "Public competition workout; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "CrossFit",
+    "CrossFit Open",
+    "2014",
+    "AMRAP",
+    "Chipper",
+    "Barbell",
+    "Rower"
+  ],
+  "level": "Hard",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "AMRAP 14",
+      "mode": "amrap",
+      "repeat": 1,
+      "timeCapSec": 840,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "cardio_rower",
+          "forMode": "calories",
+          "forValue": 60
+        },
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "bw_toes_to_bar",
+          "forMode": "reps",
+          "forValue": 50
+        },
+        {
+          "kind": "exercise",
+          "id": "s3",
+          "exercise": "gym_wall_ball",
+          "target": 9.0,
+          "rx": {
+            "men": 9.0,
+            "women": 6.5
+          },
+          "forMode": "reps",
+          "forValue": 40,
+          "note": "20/14 lb. 10/9 ft target"
+        },
+        {
+          "kind": "exercise",
+          "id": "s4",
+          "exercise": "bb_clean",
+          "target": 61.0,
+          "rx": {
+            "men": 61.0,
+            "women": 43.0
+          },
+          "forMode": "reps",
+          "forValue": 30,
+          "note": "135/95 lb. any style"
+        },
+        {
+          "kind": "exercise",
+          "id": "s5",
+          "exercise": "gym_muscle_up",
+          "forMode": "reps",
+          "forValue": 20,
+          "note": "ring muscle-up"
+        }
+      ]
+    }
+  ]
+}

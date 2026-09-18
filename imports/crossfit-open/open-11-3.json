@@ -1,0 +1,62 @@
+{
+  "id": "cf-open-11-3",
+  "title": "Open 11.3",
+  "creator": "CrossFit Games",
+  "description": "Five-minute AMRAP of one squat clean and one jerk at 165/110 lb. A short, heavy barbell test; each squat clean plus jerk is one round. If you miss a jerk you may power clean the bar to set up again. Masters 55+ used 135/75 lb.",
+  "source": {
+    "title": "CrossFit Games Open 2011 – Workout 11.3",
+    "url": "https://games.crossfit.com/workouts/open/2011",
+    "author": "CrossFit Games",
+    "kind": "benchmark",
+    "license": "Public competition workout; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "CrossFit",
+    "CrossFit Open",
+    "2011",
+    "AMRAP",
+    "Barbell",
+    "Olympic lifting"
+  ],
+  "level": "Hard",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "AMRAP 5",
+      "mode": "amrap",
+      "repeat": 1,
+      "timeCapSec": 300,
+      "note": "Each round = 1 squat clean + 1 jerk",
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "bb_squat_clean",
+          "target": 75.0,
+          "rx": {
+            "men": 75.0,
+            "women": 50.0
+          },
+          "forMode": "reps",
+          "forValue": 1,
+          "note": "165/110 lb"
+        },
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "bb_push_jerk",
+          "target": 75.0,
+          "rx": {
+            "men": 75.0,
+            "women": 50.0
+          },
+          "forMode": "reps",
+          "forValue": 1,
+          "note": "165/110 lb. any jerk style"
+        }
+      ]
+    }
+  ]
+}

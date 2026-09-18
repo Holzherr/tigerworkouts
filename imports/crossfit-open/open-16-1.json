@@ -1,0 +1,75 @@
+{
+  "id": "cf-open-16-1",
+  "title": "Open 16.1",
+  "creator": "CrossFit Games",
+  "description": "Twenty-minute AMRAP of a 25 ft overhead walking lunge at 95/65 lb, 8 burpees, another 25 ft overhead lunge and 8 chest-to-bar pull-ups. Long, low-skill and mostly about the lunges. Scaled used front-rack lunges at 45/35 lb and jumping pull-ups.",
+  "source": {
+    "title": "CrossFit Games Open 2016 – Workout 16.1",
+    "url": "https://games.crossfit.com/workouts/open/2016",
+    "author": "CrossFit Games",
+    "kind": "benchmark",
+    "license": "Public competition workout; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "CrossFit",
+    "CrossFit Open",
+    "2016",
+    "AMRAP",
+    "Barbell",
+    "Bodyweight"
+  ],
+  "level": "Hard",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "AMRAP 20",
+      "mode": "amrap",
+      "repeat": 1,
+      "timeCapSec": 1200,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "bb_overhead_walking_lunge",
+          "target": 43.0,
+          "rx": {
+            "men": 43.0,
+            "women": 29.5
+          },
+          "forMode": "meters",
+          "forValue": 8,
+          "note": "95/65 lb. 25 ft"
+        },
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "bw_burpee",
+          "forMode": "reps",
+          "forValue": 8
+        },
+        {
+          "kind": "exercise",
+          "id": "s3",
+          "exercise": "bb_overhead_walking_lunge",
+          "target": 43.0,
+          "rx": {
+            "men": 43.0,
+            "women": 29.5
+          },
+          "forMode": "meters",
+          "forValue": 8,
+          "note": "95/65 lb. 25 ft"
+        },
+        {
+          "kind": "exercise",
+          "id": "s4",
+          "exercise": "bw_chest_to_bar_pullup",
+          "forMode": "reps",
+          "forValue": 8
+        }
+      ]
+    }
+  ]
+}

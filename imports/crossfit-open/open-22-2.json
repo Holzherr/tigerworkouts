@@ -1,0 +1,76 @@
+{
+  "id": "cf-open-22-2",
+  "title": "Open 22.2",
+  "creator": "CrossFit Games",
+  "description": "1-2-3-4-5-6-7-8-9-10-9-8-7-6-5-4-3-2-1 deadlifts at 225/155 lb and bar-facing burpees, 10-minute cap. 100 of each; the descent is where backs give out. Scaled used 135/95 lb and step-over burpees; Foundations 75/55 lb and plain burpees.",
+  "source": {
+    "title": "CrossFit Games Open 2022 – Workout 22.2",
+    "url": "https://games.crossfit.com/workouts/open/2022/2",
+    "author": "CrossFit Games",
+    "kind": "benchmark",
+    "license": "Public competition workout; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "CrossFit",
+    "CrossFit Open",
+    "2022",
+    "For time",
+    "Ladder",
+    "Barbell"
+  ],
+  "level": "Hard",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "1-2-3…10…3-2-1",
+      "mode": "ladder",
+      "repeat": 1,
+      "ladder": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        9,
+        8,
+        7,
+        6,
+        5,
+        4,
+        3,
+        2,
+        1
+      ],
+      "timeCapSec": 600,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "bb_deadlift",
+          "target": 102.0,
+          "rx": {
+            "men": 102.0,
+            "women": 70.5
+          },
+          "forMode": "reps",
+          "forValue": 1,
+          "note": "225/155 lb"
+        },
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "bw_bar_facing_burpee",
+          "forMode": "reps",
+          "forValue": 1
+        }
+      ]
+    }
+  ]
+}

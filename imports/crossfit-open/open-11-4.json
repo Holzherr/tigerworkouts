@@ -1,0 +1,63 @@
+{
+  "id": "cf-open-11-4",
+  "title": "Open 11.4",
+  "creator": "CrossFit Games",
+  "description": "Ten-minute AMRAP of 60 bar-facing burpees, 30 overhead squats at 120/90 lb and 10 muscle-ups. Most athletes spend the whole ten minutes on burpees and overhead squats; the muscle-ups decided the top of the leaderboard. Masters 55+ used 110/75 lb.",
+  "source": {
+    "title": "CrossFit Games Open 2011 – Workout 11.4",
+    "url": "https://games.crossfit.com/workouts/open/2011",
+    "author": "CrossFit Games",
+    "kind": "benchmark",
+    "license": "Public competition workout; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "CrossFit",
+    "CrossFit Open",
+    "2011",
+    "AMRAP",
+    "Barbell",
+    "Gymnastics"
+  ],
+  "level": "Hard",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "AMRAP 10",
+      "mode": "amrap",
+      "repeat": 1,
+      "timeCapSec": 600,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "bw_bar_facing_burpee",
+          "forMode": "reps",
+          "forValue": 60
+        },
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "bb_overhead_squat",
+          "target": 54.5,
+          "rx": {
+            "men": 54.5,
+            "women": 41.0
+          },
+          "forMode": "reps",
+          "forValue": 30,
+          "note": "120/90 lb"
+        },
+        {
+          "kind": "exercise",
+          "id": "s3",
+          "exercise": "gym_muscle_up",
+          "forMode": "reps",
+          "forValue": 10,
+          "note": "ring muscle-up"
+        }
+      ]
+    }
+  ]
+}

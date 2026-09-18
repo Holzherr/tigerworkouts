@@ -1,0 +1,77 @@
+{
+  "id": "cf-hero-gaza",
+  "title": "Gaza",
+  "creator": "CrossFit",
+  "description": "Five rounds of 35 kettlebell swings at 53/35 lb, 30 push-ups, 25 pull-ups, 20 box jumps to a 30/24 in box and a mile run. Honours U.S. Air Force Capt. Lucas \"Gaza\" Gruenther, whose F-16 went down in the Adriatic Sea in 2013. Five miles of running plus 550 reps; an hour-plus effort.",
+  "source": {
+    "title": "Gaza – CrossFit Hero WOD",
+    "url": "https://www.crossfit.com/benchmark/gaza",
+    "author": "CrossFit",
+    "kind": "benchmark",
+    "license": "Public benchmark; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "CrossFit",
+    "Hero",
+    "For time",
+    "Kettlebell",
+    "Bodyweight",
+    "Run",
+    "Long"
+  ],
+  "level": "Hard",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "Gaza",
+      "mode": "fortime",
+      "repeat": 5,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "kb_swing",
+          "target": 24,
+          "rx": {
+            "men": 24,
+            "women": 16
+          },
+          "forMode": "reps",
+          "forValue": 35,
+          "note": "53/35 lb"
+        },
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "bw_pushup",
+          "forMode": "reps",
+          "forValue": 30
+        },
+        {
+          "kind": "exercise",
+          "id": "s3",
+          "exercise": "bw_pullup",
+          "forMode": "reps",
+          "forValue": 25
+        },
+        {
+          "kind": "exercise",
+          "id": "s4",
+          "exercise": "bw_box_jump",
+          "forMode": "reps",
+          "forValue": 20,
+          "note": "30/24 in box"
+        },
+        {
+          "kind": "exercise",
+          "id": "s5",
+          "exercise": "cardio_run",
+          "forMode": "meters",
+          "forValue": 1609
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,78 @@
+{
+  "id": "cf-open-19-3",
+  "title": "Open 19.3",
+  "creator": "CrossFit Games",
+  "description": "For time: 200 ft dumbbell overhead walking lunge at 50/35 lb, 50 dumbbell box step-ups (24/20 in), 50 strict handstand push-ups and a 200 ft handstand walk, 10-minute cap. The strict HSPU stopped most of the field. Scaled used front-rack lunges, elevated HSPU and a bear crawl.",
+  "source": {
+    "title": "CrossFit Games Open 2019 – Workout 19.3",
+    "url": "https://games.crossfit.com/workouts/open/2019/3",
+    "author": "CrossFit Games",
+    "kind": "benchmark",
+    "license": "Public competition workout; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "CrossFit",
+    "CrossFit Open",
+    "2019",
+    "For time",
+    "Chipper",
+    "Dumbbell",
+    "Gymnastics"
+  ],
+  "level": "Hard",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "For time",
+      "mode": "fortime",
+      "repeat": 1,
+      "timeCapSec": 600,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "db_overhead_lunge",
+          "target": 22.5,
+          "rx": {
+            "men": 22.5,
+            "women": 16.0
+          },
+          "forMode": "meters",
+          "forValue": 61,
+          "note": "50/35 lb. 200 ft, single dumbbell overhead"
+        },
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "db_step_up",
+          "target": 22.5,
+          "rx": {
+            "men": 22.5,
+            "women": 16.0
+          },
+          "forMode": "reps",
+          "forValue": 50,
+          "note": "50/35 lb. single dumbbell, 24/20 in box"
+        },
+        {
+          "kind": "exercise",
+          "id": "s3",
+          "exercise": "bw_handstand_pushup",
+          "forMode": "reps",
+          "forValue": 50,
+          "note": "strict"
+        },
+        {
+          "kind": "exercise",
+          "id": "s4",
+          "exercise": "bw_handstand_walk",
+          "forMode": "meters",
+          "forValue": 61,
+          "note": "200 ft"
+        }
+      ]
+    }
+  ]
+}

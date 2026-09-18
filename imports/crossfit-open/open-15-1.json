@@ -1,0 +1,87 @@
+{
+  "id": "cf-open-15-1",
+  "title": "Open 15.1 & 15.1a",
+  "creator": "CrossFit Games",
+  "description": "Nine-minute AMRAP of 15 toes-to-bars, 10 deadlifts and 5 snatches at 115/75 lb, followed straight away by six minutes to find a one-rep-max clean and jerk (15.1a). Two scores from one 15-minute window. Scaled used hanging knee raises and 85/55 lb.",
+  "source": {
+    "title": "CrossFit Games Open 2015 – Workout 15.1",
+    "url": "https://games.crossfit.com/workouts/open/2015",
+    "author": "CrossFit Games",
+    "kind": "benchmark",
+    "license": "Public competition workout; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "CrossFit",
+    "CrossFit Open",
+    "2015",
+    "AMRAP",
+    "Max lift",
+    "Barbell"
+  ],
+  "level": "Hard",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "15.1 · AMRAP 9",
+      "mode": "amrap",
+      "repeat": 1,
+      "timeCapSec": 540,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "bw_toes_to_bar",
+          "forMode": "reps",
+          "forValue": 15
+        },
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "bb_deadlift",
+          "target": 52.0,
+          "rx": {
+            "men": 52.0,
+            "women": 34.0
+          },
+          "forMode": "reps",
+          "forValue": 10,
+          "note": "115/75 lb"
+        },
+        {
+          "kind": "exercise",
+          "id": "s3",
+          "exercise": "bb_snatch",
+          "target": 52.0,
+          "rx": {
+            "men": 52.0,
+            "women": 34.0
+          },
+          "forMode": "reps",
+          "forValue": 5,
+          "note": "115/75 lb"
+        }
+      ]
+    },
+    {
+      "kind": "block",
+      "id": "b2",
+      "name": "15.1a · 1-rep-max clean and jerk",
+      "mode": "fortime",
+      "repeat": 1,
+      "timeCapSec": 360,
+      "note": "Score = heaviest successful lift in 6 minutes",
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s4",
+          "exercise": "bb_clean_and_jerk",
+          "forMode": "reps",
+          "forValue": 1,
+          "note": "Build to a 1-rep max; time starts as soon as 15.1 ends"
+        }
+      ]
+    }
+  ]
+}

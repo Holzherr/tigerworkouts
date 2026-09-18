@@ -1,0 +1,112 @@
+{
+  "id": "nhs-10-min-cardio",
+  "title": "10-minute home cardio workout",
+  "creator": "NHS",
+  "description": "Four bodyweight cardio moves, two sets of each, from the old NHS Fitness Studio 10-minute series. It is meant to raise the heart rate at home with no kit; each set is 15 to 24 reps and one exercise can be swapped for 60 seconds of skipping. Swap star jumps for squats or do burpees without the push-up position to make it easier. Warm up first with the NHS 6-minute warm-up (nhs-6-min-warm-up) and finish with the 5-minute stretch (nhs-5-min-cool-down-stretch).",
+  "source": {
+    "title": "10-minute home cardio workout",
+    "url": "https://web.archive.org/web/20220401/https://www.nhs.uk/live-well/exercise/10-minute-home-cardio-workout/",
+    "author": "NHS",
+    "kind": "article",
+    "license": "Open Government Licence v3.0 (NHS)",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "NHS",
+    "Home workout",
+    "No equipment",
+    "Cardio",
+    "10 minutes"
+  ],
+  "level": "Medium",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "Rocket jumps",
+      "repeat": 2,
+      "note": "2 sets of 15 to 24 reps",
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "bw_jump_squat",
+          "forMode": "reps",
+          "forValue": 15,
+          "note": "Rocket jump: hands on thighs, jump and drive the hands overhead, land softly"
+        },
+        {
+          "kind": "rest",
+          "id": "r1",
+          "seconds": 30
+        }
+      ]
+    },
+    {
+      "kind": "block",
+      "id": "b2",
+      "name": "Star jumps",
+      "repeat": 2,
+      "note": "2 sets of 15 to 24 reps",
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "bw_star_jump",
+          "forMode": "reps",
+          "forValue": 15,
+          "note": "Or bodyweight squats as a less energetic option"
+        },
+        {
+          "kind": "rest",
+          "id": "r2",
+          "seconds": 30
+        }
+      ]
+    },
+    {
+      "kind": "block",
+      "id": "b3",
+      "name": "Tap backs",
+      "repeat": 2,
+      "note": "2 sets of 15 to 24 reps",
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s3",
+          "exercise": "bw_tap_back",
+          "forMode": "reps",
+          "forValue": 15,
+          "note": "Jump the switch (spotty dog) for more of a challenge"
+        },
+        {
+          "kind": "rest",
+          "id": "r3",
+          "seconds": 30
+        }
+      ]
+    },
+    {
+      "kind": "block",
+      "id": "b4",
+      "name": "Burpees",
+      "repeat": 2,
+      "note": "2 sets of 15 to 24 reps",
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s4",
+          "exercise": "bw_burpee",
+          "forMode": "reps",
+          "forValue": 15,
+          "note": "Easier: skip the push-up position and stand instead of jumping"
+        },
+        {
+          "kind": "rest",
+          "id": "r4",
+          "seconds": 30
+        }
+      ]
+    }
+  ]
+}

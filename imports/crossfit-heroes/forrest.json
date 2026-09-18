@@ -1,0 +1,62 @@
+{
+  "id": "cf-hero-forrest",
+  "title": "Forrest",
+  "creator": "CrossFit",
+  "description": "Three rounds of 20 L pull-ups, 30 toes-to-bars, 40 burpees and an 800 m run. Honours DEA Special Agent Forrest N. Leamon, killed in a helicopter crash on a counternarcotics mission in western Afghanistan in 2009. Scale L pull-ups to tucked-knee pull-ups.",
+  "source": {
+    "title": "Forrest – CrossFit Hero WOD",
+    "url": "https://www.crossfit.com/benchmark/forrest",
+    "author": "CrossFit",
+    "kind": "benchmark",
+    "license": "Public benchmark; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "CrossFit",
+    "Hero",
+    "For time",
+    "Bodyweight",
+    "Gymnastics",
+    "Run"
+  ],
+  "level": "Hard",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "Forrest",
+      "mode": "fortime",
+      "repeat": 3,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "bw_l_pullup",
+          "forMode": "reps",
+          "forValue": 20
+        },
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "bw_toes_to_bar",
+          "forMode": "reps",
+          "forValue": 30
+        },
+        {
+          "kind": "exercise",
+          "id": "s3",
+          "exercise": "bw_burpee",
+          "forMode": "reps",
+          "forValue": 40
+        },
+        {
+          "kind": "exercise",
+          "id": "s4",
+          "exercise": "cardio_run",
+          "forMode": "meters",
+          "forValue": 800
+        }
+      ]
+    }
+  ]
+}

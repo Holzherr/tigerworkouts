@@ -1,0 +1,514 @@
+[
+  {
+    "key": "bb_power_clean",
+    "name": "Barbell power clean",
+    "unit": "kg",
+    "step": 2.5,
+    "group": "barbell",
+    "cue": "Floor to shoulders, receive above parallel."
+  },
+  {
+    "key": "bb_hang_squat_clean",
+    "name": "Barbell hang squat clean",
+    "unit": "kg",
+    "step": 2.5,
+    "group": "barbell",
+    "cue": "From above the knee, pull under into a full front squat."
+  },
+  {
+    "key": "bb_push_jerk",
+    "name": "Barbell push jerk",
+    "unit": "kg",
+    "step": 2.5,
+    "group": "barbell",
+    "cue": "Dip, drive, and drop under the bar into a partial squat, stand to finish."
+  },
+  {
+    "key": "bb_squat_clean_thruster",
+    "name": "Squat clean thruster",
+    "unit": "kg",
+    "step": 2.5,
+    "group": "barbell",
+    "cue": "Clean from the floor into a full squat and drive straight into a thruster."
+  },
+  {
+    "key": "bb_step_up",
+    "name": "Barbell step-up",
+    "unit": "kg",
+    "step": 2.5,
+    "group": "barbell",
+    "cue": "Bar on the back, whole foot on the box, drive through the front leg."
+  },
+  {
+    "key": "bb_farmers_carry",
+    "name": "Barbell farmers carry",
+    "unit": "kg",
+    "step": 2.5,
+    "group": "barbell",
+    "cue": "Carry a barbell by the centre in one hand, or one in each hand, tall and braced."
+  },
+  {
+    "key": "bb_overhead_carry",
+    "name": "Barbell overhead walk",
+    "unit": "kg",
+    "step": 2.5,
+    "group": "barbell",
+    "cue": "Bar locked out overhead, ribs down, walk with short steps."
+  },
+  {
+    "key": "db_hang_squat_clean",
+    "name": "Dumbbell hang squat clean",
+    "unit": "kg per arm",
+    "step": 2.5,
+    "group": "dumbbell",
+    "cue": "Dumbbells at the hang, pull under into a full squat, stand."
+  },
+  {
+    "key": "db_squat_clean",
+    "name": "Dumbbell squat clean",
+    "unit": "kg per arm",
+    "step": 2.5,
+    "group": "dumbbell",
+    "cue": "Dumbbells from the floor to the shoulders, receive in a full squat."
+  },
+  {
+    "key": "db_hang_split_snatch",
+    "name": "Dumbbell hang split snatch",
+    "unit": "kg",
+    "step": 2.5,
+    "group": "dumbbell",
+    "cue": "From the hang, snatch overhead while splitting the feet, alternate feet."
+  },
+  {
+    "key": "db_deadlift",
+    "name": "Dumbbell deadlift",
+    "unit": "kg per arm",
+    "step": 2.5,
+    "group": "dumbbell",
+    "cue": "Dumbbells outside the feet, flat back, stand tall."
+  },
+  {
+    "key": "db_burpee_deadlift",
+    "name": "Dumbbell burpee deadlift",
+    "unit": "kg per arm",
+    "step": 2.5,
+    "group": "dumbbell",
+    "cue": "Burpee with hands on the dumbbells, stand up into a deadlift."
+  },
+  {
+    "key": "db_farmers_carry",
+    "name": "Dumbbell farmers carry",
+    "unit": "kg per arm",
+    "step": 2.5,
+    "group": "dumbbell",
+    "cue": "One dumbbell in each hand, tall posture, quick steps."
+  },
+  {
+    "key": "db_waiters_walk",
+    "name": "Dumbbell waiters walk",
+    "unit": "kg",
+    "step": 2.5,
+    "group": "dumbbell",
+    "cue": "One dumbbell locked out overhead, walk with the ribs down."
+  },
+  {
+    "key": "kb_thruster",
+    "name": "Kettlebell thruster",
+    "unit": "kg",
+    "step": 4,
+    "group": "kettlebell",
+    "cue": "Bells in the rack, squat and drive them overhead in one movement."
+  },
+  {
+    "key": "kb_lunge",
+    "name": "Kettlebell walking lunge",
+    "unit": "kg",
+    "step": 4,
+    "group": "kettlebell",
+    "cue": "Two bells at the sides or in the rack, long steps, back knee to the floor."
+  },
+  {
+    "key": "bw_weighted_pullup",
+    "name": "Weighted pull-up",
+    "unit": "kg",
+    "step": 2.5,
+    "group": "body",
+    "cue": "Dumbbell between the feet or belt, dead hang to chin over the bar."
+  },
+  {
+    "key": "bw_l_pullup",
+    "name": "L pull-up",
+    "unit": "",
+    "step": 1,
+    "group": "body",
+    "cue": "Legs held straight out in front, pull chin over the bar."
+  },
+  {
+    "key": "bw_bar_muscle_up",
+    "name": "Bar muscle-up",
+    "unit": "",
+    "step": 1,
+    "group": "body",
+    "cue": "Pull high, roll over the bar, press to support."
+  },
+  {
+    "key": "bw_toes_to_bar",
+    "name": "Toes-to-bar",
+    "unit": "",
+    "step": 1,
+    "group": "core",
+    "cue": "Hang, swing and bring both feet to touch the bar."
+  },
+  {
+    "key": "bw_knees_to_elbows",
+    "name": "Knees-to-elbows",
+    "unit": "",
+    "step": 1,
+    "group": "core",
+    "cue": "Hang, bring the knees up to touch the elbows."
+  },
+  {
+    "key": "bw_hand_release_pushup",
+    "name": "Hand-release push-up",
+    "unit": "",
+    "step": 1,
+    "group": "body",
+    "cue": "Chest to the floor, lift the hands, press back up."
+  },
+  {
+    "key": "bw_burpee_pullup",
+    "name": "Burpee pull-up",
+    "unit": "",
+    "step": 1,
+    "group": "body",
+    "cue": "Burpee, then jump to the bar and do a pull-up."
+  },
+  {
+    "key": "bw_burpee_box_jump",
+    "name": "Burpee box jump",
+    "unit": "",
+    "step": 1,
+    "group": "body",
+    "cue": "Burpee, then jump onto the box."
+  },
+  {
+    "key": "bw_burpee_box_jump_over",
+    "name": "Burpee box jump over",
+    "unit": "",
+    "step": 1,
+    "group": "body",
+    "cue": "Burpee, jump onto and over the box."
+  },
+  {
+    "key": "bw_burpee_muscle_up",
+    "name": "Burpee muscle-up",
+    "unit": "",
+    "step": 1,
+    "group": "body",
+    "cue": "Burpee, then jump to the rings or bar and do a muscle-up."
+  },
+  {
+    "key": "bw_bear_crawl",
+    "name": "Bear crawl",
+    "unit": "",
+    "step": 1,
+    "group": "body",
+    "cue": "Hands and feet on the floor, knees just off the ground, crawl forward."
+  },
+  {
+    "key": "bw_flutter_kick",
+    "name": "Flutter kicks",
+    "unit": "",
+    "step": 1,
+    "group": "core",
+    "cue": "On the back, legs straight, small alternating kicks; 4 kicks = 1 rep."
+  },
+  {
+    "key": "gym_ball_slam",
+    "name": "Ball slam",
+    "unit": "kg",
+    "step": 1,
+    "group": "gym",
+    "cue": "Ball overhead, slam it to the floor, pick it up and repeat."
+  },
+  {
+    "key": "gym_rope_climb",
+    "name": "Rope climb",
+    "unit": "",
+    "step": 1,
+    "group": "gym",
+    "cue": "Climb to the 15-ft mark, wrap the feet, descend under control."
+  },
+  {
+    "key": "gym_ring_row",
+    "name": "Ring row",
+    "unit": "",
+    "step": 1,
+    "group": "gym",
+    "cue": "Body straight, pull the chest to the rings."
+  },
+  {
+    "key": "gym_ring_pushup",
+    "name": "Ring push-up",
+    "unit": "",
+    "step": 1,
+    "group": "gym",
+    "cue": "Push-up with hands on the rings, stabilise, chest to ring height."
+  },
+  {
+    "key": "gym_ring_inverted_lower",
+    "name": "Inverted hang lower",
+    "unit": "",
+    "step": 1,
+    "group": "gym",
+    "cue": "From an inverted hang on the rings, lower slowly with straight body and arms."
+  },
+  {
+    "key": "gym_ghd_situp",
+    "name": "GHD sit-up",
+    "unit": "",
+    "step": 1,
+    "group": "core",
+    "cue": "On the GHD, extend back and touch the floor, sit up to touch the pads."
+  },
+  {
+    "key": "gym_back_extension",
+    "name": "Back extension",
+    "unit": "",
+    "step": 1,
+    "group": "core",
+    "cue": "On the GHD, hinge down and extend the back to horizontal."
+  },
+  {
+    "key": "gym_plate_carry",
+    "name": "Plate carry",
+    "unit": "kg",
+    "step": 2.5,
+    "group": "gym",
+    "cue": "Carry a plate at the chest or overhead for distance."
+  },
+  {
+    "key": "gym_plate_overhead_lunge",
+    "name": "Plate overhead walking lunge",
+    "unit": "kg",
+    "step": 2.5,
+    "group": "gym",
+    "cue": "Plate locked out overhead, walking lunges."
+  },
+  {
+    "key": "gym_sandbag_carry",
+    "name": "Sandbag carry",
+    "unit": "kg",
+    "step": 5,
+    "group": "gym",
+    "cue": "Sandbag on the shoulder or in the arms, walk or run for distance."
+  },
+  {
+    "key": "gym_sandbag_over_shoulder",
+    "name": "Sandbag ground-to-over-shoulder",
+    "unit": "kg",
+    "step": 5,
+    "group": "gym",
+    "cue": "Lift the sandbag from the floor and throw it over the shoulder."
+  },
+  {
+    "key": "bb_shoulder_to_overhead",
+    "name": "Shoulder to overhead",
+    "unit": "kg",
+    "step": 2.5,
+    "group": "barbell",
+    "cue": "Bar from the shoulders to lockout overhead any way: strict press, push press or jerk."
+  },
+  {
+    "key": "bb_overhead_lunge",
+    "name": "Barbell overhead walking lunge",
+    "unit": "kg",
+    "step": 2.5,
+    "group": "barbell",
+    "cue": "Bar locked out overhead, long steps, back knee touches, arms stay straight."
+  },
+  {
+    "key": "bb_front_rack_lunge",
+    "name": "Barbell front-rack lunge",
+    "unit": "kg",
+    "step": 2.5,
+    "group": "barbell",
+    "cue": "Bar in the front rack, elbows high, step long and touch the back knee, drive up through the front foot."
+  },
+  {
+    "key": "bw_strict_pullup",
+    "name": "Strict pull-up",
+    "unit": "",
+    "step": 1,
+    "group": "body",
+    "cue": "Dead hang, no kip, pull the chin over the bar and lower under control."
+  },
+  {
+    "key": "bw_broad_jump",
+    "name": "Standing broad jump",
+    "unit": "",
+    "step": 5,
+    "group": "body",
+    "cue": "Two-foot take-off and landing, swing the arms, jump as far as you can each rep."
+  },
+  {
+    "key": "bw_forward_roll",
+    "name": "Forward roll",
+    "unit": "",
+    "step": 1,
+    "group": "body",
+    "cue": "Tuck the chin, roll over the upper back and stand up without using the hands."
+  },
+  {
+    "key": "bw_wall_climb",
+    "name": "Wall climb",
+    "unit": "",
+    "step": 1,
+    "group": "body",
+    "cue": "Feet on the wall, walk the hands back until the chest touches the wall, then walk back out."
+  },
+  {
+    "key": "bw_dead_hang",
+    "name": "Bar hang",
+    "unit": "",
+    "step": 10,
+    "group": "body",
+    "cue": "Hang from the pull-up bar with straight arms; grip is the whole exercise."
+  },
+  {
+    "key": "bw_box_step_up",
+    "name": "Box step-up",
+    "unit": "",
+    "step": 1,
+    "group": "body",
+    "cue": "Whole foot on the box, stand tall on top, step down and alternate legs."
+  },
+  {
+    "key": "bw_hanging_hip_touch",
+    "name": "Hanging hip touch",
+    "unit": "",
+    "step": 1,
+    "group": "core",
+    "cue": "Hang from the bar, swing the legs up and touch one hip to the bar, alternate sides."
+  },
+  {
+    "key": "gym_ruck_step_up",
+    "name": "Weighted box step-up",
+    "unit": "kg",
+    "step": 2.5,
+    "group": "gym",
+    "cue": "Ruck, weighted pack or vest on, whole foot on the box, stand tall on top, alternate legs."
+  },
+  {
+    "key": "gym_sled_push",
+    "name": "Sled push",
+    "unit": "kg",
+    "step": 5,
+    "group": "gym",
+    "cue": "Arms straight or bent, lean into the sled and drive with short quick steps."
+  },
+  {
+    "key": "gym_sled_pull",
+    "name": "Sled pull (arm over arm)",
+    "unit": "kg",
+    "step": 5,
+    "group": "gym",
+    "cue": "Sit or brace, pull the rope hand over hand until the sled reaches you."
+  },
+  {
+    "key": "gym_medball_clean",
+    "name": "Medicine-ball clean",
+    "unit": "kg",
+    "step": 1,
+    "group": "gym",
+    "cue": "Ball from the floor, extend the hips, pull under into a squat with the ball at the chest and stand."
+  },
+  {
+    "key": "gym_partner_carry",
+    "name": "Partner carry",
+    "unit": "",
+    "step": 5,
+    "group": "gym",
+    "cue": "Fireman's carry, piggyback or partner barbell carry over the distance; swap halfway if you like."
+  },
+  {
+    "key": "kb_overhead_squat",
+    "name": "Single-arm kettlebell overhead squat",
+    "unit": "kg",
+    "step": 4,
+    "group": "kettlebell",
+    "cue": "Bell locked out overhead in one hand, squat below parallel keeping the bell over mid-foot."
+  },
+  {
+    "key": "kb_clean_and_jerk",
+    "name": "Kettlebell clean and jerk",
+    "unit": "kg",
+    "step": 4,
+    "group": "kettlebell",
+    "cue": "Swing the bell into the rack, then dip and drive it overhead to lockout."
+  },
+  {
+    "key": "kb_front_rack_lunge",
+    "name": "Double kettlebell front-rack lunge",
+    "unit": "kg per arm",
+    "step": 4,
+    "group": "kettlebell",
+    "cue": "Two bells in the rack, elbows in, step long and touch the back knee."
+  },
+  {
+    "key": "kb_front_rack_carry",
+    "name": "Double kettlebell front-rack carry",
+    "unit": "kg per arm",
+    "step": 4,
+    "group": "kettlebell",
+    "cue": "Two bells in the rack, ribs down, walk tall."
+  },
+  {
+    "key": "kb_overhead_carry",
+    "name": "Double kettlebell overhead carry",
+    "unit": "kg per arm",
+    "step": 4,
+    "group": "kettlebell",
+    "cue": "Two bells locked out overhead, biceps by the ears, walk without leaning back."
+  },
+  {
+    "key": "db_split_clean",
+    "name": "Dumbbell split clean",
+    "unit": "kg per arm",
+    "step": 2.5,
+    "group": "dumbbell",
+    "cue": "Clean two dumbbells to the shoulders while landing in a split stance; alternate the lead leg."
+  },
+  {
+    "key": "db_squat_clean_thruster",
+    "name": "Dumbbell squat clean thruster",
+    "unit": "kg per arm",
+    "step": 2.5,
+    "group": "dumbbell",
+    "cue": "Clean two dumbbells into a full squat and drive straight into a press overhead."
+  },
+  {
+    "key": "db_front_squat",
+    "name": "Dumbbell front squat",
+    "unit": "kg per arm",
+    "step": 2.5,
+    "group": "dumbbell",
+    "cue": "Dumbbells on the shoulders, elbows forward, squat below parallel and stand."
+  },
+  {
+    "key": "db_hang_clean_and_jerk",
+    "name": "Dumbbell hang clean and jerk",
+    "unit": "kg per arm",
+    "step": 2.5,
+    "group": "dumbbell",
+    "cue": "From the hang, clean two dumbbells to the shoulders, then dip and drive them overhead."
+  },
+  {
+    "key": "cardio_shuttle_run",
+    "name": "Shuttle run",
+    "unit": "",
+    "step": 1,
+    "group": "run",
+    "cue": "Sprint out to the mark, touch and sprint back; one rep is out and back."
+  }
+]

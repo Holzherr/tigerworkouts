@@ -1,0 +1,53 @@
+{
+  "id": "cf-hero-tumilson",
+  "title": "Tumilson",
+  "creator": "CrossFit",
+  "description": "Eight rounds of a 200 m run and 11 dumbbell burpee deadlifts, for time. Honours Navy SEAL Petty Officer 1st Class Jon 'JT' Tumilson, killed in the 2011 helicopter crash in Wardak Province, Afghanistan. The dumbbells are heavy for a burpee movement; keep the back flat as you stand.",
+  "source": {
+    "title": "Tumilson – CrossFit Hero WOD",
+    "url": "https://www.crossfit.com/benchmark/tumilson-hero",
+    "author": "CrossFit",
+    "kind": "benchmark",
+    "license": "Public benchmark; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "CrossFit",
+    "Hero WOD",
+    "For time",
+    "Dumbbell",
+    "Running"
+  ],
+  "level": "Hard",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "8 rounds",
+      "mode": "fortime",
+      "repeat": 8,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "cardio_run",
+          "forMode": "meters",
+          "forValue": 200
+        },
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "db_burpee_deadlift",
+          "forMode": "reps",
+          "forValue": 11,
+          "target": 27,
+          "rx": {
+            "men": 27,
+            "women": 20.5
+          },
+          "note": "60/45 lb"
+        }
+      ]
+    }
+  ]
+}

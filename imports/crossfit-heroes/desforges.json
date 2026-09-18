@@ -1,0 +1,73 @@
+{
+  "id": "cf-hero-desforges",
+  "title": "Desforges",
+  "creator": "CrossFit",
+  "description": "Five rounds of 12 deadlifts at 225/155 lb, 20 pull-ups, 12 clean and jerks at 135/95 lb and 20 knees-to-elbows. Honours U.S. Marine Sgt. Joshua Desforges, killed in Helmand Province, Afghanistan, in 2010. 100 pull-ups and 100 knees-to-elbows; protect your hands and scale the grip volume.",
+  "source": {
+    "title": "Desforges – CrossFit Hero WOD",
+    "url": "https://www.crossfit.com/benchmark/desforges",
+    "author": "CrossFit",
+    "kind": "benchmark",
+    "license": "Public benchmark; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "CrossFit",
+    "Hero",
+    "For time",
+    "Barbell",
+    "Gymnastics"
+  ],
+  "level": "Hard",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "Desforges",
+      "mode": "fortime",
+      "repeat": 5,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "bb_deadlift",
+          "target": 102.0,
+          "rx": {
+            "men": 102.0,
+            "women": 70.5
+          },
+          "forMode": "reps",
+          "forValue": 12,
+          "note": "225/155 lb"
+        },
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "bw_pullup",
+          "forMode": "reps",
+          "forValue": 20
+        },
+        {
+          "kind": "exercise",
+          "id": "s3",
+          "exercise": "bb_clean_and_jerk",
+          "target": 61.0,
+          "rx": {
+            "men": 61.0,
+            "women": 43.0
+          },
+          "forMode": "reps",
+          "forValue": 12,
+          "note": "135/95 lb"
+        },
+        {
+          "kind": "exercise",
+          "id": "s4",
+          "exercise": "bw_knees_to_elbows",
+          "forMode": "reps",
+          "forValue": 20
+        }
+      ]
+    }
+  ]
+}

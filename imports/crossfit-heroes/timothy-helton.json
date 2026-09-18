@@ -1,0 +1,107 @@
+{
+  "id": "cf-hero-timothy-helton",
+  "title": "Timothy Helton",
+  "creator": "CrossFit",
+  "description": "A team-of-three workout: a 2,364 m row, ten rounds of 49 wall balls, 26 pull-ups, a 200 m run, 8 ring muscle-ups and 40 deadlifts, then each team member builds to a heavy single back squat. Honours Timothy Helton, a U.S. Army and Tennessee National Guard Kiowa Warrior pilot who died in 2024 of cancer linked to deployment exposures. The numbers encode his life; split the work so one athlete moves at a time.",
+  "source": {
+    "title": "Timothy Helton – CrossFit Hero WOD",
+    "url": "https://www.crossfit.com/benchmark/timothy-helton",
+    "author": "CrossFit",
+    "kind": "benchmark",
+    "license": "Public benchmark; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "CrossFit",
+    "Hero WOD",
+    "For time",
+    "Team",
+    "Rower",
+    "Barbell",
+    "Gymnastics"
+  ],
+  "level": "Hard",
+  "items": [
+    {
+      "kind": "exercise",
+      "id": "s1",
+      "exercise": "cardio_rower",
+      "forMode": "meters",
+      "forValue": 2364
+    },
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "10 rounds",
+      "mode": "fortime",
+      "repeat": 10,
+      "note": "Team of 3, split the work as you like",
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "gym_wall_ball",
+          "forMode": "reps",
+          "forValue": 49,
+          "target": 9,
+          "rx": {
+            "men": 9,
+            "women": 6.5
+          },
+          "note": "20/14 lb — 10/9 ft target"
+        },
+        {
+          "kind": "exercise",
+          "id": "s3",
+          "exercise": "bw_pullup",
+          "forMode": "reps",
+          "forValue": 26
+        },
+        {
+          "kind": "exercise",
+          "id": "s4",
+          "exercise": "cardio_run",
+          "forMode": "meters",
+          "forValue": 200
+        },
+        {
+          "kind": "exercise",
+          "id": "s5",
+          "exercise": "gym_muscle_up",
+          "forMode": "reps",
+          "forValue": 8
+        },
+        {
+          "kind": "exercise",
+          "id": "s6",
+          "exercise": "bb_deadlift",
+          "forMode": "reps",
+          "forValue": 40,
+          "target": 70.5,
+          "rx": {
+            "men": 70.5,
+            "women": 47.5
+          },
+          "note": "155/105 lb"
+        }
+      ]
+    },
+    {
+      "kind": "block",
+      "id": "b2",
+      "name": "Heavy single",
+      "mode": "fortime",
+      "repeat": 1,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s7",
+          "exercise": "bb_back_squat",
+          "forMode": "reps",
+          "forValue": 1,
+          "note": "Build to a heavy single, each team member"
+        }
+      ]
+    }
+  ]
+}

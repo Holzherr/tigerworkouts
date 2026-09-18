@@ -1,0 +1,45 @@
+{
+  "id": "cf-hero-randy",
+  "title": "Randy",
+  "creator": "CrossFit",
+  "description": "75 power snatches at a light barbell, for time. Honours LAPD SWAT officer Randy Simmons, a 27-year veteran killed in the line of duty in 2008. A pure sprint: aim for big sets and short breaks.",
+  "source": {
+    "title": "Randy – CrossFit Hero WOD",
+    "url": "https://www.crossfit.com/benchmark/randy",
+    "author": "CrossFit",
+    "kind": "benchmark",
+    "license": "Public benchmark; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "CrossFit",
+    "Hero WOD",
+    "For time",
+    "Barbell"
+  ],
+  "level": "Medium",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "75 reps",
+      "mode": "fortime",
+      "repeat": 1,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "bb_power_snatch",
+          "forMode": "reps",
+          "forValue": 75,
+          "target": 34,
+          "rx": {
+            "men": 34,
+            "women": 25
+          },
+          "note": "75/55 lb"
+        }
+      ]
+    }
+  ]
+}

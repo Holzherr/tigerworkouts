@@ -1,0 +1,86 @@
+{
+  "id": "cf-hero-northrup",
+  "title": "Northrup",
+  "creator": "CrossFit",
+  "description": "26 back-rack barbell step-ups, then three rounds of 17 power cleans, 19 sit-ups and 21 deadlifts, then a 31-calorie row, for time. Honours Detective Constable Jeffrey Northrup of the Toronto Police Service, killed in the line of duty in 2021. Light bar, big volume, so keep the cleans touch-and-go.",
+  "source": {
+    "title": "Northrup – CrossFit Hero WOD",
+    "url": "https://www.crossfit.com/benchmark/northrup",
+    "author": "CrossFit",
+    "kind": "benchmark",
+    "license": "Public benchmark; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "CrossFit",
+    "Hero WOD",
+    "For time",
+    "Barbell",
+    "Rower"
+  ],
+  "level": "Hard",
+  "items": [
+    {
+      "kind": "exercise",
+      "id": "s1",
+      "exercise": "bb_step_up",
+      "forMode": "reps",
+      "forValue": 26,
+      "target": 43,
+      "rx": {
+        "men": 43,
+        "women": 29.5
+      },
+      "note": "95/65 lb — Back rack, 24/20 in box"
+    },
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "3 rounds",
+      "mode": "fortime",
+      "repeat": 3,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "bb_power_clean",
+          "forMode": "reps",
+          "forValue": 17,
+          "target": 43,
+          "rx": {
+            "men": 43,
+            "women": 29.5
+          },
+          "note": "95/65 lb"
+        },
+        {
+          "kind": "exercise",
+          "id": "s3",
+          "exercise": "bw_situp",
+          "forMode": "reps",
+          "forValue": 19
+        },
+        {
+          "kind": "exercise",
+          "id": "s4",
+          "exercise": "bb_deadlift",
+          "forMode": "reps",
+          "forValue": 21,
+          "target": 43,
+          "rx": {
+            "men": 43,
+            "women": 29.5
+          },
+          "note": "95/65 lb"
+        }
+      ]
+    },
+    {
+      "kind": "exercise",
+      "id": "s5",
+      "exercise": "cardio_rower",
+      "forMode": "calories",
+      "forValue": 31
+    }
+  ]
+}

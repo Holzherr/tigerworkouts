@@ -1,0 +1,66 @@
+{
+  "id": "cf-open-20-5",
+  "title": "Open 20.5",
+  "creator": "CrossFit Games",
+  "description": "For time, partitioned any way: 40 ring muscle-ups, 80-calorie row and 120 wall balls (20/14 lb to 10/9 ft), 20-minute cap. You choose the order and the set sizes. Scaled used chin-over-bar pull-ups and a 14/10 lb ball.",
+  "source": {
+    "title": "CrossFit Games Open 2020 – Workout 20.5",
+    "url": "https://games.crossfit.com/workouts/open/2020/5",
+    "author": "CrossFit Games",
+    "kind": "benchmark",
+    "license": "Public competition workout; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "CrossFit",
+    "CrossFit Open",
+    "2020",
+    "For time",
+    "Chipper",
+    "Gymnastics",
+    "Rower",
+    "Wall ball"
+  ],
+  "level": "Hard",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "240 reps, any order",
+      "mode": "fortime",
+      "repeat": 1,
+      "timeCapSec": 1200,
+      "note": "Partition the three movements however you like",
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "gym_muscle_up",
+          "forMode": "reps",
+          "forValue": 40,
+          "note": "ring muscle-up"
+        },
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "cardio_rower",
+          "forMode": "calories",
+          "forValue": 80
+        },
+        {
+          "kind": "exercise",
+          "id": "s3",
+          "exercise": "gym_wall_ball",
+          "target": 9.0,
+          "rx": {
+            "men": 9.0,
+            "women": 6.5
+          },
+          "forMode": "reps",
+          "forValue": 120,
+          "note": "20/14 lb. 10/9 ft target"
+        }
+      ]
+    }
+  ]
+}

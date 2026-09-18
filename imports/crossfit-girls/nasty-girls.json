@@ -1,0 +1,61 @@
+{
+  "id": "cf-girls-nasty-girls",
+  "title": "Nasty Girls",
+  "creator": "CrossFit",
+  "description": "Three rounds of 50 squats, 7 muscle-ups and 10 hang power cleans at 135 lb. First posted in December 2005 and made famous by the video of Nicole Carroll, Eva T and Annie Sakamoto; a balanced mix of metabolic, gymnastic and weightlifting work. Substitute 3 pull-ups plus 3 dips per muscle-up if needed.",
+  "source": {
+    "title": "Nasty Girls – CrossFit benchmark WOD (\"The Girls\")",
+    "url": "https://www.crossfit.com/benchmark/nasty-girls",
+    "author": "CrossFit",
+    "kind": "benchmark",
+    "license": "Public benchmark; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "CrossFit",
+    "Girls",
+    "For time",
+    "Barbell",
+    "Gymnastics",
+    "Bodyweight"
+  ],
+  "level": "Hard",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "Nasty Girls",
+      "mode": "fortime",
+      "repeat": 3,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "bw_squat",
+          "forMode": "reps",
+          "forValue": 50
+        },
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "gym_muscle_up",
+          "forMode": "reps",
+          "forValue": 7
+        },
+        {
+          "kind": "exercise",
+          "id": "s3",
+          "exercise": "bb_hang_power_clean",
+          "target": 61,
+          "rx": {
+            "men": 61,
+            "women": 43
+          },
+          "forMode": "reps",
+          "forValue": 10,
+          "note": "135 lb (95 lb commonly used for women)"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,154 @@
+[
+  {
+    "key": "bw_high_knees",
+    "name": "High knees",
+    "unit": "",
+    "step": 5,
+    "group": "body",
+    "cue": "Run on the spot driving each knee to hip height, quick feet, arms pumping."
+  },
+  {
+    "key": "bw_pushup_rotation",
+    "name": "Push-up and rotation",
+    "unit": "",
+    "step": 1,
+    "group": "body",
+    "cue": "Push-up, then at the top rotate into a side plank with one arm reaching to the ceiling; alternate sides each rep."
+  },
+  {
+    "key": "bw_reverse_lunge_rotation",
+    "name": "Reverse lunge, elbow to instep with rotation",
+    "unit": "",
+    "step": 1,
+    "group": "body",
+    "cue": "Step back into a lunge, put the opposite hand on the floor, bring the other elbow to the inside of the front foot, then rotate and reach that arm to the ceiling. Stand and alternate."
+  },
+  {
+    "key": "db_pushup_row_burpee",
+    "name": "Push-up to row to burpee",
+    "unit": "kg per arm",
+    "step": 1,
+    "group": "dumbbell",
+    "cue": "Hands on dumbbells, push-up, row each dumbbell to the ribs, jump the feet in and jump up. Light weights."
+  },
+  {
+    "key": "db_single_leg_rdl_curl_press",
+    "name": "Single-leg Romanian deadlift to curl to press",
+    "unit": "kg per arm",
+    "step": 1,
+    "group": "dumbbell",
+    "cue": "Balance on one leg, hinge until the dumbbells reach shin height, stand, curl, press overhead. Same leg for the whole interval."
+  },
+  {
+    "key": "bw_plank_arm_lift",
+    "name": "Plank with arm lift",
+    "unit": "",
+    "step": 1,
+    "group": "core",
+    "cue": "High plank, lift one arm straight out in front without the hips turning, put it down, switch."
+  },
+  {
+    "key": "db_lateral_lunge_tricep_ext",
+    "name": "Lateral lunge to overhead triceps extension",
+    "unit": "kg per arm",
+    "step": 1,
+    "group": "dumbbell",
+    "cue": "Step wide to the side into a lunge holding one dumbbell at the chest, push back to standing and extend it overhead behind the head. Alternate sides."
+  },
+  {
+    "key": "gym_farmers_carry",
+    "name": "Farmers carry",
+    "unit": "kg per arm",
+    "step": 4,
+    "group": "gym",
+    "cue": "A kettlebell in each hand, shoulders packed, walk fast with short steps and a tall chest."
+  },
+  {
+    "key": "gym_sandbag_lunge",
+    "name": "Sandbag walking lunge",
+    "unit": "kg",
+    "step": 5,
+    "group": "gym",
+    "cue": "Sandbag across the shoulders behind the neck, alternate legs, back knee touches the floor each step."
+  },
+  {
+    "key": "bw_burpee_broad_jump",
+    "name": "Burpee broad jump",
+    "unit": "",
+    "step": 5,
+    "group": "body",
+    "cue": "Chest to the floor, stand and broad-jump forward with two feet, straight into the next burpee. Count metres."
+  },
+  {
+    "key": "gym_standing_power_throw",
+    "name": "Standing power throw",
+    "unit": "kg",
+    "step": 0.5,
+    "group": "gym",
+    "cue": "Back to the line, medicine ball in both hands, dip and throw it backward over the head as far as possible. Score = distance."
+  },
+  {
+    "key": "gym_sprint_drag_carry",
+    "name": "Sprint-drag-carry",
+    "unit": "",
+    "step": 1,
+    "group": "gym",
+    "cue": "Five 50 m shuttles on a 25 m lane: sprint, backward sled drag, lateral shuffle, kettlebell carry, sprint. For time."
+  },
+  {
+    "key": "gym_loaded_march",
+    "name": "Loaded march",
+    "unit": "kg",
+    "step": 5,
+    "group": "walk",
+    "cue": "Walk or shuffle at pace with the load in a pack or webbing; steady breathing, keep the stride long."
+  },
+  {
+    "key": "bw_fire_and_movement",
+    "name": "Fire and movement",
+    "unit": "",
+    "step": 1,
+    "group": "body",
+    "cue": "Short tactical bounds: up, sprint, down into cover, repeat; finish with a crawl and a sprint."
+  },
+  {
+    "key": "gym_casualty_drag",
+    "name": "Casualty drag",
+    "unit": "kg",
+    "step": 10,
+    "group": "gym",
+    "cue": "Grip the harness or bag, stay low, lean back and drive with the legs walking backward."
+  },
+  {
+    "key": "gym_water_can_carry",
+    "name": "Water can carry",
+    "unit": "kg per arm",
+    "step": 2,
+    "group": "gym",
+    "cue": "A jerry can in each hand, shoulders back, walk fast. Stretcher-carry simulation."
+  },
+  {
+    "key": "gym_casevac_lift",
+    "name": "Vehicle casevac lift",
+    "unit": "kg",
+    "step": 5,
+    "group": "gym",
+    "cue": "Lift the load from the floor to vehicle-bed height with a flat back, step in close before lifting."
+  },
+  {
+    "key": "gym_repeated_lift_carry",
+    "name": "Repeated lift and carry",
+    "unit": "kg",
+    "step": 5,
+    "group": "gym",
+    "cue": "Lift the bag from the floor, carry it the set distance, place it down, return and repeat."
+  },
+  {
+    "key": "bw_jumping_pullup",
+    "name": "Jumping pull-up",
+    "unit": "",
+    "step": 5,
+    "group": "body",
+    "cue": "Bar about a forearm above the head, jump and pull the chin over the bar, lower to straight arms."
+  }
+]

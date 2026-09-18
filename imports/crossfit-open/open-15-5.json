@@ -1,0 +1,146 @@
+{
+  "id": "cf-open-15-5",
+  "title": "Open 15.5",
+  "creator": "CrossFit Games",
+  "description": "27-21-15-9 calories on the rower and thrusters at 95/65 lb, for time with no cap. Short and horrible: 72 calories and 72 thrusters. Scaled used 65/45 lb.",
+  "source": {
+    "title": "CrossFit Games Open 2015 – Workout 15.5",
+    "url": "https://games.crossfit.com/workouts/open/2015",
+    "author": "CrossFit Games",
+    "kind": "benchmark",
+    "license": "Public competition workout; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "CrossFit",
+    "CrossFit Open",
+    "2015",
+    "For time",
+    "Ladder",
+    "Barbell",
+    "Rower"
+  ],
+  "level": "Hard",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "27",
+      "mode": "fortime",
+      "repeat": 1,
+      "note": "Rep scheme 27-21-15-9, no time cap",
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "cardio_rower",
+          "forMode": "calories",
+          "forValue": 27
+        },
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "bb_thruster",
+          "target": 43.0,
+          "rx": {
+            "men": 43.0,
+            "women": 29.5
+          },
+          "forMode": "reps",
+          "forValue": 27,
+          "note": "95/65 lb"
+        }
+      ]
+    },
+    {
+      "kind": "block",
+      "id": "b2",
+      "name": "21",
+      "mode": "fortime",
+      "repeat": 1,
+      "note": "Rep scheme 27-21-15-9, no time cap",
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s3",
+          "exercise": "cardio_rower",
+          "forMode": "calories",
+          "forValue": 21
+        },
+        {
+          "kind": "exercise",
+          "id": "s4",
+          "exercise": "bb_thruster",
+          "target": 43.0,
+          "rx": {
+            "men": 43.0,
+            "women": 29.5
+          },
+          "forMode": "reps",
+          "forValue": 21,
+          "note": "95/65 lb"
+        }
+      ]
+    },
+    {
+      "kind": "block",
+      "id": "b3",
+      "name": "15",
+      "mode": "fortime",
+      "repeat": 1,
+      "note": "Rep scheme 27-21-15-9, no time cap",
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s5",
+          "exercise": "cardio_rower",
+          "forMode": "calories",
+          "forValue": 15
+        },
+        {
+          "kind": "exercise",
+          "id": "s6",
+          "exercise": "bb_thruster",
+          "target": 43.0,
+          "rx": {
+            "men": 43.0,
+            "women": 29.5
+          },
+          "forMode": "reps",
+          "forValue": 15,
+          "note": "95/65 lb"
+        }
+      ]
+    },
+    {
+      "kind": "block",
+      "id": "b4",
+      "name": "9",
+      "mode": "fortime",
+      "repeat": 1,
+      "note": "Rep scheme 27-21-15-9, no time cap",
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s7",
+          "exercise": "cardio_rower",
+          "forMode": "calories",
+          "forValue": 9
+        },
+        {
+          "kind": "exercise",
+          "id": "s8",
+          "exercise": "bb_thruster",
+          "target": 43.0,
+          "rx": {
+            "men": 43.0,
+            "women": 29.5
+          },
+          "forMode": "reps",
+          "forValue": 9,
+          "note": "95/65 lb"
+        }
+      ]
+    }
+  ]
+}

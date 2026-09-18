@@ -1,0 +1,142 @@
+{
+  "id": "nhs-sciatica-exercises",
+  "title": "Exercises for sciatica",
+  "creator": "NHS",
+  "description": "Five daily stretches by physiotherapist Nick Sinfield for the NHS to ease sciatic pain: knee to chest, sciatic mobilising stretch, back extensions, standing hamstring stretch and lying deep gluteal stretch. Holds are 20 to 30 seconds and repeated 2 or 3 times per leg. Stop and see a GP if pain is severe or does not improve within a few weeks.",
+  "source": {
+    "title": "Exercises for sciatica",
+    "url": "https://web.archive.org/web/20191122201308/https://www.nhs.uk/live-well/exercise/exercises-for-sciatica/",
+    "author": "NHS",
+    "kind": "article",
+    "license": "Open Government Licence v3.0 (NHS)",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "NHS",
+    "Rehab",
+    "Stretch",
+    "Back",
+    "Sciatica",
+    "No equipment"
+  ],
+  "level": "Easy",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "Knee to chest stretch",
+      "repeat": 3,
+      "note": "3 times, alternating legs",
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "bw_stretch_knee_to_chest",
+          "forMode": "seconds",
+          "forValue": 20,
+          "note": "Right knee, 20 to 30 s"
+        },
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "bw_stretch_knee_to_chest",
+          "forMode": "seconds",
+          "forValue": 20,
+          "note": "Left knee"
+        }
+      ]
+    },
+    {
+      "kind": "block",
+      "id": "b2",
+      "name": "Sciatic mobilising stretch",
+      "repeat": 2,
+      "note": "2 or 3 times, alternating legs",
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s3",
+          "exercise": "bw_stretch_sciatic",
+          "forMode": "seconds",
+          "forValue": 20,
+          "note": "Right leg, 20 to 30 s"
+        },
+        {
+          "kind": "exercise",
+          "id": "s4",
+          "exercise": "bw_stretch_sciatic",
+          "forMode": "seconds",
+          "forValue": 20,
+          "note": "Left leg"
+        }
+      ]
+    },
+    {
+      "kind": "block",
+      "id": "b3",
+      "name": "Back extensions",
+      "repeat": 8,
+      "note": "8 to 10 times",
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s5",
+          "exercise": "bw_cobra",
+          "forMode": "seconds",
+          "forValue": 5,
+          "note": "Hold 5 to 10 s"
+        }
+      ]
+    },
+    {
+      "kind": "block",
+      "id": "b4",
+      "name": "Standing hamstring stretch",
+      "repeat": 2,
+      "note": "2 or 3 times each leg",
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s6",
+          "exercise": "bw_stretch_hamstring_standing",
+          "forMode": "seconds",
+          "forValue": 20,
+          "note": "Right leg on a step, 20 to 30 s"
+        },
+        {
+          "kind": "exercise",
+          "id": "s7",
+          "exercise": "bw_stretch_hamstring_standing",
+          "forMode": "seconds",
+          "forValue": 20,
+          "note": "Left leg"
+        }
+      ]
+    },
+    {
+      "kind": "block",
+      "id": "b5",
+      "name": "Lying deep gluteal stretch",
+      "repeat": 2,
+      "note": "2 or 3 times each leg",
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s8",
+          "exercise": "bw_stretch_buttock",
+          "forMode": "seconds",
+          "forValue": 20,
+          "note": "Right foot on the left thigh, 20 to 30 s"
+        },
+        {
+          "kind": "exercise",
+          "id": "s9",
+          "exercise": "bw_stretch_buttock",
+          "forMode": "seconds",
+          "forValue": 20,
+          "note": "Other side"
+        }
+      ]
+    }
+  ]
+}

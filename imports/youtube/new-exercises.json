@@ -1,0 +1,706 @@
+[
+  {
+    "key": "bw_butt_kick",
+    "name": "Butt kicks",
+    "unit": "",
+    "step": 1,
+    "group": "body",
+    "cue": "Jog on the spot, heels flick up to the glutes."
+  },
+  {
+    "key": "bw_jog_on_spot",
+    "name": "Jog on the spot",
+    "unit": "",
+    "step": 1,
+    "group": "body",
+    "cue": "Light run in place, easy pace, used for warm-ups and active rest."
+  },
+  {
+    "key": "bw_step_jack",
+    "name": "Step jack",
+    "unit": "",
+    "step": 1,
+    "group": "body",
+    "cue": "Low-impact jumping jack: step one foot out at a time while the arms go overhead."
+  },
+  {
+    "key": "bw_cross_jack",
+    "name": "Cross jacks",
+    "unit": "",
+    "step": 1,
+    "group": "body",
+    "cue": "Jumping jack where feet and arms cross in front instead of landing wide."
+  },
+  {
+    "key": "bw_in_out_squat",
+    "name": "In-and-out squat (squat jack / pop squat)",
+    "unit": "",
+    "step": 1,
+    "group": "body",
+    "cue": "Jump the feet wide into a squat, then jump back together; hands touch the floor on pop squats."
+  },
+  {
+    "key": "bw_skater",
+    "name": "Skater jumps",
+    "unit": "",
+    "step": 1,
+    "group": "body",
+    "cue": "Leap sideways from one foot to the other, trailing leg sweeps behind, land soft."
+  },
+  {
+    "key": "bw_lateral_hop",
+    "name": "Lateral hops (line jumps)",
+    "unit": "",
+    "step": 1,
+    "group": "body",
+    "cue": "Feet together, hop side to side over a line or object."
+  },
+  {
+    "key": "bw_lateral_shuffle",
+    "name": "Lateral shuffle",
+    "unit": "",
+    "step": 1,
+    "group": "body",
+    "cue": "Low athletic stance, shuffle a few steps left then right without crossing the feet."
+  },
+  {
+    "key": "bw_fast_feet",
+    "name": "Fast feet",
+    "unit": "",
+    "step": 1,
+    "group": "body",
+    "cue": "Quarter squat, feet chop the floor as fast as possible."
+  },
+  {
+    "key": "bw_jump_twist",
+    "name": "Twist jumps",
+    "unit": "",
+    "step": 1,
+    "group": "body",
+    "cue": "Small jump, rotate hips one way and shoulders the other, feet together."
+  },
+  {
+    "key": "bw_heisman",
+    "name": "Heisman",
+    "unit": "",
+    "step": 1,
+    "group": "body",
+    "cue": "Shuffle sideways two steps and lift the outside knee, holding the pose like the trophy."
+  },
+  {
+    "key": "bw_front_kick",
+    "name": "Front kicks",
+    "unit": "",
+    "step": 1,
+    "group": "body",
+    "cue": "Standing, kick one leg forward to hip height, alternate sides."
+  },
+  {
+    "key": "bw_shadow_box",
+    "name": "Shadow boxing punches",
+    "unit": "",
+    "step": 1,
+    "group": "body",
+    "cue": "Boxer stance, alternate straight punches or hooks, rotate the torso with each punch."
+  },
+  {
+    "key": "bw_knee_drive",
+    "name": "Knee drives",
+    "unit": "",
+    "step": 1,
+    "group": "body",
+    "cue": "From a split stance, drive the back knee up to the chest fast, reset and repeat."
+  },
+  {
+    "key": "bw_toe_tap",
+    "name": "Alternating toe taps",
+    "unit": "",
+    "step": 1,
+    "group": "body",
+    "cue": "Quick alternating taps of the toes to a spot or step in front of you."
+  },
+  {
+    "key": "bw_up_and_over",
+    "name": "Up-and-overs",
+    "unit": "",
+    "step": 1,
+    "group": "body",
+    "cue": "Step or hop sideways over an imaginary line, swinging the arms up and across."
+  },
+  {
+    "key": "bw_reverse_lunge",
+    "name": "Reverse lunge",
+    "unit": "",
+    "step": 1,
+    "group": "body",
+    "cue": "Step back into a lunge, front shin vertical, drive up through the front heel."
+  },
+  {
+    "key": "bw_lateral_lunge",
+    "name": "Lateral lunge (side lunge)",
+    "unit": "",
+    "step": 1,
+    "group": "body",
+    "cue": "Step wide to one side, sit into that hip with the other leg straight, push back to standing."
+  },
+  {
+    "key": "bw_curtsy_lunge",
+    "name": "Curtsy lunge",
+    "unit": "",
+    "step": 1,
+    "group": "body",
+    "cue": "Step one leg behind and across the other, lower until the back knee nearly touches, stand."
+  },
+  {
+    "key": "bw_jump_lunge",
+    "name": "Jumping lunges",
+    "unit": "",
+    "step": 1,
+    "group": "body",
+    "cue": "Lunge, jump and switch legs in the air, land soft in the opposite lunge."
+  },
+  {
+    "key": "bw_cossack_squat",
+    "name": "Cossack squat",
+    "unit": "",
+    "step": 1,
+    "group": "body",
+    "cue": "Wide stance, sit fully into one leg with the other straight and toes up, shift across."
+  },
+  {
+    "key": "bw_kneel_to_stand",
+    "name": "Kneel to stand",
+    "unit": "",
+    "step": 1,
+    "group": "body",
+    "cue": "From kneeling, step one foot forward and stand without using the hands, kneel back down."
+  },
+  {
+    "key": "bw_inchworm",
+    "name": "Inchworm (walk-out)",
+    "unit": "",
+    "step": 1,
+    "group": "body",
+    "cue": "Fold and walk the hands out to a plank, then walk them back to the feet and stand."
+  },
+  {
+    "key": "bw_crab_toe_touch",
+    "name": "Crab toe touch",
+    "unit": "",
+    "step": 1,
+    "group": "body",
+    "cue": "Reverse tabletop on hands and feet, kick one leg up and touch the toe with the opposite hand."
+  },
+  {
+    "key": "bw_leg_swing",
+    "name": "Leg swings",
+    "unit": "",
+    "step": 1,
+    "group": "body",
+    "cue": "Hold something for balance, swing one leg forward and back or across the body."
+  },
+  {
+    "key": "bw_leg_circle",
+    "name": "Standing leg circles",
+    "unit": "",
+    "step": 1,
+    "group": "body",
+    "cue": "Balance on one leg, draw circles with the other knee to open the hip."
+  },
+  {
+    "key": "bw_arm_circle",
+    "name": "Arm circles",
+    "unit": "",
+    "step": 1,
+    "group": "body",
+    "cue": "Arms straight out to the sides, small to large circles, forward then back."
+  },
+  {
+    "key": "bw_arm_open_close",
+    "name": "Standing arm open and close",
+    "unit": "",
+    "step": 1,
+    "group": "body",
+    "cue": "Arms extended at shoulder height, open wide and squeeze closed in front, keep the shoulders down."
+  },
+  {
+    "key": "bw_overhead_reach",
+    "name": "Overhead reach",
+    "unit": "",
+    "step": 1,
+    "group": "body",
+    "cue": "Reach both arms up and slightly back, alternate or together, to warm the shoulders."
+  },
+  {
+    "key": "bw_side_reach",
+    "name": "Standing side reach",
+    "unit": "",
+    "step": 1,
+    "group": "body",
+    "cue": "Reach one arm overhead and bend to the opposite side, alternate."
+  },
+  {
+    "key": "bw_cross_body_toe_touch",
+    "name": "Cross-body toe touch",
+    "unit": "",
+    "step": 1,
+    "group": "body",
+    "cue": "Standing, kick or raise one leg and touch it with the opposite hand."
+  },
+  {
+    "key": "bw_standing_crunch",
+    "name": "Standing crunch (elbow to knee)",
+    "unit": "",
+    "step": 1,
+    "group": "core",
+    "cue": "Hands behind the head, lift a knee and bring the opposite elbow to it."
+  },
+  {
+    "key": "bw_dance_cardio",
+    "name": "Dance cardio",
+    "unit": "",
+    "step": 1,
+    "group": "body",
+    "cue": "Follow the on-screen choreography for the whole song; keep moving, big arms, land soft."
+  },
+  {
+    "key": "bw_warm_up",
+    "name": "Warm-up (follow the video)",
+    "unit": "",
+    "step": 1,
+    "group": "body",
+    "cue": "General warm-up segment; follow the instructor's moves."
+  },
+  {
+    "key": "bw_cool_down",
+    "name": "Cool-down and stretch (follow the video)",
+    "unit": "",
+    "step": 1,
+    "group": "body",
+    "cue": "General cool-down segment; follow the instructor's stretches."
+  },
+  {
+    "key": "bw_up_down_plank",
+    "name": "Up-down plank",
+    "unit": "",
+    "step": 1,
+    "group": "core",
+    "cue": "From a forearm plank push up one arm at a time to a high plank, lower back down, alternate the lead arm."
+  },
+  {
+    "key": "bw_plank_jack",
+    "name": "Plank jacks",
+    "unit": "",
+    "step": 1,
+    "group": "core",
+    "cue": "High plank, jump the feet wide and back together, hips level."
+  },
+  {
+    "key": "bw_plank_hip_dip",
+    "name": "Plank hip dips",
+    "unit": "",
+    "step": 1,
+    "group": "core",
+    "cue": "Forearm plank, rotate the hips to tap one side to the floor, then the other."
+  },
+  {
+    "key": "bw_plank_shoulder_tap",
+    "name": "Plank shoulder taps",
+    "unit": "",
+    "step": 1,
+    "group": "core",
+    "cue": "High plank, tap the opposite shoulder with one hand, keep the hips still."
+  },
+  {
+    "key": "bw_plank_bunny_hop",
+    "name": "Plank bunny hops",
+    "unit": "",
+    "step": 1,
+    "group": "core",
+    "cue": "High plank, hop both feet together side to side or forward and back."
+  },
+  {
+    "key": "bw_spiderman_plank",
+    "name": "Spider-Man plank",
+    "unit": "",
+    "step": 1,
+    "group": "core",
+    "cue": "High plank, bring one knee out to the same-side elbow, alternate."
+  },
+  {
+    "key": "bw_cross_body_mountain_climber",
+    "name": "Cross-body mountain climber",
+    "unit": "",
+    "step": 1,
+    "group": "core",
+    "cue": "High plank, drive each knee under the body to the opposite elbow, fast."
+  },
+  {
+    "key": "bw_t_rotation",
+    "name": "T rotation",
+    "unit": "",
+    "step": 1,
+    "group": "core",
+    "cue": "From a push-up position rotate to a side plank reaching the top arm to the ceiling, return, alternate."
+  },
+  {
+    "key": "bw_reverse_plank",
+    "name": "Reverse plank",
+    "unit": "",
+    "step": 1,
+    "group": "core",
+    "cue": "Sit with legs long, hands behind, lift the hips until the body is a straight line."
+  },
+  {
+    "key": "bw_superman",
+    "name": "Superman",
+    "unit": "",
+    "step": 1,
+    "group": "core",
+    "cue": "Lie face down, lift arms and legs together, squeeze the back and glutes."
+  },
+  {
+    "key": "bw_bicycle_crunch",
+    "name": "Bicycle crunch",
+    "unit": "",
+    "step": 1,
+    "group": "core",
+    "cue": "On the back, hands behind the head, bring opposite elbow to knee as the other leg extends."
+  },
+  {
+    "key": "bw_russian_twist",
+    "name": "Russian twist",
+    "unit": "",
+    "step": 1,
+    "group": "core",
+    "cue": "Seated, lean back, feet up or down, rotate the torso side to side."
+  },
+  {
+    "key": "bw_heel_touch",
+    "name": "Heel touches",
+    "unit": "",
+    "step": 1,
+    "group": "core",
+    "cue": "On the back, knees bent, crunch sideways to tap each heel with the same-side hand."
+  },
+  {
+    "key": "bw_toe_touch_crunch",
+    "name": "Toe touch crunch",
+    "unit": "",
+    "step": 1,
+    "group": "core",
+    "cue": "On the back with legs straight up, crunch and reach the hands to the toes."
+  },
+  {
+    "key": "bw_in_and_out",
+    "name": "In-and-outs (seated knee tucks)",
+    "unit": "",
+    "step": 1,
+    "group": "core",
+    "cue": "Seated with hands beside the hips, extend the legs out then tuck the knees in."
+  },
+  {
+    "key": "bw_seated_crunch",
+    "name": "Seated crunch (V-sit crunch)",
+    "unit": "",
+    "step": 1,
+    "group": "core",
+    "cue": "Seated with feet off the floor, lean back and crunch up, add a twist for obliques."
+  },
+  {
+    "key": "bw_jackknife",
+    "name": "Jackknife (V-up)",
+    "unit": "",
+    "step": 1,
+    "group": "core",
+    "cue": "Lie flat, lift arms and legs together to touch the toes above the hips, lower slowly."
+  },
+  {
+    "key": "bw_starfish_crunch",
+    "name": "Starfish crunch",
+    "unit": "",
+    "step": 1,
+    "group": "core",
+    "cue": "Lie in a star shape, crunch up bringing one hand to the opposite foot, alternate."
+  },
+  {
+    "key": "bw_corkscrew",
+    "name": "Corkscrew",
+    "unit": "",
+    "step": 1,
+    "group": "core",
+    "cue": "On the back, legs together lifted, rotate the legs in a circle or side to side using the obliques."
+  },
+  {
+    "key": "bw_hundred",
+    "name": "The hundred",
+    "unit": "",
+    "step": 1,
+    "group": "core",
+    "cue": "Head and shoulders lifted, legs in tabletop or extended, pump the arms while breathing in fives."
+  },
+  {
+    "key": "bw_hollow_hold",
+    "name": "Hollow hold (ab hold)",
+    "unit": "",
+    "step": 1,
+    "group": "core",
+    "cue": "On the back, lower back pressed down, shoulders and legs hovering, hold."
+  },
+  {
+    "key": "bw_dead_bug",
+    "name": "Dead bug",
+    "unit": "",
+    "step": 1,
+    "group": "core",
+    "cue": "On the back, arms up and knees over hips, extend opposite arm and leg, keep the lower back down."
+  },
+  {
+    "key": "bw_stretch_deep_squat",
+    "name": "Deep squat hold",
+    "unit": "",
+    "step": 1,
+    "group": "body",
+    "cue": "Sit into the lowest squat you can with heels down, elbows push the knees out."
+  },
+  {
+    "key": "db_sumo_squat",
+    "name": "Dumbbell sumo squat",
+    "unit": "kg",
+    "step": 2.5,
+    "group": "dumbbell",
+    "cue": "Wide stance, toes out, one dumbbell hanging between the legs, squat and drive the knees out."
+  },
+  {
+    "key": "db_lateral_lunge",
+    "name": "Dumbbell lateral lunge",
+    "unit": "kg per arm",
+    "step": 2.5,
+    "group": "dumbbell",
+    "cue": "Step wide, sit into one hip with dumbbells at the sides or chest, push back."
+  },
+  {
+    "key": "db_push_press",
+    "name": "Dumbbell push press",
+    "unit": "kg per arm",
+    "step": 2.5,
+    "group": "dumbbell",
+    "cue": "Dip the knees and drive the dumbbells overhead using the legs, lower under control."
+  },
+  {
+    "key": "db_skull_crusher",
+    "name": "Dumbbell skull crusher",
+    "unit": "kg per arm",
+    "step": 1,
+    "group": "dumbbell",
+    "cue": "Lying, dumbbells over the chest, bend the elbows to lower beside the head, extend."
+  },
+  {
+    "key": "db_pullover",
+    "name": "Dumbbell pullover",
+    "unit": "kg per arm",
+    "step": 2.5,
+    "group": "dumbbell",
+    "cue": "Lying, dumbbell(s) over the chest, lower behind the head with soft elbows and pull back over."
+  },
+  {
+    "key": "db_upright_row",
+    "name": "Dumbbell upright row",
+    "unit": "kg per arm",
+    "step": 1,
+    "group": "dumbbell",
+    "cue": "Dumbbells in front of the thighs, pull up to chest height leading with the elbows."
+  },
+  {
+    "key": "db_renegade_row",
+    "name": "Renegade row",
+    "unit": "kg per arm",
+    "step": 2.5,
+    "group": "dumbbell",
+    "cue": "High plank on the dumbbells, row one to the hip without twisting the hips, alternate."
+  },
+  {
+    "key": "db_swing",
+    "name": "Single-arm dumbbell swing",
+    "unit": "kg",
+    "step": 2.5,
+    "group": "dumbbell",
+    "cue": "Hinge and swing one dumbbell between the legs to chest height, hips snap, switch hands halfway."
+  },
+  {
+    "key": "yoga_sukhasana",
+    "name": "Easy pose (Sukhasana)",
+    "unit": "",
+    "step": 1,
+    "group": "body",
+    "cue": "Sit cross-legged, spine tall, hands on the knees or at the heart; breathe."
+  },
+  {
+    "key": "yoga_seated_twist",
+    "name": "Seated twist",
+    "unit": "",
+    "step": 1,
+    "group": "body",
+    "cue": "Seated, inhale to lengthen, exhale to rotate, one hand behind you and one on the knee."
+  },
+  {
+    "key": "yoga_side_stretch",
+    "name": "Seated side body stretch",
+    "unit": "",
+    "step": 1,
+    "group": "body",
+    "cue": "One hand down, the other reaches up and over to open the side body, then switch."
+  },
+  {
+    "key": "yoga_chest_opener",
+    "name": "Seated chest opener",
+    "unit": "",
+    "step": 1,
+    "group": "body",
+    "cue": "Fingertips behind you on the floor, lift the chest and draw the shoulders back."
+  },
+  {
+    "key": "yoga_tabletop",
+    "name": "Tabletop",
+    "unit": "",
+    "step": 1,
+    "group": "body",
+    "cue": "On hands and knees, wrists under shoulders, knees under hips, neutral spine."
+  },
+  {
+    "key": "yoga_cat_cow",
+    "name": "Cat-cow",
+    "unit": "",
+    "step": 1,
+    "group": "body",
+    "cue": "From tabletop, inhale to drop the belly and lift the gaze, exhale to round the spine and tuck the chin."
+  },
+  {
+    "key": "yoga_wrist_circles",
+    "name": "Wrist circles",
+    "unit": "",
+    "step": 1,
+    "group": "body",
+    "cue": "From tabletop, roll the wrists and shake out the hands."
+  },
+  {
+    "key": "yoga_thread_the_needle",
+    "name": "Thread the needle",
+    "unit": "",
+    "step": 1,
+    "group": "body",
+    "cue": "From tabletop slide one arm under the body, shoulder and ear to the mat, then switch sides."
+  },
+  {
+    "key": "yoga_puppy_pose",
+    "name": "Puppy pose (Anahatasana)",
+    "unit": "",
+    "step": 1,
+    "group": "body",
+    "cue": "From tabletop walk the hands forward, hips stay over the knees, chest melts toward the floor."
+  },
+  {
+    "key": "yoga_downward_dog",
+    "name": "Downward-facing dog",
+    "unit": "",
+    "step": 1,
+    "group": "body",
+    "cue": "Hands and feet on the mat, hips high, long spine, heels reaching toward the floor."
+  },
+  {
+    "key": "yoga_forward_fold",
+    "name": "Standing forward fold (Uttanasana)",
+    "unit": "",
+    "step": 1,
+    "group": "body",
+    "cue": "Feet hip-width, fold from the hips with soft knees, let the head hang."
+  },
+  {
+    "key": "yoga_mountain",
+    "name": "Mountain pose (Tadasana)",
+    "unit": "",
+    "step": 1,
+    "group": "body",
+    "cue": "Stand tall, feet grounded, shoulders relaxed, breathe."
+  },
+  {
+    "key": "yoga_upward_salute",
+    "name": "Upward salute / volcano pose",
+    "unit": "",
+    "step": 1,
+    "group": "body",
+    "cue": "From mountain, reach both arms up overhead, lift through the chest."
+  },
+  {
+    "key": "yoga_low_lunge",
+    "name": "Low lunge (runner's lunge)",
+    "unit": "",
+    "step": 1,
+    "group": "body",
+    "cue": "Front knee over the ankle, back knee down or lifted, hips sink forward."
+  },
+  {
+    "key": "yoga_warrior_1",
+    "name": "Warrior I",
+    "unit": "",
+    "step": 1,
+    "group": "body",
+    "cue": "Long stance, back foot turned in, front knee bent, arms reach overhead."
+  },
+  {
+    "key": "yoga_warrior_2",
+    "name": "Warrior II",
+    "unit": "",
+    "step": 1,
+    "group": "body",
+    "cue": "Wide stance, front knee bent over the ankle, arms out in a line, gaze over the front hand."
+  },
+  {
+    "key": "yoga_sphinx",
+    "name": "Sphinx pose",
+    "unit": "",
+    "step": 1,
+    "group": "body",
+    "cue": "Lie on the belly, forearms down with elbows under the shoulders, lift the chest."
+  },
+  {
+    "key": "yoga_cobra",
+    "name": "Cobra pose",
+    "unit": "",
+    "step": 1,
+    "group": "body",
+    "cue": "Lie on the belly, hands under the shoulders, peel the chest up with light hands."
+  },
+  {
+    "key": "yoga_child_pose",
+    "name": "Child's pose (Balasana)",
+    "unit": "",
+    "step": 1,
+    "group": "body",
+    "cue": "Knees wide or together, hips to the heels, forehead down, arms long or by the sides."
+  },
+  {
+    "key": "yoga_shark_fin",
+    "name": "Shark fin",
+    "unit": "",
+    "step": 1,
+    "group": "body",
+    "cue": "Sit on the heels or kneel, one arm bends so the hand is behind the head like a fin, lean and breathe, switch sides."
+  },
+  {
+    "key": "yoga_boat",
+    "name": "Boat pose (Navasana)",
+    "unit": "",
+    "step": 1,
+    "group": "body",
+    "cue": "Seated, lean back and lift the shins parallel to the floor (half boat) or straighten the legs."
+  },
+  {
+    "key": "yoga_savasana",
+    "name": "Savasana (corpse pose)",
+    "unit": "",
+    "step": 1,
+    "group": "body",
+    "cue": "Lie flat on the back, arms by the sides, palms up, relax completely."
+  }
+]

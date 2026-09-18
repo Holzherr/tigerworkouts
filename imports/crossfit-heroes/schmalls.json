@@ -1,0 +1,90 @@
+{
+  "id": "cf-hero-schmalls",
+  "title": "Schmalls",
+  "creator": "CrossFit",
+  "description": "Run 800 m, then two rounds of 50 burpees, 40 pull-ups, 30 single-leg squats, 20 kettlebell swings and 10 handstand push-ups, then run 800 m, for time. Honours U.S. Marine EOD technician Staff Sgt. Justin E. Schmalstieg, killed in Helmand Province, Afghanistan, in 2010. A long bodyweight grind; pistols to a box are a fair scale.",
+  "source": {
+    "title": "Schmalls – CrossFit Hero WOD",
+    "url": "https://www.crossfit.com/benchmark/schmalls",
+    "author": "CrossFit",
+    "kind": "benchmark",
+    "license": "Public benchmark; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "CrossFit",
+    "Hero WOD",
+    "For time",
+    "Bodyweight",
+    "Running",
+    "Kettlebell"
+  ],
+  "level": "Hard",
+  "items": [
+    {
+      "kind": "exercise",
+      "id": "s1",
+      "exercise": "cardio_run",
+      "forMode": "meters",
+      "forValue": 800
+    },
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "2 rounds",
+      "mode": "fortime",
+      "repeat": 2,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "bw_burpee",
+          "forMode": "reps",
+          "forValue": 50
+        },
+        {
+          "kind": "exercise",
+          "id": "s3",
+          "exercise": "bw_pullup",
+          "forMode": "reps",
+          "forValue": 40
+        },
+        {
+          "kind": "exercise",
+          "id": "s4",
+          "exercise": "bw_pistol",
+          "forMode": "reps",
+          "forValue": 30,
+          "note": "Alternating legs"
+        },
+        {
+          "kind": "exercise",
+          "id": "s5",
+          "exercise": "kb_swing",
+          "forMode": "reps",
+          "forValue": 20,
+          "target": 24,
+          "rx": {
+            "men": 24,
+            "women": 16
+          },
+          "note": "53/35 lb"
+        },
+        {
+          "kind": "exercise",
+          "id": "s6",
+          "exercise": "bw_handstand_pushup",
+          "forMode": "reps",
+          "forValue": 10
+        }
+      ]
+    },
+    {
+      "kind": "exercise",
+      "id": "s7",
+      "exercise": "cardio_run",
+      "forMode": "meters",
+      "forValue": 800
+    }
+  ]
+}

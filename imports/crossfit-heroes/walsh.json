@@ -1,0 +1,62 @@
+{
+  "id": "cf-hero-walsh",
+  "title": "Walsh",
+  "creator": "CrossFit",
+  "description": "Four rounds of 22 burpee pull-ups, 22 back squats and a 200 m run with a plate held overhead, for time. Honours U.S. Army 1st Lt. Jonathan P. Walsh, 82nd Airborne, killed by an IED in Paktia, Afghanistan, in 2012. The overhead plate run is short but the shoulders are already cooked from the burpee pull-ups.",
+  "source": {
+    "title": "Walsh – CrossFit Hero WOD",
+    "url": "https://www.crossfit.com/benchmark/walsh",
+    "author": "CrossFit",
+    "kind": "benchmark",
+    "license": "Public benchmark; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "CrossFit",
+    "Hero WOD",
+    "For time",
+    "Barbell",
+    "Gymnastics",
+    "Running"
+  ],
+  "level": "Hard",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "4 rounds",
+      "mode": "fortime",
+      "repeat": 4,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "bw_burpee_pullup",
+          "forMode": "reps",
+          "forValue": 22
+        },
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "bb_back_squat",
+          "forMode": "reps",
+          "forValue": 22,
+          "target": 84,
+          "rx": {
+            "men": 84,
+            "women": 56.5
+          },
+          "note": "185/125 lb"
+        },
+        {
+          "kind": "exercise",
+          "id": "s3",
+          "exercise": "cardio_run",
+          "forMode": "meters",
+          "forValue": 200,
+          "note": "45/25 lb (20.5/11.5 kg) plate held overhead"
+        }
+      ]
+    }
+  ]
+}

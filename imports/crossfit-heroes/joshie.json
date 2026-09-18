@@ -1,0 +1,73 @@
+{
+  "id": "cf-hero-joshie",
+  "title": "Joshie",
+  "creator": "CrossFit",
+  "description": "Three rounds of 21 right-arm dumbbell snatches, 21 L pull-ups, 21 left-arm snatches and 21 L pull-ups with a 40/25 lb dumbbell. Honours U.S. Army Staff Sgt. Joshua Whitaker, killed by small-arms fire in Afghanistan in 2007. 126 L pull-ups; scale to knees-tucked or regular pull-ups.",
+  "source": {
+    "title": "Joshie – CrossFit Hero WOD",
+    "url": "https://www.crossfit.com/benchmark/joshie",
+    "author": "CrossFit",
+    "kind": "benchmark",
+    "license": "Public benchmark; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "CrossFit",
+    "Hero",
+    "For time",
+    "Dumbbell",
+    "Gymnastics"
+  ],
+  "level": "Hard",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "Joshie",
+      "mode": "fortime",
+      "repeat": 3,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "db_snatch",
+          "target": 18.0,
+          "rx": {
+            "men": 18.0,
+            "women": 11.5
+          },
+          "forMode": "reps",
+          "forValue": 21,
+          "note": "40/25 lb; right arm"
+        },
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "bw_l_pullup",
+          "forMode": "reps",
+          "forValue": 21
+        },
+        {
+          "kind": "exercise",
+          "id": "s3",
+          "exercise": "db_snatch",
+          "target": 18.0,
+          "rx": {
+            "men": 18.0,
+            "women": 11.5
+          },
+          "forMode": "reps",
+          "forValue": 21,
+          "note": "40/25 lb; left arm"
+        },
+        {
+          "kind": "exercise",
+          "id": "s4",
+          "exercise": "bw_l_pullup",
+          "forMode": "reps",
+          "forValue": 21
+        }
+      ]
+    }
+  ]
+}

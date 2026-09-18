@@ -1,0 +1,165 @@
+{
+  "id": "proto-hyrox-race",
+  "title": "Hyrox (race format)",
+  "creator": "Hyrox",
+  "description": "The standard Hyrox race: eight 1 km runs, each followed by a functional station in a fixed order, roughly 8 km of running plus SkiErg, sled push, sled pull, burpee broad jumps, row, farmers carry, sandbag lunges and wall balls. Loads here are Open division (Pro doubles most of them: 202/152 kg sled push, 153/103 kg sled pull, 2×32/24 kg farmers, 30/20 kg sandbag, 9/6 kg wall ball). Sled weights include the sled. From the 2025/26 season Women Open do 75 wall balls instead of 100.",
+  "source": {
+    "title": "The Fitness Race – HYROX",
+    "url": "https://hyrox.com/the-fitness-race/",
+    "author": "Hyrox",
+    "kind": "benchmark",
+    "license": "Published protocol; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "Hyrox",
+    "Race",
+    "Running",
+    "Stations"
+  ],
+  "level": "Hard",
+  "items": [
+    {
+      "kind": "exercise",
+      "id": "s1",
+      "exercise": "cardio_run",
+      "forMode": "meters",
+      "forValue": 1000
+    },
+    {
+      "kind": "exercise",
+      "id": "s2",
+      "exercise": "cardio_skierg",
+      "forMode": "meters",
+      "forValue": 1000
+    },
+    {
+      "kind": "exercise",
+      "id": "s3",
+      "exercise": "cardio_run",
+      "forMode": "meters",
+      "forValue": 1000
+    },
+    {
+      "kind": "exercise",
+      "id": "s4",
+      "exercise": "gym_sled_push",
+      "forMode": "meters",
+      "forValue": 50,
+      "target": 152,
+      "rx": {
+        "men": 152,
+        "women": 102
+      },
+      "note": "Open; 4 × 12.5 m lengths; weight includes sled"
+    },
+    {
+      "kind": "exercise",
+      "id": "s5",
+      "exercise": "cardio_run",
+      "forMode": "meters",
+      "forValue": 1000
+    },
+    {
+      "kind": "exercise",
+      "id": "s6",
+      "exercise": "gym_sled_pull",
+      "forMode": "meters",
+      "forValue": 50,
+      "target": 103,
+      "rx": {
+        "men": 103,
+        "women": 78
+      },
+      "note": "Open; 4 × 12.5 m lengths; weight includes sled"
+    },
+    {
+      "kind": "exercise",
+      "id": "s7",
+      "exercise": "cardio_run",
+      "forMode": "meters",
+      "forValue": 1000
+    },
+    {
+      "kind": "exercise",
+      "id": "s8",
+      "exercise": "bw_burpee_broad_jump",
+      "forMode": "meters",
+      "forValue": 80
+    },
+    {
+      "kind": "exercise",
+      "id": "s9",
+      "exercise": "cardio_run",
+      "forMode": "meters",
+      "forValue": 1000
+    },
+    {
+      "kind": "exercise",
+      "id": "s10",
+      "exercise": "cardio_rower",
+      "forMode": "meters",
+      "forValue": 1000
+    },
+    {
+      "kind": "exercise",
+      "id": "s11",
+      "exercise": "cardio_run",
+      "forMode": "meters",
+      "forValue": 1000
+    },
+    {
+      "kind": "exercise",
+      "id": "s12",
+      "exercise": "gym_farmers_carry",
+      "forMode": "meters",
+      "forValue": 200,
+      "target": 24,
+      "rx": {
+        "men": 24,
+        "women": 16
+      },
+      "note": "Open; two kettlebells"
+    },
+    {
+      "kind": "exercise",
+      "id": "s13",
+      "exercise": "cardio_run",
+      "forMode": "meters",
+      "forValue": 1000
+    },
+    {
+      "kind": "exercise",
+      "id": "s14",
+      "exercise": "gym_sandbag_lunge",
+      "forMode": "meters",
+      "forValue": 100,
+      "target": 20,
+      "rx": {
+        "men": 20,
+        "women": 10
+      },
+      "note": "Open; sandbag on the shoulders"
+    },
+    {
+      "kind": "exercise",
+      "id": "s15",
+      "exercise": "cardio_run",
+      "forMode": "meters",
+      "forValue": 1000
+    },
+    {
+      "kind": "exercise",
+      "id": "s16",
+      "exercise": "gym_wall_ball",
+      "forMode": "reps",
+      "forValue": 100,
+      "target": 6,
+      "rx": {
+        "men": 6,
+        "women": 4
+      },
+      "note": "Open; target 3.0 m men / 2.7 m women; Women Open 75 reps from 2025/26"
+    }
+  ]
+}

@@ -1,0 +1,82 @@
+{
+  "id": "cf-hero-scooter",
+  "title": "Scooter",
+  "creator": "CrossFit",
+  "description": "With a partner on a 35-minute clock: a 30-minute AMRAP of 30 double-unders, 15 pull-ups, 15 push-ups and a 100 m sprint, alternating full rounds, then five minutes to find a 1-rep-max partner deadlift. Honours Hayward Police Sgt. Scott Lunger, shot during a traffic stop in 2015. Solo athletes rest 60 seconds between rounds and find a normal deadlift max.",
+  "source": {
+    "title": "Scooter – CrossFit Hero WOD",
+    "url": "https://www.crossfit.com/benchmark/scooter",
+    "author": "CrossFit",
+    "kind": "benchmark",
+    "license": "Public benchmark; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "CrossFit",
+    "Hero WOD",
+    "AMRAP",
+    "Partner",
+    "Bodyweight",
+    "Barbell"
+  ],
+  "level": "Hard",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "AMRAP 30 (with a partner)",
+      "mode": "amrap",
+      "timeCapSec": 1800,
+      "note": "Alternate full rounds with a partner; solo, rest 60 s between rounds",
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "bw_double_under",
+          "forMode": "reps",
+          "forValue": 30
+        },
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "bw_pullup",
+          "forMode": "reps",
+          "forValue": 15
+        },
+        {
+          "kind": "exercise",
+          "id": "s3",
+          "exercise": "bw_pushup",
+          "forMode": "reps",
+          "forValue": 15
+        },
+        {
+          "kind": "exercise",
+          "id": "s4",
+          "exercise": "cardio_run",
+          "forMode": "meters",
+          "forValue": 100,
+          "note": "Sprint"
+        }
+      ]
+    },
+    {
+      "kind": "block",
+      "id": "b2",
+      "name": "5 min: 1RM partner deadlift",
+      "mode": "fortime",
+      "repeat": 1,
+      "note": "Starts at 30:00",
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s5",
+          "exercise": "bb_deadlift",
+          "forMode": "reps",
+          "forValue": 1,
+          "note": "Build to a 1-rep max in 5 minutes (partner deadlift, or a normal 1RM if solo)"
+        }
+      ]
+    }
+  ]
+}

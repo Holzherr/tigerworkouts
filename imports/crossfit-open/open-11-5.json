@@ -1,0 +1,68 @@
+{
+  "id": "cf-open-11-5",
+  "title": "Open 11.5",
+  "creator": "CrossFit Games",
+  "description": "Twenty-minute AMRAP of 5 power cleans at 145/100 lb, 10 toes-to-bars and 15 wall balls (20/14 lb to 10/9 ft). A long grind with a heavy-ish clean; keep the rounds even. Masters 55+ used 130/75 lb and a 9 ft target.",
+  "source": {
+    "title": "CrossFit Games Open 2011 – Workout 11.5",
+    "url": "https://games.crossfit.com/workouts/open/2011",
+    "author": "CrossFit Games",
+    "kind": "benchmark",
+    "license": "Public competition workout; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "CrossFit",
+    "CrossFit Open",
+    "2011",
+    "AMRAP",
+    "Barbell",
+    "Wall ball"
+  ],
+  "level": "Hard",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "AMRAP 20",
+      "mode": "amrap",
+      "repeat": 1,
+      "timeCapSec": 1200,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "bb_power_clean",
+          "target": 66.0,
+          "rx": {
+            "men": 66.0,
+            "women": 45.5
+          },
+          "forMode": "reps",
+          "forValue": 5,
+          "note": "145/100 lb"
+        },
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "bw_toes_to_bar",
+          "forMode": "reps",
+          "forValue": 10
+        },
+        {
+          "kind": "exercise",
+          "id": "s3",
+          "exercise": "gym_wall_ball",
+          "target": 9.0,
+          "rx": {
+            "men": 9.0,
+            "women": 6.5
+          },
+          "forMode": "reps",
+          "forValue": 15,
+          "note": "20/14 lb. 10/9 ft target"
+        }
+      ]
+    }
+  ]
+}

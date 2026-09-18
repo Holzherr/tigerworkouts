@@ -1,0 +1,72 @@
+{
+  "id": "cf-hero-eva-strong",
+  "title": "Eva Strong",
+  "creator": "CrossFit",
+  "description": "A partner workout: 5 rounds of 24 double-unders each, 19 toes-to-bars shared, 2 clean and jerks at 205/135 lb shared and a 400 m run together. Honours Eva Mireles, the teacher killed shielding her students in the 2022 Robb Elementary shooting in Uvalde, Texas; the reps mark the date and the 19 children lost. Solo: do everything as written.",
+  "source": {
+    "title": "Eva Strong – CrossFit Hero WOD",
+    "url": "https://www.crossfit.com/benchmark/eva-strong",
+    "author": "CrossFit",
+    "kind": "benchmark",
+    "license": "Public benchmark; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "CrossFit",
+    "Hero",
+    "For time",
+    "Partner",
+    "Barbell",
+    "Run"
+  ],
+  "level": "Hard",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "Eva Strong",
+      "mode": "fortime",
+      "repeat": 5,
+      "note": "Partner workout: double-unders each, toes-to-bars and clean and jerks split, run together",
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "bw_double_under",
+          "forMode": "reps",
+          "forValue": 24,
+          "note": "each partner"
+        },
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "bw_toes_to_bar",
+          "forMode": "reps",
+          "forValue": 19,
+          "note": "shared"
+        },
+        {
+          "kind": "exercise",
+          "id": "s3",
+          "exercise": "bb_clean_and_jerk",
+          "target": 93.0,
+          "rx": {
+            "men": 93.0,
+            "women": 61.0
+          },
+          "forMode": "reps",
+          "forValue": 2,
+          "note": "205/135 lb; shared"
+        },
+        {
+          "kind": "exercise",
+          "id": "s4",
+          "exercise": "cardio_run",
+          "forMode": "meters",
+          "forValue": 400,
+          "note": "together"
+        }
+      ]
+    }
+  ]
+}

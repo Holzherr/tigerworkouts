@@ -1,0 +1,62 @@
+{
+  "id": "cf-girls-kelly",
+  "title": "Kelly",
+  "creator": "CrossFit",
+  "description": "Five rounds of a 400 m run, 30 box jumps on a 24/20 in box and 30 wall-ball shots with a 20/14 lb ball. A long, leg-heavy Girl that typically runs 25 to 35 minutes. Scale by dropping the box height, the ball weight or the reps per round.",
+  "source": {
+    "title": "Kelly – CrossFit benchmark WOD (\"The Girls\")",
+    "url": "https://www.crossfit.com/benchmark/kelly",
+    "author": "CrossFit",
+    "kind": "benchmark",
+    "license": "Public benchmark; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "CrossFit",
+    "Girls",
+    "For time",
+    "Run",
+    "Wall ball",
+    "Bodyweight"
+  ],
+  "level": "Hard",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "Kelly",
+      "mode": "fortime",
+      "repeat": 5,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "cardio_run",
+          "forMode": "meters",
+          "forValue": 400
+        },
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "bw_box_jump",
+          "forMode": "reps",
+          "forValue": 30,
+          "note": "24/20 in box"
+        },
+        {
+          "kind": "exercise",
+          "id": "s3",
+          "exercise": "gym_wall_ball",
+          "target": 9,
+          "rx": {
+            "men": 9,
+            "women": 6.5
+          },
+          "forMode": "reps",
+          "forValue": 30,
+          "note": "20/14 lb ball"
+        }
+      ]
+    }
+  ]
+}

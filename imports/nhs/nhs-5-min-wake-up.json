@@ -1,0 +1,175 @@
+{
+  "id": "nhs-5-min-wake-up",
+  "title": "5-minute wake-up workout",
+  "creator": "NHS",
+  "description": "A bedroom routine by physiotherapist Nick Sinfield for the NHS: gentle in-bed stretches held for 3 to 4 breaths, then a few standing power moves (marching, squats, side stretch, forward bend). Meant to be done every morning to ease stiffness and wake you up. Stretch holds are modelled as about 20 seconds each.",
+  "source": {
+    "title": "5-minute wake-up workout",
+    "url": "https://web.archive.org/web/20220401/https://www.nhs.uk/live-well/exercise/5-minute-wake-up-workout/",
+    "author": "NHS",
+    "kind": "article",
+    "license": "Open Government Licence v3.0 (NHS)",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "NHS",
+    "Morning",
+    "Stretch",
+    "Mobility",
+    "No equipment",
+    "5 minutes"
+  ],
+  "level": "Easy",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "In bed",
+      "repeat": 1,
+      "note": "Each stretch is 3 to 4 deep, relaxing breaths",
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "bw_stretch_overhead",
+          "forMode": "seconds",
+          "forValue": 20,
+          "note": "3 to 4 deep breaths"
+        },
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "bw_stretch_knee_to_chest",
+          "forMode": "seconds",
+          "forValue": 20,
+          "note": "One knee, right"
+        },
+        {
+          "kind": "exercise",
+          "id": "s3",
+          "exercise": "bw_stretch_knee_to_chest",
+          "forMode": "seconds",
+          "forValue": 20,
+          "note": "Left knee"
+        },
+        {
+          "kind": "exercise",
+          "id": "s4",
+          "exercise": "bw_stretch_hamstring_lying",
+          "forMode": "seconds",
+          "forValue": 20,
+          "note": "Right leg"
+        },
+        {
+          "kind": "exercise",
+          "id": "s5",
+          "exercise": "bw_stretch_hamstring_lying",
+          "forMode": "seconds",
+          "forValue": 20,
+          "note": "Left leg"
+        },
+        {
+          "kind": "exercise",
+          "id": "s6",
+          "exercise": "bw_stretch_knee_to_chest",
+          "forMode": "seconds",
+          "forValue": 20,
+          "note": "Both knees"
+        },
+        {
+          "kind": "exercise",
+          "id": "s7",
+          "exercise": "bw_knee_roll",
+          "forMode": "seconds",
+          "forValue": 20,
+          "note": "Roll to the right"
+        },
+        {
+          "kind": "exercise",
+          "id": "s8",
+          "exercise": "bw_knee_roll",
+          "forMode": "seconds",
+          "forValue": 20,
+          "note": "Roll to the left"
+        }
+      ]
+    },
+    {
+      "kind": "block",
+      "id": "b2",
+      "name": "Sitting and standing",
+      "repeat": 1,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s9",
+          "exercise": "bw_trunk_rotation",
+          "forMode": "reps",
+          "forValue": 8,
+          "note": "6 to 8 each side"
+        },
+        {
+          "kind": "exercise",
+          "id": "s10",
+          "exercise": "bw_stretch_chest",
+          "forMode": "seconds",
+          "forValue": 20,
+          "note": "Hands on hips, chest up and out"
+        },
+        {
+          "kind": "exercise",
+          "id": "s11",
+          "exercise": "bw_stretch_upper_back",
+          "forMode": "seconds",
+          "forValue": 20
+        },
+        {
+          "kind": "exercise",
+          "id": "s12",
+          "exercise": "bw_stretch_hamstring_seated",
+          "forMode": "seconds",
+          "forValue": 20
+        },
+        {
+          "kind": "exercise",
+          "id": "s13",
+          "exercise": "bw_march",
+          "forMode": "seconds",
+          "forValue": 30,
+          "note": "Power walking on the spot, heels to buttocks, elbows bending"
+        },
+        {
+          "kind": "exercise",
+          "id": "s14",
+          "exercise": "bw_squat",
+          "forMode": "reps",
+          "forValue": 8,
+          "note": "8 to 10 slow squats down to the bed"
+        },
+        {
+          "kind": "exercise",
+          "id": "s15",
+          "exercise": "bw_stretch_side",
+          "forMode": "seconds",
+          "forValue": 20,
+          "note": "Right leg crossed in front, reach left arm to the right"
+        },
+        {
+          "kind": "exercise",
+          "id": "s16",
+          "exercise": "bw_stretch_side",
+          "forMode": "seconds",
+          "forValue": 20,
+          "note": "Other side"
+        },
+        {
+          "kind": "exercise",
+          "id": "s17",
+          "exercise": "bw_stretch_forward_bend",
+          "forMode": "seconds",
+          "forValue": 20
+        }
+      ]
+    }
+  ]
+}

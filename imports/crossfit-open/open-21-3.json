@@ -1,0 +1,163 @@
+{
+  "id": "cf-open-21-3",
+  "title": "Open 21.3",
+  "creator": "CrossFit Games",
+  "description": "Three parts, one minute's rest between: 15 front squats, 30 toes-to-bars, 15 thrusters; then the same with 30 chest-to-bar pull-ups; then with 30 bar muscle-ups. Bar is 95/65 lb, 15-minute cap, and 21.4 starts the moment you finish. Scaled used 65/45 lb with knee raises, chin-over-bar and chest-to-bar pull-ups.",
+  "source": {
+    "title": "CrossFit Games Open 2021 – Workout 21.3",
+    "url": "https://games.crossfit.com/workouts/open/2021/3",
+    "author": "CrossFit Games",
+    "kind": "benchmark",
+    "license": "Public competition workout; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "CrossFit",
+    "CrossFit Open",
+    "2021",
+    "For time",
+    "Barbell",
+    "Gymnastics"
+  ],
+  "level": "Hard",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "Part 1",
+      "mode": "fortime",
+      "repeat": 1,
+      "timeCapSec": 900,
+      "note": "15-minute cap covers all three parts",
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "bb_front_squat",
+          "target": 43.0,
+          "rx": {
+            "men": 43.0,
+            "women": 29.5
+          },
+          "forMode": "reps",
+          "forValue": 15,
+          "note": "95/65 lb"
+        },
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "bw_toes_to_bar",
+          "forMode": "reps",
+          "forValue": 30
+        },
+        {
+          "kind": "exercise",
+          "id": "s3",
+          "exercise": "bb_thruster",
+          "target": 43.0,
+          "rx": {
+            "men": 43.0,
+            "women": 29.5
+          },
+          "forMode": "reps",
+          "forValue": 15,
+          "note": "95/65 lb"
+        }
+      ]
+    },
+    {
+      "kind": "rest",
+      "id": "s4",
+      "seconds": 60
+    },
+    {
+      "kind": "block",
+      "id": "b2",
+      "name": "Part 2",
+      "mode": "fortime",
+      "repeat": 1,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s5",
+          "exercise": "bb_front_squat",
+          "target": 43.0,
+          "rx": {
+            "men": 43.0,
+            "women": 29.5
+          },
+          "forMode": "reps",
+          "forValue": 15,
+          "note": "95/65 lb"
+        },
+        {
+          "kind": "exercise",
+          "id": "s6",
+          "exercise": "bw_chest_to_bar_pullup",
+          "forMode": "reps",
+          "forValue": 30
+        },
+        {
+          "kind": "exercise",
+          "id": "s7",
+          "exercise": "bb_thruster",
+          "target": 43.0,
+          "rx": {
+            "men": 43.0,
+            "women": 29.5
+          },
+          "forMode": "reps",
+          "forValue": 15,
+          "note": "95/65 lb"
+        }
+      ]
+    },
+    {
+      "kind": "rest",
+      "id": "s8",
+      "seconds": 60
+    },
+    {
+      "kind": "block",
+      "id": "b3",
+      "name": "Part 3",
+      "mode": "fortime",
+      "repeat": 1,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s9",
+          "exercise": "bb_front_squat",
+          "target": 43.0,
+          "rx": {
+            "men": 43.0,
+            "women": 29.5
+          },
+          "forMode": "reps",
+          "forValue": 15,
+          "note": "95/65 lb"
+        },
+        {
+          "kind": "exercise",
+          "id": "s10",
+          "exercise": "bw_bar_muscle_up",
+          "forMode": "reps",
+          "forValue": 30
+        },
+        {
+          "kind": "exercise",
+          "id": "s11",
+          "exercise": "bb_thruster",
+          "target": 43.0,
+          "rx": {
+            "men": 43.0,
+            "women": 29.5
+          },
+          "forMode": "reps",
+          "forValue": 15,
+          "note": "95/65 lb"
+        }
+      ]
+    }
+  ]
+}

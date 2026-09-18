@@ -1,0 +1,129 @@
+{
+  "id": "cf-hero-the-don",
+  "title": "The Don",
+  "creator": "CrossFit",
+  "description": "A chipper of 66 reps each: deadlifts, box jumps, kettlebell swings, knees-to-elbows, sit-ups, pull-ups, thrusters, wall balls, burpees and double-unders, for time. Honours U.S. Marine Cpl. Donald M. Marler, killed in Helmand Province, Afghanistan, in 2010. 660 reps with light loads; a steady pace beats a fast start.",
+  "source": {
+    "title": "The Don – CrossFit Hero WOD",
+    "url": "https://www.crossfit.com/benchmark/the-don-hero",
+    "author": "CrossFit",
+    "kind": "benchmark",
+    "license": "Public benchmark; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "CrossFit",
+    "Hero WOD",
+    "For time",
+    "Chipper",
+    "Barbell",
+    "Kettlebell"
+  ],
+  "level": "Hard",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "Chipper",
+      "mode": "fortime",
+      "repeat": 1,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "bb_deadlift",
+          "forMode": "reps",
+          "forValue": 66,
+          "target": 50,
+          "rx": {
+            "men": 50,
+            "women": 32
+          },
+          "note": "110/70 lb"
+        },
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "bw_box_jump",
+          "forMode": "reps",
+          "forValue": 66,
+          "note": "24/20 in box"
+        },
+        {
+          "kind": "exercise",
+          "id": "s3",
+          "exercise": "kb_swing",
+          "forMode": "reps",
+          "forValue": 66,
+          "target": 24,
+          "rx": {
+            "men": 24,
+            "women": 16
+          },
+          "note": "53/35 lb"
+        },
+        {
+          "kind": "exercise",
+          "id": "s4",
+          "exercise": "bw_knees_to_elbows",
+          "forMode": "reps",
+          "forValue": 66
+        },
+        {
+          "kind": "exercise",
+          "id": "s5",
+          "exercise": "bw_situp",
+          "forMode": "reps",
+          "forValue": 66
+        },
+        {
+          "kind": "exercise",
+          "id": "s6",
+          "exercise": "bw_pullup",
+          "forMode": "reps",
+          "forValue": 66
+        },
+        {
+          "kind": "exercise",
+          "id": "s7",
+          "exercise": "bb_thruster",
+          "forMode": "reps",
+          "forValue": 66,
+          "target": 25,
+          "rx": {
+            "men": 25,
+            "women": 16
+          },
+          "note": "55/35 lb"
+        },
+        {
+          "kind": "exercise",
+          "id": "s8",
+          "exercise": "gym_wall_ball",
+          "forMode": "reps",
+          "forValue": 66,
+          "target": 9,
+          "rx": {
+            "men": 9,
+            "women": 6.5
+          },
+          "note": "20/14 lb — 10/9 ft target"
+        },
+        {
+          "kind": "exercise",
+          "id": "s9",
+          "exercise": "bw_burpee",
+          "forMode": "reps",
+          "forValue": 66
+        },
+        {
+          "kind": "exercise",
+          "id": "s10",
+          "exercise": "bw_double_under",
+          "forMode": "reps",
+          "forValue": 66
+        }
+      ]
+    }
+  ]
+}

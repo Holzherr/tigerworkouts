@@ -1,0 +1,51 @@
+{
+  "id": "proto-tabata-kettlebell-swings",
+  "title": "Tabata Kettlebell Swings",
+  "creator": "Izumi Tabata (protocol); community variant",
+  "description": "Eight rounds of 20 seconds of kettlebell swings, 10 seconds off. Russian (chest-height) swings with a bell you can keep swinging crisply for all eight rounds; 24 kg for men and 16 kg for women is the usual prescription. Score the lowest round, or the total.",
+  "source": {
+    "title": "Tabata regimen (High-intensity interval training, Wikipedia; original: Tabata et al. 1996)",
+    "url": "https://en.wikipedia.org/wiki/High-intensity_interval_training#Tabata_regimen",
+    "author": "Izumi Tabata (protocol); common bodyweight/kettlebell variant",
+    "kind": "protocol",
+    "license": "Published protocol; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "Protocol",
+    "Tabata",
+    "HIIT",
+    "Kettlebell"
+  ],
+  "level": "Medium",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "Tabata",
+      "mode": "rounds",
+      "repeat": 8,
+      "note": "8 × (20 s on / 10 s off) = 4:00",
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "kb_swing",
+          "forMode": "seconds",
+          "forValue": 20,
+          "note": "Max reps; score = lowest round",
+          "target": 24,
+          "rx": {
+            "men": 24,
+            "women": 16
+          }
+        },
+        {
+          "kind": "rest",
+          "id": "r2",
+          "seconds": 10
+        }
+      ]
+    }
+  ]
+}

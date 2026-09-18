@@ -1,0 +1,176 @@
+{
+  "id": "cf-hero-josh-o",
+  "title": "Josh-O",
+  "creator": "CrossFit",
+  "description": "A partner workout: a 400 m run, 2 rounds of 44 dumbbell front squats, floor presses and hang clean and jerks, a 1,979 m row, 2 rounds of 44 dumbbell deadlifts, bent-over rows and lunges, then a 400 m run, with 50/35 lb dumbbells. Honours Pope County Deputy Sheriff Josh Owen, killed on a domestic violence call in Minnesota in 2023. Run together and split the rest; solo, halve the reps.",
+  "source": {
+    "title": "Josh-O – CrossFit Hero WOD",
+    "url": "https://www.crossfit.com/benchmark/josh-o",
+    "author": "CrossFit",
+    "kind": "benchmark",
+    "license": "Public benchmark; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "CrossFit",
+    "Hero",
+    "For time",
+    "Partner",
+    "Dumbbell",
+    "Run",
+    "Row"
+  ],
+  "level": "Hard",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "Run",
+      "mode": "fortime",
+      "repeat": 1,
+      "note": "Partner workout: run together, split everything else",
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "cardio_run",
+          "forMode": "meters",
+          "forValue": 400,
+          "note": "together"
+        }
+      ]
+    },
+    {
+      "kind": "block",
+      "id": "b2",
+      "name": "2 rounds",
+      "mode": "fortime",
+      "repeat": 2,
+      "note": "Split with your partner",
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "db_front_squat",
+          "target": 22.5,
+          "rx": {
+            "men": 22.5,
+            "women": 16.0
+          },
+          "forMode": "reps",
+          "forValue": 44,
+          "note": "50/35 lb"
+        },
+        {
+          "kind": "exercise",
+          "id": "s3",
+          "exercise": "db_floor_press",
+          "target": 22.5,
+          "rx": {
+            "men": 22.5,
+            "women": 16.0
+          },
+          "forMode": "reps",
+          "forValue": 44,
+          "note": "50/35 lb"
+        },
+        {
+          "kind": "exercise",
+          "id": "s4",
+          "exercise": "db_hang_clean_and_jerk",
+          "target": 22.5,
+          "rx": {
+            "men": 22.5,
+            "women": 16.0
+          },
+          "forMode": "reps",
+          "forValue": 44,
+          "note": "50/35 lb"
+        }
+      ]
+    },
+    {
+      "kind": "block",
+      "id": "b3",
+      "name": "Row",
+      "mode": "fortime",
+      "repeat": 1,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s5",
+          "exercise": "cardio_rower",
+          "forMode": "meters",
+          "forValue": 1979,
+          "note": "split"
+        }
+      ]
+    },
+    {
+      "kind": "block",
+      "id": "b4",
+      "name": "2 rounds",
+      "mode": "fortime",
+      "repeat": 2,
+      "note": "Split with your partner",
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s6",
+          "exercise": "db_deadlift",
+          "target": 22.5,
+          "rx": {
+            "men": 22.5,
+            "women": 16.0
+          },
+          "forMode": "reps",
+          "forValue": 44,
+          "note": "50/35 lb"
+        },
+        {
+          "kind": "exercise",
+          "id": "s7",
+          "exercise": "db_row",
+          "target": 22.5,
+          "rx": {
+            "men": 22.5,
+            "women": 16.0
+          },
+          "forMode": "reps",
+          "forValue": 44,
+          "note": "50/35 lb; bent over, both arms"
+        },
+        {
+          "kind": "exercise",
+          "id": "s8",
+          "exercise": "db_lunge",
+          "target": 22.5,
+          "rx": {
+            "men": 22.5,
+            "women": 16.0
+          },
+          "forMode": "reps",
+          "forValue": 44,
+          "note": "50/35 lb"
+        }
+      ]
+    },
+    {
+      "kind": "block",
+      "id": "b5",
+      "name": "Run",
+      "mode": "fortime",
+      "repeat": 1,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s9",
+          "exercise": "cardio_run",
+          "forMode": "meters",
+          "forValue": 400,
+          "note": "together"
+        }
+      ]
+    }
+  ]
+}

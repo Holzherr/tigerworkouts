@@ -1,0 +1,69 @@
+{
+  "id": "cf-hero-ralph",
+  "title": "Ralph",
+  "creator": "CrossFit",
+  "description": "Four rounds of 8 heavy deadlifts, 16 burpees, 3 rope climbs and a 600 m run, for time. Honours British Army 2nd Lt. Ralph Johnson of the Household Cavalry, killed by an IED in Helmand Province in 2006. Deadlifts are heavy; singles are fine.",
+  "source": {
+    "title": "Ralph – CrossFit Hero WOD",
+    "url": "https://www.crossfit.com/benchmark/ralph",
+    "author": "CrossFit",
+    "kind": "benchmark",
+    "license": "Public benchmark; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "CrossFit",
+    "Hero WOD",
+    "For time",
+    "Barbell",
+    "Running",
+    "Rope climb"
+  ],
+  "level": "Hard",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "4 rounds",
+      "mode": "fortime",
+      "repeat": 4,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "bb_deadlift",
+          "forMode": "reps",
+          "forValue": 8,
+          "target": 113.5,
+          "rx": {
+            "men": 113.5,
+            "women": 79.5
+          },
+          "note": "250/175 lb"
+        },
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "bw_burpee",
+          "forMode": "reps",
+          "forValue": 16
+        },
+        {
+          "kind": "exercise",
+          "id": "s3",
+          "exercise": "gym_rope_climb",
+          "forMode": "reps",
+          "forValue": 3,
+          "note": "15 ft"
+        },
+        {
+          "kind": "exercise",
+          "id": "s4",
+          "exercise": "cardio_run",
+          "forMode": "meters",
+          "forValue": 600
+        }
+      ]
+    }
+  ]
+}

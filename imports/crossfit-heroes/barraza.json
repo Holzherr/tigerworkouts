@@ -1,0 +1,63 @@
+{
+  "id": "cf-hero-barraza",
+  "title": "Barraza",
+  "creator": "CrossFit",
+  "description": "An 18-minute AMRAP of a 200 m run, 9 deadlifts at 275/185 lb and 6 burpee bar muscle-ups. Honours U.S. Army Staff Sgt. Ricardo Barraza, 75th Ranger Regiment, killed in Ar Ramadi, Iraq, in 2006. Scale to burpee pull-ups and a lighter deadlift.",
+  "source": {
+    "title": "Barraza – CrossFit Hero WOD",
+    "url": "https://www.crossfit.com/benchmark/barraza",
+    "author": "CrossFit",
+    "kind": "benchmark",
+    "license": "Public benchmark; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "CrossFit",
+    "Hero",
+    "AMRAP",
+    "Run",
+    "Barbell",
+    "Gymnastics"
+  ],
+  "level": "Hard",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "Barraza",
+      "mode": "amrap",
+      "repeat": 1,
+      "timeCapSec": 1080,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "cardio_run",
+          "forMode": "meters",
+          "forValue": 200
+        },
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "bb_deadlift",
+          "target": 124.5,
+          "rx": {
+            "men": 124.5,
+            "women": 84.0
+          },
+          "forMode": "reps",
+          "forValue": 9,
+          "note": "275/185 lb"
+        },
+        {
+          "kind": "exercise",
+          "id": "s3",
+          "exercise": "bw_burpee_muscle_up",
+          "forMode": "reps",
+          "forValue": 6,
+          "note": "bar muscle-up"
+        }
+      ]
+    }
+  ]
+}

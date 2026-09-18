@@ -1,0 +1,54 @@
+{
+  "id": "cf-hero-jared",
+  "title": "Jared",
+  "creator": "CrossFit",
+  "description": "Four rounds of an 800 m run, 40 pull-ups and 70 push-ups. Honours U.S. Army Master Sgt. Jared N. Van Aalst, U.S. Army Special Operations Command, killed in Kunduz Province, Afghanistan, in 2010. 160 pull-ups and 280 push-ups; halve the reps and keep the runs.",
+  "source": {
+    "title": "Jared – CrossFit Hero WOD",
+    "url": "https://www.crossfit.com/benchmark/jared",
+    "author": "CrossFit",
+    "kind": "benchmark",
+    "license": "Public benchmark; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "CrossFit",
+    "Hero",
+    "For time",
+    "Run",
+    "Bodyweight"
+  ],
+  "level": "Hard",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "Jared",
+      "mode": "fortime",
+      "repeat": 4,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "cardio_run",
+          "forMode": "meters",
+          "forValue": 800
+        },
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "bw_pullup",
+          "forMode": "reps",
+          "forValue": 40
+        },
+        {
+          "kind": "exercise",
+          "id": "s3",
+          "exercise": "bw_pushup",
+          "forMode": "reps",
+          "forValue": 70
+        }
+      ]
+    }
+  ]
+}

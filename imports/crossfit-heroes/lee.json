@@ -1,0 +1,95 @@
+{
+  "id": "cf-hero-lee",
+  "title": "Lee",
+  "creator": "CrossFit",
+  "description": "Five rounds of a 400 m run, 1 deadlift at 345/225 lb, 3 squat cleans and 5 push jerks at 185/125 lb, 3 muscle-ups and a rope climb. Honours U.S. Army Staff Sgt. Dick Alson Lee Jr., killed by an IED in Ghazni Province, Afghanistan, in 2012. Very heavy; scale every bar to about 75% of the Rx.",
+  "source": {
+    "title": "Lee – CrossFit Hero WOD",
+    "url": "https://www.crossfit.com/benchmark/lee",
+    "author": "CrossFit",
+    "kind": "benchmark",
+    "license": "Public benchmark; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "CrossFit",
+    "Hero",
+    "For time",
+    "Run",
+    "Barbell",
+    "Gymnastics"
+  ],
+  "level": "Hard",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "Lee",
+      "mode": "fortime",
+      "repeat": 5,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "cardio_run",
+          "forMode": "meters",
+          "forValue": 400
+        },
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "bb_deadlift",
+          "target": 156.5,
+          "rx": {
+            "men": 156.5,
+            "women": 102.0
+          },
+          "forMode": "reps",
+          "forValue": 1,
+          "note": "345/225 lb"
+        },
+        {
+          "kind": "exercise",
+          "id": "s3",
+          "exercise": "bb_squat_clean",
+          "target": 84.0,
+          "rx": {
+            "men": 84.0,
+            "women": 56.5
+          },
+          "forMode": "reps",
+          "forValue": 3,
+          "note": "185/125 lb"
+        },
+        {
+          "kind": "exercise",
+          "id": "s4",
+          "exercise": "bb_push_jerk",
+          "target": 84.0,
+          "rx": {
+            "men": 84.0,
+            "women": 56.5
+          },
+          "forMode": "reps",
+          "forValue": 5,
+          "note": "185/125 lb"
+        },
+        {
+          "kind": "exercise",
+          "id": "s5",
+          "exercise": "gym_muscle_up",
+          "forMode": "reps",
+          "forValue": 3
+        },
+        {
+          "kind": "exercise",
+          "id": "s6",
+          "exercise": "gym_rope_climb",
+          "forMode": "reps",
+          "forValue": 1,
+          "note": "15 ft"
+        }
+      ]
+    }
+  ]
+}

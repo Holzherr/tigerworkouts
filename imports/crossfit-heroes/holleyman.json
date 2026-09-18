@@ -1,0 +1,67 @@
+{
+  "id": "cf-hero-holleyman",
+  "title": "Holleyman",
+  "creator": "CrossFit",
+  "description": "Thirty rounds of 5 wall balls, 3 handstand push-ups and 1 power clean at 225/155 lb. Honours U.S. Army Staff Sgt. Aaron N. Holleyman, 5th Special Forces Group, killed by an IED in Khutayiah, Iraq, in 2004. Thirty heavy singles; scale the clean to a confident load.",
+  "source": {
+    "title": "Holleyman – CrossFit Hero WOD",
+    "url": "https://www.crossfit.com/benchmark/holleyman-new",
+    "author": "CrossFit",
+    "kind": "benchmark",
+    "license": "Public benchmark; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "CrossFit",
+    "Hero",
+    "For time",
+    "Wall ball",
+    "Gymnastics",
+    "Barbell"
+  ],
+  "level": "Hard",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "Holleyman",
+      "mode": "fortime",
+      "repeat": 30,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "gym_wall_ball",
+          "target": 9.0,
+          "rx": {
+            "men": 9.0,
+            "women": 6.5
+          },
+          "forMode": "reps",
+          "forValue": 5,
+          "note": "20/14 lb; 10/9 ft target"
+        },
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "bw_handstand_pushup",
+          "forMode": "reps",
+          "forValue": 3
+        },
+        {
+          "kind": "exercise",
+          "id": "s3",
+          "exercise": "bb_power_clean",
+          "target": 102.0,
+          "rx": {
+            "men": 102.0,
+            "women": 70.5
+          },
+          "forMode": "reps",
+          "forValue": 1,
+          "note": "225/155 lb"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,207 @@
+{
+  "id": "cf-open-17-3",
+  "title": "Open 17.3",
+  "creator": "CrossFit Games",
+  "description": "Before 8 minutes: 3 rounds of 6 chest-to-bar pull-ups and 6 squat snatches at 95/65 lb, then 3 rounds of 7 and 5 at 135/95 lb. Each stage you finish adds 4 minutes: 8 and 4 at 185/135, 9 and 3 at 225/155, 10 and 2 at 245/175, 11 and 1 at 265/185, up to 24 minutes. Scaled used jumping pull-ups and bars from 45/35 lb.",
+  "source": {
+    "title": "CrossFit Games Open 2017 – Workout 17.3",
+    "url": "https://games.crossfit.com/workouts/open/2017/3",
+    "author": "CrossFit Games",
+    "kind": "benchmark",
+    "license": "Public competition workout; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "CrossFit",
+    "CrossFit Open",
+    "2017",
+    "For time",
+    "Intervals",
+    "Barbell",
+    "Gymnastics"
+  ],
+  "level": "Hard",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "Before 8:00 · 3 rounds",
+      "mode": "fortime",
+      "repeat": 3,
+      "timeCapSec": 480,
+      "note": "8-minute cap covers this block and the next",
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "bw_chest_to_bar_pullup",
+          "forMode": "reps",
+          "forValue": 6
+        },
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "bb_snatch",
+          "target": 43.0,
+          "rx": {
+            "men": 43.0,
+            "women": 29.5
+          },
+          "forMode": "reps",
+          "forValue": 6,
+          "note": "95/65 lb. squat snatch"
+        }
+      ]
+    },
+    {
+      "kind": "block",
+      "id": "b2",
+      "name": "Before 8:00 · 3 rounds",
+      "mode": "fortime",
+      "repeat": 3,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s3",
+          "exercise": "bw_chest_to_bar_pullup",
+          "forMode": "reps",
+          "forValue": 7
+        },
+        {
+          "kind": "exercise",
+          "id": "s4",
+          "exercise": "bb_snatch",
+          "target": 61.0,
+          "rx": {
+            "men": 61.0,
+            "women": 43.0
+          },
+          "forMode": "reps",
+          "forValue": 5,
+          "note": "135/95 lb. squat snatch"
+        }
+      ]
+    },
+    {
+      "kind": "block",
+      "id": "b3",
+      "name": "Before 12:00 · 3 rounds",
+      "mode": "fortime",
+      "repeat": 3,
+      "timeCapSec": 240,
+      "note": "Each completed block adds 4 minutes",
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s5",
+          "exercise": "bw_chest_to_bar_pullup",
+          "forMode": "reps",
+          "forValue": 8
+        },
+        {
+          "kind": "exercise",
+          "id": "s6",
+          "exercise": "bb_snatch",
+          "target": 84.0,
+          "rx": {
+            "men": 84.0,
+            "women": 61.0
+          },
+          "forMode": "reps",
+          "forValue": 4,
+          "note": "185/135 lb. squat snatch"
+        }
+      ]
+    },
+    {
+      "kind": "block",
+      "id": "b4",
+      "name": "Before 16:00 · 3 rounds",
+      "mode": "fortime",
+      "repeat": 3,
+      "timeCapSec": 240,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s7",
+          "exercise": "bw_chest_to_bar_pullup",
+          "forMode": "reps",
+          "forValue": 9
+        },
+        {
+          "kind": "exercise",
+          "id": "s8",
+          "exercise": "bb_snatch",
+          "target": 102.0,
+          "rx": {
+            "men": 102.0,
+            "women": 70.5
+          },
+          "forMode": "reps",
+          "forValue": 3,
+          "note": "225/155 lb. squat snatch"
+        }
+      ]
+    },
+    {
+      "kind": "block",
+      "id": "b5",
+      "name": "Before 20:00 · 3 rounds",
+      "mode": "fortime",
+      "repeat": 3,
+      "timeCapSec": 240,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s9",
+          "exercise": "bw_chest_to_bar_pullup",
+          "forMode": "reps",
+          "forValue": 10
+        },
+        {
+          "kind": "exercise",
+          "id": "s10",
+          "exercise": "bb_snatch",
+          "target": 111.0,
+          "rx": {
+            "men": 111.0,
+            "women": 79.5
+          },
+          "forMode": "reps",
+          "forValue": 2,
+          "note": "245/175 lb. squat snatch"
+        }
+      ]
+    },
+    {
+      "kind": "block",
+      "id": "b6",
+      "name": "Before 24:00 · 3 rounds",
+      "mode": "fortime",
+      "repeat": 3,
+      "timeCapSec": 240,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s11",
+          "exercise": "bw_chest_to_bar_pullup",
+          "forMode": "reps",
+          "forValue": 11
+        },
+        {
+          "kind": "exercise",
+          "id": "s12",
+          "exercise": "bb_snatch",
+          "target": 120.0,
+          "rx": {
+            "men": 120.0,
+            "women": 84.0
+          },
+          "forMode": "reps",
+          "forValue": 1,
+          "note": "265/185 lb. squat snatch"
+        }
+      ]
+    }
+  ]
+}

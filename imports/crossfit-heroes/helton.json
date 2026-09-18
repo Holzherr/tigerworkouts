@@ -1,0 +1,61 @@
+{
+  "id": "cf-hero-helton",
+  "title": "Helton",
+  "creator": "CrossFit",
+  "description": "Three rounds of an 800 m run, 30 dumbbell squat cleans with 50/35 lb dumbbells and 30 burpees. Honours U.S. Air Force Security Forces 1st Lt. Joseph D. Helton, killed by an IED near Baghdad in 2009. Ninety squat cleans; lighter dumbbells keep the rounds moving.",
+  "source": {
+    "title": "Helton – CrossFit Hero WOD",
+    "url": "https://www.crossfit.com/benchmark/helton",
+    "author": "CrossFit",
+    "kind": "benchmark",
+    "license": "Public benchmark; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "CrossFit",
+    "Hero",
+    "For time",
+    "Run",
+    "Dumbbell",
+    "Bodyweight"
+  ],
+  "level": "Hard",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "Helton",
+      "mode": "fortime",
+      "repeat": 3,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "cardio_run",
+          "forMode": "meters",
+          "forValue": 800
+        },
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "db_squat_clean",
+          "target": 22.5,
+          "rx": {
+            "men": 22.5,
+            "women": 16.0
+          },
+          "forMode": "reps",
+          "forValue": 30,
+          "note": "50/35 lb"
+        },
+        {
+          "kind": "exercise",
+          "id": "s3",
+          "exercise": "bw_burpee",
+          "forMode": "reps",
+          "forValue": 30
+        }
+      ]
+    }
+  ]
+}

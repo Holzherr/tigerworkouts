@@ -1,0 +1,66 @@
+{
+  "id": "cf-hero-coffland",
+  "title": "Coffland",
+  "creator": "CrossFit",
+  "description": "Hang from a pull-up bar for a total of 6 minutes; every time you drop, run 800 m and do 30 push-ups before getting back on. Honours U.S. Army Spc. Christopher J. Coffland, killed by an IED in Wardak Province, Afghanistan, in 2009. Grip is the whole workout; chalk up.",
+  "source": {
+    "title": "Coffland – CrossFit Hero WOD",
+    "url": "https://www.crossfit.com/benchmark/coffland",
+    "author": "CrossFit",
+    "kind": "benchmark",
+    "license": "Public benchmark; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "CrossFit",
+    "Hero",
+    "For time",
+    "Bodyweight",
+    "Grip"
+  ],
+  "level": "Hard",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "Coffland",
+      "mode": "fortime",
+      "repeat": 1,
+      "note": "Each time you drop from the bar: run 800 m and do 30 push-ups, then get back on",
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "bw_dead_hang",
+          "forMode": "minutes",
+          "forValue": 6,
+          "note": "accumulate 6 minutes of hanging"
+        }
+      ]
+    },
+    {
+      "kind": "block",
+      "id": "b2",
+      "name": "Penalty (per drop)",
+      "mode": "fortime",
+      "repeat": 1,
+      "note": "Run once per drop from the bar; not a fixed number of rounds",
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "cardio_run",
+          "forMode": "meters",
+          "forValue": 800
+        },
+        {
+          "kind": "exercise",
+          "id": "s3",
+          "exercise": "bw_pushup",
+          "forMode": "reps",
+          "forValue": 30
+        }
+      ]
+    }
+  ]
+}

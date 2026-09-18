@@ -1,0 +1,55 @@
+{
+  "id": "cf-girls-maggie",
+  "title": "Maggie",
+  "creator": "CrossFit",
+  "description": "Five rounds of 20 handstand push-ups, 40 pull-ups and 60 alternating pistols for time. A huge volume of gymnastics — 600 reps in total — making it one of the hardest bodyweight Girls. Scale by halving the reps or substituting pike push-ups and box pistols.",
+  "source": {
+    "title": "Maggie – CrossFit benchmark WOD (\"The Girls\")",
+    "url": "https://www.crossfit.com/benchmark/maggie",
+    "author": "CrossFit",
+    "kind": "benchmark",
+    "license": "Public benchmark; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "CrossFit",
+    "Girls",
+    "For time",
+    "Gymnastics",
+    "Bodyweight"
+  ],
+  "level": "Hard",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "Maggie",
+      "mode": "fortime",
+      "repeat": 5,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "bw_handstand_pushup",
+          "forMode": "reps",
+          "forValue": 20
+        },
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "bw_pullup",
+          "forMode": "reps",
+          "forValue": 40
+        },
+        {
+          "kind": "exercise",
+          "id": "s3",
+          "exercise": "bw_pistol",
+          "forMode": "reps",
+          "forValue": 60,
+          "note": "Alternating legs"
+        }
+      ]
+    }
+  ]
+}

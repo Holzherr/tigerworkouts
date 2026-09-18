@@ -1,0 +1,63 @@
+{
+  "id": "cf-open-22-1",
+  "title": "Open 22.1",
+  "creator": "CrossFit Games",
+  "description": "Fifteen-minute AMRAP of 3 wall walks, 12 dumbbell snatches at 50/35 lb and 15 box jump-overs (24/20 in). Scaled used shorter wall walks and 35/20 lb; Foundations used bear crawls, step-overs and 20/10 lb.",
+  "source": {
+    "title": "CrossFit Games Open 2022 – Workout 22.1",
+    "url": "https://games.crossfit.com/workouts/open/2022/1",
+    "author": "CrossFit Games",
+    "kind": "benchmark",
+    "license": "Public competition workout; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "CrossFit",
+    "CrossFit Open",
+    "2022",
+    "AMRAP",
+    "Dumbbell",
+    "Gymnastics"
+  ],
+  "level": "Medium",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "AMRAP 15",
+      "mode": "amrap",
+      "repeat": 1,
+      "timeCapSec": 900,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "bw_wall_walk",
+          "forMode": "reps",
+          "forValue": 3
+        },
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "db_snatch",
+          "target": 22.5,
+          "rx": {
+            "men": 22.5,
+            "women": 16.0
+          },
+          "forMode": "reps",
+          "forValue": 12,
+          "note": "50/35 lb"
+        },
+        {
+          "kind": "exercise",
+          "id": "s3",
+          "exercise": "bw_box_jump_over",
+          "forMode": "reps",
+          "forValue": 15,
+          "note": "24/20 in box"
+        }
+      ]
+    }
+  ]
+}

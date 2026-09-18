@@ -1,0 +1,61 @@
+{
+  "id": "cf-girls-lyla",
+  "title": "Lyla",
+  "creator": "CrossFit",
+  "description": "A 10-to-1 ladder of muscle-ups and bodyweight clean and jerks: 10 of each, then 9, down to 1. One of the 2021 Girls and one of the hardest — 55 muscle-ups and 55 heavy clean and jerks. Scale the muscle-ups to pull-ups plus dips and drop the bar to a fraction of bodyweight.",
+  "source": {
+    "title": "Lyla – CrossFit benchmark WOD (\"The Girls\")",
+    "url": "https://www.crossfit.com/benchmark/lyla",
+    "author": "CrossFit",
+    "kind": "benchmark",
+    "license": "Public benchmark; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "CrossFit",
+    "Girls",
+    "For time",
+    "Barbell",
+    "Gymnastics"
+  ],
+  "level": "Hard",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "10-9-8-7-6-5-4-3-2-1",
+      "mode": "ladder",
+      "repeat": 1,
+      "note": "Rep scheme 10 down to 1; bar = your bodyweight",
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "gym_muscle_up",
+          "forMode": "reps",
+          "forValue": 10
+        },
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "bb_clean_and_jerk",
+          "forMode": "reps",
+          "forValue": 10,
+          "note": "1x bodyweight"
+        }
+      ],
+      "ladder": [
+        10,
+        9,
+        8,
+        7,
+        6,
+        5,
+        4,
+        3,
+        2,
+        1
+      ]
+    }
+  ]
+}

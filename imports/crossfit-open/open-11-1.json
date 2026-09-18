@@ -1,0 +1,55 @@
+{
+  "id": "cf-open-11-1",
+  "title": "Open 11.1",
+  "creator": "CrossFit Games",
+  "description": "Ten-minute AMRAP of 30 double-unders and 15 power snatches at 75/55 lb. The very first Open workout: a light barbell, a jump rope and lungs. Scale by dropping to single-unders or a lighter bar; the workout was repeated as 14.1.",
+  "source": {
+    "title": "CrossFit Games Open 2011 – Workout 11.1",
+    "url": "https://games.crossfit.com/workouts/open/2011",
+    "author": "CrossFit Games",
+    "kind": "benchmark",
+    "license": "Public competition workout; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "CrossFit",
+    "CrossFit Open",
+    "2011",
+    "AMRAP",
+    "Barbell",
+    "Jump rope"
+  ],
+  "level": "Medium",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "AMRAP 10",
+      "mode": "amrap",
+      "repeat": 1,
+      "timeCapSec": 600,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "bw_double_under",
+          "forMode": "reps",
+          "forValue": 30
+        },
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "bb_power_snatch",
+          "target": 34.0,
+          "rx": {
+            "men": 34.0,
+            "women": 25.0
+          },
+          "forMode": "reps",
+          "forValue": 15,
+          "note": "75/55 lb"
+        }
+      ]
+    }
+  ]
+}

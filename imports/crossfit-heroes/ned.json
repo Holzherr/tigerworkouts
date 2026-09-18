@@ -1,0 +1,48 @@
+{
+  "id": "cf-hero-ned",
+  "title": "Ned",
+  "creator": "CrossFit",
+  "description": "Seven rounds of 11 bodyweight back squats and a 1,000 m row, for time. Honours Special Agent Nathan 'Ned' Schuldheiss of the Air Force Office of Special Investigations, killed by an IED near Balad, Iraq, in 2007. Seven kilometres of rowing makes this a long one; hold a pace you can repeat.",
+  "source": {
+    "title": "Ned – CrossFit Hero WOD",
+    "url": "https://www.crossfit.com/benchmark/ned",
+    "author": "CrossFit",
+    "kind": "benchmark",
+    "license": "Public benchmark; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "CrossFit",
+    "Hero WOD",
+    "For time",
+    "Barbell",
+    "Rower"
+  ],
+  "level": "Hard",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "7 rounds",
+      "mode": "fortime",
+      "repeat": 7,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "bb_back_squat",
+          "forMode": "reps",
+          "forValue": 11,
+          "note": "Bodyweight on the bar"
+        },
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "cardio_rower",
+          "forMode": "meters",
+          "forValue": 1000
+        }
+      ]
+    }
+  ]
+}

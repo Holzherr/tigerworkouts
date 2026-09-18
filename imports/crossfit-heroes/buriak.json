@@ -1,0 +1,68 @@
+{
+  "id": "cf-hero-buriak",
+  "title": "Buriak",
+  "creator": "CrossFit",
+  "description": "A 20-minute AMRAP of 5 squat cleans at 155/135 lb, 10 burpees over the bar, 15 pull-ups and a 200 m run. Honours U.S. Navy rescue swimmer AWS1 James Buriak, killed when his helicopter went down off San Diego in 2021. Note the unusually close men's/women's loads.",
+  "source": {
+    "title": "Buriak – CrossFit Hero WOD",
+    "url": "https://www.crossfit.com/benchmark/buriak",
+    "author": "CrossFit",
+    "kind": "benchmark",
+    "license": "Public benchmark; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "CrossFit",
+    "Hero",
+    "AMRAP",
+    "Run",
+    "Barbell"
+  ],
+  "level": "Hard",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "Buriak",
+      "mode": "amrap",
+      "repeat": 1,
+      "timeCapSec": 1200,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "bb_squat_clean",
+          "target": 70.5,
+          "rx": {
+            "men": 70.5,
+            "women": 61.0
+          },
+          "forMode": "reps",
+          "forValue": 5,
+          "note": "155/135 lb"
+        },
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "bw_bar_facing_burpee",
+          "forMode": "reps",
+          "forValue": 10
+        },
+        {
+          "kind": "exercise",
+          "id": "s3",
+          "exercise": "bw_pullup",
+          "forMode": "reps",
+          "forValue": 15
+        },
+        {
+          "kind": "exercise",
+          "id": "s4",
+          "exercise": "cardio_run",
+          "forMode": "meters",
+          "forValue": 200
+        }
+      ]
+    }
+  ]
+}

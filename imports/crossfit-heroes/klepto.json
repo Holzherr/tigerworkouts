@@ -1,0 +1,61 @@
+{
+  "id": "cf-hero-klepto",
+  "title": "Klepto",
+  "creator": "CrossFit",
+  "description": "Four rounds of 27 box jumps, 20 burpees and 11 squat cleans at 145/95 lb. Honours U.S. Air Force Maj. David \"Klepto\" Brodeur, killed by gunfire from an Afghan trainee in Kabul in 2011. The rep counts mark his death date; scale the cleans to a load you can do in sets of 3 to 5.",
+  "source": {
+    "title": "Klepto – CrossFit Hero WOD",
+    "url": "https://www.crossfit.com/benchmark/klepto",
+    "author": "CrossFit",
+    "kind": "benchmark",
+    "license": "Public benchmark; description in our own words",
+    "importedAt": "2026-09-06"
+  },
+  "tags": [
+    "CrossFit",
+    "Hero",
+    "For time",
+    "Bodyweight",
+    "Barbell"
+  ],
+  "level": "Hard",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "Klepto",
+      "mode": "fortime",
+      "repeat": 4,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "bw_box_jump",
+          "forMode": "reps",
+          "forValue": 27,
+          "note": "24/20 in box"
+        },
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "bw_burpee",
+          "forMode": "reps",
+          "forValue": 20
+        },
+        {
+          "kind": "exercise",
+          "id": "s3",
+          "exercise": "bb_squat_clean",
+          "target": 66.0,
+          "rx": {
+            "men": 66.0,
+            "women": 43.0
+          },
+          "forMode": "reps",
+          "forValue": 11,
+          "note": "145/95 lb"
+        }
+      ]
+    }
+  ]
+}

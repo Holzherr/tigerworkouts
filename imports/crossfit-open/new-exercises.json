@@ -1,0 +1,90 @@
+[
+  {
+    "key": "bb_clean",
+    "name": "Clean (any style)",
+    "unit": "kg",
+    "step": 2.5,
+    "group": "barbell",
+    "cue": "Bar from the floor to the shoulders, squat or power, elbows through at the top."
+  },
+  {
+    "key": "bb_ground_to_overhead",
+    "name": "Ground-to-overhead",
+    "unit": "kg",
+    "step": 2.5,
+    "group": "barbell",
+    "cue": "Floor to lockout overhead any way: snatch, or clean and jerk."
+  },
+  {
+    "key": "bb_overhead_walking_lunge",
+    "name": "Barbell overhead walking lunge",
+    "unit": "kg",
+    "step": 2.5,
+    "group": "barbell",
+    "cue": "Bar locked out overhead, long steps, back knee kisses the floor, stand tall between steps."
+  },
+  {
+    "key": "db_power_clean",
+    "name": "Dumbbell power clean",
+    "unit": "kg per arm",
+    "step": 2.5,
+    "group": "dumbbell",
+    "cue": "Both dumbbells from the floor to the shoulders without a full squat; stand fully before dropping."
+  },
+  {
+    "key": "db_squat",
+    "name": "Dumbbell front squat",
+    "unit": "kg per arm",
+    "step": 2.5,
+    "group": "dumbbell",
+    "cue": "Dumbbells on the shoulders, squat below parallel, drive up to full extension."
+  },
+  {
+    "key": "db_overhead_lunge",
+    "name": "Dumbbell overhead walking lunge",
+    "unit": "kg",
+    "step": 2.5,
+    "group": "dumbbell",
+    "cue": "One dumbbell locked out overhead, alternate legs, back knee to the floor, hips open at the top."
+  },
+  {
+    "key": "bw_wall_walk",
+    "name": "Wall walk",
+    "unit": "",
+    "step": 1,
+    "group": "body",
+    "cue": "From chest on the floor, walk the feet up the wall and the hands in until they touch the line, then walk back out to the start."
+  },
+  {
+    "key": "bw_handstand_walk",
+    "name": "Handstand walk",
+    "unit": "",
+    "step": 1,
+    "group": "body",
+    "cue": "Kick up, stack the hips over the hands and walk forward in short steps; each 5 ft segment counts."
+  },
+  {
+    "key": "bw_box_jump_over",
+    "name": "Box jump-over",
+    "unit": "",
+    "step": 1,
+    "group": "body",
+    "cue": "Jump onto or over the box and land on the far side; no need to stand tall on top."
+  },
+  {
+    "key": "bw_burpee_over_dumbbell",
+    "name": "Lateral burpee over dumbbell",
+    "unit": "",
+    "step": 1,
+    "group": "body",
+    "cue": "Chest to the floor beside the dumbbell, jump up and sideways over it with two feet."
+  },
+  {
+    "key": "gym_med_ball_box_step_over",
+    "name": "Medicine-ball box step-over",
+    "unit": "kg",
+    "step": 1,
+    "group": "gym",
+    "cue": "Holding the ball, step up onto the box, stand tall and step down the other side."
+  }
+]
