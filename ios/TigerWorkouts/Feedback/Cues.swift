@@ -1,4 +1,7 @@
 import AVFoundation
+import os
+
+private let audioLog = Logger(subsystem: "com.holzherr.tigerworkouts", category: "audio")
 
 /// Tones, and the reason the timer survives a locked screen.
 ///
@@ -40,8 +43,12 @@ final class Cues {
             try engine.start()
             running = true
             holdSessionOpen()
+            audioLog.info("audio session held open for the background")
         } catch {
             running = false
+            // Without this the app is suspended when the screen locks and the Lock Screen card
+            // stops moving, so it is worth being loud about.
+            audioLog.error("audio session failed, no background slot: \(error.localizedDescription, privacy: .public)")
         }
     }
 

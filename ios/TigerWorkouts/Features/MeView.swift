@@ -65,7 +65,7 @@ struct MeView: View {
                 }
 
                 Section {
-                    LabeledContent("Workouts bundled", value: "\(Library.shared.workouts.count)")
+                    LabeledContent("Workouts bundled", value: "\(store.catalogue.count)")
                     LabeledContent("Sessions logged", value: "\(store.results.count)")
                 }
             }

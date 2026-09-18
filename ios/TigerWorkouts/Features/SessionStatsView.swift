@@ -59,7 +59,7 @@ struct SessionStatsView: View {
             VStack(alignment: .leading, spacing: 6) {
                 Text("\(streak.weeks) week\(streak.weeks == 1 ? "" : "s") running")
                     .font(.headline)
-                Text("\(streak.thisWeek) this week, \(streak.lastWeek) last week · \(streak.total) sessions logged")
+                Text("\(streak.thisWeek) this week, \(streak.lastWeek) last week · \(streak.total) session\(streak.total == 1 ? "" : "s") logged")
                     .font(.footnote)
                     .foregroundStyle(Brand.muted)
             }

@@ -158,6 +158,25 @@ extension ExerciseStep {
         return unit.isEmpty ? Format.number(t) : "\(Format.number(t)) \(unit)"
     }
 
+    /// Whether the step carries a setting you dial in: a weight, or a machine's speed. A rower
+    /// logged in metres with no target, or a bodyweight move, has nothing to adjust — showing a
+    /// stepper for it offered "Load: — m" on a rowing machine.
+    var hasSetting: Bool {
+        if target != nil { return true }
+        let u = shortUnit.lowercased()
+        return u.hasPrefix("kg") || u.hasPrefix("lb") || u == "kph" || u == "mph"
+    }
+
+    /// What the setting is called: speed on a treadmill, load on a bar.
+    var settingLabel: String {
+        switch shortUnit.lowercased() {
+        case "kph", "mph": "Speed"
+        case "m", "km": "Distance"
+        case "cal", "kcal": "Calories"
+        default: "Load"
+        }
+    }
+
     var shortUnit: String {
         exercise.unit
             .replacingOccurrences(of: " per arm", with: "")
@@ -181,6 +200,7 @@ enum Format {
 
     /// "24 min", "1h 05"
     static func duration(_ seconds: Double) -> String {
+        if seconds < 60 { return "\(max(0, Int(seconds.rounded())))s" }
         let m = Int((seconds / 60).rounded())
         return m < 60 ? "\(m) min" : String(format: "%dh %02d", m / 60, m % 60)
     }

@@ -21,11 +21,19 @@ final class Store {
 
     var signedIn: Bool { user != nil }
 
+    /// The bundled catalogue, copied in once it has decoded. `Library` is a plain class that
+    /// SwiftUI cannot observe, so reading it straight from a view drew an empty list at launch
+    /// and never redrew it.
+    private(set) var catalogue: [Runsheet] = []
+    /// Set once the catalogue and the on-disk cache are in, before any network: the point at
+    /// which it is safe to look a workout up by id.
+    private(set) var loaded = false
+
     /// Every workout on offer: the bundled catalogue plus whatever this account has written.
     var allWorkouts: [Runsheet] {
         let mine = myWorkouts
         let mineIds = Set(mine.compactMap(\.id))
-        return mine + Library.shared.workouts.map(\.runsheet).filter { !mineIds.contains($0.key) }
+        return mine + catalogue.filter { !mineIds.contains($0.key) }
     }
 
     func workout(id: String) -> Runsheet? {
@@ -44,7 +52,9 @@ final class Store {
 
     func load() async {
         await Task.detached(priority: .userInitiated) { Library.shared.load() }.value
+        catalogue = Library.shared.workouts.map(\.runsheet)
         readCache()
+        loaded = true
         user = await Supabase.shared.user
         await readBodyweightFromHealth()
         await sync()

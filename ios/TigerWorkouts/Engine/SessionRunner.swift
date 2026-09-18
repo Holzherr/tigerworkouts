@@ -23,11 +23,24 @@ final class SessionRunner {
         self.state = Runner.start(seeded, now: Date().timeIntervalSince1970 * 1000)
     }
 
-    /// Resume a session the app was killed in the middle of.
+    /// Resume a session the app was killed in the middle of. It comes back paused at the moment
+    /// it was last saved, so the time the phone spent closed never counts as workout time and
+    /// nothing starts counting down before you are ready.
     init?(resuming runsheet: Runsheet) {
-        guard let saved = SessionRunner.readSaved(), saved.runsheetId == (runsheet.id ?? runsheet.title) else { return nil }
+        guard let saved = SessionRunner.readSaved(), saved.state.runsheetId == (runsheet.id ?? runsheet.title) else { return nil }
         self.runsheet = runsheet
-        self.state = saved
+        let at = saved.savedAt.timeIntervalSince1970 * 1000
+        self.state = saved.state.phase == .running || saved.state.phase == .lead
+            ? Runner.pause(saved.state, now: at)
+            : saved.state
+    }
+
+    /// What an interrupted session had got to, as a result that can be logged without resuming.
+    /// Timed to the last save rather than to now, which may be hours later.
+    static func partialResult(of saved: RunState, savedAt: Date, runsheet: Runsheet) -> SessionResult? {
+        let at = savedAt.timeIntervalSince1970 * 1000
+        guard saved.actuals.values.contains(where: { $0.doneAt != nil }) else { return nil }
+        return Runner.toResult(Runner.finish(saved, now: at), runsheet, now: at)
     }
 
     // MARK: - Derived
@@ -93,11 +106,26 @@ final class SessionRunner {
         SessionActivityController.shared.update(activityState)
     }
 
-    /// What the Lock Screen shows. Built fresh each time and compared by value, so the controller
-    /// pushes an update only when something a person would notice has changed.
     private var activityState: SessionActivityAttributes.ContentState {
+        SessionRunner.activityState(state, runsheet: runsheet, now: now)
+    }
+
+    private var isRestSlot: Bool { slot?.kind == .rest }
+
+    /// What the Lock Screen shows, as a pure function of the run so it can be tested.
+    ///
+    /// Everything in it must hold still for the length of a slot. The controller only pushes when
+    /// this value changes, and iOS throttles an app that updates its activity too often — the first
+    /// version put live progress in here, changed it every 100 ms tick, and the flood got the one
+    /// update that mattered (lead-in to first exercise) dropped, leaving "Get ready 0:00" on the
+    /// Lock Screen. The countdown needs no updates at all: it is sent as the instant it ends.
+    nonisolated static func activityState(_ state: RunState, runsheet: Runsheet, now: Double) -> SessionActivityAttributes.ContentState {
+        let slot = Runner.current(state)
+        let next = Runner.next(state)
+        let isRest = slot?.kind == .rest
         let headline: String
         var detail = slot?.blockName ?? runsheet.title
+
         switch state.phase {
         case .lead:
             headline = "Get ready"
@@ -107,32 +135,45 @@ final class SessionRunner {
             detail = slot?.exercise?.exercise.name ?? detail
         case .done:
             headline = "Done"
-            detail = Format.duration(elapsed)
+            detail = Format.duration(Runner.elapsed(state, now: now))
         default:
-            if isRestSlot {
+            if isRest {
                 headline = "Rest"
-                detail = nextSlot?.exercise.map { "Next: \($0.exercise.name)" } ?? detail
+                detail = next?.exercise.map { "Next: \($0.exercise.name)" } ?? detail
             } else {
                 headline = slot?.exercise?.exercise.name ?? runsheet.title
-                if let position = stepPosition {
+                if let position = stepPosition(of: slot, in: runsheet) {
                     detail = "Exercise \(position.index) of \(position.count)"
                 } else if let slot, slot.rounds > 1 {
                     detail = "Round \(slot.round + 1) of \(slot.rounds)"
                 }
             }
         }
+
+        // Progress as of the start of the slot: it steps at each boundary rather than creeping.
+        let total = state.slots.reduce(0.0) { $0 + Runner.slotEstimate($1) }
+        let done = state.slots.prefix(min(state.i, state.slots.count)).reduce(0.0) { $0 + Runner.slotEstimate($1) }
+        let progress = state.phase == .done ? 1 : (total > 0 ? done / total : 0)
+
         return SessionActivityAttributes.ContentState(
             headline: headline,
             detail: state.phase == .paused ? "Paused · \(detail)" : detail,
-            isRest: isRestSlot,
+            isRest: isRest,
             isPaused: state.phase == .paused,
             endsAt: state.endsAt.map { Date(timeIntervalSince1970: $0 / 1000) },
             startedAt: Date(timeIntervalSince1970: state.slotStartedAt / 1000),
-            progress: overall
+            progress: progress
         )
     }
 
-    private var isRestSlot: Bool { slot?.kind == .rest }
+    /// The exercise steps of a slot's block, and where the slot sits in them.
+    nonisolated static func stepPosition(of slot: Slot?, in runsheet: Runsheet) -> (index: Int, count: Int)? {
+        guard let slot, let blockId = slot.blockId,
+              let block = runsheet.items.compactMap(\.asBlock).first(where: { $0.id == blockId }) else { return nil }
+        let steps = block.steps.compactMap(\.asExercise)
+        guard steps.count > 1, let idx = steps.firstIndex(where: { $0.id == slot.step.id }) else { return nil }
+        return (idx + 1, steps.count)
+    }
 
     /// Every transition gets both a buzz and a tone: the buzz is what you feel with the phone in a
     /// pocket, the tone is what still reaches you when the screen has locked and haptics cannot.
@@ -252,14 +293,14 @@ final class SessionRunner {
     }
 
     /// A session older than six hours is not one you walked away from for a minute.
-    static func readSaved() -> RunState? {
+    static func readSaved() -> (state: RunState, savedAt: Date)? {
         guard let data = try? Data(contentsOf: savedURL),
               let attrs = try? FileManager.default.attributesOfItem(atPath: savedURL.path),
               let modified = attrs[.modificationDate] as? Date,
               Date().timeIntervalSince(modified) < 6 * 3600,
               let state = try? JSONDecoder().decode(RunState.self, from: data),
               state.phase != .done else { return nil }
-        return state
+        return (state, modified)
     }
 
     static func clearSaved() {

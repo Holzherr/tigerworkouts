@@ -4,6 +4,15 @@ struct RootView: View {
     @Environment(Store.self) private var store
     @State private var tab = Tab.workouts
     @State private var running: SessionRunner?
+    @State private var interrupted: Interrupted?
+
+    /// A session the app was killed in the middle of, waiting for a decision.
+    private struct Interrupted {
+        var sheet: Runsheet
+        var state: RunState
+        var savedAt: Date
+        var partial: SessionResult?
+    }
 
     enum Tab: Hashable { case workouts, history, me }
 
@@ -27,13 +36,43 @@ struct RootView: View {
                 running = nil
             }
         }
-        .task {
-            // Offer to pick up a session the app was killed in the middle of. The catalogue has
-            // to be in before the lookup, and loading it twice is a no-op.
-            await Task.detached(priority: .userInitiated) { Library.shared.load() }.value
-            guard running == nil, let saved = SessionRunner.readSaved(),
-                  let sheet = store.workout(id: saved.runsheetId) else { return }
-            running = SessionRunner(resuming: sheet)
+        // Asked, not assumed: reopening the app after abandoning a workout must not throw you
+        // back into its timer. The lookup waits for the catalogue, or it finds nothing.
+        .onChange(of: store.loaded, initial: true) { _, loaded in
+            guard loaded, running == nil, interrupted == nil, let saved = SessionRunner.readSaved() else { return }
+            guard let sheet = store.workout(id: saved.state.runsheetId) else {
+                SessionRunner.clearSaved()
+                return
+            }
+            SessionActivityController.shared.clearStale()
+            interrupted = Interrupted(
+                sheet: sheet, state: saved.state, savedAt: saved.savedAt,
+                partial: SessionRunner.partialResult(of: saved.state, savedAt: saved.savedAt, runsheet: sheet)
+            )
+        }
+        .alert(
+            "Pick up where you left off?",
+            isPresented: Binding(get: { interrupted != nil }, set: { if !$0 { interrupted = nil } }),
+            presenting: interrupted
+        ) { pending in
+            Button("Resume") {
+                running = SessionRunner(resuming: pending.sheet)
+                interrupted = nil
+            }
+            // The workout happened whether or not the app survived it.
+            if let partial = pending.partial {
+                Button("Save what I did") {
+                    SessionRunner.clearSaved()
+                    interrupted = nil
+                    Task { await store.save(partial) }
+                }
+            }
+            Button("Discard", role: .destructive) {
+                SessionRunner.clearSaved()
+                interrupted = nil
+            }
+        } message: { pending in
+            Text("\(pending.sheet.title) was still running when the app closed, \(pending.savedAt.formatted(.relative(presentation: .named))).")
         }
     }
 

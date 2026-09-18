@@ -62,6 +62,18 @@ targets:
         PRODUCT_BUNDLE_IDENTIFIER: com.holzherr.tigerworkouts.tests
         GENERATE_INFOPLIST_FILE: YES
 
+  TigerWorkoutsUITests:
+    type: bundle.ui-testing
+    platform: iOS
+    sources: [TigerWorkoutsUITests]
+    dependencies:
+      - target: TigerWorkouts
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.holzherr.tigerworkouts.uitests
+        GENERATE_INFOPLIST_FILE: YES
+        TEST_TARGET_NAME: TigerWorkouts
+
 schemes:
   TigerWorkouts:
     build:
@@ -69,5 +81,6 @@ schemes:
         TigerWorkouts: all
         TigerWorkoutsWidgets: all
         TigerWorkoutsTests: [test]
+        TigerWorkoutsUITests: [test]
     test:
-      targets: [TigerWorkoutsTests]
+      targets: [TigerWorkoutsTests, TigerWorkoutsUITests]

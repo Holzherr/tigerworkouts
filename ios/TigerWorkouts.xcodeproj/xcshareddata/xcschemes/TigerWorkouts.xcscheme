@@ -37,6 +37,20 @@
          </BuildActionEntry>
          <BuildActionEntry
             buildForTesting = "YES"
+            buildForRunning = "NO"
+            buildForProfiling = "NO"
+            buildForArchiving = "NO"
+            buildForAnalyzing = "NO">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "732C3A22E93E4B6FBCC0245F"
+               BuildableName = "TigerWorkoutsUITests.xctest"
+               BlueprintName = "TigerWorkoutsUITests"
+               ReferencedContainer = "container:TigerWorkouts.xcodeproj">
+            </BuildableReference>
+         </BuildActionEntry>
+         <BuildActionEntry
+            buildForTesting = "YES"
             buildForRunning = "YES"
             buildForProfiling = "YES"
             buildForArchiving = "YES"
@@ -75,6 +89,17 @@
                BlueprintIdentifier = "30FB014E948F8B03F3FAF763"
                BuildableName = "TigerWorkoutsTests.xctest"
                BlueprintName = "TigerWorkoutsTests"
+               ReferencedContainer = "container:TigerWorkouts.xcodeproj">
+            </BuildableReference>
+         </TestableReference>
+         <TestableReference
+            skipped = "NO"
+            parallelizable = "NO">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "732C3A22E93E4B6FBCC0245F"
+               BuildableName = "TigerWorkoutsUITests.xctest"
+               BlueprintName = "TigerWorkoutsUITests"
                ReferencedContainer = "container:TigerWorkouts.xcodeproj">
             </BuildableReference>
          </TestableReference>

@@ -82,7 +82,7 @@ struct WorkoutDetailView: View {
 
     private var header: some View {
         VStack(alignment: .leading, spacing: 10) {
-            Stripes(height: 5).frame(width: 64)
+            Stripes().frame(width: 26, height: 22)
             HStack(spacing: 10) {
                 Label("\(runsheet.minutes) min", systemImage: "clock")
                 if let creator = runsheet.creator { Text(creator) }

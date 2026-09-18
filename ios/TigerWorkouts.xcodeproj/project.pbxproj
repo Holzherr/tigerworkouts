@@ -49,10 +49,12 @@
 		C9123A2932AA4558713D3BEE /* SessionActivity.swift in Sources */ = {isa = PBXBuildFile; fileRef = DC9366D79FD67D11C4687AC3 /* SessionActivity.swift */; };
 		CA84645AFB81CCB16FAF4619 /* TigerWorkoutsApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = B98162A061F4395442DDC3C1 /* TigerWorkoutsApp.swift */; };
 		CD95FA53A7C13FDA78158663 /* Health.swift in Sources */ = {isa = PBXBuildFile; fileRef = 49526F5BAD78DFB059EC6918 /* Health.swift */; };
+		CF109BE9085D2D36932E37E3 /* WalkthroughUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1CA40FB23F26CFD0D7CB467 /* WalkthroughUITests.swift */; };
 		D13C662CBC346212040F776E /* SessionRunner.swift in Sources */ = {isa = PBXBuildFile; fileRef = B5764E5C8674AB9AF9B73008 /* SessionRunner.swift */; };
 		DBEDEBD4281918290549E6A8 /* SessionActivity.swift in Sources */ = {isa = PBXBuildFile; fileRef = DC9366D79FD67D11C4687AC3 /* SessionActivity.swift */; };
 		DD4545EFB40EDD4261D4585E /* HistoryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1063A8544D812A237CA3F659 /* HistoryView.swift */; };
 		DF6DD6221EB835B5A56F96DE /* workouts.json in Resources */ = {isa = PBXBuildFile; fileRef = 5820D43896B67ACA2086F001 /* workouts.json */; };
+		EB9FAD39D8876DE07D18AB3E /* LiveActivityTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = DF2925A193B28392EB5F9746 /* LiveActivityTests.swift */; };
 		F4756435DC2DA572B027CF59 /* MeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 39DFAF6D4A3365D7D78C8D6C /* MeView.swift */; };
 		F5BDC4ADEB1FC03A82DC229A /* RunsheetMath.swift in Sources */ = {isa = PBXBuildFile; fileRef = 01638E9D3E013E1503E8A675 /* RunsheetMath.swift */; };
 /* End PBXBuildFile section */
@@ -71,6 +73,13 @@
 			proxyType = 1;
 			remoteGlobalIDString = 468477449C5DAA84F47F353F;
 			remoteInfo = TigerWorkoutsWidgets;
+		};
+		D916DD27B7CCBDDBD4B52785 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 2939F44DC1918CB4A235E4AA /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = B4964016DD2B334C5138B10E;
+			remoteInfo = TigerWorkouts;
 		};
 /* End PBXContainerItemProxy section */
 
@@ -127,11 +136,14 @@
 		B98162A061F4395442DDC3C1 /* TigerWorkoutsApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TigerWorkoutsApp.swift; sourceTree = "<group>"; };
 		BD57C95FC26995ED5E6E25CF /* ExerciseSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExerciseSheet.swift; sourceTree = "<group>"; };
 		BEBB7BC4CAC7E345AFA74D2B /* WorkoutDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkoutDetailView.swift; sourceTree = "<group>"; };
+		C1CA40FB23F26CFD0D7CB467 /* WalkthroughUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WalkthroughUITests.swift; sourceTree = "<group>"; };
 		CD256074B6A4BA9F1AE2FEB1 /* WorkoutEditorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkoutEditorView.swift; sourceTree = "<group>"; };
+		D003D2F2D1E93454087D5B01 /* TigerWorkoutsUITests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = TigerWorkoutsUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		D36AE791E64CAB95929EDB34 /* ResultsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ResultsTests.swift; sourceTree = "<group>"; };
 		DB29B220F1D0DA49508EF0DE /* StepEditorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StepEditorView.swift; sourceTree = "<group>"; };
 		DC9366D79FD67D11C4687AC3 /* SessionActivity.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionActivity.swift; sourceTree = "<group>"; };
 		DCDAF2AE594C1D1C9FF54BED /* exercises.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = exercises.json; sourceTree = "<group>"; };
+		DF2925A193B28392EB5F9746 /* LiveActivityTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LiveActivityTests.swift; sourceTree = "<group>"; };
 		E6A0D42B49643D82D2C08235 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		E84311BE7C5AA68401341805 /* SyncTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SyncTests.swift; sourceTree = "<group>"; };
 		EAC092179B72B4037F1F892C /* TigerWorkoutsWidgets.appex */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = "wrapper.app-extension"; path = TigerWorkoutsWidgets.appex; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -146,6 +158,7 @@
 			children = (
 				9F5AADA27786288575C5751A /* TigerWorkouts.app */,
 				5D8FDE05A7149CE66FF79B2F /* TigerWorkoutsTests.xctest */,
+				D003D2F2D1E93454087D5B01 /* TigerWorkoutsUITests.xctest */,
 				EAC092179B72B4037F1F892C /* TigerWorkoutsWidgets.appex */,
 			);
 			name = Products;
@@ -212,6 +225,7 @@
 			children = (
 				E827247DBE4620E98EC94527 /* TigerWorkouts */,
 				A85652151D39A0391C5C5DEF /* TigerWorkoutsTests */,
+				BF12B91B310D3B2B9E59AF61 /* TigerWorkoutsUITests */,
 				4E2F0BEAD32C8D4CBD98CCD6 /* TigerWorkoutsWidgets */,
 				3330AA6E6DA6886404E0ABFA /* Products */,
 			);
@@ -240,11 +254,20 @@
 			children = (
 				2333BFB4C8394D4D3D82D69F /* CatalogueTests.swift */,
 				03B24D2D55EFBC42BB378AFE /* EditingTests.swift */,
+				DF2925A193B28392EB5F9746 /* LiveActivityTests.swift */,
 				D36AE791E64CAB95929EDB34 /* ResultsTests.swift */,
 				38611D00C12C8D5497FC0713 /* RunnerTests.swift */,
 				E84311BE7C5AA68401341805 /* SyncTests.swift */,
 			);
 			path = TigerWorkoutsTests;
+			sourceTree = "<group>";
+		};
+		BF12B91B310D3B2B9E59AF61 /* TigerWorkoutsUITests */ = {
+			isa = PBXGroup;
+			children = (
+				C1CA40FB23F26CFD0D7CB467 /* WalkthroughUITests.swift */,
+			);
+			path = TigerWorkoutsUITests;
 			sourceTree = "<group>";
 		};
 		C9B5831D7E6DCCD786233744 /* Model */ = {
@@ -347,6 +370,24 @@
 			productReference = EAC092179B72B4037F1F892C /* TigerWorkoutsWidgets.appex */;
 			productType = "com.apple.product-type.app-extension";
 		};
+		732C3A22E93E4B6FBCC0245F /* TigerWorkoutsUITests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 7C7F4893C77F6D0484815D7D /* Build configuration list for PBXNativeTarget "TigerWorkoutsUITests" */;
+			buildPhases = (
+				E8C37B6E2E101DF6240EA03A /* Sources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				97AB309A62F861B0063A9B70 /* PBXTargetDependency */,
+			);
+			name = TigerWorkoutsUITests;
+			packageProductDependencies = (
+			);
+			productName = TigerWorkoutsUITests;
+			productReference = D003D2F2D1E93454087D5B01 /* TigerWorkoutsUITests.xctest */;
+			productType = "com.apple.product-type.bundle.ui-testing";
+		};
 		B4964016DD2B334C5138B10E /* TigerWorkouts */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = 467AA46FAAFF6272F79B3DB5 /* Build configuration list for PBXNativeTarget "TigerWorkouts" */;
@@ -384,6 +425,11 @@
 						DevelopmentTeam = "";
 						ProvisioningStyle = Automatic;
 					};
+					732C3A22E93E4B6FBCC0245F = {
+						DevelopmentTeam = "";
+						ProvisioningStyle = Automatic;
+						TestTargetID = B4964016DD2B334C5138B10E;
+					};
 					B4964016DD2B334C5138B10E = {
 						DevelopmentTeam = "";
 						ProvisioningStyle = Automatic;
@@ -407,6 +453,7 @@
 				B4964016DD2B334C5138B10E /* TigerWorkouts */,
 				468477449C5DAA84F47F353F /* TigerWorkoutsWidgets */,
 				30FB014E948F8B03F3FAF763 /* TigerWorkoutsTests */,
+				732C3A22E93E4B6FBCC0245F /* TigerWorkoutsUITests */,
 			);
 		};
 /* End PBXProject section */
@@ -441,6 +488,7 @@
 			files = (
 				221B3BEEFB080270A1DD6C50 /* CatalogueTests.swift in Sources */,
 				4A186DEED593C0BA6739F608 /* EditingTests.swift in Sources */,
+				EB9FAD39D8876DE07D18AB3E /* LiveActivityTests.swift in Sources */,
 				AE6182B42F75E4CEA7DC6A74 /* ResultsTests.swift in Sources */,
 				2B60AB7BAD0FA3BD84166265 /* RunnerTests.swift in Sources */,
 				77321A9F5C2B299AA484314C /* SyncTests.swift in Sources */,
@@ -497,6 +545,14 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		E8C37B6E2E101DF6240EA03A /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				CF109BE9085D2D36932E37E3 /* WalkthroughUITests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
@@ -504,6 +560,11 @@
 			isa = PBXTargetDependency;
 			target = 468477449C5DAA84F47F353F /* TigerWorkoutsWidgets */;
 			targetProxy = 8E0FD2B8CA69ABE266783400 /* PBXContainerItemProxy */;
+		};
+		97AB309A62F861B0063A9B70 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = B4964016DD2B334C5138B10E /* TigerWorkouts */;
+			targetProxy = D916DD27B7CCBDDBD4B52785 /* PBXContainerItemProxy */;
 		};
 		B8DCDE223EB4C2835507AB4F /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
@@ -528,6 +589,23 @@
 				TARGETED_DEVICE_FAMILY = 1;
 			};
 			name = Release;
+		};
+		3F1BB84723E3D51317473DC7 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				GENERATE_INFOPLIST_FILE = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.holzherr.tigerworkouts.uitests;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_TARGET_NAME = TigerWorkouts;
+			};
+			name = Debug;
 		};
 		5860B7F54541693505FC8B86 /* Debug */ = {
 			isa = XCBuildConfiguration;
@@ -652,6 +730,23 @@
 			};
 			name = Release;
 		};
+		B620B95A91D175EB8E2A77B0 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				GENERATE_INFOPLIST_FILE = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.holzherr.tigerworkouts.uitests;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_TARGET_NAME = TigerWorkouts;
+			};
+			name = Release;
+		};
 		CB20FF07F0248896B2BD6004 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -763,6 +858,15 @@
 			buildConfigurations = (
 				5860B7F54541693505FC8B86 /* Debug */,
 				FF2C041588FAD9EBA8111123 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		7C7F4893C77F6D0484815D7D /* Build configuration list for PBXNativeTarget "TigerWorkoutsUITests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				3F1BB84723E3D51317473DC7 /* Debug */,
+				B620B95A91D175EB8E2A77B0 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Debug;

@@ -37,21 +37,33 @@ struct BigButtonStyle: ButtonStyle {
     }
 }
 
-/// The tiger stripes, without the tiger — the direction Nick picked for the logo rethink.
+/// The tiger stripes, without the tiger — the direction Nick picked for the logo. The same three
+/// leaning bars as the app icon, so the mark in the app and the one on the home screen match.
 struct Stripes: View {
-    var height: CGFloat = 6
-
     var body: some View {
-        GeometryReader { geo in
-            HStack(spacing: 0) {
-                ForEach(0..<4, id: \.self) { i in
-                    Rectangle().fill(i.isMultiple(of: 2) ? Brand.coral : .clear)
-                        .frame(width: geo.size.width / 4)
-                }
-            }
+        StripesShape().fill(Brand.coral)
+            .accessibilityHidden(true)
+    }
+}
+
+/// The icon's geometry, normalised to the mark's own box: bar offsets and widths as fractions of
+/// the width, leaning right at the top.
+struct StripesShape: Shape {
+    func path(in rect: CGRect) -> Path {
+        let lean = 0.074
+        let bars: [(x: Double, width: Double)] = [(0, 0.19), (0.353, 0.22), (0.735, 0.19)]
+        func point(_ x: Double, _ y: Double) -> CGPoint {
+            CGPoint(x: rect.minX + x * rect.width, y: rect.minY + y * rect.height)
         }
-        .frame(height: height)
-        .clipShape(Capsule())
+        var path = Path()
+        for bar in bars {
+            path.move(to: point(bar.x + lean, 0))
+            path.addLine(to: point(bar.x + bar.width + lean, 0))
+            path.addLine(to: point(bar.x + bar.width, 1))
+            path.addLine(to: point(bar.x, 1))
+            path.closeSubpath()
+        }
+        return path
     }
 }
 

@@ -52,10 +52,10 @@ struct StepEditorView: View {
                     }
                 }
 
-                if !unit.isEmpty {
-                    Section(unit == "kph" ? "Speed" : "Load") {
+                if step.hasSetting {
+                    Section(step.settingLabel) {
                         Stepper(value: Binding(get: { step.target ?? 0 }, set: { step.target = $0 }), in: 0...500, step: increment) {
-                            LabeledContent(unit == "kph" ? "Speed" : "Weight", value: step.target.map { "\(Format.number($0)) \(unit)" } ?? "—")
+                            LabeledContent(step.settingLabel, value: step.target.map { "\(Format.number($0)) \(unit)" } ?? "—")
                         }
                     }
                 }

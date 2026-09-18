@@ -83,24 +83,35 @@ Two things are yours to do once, because they need credentials or admin rights:
 
 ## Tests
 
-38 tests: the engine ported one for one from `runner.test.ts`, the muscle and effort models, the
-last-used carry-over, the editing operations, the whole catalogue decoding, and the `sessions` row
-and URL formats the two apps share.
+42 unit tests: the engine ported one for one from `runner.test.ts`, the muscle and effort models,
+the last-used carry-over, the editing operations, the Lock Screen state, the whole catalogue
+decoding, and the `sessions` row and URL formats the two apps share.
 
-Run them from Xcode (⌘U).
+5 UI walkthroughs on the simulator: browse, run and finish; write a workout; settings and the
+Health permission sheet; the Lock Screen card following a transition while the phone is locked;
+and reopening after the app was killed mid-workout. Each attaches a screenshot per stop:
 
-> **On this machine, `xcodebuild` cannot currently run.** The Xcode install's
-> `IDESimulatorFoundation` plug-in fails to load against a stale
-> `/Library/Developer/PrivateFrameworks/DVTDownloads.framework`, and no simulator runtimes are
-> installed. The fix needs admin rights:
->
-> ```sh
-> sudo xcodebuild -runFirstLaunch
-> ```
->
-> Until that runs, the app was verified by type-checking every source against the iOS 26.5 device
-> SDK (clean, no warnings) and by running the whole test suite on macOS through a SwiftPM harness
-> over the platform-free sources. The UI has not been run on a device or simulator yet.
+```sh
+xcodebuild -project TigerWorkouts.xcodeproj -scheme TigerWorkouts \
+  -destination 'platform=iOS Simulator,name=iPhone 17 Pro' -resultBundlePath out.xcresult test
+xcrun xcresulttool export attachments --path out.xcresult --output-path shots
+```
+
+The app logs its Live Activity updates and audio session under the subsystem
+`com.holzherr.tigerworkouts`, which is how the update flood below was found:
+
+```sh
+xcrun simctl spawn booted log stream --predicate 'subsystem == "com.holzherr.tigerworkouts"'
+```
+
+## Things the simulator taught
+
+- **The Lock Screen state must hold still for a slot.** The controller pushes when it changes, and
+  iOS throttles an app that updates too often. Live progress in it made every 100 ms tick an
+  update — 512 in two minutes — and the one that mattered got dropped. It now steps at slot
+  boundaries: 7 updates for the same run.
+- **An interrupted session is offered, not forced.** Reopen after the app was killed and it asks:
+  Resume (paused, so the closed time does not count), Save what I did, or Discard.
 
 ## Writing workouts
 

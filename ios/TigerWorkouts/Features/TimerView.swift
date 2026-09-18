@@ -155,7 +155,7 @@ struct TimerView: View {
 
             countdown
 
-            if !isRest, let ex = runner.slot?.exercise, !ex.shortUnit.isEmpty {
+            if !isRest, let ex = runner.slot?.exercise, ex.hasSetting {
                 inlineNudge(ex)
             }
         }
@@ -343,7 +343,7 @@ struct TimerView: View {
         return ScrollView {
             VStack(spacing: 20) {
                 VStack(spacing: 6) {
-                    Stripes(height: 6).frame(width: 80)
+                    Stripes().frame(width: 34, height: 28)
                     Text("Workout saved").font(.largeTitle.weight(.bold))
                     Text(runner.runsheet.title).font(.headline).foregroundStyle(Brand.muted)
                 }

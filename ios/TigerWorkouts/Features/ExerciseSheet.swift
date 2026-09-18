@@ -34,8 +34,8 @@ struct ExerciseSheet: View {
                         }
                     }
 
-                    if let target, !unit.isEmpty {
-                        stepper(title: unit == "kph" ? "Speed" : "Load", unit: unit, value: target, by: increment)
+                    if let target, step.hasSetting {
+                        stepper(title: step.settingLabel, unit: unit, value: target, by: increment)
                     }
                     if showsIncline, let incline {
                         stepper(title: "Incline", unit: "%", value: incline, by: 0.5)
