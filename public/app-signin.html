@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Signing in · TigerWorkouts</title>
+<style>
+  :root { color-scheme: light dark; }
+  body { margin: 0; min-height: 100vh; display: grid; place-items: center; font: 17px/1.4 -apple-system, system-ui, sans-serif; background: #f8fafc; color: #0f172a; }
+  @media (prefers-color-scheme: dark) { body { background: #0b1019; color: #f1f5f9; } }
+</style>
+</head>
+<body>
+<p>Opening Google…</p>
+<script>
+  // Where the iPhone app starts Google sign-in, so iOS names tigerworkouts.com in its
+  // "wants to use … to sign in" prompt rather than the Supabase project address.
+  // Only the PKCE challenge is taken from the page address; everything else is fixed here.
+  (function () {
+    var q = new URLSearchParams(location.search);
+    var challenge = q.get('code_challenge') || '';
+    if (!/^[A-Za-z0-9_-]{43,128}$/.test(challenge)) {
+      document.querySelector('p').textContent = 'Start sign-in from the TigerWorkouts app.';
+      return;
+    }
+    var next = new URL('https://icpdzjohsvlpyaluxgbt.supabase.co/auth/v1/authorize');
+    next.searchParams.set('provider', 'google');
+    next.searchParams.set('redirect_to', 'tigerworkouts://auth');
+    next.searchParams.set('code_challenge', challenge);
+    next.searchParams.set('code_challenge_method', 's256');
+    location.replace(next.toString());
+  })();
+</script>
+</body>
+</html>
