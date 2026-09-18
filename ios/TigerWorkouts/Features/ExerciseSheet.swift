@@ -10,6 +10,7 @@ struct ExerciseSheet: View {
     /// Shown mid-session: a change from here applies to this round and every one after it.
     var appliesFromHere = false
     var onDrop: (() -> Void)?
+    var dropLabel = "Drop for the rest of the session"
 
     @Environment(\.dismiss) private var dismiss
 
@@ -52,7 +53,7 @@ struct ExerciseSheet: View {
                             onDrop()
                             dismiss()
                         } label: {
-                            Text("Drop for the rest of the session")
+                            Text(dropLabel)
                         }
                         .buttonStyle(BigButtonStyle(tint: .red, filled: false))
                     }

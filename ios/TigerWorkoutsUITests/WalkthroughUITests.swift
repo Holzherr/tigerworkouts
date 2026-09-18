@@ -86,6 +86,43 @@ final class WalkthroughUITests: XCTestCase {
         snap("10 History")
     }
 
+    /// The workout page is the editor: drag, remove and add without finding an edit mode.
+    func testEditOnTheWorkoutPage() {
+        open("Tabata This")
+        let rower = app.buttons.matching(NSPredicate(format: "label BEGINSWITH[c] 'Row'")).firstMatch
+        let rest = app.buttons.matching(NSPredicate(format: "label BEGINSWITH[c] 'Rest'")).firstMatch
+        XCTAssertTrue(rower.waitForExistence(timeout: 5))
+        XCTAssertLessThan(rower.frame.minY, rest.frame.minY)
+        snap("21 Workout page, editable")
+
+        // Hold and drag the rest above the rower.
+        rest.press(forDuration: 0.8, thenDragTo: rower)
+        sleep(1)
+        XCTAssertLessThan(rest.frame.minY, rower.frame.minY, "dragging should reorder in place")
+
+        // A catalogue workout is never written over: the change is offered as a copy.
+        XCTAssertTrue(app.staticTexts["Changed for this session"].waitForExistence(timeout: 3))
+        snap("22 Reordered, session only")
+        tap(app.buttons["Save as mine"])
+        XCTAssertTrue(app.navigationBars["Tabata This (mine)"].waitForExistence(timeout: 5))
+        XCTAssertFalse(app.staticTexts["Changed for this session"].exists)
+
+        // Add straight from the page.
+        tap(app.buttons["Add exercise"].firstMatch)
+        let search = app.searchFields["Exercise"]
+        tap(search)
+        search.typeText("Kettlebell swing")
+        tap(app.buttons.matching(NSPredicate(format: "label BEGINSWITH[c] 'Kettlebell swing'")).firstMatch)
+        let swing = app.buttons.matching(NSPredicate(format: "label BEGINSWITH[c] 'Kettlebell swing'")).firstMatch
+        XCTAssertTrue(swing.waitForExistence(timeout: 5), "an added exercise should appear on the page")
+
+        // Swipe it away again.
+        swing.swipeLeft()
+        tap(app.buttons["Delete"])
+        XCTAssertFalse(swing.waitForExistence(timeout: 2))
+        snap("23 My copy, edited")
+    }
+
     func testWriteAWorkout() {
         XCTAssertTrue(app.navigationBars["Tiger"].waitForExistence(timeout: 10))
         tap(app.buttons["Write a workout"])

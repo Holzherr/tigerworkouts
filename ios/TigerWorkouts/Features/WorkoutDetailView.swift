@@ -1,39 +1,63 @@
 import SwiftUI
 
 /// A workout before you start it: what it is, where it came from, and every step with its photo.
-/// Any exercise opens with its steppers — there is no edit mode to find.
+/// The page is the editor: drag to reorder, swipe to remove, tap to change — no edit mode to find.
 struct WorkoutDetailView: View {
     @Environment(Store.self) private var store
     @State var runsheet: Runsheet
     var onStart: (Runsheet) -> Void
 
     @State private var editing: ExerciseStep?
+    @State private var editingRest: RestStep?
     @State private var writing: Runsheet?
+    @State private var picking: PickTarget?
+    @State private var sessionOnly = false
+    @State private var pendingSave: Task<Void, Never>?
+
+    private struct PickTarget: Identifiable {
+        var id: String { blockId ?? "loose" }
+        var blockId: String?
+    }
 
     private var saved: Bool { store.saved.contains(runsheet.key) }
 
     var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 16) {
+        List {
+            Section {
                 header
                 if let description = runsheet.description, !description.isEmpty {
                     Text(description)
                         .font(.callout)
                         .foregroundStyle(Brand.body)
                         .lineSpacing(3)
-                        .padding(.horizontal, 4)
                 }
-                ForEach(Array(runsheet.items.enumerated()), id: \.offset) { _, item in
-                    switch item {
-                    case .block(let b): blockCard(b)
-                    case .step(let s): looseCard(s)
-                    case .ref: EmptyView()
-                    }
+                if sessionOnly { sessionOnlyBanner }
+                Text("Hold and drag to reorder · swipe to remove · tap to change")
+                    .font(.footnote)
+                    .foregroundStyle(Brand.faint)
+            }
+            .listRowBackground(Color.clear)
+            .listRowSeparator(.hidden)
+            .listRowInsets(EdgeInsets(top: 6, leading: 4, bottom: 6, trailing: 4))
+
+            ForEach(runsheet.items, id: \.id) { item in
+                switch item {
+                case .block(let b): blockSection(b)
+                case .step(let s): looseSection(s)
+                case .ref: EmptyView()
                 }
             }
-            .padding(16)
-            .padding(.bottom, 24)
+
+            Section {
+                Button { apply(Edit.addBlock(runsheet)) } label: {
+                    Label("Add block", systemImage: "square.stack.3d.up")
+                }
+                .foregroundStyle(Brand.coralInk)
+            }
+            .listRowBackground(Brand.surface)
         }
+        .listStyle(.insetGrouped)
+        .scrollContentBackground(.hidden)
         .background(Brand.canvas)
         .navigationTitle(runsheet.title)
         .navigationBarTitleDisplayMode(.inline)
@@ -44,14 +68,14 @@ struct WorkoutDetailView: View {
                         Button {
                             writing = runsheet
                         } label: {
-                            Label("Edit workout", systemImage: "square.and.pencil")
+                            Label("Name, blocks and rounds", systemImage: "square.and.pencil")
                         }
                     } else {
                         // A catalogue workout is never written over: you get a copy of your own.
                         Button {
-                            writing = Edit.duplicate(runsheet, creator: store.user?.email)
+                            saveAsMine()
                         } label: {
-                            Label("Make a copy I can edit", systemImage: "doc.on.doc")
+                            Label("Save as my workout", systemImage: "doc.on.doc")
                         }
                     }
                     if let url = runsheet.source?.url.flatMap(URL.init(string:)) {
@@ -72,15 +96,90 @@ struct WorkoutDetailView: View {
         }
         .safeAreaInset(edge: .bottom) { bottomBar }
         .sheet(item: $editing) { step in
-            // Steppers are here because this screen passes handlers — there is no separate edit
-            // mode to find, on any screen that shows an exercise.
             ExerciseSheet(
                 step: step,
                 target: bind(step.id, \.target),
-                incline: bind(step.id, \.incline)
+                incline: bind(step.id, \.incline),
+                onDrop: { apply(Edit.removeStep(runsheet, stepId: step.id)) },
+                dropLabel: "Remove from this workout"
             )
             .presentationDetents([.medium, .large])
         }
+        .sheet(item: $editingRest) { rest in
+            RestEditorView(seconds: rest.seconds) { seconds in
+                apply(Edit.updateRest(runsheet, id: rest.id, seconds: seconds))
+            } onRemove: {
+                apply(Edit.removeStep(runsheet, stepId: rest.id))
+            }
+        }
+        .sheet(item: $picking) { target in
+            ExercisePickerView { exercise in
+                apply(Edit.addExercise(runsheet, to: target.blockId, exercise: exercise))
+            }
+        }
+        .onDisappear { flushSave() }
+    }
+
+    // MARK: - Editing in place
+
+    /// Every change goes through here. Your own workout saves itself a moment after the last
+    /// change; a catalogue workout is never written over, so its changes ride along into the
+    /// session you start and the banner offers to keep them as a copy.
+    private func apply(_ next: Runsheet) {
+        runsheet = next
+        if let id = editing?.id { editing = find(id) }
+        if store.isMine(runsheet) {
+            scheduleSave()
+        } else {
+            sessionOnly = true
+        }
+    }
+
+    private func scheduleSave() {
+        pendingSave?.cancel()
+        let sheet = runsheet
+        pendingSave = Task {
+            try? await Task.sleep(for: .milliseconds(700))
+            guard !Task.isCancelled else { return }
+            await store.saveWorkout(sheet)
+        }
+    }
+
+    private func flushSave() {
+        guard let task = pendingSave, !task.isCancelled, store.isMine(runsheet) else { return }
+        task.cancel()
+        let sheet = runsheet
+        Task { await store.saveWorkout(sheet) }
+    }
+
+    private func saveAsMine() {
+        let wasSaved = saved
+        let copy = Edit.duplicate(runsheet, creator: store.user?.email)
+        runsheet = copy
+        sessionOnly = false
+        Task {
+            await store.saveWorkout(copy)
+            if wasSaved { await store.toggleSaved(copy.key) }
+        }
+    }
+
+    private var sessionOnlyBanner: some View {
+        HStack(spacing: 12) {
+            VStack(alignment: .leading, spacing: 2) {
+                Text("Changed for this session").font(.subheadline.weight(.semibold)).foregroundStyle(Brand.ink)
+                Text("Keep them by saving your own copy.").font(.footnote).foregroundStyle(Brand.muted)
+            }
+            Spacer()
+            Button("Save as mine") { saveAsMine() }
+                .font(.subheadline.weight(.bold))
+                .padding(.horizontal, 14)
+                .frame(height: 36)
+                .background(Brand.coral, in: Capsule())
+                .foregroundStyle(.white)
+                .buttonStyle(.plain)
+        }
+        .padding(12)
+        .background(Brand.coralSoft, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
     }
 
     private var header: some View {
@@ -158,38 +257,57 @@ struct WorkoutDetailView: View {
         .background(.bar)
     }
 
-    private func blockCard(_ b: Block) -> some View {
-        VStack(alignment: .leading, spacing: 0) {
-            HStack(alignment: .top) {
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(b.name).font(.headline).foregroundStyle(Brand.ink)
-                    Text(Format.duration(b.estimatedSeconds)).font(.footnote).foregroundStyle(Brand.muted)
-                }
+    private func blockSection(_ b: Block) -> some View {
+        Section {
+            ForEach(b.steps) { step in
+                stepRow(step)
+                    .listRowInsets(EdgeInsets(top: 0, leading: 0, bottom: 0, trailing: 0))
+                    .listRowBackground(Brand.surface)
+            }
+            .onMove { from, to in apply(Edit.moveSteps(runsheet, in: b.id, from: from, to: to)) }
+            .onDelete { offsets in
+                let ids = offsets.map { b.steps[$0].id }
+                apply(ids.reduce(runsheet) { Edit.removeStep($0, stepId: $1) })
+            }
+
+            Button { picking = PickTarget(blockId: b.id) } label: {
+                Label("Add exercise", systemImage: "plus")
+                    .font(.subheadline.weight(.semibold))
+            }
+            .foregroundStyle(Brand.coralInk)
+            .listRowBackground(Brand.surface)
+        } header: {
+            HStack(alignment: .firstTextBaseline) {
+                Text(b.name).font(.headline).foregroundStyle(Brand.ink)
+                Text(Format.duration(b.estimatedSeconds)).font(.footnote).foregroundStyle(Brand.muted)
                 Spacer()
                 Text(b.modeLabel)
-                    .font(.subheadline.weight(.bold))
-                    .padding(.horizontal, 10).frame(height: 28)
+                    .font(.footnote.weight(.bold))
+                    .padding(.horizontal, 10).frame(height: 24)
                     .background(Brand.coralSoft, in: Capsule())
                     .foregroundStyle(Brand.coralInk)
             }
-            .padding(14)
-
-            ForEach(b.steps) { step in
-                Divider().padding(.leading, 76)
-                stepRow(step)
-            }
+            .textCase(nil)
+            .padding(.horizontal, -4)
         }
-        .cardSurface()
     }
 
-    private func looseCard(_ s: Step) -> some View {
-        VStack(spacing: 0) { stepRow(s) }.cardSurface()
+    private func looseSection(_ s: Step) -> some View {
+        Section {
+            stepRow(s)
+                .listRowInsets(EdgeInsets(top: 0, leading: 0, bottom: 0, trailing: 0))
+                .listRowBackground(Brand.surface)
+                .swipeActions {
+                    Button("Remove", role: .destructive) { apply(Edit.removeStep(runsheet, stepId: s.id)) }
+                }
+        }
     }
 
     @ViewBuilder
     private func stepRow(_ step: Step) -> some View {
         switch step {
         case .rest(let r):
+            Button { editingRest = r } label: {
             HStack(spacing: 14) {
                 Image(systemName: "pause.fill")
                     .font(.system(size: 16, weight: .bold))
@@ -202,6 +320,9 @@ struct WorkoutDetailView: View {
             }
             .padding(.horizontal, 14)
             .padding(.vertical, 10)
+            .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
         case .exercise(let e):
             Button { editing = e } label: {
                 HStack(spacing: 14) {
@@ -231,35 +352,15 @@ struct WorkoutDetailView: View {
         return parts.joined(separator: " · ")
     }
 
-    /// Edits land on this screen's own copy and go into the session that starts from it.
+    /// Stepper changes take the same path as every other edit.
     private func bind(_ stepId: String, _ path: WritableKeyPath<ExerciseStep, Double?>) -> Binding<Double?> {
         Binding(
             get: { find(stepId)?[keyPath: path] },
-            set: { value in mutate(stepId) { $0[keyPath: path] = value } }
+            set: { value in apply(Edit.updateStep(runsheet, id: stepId) { $0[keyPath: path] = value }) }
         )
     }
 
     private func find(_ stepId: String) -> ExerciseStep? {
         runsheet.exerciseSteps.first { $0.id == stepId }
-    }
-
-    private func mutate(_ stepId: String, _ change: (inout ExerciseStep) -> Void) {
-        runsheet.items = runsheet.items.map { item in
-            switch item {
-            case .block(var b):
-                b.steps = b.steps.map { step in
-                    guard case .exercise(var e) = step, e.id == stepId else { return step }
-                    change(&e)
-                    return .exercise(e)
-                }
-                return .block(b)
-            case .step(.exercise(var e)) where e.id == stepId:
-                change(&e)
-                return .step(.exercise(e))
-            default:
-                return item
-            }
-        }
-        if let updated = find(stepId), editing?.id == stepId { editing = updated }
     }
 }
