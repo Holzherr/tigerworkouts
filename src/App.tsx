@@ -29,7 +29,7 @@ import { FollowAlongScreen } from '@/features/video/components/follow-along-scre
 import { TimerScreen } from '@/features/timer/components/timer-screen';
 import { useRunner } from '@/features/timer/use-runner';
 import * as Runner from '@/features/timer/runner';
-import type { SessionResult } from '@/features/runsheet/progression';
+import type { SessionOrigin, SessionResult } from '@/features/runsheet/progression';
 import { IMPORTED } from '@/features/workouts/imported';
 import { Button } from '@/shared/components/ui/button';
 import { Sheet } from '@/shared/components/ui/sheet';
@@ -83,8 +83,15 @@ export default function App() {
     fetchPublicWorkouts().then(setRemote).catch(() => {});
   }, [cloud.user]);
   const [route, setRoute] = useState<Route>(() => parse(location.hash));
+  // The list the current workout was opened from. Set by every path into /w/:id, cleared whenever a
+  // tab shows, so a Repeat or a Me-tab card after a Discover visit cannot inherit a stale origin.
+  const [from, setFrom] = useState<SessionOrigin | undefined>();
   useEffect(() => {
-    const on = () => setRoute(parse(location.hash));
+    const on = () => {
+      const r = parse(location.hash);
+      setRoute(r);
+      if (r.name === 'tab') setFrom(undefined);
+    };
     addEventListener('hashchange', on);
     return () => removeEventListener('hashchange', on);
   }, []);
@@ -124,6 +131,7 @@ export default function App() {
   const invite = async () => { const out = await shareLink('TigerWorkouts', location.origin + location.pathname); say(out === 'copied' ? 'Link copied' : out === 'shared' ? 'Shared' : 'Could not share'); };
   const [draft, setDraft] = useState<Runsheet | null>(null); // one-off edited copy for "Edit & start"
   const [pending, setPending] = useState<Partial<SessionResult> | null>(null); // what the timer recorded, for the result sheet
+  const open = (r: Runsheet, origin?: SessionOrigin) => (setFrom(origin), go(`/w/${encodeURIComponent(wid(r))}`));
   const [tmOpen, setTmOpen] = useState(false);
 
   const overlay = (
@@ -252,7 +260,7 @@ export default function App() {
   }
   if (route.name === 'import') {
     const shared = decodeShared(route.id);
-    return full(<ImportScreen runsheet={shared} onSave={r => { const mine = { ...r, id: `u-${Date.now().toString(36)}`, source: { ...(r.source ?? { title: r.title, kind: 'user' as const }), kind: 'user' as const, author: r.creator } }; act.saveWorkout(mine); go(`/w/${encodeURIComponent(mine.id!)}`); }} onDiscard={() => go('/discover')} />);
+    return full(<ImportScreen runsheet={shared} onSave={r => { const mine = { ...r, id: `u-${Date.now().toString(36)}`, source: { ...(r.source ?? { title: r.title, kind: 'user' as const }), kind: 'user' as const, author: r.creator } }; act.saveWorkout(mine); open(mine, 'link'); }} onDiscard={() => go('/discover')} />);
   }
   if (route.name === 'log') {
     const logged = decodeLogged(route.id);
@@ -289,7 +297,7 @@ export default function App() {
           onBack={() => go('/history')}
           onChange={p => act.updateResult(res.id!, p)}
           onDelete={() => (act.deleteResult(res.id!), go('/history'))}
-          onRepeat={r ? () => go(`/w/${encodeURIComponent(wid(r))}`) : undefined}
+          onRepeat={r ? () => open(r, 'history') : undefined}
         />
     );
   }
@@ -304,6 +312,7 @@ export default function App() {
           trainingMaxes={st.trainingMaxes}
           bodyweightKg={st.bodyweightKg}
           initial={pending ?? undefined}
+          startedFrom={from}
           onCancel={() => (setPending(null), go(`/w/${encodeURIComponent(route.id)}`))}
           onSave={(res, next) => {
             act.addResult({ ...res, runsheetId: wid(r) });
@@ -399,7 +408,7 @@ export default function App() {
             .map(id => byId.get(id))
             .filter((r): r is Runsheet => !!r)
             .map(r => (
-              <WorkoutCard key={wid(r)} runsheet={r} compact onOpen={() => go(`/w/${encodeURIComponent(wid(r))}`)} />
+              <WorkoutCard key={wid(r)} runsheet={r} compact onOpen={() => open(r, 'mine')} />
             ))}
           {st.saved.length === 0 && <div className="text-[13px] text-muted">Nothing saved yet.</div>}
         </div>
@@ -432,7 +441,7 @@ export default function App() {
       )}
     </>
   );
-  return shell('discover', <DiscoverScreen key={initialTab} initialTab={initialTab} workouts={all} results={st.results} savedIds={st.saved} above={above} onCreate={() => (setDraft(null), go('/new'))} onOpen={r => go(`/w/${encodeURIComponent(wid(r))}`)} onOpenProgram={(_, days) => go(`/w/${encodeURIComponent(wid(days[0]))}`)} />);
+  return shell('discover', <DiscoverScreen key={initialTab} initialTab={initialTab} workouts={all} results={st.results} savedIds={st.saved} above={above} onCreate={() => (setDraft(null), go('/new'))} onOpen={open} onOpenProgram={(_, days) => open(days[0], 'search')} />);
 }
 
 const RunRoute = ({ runsheet, onFinish, onExit }: { runsheet: Runsheet; onFinish: (r: Partial<SessionResult>) => void; onExit: () => void }) => {

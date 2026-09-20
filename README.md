@@ -85,6 +85,8 @@ Supabase sign-in (email code and Google) and three-way sync (sessions, own worko
 prefs, custom exercises; v0.9 rows preserved), editor with drag-to-group and text commands, 472
 imported workouts, scores and progression, follow-along videos, Discover with recommendations,
 settings, share links, quick log, post-workout stats with a body map, offline via a service worker.
+Each session records where it was started (`startedFrom`: a Discover tab, the Me tab, Repeat, a
+share link) so the share started from a home recommendation can be measured.
 
 Not yet: imperial units in the UI (stored only), Fitbit heart rate is read on the session page but
 not charted, Storybook stories for every screen state.

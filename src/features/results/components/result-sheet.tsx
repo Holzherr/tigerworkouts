@@ -9,7 +9,7 @@ import { SessionStats } from './session-stats';
 import { Stepper } from '@/shared/components/ui/stepper';
 import { cn } from '@/shared/utils/ui-utils';
 import { scoreType, type ExerciseStep, type Runsheet } from '@/features/runsheet/model';
-import { fmtScore, nextLoads, resolveTarget, type NextLoad, type SessionResult, type StepResult, type TrainingMaxes } from '@/features/runsheet/progression';
+import { fmtScore, nextLoads, resolveTarget, type NextLoad, type SessionOrigin, type SessionResult, type StepResult, type TrainingMaxes } from '@/features/runsheet/progression';
 import { ScoreEntry } from './score-entry';
 
 export interface ResultSheetProps {
@@ -21,6 +21,8 @@ export interface ResultSheetProps {
   startedAt?: string;
   /** What the timer recorded: score, per-step targets and reps, duration. */
   initial?: Partial<SessionResult>;
+  /** Where the user started this session from; saved on the result so home_reco_used can be measured. */
+  startedFrom?: SessionOrigin;
   onSave: (result: SessionResult, next: NextLoad[]) => void;
   onCancel?: () => void;
 }
@@ -33,7 +35,7 @@ const exerciseSteps = (r: Runsheet): ExerciseStep[] => r.items.flatMap(it => (it
  * reps on any 5+ or max set. Bottom: "Next time" lines produced by the progression rules, then
  * Save. Pure: the host stores the result and updates training maxes.
  */
-export const ResultSheet = ({ runsheet, history = [], trainingMaxes = {}, bodyweightKg, startedAt, initial, onSave, onCancel }: ResultSheetProps) => {
+export const ResultSheet = ({ runsheet, history = [], trainingMaxes = {}, bodyweightKg, startedAt, initial, startedFrom, onSave, onCancel }: ResultSheetProps) => {
   const type = scoreType(runsheet);
   const steps = useMemo(() => exerciseSteps(runsheet), [runsheet]);
   const hasProgression = !!runsheet.progression || runsheet.items.some(i => i.kind === 'block' && i.progression);
@@ -47,7 +49,7 @@ export const ResultSheet = ({ runsheet, history = [], trainingMaxes = {}, bodywe
       })
     )
   );
-  const result: SessionResult = { ...initial, runsheetId: runsheet.id ?? runsheet.title, title: runsheet.title, startedAt: initial?.startedAt ?? startedAt ?? new Date().toISOString(), endedAt: initial?.endedAt ?? new Date().toISOString(), score, scoreText: score !== undefined ? fmtScore(type, score) : undefined, steps: Object.values(rows), notes: notes || undefined };
+  const result: SessionResult = { ...initial, runsheetId: runsheet.id ?? runsheet.title, title: runsheet.title, startedAt: initial?.startedAt ?? startedAt ?? new Date().toISOString(), endedAt: initial?.endedAt ?? new Date().toISOString(), score, scoreText: score !== undefined ? fmtScore(type, score) : undefined, steps: Object.values(rows), notes: notes || undefined, startedFrom };
   const next = useMemo(() => nextLoads(runsheet, result, history, trainingMaxes), [runsheet, result, history, trainingMaxes]);
   const set = (id: string, patch: Partial<StepResult>) => setRows(r => ({ ...r, [id]: { ...r[id], ...patch } }));
   const seen = new Set<string>();
