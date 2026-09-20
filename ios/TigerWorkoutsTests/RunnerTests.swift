@@ -175,3 +175,71 @@ struct RunTests {
         #expect(result.completed == true)
     }
 }
+
+/// What the workout screen shows is what the session runs: last-used numbers are seeded there,
+/// once, and the runner takes the sheet as handed over.
+@Suite("session runner")
+struct SessionRunnerTests {
+    static let sprint = ExerciseRef(key: "sprint", name: "Treadmill sprints", unit: "kph", step: 0.5)
+
+    /// 2 rounds of 30 s sprints at 10 kph, as written — no incline.
+    static func sprints() -> Runsheet {
+        Runsheet(id: "sp", title: "Sprints", items: [.block(Block(
+            id: "b", name: "Sprints", repeatCount: 2,
+            steps: [Fixtures.work("s1", sprint, target: 10), Fixtures.rest("r1", 30)]
+        ))])
+    }
+
+    /// Last week's session: 12 kph at 1% incline.
+    static func history() -> [SessionResult] {
+        [SessionResult(
+            runsheetId: "sp", title: "Sprints", startedAt: "2026-09-13T17:00:00.000Z",
+            steps: [StepResult(stepId: "s1", exerciseKey: "sprint", target: 12, incline: 1, reps: nil, success: true)]
+        )]
+    }
+
+    @Test("what is set on the workout screen is what the session starts with")
+    @MainActor
+    func screenIsWhatRuns() {
+        // The screen seeds once, before the numbers are seen.
+        let seeded = Settings.withLastUsed(Self.sprints(), results: Self.history())
+        #expect(seeded.exerciseSteps.first?.target == 12)
+        #expect(seeded.exerciseSteps.first?.incline == 1)
+        // Then the incline is set to 5 on the screen, the way its sheet does it.
+        let edited = Edit.updateStep(seeded, id: "s1") { $0.incline = 5 }
+        let runner = SessionRunner(runsheet: edited)
+        #expect(Runner.effectiveIncline(runner.state, 0) == 5)
+        #expect(Runner.effectiveTarget(runner.state, 0) == 12)
+    }
+
+    @Test("the runner leaves every target and incline exactly as passed")
+    @MainActor
+    func verbatim() {
+        let sheet = Edit.updateStep(Self.sprints(), id: "s1") { $0.target = 14; $0.incline = 3 }
+        let runner = SessionRunner(runsheet: sheet)
+        #expect(runner.runsheet == sheet)
+        #expect(runner.state.slots.compactMap { $0.exercise?.target } == [14, 14])
+        #expect(runner.state.slots.compactMap { $0.exercise?.incline } == [3, 3])
+    }
+
+    @Test("the timer's incline line reads the incline and follows a change from the sheet")
+    @MainActor
+    func inclineLine() throws {
+        let sheet = Edit.updateStep(Self.sprints(), id: "s1") { $0.incline = 5 }
+        let runner = SessionRunner(runsheet: sheet)
+        let step = try #require(runner.slot?.exercise)
+        #expect(TimerView.inclineLabel(runner.incline, for: step) == "5% incline")
+        runner.setStepIncline("s1", 6)
+        #expect(runner.incline == 6)
+        #expect(TimerView.inclineLabel(runner.incline, for: step) == "6% incline")
+        SessionRunner.clearSaved() // the change wrote a crash-safety copy; leave none behind
+    }
+
+    @Test("a step with no incline that is not on a treadmill has no incline line")
+    @MainActor
+    func noInclineLine() throws {
+        let runner = SessionRunner(runsheet: Fixtures.interval())
+        let step = try #require(runner.slot?.exercise)
+        #expect(TimerView.inclineLabel(runner.incline, for: step) == nil)
+    }
+}

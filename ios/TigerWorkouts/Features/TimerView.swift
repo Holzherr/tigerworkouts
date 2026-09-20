@@ -158,8 +158,26 @@ struct TimerView: View {
             if !isRest, let ex = runner.slot?.exercise, ex.hasSetting {
                 inlineNudge(ex)
             }
+            if !isRest, let ex = runner.slot?.exercise, let label = TimerView.inclineLabel(runner.incline, for: ex) {
+                Button { editing = ex } label: {
+                    Text(label)
+                        .font(.title3)
+                        .foregroundStyle(Brand.muted)
+                        .frame(minHeight: Tap.regular)
+                        .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+            }
         }
         .padding(.horizontal, 20)
+    }
+
+    /// The treadmill's other dial, under the speed. Nil for anything without one, so a bench has
+    /// no incline line; a treadmill step with none yet set gets a line that opens the sheet.
+    nonisolated static func inclineLabel(_ incline: Double?, for step: ExerciseStep) -> String? {
+        let treadmill = Library.shared.group(step.exercise.key).map { [.treadmill, .walk, .run].contains($0) } ?? false
+        guard incline != nil || step.incline != nil || treadmill else { return nil }
+        return incline.map { "\(Format.number($0))% incline" } ?? "Set incline"
     }
 
     private var countdown: some View {

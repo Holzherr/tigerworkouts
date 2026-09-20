@@ -16,11 +16,12 @@ final class SessionRunner {
     private var cuedPhase: Phase?
     private var lastTick: Int?
 
-    init(runsheet: Runsheet, history: [SessionResult] = []) {
-        // Start on the numbers you finished on last time, not what the workout was written with.
-        let seeded = Settings.withLastUsed(runsheet, results: history)
-        self.runsheet = seeded
-        self.state = Runner.start(seeded, now: Date().timeIntervalSince1970 * 1000)
+    /// Runs the runsheet exactly as handed over. The workout screen seeds the last-used numbers
+    /// once, before they are seen, and whatever is set on it after that is what starts here —
+    /// seeding again at this point put last time's numbers back over what had just been set.
+    init(runsheet: Runsheet) {
+        self.runsheet = runsheet
+        self.state = Runner.start(runsheet, now: Date().timeIntervalSince1970 * 1000)
     }
 
     /// Resume a session the app was killed in the middle of. It comes back paused at the moment
