@@ -34,10 +34,15 @@ export interface StepResult {
   success?: boolean;
 }
 
+/** The list the user tapped to reach the workout: a Discover tab, the Me tab's saved list, Repeat on a past session, or a share link. */
+export type SessionOrigin = 'recommended' | 'saved' | 'search' | 'mine' | 'history' | 'link';
+
 export interface SessionResult {
   /** Stable id (sessions.id); assigned on first save. */
   id?: string;
   runsheetId: string;
+  /** Where the session was started from; unset for direct URLs, quick logs and rows from before it was recorded. */
+  startedFrom?: SessionOrigin;
   /** Title at the time, so history reads even if the workout is gone. */
   title?: string;
   startedAt: string;
