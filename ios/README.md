@@ -97,6 +97,11 @@ xcodebuild -project TigerWorkouts.xcodeproj -scheme TigerWorkouts \
 xcrun xcresulttool export attachments --path out.xcresult --output-path shots
 ```
 
+The same runs on a hosted Mac for every pull request that touches `ios/`
+(`.github/workflows/ios.yml`): the unit tests are the check that must pass; the walkthroughs run as
+a second leg that may fail on the runner without blocking the PR, and a failed leg uploads its
+`out.xcresult` as an artifact.
+
 The app logs its Live Activity updates and audio session under the subsystem
 `com.holzherr.tigerworkouts`, which is how the update flood below was found:
 
