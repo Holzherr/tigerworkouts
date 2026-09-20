@@ -34,3 +34,7 @@ deploying. See README.md for what is where.
 
 Branch per change (`feat/…`, `fix/…`, `chore/…`), in a worktree beside the clone
 (`../tigerworkouts-<task>`), PR, then merge — Nick merges; an agent's merge is usually blocked.
+
+## Specs, goals and learnings
+
+Product context lives in `specs/`. Read `README.md` there first, then the spec your task cites. `GOALS.md` is Nick's and stays untouched. `DECISIONS.md` and `LEARNINGS.md` are append-only: add a dated line when you decide or learn something, never rewrite. One spec per feature, first line `Status: draft | agreed | building | built`. Backlog and nightly agent runs: https://github.com/Holzherr/agent-team.
