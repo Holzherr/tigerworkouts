@@ -2,6 +2,7 @@ import SwiftUI
 
 struct RootView: View {
     @Environment(Store.self) private var store
+    @Environment(\.scenePhase) private var scenePhase
     @State private var tab = Tab.workouts
     @State private var running: SessionRunner?
     @State private var interrupted: Interrupted?
@@ -74,10 +75,19 @@ struct RootView: View {
         } message: { pending in
             Text("\(pending.sheet.title) was still running when the app closed, \(pending.savedAt.formatted(.relative(presentation: .named))).")
         }
+        .onChange(of: scenePhase) { _, phase in Self.scenePhaseChanged(to: phase) }
     }
 
     private func start(_ sheet: Runsheet) {
         running = SessionRunner(runsheet: sheet, history: store.results)
+    }
+
+    /// iOS stops the haptic engine when the app leaves the foreground. Coming back is the moment
+    /// to start it again, rather than the first cue of a session in the gym.
+    @MainActor
+    static func scenePhaseChanged(to phase: ScenePhase, restart: @MainActor () -> Void = { Haptics.shared.restart() }) {
+        guard phase == .active else { return }
+        restart()
     }
 }
 

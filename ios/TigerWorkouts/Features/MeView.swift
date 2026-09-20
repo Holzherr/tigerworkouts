@@ -28,6 +28,12 @@ struct MeView: View {
 
                 Section {
                     Toggle("Buzz on every change", isOn: $haptics)
+                    // The simulator cannot buzz, so this is the two-second check in the gym.
+                    Button("Test buzz") { Task { await Self.testBuzz { Haptics.shared.play($0) } } }
+                        .disabled(!haptics)
+                    Text("Haptic engine: \(Haptics.shared.status.label)")
+                        .font(.footnote)
+                        .foregroundStyle(Brand.muted)
                     Toggle("Tones", isOn: $sound)
                     Toggle("Lock Screen card", isOn: $liveActivity)
                 } header: {
@@ -91,5 +97,14 @@ struct MeView: View {
                 }
             }
         }
+    }
+
+    /// Work's double tap, then the finish roll half a second later: the two shapes that matter
+    /// most, close enough together to feel in one go.
+    @MainActor
+    static func testBuzz(play: @MainActor (Haptics.Cue) -> Void) async {
+        play(.work)
+        try? await Task.sleep(for: .milliseconds(500))
+        play(.finish)
     }
 }
