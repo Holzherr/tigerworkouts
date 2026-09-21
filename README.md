@@ -31,6 +31,9 @@ The custom domain is the `CNAME` file. Run it by hand with
 
 - Backend: Supabase project `icpdzjohsvlpyaluxgbt` (anon key in `src/app/config.ts`; row-level
   security protects the data). Schema in `legacy/supabase/migrations/`.
+- Nightly report: `legacy/supabase/migrations/0004_agent_snapshot.sql` adds `agent_snapshot(days)`,
+  aggregates only (sessions per day, start origins per owner, top workouts, owner ids), and the
+  login role `agent_reader` that can run only that function. Nick applies it and sets the password.
 - The service worker keeps navigations network-first, and Cloudflare must never cache `/sw.js` —
   a stale worker is what once stranded a phone on an old build.
 - Domain setup, for the record: [SETUP.md](./SETUP.md).
