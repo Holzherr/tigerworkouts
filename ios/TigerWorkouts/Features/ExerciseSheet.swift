@@ -10,11 +10,15 @@ struct ExerciseSheet: View {
     /// Shown mid-session: a change from here applies to this round and every one after it.
     var appliesFromHere = false
     var onDrop: (() -> Void)?
+    /// Offered when the host can act on it: swapping mid-session changes this step from here on.
+    var onSwap: ((Alternatives.Option) -> Void)?
 
     @Environment(\.dismiss) private var dismiss
 
     private var unit: String { step.shortUnit }
     private var increment: Double { step.exercise.step == 0 ? 1 : step.exercise.step }
+    private var alternatives: [Alternatives.Option] { Alternatives.options(for: step) }
+
     private var showsIncline: Bool {
         incline != nil && (step.incline != nil || Library.shared.group(step.exercise.key).map { [.treadmill, .walk, .run].contains($0) } ?? false)
     }
@@ -45,6 +49,13 @@ struct ExerciseSheet: View {
                         Label("Applies from here to the end of the session", systemImage: "arrow.right.circle")
                             .font(.footnote)
                             .foregroundStyle(Brand.muted)
+                    }
+
+                    if let onSwap, !alternatives.isEmpty {
+                        SwapList(options: alternatives, onPick: { option in
+                            onSwap(option)
+                            dismiss()
+                        })
                     }
 
                     if let onDrop {
@@ -106,5 +117,53 @@ struct ExerciseSheet: View {
         }
         .disabled(!enabled)
         .opacity(enabled ? 1 : 0.4)
+    }
+}
+
+/// What to do instead when the kit is taken: the same movement, other equipment, the load
+/// converted into that exercise's own terms.
+private struct SwapList: View {
+    let options: [Alternatives.Option]
+    let onPick: (Alternatives.Option) -> Void
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Text("If it is busy")
+                .font(.caption.weight(.semibold))
+                .textCase(.uppercase)
+                .tracking(0.6)
+                .foregroundStyle(Brand.muted)
+            ForEach(options) { option in
+                Button { onPick(option) } label: { row(option) }
+                    .buttonStyle(.plain)
+            }
+            Text("Swapping keeps the rounds you have already done.")
+                .font(.footnote)
+                .foregroundStyle(Brand.muted)
+        }
+    }
+
+    private func row(_ option: Alternatives.Option) -> some View {
+        HStack(spacing: 12) {
+            VStack(alignment: .leading, spacing: 2) {
+                Text(option.exercise.name).foregroundStyle(Brand.ink)
+                Text(subtitle(option)).font(.footnote).foregroundStyle(Brand.muted)
+            }
+            Spacer(minLength: 8)
+            Image(systemName: "arrow.left.arrow.right")
+                .font(.footnote.weight(.semibold))
+                .foregroundStyle(Brand.coralInk)
+        }
+        .padding(12)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(Color.white, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+        .overlay(RoundedRectangle(cornerRadius: 14, style: .continuous).strokeBorder(Brand.line))
+        .contentShape(Rectangle())
+    }
+
+    /// "45 kg · Machine" — the load in the new exercise's own terms, and where to find it.
+    private func subtitle(_ option: Alternatives.Option) -> String {
+        guard let target = option.target else { return option.why }
+        return "\(Format.number(target)) \(option.exercise.unit) · \(option.why)"
     }
 }

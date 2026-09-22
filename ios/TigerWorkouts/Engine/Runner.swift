@@ -404,6 +404,24 @@ enum Runner {
         return c?.step.id == stepId ? enter(s, s.i, now) : s
     }
 
+    /// Swap the exercise of a step for another, from the current slot to the end of the session.
+    /// The machine Nick planned for is taken, so the session carries on with what is free — rounds
+    /// already done keep the exercise they were done with.
+    static func swap(_ s: RunState, now: Double, stepId: String, to: ExerciseRef, target: Double?) -> RunState {
+        let c = current(s)
+        let cursor = s.i
+        var s = s
+        s.slots = s.slots.enumerated().map { idx, sl in
+            guard idx >= cursor, sl.step.id == stepId, case .exercise(var e) = sl.step else { return sl }
+            e.exercise = to
+            e.target = target
+            var sl = sl
+            sl.step = .exercise(e)
+            return sl
+        }
+        return c?.step.id == stepId ? enter(s, s.i, now) : s
+    }
+
     static func finish(_ s: RunState, now: Double) -> RunState {
         var s = s
         s.phase = .done

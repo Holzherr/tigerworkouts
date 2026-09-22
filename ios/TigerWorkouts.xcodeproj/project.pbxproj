@@ -33,6 +33,7 @@
 		62458617B29ED7E87271BFC1 /* Store.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3553A92F9E0608BC81CAEAA /* Store.swift */; };
 		698125144849D984B6BEEE2D /* Supabase.swift in Sources */ = {isa = PBXBuildFile; fileRef = A3A09492CA4F6D818301F1C5 /* Supabase.swift */; };
 		69FF8C0873FFC9CB1AC24874 /* BodyMapView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1361DFA536CAFC0E96184089 /* BodyMapView.swift */; };
+		718720872993CC8DF123D1A5 /* AlternativesTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A063D7FDBD9EAB4C94F2CABE /* AlternativesTests.swift */; };
 		723F78A5E55D1D56F63EBBB1 /* Cues.swift in Sources */ = {isa = PBXBuildFile; fileRef = 98F9F72F6AD1476394E67175 /* Cues.swift */; };
 		76085B04BF688AF141413219 /* SessionStatsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0AEA755E81BBCA7F928A9CE4 /* SessionStatsView.swift */; };
 		77321A9F5C2B299AA484314C /* SyncTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E84311BE7C5AA68401341805 /* SyncTests.swift */; };
@@ -51,6 +52,7 @@
 		C82FB9423C1D5590112C01AB /* TimerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B5D498E61C4056DA33C03731 /* TimerView.swift */; };
 		C9123A2932AA4558713D3BEE /* SessionActivity.swift in Sources */ = {isa = PBXBuildFile; fileRef = DC9366D79FD67D11C4687AC3 /* SessionActivity.swift */; };
 		CA84645AFB81CCB16FAF4619 /* TigerWorkoutsApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = B98162A061F4395442DDC3C1 /* TigerWorkoutsApp.swift */; };
+		CAC184D9B16B619FDD530E31 /* Alternatives.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3B0EF9CE730C524EA109E8D0 /* Alternatives.swift */; };
 		CD95FA53A7C13FDA78158663 /* Health.swift in Sources */ = {isa = PBXBuildFile; fileRef = 49526F5BAD78DFB059EC6918 /* Health.swift */; };
 		CF109BE9085D2D36932E37E3 /* WalkthroughUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1CA40FB23F26CFD0D7CB467 /* WalkthroughUITests.swift */; };
 		D13C662CBC346212040F776E /* SessionRunner.swift in Sources */ = {isa = PBXBuildFile; fileRef = B5764E5C8674AB9AF9B73008 /* SessionRunner.swift */; };
@@ -116,6 +118,7 @@
 		38611D00C12C8D5497FC0713 /* RunnerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RunnerTests.swift; sourceTree = "<group>"; };
 		39DFAF6D4A3365D7D78C8D6C /* MeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MeView.swift; sourceTree = "<group>"; };
 		3A75761718C352B299FE6FAE /* Haptics.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Haptics.swift; sourceTree = "<group>"; };
+		3B0EF9CE730C524EA109E8D0 /* Alternatives.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Alternatives.swift; sourceTree = "<group>"; };
 		49526F5BAD78DFB059EC6918 /* Health.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Health.swift; sourceTree = "<group>"; };
 		4F1D59738246E472AB5AD52D /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		5820D43896B67ACA2086F001 /* workouts.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = workouts.json; sourceTree = "<group>"; };
@@ -132,6 +135,7 @@
 		98F9F72F6AD1476394E67175 /* Cues.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Cues.swift; sourceTree = "<group>"; };
 		9DEDC2C77E61EEC2DBC8D7A7 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		9F5AADA27786288575C5751A /* TigerWorkouts.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = TigerWorkouts.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		A063D7FDBD9EAB4C94F2CABE /* AlternativesTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AlternativesTests.swift; sourceTree = "<group>"; };
 		A3A09492CA4F6D818301F1C5 /* Supabase.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Supabase.swift; sourceTree = "<group>"; };
 		A49A094C79F8B5520AF51CD2 /* LastUsed.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LastUsed.swift; sourceTree = "<group>"; };
 		B3B6B0782F16CEA9ECD79A1E /* SessionResult.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionResult.swift; sourceTree = "<group>"; };
@@ -257,6 +261,7 @@
 		A85652151D39A0391C5C5DEF /* TigerWorkoutsTests */ = {
 			isa = PBXGroup;
 			children = (
+				A063D7FDBD9EAB4C94F2CABE /* AlternativesTests.swift */,
 				2333BFB4C8394D4D3D82D69F /* CatalogueTests.swift */,
 				03B24D2D55EFBC42BB378AFE /* EditingTests.swift */,
 				DF2925A193B28392EB5F9746 /* LiveActivityTests.swift */,
@@ -279,6 +284,7 @@
 		C9B5831D7E6DCCD786233744 /* Model */ = {
 			isa = PBXGroup;
 			children = (
+				3B0EF9CE730C524EA109E8D0 /* Alternatives.swift */,
 				0A7C84C7FDDB4BA9A91FFEDD /* Editing.swift */,
 				A49A094C79F8B5520AF51CD2 /* LastUsed.swift */,
 				5856434B2D5B998718B051FF /* Library.swift */,
@@ -495,6 +501,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				718720872993CC8DF123D1A5 /* AlternativesTests.swift in Sources */,
 				221B3BEEFB080270A1DD6C50 /* CatalogueTests.swift in Sources */,
 				4A186DEED593C0BA6739F608 /* EditingTests.swift in Sources */,
 				EB9FAD39D8876DE07D18AB3E /* LiveActivityTests.swift in Sources */,
@@ -509,6 +516,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				CAC184D9B16B619FDD530E31 /* Alternatives.swift in Sources */,
 				69FF8C0873FFC9CB1AC24874 /* BodyMapView.swift in Sources */,
 				723F78A5E55D1D56F63EBBB1 /* Cues.swift in Sources */,
 				85CDCDD2B5F6F3BF1A21BAC2 /* DiscoverView.swift in Sources */,

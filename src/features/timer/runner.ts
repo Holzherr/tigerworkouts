@@ -3,7 +3,7 @@
  * transition takes `now` in ms so it can be tested without a clock. The React hook adds the
  * interval, sounds, wake lock and persistence.
  */
-import { rungSteps, scoreType, type Block, type Runsheet, type Step } from '@/features/runsheet/model';
+import { rungSteps, scoreType, type Block, type ExerciseRef, type Runsheet, type Step } from '@/features/runsheet/model';
 import type { SessionResult, StepResult } from '@/features/runsheet/progression';
 
 export interface Slot {
@@ -282,6 +282,21 @@ export const drop = (s: RunState, now: number, stepId: string): RunState => {
   const c = current(s);
   const slots = s.slots.filter((sl, idx) => idx < s.i || sl.step.id !== stepId);
   const st = { ...s, slots, dropped: [...s.dropped, stepId] };
+  return c?.step.id === stepId ? enter(st, s.i, now) : st;
+};
+
+/**
+ * Swap the exercise of a step for another, from the current slot to the end of the session.
+ * The machine Nick planned for is taken, so the session carries on with what is free — rounds
+ * already done keep the exercise they were done with.
+ */
+export const swap = (s: RunState, now: number, stepId: string, to: ExerciseRef, target?: number): RunState => {
+  const c = current(s);
+  const slots = s.slots.map((sl, idx) => {
+    if (idx < s.i || sl.step.id !== stepId || sl.step.kind !== 'exercise') return sl;
+    return { ...sl, step: { ...sl.step, exercise: to, target } };
+  });
+  const st = { ...s, slots };
   return c?.step.id === stepId ? enter(st, s.i, now) : st;
 };
 

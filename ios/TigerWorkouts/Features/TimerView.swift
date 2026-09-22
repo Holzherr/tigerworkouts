@@ -8,6 +8,8 @@ struct TimerView: View {
 
     @State private var showOverview = false
     @State private var editing: ExerciseStep?
+    /// Opens tall: the alternatives sit under the steppers, and a half sheet hides them.
+    @State private var sheetDetent: PresentationDetent = .large
     @State private var confirmQuit = false
 
     private var isRest: Bool { runner.slot?.kind == .rest }
@@ -39,9 +41,10 @@ struct TimerView: View {
                     set: { if let v = $0 { runner.setStepIncline(step.id, v) } }
                 ),
                 appliesFromHere: true,
-                onDrop: { runner.drop(stepId: step.id) }
+                onDrop: { runner.drop(stepId: step.id) },
+                onSwap: { option in runner.swap(stepId: step.id, to: option.exercise, target: option.target) }
             )
-            .presentationDetents([.medium, .large])
+            .presentationDetents([.medium, .large], selection: $sheetDetent)
         }
         .confirmationDialog("End this session?", isPresented: $confirmQuit, titleVisibility: .visible) {
             Button("Finish and save", role: .destructive) { runner.finish() }

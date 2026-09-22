@@ -227,6 +227,9 @@ final class SessionRunner {
     func back() { apply { Runner.back($0, now: $1) } }
     func finish() { apply { Runner.finish($0, now: $1) } }
     func drop(stepId: String) { apply { Runner.drop($0, now: $1, stepId: stepId) } }
+    func swap(stepId: String, to exercise: LibraryExercise, target: Double?) {
+        apply { Runner.swap($0, now: $1, stepId: stepId, to: exercise.ref, target: target) }
+    }
 
     func pauseOrResume() {
         if state.phase == .paused {
