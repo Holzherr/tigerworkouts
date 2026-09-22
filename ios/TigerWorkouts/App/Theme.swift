@@ -37,8 +37,8 @@ struct BigButtonStyle: ButtonStyle {
     }
 }
 
-/// The tiger stripes, without the tiger — the direction Nick picked for the logo. The same three
-/// leaning bars as the app icon, so the mark in the app and the one on the home screen match.
+/// The tiger stripes, without the tiger — the direction Nick picked for the logo. The same two
+/// straight bars as the app icon, so the mark in the app and the one on the home screen match.
 struct Stripes: View {
     var body: some View {
         StripesShape().fill(Brand.coral)
@@ -46,22 +46,18 @@ struct Stripes: View {
     }
 }
 
-/// The icon's geometry, normalised to the mark's own box: bar offsets and widths as fractions of
-/// the width, leaning right at the top.
+/// The icon's geometry, normalised to the mark's own box: the rects of Resources/AppIcon.svg as
+/// fractions of its 1024 canvas. Two vertical bars, no lean, so the edges are flat colour.
 struct StripesShape: Shape {
+    static let bars: [CGRect] = [225.0, 574.0].map { (x: CGFloat) in
+        CGRect(x: x / 1024, y: 164 / 1024, width: 225 / 1024, height: 696 / 1024)
+    }
+
     func path(in rect: CGRect) -> Path {
-        let lean = 0.074
-        let bars: [(x: Double, width: Double)] = [(0, 0.19), (0.353, 0.22), (0.735, 0.19)]
-        func point(_ x: Double, _ y: Double) -> CGPoint {
-            CGPoint(x: rect.minX + x * rect.width, y: rect.minY + y * rect.height)
-        }
         var path = Path()
-        for bar in bars {
-            path.move(to: point(bar.x + lean, 0))
-            path.addLine(to: point(bar.x + bar.width + lean, 0))
-            path.addLine(to: point(bar.x + bar.width, 1))
-            path.addLine(to: point(bar.x, 1))
-            path.closeSubpath()
+        for bar in Self.bars {
+            path.addRect(CGRect(x: rect.minX + bar.minX * rect.width, y: rect.minY + bar.minY * rect.height,
+                                width: bar.width * rect.width, height: bar.height * rect.height))
         }
         return path
     }

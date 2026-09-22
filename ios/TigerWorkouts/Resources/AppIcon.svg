@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
+  <!-- The app icon: two straight flat coral bars on white. No lean, no gradient, no shadow.
+       Coordinates are whole pixels so a render has no anti-aliased edge; the same numbers,
+       over 1024, are the fractions StripesShape draws in Theme.swift. icon-1024.png,
+       icon-1024-dark.png (bars on black) and icon-1024-tinted.png (white bars on transparent)
+       are rendered from this file. -->
+  <rect width="1024" height="1024" fill="#ffffff"/>
+  <rect x="225" y="164" width="225" height="696" fill="#ff4d2e"/>
+  <rect x="574" y="164" width="225" height="696" fill="#ff4d2e"/>
+</svg>
