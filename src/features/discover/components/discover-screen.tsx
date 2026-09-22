@@ -10,7 +10,7 @@ import { recommend } from '../recommend';
 import { WorkoutCard } from './workout-card';
 
 export type DiscoverTab = 'saved' | 'recommended' | 'search';
-export type DiscoverFilter = 'all' | 'benchmark' | 'program' | 'video' | 'article' | 'protocol';
+export type DiscoverFilter = 'all' | 'coach' | 'benchmark' | 'program' | 'video' | 'article' | 'protocol';
 
 const TABS = [
   { id: 'saved', label: 'Saved', icon: <Bookmark /> },
@@ -19,6 +19,7 @@ const TABS = [
 ] as const satisfies readonly { id: DiscoverTab; label: string; icon: React.ReactNode }[];
 const FILTERS: { id: DiscoverFilter; label: string }[] = [
   { id: 'all', label: 'All' },
+  { id: 'coach', label: 'Coaches' },
   { id: 'benchmark', label: 'Benchmarks' },
   { id: 'program', label: 'Programs' },
   { id: 'video', label: 'Videos' },

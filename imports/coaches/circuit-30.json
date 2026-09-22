@@ -1,0 +1,97 @@
+{
+  "id": "coach-circuit-30",
+  "title": "Circuit Club · Five by Four",
+  "creator": "Priya Raman",
+  "description": "Four movements, five rounds, forty seconds of work each. The dumbbells stay the same all the way through, so choose them for round five rather than round one. Rest ninety seconds between rounds and use all of it.",
+  "source": {
+    "title": "Circuit Club — 30 minutes",
+    "author": "Priya Raman",
+    "kind": "coach",
+    "license": "Original TigerWorkouts programme",
+    "importedAt": "2026-09-22"
+  },
+  "tags": [
+    "Coach",
+    "Circuit",
+    "Dumbbell",
+    "Conditioning"
+  ],
+  "level": "Hard",
+  "program": {
+    "name": "Circuit Club",
+    "day": "30 minutes",
+    "order": 2
+  },
+  "items": [
+    {
+      "kind": "exercise",
+      "id": "w1",
+      "exercise": "bw_mountain_climber",
+      "forMode": "seconds",
+      "forValue": 40,
+      "role": "warmup"
+    },
+    {
+      "kind": "exercise",
+      "id": "w2",
+      "exercise": "bw_squat",
+      "forMode": "reps",
+      "forValue": 15,
+      "role": "warmup"
+    },
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "Five rounds",
+      "mode": "rounds",
+      "repeat": 6,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "db_goblet_squat",
+          "forMode": "seconds",
+          "forValue": 40,
+          "target": 20
+        },
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "db_row",
+          "forMode": "seconds",
+          "forValue": 40,
+          "target": 17.5,
+          "perSide": true
+        },
+        {
+          "kind": "exercise",
+          "id": "s3",
+          "exercise": "db_shoulder_press",
+          "forMode": "seconds",
+          "forValue": 40,
+          "target": 12.5
+        },
+        {
+          "kind": "exercise",
+          "id": "s4",
+          "exercise": "bw_plank",
+          "forMode": "seconds",
+          "forValue": 40
+        },
+        {
+          "kind": "rest",
+          "id": "r1",
+          "seconds": 90
+        }
+      ]
+    },
+    {
+      "kind": "exercise",
+      "id": "c1",
+      "exercise": "bw_stretch_upper_back",
+      "forMode": "seconds",
+      "forValue": 40,
+      "role": "cooldown"
+    }
+  ]
+}

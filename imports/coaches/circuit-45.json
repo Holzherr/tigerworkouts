@@ -1,0 +1,152 @@
+{
+  "id": "coach-circuit-45",
+  "title": "Circuit Club · Three Stations",
+  "creator": "Priya Raman",
+  "description": "Three stations, each run three times, with a walk between stations so the next one starts fresh. It covers a push, a pull, a hinge and a carry across the session rather than inside every round — which is what makes forty-five minutes of circuit work survivable.",
+  "source": {
+    "title": "Circuit Club — 45 minutes",
+    "author": "Priya Raman",
+    "kind": "coach",
+    "license": "Original TigerWorkouts programme",
+    "importedAt": "2026-09-22"
+  },
+  "tags": [
+    "Coach",
+    "Circuit",
+    "Full body",
+    "Conditioning"
+  ],
+  "level": "Hard",
+  "program": {
+    "name": "Circuit Club",
+    "day": "45 minutes",
+    "order": 3
+  },
+  "items": [
+    {
+      "kind": "exercise",
+      "id": "w1",
+      "exercise": "incline_walk",
+      "forMode": "minutes",
+      "forValue": 4,
+      "target": 5.5,
+      "incline": 3,
+      "role": "warmup"
+    },
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "Station one — hinge",
+      "mode": "rounds",
+      "repeat": 4,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "kb_swing",
+          "forMode": "reps",
+          "forValue": 20,
+          "target": 24
+        },
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "bw_hip_bridge",
+          "forMode": "reps",
+          "forValue": 15
+        },
+        {
+          "kind": "rest",
+          "id": "r1",
+          "seconds": 60
+        }
+      ]
+    },
+    {
+      "kind": "exercise",
+      "id": "t1",
+      "exercise": "cardio_walk",
+      "forMode": "minutes",
+      "forValue": 3,
+      "target": 5.5
+    },
+    {
+      "kind": "block",
+      "id": "b2",
+      "name": "Station two — push and pull",
+      "mode": "rounds",
+      "repeat": 4,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s3",
+          "exercise": "db_bench",
+          "forMode": "reps",
+          "forValue": 10,
+          "target": 17.5
+        },
+        {
+          "kind": "exercise",
+          "id": "s4",
+          "exercise": "db_row",
+          "forMode": "reps",
+          "forValue": 10,
+          "target": 17.5,
+          "perSide": true
+        },
+        {
+          "kind": "rest",
+          "id": "r2",
+          "seconds": 60
+        }
+      ]
+    },
+    {
+      "kind": "exercise",
+      "id": "t2",
+      "exercise": "cardio_walk",
+      "forMode": "minutes",
+      "forValue": 3,
+      "target": 5.5
+    },
+    {
+      "kind": "block",
+      "id": "b3",
+      "name": "Station three — legs and trunk",
+      "mode": "rounds",
+      "repeat": 4,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s5",
+          "exercise": "bw_box_step_up",
+          "forMode": "reps",
+          "forValue": 12,
+          "perSide": true
+        },
+        {
+          "kind": "exercise",
+          "id": "s6",
+          "exercise": "bw_side_plank",
+          "forMode": "seconds",
+          "forValue": 30,
+          "perSide": true
+        },
+        {
+          "kind": "rest",
+          "id": "r3",
+          "seconds": 60
+        }
+      ]
+    },
+    {
+      "kind": "exercise",
+      "id": "c1",
+      "exercise": "bw_stretch_hip_flexor",
+      "forMode": "seconds",
+      "forValue": 40,
+      "role": "cooldown",
+      "perSide": true
+    }
+  ]
+}

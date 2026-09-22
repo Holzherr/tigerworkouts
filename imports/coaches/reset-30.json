@@ -1,0 +1,82 @@
+{
+  "id": "coach-reset-30",
+  "title": "Reset · Walk and Unwind",
+  "creator": "Sofia Marchetti",
+  "description": "Twenty minutes of walking at a gradient, then ten on the floor. This is the session for a day when training feels like the last thing you want to do — it still counts, and it is the one that keeps a week from breaking.",
+  "source": {
+    "title": "Reset — 30 minutes",
+    "author": "Sofia Marchetti",
+    "kind": "coach",
+    "license": "Original TigerWorkouts programme",
+    "importedAt": "2026-09-22"
+  },
+  "tags": [
+    "Coach",
+    "Walk",
+    "Mobility",
+    "Recovery"
+  ],
+  "level": "Easy",
+  "program": {
+    "name": "Reset",
+    "day": "30 minutes",
+    "order": 2
+  },
+  "items": [
+    {
+      "kind": "exercise",
+      "id": "s1",
+      "exercise": "incline_walk",
+      "forMode": "minutes",
+      "forValue": 20,
+      "target": 5.5,
+      "incline": 8,
+      "note": "Hands off the rails, long stride"
+    },
+    {
+      "kind": "exercise",
+      "id": "s2",
+      "exercise": "bw_stretch_calf",
+      "forMode": "seconds",
+      "forValue": 45,
+      "perSide": true
+    },
+    {
+      "kind": "exercise",
+      "id": "s3",
+      "exercise": "bw_stretch_hip_flexor",
+      "forMode": "seconds",
+      "forValue": 45,
+      "perSide": true
+    },
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "Trunk",
+      "mode": "rounds",
+      "repeat": 2,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s4",
+          "exercise": "bw_side_plank",
+          "forMode": "seconds",
+          "forValue": 30,
+          "perSide": true
+        },
+        {
+          "kind": "exercise",
+          "id": "s5",
+          "exercise": "bw_hip_bridge",
+          "forMode": "reps",
+          "forValue": 15
+        },
+        {
+          "kind": "rest",
+          "id": "r1",
+          "seconds": 45
+        }
+      ]
+    }
+  ]
+}

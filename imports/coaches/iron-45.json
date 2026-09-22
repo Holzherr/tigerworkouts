@@ -1,0 +1,164 @@
+{
+  "id": "coach-iron-45",
+  "title": "Iron Base · Whole Body B",
+  "creator": "Dev Okafor",
+  "description": "The longer strength day: legs first while you are fresh, then the upper body, then swings to finish. Rest the full ninety seconds on the leg press even if you feel ready — the point of the session is the load, and the load needs the rest.",
+  "source": {
+    "title": "Iron Base — 45 minutes",
+    "author": "Dev Okafor",
+    "kind": "coach",
+    "license": "Original TigerWorkouts programme",
+    "importedAt": "2026-09-22"
+  },
+  "tags": [
+    "Coach",
+    "Strength",
+    "Machine",
+    "Full body"
+  ],
+  "level": "Hard",
+  "program": {
+    "name": "Iron Base",
+    "day": "45 minutes",
+    "order": 3
+  },
+  "items": [
+    {
+      "kind": "exercise",
+      "id": "w1",
+      "exercise": "incline_walk",
+      "forMode": "minutes",
+      "forValue": 4,
+      "target": 5.5,
+      "incline": 4,
+      "role": "warmup"
+    },
+    {
+      "kind": "exercise",
+      "id": "w2",
+      "exercise": "bw_stretch_deep_squat",
+      "forMode": "seconds",
+      "forValue": 45,
+      "role": "warmup"
+    },
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "Legs",
+      "mode": "rounds",
+      "repeat": 5,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "machine_leg_press",
+          "forMode": "reps",
+          "forValue": 10,
+          "target": 100
+        },
+        {
+          "kind": "rest",
+          "id": "r1",
+          "seconds": 90
+        }
+      ],
+      "progression": {
+        "onSuccessKg": 5,
+        "deloadPct": 10,
+        "failAfter": 3
+      }
+    },
+    {
+      "kind": "block",
+      "id": "b2",
+      "name": "Upper",
+      "mode": "rounds",
+      "repeat": 5,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "machine_chest_press",
+          "forMode": "reps",
+          "forValue": 8,
+          "target": 40
+        },
+        {
+          "kind": "rest",
+          "id": "r2",
+          "seconds": 60
+        },
+        {
+          "kind": "exercise",
+          "id": "s3",
+          "exercise": "cable_row",
+          "forMode": "reps",
+          "forValue": 10,
+          "target": 35
+        },
+        {
+          "kind": "rest",
+          "id": "r3",
+          "seconds": 75
+        }
+      ]
+    },
+    {
+      "kind": "block",
+      "id": "b3",
+      "name": "Arms and shoulders",
+      "mode": "rounds",
+      "repeat": 3,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s4",
+          "exercise": "machine_shoulder_press",
+          "forMode": "reps",
+          "forValue": 10,
+          "target": 25
+        },
+        {
+          "kind": "rest",
+          "id": "r4",
+          "seconds": 45
+        },
+        {
+          "kind": "exercise",
+          "id": "s5",
+          "exercise": "cable_tricep_pushdown",
+          "forMode": "reps",
+          "forValue": 12,
+          "target": 20
+        },
+        {
+          "kind": "rest",
+          "id": "r5",
+          "seconds": 45
+        }
+      ]
+    },
+    {
+      "kind": "block",
+      "id": "b4",
+      "name": "Finisher",
+      "mode": "rounds",
+      "repeat": 4,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s6",
+          "exercise": "kb_swing",
+          "forMode": "reps",
+          "forValue": 15,
+          "target": 20
+        },
+        {
+          "kind": "rest",
+          "id": "r6",
+          "seconds": 45
+        }
+      ]
+    }
+  ]
+}

@@ -41,6 +41,19 @@ struct DiscoverView: View {
                         Text("Pick up again")
                     }
                 }
+                if query.isEmpty && !savedOnly {
+                    ForEach(coaches, id: \.coach) { group in
+                        Section {
+                            ForEach(group.sheets, id: \.key) { sheet in
+                                row(sheet)
+                            }
+                        } header: {
+                            Text(group.programme)
+                        } footer: {
+                            Text("\(group.coach) · \(group.sheets.count) sessions")
+                        }
+                    }
+                }
                 Section {
                     ForEach(shown, id: \.key) { sheet in
                         row(sheet)
@@ -74,6 +87,19 @@ struct DiscoverView: View {
                 WorkoutEditorView(runsheet: sheet, isExisting: false) { _ in }
             }
         }
+    }
+
+    /// Our own coaches' programmes, each a short run of sessions at 15, 30 and 45 minutes. They
+    /// sit above the imported catalogue because they are the content written for this gym.
+    private var coaches: [(coach: String, programme: String, sheets: [Runsheet])] {
+        let mine = store.allWorkouts.filter { $0.source?.kind == "coach" }
+        let byProgramme = Dictionary(grouping: mine) { $0.program?.name ?? $0.creator ?? "Coaches" }
+        return byProgramme
+            .map { name, sheets in
+                (coach: sheets.first?.creator ?? "", programme: name,
+                 sheets: sheets.sorted { ($0.program?.order ?? 0) < ($1.program?.order ?? 0) })
+            }
+            .sorted { $0.programme < $1.programme }
     }
 
     /// The four workouts done most often, so the thing you actually do is one tap from launch.

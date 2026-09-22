@@ -1,0 +1,123 @@
+{
+  "id": "coach-reset-45",
+  "title": "Reset · The Long Walk",
+  "creator": "Sofia Marchetti",
+  "description": "Thirty-five minutes of steady walking with the gradient stepping up every seven, then ten minutes of stretching while you are warm. Keep it easy enough to hold a conversation the whole way through — that is the training effect, not a side effect.",
+  "source": {
+    "title": "Reset — 45 minutes",
+    "author": "Sofia Marchetti",
+    "kind": "coach",
+    "license": "Original TigerWorkouts programme",
+    "importedAt": "2026-09-22"
+  },
+  "tags": [
+    "Coach",
+    "Walk",
+    "Mobility",
+    "Zone 2"
+  ],
+  "level": "Easy",
+  "program": {
+    "name": "Reset",
+    "day": "45 minutes",
+    "order": 3
+  },
+  "items": [
+    {
+      "kind": "exercise",
+      "id": "s1",
+      "exercise": "incline_walk",
+      "forMode": "minutes",
+      "forValue": 7,
+      "target": 5.5,
+      "incline": 2
+    },
+    {
+      "kind": "exercise",
+      "id": "s2",
+      "exercise": "incline_walk",
+      "forMode": "minutes",
+      "forValue": 7,
+      "target": 5.5,
+      "incline": 5
+    },
+    {
+      "kind": "exercise",
+      "id": "s3",
+      "exercise": "incline_walk",
+      "forMode": "minutes",
+      "forValue": 7,
+      "target": 5.5,
+      "incline": 8
+    },
+    {
+      "kind": "exercise",
+      "id": "s4",
+      "exercise": "incline_walk",
+      "forMode": "minutes",
+      "forValue": 7,
+      "target": 5.5,
+      "incline": 10
+    },
+    {
+      "kind": "exercise",
+      "id": "s5",
+      "exercise": "incline_walk",
+      "forMode": "minutes",
+      "forValue": 7,
+      "target": 5.5,
+      "incline": 6
+    },
+    {
+      "kind": "exercise",
+      "id": "s10",
+      "exercise": "incline_walk",
+      "forMode": "minutes",
+      "forValue": 5,
+      "target": 5,
+      "incline": 3,
+      "role": "cooldown"
+    },
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "Stretch while warm",
+      "mode": "rounds",
+      "repeat": 1,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s6",
+          "exercise": "bw_stretch_hamstring_standing",
+          "forMode": "seconds",
+          "forValue": 45,
+          "perSide": true
+        },
+        {
+          "kind": "exercise",
+          "id": "s7",
+          "exercise": "bw_stretch_calf",
+          "forMode": "seconds",
+          "forValue": 45,
+          "perSide": true
+        },
+        {
+          "kind": "exercise",
+          "id": "s8",
+          "exercise": "bw_stretch_buttock",
+          "forMode": "seconds",
+          "forValue": 45,
+          "perSide": true
+        },
+        {
+          "kind": "exercise",
+          "id": "s9",
+          "exercise": "yoga_cat_cow",
+          "forMode": "seconds",
+          "forValue": 60
+        }
+      ],
+      "role": "cooldown"
+    }
+  ]
+}

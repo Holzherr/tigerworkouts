@@ -1,0 +1,71 @@
+{
+  "id": "coach-engine-15",
+  "title": "Engine Room · Ten by One",
+  "creator": "Mara Vance",
+  "description": "Ten hard minutes on the treadmill, bookended by walking. Each sprint is thirty seconds at a speed you could hold for a minute but not two, and the walk between is the whole point — it is what lets the next one be fast. Drop the speed by half a notch whenever a round starts to fall apart.",
+  "source": {
+    "title": "Engine Room — 15 minutes",
+    "author": "Mara Vance",
+    "kind": "coach",
+    "license": "Original TigerWorkouts programme",
+    "importedAt": "2026-09-22"
+  },
+  "tags": [
+    "Coach",
+    "Treadmill",
+    "Intervals",
+    "Conditioning"
+  ],
+  "level": "Hard",
+  "program": {
+    "name": "Engine Room",
+    "day": "15 minutes",
+    "order": 1
+  },
+  "items": [
+    {
+      "kind": "exercise",
+      "id": "w1",
+      "exercise": "incline_walk",
+      "forMode": "minutes",
+      "forValue": 3,
+      "target": 5.5,
+      "incline": 4,
+      "role": "warmup",
+      "note": "Brisk, nose breathing only"
+    },
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "Ten by one",
+      "mode": "rounds",
+      "repeat": 10,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "sprint",
+          "forMode": "seconds",
+          "forValue": 30,
+          "target": 14.5,
+          "incline": 6,
+          "note": "Straddle the belt, step on, ride it out"
+        },
+        {
+          "kind": "rest",
+          "id": "r1",
+          "seconds": 30
+        }
+      ]
+    },
+    {
+      "kind": "exercise",
+      "id": "c1",
+      "exercise": "cardio_walk",
+      "forMode": "minutes",
+      "forValue": 2,
+      "target": 5,
+      "role": "cooldown"
+    }
+  ]
+}

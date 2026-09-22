@@ -12,7 +12,7 @@ const FOR = new Set(['seconds', 'reps', 'minutes', 'meters', 'calories', 'max', 
 const ROLES = new Set(['warmup', 'main', 'cooldown']);
 const SCORES = new Set(['time', 'rounds', 'reps', 'load', 'distance', 'none']);
 const MODES = new Set(['rounds', 'fortime', 'amrap', 'emom', 'ladder']);
-const KINDS = new Set(['benchmark', 'program', 'video', 'article', 'protocol', 'user']);
+const KINDS = new Set(['benchmark', 'coach', 'program', 'video', 'article', 'protocol', 'user']);
 const GROUPS = new Set(['barbell', 'dumbbell', 'kettlebell', 'body', 'core', 'band', 'treadmill', 'walk', 'run', 'bike', 'rower', 'swim', 'gym']);
 
 const sources = fs.readdirSync(root).filter(d => fs.statSync(path.join(root, d)).isDirectory());
@@ -51,7 +51,8 @@ for (const s of sources) {
     if (ids.has(w.id)) err(`duplicate id ${w.id}`);
     ids.add(w.id);
     if (!w.title) err('missing title');
-    if (!w.source?.url && w.source?.kind !== 'user') err('missing source.url');
+    // A coach programme is ours: there is no outside page to link to.
+    if (!w.source?.url && !['user', 'coach'].includes(w.source?.kind)) err('missing source.url');
     if (w.source && !KINDS.has(w.source.kind)) err(`bad source.kind ${w.source.kind}`);
     if (!Array.isArray(w.items) || !w.items.length) err('no items');
     const checkStep = (st, where) => {

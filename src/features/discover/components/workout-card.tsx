@@ -3,7 +3,7 @@ import { WorkoutIcon } from '@/shared/components/ui/workout-icon';
 import { cn } from '@/shared/utils/ui-utils';
 import { modeLabel, runsheetMinutes, scoreType, type ExerciseStep, type Runsheet } from '@/features/runsheet/model';
 
-export const KIND_LABEL: Record<string, string> = { benchmark: 'Benchmark', program: 'Program', video: 'Video', article: 'Guide', protocol: 'Protocol', user: 'Mine' };
+export const KIND_LABEL: Record<string, string> = { benchmark: 'Benchmark', coach: 'Coach', program: 'Program', video: 'Video', article: 'Guide', protocol: 'Protocol', user: 'Mine' };
 
 /** First exercise with media, for the card thumb. */
 export const heroExercise = (r: Runsheet): ExerciseStep | undefined => {
