@@ -53,4 +53,19 @@ struct LiveActivityTests {
         #expect(state.isPaused)
         #expect(state.detail.hasPrefix("Paused"))
     }
+
+    @Test("a finished session stops the clock instead of counting up")
+    func finishedHoldsStill() {
+        let sheet = Fixtures.interval()
+        let running = Runner.tick(Runner.start(sheet, now: 0), now: 5_000)
+        let finished = Runner.finish(running, now: 100_000)
+        let state = SessionRunner.activityState(finished, runsheet: sheet, now: 120_000)
+        #expect(state.isDone)
+        #expect(state.headline == "Done")
+        #expect(state.progress == 1)
+        // Without this the card has no end to count down to, so it counts up from the last slot
+        // and reads as a workout still running — what Nick saw on the Lock Screen.
+        #expect(state.endsAt == nil)
+        #expect(SessionRunner.activityState(finished, runsheet: sheet, now: 200_000) == state)
+    }
 }

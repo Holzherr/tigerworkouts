@@ -91,7 +91,9 @@ struct SessionLiveActivity: Widget {
     /// A paused clock has to be a still number: an interval keeps running whatever the app does.
     @ViewBuilder
     private func clock(_ state: SessionActivityAttributes.ContentState) -> some View {
-        if state.isPaused {
+        if state.isDone {
+            Image(systemName: "checkmark.circle.fill")
+        } else if state.isPaused {
             Text(verbatim: "—")
         } else {
             Text(timerInterval: state.timerRange, pauseTime: nil, countsDown: state.countsDown, showsHours: false)

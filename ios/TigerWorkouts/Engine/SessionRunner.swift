@@ -103,7 +103,18 @@ final class SessionRunner {
         state = Runner.tick(state, now: now)
         if state != before { save() }
         fireCues()
-        SessionActivityController.shared.update(activityState)
+        pushActivity()
+    }
+
+    /// The Lock Screen card goes when the workout does. Left running, a finished session has no
+    /// countdown to show, so `Text(timerInterval:)` counts up instead and the card reads as a
+    /// workout still going — Nick saw exactly that after finishing one.
+    private func pushActivity() {
+        if state.phase == .done {
+            SessionActivityController.shared.end(activityState)
+        } else {
+            SessionActivityController.shared.update(activityState)
+        }
     }
 
     private var activityState: SessionActivityAttributes.ContentState {
@@ -162,7 +173,8 @@ final class SessionRunner {
             isPaused: state.phase == .paused,
             endsAt: state.endsAt.map { Date(timeIntervalSince1970: $0 / 1000) },
             startedAt: Date(timeIntervalSince1970: state.slotStartedAt / 1000),
-            progress: progress
+            progress: progress,
+            isDone: state.phase == .done
         )
     }
 
@@ -218,7 +230,7 @@ final class SessionRunner {
         state = change(state, now)
         save()
         fireCues()
-        SessionActivityController.shared.update(activityState)
+        pushActivity()
     }
 
     func startBlock() { apply { Runner.startBlock($0, now: $1) } }

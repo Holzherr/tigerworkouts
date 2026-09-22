@@ -21,6 +21,9 @@ struct SessionActivityAttributes: ActivityAttributes {
         var startedAt: Date
         /// 0 to 1 across the whole session.
         var progress: Double
+        /// The session is over. The clock then holds still at what it came to: with nothing left to
+        /// count down, an interval counts up instead and the card reads as a workout still running.
+        var isDone = false
 
         /// What the Lock Screen shows as the clock, either way round.
         var timerRange: ClosedRange<Date> {
