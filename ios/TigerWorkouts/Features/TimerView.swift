@@ -13,22 +13,24 @@ struct TimerView: View {
     @State private var confirmQuit = false
 
     private var isRest: Bool { runner.slot?.kind == .rest }
-    private var accent: Color { isRest ? Brand.rest : Brand.coral }
+    private var accent: Color { isRest ? Brand.Night.rest : Brand.coral }
 
     var body: some View {
         ZStack {
-            (isRest ? Brand.rest.opacity(0.06) : Color(.systemBackground)).ignoresSafeArea()
+            (runner.isDone ? Brand.canvas : Brand.Night.ground).ignoresSafeArea()
             if runner.isDone {
                 finished
             } else {
                 running
             }
         }
+        // Dark while it runs, as on the web: a white clock on slate reads across a bright gym.
+        .preferredColorScheme(runner.isDone ? nil : .dark)
         .animation(.easeInOut(duration: 0.2), value: runner.slot?.id)
         .animation(.easeInOut(duration: 0.2), value: runner.state.phase)
         .onAppear { runner.begin() }
         .onDisappear { runner.end() }
-        .sheet(isPresented: $showOverview) { overview }
+        .sheet(isPresented: $showOverview) { overview.preferredColorScheme(.light) }
         .sheet(item: $editing) { step in
             ExerciseSheet(
                 step: step,
@@ -45,6 +47,7 @@ struct TimerView: View {
                 onSwap: { option in runner.swap(stepId: step.id, to: option.exercise, target: option.target) }
             )
             .presentationDetents([.medium, .large], selection: $sheetDetent)
+            .preferredColorScheme(.light)
         }
         .confirmationDialog("End this session?", isPresented: $confirmQuit, titleVisibility: .visible) {
             Button("Finish and save", role: .destructive) { runner.finish() }
@@ -59,107 +62,102 @@ struct TimerView: View {
     private var running: some View {
         VStack(spacing: 0) {
             topBar
-            Spacer(minLength: 8)
-            if runner.state.phase == .lead {
-                leadIn
-            } else {
-                slotBody
+            Spacer(minLength: 12)
+            switch runner.state.phase {
+            case .lead: leadIn
+            case .ready: parked
+            default: slotBody
             }
-            Spacer(minLength: 8)
+            Spacer(minLength: 12)
             blockStrip
             controls
         }
     }
 
+    /// Where you are: the block, which part of the session, and how far through the whole thing.
     private var topBar: some View {
-        HStack(alignment: .firstTextBaseline) {
-            Button { confirmQuit = true } label: {
-                Image(systemName: "xmark").font(.system(size: 17, weight: .semibold)).frame(width: 44, height: 44)
-            }
-            .accessibilityLabel("End session")
+        VStack(spacing: 10) {
+            HStack(alignment: .center, spacing: 10) {
+                Button { confirmQuit = true } label: {
+                    Image(systemName: "xmark")
+                        .font(.system(size: 16, weight: .bold))
+                        .frame(width: 44, height: 44)
+                        .background(Brand.Night.raised, in: Circle())
+                }
+                .accessibilityLabel("End session")
 
-            VStack(spacing: 2) {
-                Text(runner.slot?.blockName ?? runner.runsheet.title)
-                    .font(.subheadline.weight(.semibold))
-                    .lineLimit(1)
-                // The whole-session clock, always somewhere, always smaller than the countdown.
-                Text("\(Format.clock(runner.elapsed)) elapsed")
-                    .font(.caption)
-                    .foregroundStyle(Brand.muted)
-                    .monospacedDigit()
+                VStack(alignment: .leading, spacing: 1) {
+                    Text(runner.slot?.blockName ?? runner.runsheet.title)
+                        .font(.headline)
+                        .lineLimit(1)
+                    Text(whereabouts)
+                        .font(.subheadline)
+                        .foregroundStyle(Brand.Night.muted)
+                        .lineLimit(1)
+                }
+                Spacer(minLength: 8)
+                VStack(alignment: .trailing, spacing: 1) {
+                    Text("\(Int((runner.overall * 100).rounded()))%").font(.headline).monospacedDigit()
+                    // The whole-session clock, always somewhere, always smaller than the countdown.
+                    Text(Format.clock(runner.elapsed))
+                        .font(.subheadline)
+                        .foregroundStyle(Brand.Night.muted)
+                        .monospacedDigit()
+                }
+                Button { showOverview = true } label: {
+                    Image(systemName: "list.bullet")
+                        .font(.system(size: 16, weight: .bold))
+                        .frame(width: 44, height: 44)
+                        .background(Brand.Night.raised, in: Circle())
+                }
+                .accessibilityLabel("Session overview")
             }
-            .frame(maxWidth: .infinity)
+            GeometryReader { geo in
+                ZStack(alignment: .leading) {
+                    Capsule().fill(Brand.Night.line)
+                    Capsule().fill(Brand.coral).frame(width: max(8, geo.size.width * runner.overall))
+                }
+            }
+            .frame(height: 6)
+        }
+        .foregroundStyle(Brand.Night.text)
+        .padding(.horizontal, 16)
+        .padding(.top, 6)
+    }
 
-            Button { showOverview = true } label: {
-                Image(systemName: "list.bullet").font(.system(size: 17, weight: .semibold)).frame(width: 44, height: 44)
-            }
-            .accessibilityLabel("Session overview")
-        }
-        .padding(.horizontal, 8)
-        .overlay(alignment: .bottom) {
-            ProgressView(value: runner.overall)
-                .tint(accent)
-                .scaleEffect(x: 1, y: 0.6, anchor: .center)
-        }
+    /// "Block 2 of 9 · Round 3 of 8"
+    private var whereabouts: String {
+        guard let slot = runner.slot else { return runner.runsheet.title }
+        var parts = ["Block \(slot.part + 1) of \(slot.parts)"]
+        if slot.rounds > 1 { parts.append("Round \(slot.round + 1) of \(slot.rounds)") }
+        return parts.joined(separator: " · ")
     }
 
     private var leadIn: some View {
-        VStack(spacing: 12) {
-            Text("Get ready").font(.title3.weight(.semibold)).foregroundStyle(Brand.muted)
+        VStack(spacing: 18) {
+            Text("Get ready").font(.title3.weight(.semibold)).foregroundStyle(Brand.Night.muted)
             Text(Format.clock(runner.clock.left ?? 0))
-                .font(.system(size: 96, weight: .bold, design: .rounded))
+                .font(.system(size: 110, weight: .heavy, design: .rounded))
                 .monospacedDigit()
                 .foregroundStyle(Brand.coral)
-            if let next = runner.slot?.exercise {
-                Text("First up: \(next.exercise.name)").font(.headline).foregroundStyle(Brand.body)
+                .contentTransition(.numericText(countsDown: true))
+            if let first = runner.slot?.exercise {
+                exerciseCard(first, eyebrow: "First up", adjustable: false)
             }
         }
+        .padding(.horizontal, 16)
     }
 
-    @ViewBuilder
-    private var slotBody: some View {
-        VStack(spacing: 14) {
-            if let position = runner.stepPosition {
-                Text("Exercise \(position.index) of \(position.count)")
-                    .font(.caption.weight(.semibold))
-                    .textCase(.uppercase)
-                    .tracking(0.8)
-                    .foregroundStyle(Brand.muted)
-            } else if let slot = runner.slot, slot.rounds > 1 {
-                Text("Round \(slot.round + 1) of \(slot.rounds)")
-                    .font(.caption.weight(.semibold))
-                    .textCase(.uppercase)
-                    .tracking(0.8)
-                    .foregroundStyle(Brand.muted)
-            }
-
-            if isRest {
-                Text("Rest").font(.system(size: 40, weight: .bold)).foregroundStyle(Brand.rest)
-                if let next = runner.nextSlot?.exercise {
-                    Text("Next: \(next.exercise.name)").font(.title3).foregroundStyle(Brand.body)
-                }
-            } else if let ex = runner.slot?.exercise {
-                // Readable from a bench, at arm's length, out of breath.
-                Button { editing = ex } label: {
-                    VStack(spacing: 6) {
-                        Text(ex.exercise.name)
-                            .font(.system(size: 34, weight: .bold))
-                            .multilineTextAlignment(.center)
-                            .minimumScaleFactor(0.6)
-                            .lineLimit(2)
-                            .foregroundStyle(Brand.ink)
-                        Text(ex.forLabel).font(.title3).foregroundStyle(Brand.muted)
-                    }
-                    .frame(maxWidth: .infinity)
-                    .contentShape(Rectangle())
-                }
-                .buttonStyle(.plain)
-            }
-
-            countdown
-
-            if !isRest, let ex = runner.slot?.exercise, ex.hasSetting {
-                inlineNudge(ex)
+    /// Between blocks the timer waits for you, so moving to the next machine eats no work time.
+    private var parked: some View {
+        VStack(spacing: 18) {
+            Text("Next block").font(.title3.weight(.semibold)).foregroundStyle(Brand.Night.muted)
+            Text(runner.slot?.blockName ?? "Block")
+                .font(.system(size: 34, weight: .heavy))
+                .multilineTextAlignment(.center)
+                .foregroundStyle(Brand.Night.text)
+            if let first = runner.slot?.exercise {
+                exerciseCard(first, eyebrow: "First up", adjustable: true)
             }
             if !isRest, let ex = runner.slot?.exercise, let label = TimerView.inclineLabel(runner.incline, for: ex) {
                 Button { editing = ex } label: {
@@ -172,7 +170,22 @@ struct TimerView: View {
                 .buttonStyle(.plain)
             }
         }
-        .padding(.horizontal, 20)
+        .padding(.horizontal, 16)
+    }
+
+    private var slotBody: some View {
+        VStack(spacing: 16) {
+            countdown
+            if isRest {
+                restCard
+            } else if let ex = runner.slot?.exercise {
+                exerciseCard(ex, eyebrow: runner.stepPosition.map { "Exercise \($0.index) of \($0.count)" }, adjustable: true)
+            }
+            if let next = runner.nextSlot, !isRest {
+                nextCard(next)
+            }
+        }
+        .padding(.horizontal, 16)
     }
 
     /// The treadmill's other dial, under the speed. Nil for anything without one, so a bench has
@@ -184,76 +197,177 @@ struct TimerView: View {
     }
 
     private var countdown: some View {
-        VStack(spacing: 4) {
+        VStack(spacing: 2) {
             if let left = runner.clock.left {
                 Text(Format.clock(left))
-                    .font(.system(size: 104, weight: .bold, design: .rounded))
+                    .font(.system(size: 110, weight: .heavy, design: .rounded))
                     .monospacedDigit()
-                    .foregroundStyle(left <= 3 ? Brand.coral : (isRest ? Brand.rest : Brand.ink))
+                    .foregroundStyle(left <= 3 ? Brand.coral : (isRest ? Brand.Night.rest : Brand.Night.text))
                     .contentTransition(.numericText(countsDown: true))
+                    .minimumScaleFactor(0.6)
+                    .lineLimit(1)
                 // Both figures: how far into this step, and how long the step is. A 10-minute
                 // walk should read as a 10-minute walk, not only as a number falling.
                 if let total = runner.slot?.seconds {
                     Text("\(Format.clock(runner.clock.spent)) of \(Format.clock(total))")
-                        .font(.footnote)
-                        .foregroundStyle(Brand.muted)
+                        .font(.subheadline)
+                        .foregroundStyle(Brand.Night.muted)
                         .monospacedDigit()
                 }
             } else {
                 Text(Format.clock(runner.clock.spent))
-                    .font(.system(size: 104, weight: .bold, design: .rounded))
+                    .font(.system(size: 110, weight: .heavy, design: .rounded))
                     .monospacedDigit()
-                    .foregroundStyle(Brand.ink)
-                Text("Tap Done when you finish the set").font(.footnote).foregroundStyle(Brand.muted)
+                    .foregroundStyle(Brand.Night.text)
+                    .minimumScaleFactor(0.6)
+                    .lineLimit(1)
+                Text("Tap Done when you finish the set").font(.subheadline).foregroundStyle(Brand.Night.muted)
             }
         }
     }
 
-    /// The one adjustment worth making without opening anything: the weight in your hand.
-    private func inlineNudge(_ ex: ExerciseStep) -> some View {
-        HStack(spacing: 12) {
-            Button { runner.nudgeTarget(-1) } label: {
-                Image(systemName: "minus").font(.system(size: 18, weight: .bold)).frame(width: 56, height: 56)
-            }
-            .background(Brand.coralSoft, in: RoundedRectangle(cornerRadius: 14))
-            .foregroundStyle(Brand.coralInk)
-
+    /// The exercise as a card you can read from a bench: the demo, the name, the cue, and the one
+    /// number worth changing without opening anything — the weight in your hand.
+    private func exerciseCard(_ ex: ExerciseStep, eyebrow: String?, adjustable: Bool) -> some View {
+        VStack(alignment: .leading, spacing: 14) {
             Button { editing = ex } label: {
-                VStack(spacing: 0) {
-                    Text(runner.target.map(Format.number) ?? "—")
-                        .font(.system(size: 28, weight: .semibold, design: .rounded))
-                        .monospacedDigit()
-                    Text(ex.shortUnit).font(.caption2).foregroundStyle(Brand.muted)
+                HStack(alignment: .top, spacing: 14) {
+                    ExerciseDemo(ref: ex.exercise, size: 104)
+                    VStack(alignment: .leading, spacing: 5) {
+                        if let eyebrow {
+                            Text(eyebrow)
+                                .font(.caption.weight(.bold))
+                                .textCase(.uppercase)
+                                .tracking(0.8)
+                                .foregroundStyle(Brand.coralInk)
+                        }
+                        Text(ex.exercise.name)
+                            .font(.system(size: 24, weight: .heavy))
+                            .foregroundStyle(Brand.ink)
+                            .lineLimit(2)
+                            .minimumScaleFactor(0.7)
+                        Text(detail(ex))
+                            .font(.subheadline)
+                            .foregroundStyle(Brand.muted)
+                            .lineLimit(3)
+                    }
+                    Spacer(minLength: 0)
                 }
-                .frame(minWidth: 96, minHeight: 56)
+                .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
 
-            Button { runner.nudgeTarget(1) } label: {
-                Image(systemName: "plus").font(.system(size: 18, weight: .bold)).frame(width: 56, height: 56)
+            if adjustable, ex.hasSetting {
+                Divider()
+                HStack(spacing: 10) {
+                    VStack(alignment: .leading, spacing: 1) {
+                        Text(ex.settingLabel).font(.subheadline.weight(.semibold)).foregroundStyle(Brand.body)
+                        if let incline = runner.incline, runner.slot?.exercise?.id == ex.id {
+                            Text("\(Format.number(incline))% incline").font(.caption).foregroundStyle(Brand.muted)
+                        }
+                    }
+                    Spacer()
+                    nudge("minus", label: "Less") { runner.nudgeTarget(-1) }
+                    VStack(spacing: 0) {
+                        Text((runner.slot?.exercise?.id == ex.id ? runner.target : runner.plannedTarget(ex.id) ?? ex.target).map(Format.number) ?? "—")
+                            .font(.system(size: 26, weight: .bold, design: .rounded))
+                            .monospacedDigit()
+                            .foregroundStyle(Brand.ink)
+                        Text(ex.shortUnit).font(.caption2).foregroundStyle(Brand.muted)
+                    }
+                    .frame(minWidth: 64)
+                    nudge("plus", label: "More") { runner.nudgeTarget(1) }
+                }
+                .disabled(runner.slot?.exercise?.id != ex.id)
             }
-            .background(Brand.coralSoft, in: RoundedRectangle(cornerRadius: 14))
-            .foregroundStyle(Brand.coralInk)
         }
+        .padding(16)
+        .background(.white, in: RoundedRectangle(cornerRadius: 24, style: .continuous))
+        // White card on the dark timer: its ink has to be the light-appearance ink.
+        .environment(\.colorScheme, .light)
+    }
+
+    private func detail(_ ex: ExerciseStep) -> String {
+        let cue = ex.exercise.cue ?? Library.shared.exercise(ex.exercise.key)?.cue ?? ""
+        return cue.isEmpty ? ex.forLabel : "\(ex.forLabel) · \(cue)"
+    }
+
+    private func nudge(_ symbol: String, label: String, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            Image(systemName: symbol)
+                .font(.system(size: 18, weight: .bold))
+                .frame(width: 56, height: 56)
+                .background(Brand.coralSoft, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+                .foregroundStyle(Brand.coralInk)
+        }
+        .accessibilityLabel(label)
+    }
+
+    private var restCard: some View {
+        VStack(spacing: 14) {
+            Text("Rest").font(.system(size: 36, weight: .heavy)).foregroundStyle(Brand.Night.rest)
+            if let next = runner.nextSlot?.exercise {
+                HStack(spacing: 14) {
+                    ExerciseThumb(ref: next.exercise, size: 64, radius: 16)
+                    VStack(alignment: .leading, spacing: 3) {
+                        Text("Up next")
+                            .font(.caption.weight(.bold)).textCase(.uppercase).tracking(0.8)
+                            .foregroundStyle(Brand.Night.muted)
+                        Text(next.exercise.name).font(.title3.weight(.bold)).foregroundStyle(Brand.Night.text)
+                        Text(next.forLabel).font(.subheadline).foregroundStyle(Brand.Night.muted)
+                    }
+                    Spacer()
+                }
+                .padding(14)
+                .background(Brand.Night.raised, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
+            }
+        }
+    }
+
+    private func nextCard(_ next: Slot) -> some View {
+        HStack(spacing: 14) {
+            if let ex = next.exercise {
+                ExerciseThumb(ref: ex.exercise, size: 48)
+            } else {
+                Image(systemName: "pause.fill")
+                    .font(.system(size: 16, weight: .bold))
+                    .frame(width: 48, height: 48)
+                    .background(Brand.Night.line, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+                    .foregroundStyle(Brand.Night.rest)
+            }
+            VStack(alignment: .leading, spacing: 1) {
+                Text("Next")
+                    .font(.caption.weight(.bold)).textCase(.uppercase).tracking(0.8)
+                    .foregroundStyle(Brand.Night.muted)
+                Text(next.exercise?.exercise.name ?? "Rest").font(.headline).foregroundStyle(Brand.Night.text)
+            }
+            Spacer()
+            Text(next.exercise?.forLabel ?? Format.clock(next.seconds ?? 0))
+                .font(.subheadline.weight(.semibold))
+                .monospacedDigit()
+                .foregroundStyle(Brand.Night.muted)
+        }
+        .padding(12)
+        .background(Brand.Night.raised, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
     }
 
     /// Where you are inside the block, at a glance — the live exercise filled in.
     @ViewBuilder
     private var blockStrip: some View {
         let steps = runner.blockSteps
-        if steps.count > 1 {
+        if steps.count > 1, runner.state.phase != .lead {
             ScrollView(.horizontal) {
                 HStack(spacing: 8) {
                     ForEach(steps) { s in
                         let live = s.id == runner.slot?.step.id
                         Button { editing = s } label: {
                             Text(s.exercise.name)
-                                .font(.footnote.weight(live ? .semibold : .regular))
+                                .font(.footnote.weight(live ? .bold : .medium))
                                 .lineLimit(1)
                                 .padding(.horizontal, 12)
                                 .padding(.vertical, 9)
-                                .background(live ? Brand.coral : Brand.coralSoft, in: Capsule())
-                                .foregroundStyle(live ? .white : Brand.coralInk)
+                                .background(live ? Brand.coral : Brand.Night.raised, in: Capsule())
+                                .foregroundStyle(live ? .white : Brand.Night.muted)
                         }
                         .buttonStyle(.plain)
                     }
@@ -277,14 +391,14 @@ struct TimerView: View {
                     } label: {
                         Label(runner.state.phase == .paused ? "Resume" : "Pause", systemImage: runner.state.phase == .paused ? "play.fill" : "pause.fill")
                     }
-                    .buttonStyle(BigButtonStyle(tint: Brand.ink, filled: false))
+                    .buttonStyle(NightButtonStyle())
 
                     Button {
                         runner.skip()
                     } label: {
-                        Label("Skip", systemImage: "forward.fill")
+                        Label("Skip", systemImage: "forward.end.fill")
                     }
-                    .buttonStyle(BigButtonStyle(tint: Brand.muted, filled: false))
+                    .buttonStyle(NightButtonStyle())
                 }
                 Button("Done") { runner.done() }
                     .buttonStyle(BigButtonStyle(tint: accent))

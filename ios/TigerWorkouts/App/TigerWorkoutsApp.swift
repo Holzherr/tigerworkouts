@@ -4,6 +4,10 @@ import SwiftUI
 struct TigerWorkoutsApp: App {
     @State private var store = Store()
 
+    init() {
+        Media.configureCache()
+    }
+
     var body: some Scene {
         WindowGroup {
             RootView()

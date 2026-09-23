@@ -13,57 +13,118 @@ struct SignInView: View {
     @State private var error: String?
     @State private var webAuth = WebAuth()
 
+    @FocusState private var focus: Field?
+    private enum Field { case email, code }
+
     var body: some View {
         NavigationStack {
-            Form {
-                Section {
-                    TextField("you@example.com", text: $email)
-                        .textContentType(.emailAddress)
-                        .keyboardType(.emailAddress)
-                        .textInputAutocapitalization(.never)
-                        .autocorrectionDisabled()
-                        .disabled(sent)
-
-                    if sent {
-                        TextField("6-digit code", text: $code)
-                            .textContentType(.oneTimeCode)
-                            .keyboardType(.numberPad)
+            ScrollView {
+                VStack(spacing: 28) {
+                    VStack(spacing: 14) {
+                        Stripes().frame(width: 52, height: 44)
+                        Text("Sign in to Tiger")
+                            .font(.system(size: 30, weight: .heavy))
+                            .foregroundStyle(Brand.ink)
+                        Text("Your workouts and history, the same as on tigerworkouts.com.")
+                            .font(.callout)
+                            .foregroundStyle(Brand.muted)
+                            .multilineTextAlignment(.center)
                     }
+                    .padding(.top, 24)
 
-                    Button(sent ? "Verify" : "Email me a code") {
-                        Task { sent ? await verify() : await send() }
-                    }
-                    .disabled(busy || (sent ? code.count < 6 : !email.contains("@")))
-                } header: {
-                    Text("Sign in")
-                } footer: {
-                    Text("A six-digit code by email. Same account as tigerworkouts.com, same history.")
-                }
-
-                Section {
-                    Button("Continue with Google") {
+                    Button {
                         Task { await google() }
+                    } label: {
+                        HStack(spacing: 10) {
+                            Text("G")
+                                .font(.system(size: 20, weight: .heavy, design: .rounded))
+                                .foregroundStyle(Brand.coral)
+                            Text("Continue with Google")
+                        }
                     }
-                    .disabled(busy)
-                } footer: {
-                    Text("Google needs tigerworkouts://auth listed under Supabase → Authentication → URL Configuration. If it bounces back, use the email code.")
-                }
+                    .buttonStyle(BigButtonStyle(tint: Brand.ink, filled: false))
 
-                if let error {
-                    Section {
-                        Text(error).foregroundStyle(.red).font(.footnote)
+                    HStack(spacing: 12) {
+                        Rectangle().fill(Brand.line).frame(height: 1)
+                        Text("or").font(.footnote).foregroundStyle(Brand.muted)
+                        Rectangle().fill(Brand.line).frame(height: 1)
+                    }
+
+                    VStack(spacing: 12) {
+                        field {
+                            TextField("you@example.com", text: $email)
+                                .textContentType(.emailAddress)
+                                .keyboardType(.emailAddress)
+                                .textInputAutocapitalization(.never)
+                                .autocorrectionDisabled()
+                                .focused($focus, equals: .email)
+                                .disabled(sent)
+                                .foregroundStyle(sent ? Brand.muted : Brand.ink)
+                        }
+
+                        if sent {
+                            Text("We sent a six-digit code to \(email). It can take a minute.")
+                                .font(.footnote)
+                                .foregroundStyle(Brand.muted)
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                            field {
+                                TextField("123456", text: $code)
+                                    .textContentType(.oneTimeCode)
+                                    .keyboardType(.numberPad)
+                                    .font(.system(size: 24, weight: .bold, design: .rounded))
+                                    .monospacedDigit()
+                                    .focused($focus, equals: .code)
+                            }
+                        }
+
+                        Button(sent ? "Sign in" : "Email me a code") {
+                            Task { sent ? await verify() : await send() }
+                        }
+                        .buttonStyle(BigButtonStyle())
+                        .disabled(busy || (sent ? code.filter(\.isNumber).count < 6 : !email.contains("@")))
+                        .opacity(busy ? 0.6 : 1)
+
+                        if sent {
+                            Button("Use a different email") {
+                                sent = false
+                                code = ""
+                                focus = .email
+                            }
+                            .font(.subheadline.weight(.semibold))
+                            .foregroundStyle(Brand.coralInk)
+                        }
+                    }
+
+                    if let error {
+                        Text(error)
+                            .font(.footnote)
+                            .foregroundStyle(.red)
+                            .frame(maxWidth: .infinity, alignment: .leading)
                     }
                 }
+                .padding(.horizontal, 24)
+                .padding(.bottom, 24)
             }
-            .navigationTitle("Sign in")
-            .navigationBarTitleDisplayMode(.inline)
+            .background(Brand.canvas)
+            .scrollDismissesKeyboard(.interactively)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Cancel") { dismiss() }
                 }
             }
-            .disabled(busy)
+            .overlay {
+                if busy { ProgressView().controlSize(.large) }
+            }
+            .onChange(of: sent) { _, isSent in if isSent { focus = .code } }
         }
+    }
+
+    private func field<Content: View>(@ViewBuilder _ content: () -> Content) -> some View {
+        content()
+            .padding(.horizontal, 16)
+            .frame(height: Tap.big)
+            .background(Brand.surface, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+            .overlay(RoundedRectangle(cornerRadius: 16, style: .continuous).strokeBorder(Brand.line))
     }
 
     private func send() async {

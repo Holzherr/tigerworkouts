@@ -12,6 +12,7 @@ struct ExerciseSheet: View {
     var onDrop: (() -> Void)?
     /// Offered when the host can act on it: swapping mid-session changes this step from here on.
     var onSwap: ((Alternatives.Option) -> Void)?
+    var dropLabel = "Drop for the rest of the session"
 
     @Environment(\.dismiss) private var dismiss
 
@@ -63,7 +64,7 @@ struct ExerciseSheet: View {
                             onDrop()
                             dismiss()
                         } label: {
-                            Text("Drop for the rest of the session")
+                            Text(dropLabel)
                         }
                         .buttonStyle(BigButtonStyle(tint: .red, filled: false))
                     }
