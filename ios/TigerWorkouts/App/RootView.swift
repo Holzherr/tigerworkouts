@@ -77,7 +77,7 @@ struct RootView: View {
     }
 
     private func start(_ sheet: Runsheet) {
-        running = SessionRunner(runsheet: sheet, history: store.results)
+        running = SessionRunner(runsheet: sheet)
     }
 }
 

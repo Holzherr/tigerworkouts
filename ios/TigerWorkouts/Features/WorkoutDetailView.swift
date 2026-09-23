@@ -7,6 +7,7 @@ struct WorkoutDetailView: View {
 
     @State private var editing: ExerciseStep?
     @State private var writing: Runsheet?
+    @State private var seeded = false
 
     var body: some View {
         ScrollView {
@@ -26,6 +27,14 @@ struct WorkoutDetailView: View {
         .background(Brand.canvas)
         .navigationTitle(runsheet.title)
         .navigationBarTitleDisplayMode(.inline)
+        .onAppear {
+            // Seed once, before the numbers are seen: the screen shows what the session will start
+            // with, and Start runs exactly what the screen shows. Seeding at Start instead put last
+            // time's numbers back over what had just been set here.
+            guard !seeded else { return }
+            seeded = true
+            runsheet = Settings.withLastUsed(runsheet, results: store.results)
+        }
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
                 Menu {
@@ -56,13 +65,14 @@ struct WorkoutDetailView: View {
         }
         .sheet(item: $writing) { sheet in
             WorkoutEditorView(runsheet: sheet, isExisting: store.isMine(sheet)) { saved in
-                // Editing in place should leave this screen showing what was just saved.
-                if saved.key == runsheet.key { runsheet = saved }
+                // What was just saved is what this screen shows next — the copy included, so Start
+                // runs the copy you just edited rather than the catalogue original it came from.
+                runsheet = saved
             }
         }
         .safeAreaInset(edge: .bottom) {
             Button("Start workout") {
-                onStart(Settings.withLastUsed(runsheet, results: store.results))
+                onStart(runsheet)
             }
             .buttonStyle(BigButtonStyle())
             .padding(16)
@@ -169,22 +179,7 @@ struct WorkoutDetailView: View {
     }
 
     private func mutate(_ stepId: String, _ change: (inout ExerciseStep) -> Void) {
-        runsheet.items = runsheet.items.map { item in
-            switch item {
-            case .block(var b):
-                b.steps = b.steps.map { step in
-                    guard case .exercise(var e) = step, e.id == stepId else { return step }
-                    change(&e)
-                    return .exercise(e)
-                }
-                return .block(b)
-            case .step(.exercise(var e)) where e.id == stepId:
-                change(&e)
-                return .step(.exercise(e))
-            default:
-                return item
-            }
-        }
+        runsheet = Edit.updateStep(runsheet, id: stepId, change)
         if let updated = find(stepId), editing?.id == stepId { editing = updated }
     }
 }

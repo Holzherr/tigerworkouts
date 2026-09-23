@@ -83,9 +83,10 @@ Two things are yours to do once, because they need credentials or admin rights:
 
 ## Tests
 
-42 unit tests: the engine ported one for one from `runner.test.ts`, the muscle and effort models,
-the last-used carry-over, the editing operations, the Lock Screen state, the whole catalogue
-decoding, and the `sessions` row and URL formats the two apps share.
+46 unit tests: the engine ported one for one from `runner.test.ts`, the muscle and effort models,
+the last-used carry-over and that the session runs the sheet the workout screen shows, the editing
+operations, the Lock Screen state, the whole catalogue decoding, and the `sessions` row and URL
+formats the two apps share.
 
 5 UI walkthroughs on the simulator: browse, run and finish; write a workout; settings and the
 Health permission sheet; the Lock Screen card following a transition while the phone is locked;
