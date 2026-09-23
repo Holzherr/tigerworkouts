@@ -12,43 +12,14 @@ enum Edit {
     static func newRunsheet(creator: String?) -> Runsheet {
         var sheet = Runsheet(id: id("w"), title: "", creator: creator)
         sheet.source = Source(title: "", author: creator, kind: "user")
+        // Written from scratch: yours, and private until you make it public.
+        sheet.isPublic = false
         sheet.items = [.block(newBlock(number: 1))]
         return sheet
     }
 
     static func newBlock(number: Int) -> Block {
         Block(id: id("b"), name: "Block \(number)", repeatCount: 8, mode: .rounds, steps: [])
-    }
-
-    /// A copy under a new id, so editing a catalogue workout never writes over the original.
-    static func duplicate(_ r: Runsheet, creator: String?) -> Runsheet {
-        var sheet = r
-        sheet.id = id("w")
-        sheet.title = r.title.isEmpty ? "Untitled" : "\(r.title) (mine)"
-        sheet.creator = creator
-        sheet.source = Source(title: r.title, author: creator, kind: "user")
-        sheet.program = nil
-        // Fresh step ids: two copies of a workout must not share the ids their history is keyed by.
-        sheet.items = r.items.map { item in
-            switch item {
-            case .block(var b):
-                b.id = id("b")
-                b.steps = b.steps.map(reid)
-                return .block(b)
-            case .step(let s):
-                return .step(reid(s))
-            case .ref:
-                return item
-            }
-        }
-        return sheet
-    }
-
-    private static func reid(_ step: Step) -> Step {
-        switch step {
-        case .exercise(var e): e.id = id("e"); return .exercise(e)
-        case .rest(var r): r.id = id("r"); return .rest(r)
-        }
     }
 
     // MARK: - Adding

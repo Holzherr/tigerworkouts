@@ -52,19 +52,18 @@ struct EditingTests {
         #expect(withRest.items.compactMap(\.asBlock).first?.steps.count == 2)
     }
 
-    @Test("a copy shares no ids with the original")
-    func duplicate() {
+    @Test("your own version is a new private workout that points at the original")
+    func newVersion() {
         let (original, _) = sheetWithOneBlock()
-        let copy = Edit.duplicate(original, creator: "Nick")
-        #expect(copy.id != original.id)
-        #expect(copy.title == "Mine (mine)")
-        // Step ids are what a logged session keys its loads by; two workouts must not share them,
-        // or last-used carry-over would leak between them.
-        let originalIds = Set(original.exerciseSteps.map(\.id))
-        let copyIds = Set(copy.exerciseSteps.map(\.id))
-        #expect(originalIds.isDisjoint(with: copyIds))
-        #expect(copy.items.compactMap(\.asBlock)[0].id != original.items.compactMap(\.asBlock)[0].id)
-        #expect(copy.exerciseSteps.map(\.exercise.key) == original.exerciseSteps.map(\.exercise.key))
+        let version = Settings.newVersion(original, of: original, id: "u-1", creator: "Nick")
+        #expect(version.id == "u-1")
+        #expect(version.title == "Mine (mine)")
+        #expect(version.isPublic == false)
+        #expect(version.derivedFrom == original.id)
+        #expect(version.source?.kind == "user")
+        // Step ids stay: last-used history is keyed by workout id and step id together, so the
+        // two workouts cannot leak loads into each other.
+        #expect(version.exerciseSteps.map(\.id) == original.exerciseSteps.map(\.id))
     }
 
     @Test("removing and reordering")

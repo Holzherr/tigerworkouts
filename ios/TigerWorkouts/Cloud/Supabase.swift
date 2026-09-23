@@ -274,37 +274,29 @@ actor Supabase {
     /// The account's own workouts, on top of the bundled catalogue.
     func workouts() async throws -> [Runsheet] {
         guard let uid = session?.user.id else { return [] }
-        let (data, _) = try await request("rest/v1/workouts?select=id,data,creator,title&owner=eq.\(uid)")
+        let (data, _) = try await request("rest/v1/workouts?select=id,data,creator,title,public&owner=eq.\(uid)")
         guard let rows = try JSONSerialization.jsonObject(with: data) as? [[String: Any]] else { return [] }
-        let decoder = Library.shared.decoder
-        return rows.compactMap { row in
-            guard let payload = row["data"] as? [String: Any], payload["items"] != nil,
-                  let body = try? JSONSerialization.data(withJSONObject: payload),
-                  var sheet = try? decoder.decode(Runsheet.self, from: body) else { return nil }
-            if let id = row["id"] as? String { sheet.id = id }
-            if let creator = row["creator"] as? String { sheet.creator = creator }
-            return sheet
-        }
+        return rows.compactMap { WorkoutRowCodec.decode($0, decoder: Library.shared.decoder) }
     }
 
-    /// Writes a workout this account owns. `public: true` matches what the web app writes, so a
-    /// workout made on the phone shows up there as well.
+    /// Other people's public workouts, for Discover. Row-level security already hides private ones.
+    func publicWorkouts() async throws -> [Runsheet] {
+        let me = session?.user.id
+        let (data, _) = try await request("rest/v1/workouts?select=id,data,creator,title,owner,public&public=eq.true", authed: me != nil)
+        guard let rows = try JSONSerialization.jsonObject(with: data) as? [[String: Any]] else { return [] }
+        return rows
+            .filter { ($0["owner"] as? String) != me }
+            .compactMap { WorkoutRowCodec.decode($0, decoder: Library.shared.decoder) }
+    }
+
+    /// Writes a workout this account owns, with its own visibility (see `WorkoutRowCodec.encode`).
     func saveWorkout(_ r: Runsheet) async throws {
         guard let uid = session?.user.id else { throw SupabaseError(message: "Not signed in") }
-        guard let id = r.id else { throw SupabaseError(message: "Workout has no id") }
-        let body = try JSONEncoder().encode(r)
-        let data = try JSONSerialization.jsonObject(with: body)
+        guard r.id != nil else { throw SupabaseError(message: "Workout has no id") }
         _ = try await request(
             "rest/v1/workouts?on_conflict=id",
             method: "POST",
-            body: [[
-                "id": id,
-                "owner": uid,
-                "creator": r.creator.map { $0 as Any } ?? NSNull(),
-                "title": r.title,
-                "public": true,
-                "data": data,
-            ]],
+            body: [try WorkoutRowCodec.encode(r, owner: uid)],
             headers: ["Prefer": "resolution=merge-duplicates,return=minimal"]
         )
     }
@@ -319,9 +311,10 @@ actor Supabase {
         )
     }
 
-    /// Writes back the two prefs this app owns, merged into whatever else is on the row — the web
+    /// Writes back the prefs this app owns, merged into whatever else is on the row — the web
     /// app keeps the name, units and training maxes in the same JSON and must not lose them.
-    func savePrefs(bodyweightKg: Double?, saved: [String]) async throws {
+    /// Workout settings are merged per workout, newest write wins, so neither app drops the other's.
+    func savePrefs(bodyweightKg: Double?, saved: [String], workoutSettings: [String: WorkoutSettings]) async throws {
         guard let uid = session?.user.id else { throw SupabaseError(message: "Not signed in") }
         var prefs: [String: Any] = [:]
         if let (data, _) = try? await request("rest/v1/user_state?select=prefs&owner=eq.\(uid)"),
@@ -331,6 +324,8 @@ actor Supabase {
         }
         prefs["saved"] = saved
         if let bodyweightKg { prefs["bodyweightKg"] = bodyweightKg }
+        let theirs = PrefsSettings.decode(prefs["workoutSettings"])
+        prefs["workoutSettings"] = try PrefsSettings.encode(Settings.merge(theirs, workoutSettings))
         _ = try await request(
             "rest/v1/user_state?on_conflict=owner",
             method: "POST",
@@ -339,13 +334,13 @@ actor Supabase {
         )
     }
 
-    /// Bodyweight and the saved list, kept on `user_state.prefs` by the web app.
-    func prefs() async throws -> (bodyweightKg: Double?, saved: [String]) {
-        guard let uid = session?.user.id else { return (nil, []) }
+    /// Bodyweight, the saved list and your workout settings, kept on `user_state.prefs`.
+    func prefs() async throws -> (bodyweightKg: Double?, saved: [String], workoutSettings: [String: WorkoutSettings]) {
+        guard let uid = session?.user.id else { return (nil, [], [:]) }
         let (data, _) = try await request("rest/v1/user_state?select=prefs&owner=eq.\(uid)")
         guard let rows = try JSONSerialization.jsonObject(with: data) as? [[String: Any]],
-              let prefs = rows.first?["prefs"] as? [String: Any] else { return (nil, []) }
-        return (prefs["bodyweightKg"] as? Double, prefs["saved"] as? [String] ?? [])
+              let prefs = rows.first?["prefs"] as? [String: Any] else { return (nil, [], [:]) }
+        return (prefs["bodyweightKg"] as? Double, prefs["saved"] as? [String] ?? [], PrefsSettings.decode(prefs["workoutSettings"]))
     }
 }
 
@@ -356,5 +351,51 @@ extension Data {
             .replacingOccurrences(of: "+", with: "-")
             .replacingOccurrences(of: "/", with: "_")
             .replacingOccurrences(of: "=", with: "")
+    }
+}
+
+/// A `workouts` row, both ways. Mirrors `workoutToRow` / `workoutFromRow` in src/features/cloud/sync.ts.
+enum WorkoutRowCodec {
+    /// Visibility is the workout's own. Without one the key is left out: a new row takes the
+    /// column's default (private) and an existing row keeps what it has — a push never flips it.
+    static func encode(_ r: Runsheet, owner: String) throws -> [String: Any] {
+        var data = try JSONSerialization.jsonObject(with: JSONEncoder().encode(r)) as? [String: Any] ?? [:]
+        var row: [String: Any] = [
+            "id": r.id ?? "",
+            "owner": owner,
+            "creator": r.creator.map { $0 as Any } ?? NSNull(),
+            "title": r.title,
+        ]
+        if let pub = r.isPublic {
+            row["public"] = pub
+            data["public"] = pub
+        }
+        row["data"] = data
+        return row
+    }
+
+    /// The `public` column is the truth about visibility; the copy inside `data` can be stale or missing.
+    static func decode(_ row: [String: Any], decoder: JSONDecoder) -> Runsheet? {
+        guard let payload = row["data"] as? [String: Any], payload["items"] != nil,
+              let body = try? JSONSerialization.data(withJSONObject: payload),
+              var sheet = try? decoder.decode(Runsheet.self, from: body) else { return nil }
+        if let id = row["id"] as? String { sheet.id = id }
+        if let creator = row["creator"] as? String { sheet.creator = creator }
+        if let pub = row["public"] as? Bool { sheet.isPublic = pub }
+        return sheet
+    }
+}
+
+/// `user_state.prefs.workoutSettings` as JSON values.
+enum PrefsSettings {
+    static func decode(_ value: Any?) -> [String: WorkoutSettings] {
+        guard let value, JSONSerialization.isValidJSONObject(value),
+              let data = try? JSONSerialization.data(withJSONObject: value),
+              let out = try? JSONDecoder().decode([String: WorkoutSettings].self, from: data) else { return [:] }
+        return out
+    }
+
+    static func encode(_ settings: [String: WorkoutSettings]) throws -> Any {
+        try JSONSerialization.jsonObject(with: JSONEncoder().encode(settings))
     }
 }

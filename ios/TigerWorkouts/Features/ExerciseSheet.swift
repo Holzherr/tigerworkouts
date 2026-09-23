@@ -7,6 +7,10 @@ struct ExerciseSheet: View {
     let step: ExerciseStep
     var target: Binding<Double?>?
     var incline: Binding<Double?>?
+    /// Reps, seconds, minutes, metres or calories — the step's own count.
+    var amount: Binding<Double?>?
+    /// Said under the steppers, e.g. that a change is saved as your settings.
+    var note: String?
     /// Shown mid-session: a change from here applies to this round and every one after it.
     var appliesFromHere = false
     var onDrop: (() -> Void)?
@@ -44,6 +48,14 @@ struct ExerciseSheet: View {
                     }
                     if showsIncline, let incline {
                         stepper(title: "Incline", unit: "%", value: incline, by: 0.5)
+                    }
+                    if let amount, let count = step.countSetting {
+                        stepper(title: count.label, unit: count.unit, value: amount, by: count.step)
+                    }
+                    if let note {
+                        Label(note, systemImage: "slider.horizontal.3")
+                            .font(.footnote)
+                            .foregroundStyle(Brand.muted)
                     }
 
                     if appliesFromHere, target != nil {
@@ -86,7 +98,7 @@ struct ExerciseSheet: View {
         VStack(alignment: .leading, spacing: 10) {
             Text(title).font(.subheadline.weight(.semibold)).foregroundStyle(Brand.body)
             HStack(spacing: 14) {
-                nudge("minus", enabled: (value.wrappedValue ?? 0) > 0) {
+                nudge("minus", label: "Less \(title)", enabled: (value.wrappedValue ?? 0) > 0) {
                     value.wrappedValue = max(0, (value.wrappedValue ?? amount) - amount)
                 }
                 VStack(spacing: 0) {
@@ -96,7 +108,7 @@ struct ExerciseSheet: View {
                     Text(unit).font(.caption).foregroundStyle(Brand.muted)
                 }
                 .frame(maxWidth: .infinity)
-                nudge("plus", enabled: true) {
+                nudge("plus", label: "More \(title)", enabled: true) {
                     value.wrappedValue = (value.wrappedValue ?? 0) + amount
                 }
             }
@@ -105,7 +117,7 @@ struct ExerciseSheet: View {
         .cardSurface()
     }
 
-    private func nudge(_ symbol: String, enabled: Bool, action: @escaping () -> Void) -> some View {
+    private func nudge(_ symbol: String, label: String, enabled: Bool, action: @escaping () -> Void) -> some View {
         Button {
             action()
             Haptics.shared.play(.tick)
@@ -118,6 +130,7 @@ struct ExerciseSheet: View {
         }
         .disabled(!enabled)
         .opacity(enabled ? 1 : 0.4)
+        .accessibilityLabel(label)
     }
 }
 
@@ -166,5 +179,20 @@ private struct SwapList: View {
     private func subtitle(_ option: Alternatives.Option) -> String {
         guard let target = option.target else { return option.why }
         return "\(Format.number(target)) \(option.exercise.unit) · \(option.why)"
+    }
+}
+
+extension ExerciseStep {
+    /// The count a step is done for, as a setting; none for max efforts and video segments.
+    /// Mirrors `countSetting` in src/features/runsheet/components/exercise-sheet.tsx.
+    var countSetting: (label: String, unit: String, step: Double)? {
+        switch forMode {
+        case .reps, .amrap: (perSide == true ? "Reps (each side)" : "Reps", "reps", 1)
+        case .seconds: ("Time", "seconds", 5)
+        case .minutes: ("Time", "minutes", 1)
+        case .meters: ("Distance", "metres", 50)
+        case .calories: ("Calories", "cal", 1)
+        case .max, .segment: nil
+        }
     }
 }

@@ -9,6 +9,8 @@ final class WalkthroughUITests: XCTestCase {
     override func setUp() {
         continueAfterFailure = false
         app = XCUIApplication()
+        // Each walkthrough starts with no workouts of its own, so one test's copy is not the next one's.
+        app.launchArguments = ["-uitest-fresh"]
         app.launch()
         // A test that ended mid-session leaves one to resume; start each test from a clean slate.
         let discard = app.alerts.buttons["Discard"]
@@ -133,12 +135,14 @@ final class WalkthroughUITests: XCTestCase {
         sleep(1)
         XCTAssertLessThan(rest.frame.minY, rower.frame.minY, "dragging should reorder in place")
 
-        // A catalogue workout is never written over: the change is offered as a copy.
+        // A catalogue workout is never written over: a new setup is offered as your own version.
         XCTAssertTrue(app.staticTexts["Changed for this session"].waitForExistence(timeout: 3))
         snap("22 Reordered, session only")
-        tap(app.buttons["Save as mine"])
+        tap(app.buttons["Save my version"])
         XCTAssertTrue(app.navigationBars["Tabata This (mine)"].waitForExistence(timeout: 5))
         XCTAssertFalse(app.staticTexts["Changed for this session"].exists)
+        // Your own version starts private, and says so.
+        XCTAssertTrue(app.staticTexts["Private · only you see it"].waitForExistence(timeout: 3))
 
         // Add straight from the page.
         tap(app.buttons["Add exercise"].firstMatch)
@@ -154,6 +158,29 @@ final class WalkthroughUITests: XCTestCase {
         tap(app.buttons["Delete"])
         XCTAssertFalse(swing.waitForExistence(timeout: 2))
         snap("23 My copy, edited")
+    }
+
+    /// Changing a number is not a new workout: it is saved as your settings, and can be undone.
+    func testSettingsAreNotANewWorkout() {
+        open("Tabata This")
+        let rower = app.buttons.matching(NSPredicate(format: "label BEGINSWITH[c] 'Rowing machine'")).firstMatch
+        tap(rower)
+        tap(app.buttons["More Time"])
+        XCTAssertTrue(app.staticTexts.matching(NSPredicate(format: "label BEGINSWITH 'Saved as your settings'")).firstMatch.waitForExistence(timeout: 3))
+        snap("26 A number, saved as your settings")
+        tap(app.buttons["Done"])
+
+        // Still the catalogue workout, with your number on it.
+        XCTAssertTrue(app.navigationBars["Tabata This"].waitForExistence(timeout: 3))
+        XCTAssertFalse(app.staticTexts["Changed for this session"].exists)
+        XCTAssertTrue(app.staticTexts["Your settings"].waitForExistence(timeout: 3))
+        XCTAssertTrue(app.buttons.matching(NSPredicate(format: "label BEGINSWITH[c] 'Rowing machine' AND label CONTAINS '25s'")).firstMatch.exists)
+        snap("27 Your settings on a catalogue workout")
+
+        // Back to the original.
+        tap(app.buttons["Reset to original"])
+        XCTAssertFalse(app.staticTexts["Your settings"].waitForExistence(timeout: 2))
+        XCTAssertTrue(app.buttons.matching(NSPredicate(format: "label BEGINSWITH[c] 'Rowing machine' AND label CONTAINS '20s'")).firstMatch.exists)
     }
 
     func testWriteAWorkout() {
