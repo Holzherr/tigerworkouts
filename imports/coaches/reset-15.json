@@ -1,0 +1,101 @@
+{
+  "id": "coach-reset-15",
+  "title": "Reset · Fifteen on the Floor",
+  "creator": "Sofia Marchetti",
+  "description": "A short floor session for the day after a hard one. Nothing here should raise your breathing much. Hold each stretch long enough to get bored of it, and keep the core work slow — it is the control that counts, not the count.",
+  "source": {
+    "title": "Reset — 15 minutes",
+    "author": "Sofia Marchetti",
+    "kind": "coach",
+    "license": "Original TigerWorkouts programme",
+    "importedAt": "2026-09-22"
+  },
+  "tags": [
+    "Coach",
+    "Mobility",
+    "Core",
+    "Recovery"
+  ],
+  "level": "Easy",
+  "program": {
+    "name": "Reset",
+    "day": "15 minutes",
+    "order": 1
+  },
+  "items": [
+    {
+      "kind": "exercise",
+      "id": "s1",
+      "exercise": "yoga_cat_cow",
+      "forMode": "seconds",
+      "forValue": 90
+    },
+    {
+      "kind": "exercise",
+      "id": "s2",
+      "exercise": "bw_stretch_hip_flexor",
+      "forMode": "seconds",
+      "forValue": 60,
+      "perSide": true
+    },
+    {
+      "kind": "exercise",
+      "id": "s3",
+      "exercise": "bw_stretch_hamstring_lying",
+      "forMode": "seconds",
+      "forValue": 60,
+      "perSide": true
+    },
+    {
+      "kind": "exercise",
+      "id": "s6",
+      "exercise": "bw_knee_roll",
+      "forMode": "seconds",
+      "forValue": 60
+    },
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "Slow core",
+      "mode": "rounds",
+      "repeat": 4,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s4",
+          "exercise": "bw_dead_bug",
+          "forMode": "reps",
+          "forValue": 12
+        },
+        {
+          "kind": "exercise",
+          "id": "s5",
+          "exercise": "bw_plank",
+          "forMode": "seconds",
+          "forValue": 45
+        },
+        {
+          "kind": "exercise",
+          "id": "s7",
+          "exercise": "bw_side_plank",
+          "forMode": "seconds",
+          "forValue": 30,
+          "perSide": true
+        },
+        {
+          "kind": "rest",
+          "id": "r1",
+          "seconds": 45
+        }
+      ]
+    },
+    {
+      "kind": "exercise",
+      "id": "c1",
+      "exercise": "bw_stretch_upper_back",
+      "forMode": "seconds",
+      "forValue": 60,
+      "role": "cooldown"
+    }
+  ]
+}

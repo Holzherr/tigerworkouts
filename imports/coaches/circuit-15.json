@@ -1,0 +1,80 @@
+{
+  "id": "coach-circuit-15",
+  "title": "Circuit Club · Three Rounds",
+  "creator": "Priya Raman",
+  "description": "Three rounds of three movements with one honest rest between them. Swing hard, push-up slow, squat deep. If the third round feels the same as the first you went too easy on the swings.",
+  "source": {
+    "title": "Circuit Club — 15 minutes",
+    "author": "Priya Raman",
+    "kind": "coach",
+    "license": "Original TigerWorkouts programme",
+    "importedAt": "2026-09-22"
+  },
+  "tags": [
+    "Coach",
+    "Circuit",
+    "Kettlebell",
+    "Bodyweight"
+  ],
+  "level": "Medium",
+  "program": {
+    "name": "Circuit Club",
+    "day": "15 minutes",
+    "order": 1
+  },
+  "items": [
+    {
+      "kind": "exercise",
+      "id": "w1",
+      "exercise": "bw_jumping_jack",
+      "forMode": "seconds",
+      "forValue": 45,
+      "role": "warmup"
+    },
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "The circuit",
+      "mode": "rounds",
+      "repeat": 4,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "kb_swing",
+          "forMode": "reps",
+          "forValue": 20,
+          "target": 20
+        },
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "bw_pushup",
+          "forMode": "reps",
+          "forValue": 12
+        },
+        {
+          "kind": "exercise",
+          "id": "s3",
+          "exercise": "bw_squat",
+          "forMode": "reps",
+          "forValue": 20
+        },
+        {
+          "kind": "rest",
+          "id": "r1",
+          "seconds": 60
+        }
+      ]
+    },
+    {
+      "kind": "exercise",
+      "id": "c1",
+      "exercise": "bw_stretch_hamstring_standing",
+      "forMode": "seconds",
+      "forValue": 40,
+      "role": "cooldown",
+      "perSide": true
+    }
+  ]
+}

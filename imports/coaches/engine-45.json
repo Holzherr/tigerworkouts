@@ -1,0 +1,114 @@
+{
+  "id": "coach-engine-45",
+  "title": "Engine Room · The Long Way Round",
+  "creator": "Mara Vance",
+  "description": "The session that makes every other one easier. Forty-five minutes at a pace you can hold, split across three machines so nothing gets sore before you get tired. Only the last five minutes are meant to be hard.",
+  "source": {
+    "title": "Engine Room — 45 minutes",
+    "author": "Mara Vance",
+    "kind": "coach",
+    "license": "Original TigerWorkouts programme",
+    "importedAt": "2026-09-22"
+  },
+  "tags": [
+    "Coach",
+    "Rower",
+    "Treadmill",
+    "Endurance"
+  ],
+  "level": "Medium",
+  "program": {
+    "name": "Engine Room",
+    "day": "45 minutes",
+    "order": 3
+  },
+  "items": [
+    {
+      "kind": "exercise",
+      "id": "w1",
+      "exercise": "incline_walk",
+      "forMode": "minutes",
+      "forValue": 5,
+      "target": 5.5,
+      "incline": 3,
+      "role": "warmup"
+    },
+    {
+      "kind": "exercise",
+      "id": "s1",
+      "exercise": "cardio_rower",
+      "forMode": "minutes",
+      "forValue": 12,
+      "note": "Conversational. Count strokes, not metres"
+    },
+    {
+      "kind": "rest",
+      "id": "r1",
+      "seconds": 90
+    },
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "Tempo climbs",
+      "mode": "rounds",
+      "repeat": 3,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "incline_walk",
+          "forMode": "minutes",
+          "forValue": 3,
+          "target": 6,
+          "incline": 10,
+          "note": "No hands on the rails"
+        },
+        {
+          "kind": "rest",
+          "id": "r2",
+          "seconds": 60
+        }
+      ]
+    },
+    {
+      "kind": "exercise",
+      "id": "s3",
+      "exercise": "cardio_bike",
+      "forMode": "minutes",
+      "forValue": 5,
+      "note": "Legs only, steady"
+    },
+    {
+      "kind": "block",
+      "id": "b2",
+      "name": "Last five",
+      "mode": "rounds",
+      "repeat": 4,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s4",
+          "exercise": "sprint",
+          "forMode": "seconds",
+          "forValue": 40,
+          "target": 14,
+          "incline": 4
+        },
+        {
+          "kind": "rest",
+          "id": "r3",
+          "seconds": 50
+        }
+      ]
+    },
+    {
+      "kind": "exercise",
+      "id": "c1",
+      "exercise": "cardio_walk",
+      "forMode": "minutes",
+      "forValue": 3,
+      "target": 5,
+      "role": "cooldown"
+    }
+  ]
+}

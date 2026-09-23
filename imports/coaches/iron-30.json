@@ -1,0 +1,128 @@
+{
+  "id": "coach-iron-30",
+  "title": "Iron Base · Whole Body A",
+  "creator": "Dev Okafor",
+  "description": "One push, one pull, one squat, one carry — the four things a week of training needs, in half an hour. Pick a weight that makes the last two reps slow but never ugly. The carry at the end is not filler; it is where the grip and the trunk are built.",
+  "source": {
+    "title": "Iron Base — 30 minutes",
+    "author": "Dev Okafor",
+    "kind": "coach",
+    "license": "Original TigerWorkouts programme",
+    "importedAt": "2026-09-22"
+  },
+  "tags": [
+    "Coach",
+    "Strength",
+    "Dumbbell",
+    "Full body"
+  ],
+  "level": "Medium",
+  "program": {
+    "name": "Iron Base",
+    "day": "30 minutes",
+    "order": 2
+  },
+  "items": [
+    {
+      "kind": "exercise",
+      "id": "w1",
+      "exercise": "bw_squat",
+      "forMode": "reps",
+      "forValue": 15,
+      "role": "warmup"
+    },
+    {
+      "kind": "exercise",
+      "id": "w2",
+      "exercise": "bw_stretch_chest",
+      "forMode": "seconds",
+      "forValue": 30,
+      "role": "warmup"
+    },
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "Squat and press",
+      "mode": "rounds",
+      "repeat": 5,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "db_goblet_squat",
+          "forMode": "reps",
+          "forValue": 10,
+          "target": 24
+        },
+        {
+          "kind": "rest",
+          "id": "r1",
+          "seconds": 90
+        },
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "db_bench",
+          "forMode": "reps",
+          "forValue": 8,
+          "target": 20
+        },
+        {
+          "kind": "rest",
+          "id": "r2",
+          "seconds": 90
+        }
+      ],
+      "progression": {
+        "onSuccessKg": 2.5,
+        "deloadPct": 10,
+        "failAfter": 3
+      }
+    },
+    {
+      "kind": "block",
+      "id": "b2",
+      "name": "Pull",
+      "mode": "rounds",
+      "repeat": 4,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s3",
+          "exercise": "cable_lat_pulldown",
+          "forMode": "reps",
+          "forValue": 10,
+          "target": 40
+        },
+        {
+          "kind": "rest",
+          "id": "r3",
+          "seconds": 90
+        }
+      ]
+    },
+    {
+      "kind": "block",
+      "id": "b3",
+      "name": "Carry",
+      "mode": "rounds",
+      "repeat": 2,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s4",
+          "exercise": "db_farmers_carry",
+          "forMode": "seconds",
+          "forValue": 40,
+          "target": 24,
+          "note": "Tall, slow steps, no lean"
+        },
+        {
+          "kind": "rest",
+          "id": "r4",
+          "seconds": 45
+        }
+      ]
+    }
+  ]
+}

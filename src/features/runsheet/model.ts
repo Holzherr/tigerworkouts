@@ -44,7 +44,7 @@ export interface Source {
   title: string;
   url?: string;
   author?: string;
-  kind: 'benchmark' | 'program' | 'video' | 'article' | 'protocol' | 'user';
+  kind: 'benchmark' | 'coach' | 'program' | 'video' | 'article' | 'protocol' | 'user';
   license?: string;
   importedAt?: string;
 }

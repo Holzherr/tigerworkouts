@@ -1,0 +1,75 @@
+{
+  "id": "coach-iron-15",
+  "title": "Iron Base · Press and Pull",
+  "creator": "Dev Okafor",
+  "description": "Two movements, four sets each, alternating so the rest takes care of itself. Machines on purpose: when the racks are busy this session still runs, and the load is the one number worth chasing. Add 2.5 kg whenever all four sets move cleanly.",
+  "source": {
+    "title": "Iron Base — 15 minutes",
+    "author": "Dev Okafor",
+    "kind": "coach",
+    "license": "Original TigerWorkouts programme",
+    "importedAt": "2026-09-22"
+  },
+  "tags": [
+    "Coach",
+    "Strength",
+    "Machine",
+    "Upper body"
+  ],
+  "level": "Medium",
+  "program": {
+    "name": "Iron Base",
+    "day": "15 minutes",
+    "order": 1
+  },
+  "items": [
+    {
+      "kind": "exercise",
+      "id": "w1",
+      "exercise": "bw_arm_circle",
+      "forMode": "seconds",
+      "forValue": 40,
+      "role": "warmup"
+    },
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "Press and pull",
+      "mode": "rounds",
+      "repeat": 5,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "machine_chest_press",
+          "forMode": "reps",
+          "forValue": 8,
+          "target": 40
+        },
+        {
+          "kind": "rest",
+          "id": "r1",
+          "seconds": 60
+        },
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "cable_row",
+          "forMode": "reps",
+          "forValue": 10,
+          "target": 35
+        },
+        {
+          "kind": "rest",
+          "id": "r2",
+          "seconds": 60
+        }
+      ],
+      "progression": {
+        "onSuccessKg": 2.5,
+        "deloadPct": 10,
+        "failAfter": 3
+      }
+    }
+  ]
+}

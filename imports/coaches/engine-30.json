@@ -1,0 +1,96 @@
+{
+  "id": "coach-engine-30",
+  "title": "Engine Room · Threes and Thirties",
+  "creator": "Mara Vance",
+  "description": "Two engines in one session: long threes on the rower where the pace should feel boring, then short thirties on the treadmill where it should not. The rower builds the base that makes the sprints repeatable. If you only have one machine, run both halves on it.",
+  "source": {
+    "title": "Engine Room — 30 minutes",
+    "author": "Mara Vance",
+    "kind": "coach",
+    "license": "Original TigerWorkouts programme",
+    "importedAt": "2026-09-22"
+  },
+  "tags": [
+    "Coach",
+    "Treadmill",
+    "Rower",
+    "Intervals"
+  ],
+  "level": "Hard",
+  "program": {
+    "name": "Engine Room",
+    "day": "30 minutes",
+    "order": 2
+  },
+  "items": [
+    {
+      "kind": "exercise",
+      "id": "w1",
+      "exercise": "incline_walk",
+      "forMode": "minutes",
+      "forValue": 4,
+      "target": 5.5,
+      "incline": 3,
+      "role": "warmup"
+    },
+    {
+      "kind": "block",
+      "id": "b1",
+      "name": "Rower threes",
+      "mode": "rounds",
+      "repeat": 3,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s1",
+          "exercise": "cardio_rower",
+          "forMode": "minutes",
+          "forValue": 3,
+          "note": "Steady: you could speak a full sentence"
+        },
+        {
+          "kind": "rest",
+          "id": "r1",
+          "seconds": 60
+        }
+      ]
+    },
+    {
+      "kind": "rest",
+      "id": "r9",
+      "seconds": 120
+    },
+    {
+      "kind": "block",
+      "id": "b2",
+      "name": "Treadmill thirties",
+      "mode": "rounds",
+      "repeat": 8,
+      "steps": [
+        {
+          "kind": "exercise",
+          "id": "s2",
+          "exercise": "sprint",
+          "forMode": "seconds",
+          "forValue": 30,
+          "target": 14.5,
+          "incline": 6
+        },
+        {
+          "kind": "rest",
+          "id": "r2",
+          "seconds": 30
+        }
+      ]
+    },
+    {
+      "kind": "exercise",
+      "id": "c1",
+      "exercise": "cardio_walk",
+      "forMode": "minutes",
+      "forValue": 4,
+      "target": 5,
+      "role": "cooldown"
+    }
+  ]
+}
