@@ -14,6 +14,7 @@ src/          the web app — React, a component library first and an app second
 imports/      472 public workouts and the exercises they need; the one catalogue both apps read
 ios/          the native iPhone app (SwiftUI) — see ios/README.md
 legacy/       the v0.9 single-file app, served at /legacy/; also holds the Supabase schema
+mcp/          the MCP server for AI assistants (Cloudflare Worker, mcp.tigerworkouts.com) — specs/mcp.md
 tools/        catalogue validation, the v0.9 library port, and the iOS catalogue export
 .github/      the build and deploy to tigerworkouts.com
 ```
@@ -21,6 +22,7 @@ tools/        catalogue validation, the v0.9 library port, and the iOS catalogue
 - **Live:** https://tigerworkouts.com — the React app (PWA)
 - **Legacy:** https://tigerworkouts.com/legacy/ — v0.9, kept after the cutover, no new features
 - **Storybook:** https://tigerworkouts.com/storybook/
+- **MCP server:** https://mcp.tigerworkouts.com — connect Claude or ChatGPT; deployed by hand with `cd mcp && npm run deploy`
 
 ## Deploy
 

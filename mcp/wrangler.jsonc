@@ -1,0 +1,18 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "tigerworkouts-mcp",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-09-01",
+  "compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
+  // Resolves the web app's "@/…" imports (src/features/runsheet/model.ts and friends).
+  "tsconfig": "tsconfig.json",
+  "observability": { "enabled": true },
+  "kv_namespaces": [{ "binding": "OAUTH_KV", "id": "79961dac3c484d72aa0c39326ce83784" }],
+  "vars": {
+    // Nick only, until it opens. Empty string = every TigerWorkouts account may connect.
+    "ALLOWED_USER_IDS": "71ee1910-ef0a-471d-81bb-345ce7b9c2e3",
+    // Flip to "true" once https://mcp.tigerworkouts.com/callback is an allowed Supabase redirect URL.
+    "GOOGLE_SIGNIN": "false"
+  },
+  "routes": [{ "pattern": "mcp.tigerworkouts.com", "custom_domain": true }]
+}
