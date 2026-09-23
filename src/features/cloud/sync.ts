@@ -11,7 +11,10 @@ import type { Runsheet } from '@/features/runsheet/model';
 import type { LibraryExercise } from '@/features/exercises/library';
 import type { SessionResult, TrainingMaxes } from '@/features/runsheet/progression';
 import { currentUser, sb } from './client';
-import { fromLegacySession, isLegacySession, legacyWorkoutToRunsheet, type LegacySession } from './legacy';
+import type { LegacySession } from './legacy';
+import { fromRow, workoutFromRow } from './rows';
+
+export { fromRow } from './rows';
 
 export interface SyncTarget {
   results: SessionResult[];
@@ -74,28 +77,6 @@ const stripLegacy = (r: SessionResult) => {
   void _l;
   return rest;
 };
-export const fromRow = (row: { id: string; data: unknown }): SessionResult => {
-  const d = row.data as Record<string, unknown>;
-  if (d && d.format === 'v2') {
-    const { format: _f, blocks: _b, ...rest } = d;
-    void _f;
-    void _b;
-    return { ...(rest as unknown as SessionResult), id: row.id };
-  }
-  if (isLegacySession(d)) {
-    const legacy = d as LegacySession & { v2?: SessionResult };
-    if (legacy.v2) return { ...legacy.v2, legacy: { ...legacy, v2: undefined }, id: row.id };
-    return fromLegacySession(legacy);
-  }
-  return { id: row.id, runsheetId: String((d as { workoutId?: string })?.workoutId ?? row.id), title: String((d as { title?: string })?.title ?? row.id), startedAt: String((d as { startedAt?: string })?.startedAt ?? new Date().toISOString()), steps: [] };
-};
-
-const workoutFromRow = (row: { id: string; data: unknown; creator?: string | null; title?: string | null }): Runsheet => {
-  const d = row.data as Record<string, unknown>;
-  if (d && Array.isArray(d.items)) return { ...(d as unknown as Runsheet), id: row.id };
-  return legacyWorkoutToRunsheet({ id: row.id, title: String(row.title ?? d?.title ?? row.id), creator: row.creator ?? undefined, blocks: (d?.blocks as never) ?? [] });
-};
-
 export interface SyncResult {
   patch: Partial<SyncTarget>;
   error?: string;
