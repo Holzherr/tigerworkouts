@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { EX } from '@/features/runsheet/fixtures';
 import { makeExercise, makeRest, type Block, type Runsheet } from '@/features/runsheet/model';
-import { adjust, advance, drop, elapsed, expand, pause, resume, start, swap, tick, toResult } from './runner';
+import { adjust, advance, drop, elapsed, expand, pause, replan, resume, start, swap, tick, toResult } from './runner';
 import * as R from './runner';
 
 const swings = () => ({ ...makeExercise(EX.kb_swing, { target: 28 }), id: 'sw' });
@@ -149,5 +149,77 @@ describe('adjusting a step from the overview', () => {
   it('ignores a step that is not in the session', () => {
     const s = R.start(interval(), 0);
     expect(R.adjustStep(s, 'nope', 10)).toBe(s);
+  });
+});
+
+/** Ported one for one to RunnerTests.swift: same cases, same names. */
+describe('replan: editing what is still to come', () => {
+  // 2 rounds of swings, then 3 rounds of press, then 10 squats.
+  const plan = (): Runsheet => ({
+    id: 'p',
+    title: 'Plan',
+    items: [
+      { kind: 'block', id: 'b1', name: 'Swings', repeat: 2, steps: [swings()] },
+      { kind: 'block', id: 'b2', name: 'Press', repeat: 3, steps: [press()] },
+      { kind: 'block', id: 'b3', name: 'Squats', repeat: 1, steps: [{ ...makeExercise(EX.bw_squat, { forMode: 'reps', forValue: 10 }), id: 'sq' }] },
+    ],
+  });
+  const withRounds = (r: Runsheet, id: string, repeat: number): Runsheet => ({ ...r, items: r.items.map(it => (it.kind === 'block' && it.id === id ? { ...it, repeat } : it)) });
+
+  it("changing the next block's rounds from 3 to 4 adds one round after the cursor and leaves done slots and their actuals unchanged", () => {
+    let s = tick(start(plan(), 0), 5000); // swings, round 1
+    s = adjust(s, 6000, 32);
+    s = advance(s, 35000); // round 1 done, round 2 running
+    const before = s;
+    s = replan(s, withRounds(plan(), 'b2', 4), 36000);
+    expect(s.i).toBe(1);
+    expect(s.phase).toBe('running');
+    expect(s.slots.slice(0, 2)).toEqual(before.slots.slice(0, 2));
+    expect(s.actuals[before.slots[0].id]).toEqual(before.actuals[before.slots[0].id]);
+    expect(s.slots.filter(sl => sl.blockId === 'b2').length).toBe(4);
+    expect(s.slots.length).toBe(2 + 4 + 1);
+    expect(new Set(s.slots.map(sl => sl.id)).size).toBe(s.slots.length);
+  });
+
+  it('a block moved up runs next, and a block already done never runs again', () => {
+    let s = tick(start(plan(), 0), 5000);
+    s = advance(s, 35000);
+    s = advance(s, 65000); // parked at the press gate
+    expect(s.phase).toBe('ready');
+    const [b1, b2, b3] = plan().items;
+    s = replan(s, { ...plan(), items: [b3, b2, b1] }, 66000);
+    expect(s.phase).toBe('ready');
+    expect(s.i).toBe(2);
+    expect(s.slots.slice(2).map(sl => sl.blockId)).toEqual(['b3', 'b2', 'b2', 'b2']);
+    expect(s.slots.map(sl => sl.part)).toEqual([0, 0, 1, 2, 2, 2]);
+    expect(s.slots.every(sl => sl.parts === 3)).toBe(true);
+    s = R.startBlock(s, 70000);
+    expect(R.current(s)?.step.id).toBe('sq');
+  });
+
+  it('a swap and a load set ahead survive the replan', () => {
+    let s = tick(start(plan(), 0), 5000);
+    s = swap(s, 6000, 'sq', EX.bw_pushup, undefined);
+    s = R.adjustStep(s, 'pr', 24);
+    s = replan(s, withRounds(plan(), 'b2', 4), 7000);
+    expect(s.slots.filter(sl => sl.step.id === 'sq').every(sl => sl.step.kind === 'exercise' && sl.step.exercise.key === 'bw_pushup')).toBe(true);
+    expect(R.plannedTarget(s, 'pr')).toBe(24);
+    expect(s.slots.filter(sl => sl.step.id === 'pr').length).toBe(4);
+  });
+
+  it('during the count-in the whole session is rebuilt', () => {
+    let s = start(plan(), 0);
+    s = replan(s, withRounds(plan(), 'b1', 3), 1000);
+    expect(s.phase).toBe('lead');
+    expect(s.slots.filter(sl => sl.blockId === 'b1').length).toBe(3);
+  });
+
+  it('removing everything still to come ends the session at the gate', () => {
+    let s = tick(start(plan(), 0), 5000);
+    s = advance(s, 35000);
+    s = advance(s, 65000);
+    s = replan(s, { ...plan(), items: [plan().items[0]] }, 66000);
+    expect(s.phase).toBe('done');
+    expect(s.slots.length).toBe(2);
   });
 });

@@ -10,6 +10,7 @@ enum Fixtures {
     static let pullup = ExerciseRef(key: "bw_pullup", name: "Pull-ups", unit: "", step: 1)
     static let pushup = ExerciseRef(key: "bw_pushup", name: "Push-ups", unit: "", step: 1)
     static let burpee = ExerciseRef(key: "bw_burpee", name: "Burpees", unit: "", step: 1)
+    static let squat = ExerciseRef(key: "bw_squat", name: "Squats", unit: "", step: 1)
 
     static func work(_ id: String, _ ex: ExerciseRef, target: Double? = nil, forMode: ForMode = .seconds, forValue: Double = 30) -> Step {
         .exercise(ExerciseStep(id: id, exercise: ex, target: target, forMode: forMode, forValue: forValue))
@@ -173,6 +174,89 @@ struct RunTests {
         #expect(result.steps.first { $0.stepId == "sw" }?.target == 32)
         #expect(result.steps.first { $0.stepId == "pr" }?.target == 20)
         #expect(result.completed == true)
+    }
+}
+
+/// Ported one for one from `runner.test.ts`: same cases, same names (specs/unified-editing.md).
+@Suite("replan: editing what is still to come")
+struct ReplanTests {
+    /// 2 rounds of swings, then 3 rounds of press, then 10 squats.
+    static func plan() -> Runsheet {
+        Runsheet(id: "p", title: "Plan", items: [
+            .block(Block(id: "b1", name: "Swings", repeatCount: 2, steps: [Fixtures.work("sw", Fixtures.swing, target: 28)])),
+            .block(Block(id: "b2", name: "Press", repeatCount: 3, steps: [Fixtures.work("pr", Fixtures.press, target: 20)])),
+            .block(Block(id: "b3", name: "Squats", repeatCount: 1, steps: [Fixtures.work("sq", Fixtures.squat, forMode: .reps, forValue: 10)])),
+        ])
+    }
+
+    static func withRounds(_ r: Runsheet, _ id: String, _ repeatCount: Int) -> Runsheet {
+        Edit.updateBlock(r, id: id) { $0.repeatCount = repeatCount }
+    }
+
+    @Test("changing the next block's rounds from 3 to 4 adds one round after the cursor and leaves done slots and their actuals unchanged")
+    func nextBlockRounds() {
+        var s = Runner.tick(Runner.start(Self.plan(), now: 0), now: 5_000) // swings, round 1
+        s = Runner.adjust(s, now: 6_000, target: 32)
+        s = Runner.advance(s, now: 35_000) // round 1 done, round 2 running
+        let before = s
+        s = Runner.replan(s, Self.withRounds(Self.plan(), "b2", 4), now: 36_000)
+        #expect(s.i == 1)
+        #expect(s.phase == .running)
+        #expect(Array(s.slots.prefix(2)) == Array(before.slots.prefix(2)))
+        #expect(s.actuals[before.slots[0].id] == before.actuals[before.slots[0].id])
+        #expect(s.slots.filter { $0.blockId == "b2" }.count == 4)
+        #expect(s.slots.count == 2 + 4 + 1)
+        #expect(Set(s.slots.map(\.id)).count == s.slots.count)
+    }
+
+    @Test("a block moved up runs next, and a block already done never runs again")
+    func movedUp() {
+        var s = Runner.tick(Runner.start(Self.plan(), now: 0), now: 5_000)
+        s = Runner.advance(s, now: 35_000)
+        s = Runner.advance(s, now: 65_000) // parked at the press gate
+        #expect(s.phase == .ready)
+        let items = Self.plan().items
+        var moved = Self.plan()
+        moved.items = [items[2], items[1], items[0]]
+        s = Runner.replan(s, moved, now: 66_000)
+        #expect(s.phase == .ready)
+        #expect(s.i == 2)
+        #expect(s.slots.dropFirst(2).map(\.blockId) == ["b3", "b2", "b2", "b2"])
+        #expect(s.slots.map(\.part) == [0, 0, 1, 2, 2, 2])
+        #expect(s.slots.allSatisfy { $0.parts == 3 })
+        s = Runner.startBlock(s, now: 70_000)
+        #expect(Runner.current(s)?.step.id == "sq")
+    }
+
+    @Test("a swap and a load set ahead survive the replan")
+    func carries() {
+        var s = Runner.tick(Runner.start(Self.plan(), now: 0), now: 5_000)
+        s = Runner.swap(s, now: 6_000, stepId: "sq", to: Fixtures.pushup, target: nil)
+        s = Runner.adjustStep(s, stepId: "pr", target: 24)
+        s = Runner.replan(s, Self.withRounds(Self.plan(), "b2", 4), now: 7_000)
+        #expect(s.slots.filter { $0.step.id == "sq" }.allSatisfy { $0.exercise?.exercise.key == "bw_pushup" })
+        #expect(Runner.plannedTarget(s, stepId: "pr") == 24)
+        #expect(s.slots.filter { $0.step.id == "pr" }.count == 4)
+    }
+
+    @Test("during the count-in the whole session is rebuilt")
+    func countIn() {
+        var s = Runner.start(Self.plan(), now: 0)
+        s = Runner.replan(s, Self.withRounds(Self.plan(), "b1", 3), now: 1_000)
+        #expect(s.phase == .lead)
+        #expect(s.slots.filter { $0.blockId == "b1" }.count == 3)
+    }
+
+    @Test("removing everything still to come ends the session at the gate")
+    func nothingLeft() {
+        var s = Runner.tick(Runner.start(Self.plan(), now: 0), now: 5_000)
+        s = Runner.advance(s, now: 35_000)
+        s = Runner.advance(s, now: 65_000)
+        var only = Self.plan()
+        only.items = [only.items[0]]
+        s = Runner.replan(s, only, now: 66_000)
+        #expect(s.phase == .done)
+        #expect(s.slots.count == 2)
     }
 }
 
