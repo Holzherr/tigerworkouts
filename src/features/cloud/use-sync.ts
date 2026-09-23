@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { setState, useAppState } from '@/app/store';
+import { mergeRemoteSettings, useWorkoutSettings } from '@/app/settings-store';
 import { useAuth } from './client';
 import { sync } from './sync';
 
@@ -10,6 +11,7 @@ import { sync } from './sync';
 export const useCloudSync = () => {
   const { user, ready } = useAuth();
   const st = useAppState();
+  const workoutSettings = useWorkoutSettings();
   const busy = useRef(false);
   const timer = useRef<ReturnType<typeof setTimeout>>(undefined);
   const lastLocal = useRef('');
@@ -18,9 +20,12 @@ export const useCloudSync = () => {
     if (!user || busy.current) return;
     busy.current = true;
     try {
-      const local = { results: st.results, workouts: st.workouts, favorites: st.favorites, saved: st.saved, name: st.name, avatar: st.avatar, units: st.units, trainingMaxes: st.trainingMaxes, bodyweightKg: st.bodyweightKg, exercises: st.exercises };
+      const local = { results: st.results, workouts: st.workouts, favorites: st.favorites, saved: st.saved, name: st.name, avatar: st.avatar, units: st.units, trainingMaxes: st.trainingMaxes, bodyweightKg: st.bodyweightKg, exercises: st.exercises, workoutSettings };
       const out = await sync(local);
-      if (out.changed || out.error !== st.syncError) setState({ ...out.patch, lastSync: new Date().toISOString(), syncError: out.error, signedIn: true });
+      // Settings live in their own store, not in the app state's localStorage key.
+      const { workoutSettings: remoteSettings, ...patch } = out.patch;
+      if (remoteSettings) mergeRemoteSettings(remoteSettings);
+      if (out.changed || out.error !== st.syncError) setState({ ...patch, lastSync: new Date().toISOString(), syncError: out.error, signedIn: true });
       lastLocal.current = JSON.stringify({ ...local, ...out.patch });
     } finally {
       busy.current = false;
@@ -46,12 +51,12 @@ export const useCloudSync = () => {
   // local changes, debounced
   useEffect(() => {
     if (!user) return;
-    const now = JSON.stringify({ results: st.results, workouts: st.workouts, favorites: st.favorites, saved: st.saved, name: st.name, avatar: st.avatar, units: st.units, trainingMaxes: st.trainingMaxes, bodyweightKg: st.bodyweightKg, exercises: st.exercises });
+    const now = JSON.stringify({ results: st.results, workouts: st.workouts, favorites: st.favorites, saved: st.saved, name: st.name, avatar: st.avatar, units: st.units, trainingMaxes: st.trainingMaxes, bodyweightKg: st.bodyweightKg, exercises: st.exercises, workoutSettings });
     if (now === lastLocal.current) return;
     clearTimeout(timer.current);
     timer.current = setTimeout(() => runRef.current(), 1500);
     return () => clearTimeout(timer.current);
-  }, [user, st.results, st.workouts, st.favorites, st.saved, st.name, st.avatar, st.units, st.trainingMaxes, st.bodyweightKg, st.exercises]);
+  }, [user, st.results, st.workouts, st.favorites, st.saved, st.name, st.avatar, st.units, st.trainingMaxes, st.bodyweightKg, st.exercises, workoutSettings]);
 
   return { user, ready, syncNow: () => runRef.current() };
 };

@@ -29,6 +29,10 @@ export interface EditorScreenProps {
   onReset?: () => void;
   onStart?: () => void;
   onSaveAsMine?: () => void;
+  /** What Save will do with the changes so far ("Numbers only · saves as your settings"); replaces "Tonight's version". */
+  saveHint?: string;
+  /** Label for the Save button in `tonight` mode. */
+  saveLabel?: string;
   /** Opens the "Describe the workout" sheet. */
   onPastePlan?: () => void;
   /** Free-text change line ("press 20, half rests"); the host parses it. */
@@ -46,7 +50,7 @@ export interface EditorScreenProps {
  * body; Start and Save as mine are pinned above the tab bar. In `author` mode (a new workout)
  * the title is an input and the pinned bar is Save workout + Start.
  */
-export const EditorScreen = ({ runsheet, onChange, onPickExercise, onSwapExercise, onBack, onReset, onStart, onSaveAsMine, onPastePlan, onTextChange, mode = 'tonight', dndVariant, resolveTarget, refTitle }: EditorScreenProps) => {
+export const EditorScreen = ({ runsheet, onChange, onPickExercise, onSwapExercise, onBack, onReset, onStart, onSaveAsMine, saveHint, saveLabel = 'Save as mine', onPastePlan, onTextChange, mode = 'tonight', dndVariant, resolveTarget, refTitle }: EditorScreenProps) => {
   const setItems = (items: Item[]) => onChange({ ...runsheet, items });
   const minutes = runsheetMinutes(runsheet);
   const blocks = runsheet.items.filter(i => i.kind === 'block').length;
@@ -67,7 +71,7 @@ export const EditorScreen = ({ runsheet, onChange, onPickExercise, onSwapExercis
         </div>
         <input value={runsheet.title} onChange={e => onChange({ ...runsheet, title: e.target.value })} placeholder="Workout name" aria-label="Workout name" autoFocus={mode === 'author' && !runsheet.title} className="mt-1 w-full rounded-control bg-transparent text-[19px] leading-tight font-extrabold text-ink outline-none placeholder:text-faint focus:bg-canvas" />
         <button type="button" onClick={() => setSettings(x => !x)} className="mt-0.5 block text-left text-[12px] text-muted">
-          {mode === 'tonight' ? "Tonight's version" : `By ${runsheet.creator ?? 'you'}`} · <b className="text-ink">{minutes} min</b> · {blocks} {blocks === 1 ? 'block' : 'blocks'}
+          {mode === 'tonight' ? (saveHint ? <span className="font-semibold text-brand-ink">{saveHint}</span> : "Tonight's version") : `By ${runsheet.creator ?? 'you'}`} · <b className="text-ink">{minutes} min</b> · {blocks} {blocks === 1 ? 'block' : 'blocks'}
           {runsheet.timeCapSec ? ` · cap ${Math.round(runsheet.timeCapSec / 60)}:00` : ''}
           {score !== 'none' ? ` · ${SCORE_LABEL[score]}` : ''}
           <span className="text-faint"> {settings ? '▴' : '▾'}</span>
@@ -138,7 +142,7 @@ export const EditorScreen = ({ runsheet, onChange, onPickExercise, onSwapExercis
           )}
           {mode === 'tonight' ? (
             <Button variant="ghost" onClick={onSaveAsMine}>
-              Save as mine
+              {saveLabel}
             </Button>
           ) : (
             onStart && (

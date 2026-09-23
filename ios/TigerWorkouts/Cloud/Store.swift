@@ -12,6 +12,11 @@ final class Store {
     var myWorkouts: [Runsheet] = []
     var bodyweightKg: Double?
     var saved: Set<String> = []
+    /// Your settings per workout id (specs/workout-settings.md): numbers changed on a workout,
+    /// kept apart from it. Synced through `user_state.prefs.workoutSettings`.
+    var workoutSettings: [String: WorkoutSettings] = [:]
+    /// Other people's public workouts, for Discover.
+    var community: [Runsheet] = []
     var syncing = false
     var syncError: String?
     /// Sessions logged while offline or signed out, waiting for a window to push.
@@ -29,11 +34,13 @@ final class Store {
     /// which it is safe to look a workout up by id.
     private(set) var loaded = false
 
-    /// Every workout on offer: the bundled catalogue plus whatever this account has written.
+    /// Every workout on offer: whatever this account has written, other people's public ones, and
+    /// the bundled catalogue.
     var allWorkouts: [Runsheet] {
         let mine = myWorkouts
-        let mineIds = Set(mine.compactMap(\.id))
-        return mine + catalogue.filter { !mineIds.contains($0.key) }
+        var seen = Set(mine.compactMap(\.id))
+        let others = community.filter { seen.insert($0.key).inserted }
+        return mine + others + catalogue.filter { !seen.contains($0.key) }
     }
 
     func workout(id: String) -> Runsheet? {
@@ -78,6 +85,7 @@ final class Store {
             async let sessions = Supabase.shared.sessions()
             async let workouts = Supabase.shared.workouts()
             async let prefs = Supabase.shared.prefs()
+            async let shared = Supabase.shared.publicWorkouts()
             results = try await sessions
             let remote = try await workouts
             let queued = Dictionary(pendingWorkouts.map { ($0.key, $0) }, uniquingKeysWith: { _, last in last })
@@ -89,8 +97,13 @@ final class Store {
             let p = try await prefs
             bodyweightKg = p.bodyweightKg ?? bodyweightKg
             saved = Set(p.saved).union(saved)
+            let merged = Settings.merge(workoutSettings, p.workoutSettings)
+            let pushSettings = merged != p.workoutSettings
+            workoutSettings = merged
+            community = (try? await shared) ?? community
             user = await Supabase.shared.user
             writeCache()
+            if pushSettings { try await Supabase.shared.savePrefs(bodyweightKg: bodyweightKg, saved: Array(saved), workoutSettings: workoutSettings) }
         } catch {
             syncError = error.localizedDescription
         }
@@ -102,6 +115,7 @@ final class Store {
         results = []
         myWorkouts = []
         saved = []
+        workoutSettings = [:]
         writeCache()
     }
 
@@ -160,11 +174,38 @@ final class Store {
         writeCache()
         guard await Supabase.shared.isSignedIn else { return }
         do {
-            try await Supabase.shared.savePrefs(bodyweightKg: bodyweightKg, saved: Array(saved))
+            try await Supabase.shared.savePrefs(bodyweightKg: bodyweightKg, saved: Array(saved), workoutSettings: workoutSettings)
             syncError = nil
         } catch {
             syncError = error.localizedDescription
         }
+    }
+
+    // MARK: - Your settings for a workout
+
+    func settings(for r: Runsheet) -> WorkoutSettings? {
+        workoutSettings[r.key]
+    }
+
+    /// Numbers changed on a workout: folded into your settings for it, never into the workout.
+    func saveSettings(for r: Runsheet, _ change: SettingsChange) async {
+        guard !change.isEmpty else { return }
+        workoutSettings[r.key] = Settings.with(workoutSettings[r.key], change, at: ISO8601.string(Date()))
+        await writePrefs()
+    }
+
+    /// Reset to original. The empty entry stays so the reset reaches your other devices.
+    func resetSettings(for r: Runsheet) async {
+        guard workoutSettings[r.key] != nil else { return }
+        workoutSettings[r.key] = Settings.cleared(at: ISO8601.string(Date()))
+        await writePrefs()
+    }
+
+    /// Public shows it in everyone's Discover; private keeps it to you.
+    func setPublic(_ r: Runsheet, _ isPublic: Bool) async {
+        var sheet = myWorkouts.first { $0.key == r.key } ?? r
+        sheet.isPublic = isPublic
+        await saveWorkout(sheet)
     }
 
     // MARK: - Your own workouts
@@ -258,6 +299,8 @@ final class Store {
         var saved: [String]
         var pendingWorkouts: [Runsheet]?
         var pendingWorkoutDeletes: [String]?
+        var workoutSettings: [String: WorkoutSettings]?
+        var community: [Runsheet]?
     }
 
     private var cacheURL: URL {
@@ -267,6 +310,11 @@ final class Store {
     }
 
     private func readCache() {
+        // UI tests start from nothing, so a copy saved by one walkthrough is not found by the next.
+        if ProcessInfo.processInfo.arguments.contains("-uitest-fresh") {
+            try? FileManager.default.removeItem(at: cacheURL)
+            return
+        }
         guard let data = try? Data(contentsOf: cacheURL),
               let c = try? Library.shared.decoder.decode(Cache.self, from: data) else { return }
         results = c.results
@@ -276,13 +324,16 @@ final class Store {
         saved = Set(c.saved)
         pendingWorkouts = c.pendingWorkouts ?? []
         pendingWorkoutDeletes = c.pendingWorkoutDeletes ?? []
+        workoutSettings = c.workoutSettings ?? [:]
+        community = c.community ?? []
     }
 
     private func writeCache() {
         let c = Cache(
             results: results, myWorkouts: myWorkouts, pending: pending,
             bodyweightKg: bodyweightKg, saved: Array(saved),
-            pendingWorkouts: pendingWorkouts, pendingWorkoutDeletes: pendingWorkoutDeletes
+            pendingWorkouts: pendingWorkouts, pendingWorkoutDeletes: pendingWorkoutDeletes,
+            workoutSettings: workoutSettings, community: community
         )
         try? JSONEncoder().encode(c).write(to: cacheURL, options: .atomic)
     }
