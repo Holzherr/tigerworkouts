@@ -150,6 +150,9 @@ final class WalkthroughUITests: XCTestCase {
     func testSettingsAndHealth() {
         tap(app.tabBars.buttons["Me"])
         XCTAssertTrue(app.navigationBars["Me"].waitForExistence(timeout: 5))
+        // The simulator has no haptic hardware, and the row says so rather than staying quiet.
+        XCTAssertTrue(app.staticTexts["Haptic engine: not on this device"].waitForExistence(timeout: 5))
+        tap(app.buttons["Test buzz"])
         snap("16 Me")
 
         let health = app.switches["Apple Health"]
