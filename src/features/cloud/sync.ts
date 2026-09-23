@@ -12,8 +12,11 @@ import type { LibraryExercise } from '@/features/exercises/library';
 import type { SessionResult, TrainingMaxes } from '@/features/runsheet/progression';
 import type { Equipment } from '@/features/runsheet/plates';
 import { currentUser, sb } from './client';
-import { fromLegacySession, isLegacySession, legacyWorkoutToRunsheet, type LegacySession } from './legacy';
+import type { LegacySession } from './legacy';
 import { mergePrefs, prefsRow, remoteSide, type PrefStamps } from './prefs';
+import { fromRow, workoutFromRow, type WorkoutRow } from './rows';
+
+export { fromRow } from './rows';
 
 export interface SyncTarget {
   results: SessionResult[];
@@ -78,29 +81,6 @@ const stripLegacy = (r: SessionResult) => {
   const { legacy: _l, ...rest } = r;
   void _l;
   return rest;
-};
-export const fromRow = (row: { id: string; data: unknown }): SessionResult => {
-  const d = row.data as Record<string, unknown>;
-  if (d && d.format === 'v2') {
-    const { format: _f, blocks: _b, ...rest } = d;
-    void _f;
-    void _b;
-    return { ...(rest as unknown as SessionResult), id: row.id };
-  }
-  if (isLegacySession(d)) {
-    const legacy = d as LegacySession & { v2?: SessionResult };
-    if (legacy.v2) return { ...legacy.v2, legacy: { ...legacy, v2: undefined }, id: row.id };
-    return fromLegacySession(legacy);
-  }
-  return { id: row.id, runsheetId: String((d as { workoutId?: string })?.workoutId ?? row.id), title: String((d as { title?: string })?.title ?? row.id), startedAt: String((d as { startedAt?: string })?.startedAt ?? new Date().toISOString()), steps: [] };
-};
-
-type WorkoutRow = { id: string; data: unknown; creator?: string | null; title?: string | null; public?: boolean | null; owner?: string | null };
-const workoutFromRow = (row: WorkoutRow): Runsheet => {
-  const d = row.data as Record<string, unknown>;
-  const base = d && Array.isArray(d.items) ? { ...(d as unknown as Runsheet), id: row.id } : legacyWorkoutToRunsheet({ id: row.id, title: String(row.title ?? d?.title ?? row.id), creator: row.creator ?? undefined, blocks: (d?.blocks as never) ?? [] });
-  // The row's column is the truth for who can see it; the copy inside `data` may be stale.
-  return { ...base, public: row.public ?? base.public ?? false, ownerId: row.owner ?? undefined };
 };
 const workoutData = ({ ownerId: _, ...w }: Runsheet) => w;
 
