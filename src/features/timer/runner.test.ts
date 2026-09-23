@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { EX } from '@/features/runsheet/fixtures';
 import { makeExercise, makeRest, type Block, type Runsheet } from '@/features/runsheet/model';
-import { adjust, advance, drop, elapsed, expand, pause, resume, start, tick, toResult } from './runner';
+import { adjust, advance, drop, elapsed, expand, pause, resume, start, swap, tick, toResult } from './runner';
 import * as R from './runner';
 
 const swings = () => ({ ...makeExercise(EX.kb_swing, { target: 28 }), id: 'sw' });
@@ -62,6 +62,16 @@ describe('run', () => {
     s = drop(s, 6000, 'pr');
     expect(s.slots.some(x => x.step.id === 'pr')).toBe(false);
     expect(s.slots.length).toBe(6);
+  });
+  it('swap changes what is left of a step, not what is done', () => {
+    let s = tick(start(interval(), 0), 5000);
+    s = advance(s, 20000); // first swings done
+    s = swap(s, 21000, 'sw', EX.bw_squat, undefined);
+    const done = s.slots.slice(0, s.i).filter(x => x.step.id === 'sw');
+    const left = s.slots.slice(s.i).filter(x => x.step.id === 'sw');
+    expect(done.every(x => x.step.kind === 'exercise' && x.step.exercise.key === 'kb_swing')).toBe(true);
+    expect(left.length).toBeGreaterThan(0);
+    expect(left.every(x => x.step.kind === 'exercise' && x.step.exercise.key === 'bw_squat')).toBe(true);
   });
   it('amrap stops at the cap and scores rounds + reps', () => {
     let s = tick(start(cindy(), 0), 5000);

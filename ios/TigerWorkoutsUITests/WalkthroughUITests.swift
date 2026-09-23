@@ -86,6 +86,35 @@ final class WalkthroughUITests: XCTestCase {
         snap("10 History")
     }
 
+    /// The bench is taken: the session carries on with the machine, from here to the end.
+    func testSwapWhenTheKitIsBusy() {
+        open("Tabata This")
+        tap(app.buttons["Start workout"])
+        XCTAssertTrue(app.buttons["End session"].waitForExistence(timeout: 5))
+        sleep(7) // past the lead-in, into the first work slot
+
+        // The card on the timer itself, which is what you tap with a machine in front of you.
+        let card = app.buttons.matching(NSPredicate(format: "label CONTAINS[c] 'Row'")).firstMatch
+        XCTAssertTrue(card.waitForExistence(timeout: 5))
+        card.tap()
+
+        let heading = app.staticTexts.matching(NSPredicate(format: "label CONTAINS[c] 'if it is busy'")).firstMatch
+        XCTAssertTrue(heading.waitForExistence(timeout: 5), "an exercise should offer alternatives")
+        snap("24 Alternatives")
+        let alternative = app.buttons.matching(NSPredicate(format: "label BEGINSWITH[c] 'Assault bike'")).firstMatch
+        XCTAssertTrue(alternative.waitForExistence(timeout: 3), "the rower should offer other cardio")
+        alternative.tap()
+
+        // The swap lands on the timer: the card now names what is actually being done.
+        XCTAssertTrue(app.buttons.matching(NSPredicate(format: "label CONTAINS[c] 'Assault bike'")).firstMatch.waitForExistence(timeout: 5))
+
+        XCTAssertTrue(app.buttons["End session"].waitForExistence(timeout: 5))
+        snap("25 After the swap")
+        tap(app.buttons["End session"])
+        tap(app.buttons["Finish and save"])
+        tap(app.buttons["Done"])
+    }
+
     func testWriteAWorkout() {
         XCTAssertTrue(app.navigationBars["Tiger"].waitForExistence(timeout: 10))
         tap(app.buttons["Write a workout"])
