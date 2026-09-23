@@ -12,7 +12,7 @@ describe('coach programmes', () => {
       expect(w.creator, w.id).toBeTruthy();
       expect(w.program?.name, w.id).toBeTruthy();
       expect(w.program?.day, w.id).toMatch(/^(15|30|45) minutes$/);
-      expect(w.description.length, w.id).toBeGreaterThan(120);
+      expect((w.description ?? '').length, w.id).toBeGreaterThan(120);
     }
   });
 
