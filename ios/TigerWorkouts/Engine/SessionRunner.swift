@@ -9,7 +9,7 @@ import SwiftUI
 final class SessionRunner {
     private(set) var state: RunState
     private(set) var now: Double = Date().timeIntervalSince1970 * 1000
-    let runsheet: Runsheet
+    private(set) var runsheet: Runsheet
 
     private var timer: Timer?
     private var cuedSlot: String?
@@ -242,6 +242,13 @@ final class SessionRunner {
     func drop(stepId: String) { apply { Runner.drop($0, now: $1, stepId: stepId) } }
     func swap(stepId: String, to exercise: LibraryExercise, target: Double?) {
         apply { Runner.swap($0, now: $1, stepId: stepId, to: exercise.ref, target: target) }
+    }
+
+    /// Change what is still to come — the next block's rounds, rest, durations or order. What is
+    /// done or running is untouched; the edited sheet becomes the session's. See `Runner.replan`.
+    func edit(_ sheet: Runsheet) {
+        runsheet = sheet
+        apply { Runner.replan($0, sheet, now: $1) }
     }
 
     func pauseOrResume() {

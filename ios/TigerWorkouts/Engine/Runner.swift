@@ -422,6 +422,66 @@ enum Runner {
         return c?.step.id == stepId ? enter(s, s.i, now) : s
     }
 
+    /// Re-plan the session around an edited runsheet (specs/unified-editing.md). What is done or
+    /// running stays exactly as it is, actuals included — the running block's later rounds too;
+    /// every item after it is rebuilt from the edited sheet in the sheet's order, so the next
+    /// block's rounds, rest, durations and order can change mid-session. Parked at a block gate,
+    /// the parked block counts as still to come. Drops, swaps and loads set ahead carry into the
+    /// rebuilt slots; an item already passed is never run again, wherever the edit moved it.
+    static func replan(_ s: RunState, _ r: Runsheet, now: Double) -> RunState {
+        if s.phase == .done { return s }
+        var keptCount = 0
+        if s.phase == .ready {
+            keptCount = s.i
+        } else if s.phase != .lead, let cur = current(s) {
+            keptCount = s.slots.firstIndex { $0.part > cur.part } ?? s.slots.count
+        }
+        let kept = Array(s.slots.prefix(keptCount))
+        let old = Array(s.slots.dropFirst(keptCount))
+        func itemOf(_ sl: Slot) -> String { sl.blockId ?? sl.step.id }
+        let passed = Set(kept.map(itemOf))
+        // What the old tail knew that the sheet does not: swapped exercises and loads set ahead.
+        var was: [String: ExerciseStep] = [:]
+        var ahead: [String: Actual] = [:]
+        for sl in old {
+            if let e = sl.exercise, was[e.id] == nil { was[e.id] = e }
+            if let a = s.actuals[sl.id], a.doneAt == nil, ahead[sl.step.id] == nil { ahead[sl.step.id] = a }
+        }
+        func split(_ id: String) -> (base: Substring, serial: Int) {
+            guard let hash = id.lastIndex(of: "#") else { return (Substring(id), -1) }
+            return (id[..<hash], Int(id[id.index(after: hash)...]) ?? -1)
+        }
+        var n = kept.reduce(-1) { max($0, split($1.id).serial) } + 1
+        let base = (kept.last?.part ?? -1) + 1
+        var partOf: [Int: Int] = [:]
+        var actuals = s.actuals
+        for sl in old { actuals[sl.id] = nil }
+        var tail: [Slot] = []
+        for var sl in expand(r, dropped: s.dropped) {
+            if passed.contains(itemOf(sl)) { continue }
+            if partOf[sl.part] == nil { partOf[sl.part] = base + partOf.count }
+            sl.id = "\(split(sl.id).base)#\(n)"
+            n += 1
+            if case .exercise(var e) = sl.step, let w = was[e.id], w.exercise.key != e.exercise.key {
+                e.exercise = w.exercise
+                e.target = w.target
+                sl.step = .exercise(e)
+            }
+            if let a = ahead[sl.step.id], !tail.contains(where: { $0.step.id == sl.step.id }) { actuals[sl.id] = a }
+            sl.part = partOf[sl.part] ?? base
+            tail.append(sl)
+        }
+        let parts = base + partOf.count
+        var s = s
+        s.slots = (kept + tail).map { slot in
+            var slot = slot
+            slot.parts = parts
+            return slot
+        }
+        s.actuals = actuals
+        return s.phase == .ready && tail.isEmpty ? enter(s, s.i, now) : s
+    }
+
     static func finish(_ s: RunState, now: Double) -> RunState {
         var s = s
         s.phase = .done

@@ -300,6 +300,58 @@ export const swap = (s: RunState, now: number, stepId: string, to: ExerciseRef, 
   return c?.step.id === stepId ? enter(st, s.i, now) : st;
 };
 
+/**
+ * Re-plan the session around an edited runsheet (specs/unified-editing.md). What is done or running
+ * stays exactly as it is, actuals included — the running block's later rounds too; every item after
+ * it is rebuilt from the edited sheet in the sheet's order, so the next block's rounds, rest,
+ * durations and order can change mid-session. Parked at a block gate, the parked block counts as
+ * still to come. Drops, swaps and loads set ahead carry into the rebuilt slots; an item already
+ * passed is never run again, wherever the edit moved it.
+ */
+export const replan = (s: RunState, r: Runsheet, now: number): RunState => {
+  if (s.phase === 'done') return s;
+  const cur = current(s);
+  let keptCount = 0;
+  if (s.phase === 'ready') keptCount = s.i;
+  else if (s.phase !== 'lead' && cur) {
+    const end = s.slots.findIndex(sl => sl.part > cur.part);
+    keptCount = end < 0 ? s.slots.length : end;
+  }
+  const kept = s.slots.slice(0, keptCount);
+  const old = s.slots.slice(keptCount);
+  const itemOf = (sl: Slot) => sl.blockId ?? sl.step.id;
+  const passed = new Set(kept.map(itemOf));
+  // What the old tail knew that the sheet does not: swapped exercises and loads set ahead.
+  const was = new Map<string, Step>();
+  const ahead = new Map<string, Actual>();
+  for (const sl of old) {
+    if (sl.step.kind === 'exercise' && !was.has(sl.step.id)) was.set(sl.step.id, sl.step);
+    const a = s.actuals[sl.id];
+    if (a && !a.doneAt && !ahead.has(sl.step.id)) ahead.set(sl.step.id, a);
+  }
+  const serial = (id: string) => Number(id.slice(id.lastIndexOf('#') + 1));
+  let n = kept.reduce((m, sl) => Math.max(m, serial(sl.id)), -1) + 1;
+  const base = (kept[kept.length - 1]?.part ?? -1) + 1;
+  const partOf = new Map<number, number>();
+  const actuals = { ...s.actuals };
+  for (const sl of old) delete actuals[sl.id];
+  const tail: Slot[] = [];
+  for (const sl of expand(r, s.dropped)) {
+    if (passed.has(itemOf(sl))) continue;
+    if (!partOf.has(sl.part)) partOf.set(sl.part, base + partOf.size);
+    const id = `${sl.id.slice(0, sl.id.lastIndexOf('#'))}#${n++}`;
+    let step = sl.step;
+    const w = was.get(step.id);
+    if (step.kind === 'exercise' && w?.kind === 'exercise' && w.exercise.key !== step.exercise.key) step = { ...step, exercise: w.exercise, target: w.target };
+    const a = ahead.get(step.id);
+    if (a && !tail.some(t => t.step.id === step.id)) actuals[id] = a;
+    tail.push({ ...sl, id, step, part: partOf.get(sl.part)! });
+  }
+  const parts = base + partOf.size;
+  const st = { ...s, slots: [...kept, ...tail].map(sl => ({ ...sl, parts })), actuals };
+  return s.phase === 'ready' && tail.length === 0 ? enter(st, s.i, now) : st;
+};
+
 export const finish = (s: RunState, now: number): RunState => ({ ...s, phase: 'done', endedAt: now, endsAt: undefined });
 
 /** The load in force at slot index idx: the latest adjustment made on any earlier round of the same step, else the plan. */
