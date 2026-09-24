@@ -83,9 +83,10 @@ Two things are yours to do once, because they need credentials or admin rights:
 
 ## Tests
 
-42 unit tests: the engine ported one for one from `runner.test.ts`, the muscle and effort models,
-the last-used carry-over, the editing operations, the Lock Screen state, the whole catalogue
-decoding, and the `sessions` row and URL formats the two apps share.
+46 unit tests: the engine ported one for one from `runner.test.ts`, the muscle and effort models,
+the last-used carry-over and that the session runs the sheet the workout screen shows, the editing
+operations, the Lock Screen state, the whole catalogue decoding, and the `sessions` row and URL
+formats the two apps share.
 
 5 UI walkthroughs on the simulator: browse, run and finish; write a workout; settings and the
 Health permission sheet; the Lock Screen card following a transition while the phone is locked;
@@ -96,6 +97,11 @@ xcodebuild -project TigerWorkouts.xcodeproj -scheme TigerWorkouts \
   -destination 'platform=iOS Simulator,name=iPhone 17 Pro' -resultBundlePath out.xcresult test
 xcrun xcresulttool export attachments --path out.xcresult --output-path shots
 ```
+
+The same runs on a hosted Mac for every pull request that touches `ios/`
+(`.github/workflows/ios.yml`): the unit tests are the check that must pass; the walkthroughs run as
+a second leg that may fail on the runner without blocking the PR, and a failed leg uploads its
+`out.xcresult` as an artifact.
 
 The app logs its Live Activity updates and audio session under the subsystem
 `com.holzherr.tigerworkouts`, which is how the update flood below was found:

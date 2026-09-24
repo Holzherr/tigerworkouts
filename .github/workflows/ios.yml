@@ -1,0 +1,75 @@
+name: iOS tests
+
+# Compiles the iPhone app and runs its tests on a hosted Mac whenever ios/ changes, so a Swift
+# change is verified on every pull request rather than only on a Mac somebody is sitting at.
+# Two legs: the 42 unit tests (incl. the runner.ts port) are the check that must pass; the 5
+# simulator walkthroughs run too, but tolerate the hosted runner, which has no Health sheet to
+# tap and no Lock Screen to press — a red walkthrough shows here, it does not block the PR.
+on:
+  push:
+    branches: [main]
+    paths: ['ios/**', '.github/workflows/ios.yml']
+  pull_request:
+    paths: ['ios/**', '.github/workflows/ios.yml']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ios-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: ${{ matrix.suite }}
+    runs-on: macos-latest
+    timeout-minutes: 40
+    strategy:
+      fail-fast: false
+      matrix:
+        suite: [TigerWorkoutsTests, TigerWorkoutsUITests]
+    continue-on-error: ${{ matrix.suite == 'TigerWorkoutsUITests' }}
+    defaults:
+      run:
+        working-directory: ios
+    steps:
+      - uses: actions/checkout@v4
+
+      # The image ships several Xcodes and defaults to an older one; the newest release carries
+      # the newest iOS simulator. Betas are skipped unless nothing else is installed.
+      - name: Select the newest Xcode
+        run: |
+          xcode=$(ls -d /Applications/Xcode_*.app | grep -vi beta | sort -V | tail -1)
+          [ -n "$xcode" ] || xcode=$(ls -d /Applications/Xcode_*.app | sort -V | tail -1)
+          sudo xcode-select -s "$xcode"
+          xcodebuild -version
+
+      # Pick the device at run time so a new image with different simulators does not break
+      # the job: iPhone 17 Pro when it exists (the device the tests were written on), otherwise
+      # the first available iPhone. Booting first keeps the first launch inside its timeout.
+      - name: Pick a simulator
+        id: sim
+        run: |
+          json=$(xcrun simctl list devices available -j)
+          udid=$(echo "$json" | jq -r '[.devices[][] | select(.name == "iPhone 17 Pro")][0].udid // empty')
+          [ -n "$udid" ] || udid=$(echo "$json" | jq -r '[.devices[][] | select(.name | startswith("iPhone"))][0].udid')
+          name=$(echo "$json" | jq -r --arg u "$udid" '.devices[][] | select(.udid == $u) | .name')
+          echo "using $name ($udid)"
+          echo "udid=$udid" >> "$GITHUB_OUTPUT"
+          xcrun simctl bootstatus "$udid" -b
+
+      - name: xcodebuild test ${{ matrix.suite }}
+        run: |
+          xcodebuild test -project TigerWorkouts.xcodeproj -scheme TigerWorkouts \
+            -destination "platform=iOS Simulator,id=${{ steps.sim.outputs.udid }}" \
+            -only-testing:${{ matrix.suite }} \
+            -resultBundlePath out.xcresult CODE_SIGNING_ALLOWED=NO
+
+      # The result bundle holds the failure detail and, for the walkthroughs, a screenshot per
+      # stop: `xcrun xcresulttool export attachments --path out.xcresult --output-path shots`.
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: out.xcresult-${{ matrix.suite }}
+          path: ios/out.xcresult

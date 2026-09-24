@@ -1,5 +1,9 @@
 import CoreHaptics
+import Observation
 import UIKit
+import os
+
+private let hapticLog = Logger(subsystem: "com.holzherr.tigerworkouts", category: "haptics")
 
 /// The thing the web app cannot do. iOS Safari has no Vibration API, so on the phone the PWA's
 /// end-of-workout buzz is a silent no-op; here every transition has a shape you can feel through a
@@ -8,6 +12,7 @@ import UIKit
 /// Haptics are a foreground-only API: with the screen locked the phone will not buzz whatever we
 /// ask, which is why `Cues` carries the audio half of the same signal.
 @MainActor
+@Observable
 final class Haptics {
     static let shared = Haptics()
 
@@ -24,17 +29,74 @@ final class Haptics {
         case finish
     }
 
+    /// What the Me tab reports, so a phone that does not buzz says why. The simulator has no
+    /// haptic hardware, so a Builder only ever sees `.unsupported`; the other two are for the gym.
+    enum Status: Equatable {
+        case ready
+        case unsupported
+        case stopped(String)
+
+        var label: String {
+            switch self {
+            case .ready: "ready"
+            case .unsupported: "not on this device"
+            case .stopped(let reason): "stopped — \(reason)"
+            }
+        }
+    }
+
     private var engine: CHHapticEngine?
     private let supportsHaptics = CHHapticEngine.capabilitiesForHardware().supportsHaptics
+    private(set) var status = Status.unsupported
     var enabled = true
 
     private init() {
         guard supportsHaptics else { return }
-        engine = try? CHHapticEngine()
-        // The engine is stopped whenever the app backgrounds or another app takes the hardware.
-        engine?.resetHandler = { [weak self] in try? self?.engine?.start() }
-        engine?.stoppedHandler = { _ in }
-        try? engine?.start()
+        do {
+            let engine = try CHHapticEngine()
+            // Tones come from Cues, which activates and deactivates the audio session around every
+            // session; a haptics-only engine is not tied to that session and does not go down with it.
+            engine.playsHapticsOnly = true
+            engine.isAutoShutdownEnabled = false
+            // The engine is stopped whenever the app backgrounds or another app takes the hardware.
+            engine.resetHandler = { [weak self] in Task { @MainActor in self?.restart() } }
+            engine.stoppedHandler = { [weak self] reason in Task { @MainActor in self?.stopped(reason) } }
+            self.engine = engine
+        } catch {
+            status = .stopped(error.localizedDescription)
+            hapticLog.error("haptic engine could not be created: \(error.localizedDescription, privacy: .public)")
+            return
+        }
+        restart()
+    }
+
+    /// Starts the engine, or starts it again after the system stopped it. Called whenever the app
+    /// comes to the foreground; harmless on a running engine and on a device without one.
+    func restart() {
+        guard let engine else { return }
+        do {
+            try engine.start()
+            status = .ready
+            hapticLog.info("haptic engine started")
+        } catch {
+            status = .stopped(error.localizedDescription)
+            hapticLog.error("haptic engine failed to start: \(error.localizedDescription, privacy: .public)")
+        }
+    }
+
+    private func stopped(_ reason: CHHapticEngine.StoppedReason) {
+        let why = switch reason {
+        case .audioSessionInterrupt: "audio session interrupted"
+        case .applicationSuspended: "app was suspended"
+        case .idleTimeout: "idle timeout"
+        case .notifyWhenFinished: "finished"
+        case .engineDestroyed: "engine destroyed"
+        case .gameControllerDisconnect: "game controller disconnected"
+        case .systemError: "system error"
+        @unknown default: "reason \(reason.rawValue)"
+        }
+        status = .stopped(why)
+        hapticLog.info("haptic engine stopped: \(why, privacy: .public)")
     }
 
     func play(_ cue: Cue) {

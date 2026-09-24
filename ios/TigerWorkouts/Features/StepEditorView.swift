@@ -116,6 +116,7 @@ struct StepEditorView: View {
 
 struct RestEditorView: View {
     @State var seconds: Double
+    var note: String?
     var onChange: (Double) -> Void
     var onRemove: () -> Void
 
@@ -124,10 +125,12 @@ struct RestEditorView: View {
     var body: some View {
         NavigationStack {
             Form {
-                Section("Rest") {
+                Section {
                     Stepper(value: $seconds, in: 5...600, step: 5) {
                         LabeledContent("Length", value: Format.clock(seconds))
                     }
+                } footer: {
+                    if let note { Text(note) }
                 }
                 Section {
                     Button("Remove from workout", role: .destructive) {
@@ -147,5 +150,52 @@ struct RestEditorView: View {
                 }
             }
         }
+    }
+}
+
+/// A block's numbers on the workout page: its rounds, or its minutes when it is an AMRAP. Saved as
+/// your settings, like every other number there.
+struct BlockSettingsView: View {
+    @State var block: Block
+    var note: String?
+    var onChange: (Block) -> Void
+
+    @Environment(\.dismiss) private var dismiss
+
+    var body: some View {
+        NavigationStack {
+            Form {
+                Section {
+                    if block.runMode == .amrap {
+                        Stepper(value: minutes, in: 1...90) {
+                            LabeledContent("Minutes", value: "\(Int(minutes.wrappedValue))")
+                        }
+                    } else {
+                        Stepper(value: $block.repeatCount, in: 1...99) {
+                            LabeledContent("Rounds", value: "\(block.repeatCount)")
+                        }
+                    }
+                } footer: {
+                    if let note { Text(note) }
+                }
+            }
+            .navigationTitle(block.name)
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Done") {
+                        onChange(block)
+                        dismiss()
+                    }
+                }
+            }
+        }
+    }
+
+    private var minutes: Binding<Double> {
+        Binding(
+            get: { ((block.timeCapSec ?? 60) / 60).rounded() },
+            set: { block.timeCapSec = $0 * 60 }
+        )
     }
 }

@@ -22,9 +22,20 @@ export const fromRow = (row: { id: string; data: unknown }): SessionResult => {
   return { id: row.id, runsheetId: String((d as { workoutId?: string })?.workoutId ?? row.id), title: String((d as { title?: string })?.title ?? row.id), startedAt: String((d as { startedAt?: string })?.startedAt ?? new Date().toISOString()), steps: [] };
 };
 
-export const workoutFromRow = (row: { id: string; data: unknown; creator?: string | null; title?: string | null }): Runsheet => {
+export type WorkoutRow = { id: string; data: unknown; creator?: string | null; title?: string | null; public?: boolean | null };
+
+/** The `public` column is the truth about visibility; the copy inside `data` can be stale or missing. */
+export const workoutFromRow = (row: WorkoutRow): Runsheet => {
   const d = row.data as Record<string, unknown>;
-  if (d && Array.isArray(d.items)) return { ...(d as unknown as Runsheet), id: row.id };
-  return legacyWorkoutToRunsheet({ id: row.id, title: String(row.title ?? d?.title ?? row.id), creator: row.creator ?? undefined, blocks: (d?.blocks as never) ?? [] });
+  const w = d && Array.isArray(d.items) ? { ...(d as unknown as Runsheet), id: row.id } : legacyWorkoutToRunsheet({ id: row.id, title: String(row.title ?? d?.title ?? row.id), creator: row.creator ?? undefined, blocks: (d?.blocks as never) ?? [] });
+  return typeof row.public === 'boolean' ? { ...w, public: row.public } : w;
 };
 
+/**
+ * The row for one of your workouts. Visibility is the workout's own; failing that, what the row
+ * already has on the server; failing that, private. A push never makes a workout public by itself.
+ */
+export const workoutToRow = (w: Runsheet, owner: string, name: string, remotePublic?: boolean | null) => {
+  const pub = w.public ?? remotePublic ?? false;
+  return { id: w.id!, owner, creator: w.creator ?? name, title: w.title, public: pub, data: { ...w, public: pub } };
+};

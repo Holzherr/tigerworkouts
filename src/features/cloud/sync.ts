@@ -10,11 +10,12 @@
 import type { Runsheet } from '@/features/runsheet/model';
 import type { LibraryExercise } from '@/features/exercises/library';
 import type { SessionResult, TrainingMaxes } from '@/features/runsheet/progression';
+import { mergeSettings, type SettingsMap } from '@/features/runsheet/settings';
 import { currentUser, sb } from './client';
 import type { LegacySession } from './legacy';
-import { fromRow, workoutFromRow } from './rows';
+import { fromRow, workoutFromRow, workoutToRow, type WorkoutRow } from './rows';
 
-export { fromRow } from './rows';
+export { fromRow, workoutFromRow, workoutToRow } from './rows';
 
 export interface SyncTarget {
   results: SessionResult[];
@@ -27,6 +28,8 @@ export interface SyncTarget {
   trainingMaxes: TrainingMaxes;
   bodyweightKg?: number;
   exercises?: Record<string, LibraryExercise>;
+  /** Your settings per workout (specs/workout-settings.md), in `user_state.prefs.workoutSettings`. */
+  workoutSettings?: SettingsMap;
 }
 export interface Favorite {
   name: string;
@@ -145,11 +148,11 @@ export const sync = async (local: SyncTarget): Promise<SyncResult> => {
   }
 
   // ── own workouts (key "w:<id>" in the snapshot) ──
-  const { data: wrows, error: e2 } = await sb.from('workouts').select('id,data,creator,title').eq('owner', uid);
+  const { data: wrows, error: e2 } = await sb.from('workouts').select('id,data,creator,title,public').eq('owner', uid);
   if (e2) errors.push(e2.message);
   else {
     let workouts = [...local.workouts];
-    const remote = new Map((wrows ?? []).map(r => [r.id as string, workoutFromRow(r as { id: string; data: unknown; creator?: string | null; title?: string | null })]));
+    const remote = new Map((wrows ?? []).map(r => [r.id as string, workoutFromRow(r as WorkoutRow)]));
     remote.forEach((w, id) => {
       const k = `w:${id}`;
       const rj = J(w);
@@ -181,7 +184,7 @@ export const sync = async (local: SyncTarget): Promise<SyncResult> => {
     if (workouts.length !== before) changed = true;
     const dirty = workouts.filter(w => w.id && J(w) !== snap[`w:${w.id}`]);
     if (dirty.length) {
-      const { error } = await sb.from('workouts').upsert(dirty.map(w => ({ id: w.id!, owner: uid, creator: w.creator ?? local.name, title: w.title, public: true, data: w })), { onConflict: 'id' });
+      const { error } = await sb.from('workouts').upsert(dirty.map(w => workoutToRow(w, uid, local.name, remote.get(w.id!)?.public)), { onConflict: 'id' });
       if (error) errors.push(error.message);
       else dirty.forEach(w => (snap[`w:${w.id}`] = J(w)));
     }
@@ -210,7 +213,7 @@ export const sync = async (local: SyncTarget): Promise<SyncResult> => {
 
   // ── user state: last writer wins, server fills blanks ──
   const { data: st } = await sb.from('user_state').select('favorites,prefs').eq('owner', uid).maybeSingle();
-  const prefs = (st?.prefs ?? {}) as Partial<{ name: string; saved: string[]; avatar: Avatar; units: 'metric' | 'imperial'; trainingMaxes: TrainingMaxes; bodyweightKg: number }>;
+  const prefs = (st?.prefs ?? {}) as Partial<{ name: string; saved: string[]; avatar: Avatar; units: 'metric' | 'imperial'; trainingMaxes: TrainingMaxes; bodyweightKg: number; workoutSettings: SettingsMap }>;
   const merged = {
     favorites: local.favorites.length ? local.favorites : ((st?.favorites as Favorite[] | null) ?? []),
     saved: [...new Set([...(prefs.saved ?? []), ...local.saved])],
@@ -219,10 +222,11 @@ export const sync = async (local: SyncTarget): Promise<SyncResult> => {
     units: local.units ?? prefs.units ?? 'metric',
     trainingMaxes: { ...(prefs.trainingMaxes ?? {}), ...local.trainingMaxes },
     bodyweightKg: local.bodyweightKg ?? prefs.bodyweightKg,
+    workoutSettings: mergeSettings(prefs.workoutSettings, local.workoutSettings),
   };
   Object.assign(patch, merged);
   if (J(merged) !== snap['state']) {
-    const { error } = await sb.from('user_state').upsert({ owner: uid, favorites: merged.favorites, prefs: { name: merged.name, saved: merged.saved, avatar: merged.avatar, units: merged.units, trainingMaxes: merged.trainingMaxes, bodyweightKg: merged.bodyweightKg } }, { onConflict: 'owner' });
+    const { error } = await sb.from('user_state').upsert({ owner: uid, favorites: merged.favorites, prefs: { ...prefs, name: merged.name, saved: merged.saved, avatar: merged.avatar, units: merged.units, trainingMaxes: merged.trainingMaxes, bodyweightKg: merged.bodyweightKg, workoutSettings: merged.workoutSettings } }, { onConflict: 'owner' });
     if (error) errors.push(error.message);
     else snap['state'] = J(merged);
     await sb.from('profiles').update({ name: merged.name, units: merged.units }).eq('id', uid);
@@ -234,9 +238,9 @@ export const sync = async (local: SyncTarget): Promise<SyncResult> => {
 
 /** Public workouts other people made (creators), for Discover. */
 export const fetchPublicWorkouts = async (): Promise<Runsheet[]> => {
-  const { data } = await sb.from('workouts').select('id,data,creator,title,owner').eq('public', true);
+  const { data } = await sb.from('workouts').select('id,data,creator,title,owner,public').eq('public', true);
   const me = currentUser()?.id;
-  return (data ?? []).filter(r => r.owner !== me).map(r => workoutFromRow(r as { id: string; data: unknown; creator?: string | null; title?: string | null }));
+  return (data ?? []).filter(r => r.owner !== me).map(r => workoutFromRow(r as WorkoutRow));
 };
 
 /** Fitbit / Google Health rows overlapping a session (±60 min), via the session_device RPC. */

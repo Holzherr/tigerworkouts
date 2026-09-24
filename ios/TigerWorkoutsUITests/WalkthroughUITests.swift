@@ -9,6 +9,8 @@ final class WalkthroughUITests: XCTestCase {
     override func setUp() {
         continueAfterFailure = false
         app = XCUIApplication()
+        // Each walkthrough starts with no workouts of its own, so one test's copy is not the next one's.
+        app.launchArguments = ["-uitest-fresh"]
         app.launch()
         // A test that ended mid-session leaves one to resume; start each test from a clean slate.
         let discard = app.alerts.buttons["Discard"]
@@ -94,8 +96,12 @@ final class WalkthroughUITests: XCTestCase {
         sleep(7) // past the lead-in, into the first work slot
 
         // The card on the timer itself, which is what you tap with a machine in front of you.
-        let card = app.buttons.matching(NSPredicate(format: "label CONTAINS[c] 'Row'")).firstMatch
-        XCTAssertTrue(card.waitForExistence(timeout: 5))
+        // The workout page behind it carries the same name, so take the one actually on screen.
+        let cards = app.buttons.matching(NSPredicate(format: "label CONTAINS[c] 'Rowing machine'"))
+        XCTAssertTrue(cards.firstMatch.waitForExistence(timeout: 5))
+        guard let card = cards.allElementsBoundByIndex.first(where: \.isHittable) else {
+            return XCTFail("the running exercise should be tappable")
+        }
         card.tap()
 
         let heading = app.staticTexts.matching(NSPredicate(format: "label CONTAINS[c] 'if it is busy'")).firstMatch
@@ -113,6 +119,68 @@ final class WalkthroughUITests: XCTestCase {
         tap(app.buttons["End session"])
         tap(app.buttons["Finish and save"])
         tap(app.buttons["Done"])
+    }
+
+    /// The workout page is the editor: drag, remove and add without finding an edit mode.
+    func testEditOnTheWorkoutPage() {
+        open("Tabata This")
+        let rower = app.buttons.matching(NSPredicate(format: "label BEGINSWITH[c] 'Rowing machine'")).firstMatch
+        let rest = app.buttons.matching(NSPredicate(format: "label BEGINSWITH[c] 'Rest'")).firstMatch
+        XCTAssertTrue(rower.waitForExistence(timeout: 5))
+        XCTAssertLessThan(rower.frame.minY, rest.frame.minY)
+        snap("21 Workout page, editable")
+
+        // Hold and drag the rest above the rower.
+        rest.press(forDuration: 0.8, thenDragTo: rower)
+        sleep(1)
+        XCTAssertLessThan(rest.frame.minY, rower.frame.minY, "dragging should reorder in place")
+
+        // A catalogue workout is never written over: a new setup is offered as your own version.
+        XCTAssertTrue(app.staticTexts["Changed for this session"].waitForExistence(timeout: 3))
+        snap("22 Reordered, session only")
+        tap(app.buttons["Save my version"])
+        XCTAssertTrue(app.navigationBars["Tabata This (mine)"].waitForExistence(timeout: 5))
+        XCTAssertFalse(app.staticTexts["Changed for this session"].exists)
+        // Your own version starts private, and says so.
+        XCTAssertTrue(app.staticTexts["Private · only you see it"].waitForExistence(timeout: 3))
+
+        // Add straight from the page.
+        tap(app.buttons["Add exercise"].firstMatch)
+        let search = app.searchFields["Exercise"]
+        tap(search)
+        search.typeText("Kettlebell swing")
+        tap(app.buttons.matching(NSPredicate(format: "label BEGINSWITH[c] 'Kettlebell swing'")).firstMatch)
+        let swing = app.buttons.matching(NSPredicate(format: "label BEGINSWITH[c] 'Kettlebell swing'")).firstMatch
+        XCTAssertTrue(swing.waitForExistence(timeout: 5), "an added exercise should appear on the page")
+
+        // Swipe it away again.
+        swing.swipeLeft()
+        tap(app.buttons["Delete"])
+        XCTAssertFalse(swing.waitForExistence(timeout: 2))
+        snap("23 My copy, edited")
+    }
+
+    /// Changing a number is not a new workout: it is saved as your settings, and can be undone.
+    func testSettingsAreNotANewWorkout() {
+        open("Tabata This")
+        let rower = app.buttons.matching(NSPredicate(format: "label BEGINSWITH[c] 'Rowing machine'")).firstMatch
+        tap(rower)
+        tap(app.buttons["More Time"])
+        XCTAssertTrue(app.staticTexts.matching(NSPredicate(format: "label BEGINSWITH 'Saved as your settings'")).firstMatch.waitForExistence(timeout: 3))
+        snap("26 A number, saved as your settings")
+        tap(app.buttons["Done"])
+
+        // Still the catalogue workout, with your number on it.
+        XCTAssertTrue(app.navigationBars["Tabata This"].waitForExistence(timeout: 3))
+        XCTAssertFalse(app.staticTexts["Changed for this session"].exists)
+        XCTAssertTrue(app.staticTexts["Your settings"].waitForExistence(timeout: 3))
+        XCTAssertTrue(app.buttons.matching(NSPredicate(format: "label BEGINSWITH[c] 'Rowing machine' AND label CONTAINS '25s'")).firstMatch.exists)
+        snap("27 Your settings on a catalogue workout")
+
+        // Back to the original.
+        tap(app.buttons["Reset to original"])
+        XCTAssertFalse(app.staticTexts["Your settings"].waitForExistence(timeout: 2))
+        XCTAssertTrue(app.buttons.matching(NSPredicate(format: "label BEGINSWITH[c] 'Rowing machine' AND label CONTAINS '20s'")).firstMatch.exists)
     }
 
     func testWriteAWorkout() {
@@ -150,6 +218,9 @@ final class WalkthroughUITests: XCTestCase {
     func testSettingsAndHealth() {
         tap(app.tabBars.buttons["Me"])
         XCTAssertTrue(app.navigationBars["Me"].waitForExistence(timeout: 5))
+        // The simulator has no haptic hardware, and the row says so rather than staying quiet.
+        XCTAssertTrue(app.staticTexts["Haptic engine: not on this device"].waitForExistence(timeout: 5))
+        tap(app.buttons["Test buzz"])
         snap("16 Me")
 
         let health = app.switches["Apple Health"]
@@ -197,7 +268,9 @@ final class WalkthroughUITests: XCTestCase {
         if !search.exists { app.swipeDown() }
         tap(search)
         search.typeText(title)
-        let row = app.buttons.matching(NSPredicate(format: "label BEGINSWITH %@", title)).firstMatch
+        // BEGINSWITH would also match a copy an earlier run saved as "<title> (mine)".
+        let exact = app.buttons.matching(NSPredicate(format: "label == %@ OR label BEGINSWITH %@", title, title + ",")).firstMatch
+        let row = exact.exists ? exact : app.buttons.matching(NSPredicate(format: "label BEGINSWITH %@", title)).firstMatch
         tap(row)
         XCTAssertTrue(app.buttons["Start workout"].waitForExistence(timeout: 5))
     }
