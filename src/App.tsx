@@ -13,7 +13,8 @@ import type { DndVariant } from '@/features/runsheet/components/runsheet-list';
 import { EX, priyanka } from '@/features/runsheet/fixtures';
 import { makeExercise, resolveRefs, scoreType, type ExerciseStep, type Runsheet } from '@/features/runsheet/model';
 import { withLastUsed } from '@/features/runsheet/last-used';
-import { patchStep } from '@/features/runsheet/patch-step';
+import { classifyEdit, hasSettings, newVersion, settingsChange } from '@/features/runsheet/settings';
+import { resetSettings, saveSettings, useWorkoutSettings } from '@/app/settings-store';
 import { applyCommands, parsePlan } from '@/features/runsheet/parse-text';
 import { ExercisePicker } from '@/features/exercises/components/exercise-picker';
 import type { LibraryExercise } from '@/features/exercises/library';
@@ -77,6 +78,7 @@ const usesRelativeLoads = (r: Runsheet) => r.items.some(i => (i.kind === 'block'
 export default function App() {
   const st = useAppState();
   const act = useActions();
+  const settings = useWorkoutSettings();
   const cloud = useCloudSync();
   const [remote, setRemote] = useState<Runsheet[]>([]);
   useEffect(() => {
@@ -101,6 +103,9 @@ export default function App() {
   const lookup = (id: string) => byId.get(id);
   const refTitle = (id: string) => byId.get(id)?.title;
   const resolve = (s: ExerciseStep) => resolveTarget(s, st.trainingMaxes, st.bodyweightKg);
+  const own = (r: Runsheet) => !!r.id && st.workouts.some(w => w.id === r.id);
+  /** What a session of this workout starts with: your settings and last time's numbers on it (withLastUsed). */
+  const effective = (r: Runsheet) => withLastUsed(resolveRefs(r, lookup), st.results, settings[wid(r)]);
 
   // exercise picker as a promise so the editor can await a pick
   const [pickerOpen, setPickerOpen] = useState(false);
@@ -168,19 +173,22 @@ export default function App() {
   if (route.name === 'workout') {
     const r = byId.get(route.id);
     if (!r) return shell('discover', <Missing />);
+    const shown = effective(r);
     return full(
         <WorkoutPreviewScreen
-          runsheet={r}
+          runsheet={shown}
           history={st.results.filter(x => x.runsheetId === wid(r))}
           onBack={() => go('/discover')}
           onStart={() => (setDraft(null), go(`/do/${encodeURIComponent(route.id)}`))}
-          onEditAndStart={() => (setDraft(structuredClone(resolveRefs(r, lookup))), go(`/edit/${encodeURIComponent(route.id)}`))}
+          onEditAndStart={() => (setDraft(structuredClone(shown)), go(`/edit/${encodeURIComponent(route.id)}`))}
           onFollowAlong={r.video ? () => go(`/follow/${encodeURIComponent(route.id)}`) : undefined}
           onLogOnly={() => go(`/result/${encodeURIComponent(route.id)}`)}
           onSave={() => act.toggleSaved(route.id)}
           saved={st.saved.includes(route.id)}
           onShare={async () => { const out = await shareLink(r.title, shareUrl(r)); say(out === 'copied' ? 'Link copied' : out === 'shared' ? 'Shared' : 'Could not share'); }}
-          onStepChange={st.workouts.some(w => w.id === wid(r)) ? (stepId, patch) => act.saveWorkout(patchStep(r, stepId, patch)) : undefined}
+          onChange={next => saveSettings(wid(r), settingsChange(shown, next))}
+          onResetSettings={hasSettings(settings[wid(r)]) ? () => (resetSettings(wid(r)), say('Back to the original')) : undefined}
+          visibility={own(r) ? { public: r.public ?? false, onChange: pub => (act.saveWorkout({ ...r, public: pub }), say(pub ? 'Public · shows in Discover' : 'Private · only you')) } : undefined}
         />
     );
   }
@@ -189,7 +197,7 @@ export default function App() {
     const saveMine = (): Runsheet => {
       const title = r.title.trim() || 'My workout';
       const id = `u-${Date.now().toString(36)}`;
-      const mine: Runsheet = { ...r, id, title, creator: st.name, source: { title, author: st.name, kind: 'user' }, program: undefined, icon: r.icon ?? defaultIcon(id) };
+      const mine: Runsheet = { ...r, id, title, creator: st.name, source: { title, author: st.name, kind: 'user' }, program: undefined, icon: r.icon ?? defaultIcon(id), public: false };
       act.saveWorkout(mine);
       setDraft(null);
       return mine;
@@ -218,8 +226,13 @@ export default function App() {
   }
   if (route.name === 'edit') {
     const base = byId.get(route.id);
-    const r = draft ?? (base ? structuredClone(resolveRefs(base, lookup)) : null);
+    const start = base ? effective(base) : null;
+    const r = draft ?? (start ? structuredClone(start) : null);
     if (!r) return shell('discover', <Missing />);
+    // Said before Save, not after: numbers are your settings, anything else is a new setup.
+    const kind = start ? classifyEdit(start, r) : 'structure';
+    const mine = !!base && own(base);
+    const saveHint = kind === 'settings' ? 'Numbers only · saves as your settings' : kind === 'structure' ? (mine ? 'Saves to your workout' : 'Saves as your own version (private)') : undefined;
     return full(
       <>
         <EditorScreen
@@ -228,16 +241,31 @@ export default function App() {
           onPickExercise={pick}
           onSwapExercise={pick}
           onBack={() => (setDraft(null), go(`/w/${encodeURIComponent(route.id)}`))}
-          onReset={() => setDraft(base ? structuredClone(resolveRefs(base, lookup)) : null)}
+          onReset={() => setDraft(start ? structuredClone(start) : null)}
           onStart={() => go(`/do/${encodeURIComponent(route.id)}`)}
+          saveHint={saveHint}
+          saveLabel={kind === 'settings' ? 'Save settings' : kind === 'structure' && !mine ? 'Save my version' : 'Save'}
           onSaveAsMine={() => {
-            // Your own workout saves in place; anything else becomes a copy of yours.
-            const own = !!base?.id && st.workouts.some(w => w.id === base.id);
-            const id = own ? base!.id! : `u-${Date.now().toString(36)}`;
-            const mine: Runsheet = { ...r, id, creator: own ? r.creator : st.name, source: own ? r.source : { title: r.title, url: r.source?.url, author: r.source?.author ?? r.creator, kind: 'user' }, program: own ? r.program : undefined, icon: r.icon ?? defaultIcon(id) };
-            act.saveWorkout(mine);
+            if (!base || !start || kind === 'none') return (setDraft(null), go(`/w/${encodeURIComponent(route.id)}`));
+            if (kind === 'settings') {
+              saveSettings(wid(base), settingsChange(start, r));
+              setDraft(null);
+              say('Saved as your settings');
+              return go(`/w/${encodeURIComponent(route.id)}`);
+            }
+            if (mine) {
+              // Your own workout takes the new setup in place, numbers included, so its settings are folded in.
+              act.saveWorkout({ ...r, id: base.id, public: base.public ?? false, icon: r.icon ?? base.icon });
+              resetSettings(wid(base));
+              setDraft(null);
+              say('Saved');
+              return go(`/w/${encodeURIComponent(route.id)}`);
+            }
+            const id = `u-${Date.now().toString(36)}`;
+            const version = { ...newVersion(r, base, { id, creator: st.name }), icon: r.icon ?? defaultIcon(id) };
+            act.saveWorkout(version);
             setDraft(null);
-            say(own ? 'Saved' : 'Saved to My workouts');
+            say('Saved as your own version · private');
             go(`/w/${encodeURIComponent(id)}`);
           }}
           resolveTarget={resolve}
@@ -260,7 +288,7 @@ export default function App() {
   }
   if (route.name === 'import') {
     const shared = decodeShared(route.id);
-    return full(<ImportScreen runsheet={shared} onSave={r => { const mine = { ...r, id: `u-${Date.now().toString(36)}`, source: { ...(r.source ?? { title: r.title, kind: 'user' as const }), kind: 'user' as const, author: r.creator } }; act.saveWorkout(mine); open(mine, 'link'); }} onDiscard={() => go('/discover')} />);
+    return full(<ImportScreen runsheet={shared} onSave={r => { const mine = { ...r, id: `u-${Date.now().toString(36)}`, source: { ...(r.source ?? { title: r.title, kind: 'user' as const }), kind: 'user' as const, author: r.creator }, derivedFrom: r.id, public: false }; act.saveWorkout(mine); open(mine, 'link'); }} onDiscard={() => go('/discover')} />);
   }
   if (route.name === 'log') {
     const logged = decodeLogged(route.id);
@@ -278,9 +306,11 @@ export default function App() {
     );
   }
   if (route.name === 'do') {
-    const r = draft ?? byId.get(route.id);
+    const base = byId.get(route.id);
+    // The editor's draft already starts from your numbers; a straight Start gets them here.
+    const r = draft ?? (base ? effective(base) : undefined);
     if (!r) return shell('discover', <Missing />);
-    return <RunRoute key={route.id} runsheet={withLastUsed(resolveRefs(r, lookup), st.results)} onFinish={res => (setPending(res), go(`/result/${encodeURIComponent(route.id)}`))} onExit={() => (Runner.clearPersisted(), go(`/w/${encodeURIComponent(route.id)}`))} />;
+    return <RunRoute key={route.id} runsheet={r} onFinish={res => (setPending(res), go(`/result/${encodeURIComponent(route.id)}`))} onExit={() => (Runner.clearPersisted(), go(`/w/${encodeURIComponent(route.id)}`))} />;
   }
   if (route.name === 'session') {
     const res = st.results.find(x => x.id === route.id);

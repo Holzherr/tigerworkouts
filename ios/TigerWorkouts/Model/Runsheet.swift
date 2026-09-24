@@ -388,13 +388,19 @@ struct Runsheet: Codable, Hashable, Sendable, Identifiable {
     var score: ScoreType?
     var progression: Progression?
     var video: Video?
+    /// Your own workouts only: true shows it in everyone's Discover. New ones start private.
+    /// `public` in the JSON, as the web app writes it.
+    var isPublic: Bool?
+    /// Set on your own version of someone else's workout: the id it was made from.
+    var derivedFrom: String?
     var items: [Item] = []
 
     /// Stable identity for lists: the id if it has one, else the title.
     var key: String { id ?? title }
 
     private enum CodingKeys: String, CodingKey {
-        case id, title, creator, description, source, tags, level, program, timeCapSec, score, progression, video, items
+        case id, title, creator, description, source, tags, level, program, timeCapSec, score, progression, video, derivedFrom, items
+        case isPublic = "public"
     }
 
     init(id: String? = nil, title: String, creator: String? = nil, items: [Item] = [], timeCapSec: Double? = nil, score: ScoreType? = nil) {
@@ -420,6 +426,8 @@ struct Runsheet: Codable, Hashable, Sendable, Identifiable {
         score = try c.decodeIfPresent(ScoreType.self, forKey: .score)
         progression = try c.decodeIfPresent(Progression.self, forKey: .progression)
         video = try c.decodeIfPresent(Video.self, forKey: .video)
+        isPublic = try c.decodeIfPresent(Bool.self, forKey: .isPublic)
+        derivedFrom = try c.decodeIfPresent(String.self, forKey: .derivedFrom)
         items = try c.decodeIfPresent([Item].self, forKey: .items) ?? []
     }
 }

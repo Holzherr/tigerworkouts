@@ -1,0 +1,29 @@
+{
+  "name": "tigerworkouts-mcp",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "catalogue": "node scripts/catalogue.mjs",
+    "predev": "npm run catalogue",
+    "dev": "wrangler dev",
+    "predeploy": "npm run catalogue",
+    "deploy": "wrangler deploy",
+    "pretest": "npm run catalogue",
+    "test": "vitest run",
+    "precheck-types": "npm run catalogue",
+    "check-types": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@cloudflare/workers-oauth-provider": "^0.10.3",
+    "@modelcontextprotocol/sdk": "^1.30.0",
+    "zod": "^4.6.5"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^5.20260923.1",
+    "@types/node": "^24.13.6",
+    "typescript": "~6.0.2",
+    "vitest": "^5.0.1",
+    "wrangler": "^4.136.3"
+  }
+}

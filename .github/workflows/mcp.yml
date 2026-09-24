@@ -1,0 +1,32 @@
+name: MCP worker
+
+# Type-checks and tests the MCP worker in mcp/ whenever it, or the app code and catalogue it
+# imports, changes. Deploying the worker stays a manual `npm run deploy` in mcp/ (no Cloudflare
+# token lives in this public repo's secrets).
+on:
+  push:
+    branches: [main]
+    paths: ['mcp/**', 'src/features/**', 'src/app/config.ts', 'imports/**', '.github/workflows/mcp.yml']
+  pull_request:
+    paths: ['mcp/**', 'src/features/**', 'src/app/config.ts', 'imports/**', '.github/workflows/mcp.yml']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: mcp
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: mcp/package-lock.json
+      - run: npm ci
+      - run: npm run check-types
+      - run: npm test
