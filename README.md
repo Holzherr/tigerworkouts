@@ -86,8 +86,11 @@ Storybook under Workouts → Imported. Verbatim originals live in the private as
 Live since 6 Sep 2026. Timer (rounds, for time, AMRAP, EMOM, ladders, resume after reload),
 Supabase sign-in (email code and Google) and three-way sync (sessions, own workouts, favourites,
 prefs, custom exercises; v0.9 rows preserved), editor with drag-to-group and text commands, 472
-imported workouts, scores and progression, follow-along videos, Discover with recommendations,
-settings, share links, quick log, post-workout stats with a body map, offline via a service worker.
+imported workouts, scores and progression, follow-along videos, Discover with recommendations
+(For you lists at most six: workouts by a creator done at least twice, ones sharing two exercises
+with your history, saved-not-done, and the next day of a program in progress; a creator done twice
+outranks any exercise overlap), settings, share links, quick log, post-workout stats with a body
+map, offline via a service worker.
 Each session records where it was started (`startedFrom`: a Discover tab, the Me tab, Repeat, a
 share link) so the share started from a home recommendation can be measured.
 
