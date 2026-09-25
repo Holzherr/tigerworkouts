@@ -6,3 +6,4 @@ Append-only. One line per decision: `- <date> <who>: <decision>`. Builders appen
 - 2026-09-10 Nick: block gate, rest colour, loads carry over between sessions, no quick log, Saved first on the home screen.
 - 2026-09-18 Nick: own repository with history; v0.9 kept under legacy/ until parity.
 - 2026-09-22 Nick: iOS icon and in-app mark are two straight flat coral bars, #ff4d2e, with explicit dark and tinted icon variants; the web mark stays until the web-brand question is answered.
+- 2026-09-25 Nick: For you ranks by the approved rules: a workout enters only if its creator has at least 2 sessions in history, or it shares 2 exercises, or it is saved and not done, or it is the next program day; creator match scores +10 per session over +2 per shared exercise; mid-program days of unstarted programs never show; six at most. The line-26 recommend test changes to expect Cindy absent after one Fran.
