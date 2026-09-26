@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { useState } from 'react';
-import { priyanka } from '@/features/runsheet/fixtures';
-import type { Runsheet } from '@/features/runsheet/model';
+import { EX, priyanka } from '@/features/runsheet/fixtures';
+import { makeExercise, type Runsheet } from '@/features/runsheet/model';
 import type { SessionResult } from '@/features/runsheet/progression';
 import { IMPORTED } from '@/features/workouts/imported';
 import { DiscoverScreen } from './discover-screen';
@@ -15,6 +15,13 @@ const HISTORY: SessionResult[] = [
   { runsheetId: priyanka().id!, startedAt: '2026-09-01T18:00:00Z', steps: [] },
 ].filter(h => ALL.some(r => (r.id ?? r.title) === h.runsheetId));
 const SAVED = ['cf-girls-cindy', 'nhs-c25k-w1', ALL.find(r => r.video)?.id ?? ''].filter(Boolean);
+/** Four creators, no exercise in common: after one session of Priyanka's circuit the ranking has nothing to go on. */
+const FEW: Runsheet[] = [
+  priyanka(),
+  { id: 'cf-girls-fran', title: 'Fran', source: { title: 'Fran', author: 'CrossFit', kind: 'benchmark' }, items: [makeExercise(EX.db_thruster, { forMode: 'reps', forValue: 21 }), makeExercise(EX.bw_pullup, { forMode: 'reps', forValue: 21 })] },
+  { id: 'vid-burpees', title: 'Burpee blast', source: { title: 'Burpee blast', author: 'Sam Fixture', kind: 'video' }, items: [makeExercise(EX.bw_burpee, { forMode: 'minutes', forValue: 8 })] },
+  { id: 'prog-lift-day-1', title: 'Day 1', program: { name: 'Lift', day: 'Day 1', order: 1 }, source: { title: 'Lift', author: 'Fixture Barbell Club', kind: 'program' }, items: [makeExercise(EX.bb_back_squat, { forMode: 'reps', forValue: 5 })] },
+];
 
 const meta = {
   title: 'Discover/DiscoverScreen',
@@ -35,6 +42,7 @@ const Flow = () => {
 
 export const ForYou: Story = { render: () => <Flow /> };
 export const ForYouColdStart: Story = { args: { results: [], savedIds: [] } };
+export const ForYouEmpty: Story = { args: { initialTab: 'recommended', workouts: FEW, results: [{ runsheetId: priyanka().id!, startedAt: '2026-09-25T18:00:00Z', steps: [] }], savedIds: [] } };
 export const Saved: Story = { args: { initialTab: 'saved', savedIds: SAVED } };
 export const SavedEmpty: Story = { args: { initialTab: 'saved', savedIds: [], workouts: IMPORTED.map(w => w.runsheet) } };
 export const SearchBrowse: Story = { args: { initialTab: 'search' } };
