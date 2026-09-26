@@ -347,6 +347,22 @@ export const groupOnto = (items: Item[], draggedId: string, targetId: string, op
   return without.map((x, i) => (i === tp.itemIndex ? block : x));
 };
 
+/**
+ * Loose steps become rounds: the run of top-level steps that are not warm-up or cool-down is
+ * wrapped into one block, so it gets a Rounds stepper. The visible way to make a circuit; the
+ * hold-to-group gesture is the hidden one.
+ */
+export const repeatAsRounds = (items: Item[], repeat = 3): { items: Item[]; blockId: string | null } => {
+  const loose = (it: Item): it is Step => (it.kind === 'exercise' || it.kind === 'rest') && (it.role ?? 'main') === 'main';
+  const start = items.findIndex(loose);
+  if (start < 0) return { items, blockId: null };
+  let end = start;
+  while (end + 1 < items.length && loose(items[end + 1])) end++;
+  const steps = items.slice(start, end + 1) as Step[];
+  const block: Block = { kind: 'block', id: uid('b'), name: autoBlockName(steps), repeat, mode: 'rounds', steps };
+  return { items: [...items.slice(0, start), block, ...items.slice(end + 1)], blockId: block.id };
+};
+
 // ── flat row view for drag-and-drop ──
 export type Row = { type: 'step'; id: string; step: Step; blockId?: string } | { type: 'block-head'; id: string; block: Block } | { type: 'block-end'; id: string; blockId: string } | { type: 'ref'; id: string; ref: RefItem };
 

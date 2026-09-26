@@ -17,8 +17,8 @@ import { SortableContext, useSortable, verticalListSortingStrategy } from '@dnd-
 import { CSS, getEventCoordinates } from '@dnd-kit/utilities';
 import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { cn } from '@/shared/utils/ui-utils';
-import { appendToBlock, flatten, groupOnto, insertAfter, makeRest, moveRow, moveRowTo, moveToTopLevel, removeItem, removeStep, replaceStep, ROLE_LABEL, updateBlock, type Block, type ExerciseStep, type Item, type ItemRole, type Row, type Step } from '../model';
-import { ArrowDown, ArrowUp, CornerRightUp, Link2, X } from 'lucide-react';
+import { appendToBlock, flatten, groupOnto, repeatAsRounds, insertAfter, makeRest, moveRow, moveRowTo, moveToTopLevel, removeItem, removeStep, replaceStep, ROLE_LABEL, updateBlock, type Block, type ExerciseStep, type Item, type ItemRole, type Row, type Step } from '../model';
+import { ArrowDown, ArrowUp, CornerRightUp, Link2, Repeat, X } from 'lucide-react';
 import { Button } from '@/shared/components/ui/button';
 import { AddTile, SeamInsert, type AddKind } from './add-controls';
 import { BlockBracket, BlockHeader } from './block-bracket';
@@ -392,6 +392,19 @@ export const RunsheetList = ({ items, onChange, onPickExercise, onSwapExercise, 
       <SortableContext items={ids} strategy={verticalListSortingStrategy}>
         <div className={cn('space-y-2', className)}>
           {blocks}
+          {items.some(it => (it.kind === 'exercise' || it.kind === 'rest') && (it.role ?? 'main') === 'main') && (
+            <button
+              type="button"
+              onClick={() => {
+                const next = repeatAsRounds(items);
+                onChange(next.items);
+                if (next.blockId) setExpanded(next.blockId);
+              }}
+              className="mt-3 flex h-12 w-full items-center justify-center gap-1.5 rounded-tile bg-brand-soft text-[14px] font-bold text-brand active:bg-brand-line/40"
+            >
+              <Repeat className="size-4" /> Repeat as rounds
+            </button>
+          )}
           <AddTile variant="loose" onAdd={k => add(k, { after: null })} className="mt-3" />
         </div>
       </SortableContext>

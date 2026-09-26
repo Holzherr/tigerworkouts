@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { flatten, fromLegacy, groupOnto, insertAfter, makeExercise, makeRest, moveRow, moveRowTo, moveToTopLevel, rebuild, removeStep, runsheetSeconds, type Block, type ExerciseRef, type Item } from './model';
+import { flatten, fromLegacy, groupOnto, insertAfter, makeExercise, makeRest, moveRow, moveRowTo, moveToTopLevel, rebuild, removeStep, repeatAsRounds, runsheetSeconds, type Block, type ExerciseRef, type Item } from './model';
 
 const KB: ExerciseRef = { key: 'kb_swing', name: 'Kettlebell swings', unit: 'kg', step: 4 };
 const PRESS: ExerciseRef = { key: 'db_incline_press', name: 'Incline chest press', unit: 'kg per arm', step: 2.5 };
@@ -153,5 +153,27 @@ describe('moveRowTo / moveToTopLevel', () => {
   it('moves a step to the very start', () => {
     const out = moveToTopLevel(two(), 's1', null);
     expect(out[0].id).toBe('s1');
+  });
+});
+
+describe('repeatAsRounds', () => {
+  it('wraps the loose steps into one block of rounds, leaving warm-up and cool-down outside', () => {
+    const warm = { ...makeExercise(SPRINT), role: 'warmup' as const };
+    const a = swings();
+    const b = press();
+    const items: Item[] = [warm, a, makeRest(30), b];
+    const { items: next, blockId } = repeatAsRounds(items);
+    expect(next).toHaveLength(2);
+    expect(next[0]).toBe(warm);
+    const made = next[1] as Block;
+    expect(made.kind).toBe('block');
+    expect(made.id).toBe(blockId);
+    expect(made.repeat).toBe(3);
+    expect(made.steps.map(s => s.id)).toEqual([a.id, (items[2] as Item).id, b.id]);
+  });
+
+  it('does nothing when there is nothing loose', () => {
+    const items: Item[] = [block([swings()])];
+    expect(repeatAsRounds(items)).toEqual({ items, blockId: null });
   });
 });
