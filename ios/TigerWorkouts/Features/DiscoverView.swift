@@ -111,8 +111,9 @@ struct DiscoverView: View {
                     .accessibilityLabel("Write a workout")
                 }
             }
-            .sheet(item: $writing) { sheet in
-                WorkoutEditorView(runsheet: sheet, isExisting: false) { _ in }
+            // ＋ opens a new, empty workout on the workout screen: the one editor.
+            .navigationDestination(item: $writing) { sheet in
+                WorkoutDetailView(runsheet: sheet, isNew: true, onStart: onStart)
             }
         }
     }

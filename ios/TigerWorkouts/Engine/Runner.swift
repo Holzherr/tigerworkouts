@@ -428,16 +428,26 @@ enum Runner {
     /// block's rounds, rest, durations and order can change mid-session. Parked at a block gate,
     /// the parked block counts as still to come. Drops, swaps and loads set ahead carry into the
     /// rebuilt slots; an item already passed is never run again, wherever the edit moved it.
+    /// How many slots an edit keeps as they are: everything done, and the running part to its end.
+    static func keptCount(_ s: RunState) -> Int {
+        if s.phase == .done { return s.slots.count }
+        if s.phase == .ready { return s.i }
+        if s.phase != .lead, let cur = current(s) {
+            return s.slots.firstIndex { $0.part > cur.part } ?? s.slots.count
+        }
+        return 0
+    }
+
+    /// The top-level items an edit mid-session may not touch: done, or running now.
+    static func passedItems(_ s: RunState) -> Set<String> {
+        Set(s.slots.prefix(keptCount(s)).map { $0.blockId ?? $0.step.id })
+    }
+
     static func replan(_ s: RunState, _ r: Runsheet, now: Double) -> RunState {
         if s.phase == .done { return s }
-        var keptCount = 0
-        if s.phase == .ready {
-            keptCount = s.i
-        } else if s.phase != .lead, let cur = current(s) {
-            keptCount = s.slots.firstIndex { $0.part > cur.part } ?? s.slots.count
-        }
-        let kept = Array(s.slots.prefix(keptCount))
-        let old = Array(s.slots.dropFirst(keptCount))
+        let keep = keptCount(s)
+        let kept = Array(s.slots.prefix(keep))
+        let old = Array(s.slots.dropFirst(keep))
         func itemOf(_ sl: Slot) -> String { sl.blockId ?? sl.step.id }
         let passed = Set(kept.map(itemOf))
         // What the old tail knew that the sheet does not: swapped exercises and loads set ahead.

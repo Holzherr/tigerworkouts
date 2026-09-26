@@ -129,6 +129,70 @@ struct EditingTests {
         // And it still runs: the engine has to be able to expand what the editor wrote.
         #expect(Runner.expand(back).count == 8 * 2 + 7)
     }
+
+    // MARK: - One drag moves a step anywhere, and a block by its header
+
+    /// Block A [swing], Block B [walk, rest]. Rows: hA swing addA hB walk rest addB.
+    private func twoBlocks() -> (Runsheet, a: String, b: String) {
+        var (r, a) = sheetWithOneBlock()
+        r = Edit.addBlock(r)
+        let b = r.items.compactMap(\.asBlock)[1].id
+        r = Edit.addExercise(r, to: b, exercise: walk)
+        r = Edit.addRest(r, to: b)
+        return (r, a, b)
+    }
+
+    private func names(_ r: Runsheet) -> [[String]] {
+        r.items.map { item in
+            switch item {
+            case .block(let b): [b.id] + b.steps.map { $0.asExercise?.exercise.name ?? "rest" }
+            case .step(let s): [s.asExercise?.exercise.name ?? "rest"]
+            case .ref: []
+            }
+        }
+    }
+
+    @Test("dragging a block header to the top moves the whole block, steps and all")
+    func moveBlockUp() {
+        let (r, a, b) = twoBlocks()
+        let moved = Edit.moveRow(r, from: 3, to: 0)
+        #expect(names(moved) == [[b, "Incline walk", "rest"], [a, "Kettlebell swings"]])
+    }
+
+    @Test("dragging a block header below the last row moves it to the end")
+    func moveBlockDown() {
+        let (r, a, b) = twoBlocks()
+        let moved = Edit.moveRow(r, from: 0, to: Edit.rows(r).count)
+        #expect(names(moved) == [[b, "Incline walk", "rest"], [a, "Kettlebell swings"]])
+    }
+
+    @Test("a step dragged under another block's header joins that block")
+    func moveStepBetweenBlocks() {
+        let (r, a, b) = twoBlocks()
+        let moved = Edit.moveRow(r, from: 1, to: 5) // swing lands after walk
+        #expect(names(moved) == [[a], [b, "Incline walk", "Kettlebell swings", "rest"]])
+    }
+
+    @Test("a step dragged above every block stands on its own at the top")
+    func moveStepToTop() {
+        let (r, a, b) = twoBlocks()
+        let moved = Edit.moveRow(r, from: 4, to: 0)
+        #expect(names(moved) == [["Incline walk"], [a, "Kettlebell swings"], [b, "rest"]])
+    }
+
+    @Test("mid-session, nothing moves above what is done or running")
+    func lockedStaysPut() {
+        let (r, a, _) = twoBlocks()
+        #expect(Edit.moveRow(r, from: 3, to: 0, locked: [a]) == r)
+        #expect(Edit.moveRow(r, from: 4, to: 1, locked: [a]) == r)
+        #expect(Edit.moveRow(r, from: 5, to: 4, locked: [a]) != r)
+    }
+
+    @Test("the add row never moves")
+    func addRowStays() {
+        let (r, _, _) = twoBlocks()
+        #expect(Edit.moveRow(r, from: 2, to: 0) == r)
+    }
 }
 
 /// `LibraryExercise` decodes from the export rather than being built by hand, so the tests make

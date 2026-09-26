@@ -410,21 +410,28 @@ struct TimerView: View {
 
     // MARK: - Overview
 
+    /// The same editor as the workout screen. What is done or running is greyed and stays put;
+    /// everything still to come can be changed or dragged — a block dragged up runs next.
     private var overview: some View {
         NavigationStack {
-            List {
-                ForEach(Array(runner.runsheet.items.enumerated()), id: \.offset) { _, item in
-                    switch item {
-                    case .block(let b):
-                        Section(b.name) {
-                            ForEach(b.steps) { step in overviewRow(step) }
-                        }
-                    case .step(let step):
-                        Section { overviewRow(step) }
-                    case .ref:
-                        EmptyView()
-                    }
+            RunsheetEditor(
+                runsheet: runner.runsheet,
+                locked: runner.passedItems,
+                current: runner.slot?.step.id,
+                summary: planned,
+                onExercise: { e in
+                    showOverview = false
+                    editing = e
+                },
+                apply: { runner.edit($0) }
+            ) {
+                Section {
+                    Text("Hold and drag to move what is still to come · tap to change")
+                        .font(.footnote)
+                        .foregroundStyle(Brand.faint)
                 }
+                .listRowBackground(Color.clear)
+                .listRowSeparator(.hidden)
             }
             .navigationTitle("Session")
             .navigationBarTitleDisplayMode(.inline)
@@ -433,34 +440,6 @@ struct TimerView: View {
                     Button("Close") { showOverview = false }
                 }
             }
-        }
-    }
-
-    @ViewBuilder
-    private func overviewRow(_ step: Step) -> some View {
-        switch step {
-        case .rest(let r):
-            Label("Rest \(Format.clock(r.seconds))", systemImage: "pause.circle").foregroundStyle(Brand.rest)
-        case .exercise(let e):
-            Button {
-                showOverview = false
-                editing = e
-            } label: {
-                HStack {
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text(e.exercise.name).foregroundStyle(Brand.ink)
-                        Text(planned(e)).font(.footnote).foregroundStyle(Brand.muted)
-                    }
-                    Spacer()
-                    if e.id == runner.slot?.step.id {
-                        Text("now").font(.caption.weight(.bold)).foregroundStyle(Brand.coral)
-                    }
-                    Image(systemName: "slider.horizontal.3").foregroundStyle(Brand.muted)
-                }
-                .frame(minHeight: Tap.regular)
-                .contentShape(Rectangle())
-            }
-            .buttonStyle(.plain)
         }
     }
 

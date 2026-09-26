@@ -246,6 +246,9 @@ final class SessionRunner {
 
     /// Change what is still to come — the next block's rounds, rest, durations or order. What is
     /// done or running is untouched; the edited sheet becomes the session's. See `Runner.replan`.
+    /// What the Session sheet shows but will not let you change: done, or running now.
+    var passedItems: Set<String> { Runner.passedItems(state) }
+
     func edit(_ sheet: Runsheet) {
         runsheet = sheet
         apply { Runner.replan($0, sheet, now: $1) }

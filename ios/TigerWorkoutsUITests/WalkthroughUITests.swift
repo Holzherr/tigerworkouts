@@ -133,12 +133,22 @@ final class WalkthroughUITests: XCTestCase {
         sleep(1)
         XCTAssertLessThan(rest.frame.minY, rower.frame.minY, "dragging should reorder in place")
 
-        // A catalogue workout is never written over: the change is offered as a copy.
-        XCTAssertTrue(app.staticTexts["Changed for this session"].waitForExistence(timeout: 3))
-        snap("22 Reordered, session only")
-        tap(app.buttons["Save as mine"])
+        // A catalogue workout is never written over: the first edit silently makes it yours.
         XCTAssertTrue(app.navigationBars["Tabata This (mine)"].waitForExistence(timeout: 5))
-        XCTAssertFalse(app.staticTexts["Changed for this session"].exists)
+        snap("22 Reordered, now my copy")
+
+        // A block moves as a whole by its header: drag Pull-up above Squat.
+        let squat = app.buttons.matching(NSPredicate(format: "label BEGINSWITH[c] 'Tabata Squat'")).firstMatch
+        let pullup = app.buttons.matching(NSPredicate(format: "label BEGINSWITH[c] 'Tabata Pull-up'")).firstMatch
+        XCTAssertTrue(squat.waitForExistence(timeout: 3))
+        for _ in 0..<4 where !(squat.isHittable && pullup.isHittable) {
+            app.swipeUp(velocity: .slow)
+        }
+        XCTAssertLessThan(squat.frame.minY, pullup.frame.minY)
+        pullup.press(forDuration: 0.8, thenDragTo: squat)
+        sleep(1)
+        XCTAssertLessThan(pullup.frame.minY, squat.frame.minY, "dragging a header should move the whole block")
+        snap("22b Block moved")
 
         // Add straight from the page.
         tap(app.buttons["Add exercise"].firstMatch)
@@ -159,14 +169,16 @@ final class WalkthroughUITests: XCTestCase {
     func testWriteAWorkout() {
         XCTAssertTrue(app.navigationBars["Tiger"].waitForExistence(timeout: 10))
         tap(app.buttons["Write a workout"])
-        XCTAssertTrue(app.navigationBars["New workout"].waitForExistence(timeout: 5))
-        snap("11 New workout")
-
+        // ＋ opens the workout screen itself, asking for a name first.
         let name = app.textFields["Name"]
+        XCTAssertTrue(name.waitForExistence(timeout: 5))
+        snap("11 New workout")
         tap(name)
         name.typeText("Swings and sprints")
+        tap(app.buttons["Done"])
+        XCTAssertTrue(app.navigationBars["Swings and sprints"].waitForExistence(timeout: 5))
 
-        tap(app.buttons["Add exercise"])
+        tap(app.buttons["Add exercise"].firstMatch)
         XCTAssertTrue(app.navigationBars["Add exercise"].waitForExistence(timeout: 5))
         snap("12 Exercise picker")
         let search = app.searchFields["Exercise"]
@@ -174,16 +186,19 @@ final class WalkthroughUITests: XCTestCase {
         search.typeText("Kettlebell swing")
         tap(app.buttons.matching(NSPredicate(format: "label BEGINSWITH[c] 'Kettlebell swing'")).firstMatch)
 
-        XCTAssertTrue(app.buttons["Save"].waitForExistence(timeout: 5))
-        snap("13 Editor with an exercise")
-        XCTAssertTrue(app.buttons["Save"].isEnabled, "a named workout with one exercise should save")
+        let swing = app.buttons.matching(NSPredicate(format: "label BEGINSWITH[c] 'Kettlebell swing'")).firstMatch
+        XCTAssertTrue(swing.waitForExistence(timeout: 5))
+        snap("13 Workout screen with an exercise")
 
-        tap(app.buttons.matching(NSPredicate(format: "label BEGINSWITH[c] 'Kettlebell swing'")).firstMatch)
+        tap(swing)
+        tap(app.buttons.matching(NSPredicate(format: "label BEGINSWITH[c] 'How long or how many'")).firstMatch)
         XCTAssertTrue(app.navigationBars["Step"].waitForExistence(timeout: 5))
         snap("14 Step editor")
         tap(app.buttons["Done"])
+        tap(app.buttons["Done"])
 
-        tap(app.buttons["Save"])
+        // No Save: it saved itself once it had a name and an exercise.
+        app.navigationBars.buttons.element(boundBy: 0).tap()
         XCTAssertTrue(app.staticTexts["Mine"].waitForExistence(timeout: 5), "a saved workout should appear under Mine")
         snap("15 Workouts with Mine")
     }

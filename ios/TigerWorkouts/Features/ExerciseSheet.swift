@@ -13,6 +13,8 @@ struct ExerciseSheet: View {
     /// Offered when the host can act on it: swapping mid-session changes this step from here on.
     var onSwap: ((Alternatives.Option) -> Void)?
     var dropLabel = "Drop for the rest of the session"
+    /// Offered where the workout itself is being edited: how long or how many.
+    var onAmount: (() -> Void)?
 
     @Environment(\.dismiss) private var dismiss
 
@@ -37,6 +39,21 @@ struct ExerciseSheet: View {
                         if let cue = step.exercise.cue ?? Library.shared.exercise(step.exercise.key)?.cue, !cue.isEmpty {
                             Text(cue).font(.callout).foregroundStyle(Brand.body)
                         }
+                    }
+
+                    if let onAmount {
+                        Button(action: onAmount) {
+                            HStack {
+                                Text("How long or how many").foregroundStyle(Brand.body)
+                                Spacer()
+                                Text(step.forLabel).font(.body.weight(.semibold)).monospacedDigit().foregroundStyle(Brand.ink)
+                                Image(systemName: "chevron.right").font(.footnote.weight(.semibold)).foregroundStyle(Brand.faint)
+                            }
+                            .padding(16)
+                            .contentShape(Rectangle())
+                        }
+                        .buttonStyle(.plain)
+                        .cardSurface()
                     }
 
                     if let target, step.hasSetting {

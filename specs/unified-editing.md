@@ -1,4 +1,4 @@
-Status: agreed
+Status: building
 
 # Unified editing
 
@@ -101,6 +101,18 @@ Two M items, in this order:
    the timer's upcoming-blocks list, editable in place, with block drag for the jump; the web
    timer's list. Proof: RunnerTests and runner.test.ts, the "run and finish" walkthrough with a
    round added mid-session.
+
+## Built (2026-09-26)
+
+- iOS: `RunsheetEditor` is the one editor, used by the workout screen and the timer's Session sheet.
+  One flat list: a step drags within or between blocks or out on its own; a block drags by its
+  header (`Edit.rows` / `Edit.moveRow`, EditingTests). Tap a header for rounds and rest
+  (`BlockSheet`). `WorkoutEditorView` is gone; ＋ opens the workout screen. The ⋯ menu is "Edit":
+  name and creator, duplicate, open the original, delete. A catalogue workout's first edit makes a
+  silent copy. Mid-session, done and running blocks are greyed and fixed; the rest edit and drag
+  through `SessionRunner.edit`.
+- Not yet: the web editor (variant B only, blocks and rounds on the workout page), one copy per
+  original, keeping copies out of Discover.
 
 ## Out
 

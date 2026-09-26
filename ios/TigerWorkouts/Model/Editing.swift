@@ -142,6 +142,110 @@ enum Edit {
         return result
     }
 
+    // MARK: - The editor's rows
+
+    /// The editor is one flat list, so a single drag can move a step within a block, into another
+    /// block or out to the top level, and a block moves by dragging its header.
+    enum Row: Hashable, Identifiable {
+        /// A block's header. Dragging it moves the whole block.
+        case block(String)
+        /// A step in a block, or on its own when `block` is nil.
+        case step(String, block: String?)
+        /// Add exercise / Add rest under a block. Never moves.
+        case add(String)
+
+        var id: String {
+            switch self {
+            case .block(let b): "h:\(b)"
+            case .step(let s, _): "s:\(s)"
+            case .add(let b): "a:\(b)"
+            }
+        }
+    }
+
+    static func rows(_ r: Runsheet) -> [Row] {
+        r.items.flatMap { item -> [Row] in
+            switch item {
+            case .block(let b): [.block(b.id)] + b.steps.map { .step($0.id, block: b.id) } + [.add(b.id)]
+            case .step(let s): [.step(s.id, block: nil)]
+            case .ref: []
+            }
+        }
+    }
+
+    /// One drag in the editor, with `onMove` semantics: `destination` is a row index in the list as
+    /// it was before the move. Items in `locked` (done or running in a live session) keep their place
+    /// and contents; a move that would disturb them is refused.
+    static func moveRow(_ r: Runsheet, from: Int, to destination: Int, locked: Set<String> = []) -> Runsheet {
+        let rows = rows(r)
+        guard rows.indices.contains(from) else { return r }
+        let next: Runsheet
+        switch rows[from] {
+        case .add:
+            return r
+        case .block(let blockId):
+            guard let at = r.items.firstIndex(where: { $0.id == blockId }) else { return r }
+            // The block lands after every item whose first row sits above the drop point.
+            var starts: [Int] = []
+            var row = 0
+            for item in r.items {
+                starts.append(row)
+                switch item {
+                case .block(let b): row += b.steps.count + 2
+                case .step: row += 1
+                case .ref: break
+                }
+            }
+            next = moveItems(r, from: [at], to: starts.filter { $0 < destination }.count)
+        case .step(let stepId, _):
+            guard let step = findStep(r, stepId) else { return r }
+            var rest = rows
+            rest.remove(at: from)
+            let landing = max(0, min(rest.count, destination > from ? destination - 1 : destination))
+            var sheet = removeStep(r, stepId: stepId)
+            switch landing > 0 ? rest[landing - 1] : nil {
+            case nil:
+                sheet.items.insert(.step(step), at: 0)
+            case .block(let b)?:
+                sheet = updateBlock(sheet, id: b) { $0.steps.insert(step, at: 0) }
+            case .step(let after, let b?)?:
+                sheet = updateBlock(sheet, id: b) { block in
+                    let i = block.steps.firstIndex { $0.id == after }.map { $0 + 1 } ?? block.steps.count
+                    block.steps.insert(step, at: i)
+                }
+            case .step(let after, nil)?, .add(let after)?:
+                // After a loose step, or below a block's last row: on its own at the top level.
+                let i = sheet.items.firstIndex { $0.id == after }.map { $0 + 1 } ?? sheet.items.count
+                sheet.items.insert(.step(step), at: i)
+            }
+            next = sheet
+        }
+        let fixed = r.items.prefix { locked.contains($0.id) }
+        return Array(next.items.prefix(fixed.count)) == Array(fixed) ? next : r
+    }
+
+    static func findStep(_ r: Runsheet, _ stepId: String) -> Step? {
+        for item in r.items {
+            switch item {
+            case .block(let b): if let s = b.steps.first(where: { $0.id == stepId }) { return s }
+            case .step(let s): if s.id == stepId { return s }
+            case .ref: break
+            }
+        }
+        return nil
+    }
+
+    /// Every block and step id in order, so a copy's ids can be matched to the original's.
+    static func ids(_ r: Runsheet) -> [String] {
+        r.items.flatMap { item -> [String] in
+            switch item {
+            case .block(let b): [b.id] + b.steps.map(\.id)
+            case .step(let s): [s.id]
+            case .ref(let ref): [ref.id]
+            }
+        }
+    }
+
     // MARK: - Changing
 
     static func updateBlock(_ r: Runsheet, id blockId: String, _ change: (inout Block) -> Void) -> Runsheet {
