@@ -1,4 +1,4 @@
-import { Flame, History, Settings, User } from 'lucide-react';
+import { Flame, History, ImageUp, Settings, User } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { DiscoverScreen, type DiscoverTab } from '@/features/discover/components/discover-screen';
 import { LandingScreen } from '@/features/landing/components/landing-screen';
@@ -15,6 +15,8 @@ import { makeExercise, resolveRefs, scoreType, type ExerciseStep, type Runsheet 
 import { withLastUsed } from '@/features/runsheet/last-used';
 import { patchStep } from '@/features/runsheet/patch-step';
 import { applyCommands, parsePlan } from '@/features/runsheet/parse-text';
+import { isImage, readImport } from '@/features/runsheet/import-file';
+import { cn } from '@/shared/utils/ui-utils';
 import { ExercisePicker } from '@/features/exercises/components/exercise-picker';
 import type { LibraryExercise } from '@/features/exercises/library';
 import { AvatarView, SettingsSheet } from '@/features/profile/components/settings-sheet';
@@ -455,11 +457,33 @@ const RunRoute = ({ runsheet, onFinish, onExit }: { runsheet: Runsheet; onFinish
 
 const PasteSheet = ({ open, onOpenChange, library, onUse }: { open: boolean; onOpenChange: (o: boolean) => void; library: Record<string, LibraryExercise>; onUse: (items: Runsheet['items']) => void }) => {
   const [text, setText] = useState('');
+  const [reading, setReading] = useState<number | null>(null);
+  const [error, setError] = useState<string | null>(null);
   const parsed = useMemo(() => parsePlan(text, library), [text, library]);
+  const pick = async (file: File | undefined) => {
+    if (!file) return;
+    setError(null);
+    setReading(0);
+    try {
+      const read = await readImport(file, setReading);
+      if (!read.trim()) setError(isImage(file) ? 'Could not read any text in that photo. Try a sharper, straight-on shot.' : 'That file is empty.');
+      else setText(read);
+    } catch {
+      setError('Could not read that file.');
+    } finally {
+      setReading(null);
+    }
+  };
   return (
-    <Sheet open={open} onOpenChange={onOpenChange} title="Describe the workout" height="80dvh">
-      <p className="text-[13px] text-muted">One line per block: “kb swings 28 + incline press 20 x8 30/30”, “sprints 14.5 x8, rest 15”, “incline walk 10 min inc 6”.</p>
-      <textarea value={text} onChange={e => setText(e.target.value)} rows={5} autoFocus className="mt-2 w-full rounded-card border border-line bg-canvas p-3 font-mono text-[14px] outline-none focus:border-hint" placeholder="Paste or type…" />
+    <Sheet open={open} onOpenChange={onOpenChange} title="Import a workout" height="80dvh">
+      <p className="text-[13px] text-muted">Upload a photo or screenshot of a workout, or a text file — or type it. One line per block: “kb swings 28 + incline press 20 x8 30/30”, “sprints 14.5 x8, rest 15”.</p>
+      <label className={cn('mt-2 flex h-11 cursor-pointer items-center justify-center gap-2 rounded-tile border-2 border-dashed border-brand-line bg-brand-soft text-[14px] font-bold text-brand', reading !== null && 'pointer-events-none opacity-60')}>
+        <ImageUp className="size-4" />
+        {reading === null ? 'Upload image or text' : `Reading… ${reading}%`}
+        <input type="file" accept="image/*,.txt,.md,text/plain" className="hidden" onChange={e => { void pick(e.target.files?.[0]); e.target.value = ''; }} />
+      </label>
+      {error && <p className="mt-1.5 text-[13px] text-danger">{error}</p>}
+      <textarea value={text} onChange={e => setText(e.target.value)} rows={5} className="mt-2 w-full rounded-card border border-line bg-canvas p-3 font-mono text-[14px] outline-none focus:border-hint" placeholder="Paste or type…" />
       {text.trim() && (
         <div className="mt-2 space-y-1 text-[13px]">
           <div className="text-[11px] font-bold tracking-widest text-muted uppercase">Reads as · {parsed.items.length} {parsed.items.length === 1 ? 'item' : 'items'}</div>

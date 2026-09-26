@@ -117,7 +117,7 @@ export const EditorScreen = ({ runsheet, onChange, onPickExercise, onSwapExercis
           />
           {onPastePlan && (
             <Button variant="text" size="inline" onClick={onPastePlan} className="shrink-0">
-              <ClipboardPaste /> Paste plan
+              <ClipboardPaste /> Import
             </Button>
           )}
         </label>
