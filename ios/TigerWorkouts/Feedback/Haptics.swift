@@ -1,3 +1,4 @@
+import AudioToolbox
 import CoreHaptics
 import Observation
 import UIKit
@@ -9,8 +10,9 @@ private let hapticLog = Logger(subsystem: "com.holzherr.tigerworkouts", category
 /// end-of-workout buzz is a silent no-op; here every transition has a shape you can feel through a
 /// pocket without looking.
 ///
-/// Haptics are a foreground-only API: with the screen locked the phone will not buzz whatever we
-/// ask, which is why `Cues` carries the audio half of the same signal.
+/// Core Haptics is foreground-only: with the screen locked it plays nothing. The session keeps the
+/// app alive in the background (Cues' audio), so a locked phone gets the system vibration instead —
+/// two long buzzes for work, one for rest, the only buzz iOS lets a backgrounded app make.
 @MainActor
 @Observable
 final class Haptics {
@@ -101,6 +103,7 @@ final class Haptics {
 
     func play(_ cue: Cue) {
         guard enabled else { return }
+        if UIApplication.shared.applicationState != .active { return vibrate(cue) }
         guard supportsHaptics, let engine else { return fallback(cue) }
         do {
             try engine.start()
@@ -136,6 +139,28 @@ final class Haptics {
             return [tap(0, 0.8, 0.5), tap(0.13, 0.9, 0.6), tap(0.26, 1, 0.8)]
         case .finish:
             return [roll(0, 0.7, 0.9, 0.3), tap(0.75, 1, 1), tap(0.95, 1, 1), roll(1.05, 0.5, 1, 0.6)]
+        }
+    }
+
+    /// Screen locked or app in the background. The ticks stay silent: three long buzzes a second
+    /// apart would blur into one, and the work/rest buzz that follows is the one that matters.
+    private func vibrate(_ cue: Cue) {
+        switch cue {
+        case .tick:
+            return
+        case .rest:
+            buzz(1)
+        case .work, .block:
+            buzz(2)
+        case .finish:
+            buzz(3)
+        }
+    }
+
+    /// Work is two buzzes and rest one, so the pocket can tell them apart.
+    private func buzz(_ times: Int) {
+        for i in 0..<times {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.6 * Double(i)) { AudioServicesPlaySystemSound(kSystemSoundID_Vibrate) }
         }
     }
 
