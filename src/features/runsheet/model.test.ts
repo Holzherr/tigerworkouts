@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { flatten, fromLegacy, groupOnto, insertAfter, makeExercise, makeRest, moveRow, moveRowTo, moveToTopLevel, rebuild, removeStep, repeatAsRounds, runsheetSeconds, type Block, type ExerciseRef, type Item } from './model';
+import { flatten, fromLegacy, groupOnto, insertAfter, makeExercise, makeRest, moveRow, moveRowTo, moveToTopLevel, rebuild, removeStep, isEmptyMain, repeatAsRounds, startBlock, runsheetSeconds, type Block, type ExerciseRef, type Item } from './model';
 
 const KB: ExerciseRef = { key: 'kb_swing', name: 'Kettlebell swings', unit: 'kg', step: 4 };
 const PRESS: ExerciseRef = { key: 'db_incline_press', name: 'Incline chest press', unit: 'kg per arm', step: 2.5 };
@@ -175,5 +175,23 @@ describe('repeatAsRounds', () => {
   it('does nothing when there is nothing loose', () => {
     const items: Item[] = [block([swings()])];
     expect(repeatAsRounds(items)).toEqual({ items, blockId: null });
+  });
+});
+
+describe('startBlock', () => {
+  it('puts the first step of an empty workout in a block of rounds', () => {
+    expect(isEmptyMain([])).toBe(true);
+    const a = swings();
+    const { items, blockId } = startBlock([], a);
+    expect(items).toHaveLength(1);
+    const b = items[0] as Block;
+    expect(b.id).toBe(blockId);
+    expect(b.repeat).toBe(3);
+    expect(b.steps).toEqual([a]);
+    expect(isEmptyMain(items)).toBe(false);
+  });
+
+  it('does not count a warm-up as a start', () => {
+    expect(isEmptyMain([{ ...makeExercise(SPRINT), role: 'warmup' }])).toBe(true);
   });
 });

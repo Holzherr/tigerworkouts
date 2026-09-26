@@ -17,7 +17,7 @@ import { SortableContext, useSortable, verticalListSortingStrategy } from '@dnd-
 import { CSS, getEventCoordinates } from '@dnd-kit/utilities';
 import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { cn } from '@/shared/utils/ui-utils';
-import { appendToBlock, flatten, groupOnto, repeatAsRounds, insertAfter, makeRest, moveRow, moveRowTo, moveToTopLevel, removeItem, removeStep, replaceStep, ROLE_LABEL, updateBlock, type Block, type ExerciseStep, type Item, type ItemRole, type Row, type Step } from '../model';
+import { appendToBlock, flatten, groupOnto, isEmptyMain, repeatAsRounds, startBlock, insertAfter, makeRest, moveRow, moveRowTo, moveToTopLevel, removeItem, removeStep, replaceStep, ROLE_LABEL, updateBlock, type Block, type ExerciseStep, type Item, type ItemRole, type Row, type Step } from '../model';
 import { ArrowDown, ArrowUp, CornerRightUp, Link2, Repeat, X } from 'lucide-react';
 import { Button } from '@/shared/components/ui/button';
 import { AddTile, SeamInsert, type AddKind } from './add-controls';
@@ -217,6 +217,12 @@ export const RunsheetList = ({ items, onChange, onPickExercise, onSwapExercise, 
     async (kind: AddKind, where: { after: string | null } | { block: string }) => {
       const step: Step | null = kind === 'rest' ? makeRest(nearestRest(items, 'after' in where ? where.after : where.block) ?? autoRest ?? 30) : await onPickExercise();
       if (!step) return;
+      if (!('block' in where) && where.after === null && isEmptyMain(items)) {
+        const started = startBlock(items, step);
+        onChange(started.items);
+        setExpanded(step.id);
+        return;
+      }
       onChange('block' in where ? appendToBlock(items, where.block, step) : insertAfter(items, where.after, step));
       setExpanded(step.id);
     },

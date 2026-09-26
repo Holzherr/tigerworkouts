@@ -363,6 +363,16 @@ export const repeatAsRounds = (items: Item[], repeat = 3): { items: Item[]; bloc
   return { items: [...items.slice(0, start), block, ...items.slice(end + 1)], blockId: block.id };
 };
 
+/**
+ * The first step of an empty workout starts a block, so rounds are there from the start instead of
+ * a loose step with nowhere to set them. Warm-up and cool-down items do not count as a start.
+ */
+export const isEmptyMain = (items: Item[]) => !items.some(it => it.kind !== 'ref' && (it.role ?? 'main') === 'main');
+export const startBlock = (items: Item[], step: Step, repeat = 3): { items: Item[]; blockId: string } => {
+  const block: Block = { kind: 'block', id: uid('b'), name: autoBlockName([step]), repeat, mode: 'rounds', steps: [step] };
+  return { items: [...items, block], blockId: block.id };
+};
+
 // ── flat row view for drag-and-drop ──
 export type Row = { type: 'step'; id: string; step: Step; blockId?: string } | { type: 'block-head'; id: string; block: Block } | { type: 'block-end'; id: string; blockId: string } | { type: 'ref'; id: string; ref: RefItem };
 
