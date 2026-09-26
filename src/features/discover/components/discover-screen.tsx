@@ -61,7 +61,8 @@ const groupRecs = (recs: ReturnType<typeof recommend>) => {
  * Home feed with three tabs in a segmented control under the title, and a Create button top
  * right. Saved (default): a Create tile, then the user's own and bookmarked workouts, most recently
  * done first. For you: ranked recommendations from history, each card with a one-line
- * reason ("Next in StrongLifts 5×5", "Because you did Fran"). Search: the search field first;
+ * reason ("Next in StrongLifts 5×5", "Because you did Fran"); with history but no picks, an empty
+ * state that sends the user to Search. Search: the search field first;
  * with no query it shows filter chips and the full catalogue (programs collapsed to one row each),
  * with a query it shows matches only.
  */
@@ -162,6 +163,7 @@ export const DiscoverScreen = ({ workouts, results = [], savedIds = [], onOpen, 
           <>
             {above}
             {results.length === 0 && <div className="px-1 pb-1 text-[12px] text-muted">Log a workout and this list learns what you like. Until then, some good first ones.</div>}
+            {results.length > 0 && recs.length === 0 && <EmptyState icon={<Sparkles />} title="Nothing to suggest yet" body="Log a couple more workouts and this list learns what you like." action={{ label: 'Browse workouts', onClick: () => setTab('search') }} />}
             {groupRecs(recs).map(([reason, list]) => (
               <section key={reason} className="space-y-2">
                 <div className="flex items-center gap-1.5 px-1 pt-1 text-[12px] font-bold text-brand-ink">
