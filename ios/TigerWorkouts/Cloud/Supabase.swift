@@ -274,7 +274,7 @@ actor Supabase {
     /// The account's own workouts, on top of the bundled catalogue.
     func workouts() async throws -> [Runsheet] {
         guard let uid = session?.user.id else { return [] }
-        let (data, _) = try await request("rest/v1/workouts?select=id,data,creator,title&owner=eq.\(uid)")
+        let (data, _) = try await request("rest/v1/workouts?select=id,data,creator,title,public&owner=eq.\(uid)")
         guard let rows = try JSONSerialization.jsonObject(with: data) as? [[String: Any]] else { return [] }
         let decoder = Library.shared.decoder
         return rows.compactMap { row in
@@ -283,12 +283,13 @@ actor Supabase {
                   var sheet = try? decoder.decode(Runsheet.self, from: body) else { return nil }
             if let id = row["id"] as? String { sheet.id = id }
             if let creator = row["creator"] as? String { sheet.creator = creator }
+            // The column decides who can see it; `data` may predate the flag.
+            sheet.isPublic = row["public"] as? Bool
             return sheet
         }
     }
 
-    /// Writes a workout this account owns. `public: true` matches what the web app writes, so a
-    /// workout made on the phone shows up there as well.
+    /// Writes a workout this account owns. Private unless its creator made it public.
     func saveWorkout(_ r: Runsheet) async throws {
         guard let uid = session?.user.id else { throw SupabaseError(message: "Not signed in") }
         guard let id = r.id else { throw SupabaseError(message: "Workout has no id") }
@@ -302,7 +303,7 @@ actor Supabase {
                 "owner": uid,
                 "creator": r.creator.map { $0 as Any } ?? NSNull(),
                 "title": r.title,
-                "public": true,
+                "public": r.isPublic ?? false,
                 "data": data,
             ]],
             headers: ["Prefer": "resolution=merge-duplicates,return=minimal"]

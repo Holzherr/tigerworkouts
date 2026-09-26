@@ -69,6 +69,15 @@ struct WorkoutDetailView: View {
                         }
                     }
                     if store.isMine(runsheet) {
+                        Button {
+                            var next = runsheet
+                            next.isPublic = !(runsheet.isPublic ?? false)
+                            apply(next)
+                        } label: {
+                            (runsheet.isPublic ?? false)
+                                ? Label("Make private", systemImage: "lock")
+                                : Label("Make public on my page", systemImage: "globe")
+                        }
                         Button(role: .destructive) { confirmDelete = true } label: {
                             Label("Delete workout", systemImage: "trash")
                         }

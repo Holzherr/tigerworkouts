@@ -10,6 +10,8 @@ struct DiscoverView: View {
     @State private var query = ""
     @State private var filter: Kind?
     @State private var writing: Runsheet?
+    /// Workouts pushed on this stack; a tigerworkouts://w/<id> link from the website lands here.
+    @State private var path: [String] = []
 
     enum Tab: String, CaseIterable, Identifiable {
         case saved = "Saved", forYou = "For you", browse = "Browse"
@@ -70,7 +72,7 @@ struct DiscoverView: View {
     }
 
     var body: some View {
-        NavigationStack {
+        NavigationStack(path: $path) {
             ScrollView {
                 VStack(alignment: .leading, spacing: 22) {
                     if !searching {
@@ -110,6 +112,12 @@ struct DiscoverView: View {
                     }
                     .accessibilityLabel("Write a workout")
                 }
+            }
+            .onOpenURL { url in
+                // tigerworkouts://w/<id>: "Open in the app" on a workout page of the website.
+                guard url.host == "w", let id = url.pathComponents.dropFirst().first?.removingPercentEncoding,
+                      store.workout(id: id) != nil else { return }
+                path = [id]
             }
             // ＋ opens a new, empty workout on the workout screen: the one editor.
             .navigationDestination(item: $writing) { sheet in

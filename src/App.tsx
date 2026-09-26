@@ -16,6 +16,8 @@ import { withLastUsed } from '@/features/runsheet/last-used';
 import { patchStep } from '@/features/runsheet/patch-step';
 import { applyCommands, parsePlan } from '@/features/runsheet/parse-text';
 import { isImage, readImport } from '@/features/runsheet/import-file';
+import { appLink, CreatorScreen } from '@/features/creators/components/creator-screen';
+import { CreatorPageCard } from '@/features/creators/components/creator-page-card';
 import { cn } from '@/shared/utils/ui-utils';
 import { ExercisePicker } from '@/features/exercises/components/exercise-picker';
 import type { LibraryExercise } from '@/features/exercises/library';
@@ -41,7 +43,7 @@ import { defaultIcon } from '@/features/workouts/icon';
 import { useActions, useAppState } from './app/store';
 import { providers, sendCode, signInGoogle, signOut, verifyCode } from '@/features/cloud/client';
 import { getVolume, setVolume } from '@/features/timer/use-runner';
-import { deviceFor, fetchPublicWorkouts } from '@/features/cloud/sync';
+import { deviceFor, fetchCreator, fetchPublicWorkouts, type CreatorProfile } from '@/features/cloud/sync';
 import { useCloudSync } from '@/features/cloud/use-sync';
 import { SessionDetailScreen } from '@/features/results/components/session-detail-screen';
 import { FULL_LIBRARY as LIB } from '@/features/workouts/imported';
@@ -54,7 +56,7 @@ const TABS = [
 ] as const;
 type Tab = (typeof TABS)[number]['id'];
 
-type Route = { name: 'tab'; tab: Tab; sub?: string } | { name: 'new' } | { name: 'workout' | 'edit' | 'follow' | 'result' | 'do' | 'session' | 'import' | 'log'; id: string };
+type Route = { name: 'tab'; tab: Tab; sub?: string } | { name: 'new' } | { name: 'workout' | 'edit' | 'follow' | 'result' | 'do' | 'session' | 'import' | 'log' | 'creator'; id: string };
 
 const parse = (hash: string): Route => {
   const seg = hash.replace(/^#\/?/, '').split('/');
@@ -66,6 +68,7 @@ const parse = (hash: string): Route => {
   if (seg[0] === 'result' && id) return { name: 'result', id };
   if (seg[0] === 'do' && id) return { name: 'do', id };
   if (seg[0] === 's' && id) return { name: 'session', id };
+  if (seg[0] === 'c' && id) return { name: 'creator', id };
   if (seg[0] === 'import' && seg[1]) return { name: 'import', id: seg.slice(1).join('/') };
   if (seg[0] === 'log' && seg[1]) return { name: 'log', id: seg.slice(1).join('/') };
   return { name: 'tab', tab: seg[0] === 'history' || seg[0] === 'me' ? seg[0] : 'discover', sub: seg[1] };
@@ -183,8 +186,14 @@ export default function App() {
           saved={st.saved.includes(route.id)}
           onShare={async () => { const out = await shareLink(r.title, shareUrl(r)); say(out === 'copied' ? 'Link copied' : out === 'shared' ? 'Shared' : 'Could not share'); }}
           onStepChange={st.workouts.some(w => w.id === wid(r)) ? (stepId, patch) => act.saveWorkout(patchStep(r, stepId, patch)) : undefined}
+          onCreator={r.ownerId || (cloud.user && st.workouts.some(w => w.id === wid(r))) ? () => go(`/c/${r.ownerId ?? cloud.user!.id}`) : undefined}
+          onTogglePublic={cloud.user && st.workouts.some(w => w.id === wid(r)) ? () => { act.saveWorkout({ ...r, public: !r.public }); say(r.public ? 'Private now' : 'On your public page'); } : undefined}
+          appHref={appLink(`w/${encodeURIComponent(wid(r))}`)}
         />
     );
+  }
+  if (route.name === 'creator') {
+    return full(<CreatorRoute key={route.id} id={route.id} onOpen={r => open(r)} onShare={async () => { const out = await shareLink('TigerWorkouts', location.href); say(out === 'copied' ? 'Link copied' : out === 'shared' ? 'Shared' : 'Could not share'); }} />);
   }
   if (route.name === 'new') {
     const r: Runsheet = draft ?? { title: '', creator: st.name, items: [] };
@@ -236,7 +245,7 @@ export default function App() {
             // Your own workout saves in place; anything else becomes a copy of yours.
             const own = !!base?.id && st.workouts.some(w => w.id === base.id);
             const id = own ? base!.id! : `u-${Date.now().toString(36)}`;
-            const mine: Runsheet = { ...r, id, creator: own ? r.creator : st.name, source: own ? r.source : { title: r.title, url: r.source?.url, author: r.source?.author ?? r.creator, kind: 'user' }, program: own ? r.program : undefined, icon: r.icon ?? defaultIcon(id) };
+            const mine: Runsheet = { ...r, id, creator: own ? r.creator : st.name, source: own ? r.source : { title: r.title, url: r.source?.url, author: r.source?.author ?? r.creator, kind: 'user' }, program: own ? r.program : undefined, icon: r.icon ?? defaultIcon(id), public: own ? r.public : false, ownerId: undefined };
             act.saveWorkout(mine);
             setDraft(null);
             say(own ? 'Saved' : 'Saved to My workouts');
@@ -262,7 +271,7 @@ export default function App() {
   }
   if (route.name === 'import') {
     const shared = decodeShared(route.id);
-    return full(<ImportScreen runsheet={shared} onSave={r => { const mine = { ...r, id: `u-${Date.now().toString(36)}`, source: { ...(r.source ?? { title: r.title, kind: 'user' as const }), kind: 'user' as const, author: r.creator } }; act.saveWorkout(mine); open(mine, 'link'); }} onDiscard={() => go('/discover')} />);
+    return full(<ImportScreen runsheet={shared} onSave={r => { const mine = { ...r, public: false, ownerId: undefined, id: `u-${Date.now().toString(36)}`, source: { ...(r.source ?? { title: r.title, kind: 'user' as const }), kind: 'user' as const, author: r.creator } }; act.saveWorkout(mine); open(mine, 'link'); }} onDiscard={() => go('/discover')} />);
   }
   if (route.name === 'log') {
     const logged = decodeLogged(route.id);
@@ -396,6 +405,7 @@ export default function App() {
               </Button>
             </div>
           )}
+          {cloud.user && <CreatorPageCard publicCount={st.workouts.filter(w => w.public).length} onOpenPage={key => go(`/c/${encodeURIComponent(key)}`)} />}
           <Button variant="ghost" block onClick={() => setTmOpen(true)}>
             Training maxes
           </Button>
@@ -503,6 +513,15 @@ const PasteSheet = ({ open, onOpenChange, library, onUse }: { open: boolean; onO
       </Button>
     </Sheet>
   );
+};
+
+/** A creator's page, loaded from the cloud; its workouts open like any other and run as a guest. */
+const CreatorRoute = ({ id, onOpen, onShare }: { id: string; onOpen: (r: Runsheet) => void; onShare: () => void }) => {
+  const [page, setPage] = useState<{ profile: CreatorProfile | null; workouts: Runsheet[] } | null>(null);
+  useEffect(() => {
+    fetchCreator(id).then(p => setPage(p ?? { profile: null, workouts: [] })).catch(() => setPage({ profile: null, workouts: [] }));
+  }, [id]);
+  return <CreatorScreen loading={!page} profile={page?.profile ?? null} workouts={page?.workouts ?? []} onBack={() => (history.length > 1 ? history.back() : go('/discover'))} onOpen={onOpen} onShare={onShare} />;
 };
 
 const Missing = () => (

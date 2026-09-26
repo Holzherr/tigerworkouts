@@ -389,12 +389,15 @@ struct Runsheet: Codable, Hashable, Sendable, Identifiable {
     var progression: Progression?
     var video: Video?
     var items: [Item] = []
+    /// On the creator's public page and in everyone's Discover. New and copied workouts are private.
+    var isPublic: Bool?
 
     /// Stable identity for lists: the id if it has one, else the title.
     var key: String { id ?? title }
 
     private enum CodingKeys: String, CodingKey {
         case id, title, creator, description, source, tags, level, program, timeCapSec, score, progression, video, items
+        case isPublic = "public"
     }
 
     init(id: String? = nil, title: String, creator: String? = nil, items: [Item] = [], timeCapSec: Double? = nil, score: ScoreType? = nil) {
@@ -421,6 +424,7 @@ struct Runsheet: Codable, Hashable, Sendable, Identifiable {
         progression = try c.decodeIfPresent(Progression.self, forKey: .progression)
         video = try c.decodeIfPresent(Video.self, forKey: .video)
         items = try c.decodeIfPresent([Item].self, forKey: .items) ?? []
+        isPublic = try c.decodeIfPresent(Bool.self, forKey: .isPublic)
     }
 }
 

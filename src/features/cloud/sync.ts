@@ -90,11 +90,14 @@ export const fromRow = (row: { id: string; data: unknown }): SessionResult => {
   return { id: row.id, runsheetId: String((d as { workoutId?: string })?.workoutId ?? row.id), title: String((d as { title?: string })?.title ?? row.id), startedAt: String((d as { startedAt?: string })?.startedAt ?? new Date().toISOString()), steps: [] };
 };
 
-const workoutFromRow = (row: { id: string; data: unknown; creator?: string | null; title?: string | null }): Runsheet => {
+type WorkoutRow = { id: string; data: unknown; creator?: string | null; title?: string | null; public?: boolean | null; owner?: string | null };
+const workoutFromRow = (row: WorkoutRow): Runsheet => {
   const d = row.data as Record<string, unknown>;
-  if (d && Array.isArray(d.items)) return { ...(d as unknown as Runsheet), id: row.id };
-  return legacyWorkoutToRunsheet({ id: row.id, title: String(row.title ?? d?.title ?? row.id), creator: row.creator ?? undefined, blocks: (d?.blocks as never) ?? [] });
+  const base = d && Array.isArray(d.items) ? { ...(d as unknown as Runsheet), id: row.id } : legacyWorkoutToRunsheet({ id: row.id, title: String(row.title ?? d?.title ?? row.id), creator: row.creator ?? undefined, blocks: (d?.blocks as never) ?? [] });
+  // The row's column is the truth for who can see it; the copy inside `data` may be stale.
+  return { ...base, public: row.public ?? base.public ?? false, ownerId: row.owner ?? undefined };
 };
+const workoutData = ({ ownerId: _, ...w }: Runsheet) => w;
 
 export interface SyncResult {
   patch: Partial<SyncTarget>;
@@ -164,11 +167,11 @@ export const sync = async (local: SyncTarget): Promise<SyncResult> => {
   }
 
   // ── own workouts (key "w:<id>" in the snapshot) ──
-  const { data: wrows, error: e2 } = await sb.from('workouts').select('id,data,creator,title').eq('owner', uid);
+  const { data: wrows, error: e2 } = await sb.from('workouts').select('id,data,creator,title,public').eq('owner', uid);
   if (e2) errors.push(e2.message);
   else {
     let workouts = [...local.workouts];
-    const remote = new Map((wrows ?? []).map(r => [r.id as string, workoutFromRow(r as { id: string; data: unknown; creator?: string | null; title?: string | null })]));
+    const remote = new Map((wrows ?? []).map(r => [r.id as string, workoutFromRow(r as WorkoutRow)]));
     remote.forEach((w, id) => {
       const k = `w:${id}`;
       const rj = J(w);
@@ -200,7 +203,7 @@ export const sync = async (local: SyncTarget): Promise<SyncResult> => {
     if (workouts.length !== before) changed = true;
     const dirty = workouts.filter(w => w.id && J(w) !== snap[`w:${w.id}`]);
     if (dirty.length) {
-      const { error } = await sb.from('workouts').upsert(dirty.map(w => ({ id: w.id!, owner: uid, creator: w.creator ?? local.name, title: w.title, public: true, data: w })), { onConflict: 'id' });
+      const { error } = await sb.from('workouts').upsert(dirty.map(w => ({ id: w.id!, owner: uid, creator: w.creator ?? local.name, title: w.title, public: w.public ?? remote.get(w.id!)?.public ?? false, data: workoutData(w) })), { onConflict: 'id' });
       if (error) errors.push(error.message);
       else dirty.forEach(w => (snap[`w:${w.id}`] = J(w)));
     }
@@ -255,7 +258,49 @@ export const sync = async (local: SyncTarget): Promise<SyncResult> => {
 export const fetchPublicWorkouts = async (): Promise<Runsheet[]> => {
   const { data } = await sb.from('workouts').select('id,data,creator,title,owner').eq('public', true);
   const me = currentUser()?.id;
-  return (data ?? []).filter(r => r.owner !== me).map(r => workoutFromRow(r as { id: string; data: unknown; creator?: string | null; title?: string | null }));
+  return (data ?? []).filter(r => r.owner !== me).map(r => workoutFromRow(r as WorkoutRow));
+};
+
+export interface CreatorProfile {
+  id: string;
+  name: string;
+  handle?: string;
+  bio?: string;
+}
+
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+/** A creator's public page: their profile by handle (or id) and the workouts they made public. */
+export const fetchCreator = async (key: string): Promise<{ profile: CreatorProfile; workouts: Runsheet[] } | null> => {
+  const q = sb.from('profiles').select('*');
+  const { data: p } = await (UUID.test(key) ? q.eq('id', key) : q.eq('handle', key.toLowerCase())).maybeSingle();
+  if (!p) return null;
+  const { data: rows } = await sb.from('workouts').select('id,data,creator,title,public,owner').eq('owner', p.id).eq('public', true).order('updated_at', { ascending: false });
+  return {
+    profile: { id: p.id, name: p.name ?? 'Creator', handle: p.handle ?? undefined, bio: p.bio ?? undefined },
+    workouts: (rows ?? []).map(r => workoutFromRow(r as WorkoutRow)),
+  };
+};
+
+export const HANDLE = /^[a-z0-9][a-z0-9-]{1,29}$/;
+
+/** Your own page's handle and bio. Needs migration 0005 (profiles.handle, profiles.bio). */
+export const myProfile = async (): Promise<CreatorProfile | null> => {
+  const user = currentUser();
+  if (!user) return null;
+  const { data } = await sb.from('profiles').select('*').eq('id', user.id).maybeSingle();
+  return data ? { id: data.id, name: data.name ?? '', handle: data.handle ?? undefined, bio: data.bio ?? undefined } : null;
+};
+
+export const saveProfile = async (patch: { handle?: string; bio?: string }): Promise<string | null> => {
+  const user = currentUser();
+  if (!user) return 'Sign in first.';
+  if (patch.handle !== undefined && patch.handle && !HANDLE.test(patch.handle)) return 'Use 2–30 lower-case letters, numbers or dashes.';
+  const { error } = await sb.from('profiles').update({ handle: patch.handle || null, bio: patch.bio ?? null }).eq('id', user.id);
+  if (!error) return null;
+  if (/duplicate|unique/i.test(error.message)) return 'That name is taken.';
+  if (/column/i.test(error.message)) return 'Creator pages are not switched on yet (database update pending).';
+  return error.message;
 };
 
 /** Fitbit / Google Health rows overlapping a session (±60 min), via the session_device RPC. */

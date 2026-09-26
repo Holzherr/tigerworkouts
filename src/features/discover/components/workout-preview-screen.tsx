@@ -1,4 +1,4 @@
-import { ChevronLeft, ChevronRight, ExternalLink, Pencil, Play, Share2, Video } from 'lucide-react';
+import { ChevronLeft, ChevronRight, ExternalLink, Globe, Lock, Pencil, Play, Share2, Smartphone, Video } from 'lucide-react';
 import { useState } from 'react';
 import { Button } from '@/shared/components/ui/button';
 import { Chip } from '@/shared/components/ui/chip';
@@ -23,6 +23,12 @@ export interface WorkoutPreviewScreenProps {
   onShare?: () => void;
   /** Given, every exercise on the page is editable where it is read — no edit mode. */
   onStepChange?: (stepId: string, patch: { target?: number; incline?: number }) => void;
+  /** Opens the creator's public page from the attribution line. */
+  onCreator?: () => void;
+  /** Given for your own workouts: flips it between private and on your public page. */
+  onTogglePublic?: () => void;
+  /** tigerworkouts:// link that opens this workout in the iOS app. */
+  appHref?: string;
 }
 
 const SCORE_TEXT: Record<string, string> = { time: 'For time', rounds: 'AMRAP: rounds + reps', reps: 'Total reps', load: 'For load', distance: 'For distance' };
@@ -33,7 +39,7 @@ const SCORE_TEXT: Record<string, string> = { time: 'For time', rounds: 'AMRAP: r
  * Edit & start, Follow along for videos, Save. Tapping any exercise opens it — the clip, the cue,
  * and its numbers as steppers when the host can save them.
  */
-export const WorkoutPreviewScreen = ({ runsheet: r, history = [], onBack, onStart, onEditAndStart, onFollowAlong, onLogOnly, onSave, saved, onShare, onStepChange }: WorkoutPreviewScreenProps) => {
+export const WorkoutPreviewScreen = ({ runsheet: r, history = [], onBack, onStart, onEditAndStart, onFollowAlong, onLogOnly, onSave, saved, onShare, onStepChange, onCreator, onTogglePublic, appHref }: WorkoutPreviewScreenProps) => {
   const [open, setOpen] = useState<ExerciseStep | null>(null);
   const kind = r.source?.kind ?? 'user';
   const score = scoreType(r);
@@ -48,8 +54,15 @@ export const WorkoutPreviewScreen = ({ runsheet: r, history = [], onBack, onStar
         </Button>
         <h1 className="mt-1 text-[22px] leading-tight font-extrabold">{r.title}</h1>
         <div className="mt-1 flex flex-wrap items-center gap-x-1 text-[13px] text-muted">
-          <span>{KIND_LABEL[kind]}</span>
-          {(r.source?.author ?? r.creator) && <span>· {r.source?.author ?? r.creator}</span>}
+          <span>{(kind === 'user' && r.ownerId ? 'Creator' : KIND_LABEL[kind])}</span>
+          {(r.source?.author ?? r.creator) &&
+            (onCreator ? (
+              <button type="button" onClick={onCreator} className="font-semibold text-brand">
+                · {r.source?.author ?? r.creator}
+              </button>
+            ) : (
+              <span>· {r.source?.author ?? r.creator}</span>
+            ))}
           {r.program && (
             <span>
               · {r.program.name}, {r.program.day}
@@ -66,7 +79,17 @@ export const WorkoutPreviewScreen = ({ runsheet: r, history = [], onBack, onStar
           {r.timeCapSec && <Chip variant="outline">cap {fmtClock(r.timeCapSec)}</Chip>}
           {score !== 'none' && <Chip variant="brand">{SCORE_TEXT[score]}</Chip>}
           {r.level && <Chip variant="outline">{r.level}</Chip>}
+          {onTogglePublic && (
+            <Chip variant={r.public ? 'brand' : 'outline'} onClick={onTogglePublic} aria-label={r.public ? 'Public — tap to make private' : 'Private — tap to make public'}>
+              {r.public ? <Globe className="size-3.5" /> : <Lock className="size-3.5" />} {r.public ? 'Public' : 'Private'}
+            </Chip>
+          )}
         </div>
+        {appHref && (
+          <a href={appHref} className="mt-2 inline-flex items-center gap-1.5 text-[13px] font-bold text-brand">
+            <Smartphone className="size-4" /> Open in the app
+          </a>
+        )}
       </header>
       <div className="min-h-0 flex-1 space-y-3 overflow-y-auto px-3 py-3">
         {r.description && <p className="px-1 text-[14px] leading-relaxed text-body">{r.description}</p>}

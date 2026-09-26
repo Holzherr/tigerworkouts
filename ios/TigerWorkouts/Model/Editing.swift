@@ -28,6 +28,7 @@ enum Edit {
         sheet.creator = creator
         sheet.source = Source(title: r.title, author: creator, kind: "user")
         sheet.program = nil
+        sheet.isPublic = nil
         // Fresh step ids: two copies of a workout must not share the ids their history is keyed by.
         sheet.items = r.items.map { item in
             switch item {

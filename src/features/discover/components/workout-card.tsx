@@ -38,7 +38,7 @@ export const WorkoutCard = ({ runsheet: r, onOpen, compact, done = 0, className 
       <div className="min-w-0 flex-1">
         <div className={cn('truncate font-bold', compact ? 'text-[14px]' : 'text-[15px]')}>{r.title}</div>
         <div className="truncate text-[12px] text-muted">
-          {KIND_LABEL[kind]}
+          {(kind === 'user' && r.ownerId ? 'Creator' : KIND_LABEL[kind])}
           {who ? ` · ${who}` : ''}
         </div>
         {!compact && (

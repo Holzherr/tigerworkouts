@@ -150,6 +150,10 @@ export interface Runsheet {
   video?: Video;
   /** Card icon: monogram on a gradient (default, derived from id) or an uploaded image. */
   icon?: WorkoutIcon;
+  /** On the creator's public page and in everyone's Discover. New workouts are private. */
+  public?: boolean;
+  /** Who owns it, filled in when read from the cloud; never saved into the workout itself. */
+  ownerId?: string;
   items: Item[];
 }
 
