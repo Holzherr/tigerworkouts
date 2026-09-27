@@ -47,6 +47,11 @@ const saveSnap = () => {
     /* ignore */
   }
 };
+/** Sign-out: forget the server's last seen rows, in memory and on disk, so the next account's first sync neither pushes nor deletes anything of the last one's. */
+export const clearSnap = () => {
+  snap = {};
+  localStorage.removeItem(SNAP_KEY);
+};
 const J = (o: unknown) => JSON.stringify(o);
 
 const resultId = (r: SessionResult) => r.id ?? `${r.runsheetId}@${r.startedAt}`;

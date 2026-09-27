@@ -1,6 +1,14 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import type { SessionResult } from '@/features/runsheet/progression';
-import { fromRow, toRow } from './sync';
+import { clearSnap, fromRow, sync, toRow } from './sync';
+
+// Supabase stand-in: every table call is written down and resolves empty.
+const { calls, table } = vi.hoisted(() => {
+  const calls: string[] = [];
+  const table = (name: string): unknown => new Proxy({}, { get: (_, m) => (m === 'then' ? (res: (v: unknown) => void) => res({ data: [], error: null }) : () => (calls.push(`${name}.${String(m)}`), table(name))) });
+  return { calls, table };
+});
+vi.mock('./client', () => ({ currentUser: () => ({ id: 'u2' }), sb: { from: table } }));
 
 describe('session rows', () => {
   it('round-trips startedFrom through the v2 jsonb payload', () => {
@@ -20,5 +28,13 @@ describe('session rows', () => {
   it('reads a row written before the field existed', () => {
     const row = toRow({ id: 's-z', runsheetId: 'cf-girls-fran', startedAt: '2026-09-01T10:00:00.000Z', steps: [] }, 'u');
     expect(fromRow({ id: row.id, data: row.data }).startedFrom).toBeUndefined();
+  });
+});
+
+describe('the next account on the device', () => {
+  it('pushes and deletes nothing when the last one signed out clean', async () => {
+    clearSnap();
+    const out = await sync({ results: [], workouts: [], favorites: [], saved: [], name: 'Nick', units: 'metric', trainingMaxes: {} });
+    expect([out.error, out.patch.results, calls.filter(c => /upsert|delete/.test(c))]).toEqual([undefined, [], ['user_state.upsert']]);
   });
 });

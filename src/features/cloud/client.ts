@@ -1,6 +1,9 @@
 import { createClient, type Session, type User } from '@supabase/supabase-js';
 import { useSyncExternalStore } from 'react';
 import { SB_KEY, SB_URL } from '@/app/config';
+import { setState, type AppState } from '@/app/store';
+import { clearSnap, sync } from './sync';
+import { pick } from './use-sync';
 
 export const sb = createClient(SB_URL, SB_KEY, { auth: { persistSession: true, detectSessionInUrl: true, flowType: 'pkce' } });
 
@@ -34,8 +37,20 @@ export const signInGoogle = async () => {
   const { error } = await sb.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: location.origin + location.pathname } });
   if (error) throw error;
 };
+/** The store as it is now: a write of nothing hands its state over without notifying anyone. */
+const readState = (s?: AppState) => (setState(cur => ((s = cur), {})), s!);
+/** Pushes what this device holds, signs out, then clears the device for the next account. A failed push, or a session saved mid-push, holds the sign-out instead: `syncError` says so and the promise rejects. */
 export const signOut = async () => {
+  const local = pick(readState());
+  const out = await sync(local);
+  const held = out.error ? `could not upload this device's sessions (${out.error})` : JSON.stringify(pick(readState())) !== JSON.stringify(local) ? 'a session was saved just now' : '';
+  if (held) {
+    setState({ syncError: `Not signed out: ${held}. Try again.` });
+    throw new Error(held);
+  }
   await sb.auth.signOut();
+  clearSnap();
+  setState({ results: [], workouts: [], favorites: [], saved: [], exercises: {}, trainingMaxes: {}, bodyweightKg: undefined, name: 'Nick', avatar: undefined, signedIn: false, lastSync: undefined, syncError: undefined });
 };
 
 /** Which external providers the project has enabled (Google shows only when configured). */
