@@ -2,7 +2,7 @@
   "id": "coach-circuit-30",
   "title": "Circuit Club · Five by Four",
   "creator": "Priya Raman",
-  "description": "Four movements, five rounds, forty seconds of work each. The dumbbells stay the same all the way through, so choose them for round five rather than round one. Rest ninety seconds between rounds and use all of it.",
+  "description": "Four movements, five rounds, a minute of work each. The dumbbells stay the same all the way through, so choose them for round five rather than round one. Rest ninety seconds between rounds and use all of it.",
   "source": {
     "title": "Circuit Club — 30 minutes",
     "author": "Priya Raman",
@@ -44,14 +44,14 @@
       "id": "b1",
       "name": "Five rounds",
       "mode": "rounds",
-      "repeat": 6,
+      "repeat": 5,
       "steps": [
         {
           "kind": "exercise",
           "id": "s1",
           "exercise": "db_goblet_squat",
           "forMode": "seconds",
-          "forValue": 40,
+          "forValue": 60,
           "target": 20
         },
         {
@@ -59,7 +59,7 @@
           "id": "s2",
           "exercise": "db_row",
           "forMode": "seconds",
-          "forValue": 40,
+          "forValue": 60,
           "target": 17.5,
           "perSide": true
         },
@@ -68,7 +68,7 @@
           "id": "s3",
           "exercise": "db_shoulder_press",
           "forMode": "seconds",
-          "forValue": 40,
+          "forValue": 60,
           "target": 12.5
         },
         {
@@ -76,7 +76,7 @@
           "id": "s4",
           "exercise": "bw_plank",
           "forMode": "seconds",
-          "forValue": 40
+          "forValue": 60
         },
         {
           "kind": "rest",

@@ -44,7 +44,7 @@
     {
       "kind": "rest",
       "id": "r1",
-      "seconds": 90
+      "seconds": 120
     },
     {
       "kind": "block",

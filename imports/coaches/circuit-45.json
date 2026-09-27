@@ -2,7 +2,7 @@
   "id": "coach-circuit-45",
   "title": "Circuit Club · Three Stations",
   "creator": "Priya Raman",
-  "description": "Three stations, each run three times, with a walk between stations so the next one starts fresh. It covers a push, a pull, a hinge and a carry across the session rather than inside every round — which is what makes forty-five minutes of circuit work survivable.",
+  "description": "Three stations, each run four times, with a walk between stations so the next one starts fresh. It covers a hinge, a push, a pull and the legs across the session rather than inside every round — which is what makes forty-five minutes of circuit work survivable.",
   "source": {
     "title": "Circuit Club — 45 minutes",
     "author": "Priya Raman",
@@ -67,7 +67,7 @@
       "id": "t1",
       "exercise": "cardio_walk",
       "forMode": "minutes",
-      "forValue": 3,
+      "forValue": 4,
       "target": 5.5
     },
     {
@@ -106,7 +106,7 @@
       "id": "t2",
       "exercise": "cardio_walk",
       "forMode": "minutes",
-      "forValue": 3,
+      "forValue": 4,
       "target": 5.5
     },
     {
@@ -144,7 +144,7 @@
       "id": "c1",
       "exercise": "bw_stretch_hip_flexor",
       "forMode": "seconds",
-      "forValue": 40,
+      "forValue": 60,
       "role": "cooldown",
       "perSide": true
     }

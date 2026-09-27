@@ -69,28 +69,18 @@
       "incline": 6
     },
     {
-      "kind": "exercise",
-      "id": "s10",
-      "exercise": "incline_walk",
-      "forMode": "minutes",
-      "forValue": 5,
-      "target": 5,
-      "incline": 3,
-      "role": "cooldown"
-    },
-    {
       "kind": "block",
       "id": "b1",
       "name": "Stretch while warm",
       "mode": "rounds",
-      "repeat": 1,
+      "repeat": 2,
       "steps": [
         {
           "kind": "exercise",
           "id": "s6",
           "exercise": "bw_stretch_hamstring_standing",
           "forMode": "seconds",
-          "forValue": 45,
+          "forValue": 75,
           "perSide": true
         },
         {
@@ -98,7 +88,7 @@
           "id": "s7",
           "exercise": "bw_stretch_calf",
           "forMode": "seconds",
-          "forValue": 45,
+          "forValue": 75,
           "perSide": true
         },
         {
@@ -106,7 +96,7 @@
           "id": "s8",
           "exercise": "bw_stretch_buttock",
           "forMode": "seconds",
-          "forValue": 45,
+          "forValue": 75,
           "perSide": true
         },
         {
@@ -114,7 +104,7 @@
           "id": "s9",
           "exercise": "yoga_cat_cow",
           "forMode": "seconds",
-          "forValue": 60
+          "forValue": 75
         }
       ],
       "role": "cooldown"
