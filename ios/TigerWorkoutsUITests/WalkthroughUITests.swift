@@ -462,6 +462,56 @@ final class WalkthroughUITests: XCTestCase {
         snap("29 Timed exercise history")
     }
 
+    func testOwnExerciseAndExport() {
+        app.terminate()
+        app.launchArguments = ["-seedLogbook"]
+        app.launch()
+        let discard = app.alerts.buttons["Discard"]
+        if discard.waitForExistence(timeout: 3) { discard.tap() }
+
+        // A machine the catalogue does not have, made from the picker and used straight away.
+        XCTAssertTrue(app.navigationBars["Tiger"].waitForExistence(timeout: 10))
+        tap(app.buttons["New workout"])
+        let name = app.textFields["Name"]
+        tap(name)
+        name.typeText("Machine day")
+        tap(app.buttons["Done"])
+        tap(app.buttons["Add exercise"].firstMatch)
+        let search = app.searchFields["Exercise"]
+        tap(search)
+        search.typeText("Hammer chest press")
+        snap("38 Picker, offering a new exercise")
+        tap(app.buttons["add-new-exercise"])
+        XCTAssertTrue(app.navigationBars["New exercise"].waitForExistence(timeout: 5))
+        XCTAssertEqual(app.textFields["new-exercise-name"].value as? String, "Hammer chest press", "the search carries over as the name")
+        tap(app.buttons.matching(NSPredicate(format: "label BEGINSWITH 'Equipment'")).firstMatch)
+        tap(app.buttons["Barbell & machines"])
+        snap("39 New exercise")
+        tap(app.buttons["save-new-exercise"])
+        XCTAssertTrue(app.buttons.matching(NSPredicate(format: "label BEGINSWITH[c] 'Hammer chest press'")).firstMatch.waitForExistence(timeout: 5),
+                      "the new exercise should be in the workout")
+        snap("40 Workout with your own exercise")
+
+        // It is in the picker from now on, marked as yours.
+        tap(app.buttons["Add exercise"].firstMatch)
+        tap(app.searchFields["Exercise"])
+        app.searchFields["Exercise"].typeText("Hammer")
+        XCTAssertTrue(app.staticTexts["yours · kg"].waitForExistence(timeout: 5))
+        snap("41 Picker with your own exercise")
+        tap(app.buttons.matching(NSPredicate(format: "label BEGINSWITH[c] 'Hammer chest press'")).firstMatch)
+
+        // History out as CSV, from Me.
+        tap(app.tabBars.buttons["Me"])
+        let export = app.buttons["export-history"]
+        for _ in 0..<4 where !(export.exists && export.isHittable) { app.swipeUp() }
+        snap("42 Me, export history")
+        tap(export)
+        XCTAssertTrue(app.otherElements["ActivityListView"].waitForExistence(timeout: 10) || app.navigationBars["UIActivityContentView"].waitForExistence(timeout: 2),
+                      "export should open the share sheet")
+        sleep(1)
+        snap("43 Export share sheet")
+    }
+
     // MARK: - Helpers
 
     private func open(_ title: String) {

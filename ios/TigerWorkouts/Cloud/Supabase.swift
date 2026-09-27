@@ -320,6 +320,42 @@ actor Supabase {
         )
     }
 
+    /// Exercises this account made, in either app. `data` is the exercise as the web stores it.
+    func exercises() async throws -> [LibraryExercise] {
+        guard let uid = session?.user.id else { return [] }
+        let (data, _) = try await request("rest/v1/exercises?select=key,data&owner=eq.\(uid)")
+        return Self.decodeExercises(data)
+    }
+
+    /// Rows of `key, data` into exercises; the column key wins over whatever `data` says.
+    static func decodeExercises(_ data: Data) -> [LibraryExercise] {
+        guard let rows = try? JSONSerialization.jsonObject(with: data) as? [[String: Any]] else { return [] }
+        return rows.compactMap { row in
+            guard let key = row["key"] as? String, var payload = row["data"] as? [String: Any] else { return nil }
+            payload["key"] = key
+            guard let body = try? JSONSerialization.data(withJSONObject: payload),
+                  let e = try? JSONDecoder().decode(LibraryExercise.self, from: body) else { return nil }
+            return e
+        }
+    }
+
+    /// Upserts exercises as the web's sync does: owned by this account, `public` so a shared
+    /// workout that names one still resolves for whoever opens it.
+    func saveExercises(_ list: [LibraryExercise]) async throws {
+        guard let uid = session?.user.id else { throw SupabaseError(message: "Not signed in") }
+        guard !list.isEmpty else { return }
+        let rows: [[String: Any]] = try list.map { e in
+            let data = try JSONSerialization.jsonObject(with: JSONEncoder().encode(e))
+            return ["key": e.key, "owner": uid, "public": true, "data": data]
+        }
+        _ = try await request(
+            "rest/v1/exercises?on_conflict=key",
+            method: "POST",
+            body: rows,
+            headers: ["Prefer": "resolution=merge-duplicates,return=minimal"]
+        )
+    }
+
     /// Writes back the two prefs this app owns, merged into whatever else is on the row — the web
     /// app keeps the name, units and training maxes in the same JSON and must not lose them.
     func savePrefs(bodyweightKg: Double?, saved: [String]) async throws {

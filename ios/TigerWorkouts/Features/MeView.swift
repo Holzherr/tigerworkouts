@@ -62,6 +62,18 @@ struct MeView: View {
                         }
                     }
 
+                    ShareLink(item: HistoryCSV(results: store.results), preview: SharePreview(CSVExport.fileName())) {
+                        HStack(spacing: 12) {
+                            Image(systemName: "square.and.arrow.up").foregroundStyle(Brand.coral)
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text("Export history").foregroundStyle(Brand.ink)
+                                Text("Every set you have logged, as a CSV file").font(.footnote).foregroundStyle(Brand.muted)
+                            }
+                        }
+                    }
+                    .disabled(store.results.isEmpty)
+                    .accessibilityIdentifier("export-history")
+
                     Stepper(
                         value: Binding(
                             get: { store.bodyweightKg ?? EffortModel.defaultBodyweightKg },

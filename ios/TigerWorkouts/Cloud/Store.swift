@@ -12,6 +12,11 @@ final class Store {
     var myWorkouts: [Runsheet] = []
     var bodyweightKg: Double?
     var saved: Set<String> = []
+    /// Exercises this account made, here or on the web. Mirrored into `Library.shared` so lookups
+    /// find them; kept here too so a view that lists them redraws when one is added.
+    private(set) var customExercises: [String: LibraryExercise] = [:]
+    /// Made on this phone and not yet on the server.
+    private var pendingExercises: [LibraryExercise] = []
     var syncing = false
     var syncError: String?
     /// Sessions logged while offline or signed out, waiting for a window to push.
@@ -79,6 +84,9 @@ final class Store {
         do {
             try await flushPending()
             try await flushWorkouts()
+            try await flushExercises()
+            // Union, as the web does: an exercise made on either side appears on both.
+            mergeCustom(try await Supabase.shared.exercises())
             async let sessions = Supabase.shared.sessions()
             async let workouts = Supabase.shared.workouts()
             async let prefs = Supabase.shared.prefs()
@@ -176,6 +184,34 @@ final class Store {
         }
     }
 
+    // MARK: - Your own exercises
+
+    /// Saved on the phone first, then pushed; usable straight away everywhere the catalogue is.
+    func addExercise(_ e: LibraryExercise) async {
+        mergeCustom([e])
+        pendingExercises.removeAll { $0.key == e.key }
+        pendingExercises.append(e)
+        writeCache()
+        do {
+            try await flushExercises()
+            syncError = nil
+        } catch {
+            syncError = error.localizedDescription
+        }
+        writeCache()
+    }
+
+    private func mergeCustom(_ list: [LibraryExercise]) {
+        for e in list { customExercises[e.key] = e }
+        Library.shared.addCustom(list)
+    }
+
+    private func flushExercises() async throws {
+        guard await Supabase.shared.isSignedIn, !pendingExercises.isEmpty else { return }
+        try await Supabase.shared.saveExercises(pendingExercises)
+        pendingExercises = []
+    }
+
     // MARK: - Your own workouts
 
     /// Local first: the workout is in the list before the network is asked, and a failed push is
@@ -267,6 +303,8 @@ final class Store {
         var saved: [String]
         var pendingWorkouts: [Runsheet]?
         var pendingWorkoutDeletes: [String]?
+        var customExercises: [LibraryExercise]?
+        var pendingExercises: [LibraryExercise]?
     }
 
     private var cacheURL: URL {
@@ -276,8 +314,11 @@ final class Store {
     }
 
     private func readCache() {
-        guard let data = try? Data(contentsOf: cacheURL),
-              let c = try? Library.shared.decoder.decode(Cache.self, from: data) else { return }
+        guard let data = try? Data(contentsOf: cacheURL) else { return }
+        // Your own exercises first, so a workout that names one by key resolves to it.
+        struct Custom: Decodable { var customExercises: [LibraryExercise]? }
+        mergeCustom((try? JSONDecoder().decode(Custom.self, from: data))?.customExercises ?? [])
+        guard let c = try? Library.shared.decoder.decode(Cache.self, from: data) else { return }
         results = c.results
         myWorkouts = c.myWorkouts
         pending = c.pending
@@ -285,13 +326,15 @@ final class Store {
         saved = Set(c.saved)
         pendingWorkouts = c.pendingWorkouts ?? []
         pendingWorkoutDeletes = c.pendingWorkoutDeletes ?? []
+        pendingExercises = c.pendingExercises ?? []
     }
 
     private func writeCache() {
         let c = Cache(
             results: results, myWorkouts: myWorkouts, pending: pending,
             bodyweightKg: bodyweightKg, saved: Array(saved),
-            pendingWorkouts: pendingWorkouts, pendingWorkoutDeletes: pendingWorkoutDeletes
+            pendingWorkouts: pendingWorkouts, pendingWorkoutDeletes: pendingWorkoutDeletes,
+            customExercises: Array(customExercises.values), pendingExercises: pendingExercises
         )
         try? JSONEncoder().encode(c).write(to: cacheURL, options: .atomic)
         shareUpNext()
