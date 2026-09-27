@@ -29,18 +29,19 @@ enum CSVExport {
         var rows = [line(columns)]
         for r in results.sorted(by: { $0.startedAt < $1.startedAt }) {
             let head = [r.startedAt, r.displayTitle]
-            // No set times yet on this platform's model; the column stays for the web's rows.
-            let tail = [number(r.durationSec ?? r.activity.map { $0.minutes * 60 }), "", r.notes ?? ""]
+            func tail(_ at: Double? = nil) -> [String] {
+                [number(r.durationSec ?? r.activity.map { $0.minutes * 60 }), number(at), r.notes ?? ""]
+            }
             if r.steps.isEmpty {
-                rows.append(line(head + ["", "", "", "", "", ""] + tail))
+                rows.append(line(head + ["", "", "", "", "", ""] + tail()))
                 continue
             }
             for s in r.steps {
                 let ex = exercise(s.exerciseKey)
                 let sets = Logbook.sets(of: s)
-                if sets.isEmpty { rows.append(line(head + [ex.name, s.exerciseKey, "", "", ex.unit, ""] + tail)) }
+                if sets.isEmpty { rows.append(line(head + [ex.name, s.exerciseKey, "", "", ex.unit, ""] + tail())) }
                 for (i, x) in sets.enumerated() {
-                    rows.append(line(head + [ex.name, s.exerciseKey, String(i + 1), number(x.load), ex.unit, number(x.reps)] + tail))
+                    rows.append(line(head + [ex.name, s.exerciseKey, String(i + 1), number(x.load), ex.unit, number(x.reps)] + tail(x.at)))
                 }
             }
         }
