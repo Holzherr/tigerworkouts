@@ -45,14 +45,14 @@ final class Health {
     /// Saves the session as a workout. Silently does nothing when Health is off or unauthorised —
     /// a refused permission is a choice, not an error worth interrupting a finished workout for.
     @discardableResult
-    func save(_ result: SessionResult, worked: [WorkedSet], kcal: Int) async -> Bool {
+    func save(_ result: SessionResult, runsheet: Runsheet?, worked: [WorkedSet], kcal: Int) async -> Bool {
         guard canWrite,
               let start = ISO8601.date(result.startedAt),
               let end = result.endedAt.flatMap(ISO8601.date) ?? result.durationSec.map({ start.addingTimeInterval($0) }),
               end > start else { return false }
 
         let configuration = HKWorkoutConfiguration()
-        configuration.activityType = Self.activityType(for: worked)
+        configuration.activityType = Self.activityType(for: worked, runsheet: runsheet)
         let builder = HKWorkoutBuilder(healthStore: store, configuration: configuration, device: .local())
 
         do {
@@ -77,9 +77,37 @@ final class Health {
         }
     }
 
-    /// The kind of training this mostly was, by working time. A session that is mainly treadmill
-    /// should read as a run in Health, not as "functional strength training".
-    private static func activityType(for worked: [WorkedSet]) -> HKWorkoutActivityType {
+    /// The kind of training this mostly was. Cardio kit decides by itself — sprints on a treadmill
+    /// are still a run. Otherwise the way it was run decides before the equipment does: a Tabata of
+    /// burpees or an AMRAP of kettlebell swings is interval training, not "functional strength".
+    static func activityType(for worked: [WorkedSet], runsheet: Runsheet?) -> HKWorkoutActivityType {
+        let kit = equipmentType(for: worked)
+        switch kit {
+        case .running, .walking, .cycling, .rowing, .swimming: return kit
+        default: break
+        }
+        return runsheet.map(isIntervals) == true ? .highIntensityIntervalTraining : kit
+    }
+
+    /// Run against the clock: an amrap, emom or for-time main block, or rounds of timed work with
+    /// rest between — a Tabata, a circuit on a countdown.
+    static func isIntervals(_ r: Runsheet) -> Bool {
+        let main = r.items.compactMap(\.asBlock).filter { ($0.role ?? .main) == .main }
+        return main.contains { b in
+            switch b.runMode {
+            case .amrap, .emom, .fortime: return true
+            case .ladder: return false
+            case .rounds:
+                let work = b.steps.compactMap(\.asExercise)
+                let timed = !work.isEmpty && work.allSatisfy { $0.forMode == .seconds }
+                let rests = b.steps.contains { $0.asExercise == nil } || (b.restBetweenSec ?? 0) > 0
+                return timed && rests && b.repeatCount > 1
+            }
+        }
+    }
+
+    /// By working time, from the equipment alone.
+    private static func equipmentType(for worked: [WorkedSet]) -> HKWorkoutActivityType {
         var seconds: [ExerciseGroup: Double] = [:]
         for w in worked { seconds[w.group ?? .body, default: 0] += w.seconds }
         switch seconds.max(by: { $0.value < $1.value })?.key {

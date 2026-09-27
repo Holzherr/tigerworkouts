@@ -136,11 +136,12 @@ final class Store {
     /// The session also belongs in Health, typed by what it mostly was, counting towards the rings.
     private func writeToHealth(_ r: SessionResult) async {
         guard healthEnabled else { return }
-        let worked = EffortModel.workedFrom(r, runsheet: workout(id: r.runsheetId))
+        let runsheet = workout(id: r.runsheetId)
+        let worked = EffortModel.workedFrom(r, runsheet: runsheet)
         // Health's own figure wins when the watch was on; ours is only an estimate.
         let kcal = r.device?.calories.map { Int($0) }
             ?? EffortModel.effort(r, worked: worked, bodyweightKg: bodyweightKg).kcal
-        await Health.shared.save(r, worked: worked, kcal: kcal)
+        await Health.shared.save(r, runsheet: runsheet, worked: worked, kcal: kcal)
     }
 
     // MARK: - Prefs

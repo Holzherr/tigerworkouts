@@ -38,6 +38,7 @@
 		723F78A5E55D1D56F63EBBB1 /* Cues.swift in Sources */ = {isa = PBXBuildFile; fileRef = 98F9F72F6AD1476394E67175 /* Cues.swift */; };
 		76085B04BF688AF141413219 /* SessionStatsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0AEA755E81BBCA7F928A9CE4 /* SessionStatsView.swift */; };
 		77321A9F5C2B299AA484314C /* SyncTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E84311BE7C5AA68401341805 /* SyncTests.swift */; };
+		803AE9BCD05107F29333C35D /* AppStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = FDF28E18F9E37CEC3D289A43 /* AppStoreTests.swift */; };
 		850AFBF105DB3760187260D8 /* LastUsed.swift in Sources */ = {isa = PBXBuildFile; fileRef = A49A094C79F8B5520AF51CD2 /* LastUsed.swift */; };
 		85CDCDD2B5F6F3BF1A21BAC2 /* DiscoverView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 70A2BD32BBFA62B93E613882 /* DiscoverView.swift */; };
 		8E5013531B6B4CE2A1DD5C76 /* Editing.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A7C84C7FDDB4BA9A91FFEDD /* Editing.swift */; };
@@ -48,6 +49,7 @@
 		AE6182B42F75E4CEA7DC6A74 /* ResultsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D36AE791E64CAB95929EDB34 /* ResultsTests.swift */; };
 		B01FA0C771DEBBD6B2393CF8 /* Runner.swift in Sources */ = {isa = PBXBuildFile; fileRef = 36B599742F16E34DF89CB346 /* Runner.swift */; };
 		B2D8DF3941B699A1D99EDC07 /* SessionLiveActivity.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87A0379EA6B428BEE7F68638 /* SessionLiveActivity.swift */; };
+		B7DD621A22E46957F60BF22D /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 8ECD0D99BECC297562625D45 /* PrivacyInfo.xcprivacy */; };
 		B9014443750E9D5F6AF43DB2 /* exercises.json in Resources */ = {isa = PBXBuildFile; fileRef = DCDAF2AE594C1D1C9FF54BED /* exercises.json */; };
 		C56CBB8E755A9BE71A27D65B /* AppIcon.svg in Resources */ = {isa = PBXBuildFile; fileRef = FCF7BF4830AD9ACF61791DA9 /* AppIcon.svg */; };
 		C687DB44B16457FA168675A3 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 4F1D59738246E472AB5AD52D /* Assets.xcassets */; };
@@ -138,6 +140,7 @@
 		781B4703341F053F08AE0613 /* Keychain.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Keychain.swift; sourceTree = "<group>"; };
 		87A0379EA6B428BEE7F68638 /* SessionLiveActivity.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionLiveActivity.swift; sourceTree = "<group>"; };
 		8BCB1B34E80BE522AEA8C7A3 /* TigerWorkouts.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = TigerWorkouts.entitlements; sourceTree = "<group>"; };
+		8ECD0D99BECC297562625D45 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		8FA46D7EF60541FEC8764F65 /* Muscles.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Muscles.swift; sourceTree = "<group>"; };
 		98F9F72F6AD1476394E67175 /* Cues.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Cues.swift; sourceTree = "<group>"; };
 		9DEDC2C77E61EEC2DBC8D7A7 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
@@ -167,6 +170,7 @@
 		F3553A92F9E0608BC81CAEAA /* Store.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Store.swift; sourceTree = "<group>"; };
 		F5CF9DC0EA5841510B9D13F6 /* WorkoutIconTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkoutIconTests.swift; sourceTree = "<group>"; };
 		FCF7BF4830AD9ACF61791DA9 /* AppIcon.svg */ = {isa = PBXFileReference; path = AppIcon.svg; sourceTree = "<group>"; };
+		FDF28E18F9E37CEC3D289A43 /* AppStoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppStoreTests.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXGroup section */
@@ -270,6 +274,7 @@
 			isa = PBXGroup;
 			children = (
 				A063D7FDBD9EAB4C94F2CABE /* AlternativesTests.swift */,
+				FDF28E18F9E37CEC3D289A43 /* AppStoreTests.swift */,
 				2333BFB4C8394D4D3D82D69F /* CatalogueTests.swift */,
 				03B24D2D55EFBC42BB378AFE /* EditingTests.swift */,
 				3D87622F139D50161B1F5C9C /* HapticsTests.swift */,
@@ -316,6 +321,7 @@
 				A6BDC848F9B91282BDA7B973 /* Health */,
 				9DEDC2C77E61EEC2DBC8D7A7 /* Info.plist */,
 				C9B5831D7E6DCCD786233744 /* Model */,
+				8ECD0D99BECC297562625D45 /* PrivacyInfo.xcprivacy */,
 				F91396491F84AF298F6F99B1 /* Resources */,
 				8188EBB1F02F9AF9283803EA /* Results */,
 				6CF66239D8BD7CE984BE3427 /* Shared */,
@@ -490,6 +496,7 @@
 			files = (
 				36C3F06105915FAA4D145D1E /* AppIcon.svg in Resources */,
 				C687DB44B16457FA168675A3 /* Assets.xcassets in Resources */,
+				B7DD621A22E46957F60BF22D /* PrivacyInfo.xcprivacy in Resources */,
 				B9014443750E9D5F6AF43DB2 /* exercises.json in Resources */,
 				DF6DD6221EB835B5A56F96DE /* workouts.json in Resources */,
 			);
@@ -514,6 +521,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				718720872993CC8DF123D1A5 /* AlternativesTests.swift in Sources */,
+				803AE9BCD05107F29333C35D /* AppStoreTests.swift in Sources */,
 				221B3BEEFB080270A1DD6C50 /* CatalogueTests.swift in Sources */,
 				4A186DEED593C0BA6739F608 /* EditingTests.swift in Sources */,
 				05E59B570AE45E1D3609914C /* HapticsTests.swift in Sources */,
