@@ -22,34 +22,74 @@ final class Cues {
     private let tones = AVAudioPlayerNode()
     private let keepAlive = AVAudioPlayerNode()
     private lazy var format = AVAudioFormat(standardFormatWithSampleRate: 44_100, channels: 1)!
+    /// Between `begin` and `end`: a session wants the audio open, whatever has knocked it down.
     private var running = false
-    var enabled = true
+    var enabled = Switches.isOn(Switches.sound)
 
     private init() {
         engine.attach(tones)
         engine.attach(keepAlive)
         engine.connect(tones, to: engine.mainMixerNode, format: format)
         engine.connect(keepAlive, to: engine.mainMixerNode, format: format)
+
+        // A phone call, Siri or an alarm stops the engine, and with it the silent loop that holds
+        // the background slot: the timer would stop at screen lock, silently, for the rest of the
+        // session. Plugging in or pulling out headphones stops the engine too.
+        let center = NotificationCenter.default
+        center.addObserver(forName: AVAudioSession.interruptionNotification, object: nil, queue: .main) { [weak self] note in
+            let raw = note.userInfo?[AVAudioSessionInterruptionTypeKey] as? UInt
+            let ended = raw.flatMap(AVAudioSession.InterruptionType.init) == .ended
+            MainActor.assumeIsolated { self?.interrupted(ended: ended) }
+        }
+        center.addObserver(forName: .AVAudioEngineConfigurationChange, object: engine, queue: .main) { [weak self] _ in
+            MainActor.assumeIsolated { self?.reopen(after: "route change") }
+        }
     }
 
-    /// Call when a session starts. Ducks music rather than stopping it, so the cue is audible over
-    /// whatever is playing.
+    /// Call when a session starts. Mixes with whatever is playing and leaves it at full volume: the
+    /// session is open for the whole workout to hold the background slot, and `.duckOthers` held
+    /// music down for all of it, not just under the cues.
     func begin() {
         guard !running else { return }
+        running = true
+        open()
+    }
+
+    /// Activate the session and start the engine and the silent loop.
+    @discardableResult
+    private func open() -> Bool {
         do {
-            try AVAudioSession.sharedInstance().setCategory(.playback, mode: .default, options: [.mixWithOthers, .duckOthers])
+            try AVAudioSession.sharedInstance().setCategory(.playback, mode: .default, options: [.mixWithOthers])
             try AVAudioSession.sharedInstance().setActive(true)
             engine.prepare()
             try engine.start()
-            running = true
             holdSessionOpen()
             audioLog.info("audio session held open for the background")
+            return true
         } catch {
-            running = false
             // Without this the app is suspended when the screen locks and the Lock Screen card
             // stops moving, so it is worth being loud about.
             audioLog.error("audio session failed, no background slot: \(error.localizedDescription, privacy: .public)")
+            return false
         }
+    }
+
+    private func interrupted(ended: Bool) {
+        guard running else { return }
+        if ended {
+            // Resume whether or not the system suggests it: a workout timer is not music the
+            // person chose to stop.
+            reopen(after: "interruption")
+        } else {
+            audioLog.info("audio interrupted; the engine is down until it ends")
+        }
+    }
+
+    private func reopen(after reason: String) {
+        guard running, !engine.isRunning else { return }
+        keepAlive.stop()
+        tones.stop()
+        if open() { audioLog.info("audio back after \(reason, privacy: .public)") }
     }
 
     /// Call when the session ends, so the app stops holding the audio session and the background
@@ -64,7 +104,7 @@ final class Cues {
     }
 
     func play(_ tone: Tone) {
-        guard enabled, running, let buffer = render(notes(for: tone)) else { return }
+        guard enabled, running, engine.isRunning, let buffer = render(notes(for: tone)) else { return }
         if !tones.isPlaying { tones.play() }
         tones.scheduleBuffer(buffer, at: nil, options: [])
     }

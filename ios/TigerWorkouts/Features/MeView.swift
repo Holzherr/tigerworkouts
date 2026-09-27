@@ -2,9 +2,9 @@ import SwiftUI
 
 struct MeView: View {
     @Environment(Store.self) private var store
-    @AppStorage("haptics") private var haptics = true
-    @AppStorage("sound") private var sound = true
-    @AppStorage("liveActivity") private var liveActivity = true
+    @AppStorage(Switches.haptics) private var haptics = true
+    @AppStorage(Switches.sound) private var sound = true
+    @AppStorage(Switches.liveActivity) private var liveActivity = true
     @AppStorage("health") private var health = false
     @State private var signingIn = false
     @State private var healthError: String?
@@ -102,9 +102,9 @@ struct MeView: View {
             }
             .scrollContentBackground(.hidden)
             .background(Brand.canvas)
-            .onChange(of: haptics, initial: true) { _, on in Haptics.shared.enabled = on }
-            .onChange(of: sound, initial: true) { _, on in Cues.shared.enabled = on }
-            .onChange(of: liveActivity, initial: true) { _, on in SessionActivityController.shared.enabled = on }
+            .onChange(of: haptics) { _, on in Haptics.shared.enabled = on }
+            .onChange(of: sound) { _, on in Cues.shared.enabled = on }
+            .onChange(of: liveActivity) { _, on in SessionActivityController.shared.enabled = on }
             .onChange(of: health) { _, on in
                 guard on else { return }
                 Task {

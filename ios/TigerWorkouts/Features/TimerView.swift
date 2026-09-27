@@ -4,7 +4,7 @@ struct TimerView: View {
     @Environment(Store.self) private var store
     @Environment(\.dismiss) private var dismiss
     @State var runner: SessionRunner
-    var onSave: (SessionResult) -> Void
+    var onClose: () -> Void
 
     @State private var showOverview = false
     @State private var editing: ExerciseStep?
@@ -129,7 +129,7 @@ struct TimerView: View {
     private var whereabouts: String {
         guard let slot = runner.slot else { return runner.runsheet.title }
         var parts = ["Block \(slot.part + 1) of \(slot.parts)"]
-        if slot.rounds > 1 { parts.append("Round \(slot.round + 1) of \(slot.rounds)") }
+        if let round = slot.roundLabel { parts.append(round) }
         return parts.joined(separator: " · ")
     }
 
@@ -453,7 +453,7 @@ struct TimerView: View {
     // MARK: - Finished
 
     private var finished: some View {
-        let result = runner.result()
+        let result = runner.finalResult ?? runner.result()
         return ScrollView {
             VStack(spacing: 20) {
                 VStack(spacing: 6) {
@@ -465,7 +465,7 @@ struct TimerView: View {
 
                 SessionStatsView(result: result, runsheet: runner.runsheet, history: store.results, bodyweightKg: store.bodyweightKg)
 
-                Button("Done") { onSave(result) }
+                Button("Done") { onClose() }
                     .buttonStyle(BigButtonStyle())
             }
             .padding(16)

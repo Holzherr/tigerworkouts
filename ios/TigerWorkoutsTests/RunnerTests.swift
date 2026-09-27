@@ -327,3 +327,89 @@ struct SessionRunnerTests {
         #expect(TimerView.inclineLabel(runner.incline, for: step) == nil)
     }
 }
+
+/// Ported from the 'session safety' block of `runner.test.ts`.
+@Suite("session safety")
+struct SessionSafetyTests {
+    static func warmThenCindy() -> Runsheet {
+        Runsheet(id: "wc", title: "Warm-up then Cindy", items: [.step(Fixtures.work("wu", Fixtures.squat))] + Fixtures.cindy().items)
+    }
+
+    @Test("a pause before a capped block does not stretch its cap")
+    func pauseBeforeBlock() {
+        var s = Runner.tick(Runner.start(Self.warmThenCindy(), now: 0), now: 5_000)
+        s = Runner.pause(s, now: 10_000)
+        s = Runner.resume(s, now: 110_000)
+        s = Runner.tick(s, now: 135_000)
+        #expect(s.phase == .ready)
+        s = Runner.startBlock(s, now: 140_000)
+        #expect(Runner.blockElapsed(s, now: 150_000) == 10)
+        s = Runner.tick(s, now: 140_000 + 61_000)
+        #expect(s.phase == .done)
+    }
+
+    @Test("a pause inside a capped block still extends that block")
+    func pauseInsideBlock() {
+        var s = Runner.tick(Runner.start(Fixtures.cindy(), now: 0), now: 5_000)
+        s = Runner.pause(s, now: 15_000)
+        s = Runner.resume(s, now: 45_000)
+        #expect(Runner.blockElapsed(s, now: 45_000) == 10)
+        s = Runner.tick(s, now: 5_000 + 61_000)
+        #expect(s.phase == .running)
+        s = Runner.tick(s, now: 5_000 + 30_000 + 61_000)
+        #expect(s.phase == .done)
+    }
+
+    @Test("an amrap runs to its cap however many rounds are done")
+    func amrapOpenEnded() {
+        var s = Runner.tick(Runner.start(Fixtures.cindy(), now: 0), now: 5_000)
+        var t: Double = 5_000
+        for _ in 0..<20 {
+            t += 2_000
+            s = Runner.advance(s, now: t)
+        }
+        #expect(s.phase == .running)
+        #expect(s.blockDone["b"] == 20)
+        #expect(Runner.current(s)?.roundLabel == "Round 11")
+        s = Runner.tick(s, now: 5_000 + 61_000)
+        #expect(s.phase == .done)
+        #expect(Runner.toResult(s, Fixtures.cindy(), now: 70_000).score == 10)
+    }
+
+    @Test("a swap keeps the exercise and load of the rounds already done")
+    func swapKeepsDone() {
+        var s = Runner.tick(Runner.start(Fixtures.interval(), now: 0), now: 5_000)
+        s = Runner.adjust(s, now: 6_000, target: 32)
+        for t in [20_000.0, 21_000, 22_000, 23_000] { s = Runner.advance(s, now: t) }
+        s = Runner.swap(s, now: 24_000, stepId: "sw", to: Fixtures.squat, target: 10)
+        var t: Double = 25_000
+        while s.phase != .done {
+            s = Runner.advance(s, now: t)
+            t += 1_000
+        }
+        let sw = Runner.toResult(s, Fixtures.interval(), now: 40_000).steps.filter { $0.stepId == "sw" }
+        #expect(sw.map(\.exerciseKey) == ["kb_swing", "bw_squat"])
+        #expect(sw.map(\.target) == [32, 10])
+    }
+
+    @Test("the workout is handed to the store when it finishes, once, and the copy on disk stays")
+    @MainActor
+    func deliversAtFinish() throws {
+        let runner = SessionRunner(runsheet: Fixtures.interval())
+        var delivered: [SessionResult] = []
+        runner.onFinished = { delivered.append($0) }
+        runner.done()
+        runner.done()
+        runner.finish()
+        runner.done()
+        #expect(delivered.count == 1)
+        #expect(delivered.first?.id == SessionRunner.rowId(runner.state))
+        #expect(runner.finalResult == delivered.first)
+        let saved = try #require(SessionRunner.readSaved())
+        #expect(saved.state.phase == .done)
+        SessionRunner.clearSaved(startedAt: saved.state.startedAt + 1)
+        #expect(SessionRunner.readSaved() != nil)
+        SessionRunner.clearSaved(startedAt: saved.state.startedAt)
+        #expect(SessionRunner.readSaved() == nil)
+    }
+}

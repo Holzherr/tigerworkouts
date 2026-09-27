@@ -29,6 +29,7 @@
 		50E8634E2A5C17D76A16EFE7 /* Runsheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 14A15B576C26A9F28134E487 /* Runsheet.swift */; };
 		5277A4EA5AE2E5058535475E /* Library.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5856434B2D5B998718B051FF /* Library.swift */; };
 		59EB619669CDBE47FFE23DA2 /* exercises.json in Resources */ = {isa = PBXBuildFile; fileRef = DCDAF2AE594C1D1C9FF54BED /* exercises.json */; };
+		601B733D86F5A743E7A82AAB /* Switches.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3CB31186DB90FD6BB06CFD04 /* Switches.swift */; };
 		62145373B9595B72AECF4A68 /* RootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 26303167406F3C821FAFE7E2 /* RootView.swift */; };
 		62282879E59461F4A9D52AC2 /* SessionResult.swift in Sources */ = {isa = PBXBuildFile; fileRef = B3B6B0782F16CEA9ECD79A1E /* SessionResult.swift */; };
 		62458617B29ED7E87271BFC1 /* Store.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3553A92F9E0608BC81CAEAA /* Store.swift */; };
@@ -124,6 +125,7 @@
 		39DFAF6D4A3365D7D78C8D6C /* MeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MeView.swift; sourceTree = "<group>"; };
 		3A75761718C352B299FE6FAE /* Haptics.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Haptics.swift; sourceTree = "<group>"; };
 		3B0EF9CE730C524EA109E8D0 /* Alternatives.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Alternatives.swift; sourceTree = "<group>"; };
+		3CB31186DB90FD6BB06CFD04 /* Switches.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Switches.swift; sourceTree = "<group>"; };
 		3D87622F139D50161B1F5C9C /* HapticsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HapticsTests.swift; sourceTree = "<group>"; };
 		49526F5BAD78DFB059EC6918 /* Health.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Health.swift; sourceTree = "<group>"; };
 		4F1D59738246E472AB5AD52D /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
@@ -224,6 +226,7 @@
 				98F9F72F6AD1476394E67175 /* Cues.swift */,
 				3A75761718C352B299FE6FAE /* Haptics.swift */,
 				EDC796C4D99ADE360B9D3367 /* SessionActivityController.swift */,
+				3CB31186DB90FD6BB06CFD04 /* Switches.swift */,
 			);
 			path = Feedback;
 			sourceTree = "<group>";
@@ -561,6 +564,7 @@
 				0332F10757EBDC1D23299FCA /* StepEditorView.swift in Sources */,
 				62458617B29ED7E87271BFC1 /* Store.swift in Sources */,
 				698125144849D984B6BEEE2D /* Supabase.swift in Sources */,
+				601B733D86F5A743E7A82AAB /* Switches.swift in Sources */,
 				01BB8AD0F33A985650943AC6 /* Theme.swift in Sources */,
 				CA84645AFB81CCB16FAF4619 /* TigerWorkoutsApp.swift in Sources */,
 				C82FB9423C1D5590112C01AB /* TimerView.swift in Sources */,

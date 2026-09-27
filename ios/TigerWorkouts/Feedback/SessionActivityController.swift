@@ -13,7 +13,7 @@ final class SessionActivityController {
     private var activity: Activity<SessionActivityAttributes>?
     /// What was last pushed, so a 10 Hz tick does not become a 10 Hz stream of updates.
     private var pushed: SessionActivityAttributes.ContentState?
-    var enabled = true
+    var enabled = Switches.isOn(Switches.liveActivity)
 
     var isSupported: Bool { ActivityAuthorizationInfo().areActivitiesEnabled }
 

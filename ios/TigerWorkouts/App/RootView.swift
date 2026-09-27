@@ -32,10 +32,7 @@ struct RootView: View {
                 .tag(Tab.me)
         }
         .fullScreenCover(item: $running) { runner in
-            TimerView(runner: runner) { result in
-                Task { await store.save(result) }
-                running = nil
-            }
+            TimerView(runner: runner) { running = nil }
         }
         // Asked, not assumed: reopening the app after abandoning a workout must not throw you
         // back into its timer. The lookup waits for the catalogue, or it finds nothing.
@@ -43,6 +40,15 @@ struct RootView: View {
             guard loaded, running == nil, interrupted == nil, let saved = SessionRunner.readSaved() else { return }
             guard let sheet = store.workout(id: saved.state.runsheetId) else {
                 SessionRunner.clearSaved()
+                return
+            }
+            // Finished, but the app died before the store had it: log it, no question to ask.
+            if saved.state.phase == .done {
+                if let result = SessionRunner.partialResult(of: saved.state, savedAt: saved.savedAt, runsheet: sheet) {
+                    Task { await store.save(result) { SessionRunner.clearSaved(startedAt: saved.state.startedAt) } }
+                } else {
+                    SessionRunner.clearSaved()
+                }
                 return
             }
             SessionActivityController.shared.clearStale()
@@ -57,7 +63,7 @@ struct RootView: View {
             presenting: interrupted
         ) { pending in
             Button("Resume") {
-                running = SessionRunner(resuming: pending.sheet)
+                running = SessionRunner(resuming: pending.sheet).map(logOnFinish)
                 interrupted = nil
             }
             // The workout happened whether or not the app survived it.
@@ -79,7 +85,17 @@ struct RootView: View {
     }
 
     private func start(_ sheet: Runsheet) {
-        running = SessionRunner(runsheet: sheet)
+        running = logOnFinish(SessionRunner(runsheet: sheet))
+    }
+
+    /// The workout is logged when it finishes, not when Done is tapped: the finished screen says
+    /// "Workout saved", and a phone that dies on it must not make that untrue.
+    private func logOnFinish(_ runner: SessionRunner) -> SessionRunner {
+        let startedAt = runner.state.startedAt
+        runner.onFinished = { [store] result in
+            Task { await store.save(result) { SessionRunner.clearSaved(startedAt: startedAt) } }
+        }
+        return runner
     }
 
     /// iOS stops the haptic engine when the app leaves the foreground. Coming back is the moment

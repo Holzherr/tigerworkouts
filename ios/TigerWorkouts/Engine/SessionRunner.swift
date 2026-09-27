@@ -12,6 +12,11 @@ final class SessionRunner {
     private(set) var runsheet: Runsheet
 
     private var timer: Timer?
+    /// Called once, the moment the session reaches done — not when Done is tapped. Until the store
+    /// has the result, the crash-safe copy on disk stays; the store clears it (`clearSaved`).
+    var onFinished: ((SessionResult) -> Void)?
+    /// What was handed to `onFinished`, and what the finished screen shows.
+    private(set) var finalResult: SessionResult?
     private var cuedSlot: String?
     private var cuedPhase: Phase?
     private var lastTick: Int?
@@ -41,8 +46,14 @@ final class SessionRunner {
     static func partialResult(of saved: RunState, savedAt: Date, runsheet: Runsheet) -> SessionResult? {
         let at = savedAt.timeIntervalSince1970 * 1000
         guard saved.actuals.values.contains(where: { $0.doneAt != nil }) else { return nil }
-        return Runner.toResult(Runner.finish(saved, now: at), runsheet, now: at)
+        var r = Runner.toResult(saved.phase == .done ? saved : Runner.finish(saved, now: at), runsheet, now: at)
+        r.id = rowId(saved)
+        return r
     }
+
+    /// One id per session, so a result saved twice (finished, then recovered after a kill before the
+    /// store confirmed it) replaces itself rather than logging the workout twice.
+    nonisolated static func rowId(_ s: RunState) -> String { "s-\(Int(s.startedAt))-run" }
 
     // MARK: - Derived
 
@@ -89,13 +100,14 @@ final class SessionRunner {
         RunLoop.main.add(timer!, forMode: .common)
     }
 
+    /// The copy on disk is not cleared here: a finished session's copy goes when the store has the
+    /// result (`onFinished`), and the timer cannot be closed any other way.
     func end() {
         timer?.invalidate()
         timer = nil
         UIApplication.shared.isIdleTimerDisabled = false
         Cues.shared.end()
         SessionActivityController.shared.end(activityState)
-        SessionRunner.clearSaved()
     }
 
     private func tick() {
@@ -103,8 +115,18 @@ final class SessionRunner {
         let before = state
         state = Runner.tick(state, now: now)
         if state != before { save() }
+        deliver()
         fireCues()
         pushActivity()
+    }
+
+    /// Hand the result over the first time the session is done. A countdown can finish the session
+    /// on a locked phone, so this runs from the tick as well as from the buttons.
+    private func deliver() {
+        guard state.phase == .done, finalResult == nil else { return }
+        let r = result()
+        finalResult = r
+        onFinished?(r)
     }
 
     /// The Lock Screen card goes when the workout does. Left running, a finished session has no
@@ -156,8 +178,8 @@ final class SessionRunner {
                 headline = slot?.exercise?.exercise.name ?? runsheet.title
                 if let position = stepPosition(of: slot, in: runsheet) {
                     detail = "Exercise \(position.index) of \(position.count)"
-                } else if let slot, slot.rounds > 1 {
-                    detail = "Round \(slot.round + 1) of \(slot.rounds)"
+                } else if let round = slot?.roundLabel {
+                    detail = round
                 }
             }
         }
@@ -230,6 +252,7 @@ final class SessionRunner {
         now = Date().timeIntervalSince1970 * 1000
         state = change(state, now)
         save()
+        deliver()
         fireCues()
         pushActivity()
     }
@@ -303,7 +326,9 @@ final class SessionRunner {
     func plannedIncline(_ stepId: String) -> Double? { Runner.plannedIncline(state, stepId: stepId) }
 
     func result() -> SessionResult {
-        Runner.toResult(state, runsheet, now: Date().timeIntervalSince1970 * 1000)
+        var r = Runner.toResult(state, runsheet, now: Date().timeIntervalSince1970 * 1000)
+        r.id = Self.rowId(state)
+        return r
     }
 
     // MARK: - Crash safety
@@ -313,23 +338,30 @@ final class SessionRunner {
             .appendingPathComponent("tiger-run.json")
     }
 
+    /// A finished session is written too: until the store has it, this file is the only copy.
     private func save() {
-        guard state.phase != .done else { return SessionRunner.clearSaved() }
         try? JSONEncoder().encode(state).write(to: SessionRunner.savedURL, options: .atomic)
     }
 
-    /// A session older than six hours is not one you walked away from for a minute.
+    /// A session older than six hours is not one you walked away from for a minute. A finished one
+    /// is returned whatever its age: it is a workout the store never confirmed.
     static func readSaved() -> (state: RunState, savedAt: Date)? {
         guard let data = try? Data(contentsOf: savedURL),
               let attrs = try? FileManager.default.attributesOfItem(atPath: savedURL.path),
               let modified = attrs[.modificationDate] as? Date,
-              Date().timeIntervalSince(modified) < 6 * 3600,
               let state = try? JSONDecoder().decode(RunState.self, from: data),
-              state.phase != .done else { return nil }
+              state.phase == .done || Date().timeIntervalSince(modified) < 6 * 3600 else { return nil }
         return (state, modified)
     }
 
     static func clearSaved() {
         try? FileManager.default.removeItem(at: savedURL)
+    }
+
+    /// Clear the copy only if it is still this session's: a new workout started while the last one
+    /// was saving must keep its own.
+    static func clearSaved(startedAt: Double) {
+        guard readSaved()?.state.startedAt == startedAt else { return }
+        clearSaved()
     }
 }

@@ -108,8 +108,9 @@ final class Store {
     // MARK: - Saving a session
 
     /// Show it in History straight away, then get it to the server. A failed push is queued, not
-    /// lost: the workout happened whatever the network thinks.
-    func save(_ result: SessionResult) async {
+    /// lost: the workout happened whatever the network thinks. `stored` runs once the result is in
+    /// the cache on disk, the point from which a killed app still has it.
+    func save(_ result: SessionResult, stored: () -> Void = {}) async {
         var r = result
         if r.id == nil { r.id = "s-\(Int(Date().timeIntervalSince1970 * 1000))-\(UUID().uuidString.prefix(4))" }
         // Attach the heart rate before the row goes anywhere, so the web app sees it too.
@@ -124,6 +125,7 @@ final class Store {
         pending.removeAll { $0.rowId == r.rowId }
         pending.append(r)
         writeCache()
+        stored()
         do {
             try await flushPending()
         } catch {

@@ -50,7 +50,7 @@ final class Haptics {
     private var engine: CHHapticEngine?
     private let supportsHaptics = CHHapticEngine.capabilitiesForHardware().supportsHaptics
     private(set) var status = Status.unsupported
-    var enabled = true
+    var enabled = Switches.isOn(Switches.haptics)
 
     private init() {
         guard supportsHaptics else { return }
