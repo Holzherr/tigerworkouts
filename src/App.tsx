@@ -27,6 +27,8 @@ import { streak, workedFrom } from '@/features/results/effort';
 import { muscleLoad } from '@/features/results/muscles';
 import { ImportScreen } from '@/features/share/components/import-screen';
 import { LogImportScreen } from '@/features/results/components/log-import-screen';
+import { ImportCsvSheet } from '@/features/results/components/import-csv-sheet';
+import { exportFileName, toCsv } from '@/features/results/csv';
 import { decodeLogged, decodeShared, shareLink, shareUrl } from '@/features/share/share';
 import { useCallback, useRef } from 'react';
 import { fmtScore, resolveTarget } from '@/features/runsheet/progression';
@@ -129,6 +131,7 @@ export default function App() {
   const pick = useCallback((): Promise<ExerciseStep | null> => new Promise(res => { pickResolve.current = e => res(e ? makeExercise(e) : null); setPickerOpen(true); }), []);
   const picker = <ExercisePicker open={pickerOpen} onOpenChange={o => { setPickerOpen(o); if (!o) { pickResolve.current?.(null); pickResolve.current = null; } }} library={library} usage={usage} onPick={e => { pickResolve.current?.(e); pickResolve.current = null; }} onCreate={act.addExercise} />;
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [importOpen, setImportOpen] = useState(false);
   const [volume, setVol] = useState(getVolume);
   const [dnd, setDndState] = useState<DndVariant>(() => { try { return (localStorage.getItem('tiger:dnd') as DndVariant) || 'classic'; } catch { return 'classic'; } });
   const setDnd = (v: DndVariant) => { setDndState(v); try { localStorage.setItem('tiger:dnd', v); } catch { /* ignore */ } };
@@ -295,7 +298,7 @@ export default function App() {
     return full(
       <LogImportScreen
         result={logged}
-        exercise={k => LIB[k] ?? { key: k, name: k, unit: '', step: 1 }}
+        exercise={k => library[k] ?? { key: k, name: k, unit: '', step: 1 }}
         onSave={res => {
           act.addResult(res);
           say('Workout saved');
@@ -318,7 +321,7 @@ export default function App() {
         <SessionDetailScreen
           result={res}
           runsheet={r}
-          exercise={k => LIB[k] ?? { key: k, name: k, unit: '', step: 1 }}
+          exercise={k => library[k] ?? { key: k, name: k, unit: '', step: 1 }}
           history={st.results}
           bodyweightKg={st.bodyweightKg}
           loadDevice={cloud.user ? () => deviceFor(res) : undefined}
@@ -417,7 +420,7 @@ export default function App() {
   }
   if (tab === 'me') {
     const since = Date.now() - 28 * 864e5;
-    const load = muscleLoad(st.results.filter(r => Date.parse(r.startedAt) >= since).flatMap(r => workedFrom(r, byId.get(r.runsheetId), k => ({ name: LIB[k]?.name ?? k, group: LIB[k]?.group }))));
+    const load = muscleLoad(st.results.filter(r => Date.parse(r.startedAt) >= since).flatMap(r => workedFrom(r, byId.get(r.runsheetId), k => ({ name: library[k]?.name ?? k, group: library[k]?.group }))));
     const out = () => signOut().then(() => (act.setSignedIn(false), setSettingsOpen(false), go('/discover')));
     return shell(
       'me',
@@ -434,6 +437,13 @@ export default function App() {
           onOpenHistory={() => go('/history')}
           onOpenWeek={() => go('/history/week')}
           onOpenExercises={() => go('/history/exercises')}
+          onExport={() => {
+            const url = URL.createObjectURL(new Blob([toCsv(st.results, k => library[k] ?? { name: k, unit: '' })], { type: 'text/csv;charset=utf-8' }));
+            const a = Object.assign(document.createElement('a'), { href: url, download: exportFileName() });
+            a.click();
+            setTimeout(() => URL.revokeObjectURL(url), 1000);
+          }}
+          onImport={() => setImportOpen(true)}
         >
           {!cloud.user && <SignInCard title="Sign in to sync" reasons={['Sessions logged here are kept on this device until you do', 'Same account as the iPhone app: one history on both', 'No password: we email you a 6-digit code']} onSendCode={sendCode} onVerify={async (e, c) => { await verifyCode(e, c); act.setSignedIn(true); }} onGoogle={google ? signInGoogle : undefined} />}
           {cloud.user && (
@@ -459,6 +469,7 @@ export default function App() {
         </MeScreen>
         <SettingsSheet open={settingsOpen} onOpenChange={setSettingsOpen} name={st.name} avatar={st.avatar} units={st.units} email={cloud.user?.email ?? undefined} volume={volume} onVolume={v => { setVolume(v); setVol(v); }} dnd={dnd} onDnd={setDnd} onChange={act.setProfile} onInvite={invite} onSignOut={cloud.user ? out : undefined} />
         {tmSheet()}
+        <ImportCsvSheet open={importOpen} onOpenChange={setImportOpen} results={st.results} library={library} onImport={p => (act.importSessions(p.sessions, p.newExercises), say(`${p.sessions.length} ${p.sessions.length === 1 ? 'session' : 'sessions'} added to History`))} />
       </>
     );
   }
