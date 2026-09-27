@@ -319,6 +319,19 @@ struct SessionRunnerTests {
         SessionRunner.clearSaved() // the change wrote a crash-safety copy; leave none behind
     }
 
+    @Test("the result carries the list the workout was started from", arguments: SessionOrigin.allCases)
+    @MainActor
+    func startedFrom(_ origin: SessionOrigin) {
+        let runner = SessionRunner(runsheet: Fixtures.interval(), startedFrom: origin)
+        #expect(runner.result().startedFrom == origin.rawValue)
+    }
+
+    @Test("a session started without a known origin writes none")
+    @MainActor
+    func noOrigin() {
+        #expect(SessionRunner(runsheet: Fixtures.interval()).result().startedFrom == nil)
+    }
+
     @Test("a step with no incline that is not on a treadmill has no incline line")
     @MainActor
     func noInclineLine() throws {
