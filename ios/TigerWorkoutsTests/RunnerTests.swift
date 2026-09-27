@@ -395,6 +395,11 @@ struct SessionSafetyTests {
     @Test("the workout is handed to the store when it finishes, once, and the copy on disk stays")
     @MainActor
     func deliversAtFinish() throws {
+        try SessionRunner.$savedName.withValue("test-\(UUID().uuidString).json") { try deliversAtFinishBody() }
+    }
+
+    @MainActor
+    private func deliversAtFinishBody() throws {
         let runner = SessionRunner(runsheet: Fixtures.interval())
         var delivered: [SessionResult] = []
         runner.onFinished = { delivered.append($0) }
@@ -441,6 +446,11 @@ struct HonestLoggingTests {
     @Test("the stepper counts from the plan and logs what it shows")
     @MainActor
     func stepper() {
+        SessionRunner.$savedName.withValue("test-\(UUID().uuidString).json") { stepperBody() }
+    }
+
+    @MainActor
+    private func stepperBody() {
         let runner = SessionRunner(runsheet: Self.press())
         runner.done() // lead-in → first set
         #expect(runner.reps == 8)
