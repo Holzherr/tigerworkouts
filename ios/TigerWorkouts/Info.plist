@@ -20,6 +20,9 @@
   <string>$(MARKETING_VERSION)</string>
   <key>CFBundleVersion</key>
   <string>$(CURRENT_PROJECT_VERSION)</string>
+  <!-- HTTPS through URLSession only, which is exempt: no export compliance question per upload. -->
+  <key>ITSAppUsesNonExemptEncryption</key>
+  <false/>
   <key>UILaunchScreen</key>
   <dict/>
   <key>UISupportedInterfaceOrientations</key>
