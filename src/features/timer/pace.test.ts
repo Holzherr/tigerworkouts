@@ -45,3 +45,14 @@ describe('lastTimed', () => {
     expect(lastTimed([{ ...old, id: 'me' }], 'w', 'me')).toBeUndefined();
   });
 });
+
+describe('ghost on the block clock', () => {
+  const split = (at: number[], from?: number) => session({ splits: [{ blockId: 'b', at, ...(from !== undefined ? { from } : {}) }] });
+  it('compares rounds from the start of the block when both sessions have it', () => {
+    // Last time the warm-up took 60 s longer and the round itself 5 s longer.
+    expect(ghost(split([95], 20), split([160], 80))?.text).toBe('Round 1 — 5 s ahead');
+  });
+  it('falls back to session time against a session logged before', () => {
+    expect(ghost(split([95], 20), split([160]))?.text).toBe('Round 1 — 1:05 ahead');
+  });
+});

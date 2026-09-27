@@ -3,7 +3,7 @@
  * transition takes `now` in ms so it can be tested without a clock. The React hook adds the
  * interval, sounds, wake lock and persistence.
  */
-import { plannedSet, rungSteps, scoreType, type Block, type ExerciseRef, type ExerciseStep, type Runsheet, type SetPlan, type SetType, type Step } from '@/features/runsheet/model';
+import { plannedSet, rungSteps, scoreType, type Block, type ExerciseRef, type ExerciseStep, type ItemRole, type Runsheet, type SetPlan, type SetType, type Step } from '@/features/runsheet/model';
 import type { RoundSplit, SessionResult, SetResult, StepResult } from '@/features/runsheet/progression';
 
 export interface Slot {
@@ -30,6 +30,8 @@ export interface Slot {
   /** Which top-level item (block or loose step) this slot belongs to, 0-based, and how many there are. */
   part: number;
   parts: number;
+  /** The item's role: a warm-up or cool-down is not part of a for-time score. */
+  role?: ItemRole;
 }
 
 export type Phase = 'ready' | 'lead' | 'running' | 'paused' | 'done';
@@ -70,6 +72,12 @@ export interface RunState {
   /** Slots completed per block (for AMRAP scoring). */
   blockDone: Record<string, number>;
   leadSec: number;
+  /** What a pause interrupted, so resuming goes back to it: the lead-in or a running slot. */
+  pausedFrom?: 'lead' | 'running';
+  /** Session time, seconds, pauses excluded, at which each part (block or loose step) started and
+   * was left. A for-time score is the time spent in the main parts: no lead-in, no gate, no warm-up. */
+  partAt?: Record<number, number>;
+  partOut?: Record<number, number>;
 }
 
 const LEAD_SEC = 5;
@@ -91,13 +99,15 @@ export const expand = (r: Runsheet, dropped: string[] = []): Slot[] => {
   let n = 0;
   const parts = r.items.filter(i => i.kind !== 'ref').length;
   let part = -1;
+  let role: ItemRole | undefined;
   const push = (step: Step, extra: Partial<Slot> & Pick<Slot, 'mode' | 'round' | 'rounds'>) => {
     if (skip.has(step.id)) return;
-    out.push({ id: `${step.id}#${n++}`, kind: step.kind === 'rest' ? 'rest' : 'work', step, seconds: slotSeconds(step), part, parts, ...extra });
+    out.push({ id: `${step.id}#${n++}`, kind: step.kind === 'rest' ? 'rest' : 'work', step, seconds: slotSeconds(step), part, parts, ...(role ? { role } : {}), ...extra });
   };
   for (const it of r.items) {
     if (it.kind === 'ref') continue;
     part++;
+    role = it.role;
     if (it.kind !== 'block') {
       push(it, { mode: 'loose', round: 0, rounds: 1 });
       continue;
@@ -106,7 +116,7 @@ export const expand = (r: Runsheet, dropped: string[] = []): Slot[] => {
     const mode = b.mode ?? 'rounds';
     const base = { blockId: b.id, blockName: b.name, mode } as const;
     const between = (round: number, rounds: number) => {
-      if (b.restBetweenSec && round < rounds - 1) out.push({ id: `${b.id}:between#${n++}`, kind: 'rest', step: { kind: 'rest', id: `${b.id}:between`, seconds: b.restBetweenSec }, seconds: b.restBetweenSec, part, parts, ...base, round, rounds });
+      if (b.restBetweenSec && round < rounds - 1) out.push({ id: `${b.id}:between#${n++}`, kind: 'rest', step: { kind: 'rest', id: `${b.id}:between`, seconds: b.restBetweenSec }, seconds: b.restBetweenSec, part, parts, ...(role ? { role } : {}), ...base, round, rounds });
     };
     if (mode === 'ladder') {
       const rungs = b.ladder ?? [b.repeat];
@@ -120,7 +130,7 @@ export const expand = (r: Runsheet, dropped: string[] = []): Slot[] => {
       const every = b.everySec ?? 60;
       for (let m = 0; m < b.repeat; m++) {
         for (const s of b.steps) if (s.kind === 'exercise') push(s, { ...base, round: m, rounds: b.repeat, everySec: every });
-        out.push({ id: `${b.id}:wait#${n++}`, kind: 'rest', step: { kind: 'rest', id: `${b.id}:wait`, seconds: every }, seconds: every, untilBoundary: true, everySec: every, part, parts, ...base, round: m, rounds: b.repeat });
+        out.push({ id: `${b.id}:wait#${n++}`, kind: 'rest', step: { kind: 'rest', id: `${b.id}:wait`, seconds: every }, seconds: every, untilBoundary: true, everySec: every, part, parts, ...(role ? { role } : {}), ...base, round: m, rounds: b.repeat });
       }
       continue;
     }
@@ -190,9 +200,20 @@ export const capLeft = (s: RunState, now: number): number | undefined => {
   return Math.max(0, c.capSec - blockElapsed(s, now));
 };
 
+/** EMOM work: seconds left in the minute (or whatever the interval is) the set belongs to. */
+export const minuteLeft = (s: RunState, now: number): number | undefined => {
+  const c = current(s);
+  if (c?.mode !== 'emom' || c.kind !== 'work' || !c.everySec || (s.phase !== 'running' && s.phase !== 'paused')) return undefined;
+  return Math.max(0, (c.round + 1) * c.everySec - blockElapsed(s, now));
+};
+
 /** Move to slot i. Entering a new part (block or loose step) going forward parks the timer in
  * `ready` until the user taps Start block, so equipment changes don't eat the countdown. */
-const enter = (s: RunState, i: number, now: number): RunState => {
+const enter = (st: RunState, i: number, now: number): RunState => {
+  // Moving on from a paused timer takes the pause out first, so it never counts as work.
+  let s = st.phase === 'paused' ? resume(st, now) : st;
+  const cur = s.phase === 'running' ? current(s) : undefined;
+  if (cur && s.slots[i]?.part !== cur.part) s = { ...s, partOut: { ...s.partOut, [cur.part]: elapsed(s, now) } };
   if (i >= s.slots.length) return { ...s, i, phase: 'done', endsAt: undefined, endedAt: now };
   if (i > s.i) {
     const drop = restBeforeDrop(s, i);
@@ -225,15 +246,18 @@ export const setTypeAt = (s: RunState, slotId: string, type: SetType): RunState 
 
 /** Start the block the timer is parked on. */
 export const startBlock = (s: RunState, now: number): RunState => (s.phase === 'ready' ? activate(s, s.i, now) : s);
-const activate = (s: RunState, i: number, now: number): RunState => {
+const activate = (st: RunState, i: number, now: number): RunState => {
+  const s = st.partAt?.[st.slots[i].part] === undefined ? { ...st, partAt: { ...st.partAt, [st.slots[i].part]: elapsed(st, now) } } : st;
   const slot = s.slots[i];
   const blockStart = { ...s.blockStart };
   if (slot.blockId && blockStart[slot.blockId] === undefined) blockStart[slot.blockId] = now;
   let seconds = slot.seconds;
   if (slot.untilBoundary && slot.blockId && slot.everySec) {
+    // The wait ends on its own minute's boundary. A minute that overran has none left: the next
+    // minute starts at once and catches up, rather than the block quietly growing a minute.
     const into = (now - blockStart[slot.blockId]) / 1000;
-    const boundary = (Math.floor(into / slot.everySec) + 1) * slot.everySec;
-    seconds = Math.max(0, boundary - into);
+    seconds = (slot.round + 1) * slot.everySec - into;
+    if (seconds <= 0) return enter({ ...s, blockStart, i }, i + 1, now);
   }
   // a capped block that has run out: skip its remaining slots
   if (slot.capSec && slot.blockId && blockStart[slot.blockId] !== undefined) {
@@ -248,8 +272,10 @@ const activate = (s: RunState, i: number, now: number): RunState => {
 };
 
 /** Advance past the current slot (Done / countdown finished / skip). */
-export const advance = (s: RunState, now: number, opts: { skipped?: boolean } = {}): RunState => {
-  if (s.phase === 'done') return s;
+export const advance = (given: RunState, now: number, opts: { skipped?: boolean } = {}): RunState => {
+  if (given.phase === 'done') return given;
+  // Done on a paused timer: the pause comes out first, and a paused lead-in is still a lead-in.
+  const s = given.phase === 'paused' ? resume(given, now) : given;
   if (s.phase === 'lead') return enter(s, 0, now);
   if (s.phase === 'ready') return activate(s, s.i + 1 < s.slots.length && s.slots[s.i + 1].part === s.slots[s.i].part ? s.i + 1 : s.i, now);
   const c = current(s);
@@ -292,18 +318,24 @@ export const tick = (s: RunState, now: number): RunState => {
   return s;
 };
 
-export const pause = (s: RunState, now: number): RunState => (s.phase === 'running' || s.phase === 'lead' ? { ...s, phase: 'paused', pausedAt: now, remainingMs: s.endsAt !== undefined ? Math.max(0, s.endsAt - now) : undefined } : s);
+export const pause = (s: RunState, now: number): RunState => (s.phase === 'running' || s.phase === 'lead' ? { ...s, phase: 'paused', pausedFrom: s.phase, pausedAt: now, remainingMs: s.endsAt !== undefined ? Math.max(0, s.endsAt - now) : undefined } : s);
 export const resume = (s: RunState, now: number): RunState => {
   if (s.phase !== 'paused' || s.pausedAt === undefined) return s;
   const gap = now - s.pausedAt;
-  const wasLead = s.i === 0 && s.blockStart && Object.keys(s.blockStart).length === 0 && s.remainingMs !== undefined && s.slotStartedAt === s.startedAt;
+  // A run paused before pausedFrom was kept: the lead-in is the only pause before any block starts.
+  const wasLead = s.pausedFrom ? s.pausedFrom === 'lead' : s.i === 0 && Object.keys(s.blockStart ?? {}).length === 0 && s.remainingMs !== undefined && s.slotStartedAt === s.startedAt;
   const block = current(s)?.blockId;
   const blockStart = block !== undefined && s.blockStart[block] !== undefined ? { ...s.blockStart, [block]: s.blockStart[block] + gap } : s.blockStart;
-  return { ...s, blockStart, phase: wasLead ? 'lead' : 'running', pausedAt: undefined, pausedMs: s.pausedMs + gap, slotStartedAt: s.slotStartedAt + gap, endsAt: s.remainingMs !== undefined ? now + s.remainingMs : undefined, remainingMs: undefined };
+  return { ...s, blockStart, phase: wasLead ? 'lead' : 'running', pausedAt: undefined, pausedFrom: undefined, pausedMs: s.pausedMs + gap, slotStartedAt: s.slotStartedAt + gap, endsAt: s.remainingMs !== undefined ? now + s.remainingMs : undefined, remainingMs: undefined };
 };
 
-/** Go back one slot (restarts its countdown). */
-export const back = (s: RunState, now: number): RunState => (s.i > 0 ? enter(s, s.i - 1, now) : s);
+/** Go back one slot (restarts its countdown). The step gone back to is no longer done until it is
+ * done again, so an AMRAP round is not counted twice. */
+export const back = (s: RunState, now: number): RunState => {
+  if (s.i <= 0 || s.phase === 'lead' || s.phase === 'done') return s;
+  const prev = s.slots[s.i - 1];
+  return enter(prev.kind === 'work' ? reopenSet(s, prev.id) : s, s.i - 1, now);
+};
 
 /**
  * Lengthen (or, with a negative `by`, shorten) the rest that is counting down, running or paused:
@@ -536,7 +568,13 @@ export const replan = (s: RunState, r: Runsheet, now: number): RunState => {
 /** One id per session, so logging it at the end and saving its result sheet is one row, not two. */
 export const sessionId = (s: RunState) => `s-${Math.round(s.startedAt).toString(36)}-run`;
 
-export const finish = (s: RunState, now: number): RunState => ({ ...s, phase: 'done', endedAt: now, endsAt: undefined });
+export const finish = (st: RunState, now: number): RunState => {
+  // Finished while paused: the pause is not workout time.
+  const s = st.phase === 'paused' ? resume(st, now) : st;
+  const cur = s.phase === 'running' ? current(s) : undefined;
+  const partOut = cur && s.partOut?.[cur.part] === undefined ? { ...s.partOut, [cur.part]: elapsed(s, now) } : s.partOut;
+  return { ...s, phase: 'done', endedAt: now, endsAt: undefined, ...(partOut ? { partOut } : {}) };
+};
 
 /** The load in force at slot index idx: walking back through the rounds of the same step with the
  * same exercise, the first adjustment or prescribed set load met, else the step's target. So an
@@ -617,8 +655,15 @@ export const toResult = (s: RunState, r: Runsheet, now: number): SessionResult =
     const warm = type === 'warmup';
     steps.set(key, { stepId: slot.step.id, exerciseKey: slot.step.exercise.key, target: warm ? (prev?.target ?? target) : target, ...(incline !== undefined ? { incline } : {}), reps: [...(prev?.reps ?? []), ...(reps !== undefined && !warm ? [reps] : [])], success: prev?.success ?? true, sets: [...(prev?.sets ?? []), set] });
   }
+  // A set of the step left undone (skipped, never reached) is a missed session for the progression
+  // rules, not a success. An AMRAP's rounds are a guess, so its undone ones say nothing.
+  for (const [idx, slot] of s.slots.entries()) {
+    if (slot.kind !== 'work' || slot.step.kind !== 'exercise' || slot.mode === 'amrap' || s.actuals[slot.id]?.doneAt || typeAt(s, idx) === 'warmup') continue;
+    const row = steps.get(`${slot.step.id}|${slot.step.exercise.key}`);
+    if (row) row.success = false;
+  }
   let score: number | undefined;
-  if (type === 'time') score = durationSec;
+  if (type === 'time') score = timeScore(s, now) ?? durationSec;
   else if (type === 'rounds') {
     const amrap = r.items.find((i): i is Block => i.kind === 'block' && i.mode === 'amrap');
     if (amrap) {
@@ -632,6 +677,21 @@ export const toResult = (s: RunState, r: Runsheet, now: number): SessionResult =
   } else if (type === 'reps') score = [...steps.values()].reduce((t, x) => t + (x.reps?.reduce((a, b) => a + b, 0) ?? 0), 0);
   const split = splits(s);
   return { runsheetId: s.runsheetId, startedAt: new Date(s.startedAt).toISOString(), endedAt: new Date(s.endedAt ?? now).toISOString(), score, steps: [...steps.values()], ...(split.length ? { splits: split } : {}), notes: undefined, durationSec, completed: s.phase === 'done' && s.i >= s.slots.length, title: r.title };
+};
+
+/** Seconds spent in the main parts — blocks and loose steps that are not a warm-up or cool-down —
+ * each from its start to when it was left: the lead-in and the time parked at a Start block gate
+ * fall between parts, and pauses are out of the session clock already. Undefined when no main part
+ * has started. */
+const timeScore = (s: RunState, now: number): number | undefined => {
+  const end = elapsed(s, now);
+  let total: number | undefined;
+  for (const [p, at] of Object.entries(s.partAt ?? {})) {
+    const role = s.slots.find(sl => sl.part === Number(p))?.role ?? 'main';
+    if (role !== 'main') continue;
+    total = (total ?? 0) + Math.max(0, (s.partOut?.[Number(p)] ?? end) - at);
+  }
+  return total === undefined ? undefined : Math.round(total);
 };
 
 /** Session time a slot was done at. A run saved before `at` was kept falls back to its clock time
@@ -670,7 +730,8 @@ export const splits = (s: RunState): RoundSplit[] => {
       if (!times.length || !closed) break;
       at.push(Math.max(...times));
     }
-    if (at.length) out.push({ blockId, at });
+    const from = s.partAt?.[[...rounds.values()][0][0].part];
+    if (at.length) out.push({ blockId, at, ...(from !== undefined ? { from: Math.round(from) } : {}) });
   }
   return out;
 };
@@ -691,11 +752,19 @@ export const clearPersisted = () => {
     /* ignore */
   }
 };
-export const loadPersisted = (): RunState | null => {
+/** The run kept on this device, if it is under six hours old and not done — and, given a workout
+ * id, only if it is that workout's. */
+export const loadPersisted = (runsheetId?: string): { state: RunState; savedAt: number } | null => {
   try {
     const r = JSON.parse(localStorage.getItem(KEY) || 'null');
-    return r && Date.now() - r.savedAt < 6 * 3600 * 1000 && r.phase !== 'done' ? r : null;
+    if (!r || !(Date.now() - r.savedAt < 6 * 3600 * 1000) || r.phase === 'done') return null;
+    if (runsheetId !== undefined && r.runsheetId !== runsheetId) return null;
+    const { savedAt, ...state } = r;
+    return { state: state as RunState, savedAt };
   } catch {
     return null;
   }
 };
+/** A kept run, picked up again: paused at the moment it was last saved, so the time the tab was
+ * closed never counts and nothing counts down before you are ready (as on iOS). */
+export const restore = (s: RunState, savedAt: number): RunState => (s.phase === 'running' || s.phase === 'lead' ? pause(s, savedAt) : s);
