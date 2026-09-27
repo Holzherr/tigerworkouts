@@ -87,3 +87,23 @@ export const lastTimeLabel = (set: SetResult | undefined, step: ExerciseStep): s
   if (set.reps !== undefined) return `last time ${num(set.reps)} reps`;
   return undefined;
 };
+
+/** Every set of this step last time, in order — the same step if it has history, else the same
+ * exercise. For the set grid, where set 2 is shown against last time's set 2. */
+export const lastSets = (results: SessionResult[], step: ExerciseStep): SetResult[] | undefined => {
+  const newest = [...results].sort((a, b) => b.startedAt.localeCompare(a.startedAt));
+  const find = (match: (x: StepResult) => boolean) => {
+    for (const r of newest) {
+      const hit = r.steps.find(x => match(x) && x.sets?.length);
+      if (hit) return hit.sets;
+    }
+    return undefined;
+  };
+  return find(x => x.stepId === step.id && x.exerciseKey === step.exercise.key) ?? find(x => x.exerciseKey === step.exercise.key);
+};
+
+/** "last 57.5 × 8" under a set row. */
+export const lastSetLabel = (set: SetResult | undefined): string | undefined => {
+  if (!set || (set.load === undefined && set.reps === undefined)) return undefined;
+  return `last ${[set.load, set.reps].filter((n): n is number => n !== undefined).map(num).join(' × ')}`;
+};

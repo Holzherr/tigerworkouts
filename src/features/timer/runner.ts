@@ -3,7 +3,7 @@
  * transition takes `now` in ms so it can be tested without a clock. The React hook adds the
  * interval, sounds, wake lock and persistence.
  */
-import { rungSteps, scoreType, type Block, type ExerciseRef, type Runsheet, type Step } from '@/features/runsheet/model';
+import { plannedSet, rungSteps, scoreType, type Block, type ExerciseRef, type Runsheet, type SetPlan, type Step } from '@/features/runsheet/model';
 import type { SessionResult, StepResult } from '@/features/runsheet/progression';
 
 export interface Slot {
@@ -24,6 +24,9 @@ export interface Slot {
   rung?: number;
   /** amrap/fortime: the cap on the whole block, seconds. */
   capSec?: number;
+  /** rounds blocks: what the step prescribes for this set on its own (step.sets[round]). Its reps
+   * are already in step.forValue; its load is read by effectiveTarget. */
+  plan?: SetPlan;
   /** Which top-level item (block or loose step) this slot belongs to, 0-based, and how many there are. */
   part: number;
   parts: number;
@@ -122,7 +125,17 @@ export const expand = (r: Runsheet, dropped: string[] = []): Slot[] => {
     // extendAmrap) and ends on the cap, however fast the rounds go.
     const rounds = mode === 'amrap' ? Math.max(2, Math.ceil((b.timeCapSec ?? 600) / Math.max(15, roundLen))) : Math.max(1, b.repeat);
     for (let ri = 0; ri < rounds; ri++) {
-      for (const s of b.steps) push(s, { ...base, round: ri, rounds, capSec: mode === 'amrap' || mode === 'fortime' ? b.timeCapSec : undefined });
+      for (const s of b.steps) {
+        const extra = { ...base, round: ri, rounds, capSec: mode === 'amrap' || mode === 'fortime' ? b.timeCapSec : undefined };
+        if (mode !== 'rounds' || s.kind !== 'exercise' || !s.sets?.length) {
+          push(s, extra);
+          continue;
+        }
+        // A set with its own reps runs them; its load goes on the slot for effectiveTarget.
+        const own = s.sets[ri];
+        const plan = own && (own.reps !== undefined || own.load !== undefined) ? own : undefined;
+        push({ ...s, forValue: plannedSet(s, ri).reps }, { ...extra, ...(plan ? { plan } : {}) });
+      }
       between(ri, rounds);
     }
   }
@@ -164,6 +177,13 @@ export const blockElapsed = (s: RunState, now: number) => {
   if (!c?.blockId || s.blockStart[c.blockId] === undefined) return 0;
   const end = s.phase === 'paused' && s.pausedAt ? s.pausedAt : now;
   return Math.max(0, (end - s.blockStart[c.blockId]) / 1000);
+};
+
+/** Seconds left on the current block's cap (amrap, capped fortime); undefined for an uncapped block. */
+export const capLeft = (s: RunState, now: number): number | undefined => {
+  const c = current(s);
+  if (!c?.capSec || s.phase === 'ready' || s.phase === 'lead') return undefined;
+  return Math.max(0, c.capSec - blockElapsed(s, now));
 };
 
 /** Move to slot i. Entering a new part (block or loose step) going forward parks the timer in
@@ -296,6 +316,46 @@ export const setReps = (s: RunState, reps: number): RunState => {
   return { ...s, actuals: { ...s.actuals, [c.id]: { ...(s.actuals[c.id] ?? { changes: [] }), reps } } };
 };
 
+// ── the set grid ──
+const slotIndex = (s: RunState, slotId: string) => s.slots.findIndex(sl => sl.id === slotId);
+/** Change the load of one set from its row: the running set as `adjust` does, a set still to come
+ * as if set ahead, a done set only after it has been un-ticked. */
+export const adjustAt = (s: RunState, now: number, slotId: string, target: number): RunState => {
+  const idx = slotIndex(s, slotId);
+  const sl = s.slots[idx];
+  if (!sl || sl.kind !== 'work' || s.actuals[slotId]?.doneAt !== undefined) return s;
+  if (idx === s.i) return adjust(s, now, target);
+  const a = s.actuals[slotId] ?? { changes: [] };
+  return { ...s, actuals: { ...s.actuals, [slotId]: { ...a, target, changes: [...a.changes, { atSec: 0, target }] } } };
+};
+/** Reps for one set from its row. A done set is locked like its load. */
+export const setRepsAt = (s: RunState, slotId: string, reps: number): RunState => {
+  const sl = s.slots[slotIndex(s, slotId)];
+  if (!sl || sl.kind !== 'work' || s.actuals[slotId]?.doneAt !== undefined) return s;
+  return { ...s, actuals: { ...s.actuals, [slotId]: { ...(s.actuals[slotId] ?? { changes: [] }), reps } } };
+};
+/** The tick on a set row. The running set is Done (advance). A set passed without a tick (skipped,
+ * or un-ticked to fix its weight) is logged where it is and the cursor stays put. */
+export const completeSet = (s: RunState, now: number, slotId: string): RunState => {
+  const idx = slotIndex(s, slotId);
+  const sl = s.slots[idx];
+  if (!sl || sl.kind !== 'work' || s.actuals[slotId]?.doneAt !== undefined) return s;
+  if (idx === s.i && (s.phase === 'running' || s.phase === 'paused')) return advance(s, now);
+  if (idx >= s.i) return s;
+  const blockDone = sl.blockId ? { ...s.blockDone, [sl.blockId]: (s.blockDone[sl.blockId] ?? 0) + 1 } : s.blockDone;
+  return { ...s, blockDone, actuals: { ...s.actuals, [slotId]: { ...(s.actuals[slotId] ?? { changes: [] }), doneAt: now } } };
+};
+/** Un-tick a done set so its weight and reps can be put right. It is not logged until ticked again. */
+export const reopenSet = (s: RunState, slotId: string): RunState => {
+  const sl = s.slots[slotIndex(s, slotId)];
+  const a = s.actuals[slotId];
+  if (!sl || a?.doneAt === undefined) return s;
+  const rest = { ...a };
+  delete rest.doneAt;
+  const blockDone = sl.blockId ? { ...s.blockDone, [sl.blockId]: Math.max(0, (s.blockDone[sl.blockId] ?? 0) - 1) } : s.blockDone;
+  return { ...s, blockDone, actuals: { ...s.actuals, [slotId]: rest } };
+};
+
 /** Drop a step for the rest of the session: remove every remaining slot of it. */
 export const drop = (s: RunState, now: number, stepId: string): RunState => {
   const c = current(s);
@@ -313,7 +373,9 @@ export const swap = (s: RunState, now: number, stepId: string, to: ExerciseRef, 
   const c = current(s);
   const slots = s.slots.map((sl, idx) => {
     if (idx < s.i || sl.step.id !== stepId || sl.step.kind !== 'exercise') return sl;
-    return { ...sl, step: { ...sl.step, exercise: to, target } };
+    // The plan's loads were for the planned exercise; the swap's target stands in for them.
+    const plan = sl.plan?.reps !== undefined ? { reps: sl.plan.reps } : undefined;
+    return { ...sl, step: { ...sl.step, exercise: to, target }, plan };
   });
   const st = { ...s, slots };
   return c?.step.id === stepId ? enter(st, s.i, now) : st;
@@ -361,10 +423,14 @@ export const replan = (s: RunState, r: Runsheet, now: number): RunState => {
     const id = `${sl.id.slice(0, sl.id.lastIndexOf('#'))}#${n++}`;
     let step = sl.step;
     const w = was.get(step.id);
-    if (step.kind === 'exercise' && w?.kind === 'exercise' && w.exercise.key !== step.exercise.key) step = { ...step, exercise: w.exercise, target: w.target };
+    let plan = sl.plan;
+    if (step.kind === 'exercise' && w?.kind === 'exercise' && w.exercise.key !== step.exercise.key) {
+      step = { ...step, exercise: w.exercise, target: w.target };
+      plan = plan?.reps !== undefined ? { reps: plan.reps } : undefined;
+    }
     const a = ahead.get(step.id);
     if (a && !tail.some(t => t.step.id === step.id)) actuals[id] = a;
-    tail.push({ ...sl, id, step, part: partOf.get(sl.part)! });
+    tail.push({ ...sl, id, step, plan, part: partOf.get(sl.part)! });
   }
   const parts = base + partOf.size;
   const st = { ...s, slots: [...kept, ...tail].map(sl => ({ ...sl, parts })), actuals };
@@ -376,8 +442,10 @@ export const sessionId = (s: RunState) => `s-${Math.round(s.startedAt).toString(
 
 export const finish = (s: RunState, now: number): RunState => ({ ...s, phase: 'done', endedAt: now, endsAt: undefined });
 
-/** The load in force at slot index idx: the latest adjustment made on any earlier round of the same
- * step with the same exercise, else the plan. A swap starts the load afresh from the swap's target. */
+/** The load in force at slot index idx: walking back through the rounds of the same step with the
+ * same exercise, the first adjustment or prescribed set load met, else the step's target. So an
+ * adjustment carries to later rounds until a round that prescribes its own load (a pyramid's next
+ * step), and that round's load carries on in turn. A swap starts afresh from the swap's target. */
 const sameWork = (a: Slot, b: Slot) => a.step.id === b.step.id && (a.step.kind !== 'exercise' || b.step.kind !== 'exercise' || a.step.exercise.key === b.step.exercise.key);
 export const effectiveTarget = (s: RunState, idx: number): number | undefined => {
   const slot = s.slots[idx];
@@ -385,7 +453,7 @@ export const effectiveTarget = (s: RunState, idx: number): number | undefined =>
   for (let j = idx; j >= 0; j--) {
     const sl = s.slots[j];
     if (!sameWork(sl, slot)) continue;
-    const t = s.actuals[sl.id]?.target;
+    const t = s.actuals[sl.id]?.target ?? sl.plan?.load;
     if (t !== undefined) return t;
   }
   return slot.step.kind === 'exercise' ? slot.step.target : undefined;

@@ -1,10 +1,10 @@
 import { ChevronLeft, ChevronRight, ExternalLink, Globe, Lock, Pencil, Play, Share2, Smartphone, Video } from 'lucide-react';
-import { useState } from 'react';
+import { Fragment, useState } from 'react';
 import { Button } from '@/shared/components/ui/button';
 import { Chip } from '@/shared/components/ui/chip';
 import { ClipThumb } from '@/shared/components/ui/clip-thumb';
-import { fmtClock } from '@/shared/utils/ui-utils';
-import { blockSeconds, forLabel, loadLabel, modeLabel, ROLE_LABEL, runsheetMinutes, scoreType, type ExerciseStep, type Runsheet } from '@/features/runsheet/model';
+import { fmtClock, fmtNum } from '@/shared/utils/ui-utils';
+import { blockSeconds, countLabel, forLabel, loadLabel, modeLabel, plannedSet, ROLE_LABEL, runsheetMinutes, scoreType, shortUnit, straightSetStep, type Block, type ExerciseStep, type Runsheet } from '@/features/runsheet/model';
 import { ExerciseSheet } from '@/features/runsheet/components/exercise-sheet';
 import type { SessionResult } from '@/features/runsheet/progression';
 import { fmtScore } from '@/features/runsheet/progression';
@@ -32,6 +32,25 @@ export interface WorkoutPreviewScreenProps {
   /** tigerworkouts:// link that opens this workout in the iOS app. */
   appHref?: string;
 }
+
+/** A straight-set block read as the gym writes it: set, load, reps — one line each. */
+const SetList = ({ block, step }: { block: Block; step: ExerciseStep }) => {
+  const unit = shortUnit(step.exercise.unit);
+  const count = countLabel(step.forMode)?.toLowerCase();
+  return (
+    <div className="px-3 pt-0.5 pb-1.5" aria-label="Sets">
+      {Array.from({ length: block.repeat }, (_, i) => {
+        const p = plannedSet(step, i);
+        return (
+          <div key={i} className="flex items-center gap-3 py-0.5 text-[13px] tabular-nums">
+            <span className="w-12 font-bold text-muted">Set {i + 1}</span>
+            <span className="flex-1 font-semibold">{[p.load !== undefined && unit ? `${fmtNum(p.load)} ${unit}` : '', count ? `${fmtNum(p.reps)} ${count}` : forLabel(step)].filter(Boolean).join(' × ')}</span>
+          </div>
+        );
+      })}
+    </div>
+  );
+};
 
 const SCORE_TEXT: Record<string, string> = { time: 'For time', rounds: 'AMRAP: rounds + reps', reps: 'Total reps', load: 'For load', distance: 'For distance' };
 
@@ -115,6 +134,7 @@ export const WorkoutPreviewScreen = ({ runsheet: r, history = [], lastTime, onBa
           if (it.kind === 'ref') return null;
           const role = it.role && it.role !== 'main' ? ROLE_LABEL[it.role] : null;
           if (it.kind === 'block') {
+            const straight = straightSetStep(it);
             return (
               <section key={it.id} className="rounded-card border border-line bg-surface">
                 <div className="flex items-center gap-2 px-3 pt-2.5 pb-1.5">
@@ -141,15 +161,18 @@ export const WorkoutPreviewScreen = ({ runsheet: r, history = [], lastTime, onBa
                         <span className="text-[13px] font-semibold tabular-nums">{s.seconds}s</span>
                       </div>
                     ) : (
-                      <button key={s.id} type="button" onClick={() => setOpen(s)} className="flex w-full items-center gap-2.5 px-3 py-1.5 text-left active:bg-line-soft">
+                      <Fragment key={s.id}>
+                      <button type="button" onClick={() => setOpen(s)} className="flex w-full items-center gap-2.5 px-3 py-1.5 text-left active:bg-line-soft">
                         <ClipThumb size="sm" clip={s.exercise.clip} poster={s.exercise.poster} icon={s.exercise.icon} />
                         <div className="min-w-0 flex-1">
                           <div className="truncate text-[14px]">{s.exercise.name}</div>
                           {lastTime?.(s) && <div className="truncate text-[12px] text-muted">{lastTime(s)}</div>}
                         </div>
-                        <span className="text-[13px] font-semibold tabular-nums">{[loadLabel(s), forLabel(s)].filter(Boolean).join(' · ')}</span>
+                        <span className="text-[13px] font-semibold tabular-nums">{straight ? `${it.repeat} sets` : [loadLabel(s), forLabel(s)].filter(Boolean).join(' · ')}</span>
                         <ChevronRight className="size-4 shrink-0 text-faint" />
                       </button>
+                      {straight && <SetList block={it} step={straight} />}
+                      </Fragment>
                     )
                   )}
                 </div>

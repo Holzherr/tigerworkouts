@@ -180,6 +180,21 @@ extension ExerciseStep {
     /// Done to a count, so the reps done are worth logging: reps, reps-plus, max.
     var countsReps: Bool { forMode == .reps || forMode == .amrap || forMode == .max }
 
+    /// The set grid's column for the per-set count; nil for modes with nothing to count per set.
+    var countLabel: String? {
+        switch forMode {
+        case .reps, .amrap: "Reps"
+        case .seconds: "Sec"
+        case .minutes: "Min"
+        case .meters: "m"
+        case .calories: "Cal"
+        case .max, .segment: nil
+        }
+    }
+
+    /// The set grid shows a load column: an absolute weight or speed, not % TM or × BW.
+    var hasSetLoad: Bool { hasSetting && loadFactor == nil && targetPct == nil }
+
     var shortUnit: String {
         exercise.unit
             .replacingOccurrences(of: " per arm", with: "")

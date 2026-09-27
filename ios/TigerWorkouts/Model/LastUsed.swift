@@ -97,4 +97,26 @@ enum LastTime {
     static func label(_ results: [SessionResult], for step: ExerciseStep) -> String? {
         label(set(results, for: step), for: step)
     }
+
+    /// Every set of this step last time, in order — the same step if it has history, else the same
+    /// exercise. For the set grid, where set 2 is shown against last time's set 2. Ported from
+    /// `lastSets` in `last-used.ts`.
+    static func sets(_ results: [SessionResult], for step: ExerciseStep) -> [SetResult]? {
+        let newest = results.sorted { $0.startedAt > $1.startedAt }
+        func find(_ match: (StepResult) -> Bool) -> [SetResult]? {
+            for r in newest {
+                if let hit = r.steps.first(where: { match($0) && $0.sets?.isEmpty == false }) { return hit.sets }
+            }
+            return nil
+        }
+        return find { $0.stepId == step.id && $0.exerciseKey == step.exercise.key }
+            ?? find { $0.exerciseKey == step.exercise.key }
+    }
+
+    /// "last 57.5 × 8" under a set row.
+    static func setLabel(_ set: SetResult?) -> String? {
+        guard let set else { return nil }
+        let parts = [set.load, set.reps].compactMap { $0 }.map(Format.number)
+        return parts.isEmpty ? nil : "last " + parts.joined(separator: " × ")
+    }
 }

@@ -87,8 +87,18 @@ export interface ExerciseStep {
   /** Ladder blocks: multiply the rung by this (double-unders 10n), or keep the step fixed. */
   ladderFactor?: number;
   ladderFixed?: boolean;
+  /** Per-set prescription, indexed by round: a pyramid or ramping sets give each set its own load or
+   * reps. A value left out carries the one before it, and the first set falls back to target /
+   * forValue. Only read in a rounds block. */
+  sets?: SetPlan[];
   role?: ItemRole;
   note?: string;
+}
+
+/** One prescribed set. `reps` stands in for forValue (the count, or the seconds of a timed set). */
+export interface SetPlan {
+  reps?: number;
+  load?: number;
 }
 
 export interface RestStep {
@@ -229,6 +239,61 @@ export const scoreType = (r: Runsheet): ScoreType => {
   return 'none';
 };
 export const runsheetMinutes = (r: Pick<Runsheet, 'items'>) => Math.round(runsheetSeconds(r) / 60);
+
+// ── straight sets ──
+/** A block that is one exercise done for N sets, rests allowed: shown and run as a set grid. The
+ * exercise has to be done to a count or carry a load — 8 × 20 s of squats in a Tabata is an
+ * interval, not sets, and keeps the countdown. */
+export const straightSetStep = (b: Block): ExerciseStep | undefined => {
+  if ((b.mode ?? 'rounds') !== 'rounds') return undefined;
+  const ex = b.steps.filter((s): s is ExerciseStep => s.kind === 'exercise');
+  const s = ex.length === 1 ? ex[0] : undefined;
+  return s && (s.forMode === 'reps' || s.forMode === 'amrap' || s.forMode === 'max' || s.target !== undefined) ? s : undefined;
+};
+/** The set a round asks for: its own values, else the latest set before it that has one, else the step's. */
+export const plannedSet = (s: ExerciseStep, round: number): { reps: number; load?: number } => {
+  let reps: number | undefined;
+  let load: number | undefined;
+  for (let i = Math.min(round, (s.sets?.length ?? 0) - 1); i >= 0 && (reps === undefined || load === undefined); i--) {
+    reps ??= s.sets![i]?.reps;
+    load ??= s.sets![i]?.load;
+  }
+  return { reps: reps ?? s.forValue, load: load ?? s.target };
+};
+/** Change one set of a straight-set block. Every set is written out with what it showed first, so
+ * the edit changes that row and no other. */
+export const editSet = (b: Block, round: number, patch: SetPlan): Block => {
+  const step = straightSetStep(b);
+  if (!step) return b;
+  const sets: SetPlan[] = Array.from({ length: Math.max(b.repeat, step.sets?.length ?? 0) }, (_, i) => {
+    const p = plannedSet(step, i);
+    return { reps: p.reps, ...(p.load !== undefined ? { load: p.load } : {}) };
+  });
+  sets[round] = { ...sets[round], ...patch };
+  return { ...b, steps: b.steps.map(s => (s.id === step.id ? { ...step, sets } : s)) };
+};
+/** One more set, a copy of the last one; the block repeats once more. */
+export const addSet = (b: Block): Block => {
+  const step = straightSetStep(b);
+  if (!step) return b;
+  const last = plannedSet(step, b.repeat - 1);
+  const sets: SetPlan[] = Array.from({ length: b.repeat }, (_, i) => ({ ...step.sets?.[i] }));
+  sets.push({ reps: last.reps, ...(last.load !== undefined ? { load: last.load } : {}) });
+  return { ...b, repeat: b.repeat + 1, steps: b.steps.map(s => (s.id === step.id ? { ...step, sets } : s)) };
+};
+/** Drop the last set. A block keeps at least one. */
+export const removeSet = (b: Block): Block => {
+  const step = straightSetStep(b);
+  if (!step || b.repeat <= 1) return b;
+  const repeat = b.repeat - 1;
+  const next: ExerciseStep = { ...step, sets: step.sets?.slice(0, repeat) };
+  if (!next.sets?.length) delete next.sets;
+  return { ...b, repeat, steps: b.steps.map(s => (s.id === step.id ? next : s)) };
+};
+
+/** Column heading for the per-set count; undefined for modes with nothing to count per set. */
+export const countLabel = (m: ForMode): string | undefined =>
+  m === 'reps' || m === 'amrap' ? 'Reps' : m === 'seconds' ? 'Sec' : m === 'minutes' ? 'Min' : m === 'meters' ? 'm' : m === 'calories' ? 'Cal' : undefined;
 
 // ── labels ──
 export const shortUnit = (unit: string) => unit.replace(' per arm', '').replace(' per side', '').trim();

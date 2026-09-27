@@ -11,6 +11,8 @@ struct TimerView: View {
     /// Opens tall: the alternatives sit under the steppers, and a half sheet hides them.
     @State private var sheetDetent: PresentationDetent = .large
     @State private var confirmQuit = false
+    /// The set row open for editing on a straight-set block; nil = the set you are on.
+    @State private var openSet: String?
 
     private var isRest: Bool { runner.slot?.kind == .rest }
     private var accent: Color { isRest ? Brand.Night.rest : Brand.coral }
@@ -29,6 +31,7 @@ struct TimerView: View {
         .animation(.easeInOut(duration: 0.2), value: runner.slot?.id)
         .animation(.easeInOut(duration: 0.2), value: runner.state.phase)
         .onAppear { runner.begin() }
+        .onChange(of: runner.slot?.id) { openSet = nil }
         .onDisappear { runner.end() }
         .sheet(isPresented: $showOverview) { overview.preferredColorScheme(.light) }
         .sheet(item: $editing) { step in
@@ -62,6 +65,7 @@ struct TimerView: View {
     private var running: some View {
         VStack(spacing: 0) {
             topBar
+            capClock
             Spacer(minLength: 12)
             switch runner.state.phase {
             case .lead: leadIn
@@ -173,9 +177,47 @@ struct TimerView: View {
         .padding(.horizontal, 16)
     }
 
+    /// An amrap or a capped for-time block runs against a clock of its own; this is what is left of it.
+    @ViewBuilder
+    private var capClock: some View {
+        if let left = runner.capLeft, runner.state.phase == .running || runner.state.phase == .paused {
+            HStack(spacing: 6) {
+                Image(systemName: "timer")
+                Text("\(Format.clock(left)) left in the block").monospacedDigit()
+            }
+            .font(.subheadline.weight(.bold))
+            .foregroundStyle(left <= 10 ? Brand.coral : Brand.Night.text)
+            .padding(.horizontal, 14)
+            .frame(height: 32)
+            .background(Brand.Night.raised, in: Capsule())
+            .padding(.top, 10)
+            .accessibilityElement(children: .combine)
+            .accessibilityIdentifier("cap-left")
+        }
+    }
+
+    @ViewBuilder
     private var slotBody: some View {
+        if let straight = runner.straightSetStep {
+            VStack(spacing: 12) {
+                if isRest {
+                    Text("Rest").font(.title3.weight(.bold)).foregroundStyle(Brand.Night.rest)
+                }
+                countdown(size: 76)
+                ScrollView {
+                    setGrid(straight)
+                }
+                .scrollBounceBehavior(.basedOnSize)
+            }
+            .padding(.horizontal, 16)
+        } else {
+            circuitBody
+        }
+    }
+
+    private var circuitBody: some View {
         VStack(spacing: 16) {
-            countdown
+            countdown(size: 110)
             if isRest {
                 restCard
             } else if let ex = runner.slot?.exercise {
@@ -196,11 +238,11 @@ struct TimerView: View {
         return incline.map { "\(Format.number($0))% incline" } ?? "Set incline"
     }
 
-    private var countdown: some View {
+    private func countdown(size: CGFloat) -> some View {
         VStack(spacing: 2) {
             if let left = runner.clock.left {
                 Text(Format.clock(left))
-                    .font(.system(size: 110, weight: .heavy, design: .rounded))
+                    .font(.system(size: size, weight: .heavy, design: .rounded))
                     .monospacedDigit()
                     .foregroundStyle(left <= 3 ? Brand.coral : (isRest ? Brand.Night.rest : Brand.Night.text))
                     .contentTransition(.numericText(countsDown: true))
@@ -216,12 +258,13 @@ struct TimerView: View {
                 }
             } else {
                 Text(Format.clock(runner.clock.spent))
-                    .font(.system(size: 110, weight: .heavy, design: .rounded))
+                    .font(.system(size: size, weight: .heavy, design: .rounded))
                     .monospacedDigit()
                     .foregroundStyle(Brand.Night.text)
                     .minimumScaleFactor(0.6)
                     .lineLimit(1)
-                Text("Tap Done when you finish the set").font(.subheadline).foregroundStyle(Brand.Night.muted)
+                Text(runner.straightSetStep == nil ? "Tap Done when you finish the set" : "Tick the set when you finish it")
+                    .font(.subheadline).foregroundStyle(Brand.Night.muted)
             }
         }
     }
@@ -308,6 +351,113 @@ struct TimerView: View {
         .background(.white, in: RoundedRectangle(cornerRadius: 24, style: .continuous))
         // White card on the dark timer: its ink has to be the light-appearance ink.
         .environment(\.colorScheme, .light)
+    }
+
+    /// A straight-set block as the gym writes it: a row per set, load and reps filled in from the
+    /// plan, the set you are on highlighted, a tick to finish it. A done row shows what was done and
+    /// is locked until it is un-ticked (tap the tick again), so a weight is never changed by a stray
+    /// tap on a set already logged.
+    private func setGrid(_ ex: ExerciseStep) -> some View {
+        let rows = runner.setRows
+        let last = LastTime.sets(store.results, for: ex) ?? []
+        return VStack(alignment: .leading, spacing: 10) {
+            Button { editing = ex } label: {
+                HStack(spacing: 12) {
+                    ExerciseDemo(ref: ex.exercise, size: 64)
+                    VStack(alignment: .leading, spacing: 3) {
+                        Text(ex.exercise.name)
+                            .font(.system(size: 22, weight: .heavy))
+                            .foregroundStyle(Brand.ink)
+                            .lineLimit(2)
+                            .minimumScaleFactor(0.7)
+                        let cue = ex.exercise.cue ?? Library.shared.exercise(ex.exercise.key)?.cue ?? ""
+                        if !cue.isEmpty {
+                            Text(cue).font(.footnote).foregroundStyle(Brand.muted).lineLimit(2)
+                        }
+                    }
+                    Spacer(minLength: 0)
+                }
+                .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+
+            HStack(spacing: 8) {
+                Text("Set").frame(width: 30, alignment: .leading)
+                if ex.hasSetLoad { Text(ex.shortUnit).frame(maxWidth: .infinity) }
+                if let count = ex.countLabel { Text(count).frame(maxWidth: .infinity) }
+                Color.clear.frame(width: 44, height: 1)
+            }
+            .font(.caption.weight(.bold))
+            .textCase(.uppercase)
+            .tracking(0.8)
+            .foregroundStyle(Brand.muted)
+
+            ForEach(rows) { row in
+                setRow(row, ex, hint: last.indices.contains(row.number - 1) ? LastTime.setLabel(last[row.number - 1]) : nil)
+            }
+        }
+        .padding(14)
+        .background(.white, in: RoundedRectangle(cornerRadius: 24, style: .continuous))
+        .environment(\.colorScheme, .light)
+        .accessibilityElement(children: .contain)
+        .accessibilityIdentifier("timer-set-grid")
+    }
+
+    private func setRow(_ row: SessionRunner.SetRow, _ ex: ExerciseStep, hint: String?) -> some View {
+        let editable = !row.done && (openSet == row.slotId || (openSet == nil && row.current))
+        return VStack(alignment: .leading, spacing: 2) {
+            HStack(spacing: 8) {
+                Text("\(row.number)")
+                    .font(.system(size: 18, weight: .heavy, design: .rounded))
+                    .foregroundStyle(row.current && !row.done ? Brand.coralInk : Brand.ink)
+                    .frame(width: 30, alignment: .leading)
+                if ex.hasSetLoad {
+                    Group {
+                        if editable {
+                            MiniStepper(value: row.load ?? 0, label: "Set \(row.number) load", onTint: row.current) { runner.nudgeSetLoad(row.slotId, $0) }
+                        } else {
+                            Text(row.load.map(Format.number) ?? "—").font(.system(size: 18, weight: .bold, design: .rounded))
+                        }
+                    }
+                    .frame(maxWidth: .infinity)
+                }
+                if let count = ex.countLabel {
+                    Group {
+                        if editable {
+                            MiniStepper(value: row.reps, label: "Set \(row.number) \(count.lowercased())", onTint: row.current) { runner.nudgeSetReps(row.slotId, $0) }
+                        } else {
+                            Text(Format.number(row.reps)).font(.system(size: 18, weight: .bold, design: .rounded))
+                        }
+                    }
+                    .frame(maxWidth: .infinity)
+                }
+                Button {
+                    if row.done { openSet = row.slotId } else if row.current { openSet = nil }
+                    runner.tickSet(row.slotId)
+                } label: {
+                    Image(systemName: "checkmark")
+                        .font(.system(size: 17, weight: .bold))
+                        .frame(width: 44, height: 44)
+                        .background(row.done ? Brand.coral : Color.clear, in: Circle())
+                        .overlay(Circle().strokeBorder(row.done ? Brand.coral : Brand.line, lineWidth: 2))
+                        .foregroundStyle(row.done ? .white : Brand.faint)
+                }
+                .buttonStyle(.plain)
+                .disabled(!row.tickable)
+                .opacity(row.tickable ? 1 : 0.35)
+                .accessibilityLabel(row.done ? "Un-tick set \(row.number)" : "Tick set \(row.number)")
+            }
+            .monospacedDigit()
+            .foregroundStyle(row.done ? Brand.muted : Brand.ink)
+            if let hint {
+                Text(hint).font(.caption).foregroundStyle(Brand.muted).padding(.leading, 38)
+            }
+        }
+        .padding(.horizontal, 8)
+        .padding(.vertical, 6)
+        .background(row.current && !row.done ? Brand.coralSoft : Color.clear, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+        .contentShape(Rectangle())
+        .onTapGesture { if !row.done { openSet = row.slotId } }
     }
 
     private func detail(_ ex: ExerciseStep) -> String {

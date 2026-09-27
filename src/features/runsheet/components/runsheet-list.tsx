@@ -17,11 +17,12 @@ import { SortableContext, useSortable, verticalListSortingStrategy } from '@dnd-
 import { CSS, getEventCoordinates } from '@dnd-kit/utilities';
 import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { cn } from '@/shared/utils/ui-utils';
-import { appendToBlock, flatten, groupOnto, isEmptyMain, repeatAsRounds, startBlock, insertAfter, makeRest, moveRow, moveRowTo, moveToTopLevel, removeItem, removeStep, replaceStep, ROLE_LABEL, updateBlock, type Block, type ExerciseStep, type Item, type ItemRole, type Row, type Step } from '../model';
+import { appendToBlock, straightSetStep, flatten, groupOnto, isEmptyMain, repeatAsRounds, startBlock, insertAfter, makeRest, moveRow, moveRowTo, moveToTopLevel, removeItem, removeStep, replaceStep, ROLE_LABEL, updateBlock, type Block, type ExerciseStep, type Item, type ItemRole, type Row, type Step } from '../model';
 import { ArrowDown, ArrowUp, CornerRightUp, Link2, Repeat, X } from 'lucide-react';
 import { Button } from '@/shared/components/ui/button';
 import { AddTile, SeamInsert, type AddKind } from './add-controls';
 import { BlockBracket, BlockHeader } from './block-bracket';
+import { SetGrid } from './set-grid';
 import { StepRow } from './step-row';
 import { SwipeToRemove } from './swipe-to-remove';
 
@@ -40,6 +41,8 @@ export interface RunsheetListProps {
   resolveTarget?: (step: ExerciseStep) => number | undefined;
   /** Grey line under a collapsed exercise, e.g. "last time 57.5 × 8". */
   hintFor?: (step: ExerciseStep) => string | undefined;
+  /** Grey line under one set of a straight-set block, e.g. last time's set of that number. */
+  setHintFor?: (step: ExerciseStep, round: number) => string | undefined;
   /** Title lookup for ref items (embedded runsheets). */
   refTitle?: (runsheetId: string) => string | undefined;
   className?: string;
@@ -92,7 +95,7 @@ const LIFT_MS = 350;
  * to make a block or join one. Blocks drag as a chunk by their header. Tap a row to expand it,
  * swipe or ✕ to remove, ＋ on a seam to insert there.
  */
-export const RunsheetList = ({ items, onChange, onPickExercise, onSwapExercise, expandedId: expandedProp, onExpandedChange, autoRest = 30, resolveTarget, hintFor, refTitle, className, variant = 'classic' }: RunsheetListProps) => {
+export const RunsheetList = ({ items, onChange, onPickExercise, onSwapExercise, expandedId: expandedProp, onExpandedChange, autoRest = 30, resolveTarget, hintFor, setHintFor, refTitle, className, variant = 'classic' }: RunsheetListProps) => {
   const [expandedLocal, setExpandedLocal] = useState<string | null>(null);
   const expandedId = expandedProp === undefined ? expandedLocal : expandedProp;
   const setExpanded = (id: string | null) => (onExpandedChange ? onExpandedChange(id) : setExpandedLocal(id));
@@ -365,6 +368,9 @@ export const RunsheetList = ({ items, onChange, onPickExercise, onSwapExercise, 
         );
         j++;
       }
+      // One exercise done for N sets: the sets are the rows that matter, so they get a grid.
+      const straight = straightSetStep(block);
+      if (straight && !activeId) inner.push(<SetGrid key={`${block.id}:sets`} block={block} onChange={b => onChange(items.map(it => (it.id === b.id ? b : it)))} hintFor={setHintFor ? round => setHintFor(straight, round) : undefined} />);
       const endRow = rows[j];
       const div = divider(r);
       if (div) blocks.push(div);

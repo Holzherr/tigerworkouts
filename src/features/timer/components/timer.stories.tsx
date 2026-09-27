@@ -7,9 +7,12 @@ import { TimerScreen } from './timer-screen';
 
 const cindy = (): Runsheet => ({ id: 'cindy', title: 'Cindy', items: [{ kind: 'block', id: 'b', name: 'Cindy', mode: 'amrap', timeCapSec: 1200, repeat: 1, steps: [{ ...makeExercise(EX.bw_pullup, { forMode: 'reps', forValue: 5 }), id: 'a' }, { ...makeExercise(EX.bw_pushup, { forMode: 'reps', forValue: 10 }), id: 'b2' }, { ...makeExercise(EX.bw_squat, { forMode: 'reps', forValue: 15 }), id: 'c' }] }] });
 
+/** Bench pyramid 60 / 70 / 80 kg for 10 / 8 / 6, a minute's rest between sets. */
+const pyramid = (): Runsheet => ({ id: 'pyramid', title: 'Bench pyramid', items: [{ kind: 'block', id: 'b', name: 'Bench', repeat: 3, steps: [{ ...makeExercise(EX.bb_bench, { forMode: 'reps', forValue: 10, target: 60 }), id: 'bench', sets: [{ reps: 10, load: 60 }, { reps: 8, load: 70 }, { reps: 6, load: 80 }] }, { kind: 'rest', id: 'r', seconds: 60 }] }] });
+
 const Live = ({ runsheet }: { runsheet: Runsheet }) => {
-  const { state, now, act } = useRunner(runsheet);
-  return <TimerScreen runsheet={runsheet} state={state} now={now} onDone={act.done} onSkip={act.skip} onBack={act.back} onPause={act.pause} onResume={act.resume} onAdjust={act.adjust} onSetReps={act.setReps} onDrop={act.drop} onStartBlock={act.startBlock} onAdjustIncline={act.adjustIncline} onFinish={() => alert(JSON.stringify(R.toResult(state, runsheet, Date.now()), null, 1))} onExit={() => alert('exit')} />;
+  const { state, now, act } = useRunner(runsheet, { persist: false });
+  return <TimerScreen runsheet={runsheet} state={state} now={now} onDone={act.done} onSkip={act.skip} onBack={act.back} onPause={act.pause} onResume={act.resume} onAdjust={act.adjust} onSetReps={act.setReps} onDrop={act.drop} onStartBlock={act.startBlock} onAdjustIncline={act.adjustIncline} sets={{ adjust: act.adjustAt, setReps: act.setRepsAt, complete: act.completeSet, reopen: act.reopenSet, hintFor: (_, i) => (i < 2 ? `last ${57.5 + i * 5} × 8` : undefined) }} onFinish={() => alert(JSON.stringify(R.toResult(state, runsheet, Date.now()), null, 1))} onExit={() => alert('exit')} />;
 };
 
 const meta = {
@@ -25,3 +28,4 @@ type Story = StoryObj<typeof meta>;
 
 export const PriyankasCircuit: Story = { render: () => <Live runsheet={priyanka()} /> };
 export const CindyAmrap: Story = { render: () => <Live runsheet={cindy()} /> };
+export const StraightSets: Story = { render: () => <Live runsheet={pyramid()} /> };

@@ -12,7 +12,7 @@ import { EditorScreen } from '@/features/runsheet/components/editor-screen';
 import type { DndVariant } from '@/features/runsheet/components/runsheet-list';
 import { EX, priyanka } from '@/features/runsheet/fixtures';
 import { makeExercise, resolveRefs, scoreType, type ExerciseStep, type Runsheet } from '@/features/runsheet/model';
-import { lastSet, lastTimeLabel, withLastUsed } from '@/features/runsheet/last-used';
+import { lastSet, lastSetLabel, lastSets, lastTimeLabel, withLastUsed } from '@/features/runsheet/last-used';
 import { patchStep } from '@/features/runsheet/patch-step';
 import { applyCommands, parsePlan } from '@/features/runsheet/parse-text';
 import { isImage, readImport } from '@/features/runsheet/import-file';
@@ -107,6 +107,7 @@ export default function App() {
   const refTitle = (id: string) => byId.get(id)?.title;
   const resolve = (s: ExerciseStep) => resolveTarget(s, st.trainingMaxes, st.bodyweightKg);
   const lastTime = (s: ExerciseStep) => lastTimeLabel(lastSet(st.results, s), s);
+  const lastSetHint = (s: ExerciseStep, round: number) => lastSetLabel(lastSets(st.results, s)?.[round]);
 
   // exercise picker as a promise so the editor can await a pick
   const [pickerOpen, setPickerOpen] = useState(false);
@@ -220,6 +221,7 @@ export default function App() {
           onStart={() => { const m = saveMine(); go(`/do/${encodeURIComponent(m.id!)}`); }}
           resolveTarget={resolve}
           hintFor={lastTime}
+          setHintFor={lastSetHint}
           refTitle={refTitle}
           mode="author"
           dndVariant={dnd}
@@ -256,6 +258,7 @@ export default function App() {
           }}
           resolveTarget={resolve}
           hintFor={lastTime}
+          setHintFor={lastSetHint}
           refTitle={refTitle}
           mode="tonight"
           dndVariant={dnd}
@@ -295,7 +298,7 @@ export default function App() {
   if (route.name === 'do') {
     const r = draft ?? byId.get(route.id);
     if (!r) return shell('discover', <Missing />);
-    return <RunRoute key={route.id} runsheet={withLastUsed(resolveRefs(r, lookup), st.results)} onLog={res => act.addResult({ ...res, runsheetId: wid(r) })} onFinish={res => (setPending({ ...res, runsheetId: wid(r) }), go(`/result/${encodeURIComponent(route.id)}`))} onExit={() => (Runner.clearPersisted(), go(`/w/${encodeURIComponent(route.id)}`))} />;
+    return <RunRoute key={route.id} runsheet={withLastUsed(resolveRefs(r, lookup), st.results)} setHintFor={lastSetHint} onLog={res => act.addResult({ ...res, runsheetId: wid(r) })} onFinish={res => (setPending({ ...res, runsheetId: wid(r) }), go(`/result/${encodeURIComponent(route.id)}`))} onExit={() => (Runner.clearPersisted(), go(`/w/${encodeURIComponent(route.id)}`))} />;
   }
   if (route.name === 'session') {
     const res = st.results.find(x => x.id === route.id);
@@ -465,7 +468,7 @@ export default function App() {
  * result sheet is saved. Until then it lived only in memory: the persisted run was cleared at done,
  * so a reload or a closed tab on the result sheet lost it. The sheet then edits the logged row.
  */
-const RunRoute = ({ runsheet, onLog, onFinish, onExit }: { runsheet: Runsheet; onLog: (r: SessionResult) => void; onFinish: (r: SessionResult) => void; onExit: () => void }) => {
+const RunRoute = ({ runsheet, onLog, onFinish, onExit, setHintFor }: { runsheet: Runsheet; onLog: (r: SessionResult) => void; onFinish: (r: SessionResult) => void; onExit: () => void; setHintFor?: (step: ExerciseStep, round: number) => string | undefined }) => {
   const { state, now, act } = useRunner(runsheet, { resume: true });
   const logged = useRef<SessionResult | null>(null);
   const log = (s: Runner.RunState) => {
@@ -482,7 +485,7 @@ const RunRoute = ({ runsheet, onLog, onFinish, onExit }: { runsheet: Runsheet; o
   });
   return (
     <div className="relative h-dvh">
-      <TimerScreen runsheet={runsheet} state={state} now={now} onDone={act.done} onSkip={act.skip} onBack={act.back} onPause={act.pause} onResume={act.resume} onAdjust={act.adjust} onAdjustIncline={act.adjustIncline} onSetReps={act.setReps} onDrop={act.drop} onStartBlock={act.startBlock} onAdjustStep={act.adjustStep} onFinish={() => { const res = log(state.phase === 'done' ? state : Runner.finish(state, Date.now())); Runner.clearPersisted(); onFinish(res); }} onExit={onExit} />
+      <TimerScreen runsheet={runsheet} state={state} now={now} onDone={act.done} onSkip={act.skip} onBack={act.back} onPause={act.pause} onResume={act.resume} onAdjust={act.adjust} onAdjustIncline={act.adjustIncline} onSetReps={act.setReps} onDrop={act.drop} onStartBlock={act.startBlock} onAdjustStep={act.adjustStep} sets={{ adjust: act.adjustAt, setReps: act.setRepsAt, complete: act.completeSet, reopen: act.reopenSet, hintFor: setHintFor }} onFinish={() => { const res = log(state.phase === 'done' ? state : Runner.finish(state, Date.now())); Runner.clearPersisted(); onFinish(res); }} onExit={onExit} />
     </div>
   );
 };

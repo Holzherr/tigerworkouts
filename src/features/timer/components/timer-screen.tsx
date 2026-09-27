@@ -5,7 +5,7 @@ import { ClipThumb } from '@/shared/components/ui/clip-thumb';
 import { Sheet } from '@/shared/components/ui/sheet';
 import { Stepper } from '@/shared/components/ui/stepper';
 import { cn, fmtClock, fmtNum } from '@/shared/utils/ui-utils';
-import { forLabel, shortUnit, type Block, type ExerciseStep, type Item, type Runsheet } from '@/features/runsheet/model';
+import { countLabel, forLabel, shortUnit, straightSetStep, type Block, type ExerciseStep, type Item, type Runsheet } from '@/features/runsheet/model';
 import { SwipeToRemove } from '@/features/runsheet/components/swipe-to-remove';
 import { ExerciseSheet } from '@/features/runsheet/components/exercise-sheet';
 import * as R from '../runner';
@@ -26,9 +26,100 @@ export interface TimerScreenProps {
   onStartBlock?: () => void;
   /** Change a step from the overview, before it comes round. Applies to the rest of the session. */
   onAdjustStep?: (stepId: string, patch: { target?: number; incline?: number }) => void;
+  /** The set grid a straight-set block runs as. Without it those blocks show the card like any other. */
+  sets?: SetActions;
   onFinish: () => void;
   onExit: () => void;
 }
+
+export interface SetActions {
+  adjust: (slotId: string, target: number) => void;
+  setReps: (slotId: string, reps: number) => void;
+  /** The tick: Done on the running set, a late log on one passed without a tick. */
+  complete: (slotId: string) => void;
+  /** Un-tick a done set so its weight can be put right. */
+  reopen: (slotId: string) => void;
+  hintFor?: (step: ExerciseStep, round: number) => string | undefined;
+}
+
+/**
+ * A straight-set block on the timer: one row per set, load and reps filled in from the plan, the
+ * set you are on highlighted, a tick to finish it. Done rows show what was done and are locked
+ * until un-ticked. The rest between sets counts down above the grid.
+ */
+const TimerSetGrid = ({ state, step, blockId, actions }: { state: R.RunState; step: ExerciseStep; blockId: string; actions: SetActions }) => {
+  const rows = state.slots.map((sl, idx) => ({ sl, idx })).filter(x => x.sl.blockId === blockId && x.sl.kind === 'work');
+  const on = rows.find(x => x.idx >= state.i)?.sl.id;
+  const [open, setOpen] = useState<string | null>(null);
+  const editing = open ?? on;
+  const hasLoad = !!step.exercise.unit && step.loadFactor === undefined && step.targetPct === undefined;
+  const count = countLabel(step.forMode);
+  const unit = shortUnit(step.exercise.unit);
+  return (
+    <div className="rounded-card bg-white p-3 text-ink" aria-label="Sets">
+      <div className="flex items-center gap-3 pb-2">
+        <ClipThumb size="lg" clip={step.exercise.clip} poster={step.exercise.poster} icon={step.exercise.icon} />
+        <div className="min-w-0 flex-1">
+          <div className="text-[22px] leading-tight font-extrabold">{step.exercise.name}</div>
+          {step.exercise.cue && <div className="text-[13px] text-muted">{step.exercise.cue}</div>}
+        </div>
+      </div>
+      <div className="flex items-center gap-2 border-t border-line-soft pt-2 pb-1 text-[11px] font-bold tracking-widest text-muted uppercase">
+        <span className="w-8">Set</span>
+        {hasLoad && <span className="flex-1">{unit}</span>}
+        {count && <span className="flex-1">{count}</span>}
+        <span className="w-11" />
+      </div>
+      {rows.map(({ sl, idx }, n) => {
+        const a = state.actuals[sl.id];
+        const done = a?.doneAt !== undefined;
+        const current = sl.id === on;
+        const load = R.effectiveTarget(state, idx);
+        const reps = a?.reps ?? (sl.step.kind === 'exercise' ? sl.step.forValue : 0);
+        const edit = !done && sl.id === editing;
+        const canTick = done || idx < state.i || (idx === state.i && state.phase !== 'ready');
+        const hint = actions.hintFor?.(step, n);
+        return (
+          <div key={sl.id} className={cn('-mx-1 rounded-lg px-1 py-1.5', current && !done && 'bg-brand-soft', done && 'text-muted')}>
+            <div className="flex items-center gap-2" onClick={() => !done && setOpen(sl.id)}>
+              <span className={cn('w-8 text-[16px] font-extrabold tabular-nums', current && !done && 'text-brand')}>{n + 1}</span>
+              {hasLoad && (
+                <div className="flex-1">
+                  {edit ? <Stepper size="sm" aria-label={`Set ${n + 1} load`} value={load ?? 0} step={step.exercise.step || 1} max={1000} onChange={t => actions.adjust(sl.id, t)} /> : <span className="text-[16px] font-bold tabular-nums">{load !== undefined ? fmtNum(load) : '—'}</span>}
+                </div>
+              )}
+              {count && (
+                <div className="flex-1">
+                  {edit ? <Stepper size="sm" aria-label={`Set ${n + 1} ${count.toLowerCase()}`} value={reps} min={0} max={999} onChange={v => actions.setReps(sl.id, v)} /> : <span className="text-[16px] font-bold tabular-nums">{fmtNum(reps)}</span>}
+                </div>
+              )}
+              <button
+                type="button"
+                aria-label={done ? `Un-tick set ${n + 1}` : `Tick set ${n + 1}`}
+                aria-pressed={done}
+                disabled={!canTick}
+                onClick={e => {
+                  e.stopPropagation();
+                  if (done) {
+                    actions.reopen(sl.id);
+                    setOpen(sl.id);
+                  } else {
+                    actions.complete(sl.id);
+                    setOpen(null);
+                  }
+                }}
+                className={cn('grid size-11 shrink-0 place-items-center rounded-full border-2 disabled:opacity-30', done ? 'border-brand bg-brand text-white' : 'border-line text-faint')}
+              >
+                <Check className="size-5" />
+              </button>
+            </div>
+            {hint && <div className="pl-10 text-[11px] text-muted">{hint}</div>}
+          </div>
+        );
+      })}
+    </div>
+  );
+};
 
 const MODE_LABEL: Record<string, string> = { loose: '', rounds: 'Round', fortime: 'For time · round', amrap: 'AMRAP · round', emom: 'EMOM · minute', ladder: 'Rung' };
 const isTreadmill = (s: ExerciseStep) => s.exercise.unit === 'kph' || s.incline !== undefined;
@@ -46,7 +137,7 @@ const stepLine = (s: ExerciseStep) => [forLabel(s), s.target !== undefined ? `${
  * a ⋯ menu (previous, overview, stop), Pause and Skip/Done at equal size. Tap the Next row to see
  * what the coming block asks for; the overview sheet lists every part with progress.
  */
-export const TimerScreen = ({ runsheet, state, now, onDone, onSkip, onBack, onPause, onResume, onAdjust, onAdjustIncline, onSetReps, onDrop, onStartBlock, onAdjustStep, onFinish, onExit }: TimerScreenProps) => {
+export const TimerScreen = ({ runsheet, state, now, onDone, onSkip, onBack, onPause, onResume, onAdjust, onAdjustIncline, onSetReps, onDrop, onStartBlock, onAdjustStep, sets, onFinish, onExit }: TimerScreenProps) => {
   const [confirmExit, setConfirmExit] = useState(false);
   const [menu, setMenu] = useState(false);
   const [overview, setOverview] = useState(false);
@@ -71,7 +162,7 @@ export const TimerScreen = ({ runsheet, state, now, onDone, onSkip, onBack, onPa
   const bigNumber = done ? fmtClock(total) : lead ? String(Math.ceil(clock.left ?? 0)) : timed ? fmtClock(clock.left ?? 0) : fmtClock(clock.spent);
   const progress = slot?.seconds && clock.left !== undefined ? 1 - clock.left / slot.seconds : 0;
   const all = R.overall(state, now);
-  const capLeft = slot?.capSec ? Math.max(0, slot.capSec - bElapsed) : undefined;
+  const capLeft = R.capLeft(state, now);
   const items = partItems(runsheet);
   const nextIsNewPart = !!nxt && !!slot && nxt.part !== slot.part;
   const partOf = (p: number) => items[p];
@@ -79,6 +170,8 @@ export const TimerScreen = ({ runsheet, state, now, onDone, onSkip, onBack, onPa
   const blockSteps = slot ? stepsOf(partOf(slot.part)) : [];
   const stepPos = slot && stepOf?.kind === 'exercise' ? blockSteps.findIndex(s => s.id === stepOf.id) : -1;
   const showPos = blockSteps.length > 1 && stepPos >= 0;
+  const part = slot ? partOf(slot.part) : undefined;
+  const straight = sets && part?.kind === 'block' && slot?.blockId ? straightSetStep(part) : undefined;
 
   const partLabel = slot ? `${slot.parts > 1 ? `Block ${slot.part + 1} of ${slot.parts}` : ''}${slot.mode !== 'loose' ? `${slot.parts > 1 ? ' · ' : ''}${MODE_LABEL[slot.mode]} ${slot.round + 1}${slot.mode === 'amrap' ? '' : ` of ${slot.rounds}`}` : ''}` : runsheet.title;
 
@@ -91,7 +184,7 @@ export const TimerScreen = ({ runsheet, state, now, onDone, onSkip, onBack, onPa
             <div className="text-[16px] font-bold text-white/85">
               {partLabel}
               {slot?.rung ? ` · ${slot.rung} reps` : ''}
-              {capLeft !== undefined ? ` · ${fmtClock(capLeft)} left` : slot?.mode === 'fortime' ? ` · ${fmtClock(bElapsed)}` : ''}
+              {capLeft === undefined && slot?.mode === 'fortime' ? ` · ${fmtClock(bElapsed)}` : ''}
             </div>
           </div>
           <button type="button" onClick={() => setOverview(true)} className="shrink-0 text-right" aria-label="Workout overview">
@@ -135,9 +228,16 @@ export const TimerScreen = ({ runsheet, state, now, onDone, onSkip, onBack, onPa
               <div className="pb-1" />
             )}
             {lead && <div className="-mt-2 pb-3 text-center text-[13px] text-white/60">Get ready</div>}
-            {!timed && !lead && !done && slot && <div className="-mt-2 pb-3 text-center text-[13px] text-white/60">{isRest ? 'Rest' : 'Tap Done when finished'}</div>}
+            {!timed && !lead && !done && slot && <div className="-mt-2 pb-3 text-center text-[13px] text-white/60">{isRest ? 'Rest' : straight ? 'Tick the set when you finish it' : 'Tap Done when finished'}</div>}
+            {capLeft !== undefined && !lead && !done && (
+              <div className="mx-auto mb-3 w-fit rounded-full bg-white/10 px-3 py-1 text-[13px] font-bold tabular-nums" aria-label="Time left in the block">
+                {fmtClock(capLeft)} left in the block
+              </div>
+            )}
 
-            {slot && !done && (
+            {straight && slot?.blockId && !done && !lead && <TimerSetGrid key={slot.blockId} state={state} step={straight} blockId={slot.blockId} actions={sets!} />}
+
+            {slot && !done && !(straight && !lead) && (
               <SwipeToRemove onRemove={() => onDrop(slot.step.id)} disabled={isRest || paused} className="rounded-card">
                 <div className={cn('rounded-card p-3', isRest ? 'bg-white/10' : 'bg-white text-ink')}>
                   <div className="flex items-center gap-3">
@@ -184,7 +284,7 @@ export const TimerScreen = ({ runsheet, state, now, onDone, onSkip, onBack, onPa
               </SwipeToRemove>
             )}
 
-            {showPos && !done && (
+            {showPos && !done && !straight && (
               <div className="mt-3 flex gap-1.5">
                 {blockSteps.map((bs, i) => (
                   <div key={bs.id} className={cn('min-w-0 flex-1 rounded-full px-2 py-1 text-center text-[11px] font-semibold', i === stepPos ? 'bg-brand text-white' : i < stepPos ? 'bg-white/20 text-white/70' : 'bg-white/10 text-white/50')}>
@@ -211,7 +311,7 @@ export const TimerScreen = ({ runsheet, state, now, onDone, onSkip, onBack, onPa
                 <div className="mt-1 text-[13px] text-white/70">{fmtClock(total)} · log the result to keep it</div>
               </div>
             )}
-            {!isRest && !done && !lead && <div className="pt-2 text-center text-[11px] text-white/40">Swipe the card left to drop this exercise for tonight</div>}
+            {!isRest && !done && !lead && !straight && <div className="pt-2 text-center text-[11px] text-white/40">Swipe the card left to drop this exercise for tonight</div>}
           </>
         )}
       </div>

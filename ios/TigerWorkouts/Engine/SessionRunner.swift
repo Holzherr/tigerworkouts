@@ -63,6 +63,8 @@ final class SessionRunner {
     var elapsed: Double { Runner.elapsed(state, now: now) }
     var overall: Double { Runner.overall(state, now: now) }
     var blockElapsed: Double { Runner.blockElapsed(state, now: now) }
+    /// Time left on an amrap's or a capped for-time block's clock; nil for an uncapped block.
+    var capLeft: Double? { Runner.capLeft(state, now: now) }
     var isDone: Bool { state.phase == .done }
     var target: Double? { slot.flatMap { Runner.targetOf(state, $0) } }
     var incline: Double? {
@@ -321,6 +323,72 @@ final class SessionRunner {
     }
 
     func setReps(_ reps: Double) { apply { s, _ in Runner.setReps(s, reps: reps) } }
+
+    // MARK: - The set grid
+
+    /// The block the running slot belongs to, when it is one exercise done for sets.
+    var straightSetStep: ExerciseStep? {
+        guard let blockId = slot?.blockId,
+              let block = runsheet.items.compactMap(\.asBlock).first(where: { $0.id == blockId }) else { return nil }
+        return block.straightSetStep
+    }
+
+    /// One row per set of the running block, in order.
+    struct SetRow: Identifiable, Hashable {
+        var id: String { slotId }
+        var slotId: String
+        var number: Int
+        var load: Double?
+        var reps: Double
+        var done: Bool
+        /// The set being done now, or the next one while the rest between sets runs.
+        var current: Bool
+        /// The tick does something: Done on the running set, a late log on a passed one, un-tick on a done one.
+        var tickable: Bool
+    }
+
+    var setRows: [SetRow] {
+        guard let blockId = slot?.blockId else { return [] }
+        let work = state.slots.indices.filter { state.slots[$0].blockId == blockId && state.slots[$0].kind == .work }
+        let on = work.first { $0 >= state.i }
+        return work.enumerated().map { n, idx in
+            let sl = state.slots[idx]
+            let a = state.actuals[sl.id]
+            let done = a?.doneAt != nil
+            let running = idx == state.i && state.phase != .ready && state.phase != .lead
+            return SetRow(
+                slotId: sl.id,
+                number: n + 1,
+                load: Runner.effectiveTarget(state, idx),
+                reps: a?.reps ?? sl.exercise?.forValue ?? 0,
+                done: done,
+                current: idx == on,
+                tickable: done || idx < state.i || running
+            )
+        }
+    }
+
+    func tickSet(_ slotId: String) {
+        if state.actuals[slotId]?.doneAt != nil {
+            apply { s, _ in Runner.reopenSet(s, slotId: slotId) }
+        } else {
+            apply { Runner.completeSet($0, now: $1, slotId: slotId) }
+        }
+        Haptics.shared.play(.tick)
+    }
+
+    func nudgeSetLoad(_ slotId: String, _ direction: Double) {
+        guard let row = setRows.first(where: { $0.slotId == slotId }), let ex = straightSetStep else { return }
+        let step = ex.exercise.step == 0 ? 1 : ex.exercise.step
+        apply { Runner.adjustAt($0, now: $1, slotId: slotId, target: max(0, (row.load ?? 0) + direction * step)) }
+        Haptics.shared.play(.tick)
+    }
+
+    func nudgeSetReps(_ slotId: String, _ direction: Double) {
+        guard let row = setRows.first(where: { $0.slotId == slotId }) else { return }
+        apply { s, _ in Runner.setRepsAt(s, slotId: slotId, reps: max(0, row.reps + direction)) }
+        Haptics.shared.play(.tick)
+    }
 
     /// Whether the running slot is done to a count, so has reps worth logging.
     var countsReps: Bool { slot?.exercise?.countsReps == true }

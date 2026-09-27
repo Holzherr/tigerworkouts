@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { flatten, fromLegacy, groupOnto, insertAfter, makeExercise, makeRest, moveRow, moveRowTo, moveToTopLevel, rebuild, removeStep, isEmptyMain, repeatAsRounds, startBlock, runsheetSeconds, type Block, type ExerciseRef, type Item } from './model';
+import { addSet, editSet, plannedSet, removeSet, straightSetStep, flatten, fromLegacy, groupOnto, insertAfter, makeExercise, makeRest, moveRow, moveRowTo, moveToTopLevel, rebuild, removeStep, isEmptyMain, repeatAsRounds, startBlock, runsheetSeconds, type Block, type ExerciseRef, type Item } from './model';
 
 const KB: ExerciseRef = { key: 'kb_swing', name: 'Kettlebell swings', unit: 'kg', step: 4 };
 const PRESS: ExerciseRef = { key: 'db_incline_press', name: 'Incline chest press', unit: 'kg per arm', step: 2.5 };
@@ -193,5 +193,31 @@ describe('startBlock', () => {
 
   it('does not count a warm-up as a start', () => {
     expect(isEmptyMain([{ ...makeExercise(SPRINT), role: 'warmup' }])).toBe(true);
+  });
+});
+
+describe('straight sets', () => {
+  const bench = (): Block => ({ kind: 'block', id: 'b', name: 'Bench', repeat: 3, steps: [{ ...makeExercise(PRESS, { target: 20, forMode: 'reps', forValue: 8 }), id: 'pr' }, { ...makeRest(60), id: 'r' }] });
+  const step = (b: Block) => straightSetStep(b)!;
+
+  it('is one exercise in a rounds block; circuits and timed modes are not', () => {
+    expect(straightSetStep(bench())?.id).toBe('pr');
+    expect(straightSetStep({ ...bench(), mode: 'amrap' })).toBeUndefined();
+    expect(straightSetStep({ ...bench(), steps: [{ ...makeExercise(KB, { forMode: 'seconds', forValue: 20 }), target: undefined, id: 'tabata' }] })).toBeUndefined();
+    expect(straightSetStep({ ...bench(), steps: [...bench().steps, { ...makeExercise(KB), id: 'pu' }] })).toBeUndefined();
+  });
+  it('editing one set changes that row and no other', () => {
+    const b = editSet(bench(), 1, { load: 25 });
+    expect(step(b).sets).toEqual([{ reps: 8, load: 20 }, { reps: 8, load: 25 }, { reps: 8, load: 20 }]);
+    expect([0, 1, 2].map(i => plannedSet(step(b), i))).toEqual([{ reps: 8, load: 20 }, { reps: 8, load: 25 }, { reps: 8, load: 20 }]);
+  });
+  it('add set copies the last set and repeats once more; remove set drops it', () => {
+    const b = addSet(editSet(bench(), 2, { load: 30, reps: 5 }));
+    expect(b.repeat).toBe(4);
+    expect(plannedSet(step(b), 3)).toEqual({ reps: 5, load: 30 });
+    const c = removeSet(removeSet(b));
+    expect(c.repeat).toBe(2);
+    expect(step(c).sets).toEqual([{ reps: 8, load: 20 }, { reps: 8, load: 20 }]);
+    expect(removeSet({ ...bench(), repeat: 1 }).repeat).toBe(1);
   });
 });

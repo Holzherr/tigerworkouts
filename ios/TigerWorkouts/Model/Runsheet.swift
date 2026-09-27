@@ -123,12 +123,16 @@ struct ExerciseStep: Codable, Hashable, Sendable, Identifiable {
     var endSeconds: Double?
     var ladderFactor: Double?
     var ladderFixed: Bool?
+    /// Per-set prescription, indexed by round: a pyramid or ramping sets give each set its own load
+    /// or reps. A value left out carries the one before it; the first set falls back to target /
+    /// forValue. Only read in a rounds block.
+    var sets: [SetPlan]?
     var role: ItemRole?
     var note: String?
 
     private enum CodingKeys: String, CodingKey {
         case id, exercise, target, forMode, forValue, forMax, perSide, loadFactor, targetPct
-        case incline, rx, startSeconds, endSeconds, ladderFactor, ladderFixed, role, note
+        case incline, rx, startSeconds, endSeconds, ladderFactor, ladderFixed, sets, role, note
     }
 
     init(id: String, exercise: ExerciseRef, target: Double? = nil, forMode: ForMode = .seconds, forValue: Double = 30, incline: Double? = nil, perSide: Bool? = nil) {
@@ -163,6 +167,7 @@ struct ExerciseStep: Codable, Hashable, Sendable, Identifiable {
         endSeconds = try c.decodeIfPresent(Double.self, forKey: .endSeconds)
         ladderFactor = try c.decodeIfPresent(Double.self, forKey: .ladderFactor)
         ladderFixed = try c.decodeIfPresent(Bool.self, forKey: .ladderFixed)
+        sets = try c.decodeIfPresent([SetPlan].self, forKey: .sets)
         role = try c.decodeIfPresent(ItemRole.self, forKey: .role)
         note = try c.decodeIfPresent(String.self, forKey: .note)
     }
@@ -184,8 +189,34 @@ struct ExerciseStep: Codable, Hashable, Sendable, Identifiable {
         try c.encodeIfPresent(endSeconds, forKey: .endSeconds)
         try c.encodeIfPresent(ladderFactor, forKey: .ladderFactor)
         try c.encodeIfPresent(ladderFixed, forKey: .ladderFixed)
+        try c.encodeIfPresent(sets, forKey: .sets)
         try c.encodeIfPresent(role, forKey: .role)
         try c.encodeIfPresent(note, forKey: .note)
+    }
+}
+
+/// One prescribed set. `reps` stands in for forValue (the count, or the seconds of a timed set).
+struct SetPlan: Codable, Hashable, Sendable {
+    var reps: Double?
+    var load: Double?
+
+    var isEmpty: Bool { reps == nil && load == nil }
+}
+
+extension ExerciseStep {
+    /// The set a round asks for: its own values, else the latest set before it that has one, else
+    /// the step's.
+    func plannedSet(_ round: Int) -> (reps: Double, load: Double?) {
+        var reps: Double?
+        var load: Double?
+        let plans = sets ?? []
+        var i = min(round, plans.count - 1)
+        while i >= 0, reps == nil || load == nil {
+            reps = reps ?? plans[i].reps
+            load = load ?? plans[i].load
+            i -= 1
+        }
+        return (reps ?? forValue, load ?? target)
     }
 }
 
@@ -275,6 +306,16 @@ struct Block: Codable, Hashable, Sendable, Identifiable {
     var steps: [Step] = []
 
     var runMode: BlockMode { mode ?? .rounds }
+
+    /// A block that is one exercise done for N sets, rests allowed: shown and run as a set grid. The
+    /// exercise has to be done to a count or carry a load — 8 × 20 s of squats in a Tabata is an
+    /// interval, not sets, and keeps the countdown.
+    var straightSetStep: ExerciseStep? {
+        guard runMode == .rounds else { return nil }
+        let exercises = steps.compactMap(\.asExercise)
+        guard exercises.count == 1, let e = exercises.first else { return nil }
+        return [.reps, .amrap, .max].contains(e.forMode) || e.target != nil ? e : nil
+    }
 
     private enum CodingKeys: String, CodingKey {
         case id, name, mode, timeCapSec, everySec, ladder, restBetweenSec, score, progression, role, note, steps

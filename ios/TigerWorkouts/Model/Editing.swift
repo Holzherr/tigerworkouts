@@ -301,6 +301,52 @@ enum Edit {
         return sheet
     }
 
+    // MARK: - Straight sets
+
+    /// Change one set of a straight-set block. Every set is written out with what it showed first,
+    /// so the edit changes that row and no other.
+    static func editSet(_ r: Runsheet, block blockId: String, round: Int, reps: Double? = nil, load: Double? = nil) -> Runsheet {
+        updateStraightSet(r, block: blockId) { b, step in
+            var sets = (0..<max(b.repeatCount, step.sets?.count ?? 0)).map { i in
+                let p = step.plannedSet(i)
+                return SetPlan(reps: p.reps, load: p.load)
+            }
+            guard sets.indices.contains(round) else { return }
+            if let reps { sets[round].reps = reps }
+            if let load { sets[round].load = load }
+            step.sets = sets
+        }
+    }
+
+    /// One more set, a copy of the last one; the block repeats once more.
+    static func addSet(_ r: Runsheet, block blockId: String) -> Runsheet {
+        updateStraightSet(r, block: blockId) { b, step in
+            let last = step.plannedSet(b.repeatCount - 1)
+            var sets = (0..<b.repeatCount).map { i in step.sets.flatMap { $0.indices.contains(i) ? $0[i] : nil } ?? SetPlan() }
+            sets.append(SetPlan(reps: last.reps, load: last.load))
+            step.sets = sets
+            b.repeatCount += 1
+        }
+    }
+
+    /// Drop the last set. A block keeps at least one.
+    static func removeSet(_ r: Runsheet, block blockId: String) -> Runsheet {
+        updateStraightSet(r, block: blockId) { b, step in
+            guard b.repeatCount > 1 else { return }
+            b.repeatCount -= 1
+            let kept = Array((step.sets ?? []).prefix(b.repeatCount))
+            step.sets = kept.isEmpty ? nil : kept
+        }
+    }
+
+    private static func updateStraightSet(_ r: Runsheet, block blockId: String, _ change: (inout Block, inout ExerciseStep) -> Void) -> Runsheet {
+        updateBlock(r, id: blockId) { b in
+            guard var step = b.straightSetStep else { return }
+            change(&b, &step)
+            b.steps = b.steps.map { $0.id == step.id ? .exercise(step) : $0 }
+        }
+    }
+
     // MARK: - Validation
 
     /// What is stopping this being saved, in the order a person would fix it.

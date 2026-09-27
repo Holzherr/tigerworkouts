@@ -27,6 +27,9 @@ struct Slot: Identifiable, Hashable, Sendable, Codable {
     var rung: Double?
     /// amrap/fortime: the cap on the whole block, seconds.
     var capSec: Double?
+    /// rounds blocks: what the step prescribes for this set on its own (`step.sets[round]`). Its
+    /// reps are already in the step's forValue; its load is read by `effectiveTarget`.
+    var plan: SetPlan?
     /// Which top-level item this slot belongs to, 0-based, and how many there are.
     var part: Int
     var parts: Int
@@ -181,9 +184,17 @@ enum Runner {
             let cap = (mode == .amrap || mode == .fortime) ? b.timeCapSec : nil
             for ri in 0..<rounds {
                 for s in b.steps {
-                    push(s) {
+                    var step = s
+                    var plan: SetPlan?
+                    // A set with its own reps runs them; its load goes on the slot for effectiveTarget.
+                    if mode == .rounds, case .exercise(var e) = s, let sets = e.sets, !sets.isEmpty {
+                        if sets.indices.contains(ri), !sets[ri].isEmpty { plan = sets[ri] }
+                        e.forValue = e.plannedSet(ri).reps
+                        step = .exercise(e)
+                    }
+                    push(step) {
                         $0.blockId = b.id; $0.blockName = b.name; $0.mode = slotMode
-                        $0.round = ri; $0.rounds = rounds; $0.capSec = cap
+                        $0.round = ri; $0.rounds = rounds; $0.capSec = cap; $0.plan = plan
                     }
                 }
                 between(ri, rounds)
@@ -231,6 +242,12 @@ enum Runner {
         guard let id = current(s)?.blockId, let began = s.blockStart[id] else { return 0 }
         let end = s.phase == .paused ? (s.pausedAt ?? now) : now
         return max(0, (end - began) / 1000)
+    }
+
+    /// Seconds left on the current block's cap (amrap, capped fortime); nil for an uncapped block.
+    static func capLeft(_ s: RunState, now: Double) -> Double? {
+        guard let cap = current(s)?.capSec, s.phase != .ready, s.phase != .lead else { return nil }
+        return max(0, cap - blockElapsed(s, now: now))
     }
 
     /// Move to slot i. Entering a new part going forward parks the timer in `ready` until the user
@@ -435,6 +452,57 @@ enum Runner {
         return s
     }
 
+    // MARK: - The set grid
+
+    /// Change the load of one set from its row: the running set as `adjust` does, a set still to
+    /// come as if set ahead, a done set only after it has been un-ticked.
+    static func adjustAt(_ s: RunState, now: Double, slotId: String, target: Double) -> RunState {
+        guard let idx = s.slots.firstIndex(where: { $0.id == slotId }), s.slots[idx].kind == .work,
+              s.actuals[slotId]?.doneAt == nil else { return s }
+        if idx == s.i { return adjust(s, now: now, target: target) }
+        var s = s
+        var a = s.actuals[slotId] ?? Actual()
+        a.target = target
+        a.changes.append(Change(atSec: 0, target: target))
+        s.actuals[slotId] = a
+        return s
+    }
+
+    /// Reps for one set from its row. A done set is locked like its load.
+    static func setRepsAt(_ s: RunState, slotId: String, reps: Double) -> RunState {
+        guard let idx = s.slots.firstIndex(where: { $0.id == slotId }), s.slots[idx].kind == .work,
+              s.actuals[slotId]?.doneAt == nil else { return s }
+        var s = s
+        var a = s.actuals[slotId] ?? Actual()
+        a.reps = reps
+        s.actuals[slotId] = a
+        return s
+    }
+
+    /// The tick on a set row. The running set is Done (advance). A set passed without a tick
+    /// (skipped, or un-ticked to fix its weight) is logged where it is and the cursor stays put.
+    static func completeSet(_ s: RunState, now: Double, slotId: String) -> RunState {
+        guard let idx = s.slots.firstIndex(where: { $0.id == slotId }), s.slots[idx].kind == .work,
+              s.actuals[slotId]?.doneAt == nil else { return s }
+        if idx == s.i, s.phase == .running || s.phase == .paused { return advance(s, now: now) }
+        guard idx < s.i else { return s }
+        var s = s
+        var a = s.actuals[slotId] ?? Actual()
+        a.doneAt = now
+        s.actuals[slotId] = a
+        if let block = s.slots[idx].blockId { s.blockDone[block, default: 0] += 1 }
+        return s
+    }
+
+    /// Un-tick a done set so its weight and reps can be put right. It is not logged until ticked again.
+    static func reopenSet(_ s: RunState, slotId: String) -> RunState {
+        guard let idx = s.slots.firstIndex(where: { $0.id == slotId }), s.actuals[slotId]?.doneAt != nil else { return s }
+        var s = s
+        s.actuals[slotId]?.doneAt = nil
+        if let block = s.slots[idx].blockId { s.blockDone[block] = max(0, (s.blockDone[block] ?? 0) - 1) }
+        return s
+    }
+
     /// Drop a step for the rest of the session: remove every remaining slot of it.
     static func drop(_ s: RunState, now: Double, stepId: String) -> RunState {
         let c = current(s)
@@ -460,6 +528,8 @@ enum Runner {
             e.target = target
             var sl = sl
             sl.step = .exercise(e)
+            // The plan's loads were for the planned exercise; the swap's target stands in for them.
+            sl.plan = sl.plan?.reps.map { SetPlan(reps: $0) }
             return sl
         }
         return c?.step.id == stepId ? enter(s, s.i, now) : s
@@ -519,6 +589,7 @@ enum Runner {
                 e.exercise = w.exercise
                 e.target = w.target
                 sl.step = .exercise(e)
+                sl.plan = sl.plan?.reps.map { SetPlan(reps: $0) }
             }
             if let a = ahead[sl.step.id], !tail.contains(where: { $0.step.id == sl.step.id }) { actuals[sl.id] = a }
             sl.part = partOf[sl.part] ?? base
@@ -545,15 +616,17 @@ enum Runner {
 
     // MARK: - Effective values
 
-    /// The load in force at slot `idx`: the latest adjustment made on any earlier round of the
-    /// same step with the same exercise, else the plan. A swap starts afresh from the swap's target.
+    /// The load in force at slot `idx`: walking back through the rounds of the same step with the
+    /// same exercise, the first adjustment or prescribed set load met, else the step's target. So an
+    /// adjustment carries to later rounds until a round that prescribes its own load (a pyramid's
+    /// next step), and that round's load carries on in turn. A swap starts afresh from its target.
     static func effectiveTarget(_ s: RunState, _ idx: Int) -> Double? {
         guard s.slots.indices.contains(idx) else { return nil }
         let slot = s.slots[idx]
         var j = idx
         while j >= 0 {
             let sl = s.slots[j]
-            if sameWork(sl, slot), let t = s.actuals[sl.id]?.target { return t }
+            if sameWork(sl, slot), let t = s.actuals[sl.id]?.target ?? sl.plan?.load { return t }
             j -= 1
         }
         return slot.exercise?.target

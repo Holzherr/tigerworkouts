@@ -119,6 +119,58 @@ final class WalkthroughUITests: XCTestCase {
         tap(app.buttons["Done"])
     }
 
+    /// One exercise for sets is a grid: on the workout page a row per set, on the timer a tick per set.
+    func testStraightSets() {
+        open("Iron Base · Whole Body A")
+        let grid = app.descendants(matching: .any)["set-grid"].firstMatch
+        for _ in 0..<6 where !(grid.exists && grid.isHittable) {
+            app.swipeUp(velocity: .slow)
+        }
+        XCTAssertTrue(grid.waitForExistence(timeout: 5), "a one-exercise block should show its sets")
+        snap("26 Set grid on the workout page")
+
+        tap(app.buttons["Start workout"])
+        XCTAssertTrue(app.buttons["End session"].waitForExistence(timeout: 5))
+        // Skip through the warm-up and the first block to the Pull block's gate.
+        let startPull = app.buttons["Start Pull"]
+        for _ in 0..<60 where !startPull.exists {
+            let start = app.buttons.matching(NSPredicate(format: "label BEGINSWITH 'Start ' AND label != 'Start workout'")).firstMatch
+            if start.exists, start.isHittable {
+                start.tap()
+            } else if app.buttons["Skip"].exists {
+                app.buttons["Skip"].tap()
+            }
+        }
+        tap(startPull)
+        XCTAssertTrue(app.buttons["Tick set 1"].waitForExistence(timeout: 5), "the timer should show the sets")
+        snap("27 Set grid on the timer")
+
+        tap(app.buttons["Tick set 1"])
+        XCTAssertTrue(app.buttons["Un-tick set 1"].waitForExistence(timeout: 5), "a ticked set shows as done")
+        XCTAssertTrue(app.staticTexts["Rest"].waitForExistence(timeout: 3), "the rest between sets counts down")
+        snap("28 Rest between sets")
+
+        tap(app.buttons["Un-tick set 1"])
+        XCTAssertTrue(app.buttons["Set 1 load, more"].waitForExistence(timeout: 5), "an un-ticked set can be changed")
+        snap("29 Set un-ticked to fix its weight")
+
+        tap(app.buttons["End session"])
+        tap(app.buttons["Finish and save"])
+        tap(app.buttons["Done"])
+    }
+
+    /// An AMRAP runs against its cap, and the timer says how much of it is left.
+    func testCapClock() {
+        open("Cindy")
+        tap(app.buttons["Start workout"])
+        let cap = app.descendants(matching: .any)["cap-left"].firstMatch
+        XCTAssertTrue(cap.waitForExistence(timeout: 12), "a capped block should show the time left on it")
+        snap("30 Cap clock on an AMRAP")
+        tap(app.buttons["End session"])
+        tap(app.buttons["Finish and save"])
+        tap(app.buttons["Done"])
+    }
+
     /// The workout page is the editor: drag, remove and add without finding an edit mode.
     func testEditOnTheWorkoutPage() {
         open("Tabata This")

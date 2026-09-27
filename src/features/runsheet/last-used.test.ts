@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { lastSet, lastTimeLabel, lastUsed, withLastUsed } from './last-used';
+import { lastSet, lastSetLabel, lastSets, lastTimeLabel, lastUsed, withLastUsed } from './last-used';
 import type { SessionResult } from './progression';
 import type { Runsheet } from './model';
 
@@ -73,5 +73,18 @@ describe('last time, on the row', () => {
 
   it('says nothing when there is no history', () => {
     expect(lastTimeLabel(lastSet([], bench), bench)).toBeUndefined();
+  });
+});
+
+describe('last time, per set', () => {
+  it('reads the newest session with sets for this step, else the exercise anywhere', () => {
+    const step = { kind: 'exercise', id: 'pr', exercise: { key: 'db_incline_press', name: 'Press', unit: 'kg', step: 2.5 }, forMode: 'reps', forValue: 8 } as const;
+    const res = (at: string, stepId: string, sets: { reps?: number; load?: number }[]): SessionResult => ({ runsheetId: 'x', startedAt: at, steps: [{ stepId, exerciseKey: 'db_incline_press', sets }] });
+    expect(lastSets([res('2026-09-01', 'pr', [{ reps: 8, load: 20 }]), res('2026-09-02', 'other', [{ reps: 5, load: 30 }])], step)).toEqual([{ reps: 8, load: 20 }]);
+    expect(lastSets([res('2026-09-02', 'other', [{ reps: 5, load: 30 }])], step)).toEqual([{ reps: 5, load: 30 }]);
+    expect(lastSets([], step)).toBeUndefined();
+    expect(lastSetLabel({ reps: 8, load: 57.5 })).toBe('last 57.5 × 8');
+    expect(lastSetLabel({ reps: 8 })).toBe('last 8');
+    expect(lastSetLabel({})).toBeUndefined();
   });
 });

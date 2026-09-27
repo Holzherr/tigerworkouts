@@ -10,6 +10,8 @@ struct RunsheetEditor<Header: View>: View {
     var locked: Set<String> = []
     /// The step running now, marked on its row.
     var current: String?
+    /// Grey line under one set of a straight-set block: last time's set of that number.
+    var setHint: (ExerciseStep, Int) -> String? = { _, _ in nil }
     /// The grey line under an exercise's name.
     var summary: (ExerciseStep) -> String
     var onExercise: (ExerciseStep) -> Void
@@ -124,21 +126,38 @@ struct RunsheetEditor<Header: View>: View {
                     .listRowBackground(Brand.surface)
             }
         case .add(let blockId):
-            if !locked.contains(blockId) {
-                HStack(spacing: 20) {
-                    Button { picking = PickTarget(blockId: blockId) } label: {
-                        Label("Add exercise", systemImage: "plus")
+            // One exercise done for sets: the sets are the rows that matter, so they get a grid,
+            // on the block's last row so a drag still counts rows the way it always has.
+            if let b = runsheet.items.compactMap(\.asBlock).first(where: { $0.id == blockId }), let step = b.straightSetStep {
+                VStack(alignment: .leading, spacing: 12) {
+                    SetPlanGrid(block: b, step: step, locked: locked.contains(blockId), hint: { setHint(step, $0) }) { change in
+                        apply(change(runsheet))
                     }
-                    Button { apply(Edit.addRest(runsheet, to: blockId)) } label: {
-                        Label("Add rest", systemImage: "pause")
-                    }
-                    Spacer()
+                    if !locked.contains(blockId) { addButtons(blockId) }
                 }
                 .buttonStyle(.borderless)
                 .font(.subheadline.weight(.semibold))
                 .foregroundStyle(Brand.coralInk)
                 .listRowBackground(Brand.surface)
+            } else if !locked.contains(blockId) {
+                addButtons(blockId)
+                    .buttonStyle(.borderless)
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(Brand.coralInk)
+                    .listRowBackground(Brand.surface)
             }
+        }
+    }
+
+    private func addButtons(_ blockId: String) -> some View {
+        HStack(spacing: 20) {
+            Button { picking = PickTarget(blockId: blockId) } label: {
+                Label("Add exercise", systemImage: "plus")
+            }
+            Button { apply(Edit.addRest(runsheet, to: blockId)) } label: {
+                Label("Add rest", systemImage: "pause")
+            }
+            Spacer()
         }
     }
 

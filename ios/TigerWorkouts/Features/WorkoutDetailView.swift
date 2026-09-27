@@ -23,6 +23,10 @@ struct WorkoutDetailView: View {
     var body: some View {
         RunsheetEditor(
             runsheet: runsheet,
+            setHint: { step, round in
+                let sets = LastTime.sets(store.results, for: step) ?? []
+                return sets.indices.contains(round) ? LastTime.setLabel(sets[round]) : nil
+            },
             summary: settingSummary,
             onExercise: { editing = $0 },
             apply: apply
