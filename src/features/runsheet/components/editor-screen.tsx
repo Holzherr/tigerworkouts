@@ -7,6 +7,7 @@ import { WorkoutIcon } from '@/shared/components/ui/workout-icon';
 import { fileToSquareDataUrl } from '@/shared/utils/image';
 import { shuffleIcon } from '@/features/workouts/icon';
 import { runsheetMinutes, scoreType, type ExerciseStep, type Item, type Runsheet, type ScoreType } from '../model';
+import type { Equipment } from '../plates';
 
 const SCORE_OPTIONS = [
   { value: 'auto', label: 'Auto' },
@@ -40,6 +41,8 @@ export interface EditorScreenProps {
   /** Grey line under a collapsed exercise, e.g. "last time 57.5 × 8". */
   hintFor?: (step: ExerciseStep) => string | undefined;
   setHintFor?: (step: ExerciseStep, round: number) => string | undefined;
+  /** Settings → My equipment, for the plate calculator in a set grid. */
+  equipment?: Equipment;
   refTitle?: (runsheetId: string) => string | undefined;
   /** Seconds a new rest gets (Settings → Default rest). */
   autoRest?: number;
@@ -51,7 +54,7 @@ export interface EditorScreenProps {
  * body; Start and Save as mine are pinned above the tab bar. In `author` mode (a new workout)
  * the title is an input and the pinned bar is Save workout + Start.
  */
-export const EditorScreen = ({ runsheet, onChange, onPickExercise, onSwapExercise, onBack, onReset, onStart, onSaveAsMine, onPastePlan, onTextChange, mode = 'tonight', dndVariant, resolveTarget, hintFor, setHintFor, refTitle, autoRest }: EditorScreenProps) => {
+export const EditorScreen = ({ runsheet, onChange, onPickExercise, onSwapExercise, onBack, onReset, onStart, onSaveAsMine, onPastePlan, onTextChange, mode = 'tonight', dndVariant, resolveTarget, hintFor, setHintFor, equipment, refTitle, autoRest }: EditorScreenProps) => {
   const setItems = (items: Item[]) => onChange({ ...runsheet, items });
   const minutes = runsheetMinutes(runsheet);
   const blocks = runsheet.items.filter(i => i.kind === 'block').length;
@@ -133,7 +136,7 @@ export const EditorScreen = ({ runsheet, onChange, onPickExercise, onSwapExercis
         </label>
       </header>
       <div className="min-h-0 flex-1 overflow-y-auto px-3 pt-3 pb-28">
-        <RunsheetList items={runsheet.items} onChange={setItems} onPickExercise={onPickExercise} onSwapExercise={onSwapExercise} resolveTarget={resolveTarget} hintFor={hintFor} setHintFor={setHintFor} refTitle={refTitle} variant={dndVariant} autoRest={autoRest} />
+        <RunsheetList items={runsheet.items} onChange={setItems} onPickExercise={onPickExercise} onSwapExercise={onSwapExercise} resolveTarget={resolveTarget} hintFor={hintFor} setHintFor={setHintFor} equipment={equipment} refTitle={refTitle} variant={dndVariant} autoRest={autoRest} />
       </div>
       <div className="safe-bottom shrink-0 border-t border-line bg-surface p-3">
         <div className="flex gap-2">

@@ -12,7 +12,8 @@ import { scoreType, type ExerciseStep, type Runsheet } from '@/features/runsheet
 import { fmtScore, nextLoads, resolveTarget, type NextLoad, type SessionOrigin, type SessionResult, type StepResult, type TrainingMaxes } from '@/features/runsheet/progression';
 import { ScoreEntry } from './score-entry';
 import { BodyweightPrompt } from './bodyweight-prompt';
-import { nextTime, type Intent } from '@/features/runsheet/targets';
+import { nextTime, ruled, type Intent } from '@/features/runsheet/targets';
+import type { Equipment } from '@/features/runsheet/plates';
 import { celebrate } from '../celebrate';
 import { shareCardData } from '../share-card';
 import { CelebrationCard } from './celebration-card';
@@ -38,6 +39,8 @@ export interface ResultSheetProps {
   onBodyweight?: (kg: number | undefined) => void;
   /** How hard the next-time targets push (Settings → Suggestions). */
   intent?: Intent;
+  /** Settings → My equipment: next time's loads snap to what it can make. */
+  equipment?: Equipment;
 }
 
 const exerciseSteps = (r: Runsheet): ExerciseStep[] => r.items.flatMap(it => (it.kind === 'block' ? it.steps : it.kind === 'ref' ? [] : [it])).filter((s): s is ExerciseStep => s.kind === 'exercise');
@@ -46,14 +49,16 @@ const exerciseSteps = (r: Runsheet): ExerciseStep[] => r.items.flatMap(it => (it
  * End-of-session sheet. Top: the score entry for the workout's score type. Then the celebration
  * (workout count, streak, records set, deltas vs last time, Share) and the 1–10 effort row. Middle: one line per
  * exercise with the load used and, for program sessions, a "made it / missed" toggle and the
- * reps on any 5+ or max set. Bottom: "Next time" lines produced by the progression rules and,
+ * reps on any 5+ or max set — only on exercises a progression rule reads. Bottom: "Next time" lines produced by the progression rules and,
  * for everything they do not move, the targets read from history (targets.ts), then Save. Pure:
  * the host stores the result and updates training maxes.
  */
-export const ResultSheet = ({ runsheet, history = [], allResults = history, trainingMaxes = {}, bodyweightKg, startedAt, initial, startedFrom, onSave, onCancel, onBodyweight, intent = 'maintain' }: ResultSheetProps) => {
+export const ResultSheet = ({ runsheet, history = [], allResults = history, trainingMaxes = {}, bodyweightKg, startedAt, initial, startedFrom, onSave, onCancel, onBodyweight, intent = 'maintain', equipment }: ResultSheetProps) => {
   const type = scoreType(runsheet);
   const steps = useMemo(() => exerciseSteps(runsheet), [runsheet]);
-  const hasProgression = !!runsheet.progression || runsheet.items.some(i => i.kind === 'block' && i.progression);
+  // Made it / Missed only where a progression rule reads it: a rule on one block says nothing
+  // about the exercises in the others.
+  const hasRule = (s: ExerciseStep) => ruled(runsheet, s);
   const [score, setScore] = useState<number | undefined>(initial?.score);
   const [notes, setNotes] = useState('');
   const [rpe, setRpe] = useState<number | undefined>(initial?.rpe);
@@ -66,16 +71,16 @@ export const ResultSheet = ({ runsheet, history = [], allResults = history, trai
     Object.fromEntries(
       steps.map(s => {
         const rec = matched(s);
-        return [s.id, { ...rec, stepId: s.id, exerciseKey: rec?.exerciseKey ?? s.exercise.key, target: rec?.target ?? resolveTarget(s, trainingMaxes, bodyweightKg), success: rec?.success ?? (hasProgression ? true : undefined), reps: rec?.reps ?? (s.forMode === 'amrap' || s.forMode === 'max' ? [s.forValue] : undefined) }];
+        return [s.id, { ...rec, stepId: s.id, exerciseKey: rec?.exerciseKey ?? s.exercise.key, target: rec?.target ?? resolveTarget(s, trainingMaxes, bodyweightKg, equipment), success: rec?.success ?? (hasRule(s) ? true : undefined), reps: rec?.reps ?? (s.forMode === 'amrap' || s.forMode === 'max' ? [s.forValue] : undefined) }];
       })
     )
   );
   const result: SessionResult = { ...initial, runsheetId: runsheet.id ?? runsheet.title, title: runsheet.title, startedAt: initial?.startedAt ?? startedAt ?? new Date().toISOString(), endedAt: initial?.endedAt ?? new Date().toISOString(), score, scoreText: score !== undefined ? fmtScore(type, score) : undefined, steps: [...Object.values(rows), ...extra], notes: notes || undefined, rpe, startedFrom };
   const celebration = celebrate(result, allResults);
   const exerciseName = (k: string) => ({ name: LIB[k]?.name ?? k, unit: LIB[k]?.unit });
-  const next = useMemo(() => nextLoads(runsheet, result, history, trainingMaxes), [runsheet, result, history, trainingMaxes]);
+  const next = useMemo(() => nextLoads(runsheet, result, history, trainingMaxes, equipment), [runsheet, result, history, trainingMaxes, equipment]);
   // Targets from history for what the programme rules do not move: the score, loads, reps.
-  const targets = useMemo(() => nextTime(runsheet, result, history, intent, next.map(n => n.exerciseKey)), [runsheet, result, history, intent, next]);
+  const targets = useMemo(() => nextTime(runsheet, result, history, intent, next.map(n => n.exerciseKey), equipment), [runsheet, result, history, intent, next, equipment]);
   const set = (id: string, patch: Partial<StepResult>) => setRows(r => ({ ...r, [id]: { ...r[id], ...patch } }));
   const seen = new Set<string>();
 
@@ -110,7 +115,7 @@ export const ResultSheet = ({ runsheet, history = [], allResults = history, trai
                 </div>
                 {s.exercise.unit && s.exercise.unit !== 'reps' && <Stepper size="sm" aria-label="Load used" value={row.target ?? 0} step={s.exercise.step} onChange={t => set(s.id, { target: t })} />}
               </div>
-              {(hasProgression || logsReps) && (
+              {(hasRule(s) || logsReps) && (
                 <div className="mt-2 flex items-center justify-between gap-2">
                   {logsReps ? (
                     <>

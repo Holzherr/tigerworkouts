@@ -10,6 +10,7 @@
 import type { Runsheet } from '@/features/runsheet/model';
 import type { LibraryExercise } from '@/features/exercises/library';
 import type { SessionResult, TrainingMaxes } from '@/features/runsheet/progression';
+import type { Equipment } from '@/features/runsheet/plates';
 import { currentUser, sb } from './client';
 import { fromLegacySession, isLegacySession, legacyWorkoutToRunsheet, type LegacySession } from './legacy';
 
@@ -23,6 +24,7 @@ export interface SyncTarget {
   units: 'metric' | 'imperial';
   trainingMaxes: TrainingMaxes;
   bodyweightKg?: number;
+  equipment?: Equipment;
   exercises?: Record<string, LibraryExercise>;
 }
 export interface Favorite {
@@ -232,7 +234,7 @@ export const sync = async (local: SyncTarget): Promise<SyncResult> => {
 
   // ── user state: last writer wins, server fills blanks ──
   const { data: st } = await sb.from('user_state').select('favorites,prefs').eq('owner', uid).maybeSingle();
-  const prefs = (st?.prefs ?? {}) as Partial<{ name: string; saved: string[]; avatar: Avatar; units: 'metric' | 'imperial'; trainingMaxes: TrainingMaxes; bodyweightKg: number }>;
+  const prefs = (st?.prefs ?? {}) as Partial<{ name: string; saved: string[]; avatar: Avatar; units: 'metric' | 'imperial'; trainingMaxes: TrainingMaxes; bodyweightKg: number; equipment: Equipment }>;
   const merged = {
     favorites: local.favorites.length ? local.favorites : ((st?.favorites as Favorite[] | null) ?? []),
     saved: [...new Set([...(prefs.saved ?? []), ...local.saved])],
@@ -241,10 +243,11 @@ export const sync = async (local: SyncTarget): Promise<SyncResult> => {
     units: local.units ?? prefs.units ?? 'metric',
     trainingMaxes: { ...(prefs.trainingMaxes ?? {}), ...local.trainingMaxes },
     bodyweightKg: local.bodyweightKg ?? prefs.bodyweightKg,
+    equipment: local.equipment ?? prefs.equipment,
   };
   Object.assign(patch, merged);
   if (J(merged) !== snap['state']) {
-    const { error } = await sb.from('user_state').upsert({ owner: uid, favorites: merged.favorites, prefs: { name: merged.name, saved: merged.saved, avatar: merged.avatar, units: merged.units, trainingMaxes: merged.trainingMaxes, bodyweightKg: merged.bodyweightKg } }, { onConflict: 'owner' });
+    const { error } = await sb.from('user_state').upsert({ owner: uid, favorites: merged.favorites, prefs: { ...prefs, name: merged.name, saved: merged.saved, avatar: merged.avatar, units: merged.units, trainingMaxes: merged.trainingMaxes, bodyweightKg: merged.bodyweightKg, equipment: merged.equipment } }, { onConflict: 'owner' });
     if (error) errors.push(error.message);
     else snap['state'] = J(merged);
     await sb.from('profiles').update({ name: merged.name, units: merged.units }).eq('id', uid);

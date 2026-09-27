@@ -416,6 +416,48 @@ describe('the set grid', () => {
   });
 });
 
+describe('set types', () => {
+  // A warm-up at 40, two working sets at 60, then a drop set at 45 straight after the last.
+  const sheet = (): Runsheet => ({
+    id: 't',
+    title: 'Types',
+    items: [{ kind: 'block', id: 'b', name: 'Bench', repeat: 4, steps: [{ ...makeExercise(EX.db_incline_press, { target: 60, forMode: 'reps', forValue: 8 }), id: 'pr', sets: [{ load: 40, type: 'warmup' }, { load: 60 }, {}, { load: 45, type: 'drop' }] }, { ...makeRest(60), id: 'r' }] }],
+  });
+  const ids = (s: R.RunState) => s.slots.filter(x => x.kind === 'work').map(x => x.id);
+
+  it('each set carries its planned type', () => {
+    const s = start(sheet(), 0);
+    expect(s.slots.map((_, i) => R.typeAt(s, i)).filter((_, i) => s.slots[i].kind === 'work')).toEqual(['warmup', 'normal', 'normal', 'drop']);
+  });
+  it('no rest before a drop set', () => {
+    let s = tick(start(sheet(), 0), 5000);
+    s = advance(s, 10000); // warm-up done → rest
+    expect(s.slots[s.i].kind).toBe('rest');
+    s = advance(s, 20000); // rest over → set 2
+    s = advance(s, 30000); // set 2 done → rest
+    s = advance(s, 40000); // rest over → set 3
+    s = advance(s, 50000); // set 3 done: the drop set comes straight on
+    expect(s.slots[s.i].id).toBe(ids(s)[3]);
+    expect(s.phase).toBe('running');
+  });
+  it('a type changed on the grid counts, rest rule included', () => {
+    let s = tick(start(sheet(), 0), 5000);
+    s = R.setTypeAt(s, ids(s)[1], 'drop');
+    s = advance(s, 10000);
+    expect(s.slots[s.i].id).toBe(ids(s)[1]);
+    s = R.setTypeAt(s, ids(s)[2], 'failure');
+    expect(R.typeAt(s, s.slots.findIndex(x => x.id === ids(s)[2]))).toBe('failure');
+  });
+  it('logs the type on each set; a warm-up stays out of the old target and reps fields', () => {
+    let s = tick(start(sheet(), 0), 5000);
+    for (let t = 10000; s.phase !== 'done'; t += 10000) s = advance(s, t);
+    const row = toResult(s, sheet(), 200000).steps[0];
+    expect(row.sets?.map(x => x.type)).toEqual(['warmup', undefined, undefined, 'drop']);
+    expect(row.sets?.map(x => x.load)).toEqual([40, 60, 60, 45]);
+    expect(row.reps).toEqual([8, 8, 8]);
+  });
+});
+
 describe('cap clock', () => {
   it('counts down the block cap and ignores uncapped blocks', () => {
     let s = tick(start(cindy(), 0), 5000);

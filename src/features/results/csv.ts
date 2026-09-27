@@ -5,11 +5,21 @@
  */
 import type { ExerciseGroup, LibraryExercise } from '@/features/exercises/library';
 import type { SessionResult, SetResult } from '@/features/runsheet/progression';
+import type { SetType } from '@/features/runsheet/model';
 import { setsOf } from './logbook';
 
 // ── export ──
 
-export const EXPORT_COLUMNS = ['date', 'workout', 'exercise', 'exercise_key', 'set', 'load', 'unit', 'reps', 'duration_seconds', 'set_time_seconds', 'notes'] as const;
+export const EXPORT_COLUMNS = ['date', 'workout', 'exercise', 'exercise_key', 'set', 'set_type', 'load', 'unit', 'reps', 'duration_seconds', 'set_time_seconds', 'notes'] as const;
+
+/** A set type in a file, in Hevy's words, which this export uses too. */
+const TYPE_WORD: Record<SetType, string> = { normal: 'normal', warmup: 'warmup', drop: 'dropset', failure: 'failure' };
+export const setTypeWord = (t: SetType | undefined) => TYPE_WORD[t ?? 'normal'];
+/** Hevy's and this app's words back to a type; unset for normal or anything unknown. */
+export const readSetType = (s: string): SetType | undefined => {
+  const t = s.trim().toLowerCase().replace(/[\s_-]/g, '');
+  return t === 'warmup' || t === 'w' ? 'warmup' : t === 'dropset' || t === 'drop' || t === 'd' ? 'drop' : t === 'failure' || t === 'f' ? 'failure' : undefined;
+};
 
 /** Set time in seconds of session time. Written by the timer from the set-time change on; older sets have none. */
 type TimedSet = SetResult & { at?: number };
@@ -32,14 +42,14 @@ export const toCsv = (results: SessionResult[], exercise: (key: string) => { nam
     const head = [r.startedAt, r.title ?? r.activity?.name ?? r.runsheetId];
     const tail = (set?: TimedSet) => [num(r.durationSec ?? (r.activity ? r.activity.minutes * 60 : undefined)), num(set?.at), r.notes ?? ''];
     if (!r.steps.length) {
-      rows.push(line([...head, '', '', '', '', '', '', ...tail()]));
+      rows.push(line([...head, '', '', '', '', '', '', '', ...tail()]));
       continue;
     }
     for (const s of r.steps) {
       const ex = exercise(s.exerciseKey);
       const sets = setsOf(s) as TimedSet[];
-      if (!sets.length) rows.push(line([...head, ex.name, s.exerciseKey, '', '', ex.unit ?? '', '', ...tail()]));
-      sets.forEach((x, i) => rows.push(line([...head, ex.name, s.exerciseKey, String(i + 1), num(x.load), ex.unit ?? '', num(x.reps), ...tail(x)])));
+      if (!sets.length) rows.push(line([...head, ex.name, s.exerciseKey, '', '', '', ex.unit ?? '', '', ...tail()]));
+      sets.forEach((x, i) => rows.push(line([...head, ex.name, s.exerciseKey, String(i + 1), setTypeWord(x.type), num(x.load), ex.unit ?? '', num(x.reps), ...tail(x)])));
     }
   }
   return rows.join('\n') + '\n';
@@ -163,7 +173,7 @@ const group = (rows: string[][], read: (get: Row) => { session: Omit<ImportedSes
   return [...sessions.values()];
 };
 
-const set = (reps?: number, load?: number, seconds?: number): ImportedSet => ({ ...(reps !== undefined ? { reps } : {}), ...(load !== undefined ? { load } : {}), ...(seconds !== undefined ? { seconds } : {}) });
+const set = (reps?: number, load?: number, seconds?: number, type?: SetType): ImportedSet => ({ ...(reps !== undefined ? { reps } : {}), ...(load !== undefined ? { load } : {}), ...(seconds !== undefined ? { seconds } : {}), ...(type ? { type } : {}) });
 
 /**
  * Hevy: title, start_time, end_time, description, exercise_title, superset_id, exercise_notes,
@@ -179,7 +189,7 @@ const hevy = (rows: string[][]): ImportedSession[] => {
     return {
       session: { title: get('title').trim() || 'Workout', startedAt: start.toISOString(), ...(end ? { endedAt: end.toISOString(), durationSec: Math.round((+end - +start) / 1000) } : {}), ...(get('description').trim() ? { notes: get('description').trim() } : {}) },
       exercise: get('exercise_title').trim(),
-      set: set(val(get('reps')), w === undefined ? undefined : lbs ? Math.round(w * LB * 100) / 100 : w, val(get('duration_seconds'))),
+      set: set(val(get('reps')), w === undefined ? undefined : lbs ? Math.round(w * LB * 100) / 100 : w, val(get('duration_seconds')), readSetType(get('set_type'))),
     };
   });
 };
@@ -215,7 +225,7 @@ const tiger = (rows: string[][]): ImportedSession[] =>
       exercise: get('exercise').trim(),
       key: get('exercise_key').trim() || undefined,
       unit: get('unit'),
-      set: get('set').trim() ? set(val(get('reps')), val(get('load'))) : undefined,
+      set: get('set').trim() ? set(val(get('reps')), val(get('load')), undefined, readSetType(get('set_type'))) : undefined,
     };
   });
 

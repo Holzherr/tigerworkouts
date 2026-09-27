@@ -23,6 +23,7 @@ import { Button } from '@/shared/components/ui/button';
 import { AddTile, SeamInsert, type AddKind } from './add-controls';
 import { BlockBracket, BlockHeader } from './block-bracket';
 import { SetGrid } from './set-grid';
+import type { Equipment } from '../plates';
 import { StepRow } from './step-row';
 import { SwipeToRemove } from './swipe-to-remove';
 
@@ -43,6 +44,8 @@ export interface RunsheetListProps {
   hintFor?: (step: ExerciseStep) => string | undefined;
   /** Grey line under one set of a straight-set block, e.g. last time's set of that number. */
   setHintFor?: (step: ExerciseStep, round: number) => string | undefined;
+  /** Settings → My equipment, for the plate calculator in a set grid. */
+  equipment?: Equipment;
   /** Title lookup for ref items (embedded runsheets). */
   refTitle?: (runsheetId: string) => string | undefined;
   className?: string;
@@ -95,7 +98,7 @@ const LIFT_MS = 350;
  * to make a block or join one. Blocks drag as a chunk by their header. Tap a row to expand it,
  * swipe or ✕ to remove, ＋ on a seam to insert there.
  */
-export const RunsheetList = ({ items, onChange, onPickExercise, onSwapExercise, expandedId: expandedProp, onExpandedChange, autoRest = 30, resolveTarget, hintFor, setHintFor, refTitle, className, variant = 'classic' }: RunsheetListProps) => {
+export const RunsheetList = ({ items, onChange, onPickExercise, onSwapExercise, expandedId: expandedProp, onExpandedChange, autoRest = 30, resolveTarget, hintFor, setHintFor, equipment, refTitle, className, variant = 'classic' }: RunsheetListProps) => {
   const [expandedLocal, setExpandedLocal] = useState<string | null>(null);
   const expandedId = expandedProp === undefined ? expandedLocal : expandedProp;
   const setExpanded = (id: string | null) => (onExpandedChange ? onExpandedChange(id) : setExpandedLocal(id));
@@ -370,7 +373,7 @@ export const RunsheetList = ({ items, onChange, onPickExercise, onSwapExercise, 
       }
       // One exercise done for N sets: the sets are the rows that matter, so they get a grid.
       const straight = straightSetStep(block);
-      if (straight && !activeId) inner.push(<SetGrid key={`${block.id}:sets`} block={block} onChange={b => onChange(items.map(it => (it.id === b.id ? b : it)))} hintFor={setHintFor ? round => setHintFor(straight, round) : undefined} />);
+      if (straight && !activeId) inner.push(<SetGrid key={`${block.id}:sets`} block={block} onChange={b => onChange(items.map(it => (it.id === b.id ? b : it)))} hintFor={setHintFor ? round => setHintFor(straight, round) : undefined} equipment={equipment} />);
       const endRow = rows[j];
       const div = divider(r);
       if (div) blocks.push(div);

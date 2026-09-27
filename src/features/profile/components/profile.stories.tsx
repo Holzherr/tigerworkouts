@@ -10,6 +10,8 @@ import type { Favorite } from '@/features/cloud/sync';
 import { Button } from '@/shared/components/ui/button';
 import { SettingsSheet } from './settings-sheet';
 import { MeScreen } from './me-screen';
+import { EquipmentSheet } from './equipment-sheet';
+import type { Equipment } from '@/features/runsheet/plates';
 
 const meta = {
   title: 'Profile/Sheets',
@@ -35,6 +37,21 @@ const Settings = () => {
   );
 };
 export const Settings_: Story = { render: () => <Settings /> };
+
+const Kit = () => {
+  const [e, setE] = useState<Equipment>({ barKg: 20, plates: [{ kg: 20, count: 2 }, { kg: 10, count: 2 }, { kg: 5, count: 2 }, { kg: 2.5, count: 2 }], dumbbells: [10, 12.5, 15], kettlebells: [12, 16, 24] });
+  const [open, setOpen] = useState(true);
+  return (
+    <div className="p-4">
+      <Button variant="ghost" onClick={() => setOpen(true)}>
+        Open My equipment
+      </Button>
+      <EquipmentSheet open={open} onOpenChange={setOpen} equipment={e} onChange={setE} />
+    </div>
+  );
+};
+/** Settings → My equipment: bar, plate counts, dumbbells and kettlebells owned. */
+export const MyEquipment: Story = { render: () => <Kit /> };
 
 const Picker = () => {
   const [open, setOpen] = useState(true);

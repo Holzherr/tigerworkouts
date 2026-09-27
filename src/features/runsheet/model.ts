@@ -95,10 +95,35 @@ export interface ExerciseStep {
   note?: string;
 }
 
+/**
+ * What a set is for. normal = a working set. warmup = lighter, before the work: left out of records,
+ * volume, stalls and targets. drop = straight on from the set before at a lighter load, no rest and
+ * no set number of its own. failure = a working set taken to failure. Unset means normal.
+ */
+export type SetType = 'normal' | 'warmup' | 'drop' | 'failure';
+
+/** The order a tap on the set number goes through. */
+export const SET_TYPES: SetType[] = ['normal', 'warmup', 'drop', 'failure'];
+export const SET_TYPE_LABEL: Record<SetType, string> = { normal: 'Normal', warmup: 'Warm-up', drop: 'Drop set', failure: 'Failure' };
+/** The next type in the cycle W / 1 / D / F. */
+export const nextSetType = (t: SetType | undefined): SetType => SET_TYPES[(SET_TYPES.indexOf(t ?? 'normal') + 1) % SET_TYPES.length];
+
+/**
+ * What each row's number shows: W for a warm-up, D for a drop set, F for a set to failure, and a
+ * running count of the normal sets otherwise — a drop set is part of the set before it, so it is
+ * not a new number.
+ */
+export const setMarks = (types: (SetType | undefined)[]): string[] => {
+  let n = 0;
+  return types.map(t => (t === 'warmup' ? 'W' : t === 'drop' ? 'D' : t === 'failure' ? 'F' : String(++n)));
+};
+
 /** One prescribed set. `reps` stands in for forValue (the count, or the seconds of a timed set). */
 export interface SetPlan {
   reps?: number;
   load?: number;
+  /** Unset for a normal set. Never carried to the sets after it, unlike reps and load. */
+  type?: SetType;
 }
 
 export interface RestStep {
@@ -267,11 +292,16 @@ export const editSet = (b: Block, round: number, patch: SetPlan): Block => {
   if (!step) return b;
   const sets: SetPlan[] = Array.from({ length: Math.max(b.repeat, step.sets?.length ?? 0) }, (_, i) => {
     const p = plannedSet(step, i);
-    return { reps: p.reps, ...(p.load !== undefined ? { load: p.load } : {}) };
+    const type = step.sets?.[i]?.type;
+    return { reps: p.reps, ...(p.load !== undefined ? { load: p.load } : {}), ...(type && type !== 'normal' ? { type } : {}) };
   });
   sets[round] = { ...sets[round], ...patch };
+  if (sets[round].type === 'normal' || sets[round].type === undefined) delete sets[round].type;
   return { ...b, steps: b.steps.map(s => (s.id === step.id ? { ...step, sets } : s)) };
 };
+/** The type of one planned set; normal when the plan says nothing. */
+export const plannedType = (s: ExerciseStep, round: number): SetType => s.sets?.[round]?.type ?? 'normal';
+
 /** One more set, a copy of the last one; the block repeats once more. */
 export const addSet = (b: Block): Block => {
   const step = straightSetStep(b);
@@ -290,6 +320,10 @@ export const removeSet = (b: Block): Block => {
   if (!next.sets?.length) delete next.sets;
   return { ...b, repeat, steps: b.steps.map(s => (s.id === step.id ? next : s)) };
 };
+
+/** The set grid has a load column: a unit to count it in, and either an absolute load or a relative
+ * one (% of a training max, × bodyweight) already resolved into `target` by `resolveLoads`. */
+export const showsLoad = (s: ExerciseStep) => !!s.exercise.unit && (s.target !== undefined || (s.loadFactor === undefined && s.targetPct === undefined));
 
 /** Column heading for the per-set count; undefined for modes with nothing to count per set. */
 export const countLabel = (m: ForMode): string | undefined =>

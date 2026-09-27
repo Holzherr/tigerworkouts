@@ -23,3 +23,11 @@ export default meta;
 type Story = StoryObj<typeof meta>;
 
 export const Pyramid: Story = { render: () => <Live /> };
+
+const typed = (): Block => ({ kind: 'block', id: 'b', name: 'Bench', repeat: 5, steps: [{ ...makeExercise(EX.bb_bench, { forMode: 'reps', forValue: 8, target: 60 }), id: 'bench', sets: [{ reps: 10, load: 40, type: 'warmup' }, { reps: 8, load: 60 }, { reps: 8, load: 60 }, { reps: 6, load: 60, type: 'failure' }, { reps: 8, load: 45, type: 'drop' }] }, { ...makeRest(90), id: 'r' }] });
+const Typed = () => {
+  const [block, setBlock] = useState(typed);
+  return <SetGrid block={block} onChange={setBlock} equipment={{ barKg: 20, plates: [{ kg: 20, count: 2 }, { kg: 10, count: 2 }, { kg: 5, count: 2 }, { kg: 2.5, count: 2 }] }} />;
+};
+/** Warm-up (W), two working sets, one to failure (F) and a drop set (D). Tap a set number to change its type; the disc opens the plate calculator. */
+export const SetTypes: Story = { render: () => <Typed /> };

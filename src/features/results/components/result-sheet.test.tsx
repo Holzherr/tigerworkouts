@@ -66,3 +66,24 @@ describe('ResultSheet celebration and effort', () => {
     expect(onSave.mock.calls[0][0].rpe).toBeUndefined();
   });
 });
+
+describe('ResultSheet made it / missed', () => {
+  it('asks only for the exercises a progression rule reads', () => {
+    const lift = (id: string, key: string, name: string) => ({ kind: 'exercise' as const, id, exercise: { key, name, unit: 'kg', step: 2.5 }, forMode: 'reps' as const, forValue: 5, target: 60 });
+    const r = {
+      id: 'ruled',
+      title: 'Squat day',
+      items: [
+        { kind: 'block' as const, id: 'b1', name: 'Squat', repeat: 5, progression: { onSuccessKg: 2.5 }, steps: [lift('sq', 'bb_back_squat', 'Squat')] },
+        { kind: 'block' as const, id: 'b2', name: 'Accessories', repeat: 3, steps: [lift('row', 'bb_row', 'Row')] },
+      ],
+    };
+    const onSave = vi.fn();
+    render(<ResultSheet runsheet={r} onSave={onSave} />);
+    expect(screen.getAllByText('Made it')).toHaveLength(1);
+    fireEvent.click(screen.getByText('Save result'));
+    const saved: SessionResult = onSave.mock.calls[0][0];
+    expect(saved.steps.find(x => x.stepId === 'sq')?.success).toBe(true);
+    expect(saved.steps.find(x => x.stepId === 'row')?.success).toBeUndefined();
+  });
+});

@@ -13,8 +13,9 @@
  * `ios/TigerWorkouts/Model/Targets.swift`. Programmes with their own progression rules keep
  * `nextLoads` (progression.ts), and these lines stand aside for the exercises it covers.
  */
-import { scoreType, shortUnit, type Block, type ExerciseStep, type Item, type Runsheet } from './model';
+import { plannedSet, scoreType, shortUnit, type Block, type ExerciseStep, type Item, type Runsheet, type SetType } from './model';
 import type { SessionResult, SetResult } from './progression';
+import { nextLoadUp, type Equipment } from './plates';
 import { lastSets } from './last-used';
 
 export type Intent = 'restore' | 'maintain' | 'overreach';
@@ -118,13 +119,22 @@ export interface SetTarget {
 
 const repsText = (reps: number[]) => (reps.every(n => n === reps[0]) ? num(reps[0]) : reps.map(num).join(', '));
 
+/** A per-set plan whose working sets differ (a pyramid, ramping sets). Warm-ups before straight
+ * sets do not make one. */
+const pyramid = (s: ExerciseStep): boolean => {
+  const work = (s.sets ?? []).flatMap((p, i) => (p.type === 'warmup' ? [] : [plannedSet(s, i)]));
+  return work.some(p => p.reps !== work[0].reps || p.load !== work[0].load);
+};
+
 /**
  * Today's sets for one step, from its sets last time. Only steps counted in reps whose load is
- * theirs to change: no per-set plan (a pyramid), no load relative to a training max or bodyweight,
- * nothing on a speed. `last` is what `lastSets` returns.
+ * theirs to change: no pyramid, no load relative to a training max or bodyweight, nothing on a
+ * speed. `last` is what `lastSets` returns; its warm-ups and drop sets are not the work, so they are
+ * left out. The next load up is the next one `kit` can make (a 24 kg bell goes to 28, not 26.5).
  */
-export const setTarget = (s: ExerciseStep, last: SetResult[] | undefined, intent: Intent = 'maintain'): SetTarget | undefined => {
-  if (!last?.length || s.sets?.length || s.targetPct !== undefined || s.loadFactor !== undefined) return undefined;
+export const setTarget = (s: ExerciseStep, lastAll: SetResult[] | undefined, intent: Intent = 'maintain', kit?: Equipment): SetTarget | undefined => {
+  const last = lastAll?.filter(x => x.type !== 'warmup' && x.type !== 'drop');
+  if (!last?.length || pyramid(s) || s.targetPct !== undefined || s.loadFactor !== undefined) return undefined;
   if (s.forMode !== 'reps' && s.forMode !== 'amrap' && s.forMode !== 'max') return undefined;
   const unit = shortUnit(s.exercise.unit);
   if (unit === 'kph') return undefined;
@@ -141,33 +151,35 @@ export const setTarget = (s: ExerciseStep, last: SetResult[] | undefined, intent
   if (s.forMode !== 'reps') return undefined;
   const working = last.filter(x => x.load === top && x.reps !== undefined && x.reps > 0).map(x => x.reps!);
   if (!working.length) return undefined;
-  const step = s.exercise.step || 2.5;
+  const up = nextLoadUp(top, s.exercise, kit);
   const bottom = s.forValue;
-  const ceiling = s.forMax ?? bankTop(top, step, bottom);
-  const next = Math.round((top + step) * 100) / 100;
+  const ceiling = s.forMax ?? (up !== undefined ? bankTop(top, up - top, bottom) : bottom * 2);
+  const next = up !== undefined ? Math.round(up * 100) / 100 : top;
   const u = unit ? ` ${unit}` : '';
-  if (intent !== 'restore' && working.every(n => n >= ceiling)) {
+  if (up !== undefined && intent !== 'restore' && working.every(n => n >= ceiling)) {
     const reps = working.map(() => bottom);
     return { ...base, load: next, reps, jump: true, text: `${num(next)}${u} × ${repsText(reps)}`, reason: `${num(ceiling)} reps at ${num(top)}${u} on every set: up to ${num(next)}${u}` };
   }
   // A rep or two more a set, never past the ceiling, never fewer than was done.
   const reps = working.map(n => Math.max(n, Math.min(ceiling, n + add)));
-  return { ...base, load: top, reps, jump: false, text: `${num(top)}${u} × ${repsText(reps)}`, reason: add ? `bank reps: ${num(next)}${u} once every set reaches ${num(ceiling)}` : 'what you did last time' };
+  const why = up === undefined ? `bank reps: ${num(top)}${u} is the heaviest you own` : `bank reps: ${num(next)}${u} once every set reaches ${num(ceiling)}`;
+  return { ...base, load: top, reps, jump: false, text: `${num(top)}${u} × ${repsText(reps)}`, reason: add ? why : 'what you did last time' };
 };
 
 const exerciseSteps = (items: Item[]): ExerciseStep[] => items.flatMap(it => (it.kind === 'block' ? it.steps : it.kind === 'ref' ? [] : [it])).filter((s): s is ExerciseStep => s.kind === 'exercise');
 
-const ruled = (r: Runsheet, s: ExerciseStep) => !!r.progression || r.items.some(i => i.kind === 'block' && !!i.progression && i.steps.some(x => x.id === s.id));
+/** A programme's own progression rule covers this step: the runsheet's, or its block's. */
+export const ruled = (r: Runsheet, s: ExerciseStep) => !!r.progression || r.items.some(i => i.kind === 'block' && !!i.progression && i.steps.some(x => x.id === s.id));
 
 /** A target per step, first step of each exercise only, skipping warm-ups and steps a programme's
  * own progression rules already move. */
-export const setTargets = (r: Runsheet, results: SessionResult[], intent: Intent = 'maintain'): SetTarget[] => {
+export const setTargets = (r: Runsheet, results: SessionResult[], intent: Intent = 'maintain', kit?: Equipment): SetTarget[] => {
   const seen = new Set<string>();
   const out: SetTarget[] = [];
   for (const s of exerciseSteps(r.items)) {
     if (seen.has(s.exercise.key) || (s.role ?? 'main') !== 'main' || ruled(r, s)) continue;
     seen.add(s.exercise.key);
-    const t = setTarget(s, lastSets(results, s), intent);
+    const t = setTarget(s, lastSets(results, s), intent, kit);
     if (t) out.push(t);
   }
   return out;
@@ -183,9 +195,9 @@ export interface Today {
 
 /** The one line for the Up next card and the top of the workout page: the score target if the
  * workout is scored, else the first exercise with a target. */
-export const today = (r: Runsheet, results: SessionResult[], intent: Intent = 'maintain'): Today | undefined => {
+export const today = (r: Runsheet, results: SessionResult[], intent: Intent = 'maintain', kit?: Equipment): Today | undefined => {
   const score = scoreTarget(r, results, intent);
-  const sets = score ? [] : setTargets(r, results, intent);
+  const sets = score ? [] : setTargets(r, results, intent, kit);
   if (score) return { text: score.text, detail: score.detail, score, sets };
   const first = sets[0];
   if (!first) return undefined;
@@ -197,7 +209,7 @@ export const today = (r: Runsheet, results: SessionResult[], intent: Intent = 'm
  * The target for where the timer is: the score's pace for a round of the main block, or the set's
  * load × reps for a straight set. Small, beside the race against last time.
  */
-export const timerTarget = (t: Today | undefined, at: { blockId?: string; stepId?: string; round: number }, r: Runsheet): string | undefined => {
+export const timerTarget = (t: Today | undefined, at: { blockId?: string; stepId?: string; round: number; type?: SetType; set?: number }, r: Runsheet): string | undefined => {
   if (!t) return undefined;
   const main = mainBlock(r);
   if (t.score && main && at.blockId === main.id) {
@@ -205,8 +217,10 @@ export const timerTarget = (t: Today | undefined, at: { blockId?: string; stepId
     return t.score.kind === 'time' ? `Target ${clock(t.score.aim)}${pace}` : `Target ${t.score.aim}+${pace}`;
   }
   const set = t.sets.find(x => x.stepId === at.stepId);
-  if (!set) return undefined;
-  const reps = set.reps[Math.min(at.round, set.reps.length - 1)];
+  // A warm-up or a drop set has no target: the target is for the work. `set` counts the working
+  // sets before this one, so a warm-up first does not shift the reps.
+  if (!set || at.type === 'warmup' || at.type === 'drop') return undefined;
+  const reps = set.reps[Math.min(at.set ?? at.round, set.reps.length - 1)];
   return set.load !== undefined ? `Target ${num(set.load)} × ${num(reps)}` : `Target ${num(reps)} reps`;
 };
 
@@ -221,11 +235,11 @@ export interface NextTimeLine {
  * The finish screen's "Next time", read as if the session just done were the newest: the score to
  * aim for, then a line per exercise not already moved by `nextLoads` (`covered`).
  */
-export const nextTime = (r: Runsheet, done: SessionResult, history: SessionResult[], intent: Intent = 'maintain', covered: string[] = []): NextTimeLine[] => {
+export const nextTime = (r: Runsheet, done: SessionResult, history: SessionResult[], intent: Intent = 'maintain', covered: string[] = [], kit?: Equipment): NextTimeLine[] => {
   const all = [...history.filter(h => h !== done && (h.id === undefined || h.id !== done.id)), { ...done, runsheetId: done.runsheetId || id(r) }];
   const out: NextTimeLine[] = [];
   const score = scoreTarget(r, all, intent);
   if (score) out.push({ key: 'score', name: r.title, text: score.text, reason: score.detail });
-  if (!score) for (const s of setTargets(r, all, intent)) if (!covered.includes(s.exerciseKey)) out.push({ key: s.exerciseKey, name: s.name, text: s.text, reason: s.reason });
+  if (!score) for (const s of setTargets(r, all, intent, kit)) if (!covered.includes(s.exerciseKey)) out.push({ key: s.exerciseKey, name: s.name, text: s.text, reason: s.reason });
   return out;
 };

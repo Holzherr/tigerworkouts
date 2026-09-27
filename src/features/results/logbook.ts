@@ -4,7 +4,7 @@
  * swapped mid-session logs a row per exercise, so the key is what the history follows, not the
  * step. Ported one for one to `ios/TigerWorkouts/Results/Logbook.swift`.
  */
-import type { SessionResult, SetResult, StepResult } from '@/features/runsheet/progression';
+import { isWorking, type SessionResult, type SetResult, type StepResult } from '@/features/runsheet/progression';
 
 /** One session of one exercise: every set of it in that session, in order. */
 export interface LogSession {
@@ -51,8 +51,9 @@ export const setsOf = (s: StepResult): SetResult[] => {
   return s.target !== undefined ? [{ load: s.target }] : [];
 };
 
-const loaded = (x: SetResult) => x.load !== undefined && x.load > 0;
-const counted = (x: SetResult) => x.reps !== undefined && x.reps > 0;
+// A warm-up is logged and shown, but it is never a record, never volume and never a session's best.
+const loaded = (x: SetResult) => isWorking(x) && x.load !== undefined && x.load > 0;
+const counted = (x: SetResult) => isWorking(x) && x.reps !== undefined && x.reps > 0;
 
 /** Sets above this many reps say nothing reliable about a one-rep max. */
 export const E1RM_MAX_REPS = 10;
@@ -121,7 +122,7 @@ export const sessionBest = (s: Pick<LogSession, 'sets'>, kind: LogKind): number 
   if (kind === 'strength') return max(s.sets.map(e1rm)) ?? topLoad(s);
   if (kind === 'load') return max(s.sets.map(x => (loaded(x) ? x.load : undefined)));
   if (kind === 'reps') return max(s.sets.map(x => (counted(x) ? x.reps : undefined)));
-  return s.sets.length || undefined;
+  return s.sets.filter(isWorking).length || undefined;
 };
 
 export interface ChartPoint {

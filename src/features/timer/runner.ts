@@ -3,7 +3,7 @@
  * transition takes `now` in ms so it can be tested without a clock. The React hook adds the
  * interval, sounds, wake lock and persistence.
  */
-import { plannedSet, rungSteps, scoreType, type Block, type ExerciseRef, type ExerciseStep, type Runsheet, type SetPlan, type Step } from '@/features/runsheet/model';
+import { plannedSet, rungSteps, scoreType, type Block, type ExerciseRef, type ExerciseStep, type Runsheet, type SetPlan, type SetType, type Step } from '@/features/runsheet/model';
 import type { RoundSplit, SessionResult, SetResult, StepResult } from '@/features/runsheet/progression';
 
 export interface Slot {
@@ -39,6 +39,8 @@ export interface Actual {
   incline?: number;
   reps?: number;
   changes: { atSec: number; target: number }[];
+  /** The set's type changed on the grid; over the plan's. */
+  type?: SetType;
   doneAt?: number;
   /** Session time when it was done, seconds, pauses excluded. */
   at?: number;
@@ -135,7 +137,7 @@ export const expand = (r: Runsheet, dropped: string[] = []): Slot[] => {
         }
         // A set with its own reps runs them; its load goes on the slot for effectiveTarget.
         const own = s.sets[ri];
-        const plan = own && (own.reps !== undefined || own.load !== undefined) ? own : undefined;
+        const plan = own && (own.reps !== undefined || own.load !== undefined || own.type !== undefined) ? own : undefined;
         push({ ...s, forValue: plannedSet(s, ri).reps }, { ...extra, ...(plan ? { plan } : {}) });
       }
       between(ri, rounds);
@@ -192,10 +194,35 @@ export const capLeft = (s: RunState, now: number): number | undefined => {
  * `ready` until the user taps Start block, so equipment changes don't eat the countdown. */
 const enter = (s: RunState, i: number, now: number): RunState => {
   if (i >= s.slots.length) return { ...s, i, phase: 'done', endsAt: undefined, endedAt: now };
+  if (i > s.i) {
+    const drop = restBeforeDrop(s, i);
+    if (drop !== undefined) return enter(s, drop, now);
+  }
   const slot = s.slots[i];
   if (i > 0 && i > s.i && slot.part !== s.slots[i - 1].part) return { ...s, i, phase: 'ready', slotStartedAt: now, endsAt: undefined, remainingMs: undefined };
   return activate(s, i, now);
 };
+/** The type of the set at slot idx: changed on the grid, else the plan's, else normal. */
+export const typeAt = (s: RunState, idx: number): SetType => {
+  const sl = s.slots[idx];
+  return (sl && (s.actuals[sl.id]?.type ?? sl.plan?.type)) ?? 'normal';
+};
+/** A drop set follows the set before it with no rest (Hevy's rule): when slot i is a rest in a block
+ * and the next set of that block is a drop set, the index of that set; else undefined. */
+const restBeforeDrop = (s: RunState, i: number): number | undefined => {
+  const sl = s.slots[i];
+  if (sl?.kind !== 'rest' || sl.untilBoundary || !sl.blockId || sl.mode !== 'rounds') return undefined;
+  let j = i;
+  while (j < s.slots.length && s.slots[j].kind === 'rest' && s.slots[j].blockId === sl.blockId) j++;
+  return j < s.slots.length && s.slots[j].blockId === sl.blockId && s.slots[j].kind === 'work' && typeAt(s, j) === 'drop' ? j : undefined;
+};
+/** Mark a set warm-up, normal, drop or to failure, from its row. Any set, done or not: the type is a label, not a number to lock. */
+export const setTypeAt = (s: RunState, slotId: string, type: SetType): RunState => {
+  const sl = s.slots[slotIndex(s, slotId)];
+  if (!sl || sl.kind !== 'work') return s;
+  return { ...s, actuals: { ...s.actuals, [slotId]: { ...(s.actuals[slotId] ?? { changes: [] }), type } } };
+};
+
 /** Start the block the timer is parked on. */
 export const startBlock = (s: RunState, now: number): RunState => (s.phase === 'ready' ? activate(s, s.i, now) : s);
 const activate = (s: RunState, i: number, now: number): RunState => {
@@ -580,8 +607,12 @@ export const toResult = (s: RunState, r: Runsheet, now: number): SessionResult =
     const incline = effectiveIncline(s, idx);
     const reps = a.reps !== undefined ? a.reps : slot.step.forMode === 'reps' ? slot.step.forValue : undefined;
     const at = doneAtSec(s, a);
-    const set = { ...(reps !== undefined ? { reps } : {}), ...(target !== undefined ? { load: target } : {}), ...(at !== undefined ? { at } : {}) };
-    steps.set(key, { stepId: slot.step.id, exerciseKey: slot.step.exercise.key, target, ...(incline !== undefined ? { incline } : {}), reps: [...(prev?.reps ?? []), ...(reps !== undefined ? [reps] : [])], success: prev?.success ?? true, sets: [...(prev?.sets ?? []), set] });
+    const type = typeAt(s, idx);
+    const set: SetResult = { ...(reps !== undefined ? { reps } : {}), ...(target !== undefined ? { load: target } : {}), ...(at !== undefined ? { at } : {}), ...(type !== 'normal' ? { type } : {}) };
+    // `target` and `reps` are for readers from before per-set rows: a warm-up is not the load
+    // worked at and its reps are not work, so they stay out of both.
+    const warm = type === 'warmup';
+    steps.set(key, { stepId: slot.step.id, exerciseKey: slot.step.exercise.key, target: warm ? (prev?.target ?? target) : target, ...(incline !== undefined ? { incline } : {}), reps: [...(prev?.reps ?? []), ...(reps !== undefined && !warm ? [reps] : [])], success: prev?.success ?? true, sets: [...(prev?.sets ?? []), set] });
   }
   let score: number | undefined;
   if (type === 'time') score = durationSec;

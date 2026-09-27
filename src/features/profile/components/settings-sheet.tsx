@@ -1,5 +1,7 @@
-import { Camera, Share2 } from 'lucide-react';
-import { useRef } from 'react';
+import { Camera, ChevronRight, Share2 } from 'lucide-react';
+import { useRef, useState } from 'react';
+import type { Equipment } from '@/features/runsheet/plates';
+import { EquipmentSheet, equipmentSummary } from './equipment-sheet';
 import { Button } from '@/shared/components/ui/button';
 import { Stepper } from '@/shared/components/ui/stepper';
 import { DND_VARIANTS, type DndVariant } from '@/features/runsheet/components/runsheet-list';
@@ -38,6 +40,9 @@ export interface SettingsSheetProps {
   /** How hard today's targets push. Maintain until changed. */
   intent?: Intent;
   onIntent?: (v: Intent) => void;
+  /** My equipment: what suggested loads snap to, and the plate calculator's plates. */
+  equipment?: Equipment;
+  onEquipment?: (e: Equipment) => void;
 }
 
 /** 56px avatar: photo, or an emoji / initial on a coloured disc. */
@@ -54,8 +59,9 @@ export const AvatarView = ({ name, avatar, size = 56 }: { name: string; avatar?:
  * Settings sheet: avatar preview with name field, emoji and colour chips, photo upload (resized
  * to 256px and stored as a data URL), units dropdown, Invite someone, Sign out.
  */
-export const SettingsSheet = ({ open, onOpenChange, name, avatar, units, email, onChange, onInvite, onSignOut, volume, onVolume, defaultRest, onDefaultRest, dnd, onDnd, intent = 'maintain', onIntent }: SettingsSheetProps) => {
+export const SettingsSheet = ({ open, onOpenChange, name, avatar, units, email, onChange, onInvite, onSignOut, volume, onVolume, defaultRest, onDefaultRest, dnd, onDnd, intent = 'maintain', onIntent, equipment, onEquipment }: SettingsSheetProps) => {
   const file = useRef<HTMLInputElement>(null);
+  const [kit, setKit] = useState(false);
   const onPhoto = (f: File) => {
     const img = new Image();
     img.onload = () => {
@@ -132,6 +138,18 @@ export const SettingsSheet = ({ open, onOpenChange, name, avatar, units, email, 
           </div>
           <div className="mt-1 text-[12px] text-muted">{INTENTS.find(i => i.id === intent)?.note} Ignoring a suggestion costs nothing.</div>
         </div>
+      )}
+      {onEquipment && (
+        <>
+          <button type="button" onClick={() => setKit(true)} className="flex w-full items-center justify-between gap-3 text-left">
+            <span className="min-w-0">
+              <span className="block text-[14px]">My equipment</span>
+              <span className="block truncate text-[12px] text-muted">{equipmentSummary(equipment)}</span>
+            </span>
+            <ChevronRight className="size-5 shrink-0 text-faint" />
+          </button>
+          {kit && <EquipmentSheet open={kit} onOpenChange={setKit} equipment={equipment} onChange={onEquipment} />}
+        </>
       )}
       <Button variant="ghost" block onClick={onInvite}>
           <Share2 /> Invite someone

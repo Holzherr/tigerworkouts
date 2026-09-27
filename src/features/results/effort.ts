@@ -1,6 +1,6 @@
 import type { ExerciseGroup } from '@/features/exercises/library';
 import type { SessionResult } from '@/features/runsheet/progression';
-import type { ExerciseStep, Runsheet } from '@/features/runsheet/model';
+import type { ExerciseStep, Runsheet, SetType } from '@/features/runsheet/model';
 
 /**
  * Rough METs per kind of work. Calories from METs are an estimate and nothing more — without
@@ -28,18 +28,28 @@ const DEFAULT_KG = 80;
 export interface Effort {
   /** Seconds of actual work, rest excluded. */
   workSec: number;
-  /** Sets completed across the session. */
+  /** Sets completed across the session. A warm-up is not a set of work, and a drop set is part of the set before it. */
   sets: number;
-  /** kg moved: load × reps, summed. Zero for a session with no weights. */
+  /** kg moved: load × reps, summed, warm-ups left out. Zero for a session with no weights. */
   tonnage: number;
   kcal: number;
   /** True when bodyweight is a guess, so the screen can say so. */
   estimatedWeight: boolean;
 }
 
+/** One set done: how long it took, its reps and load, and its type when it is not a normal set. */
+export interface Worked {
+  name?: string;
+  group?: ExerciseGroup;
+  seconds: number;
+  reps: number;
+  load?: number;
+  type?: SetType;
+}
+
 export const effort = (
   r: SessionResult,
-  worked: { group?: ExerciseGroup; seconds: number; reps: number; load?: number }[],
+  worked: Worked[],
   bodyweightKg?: number
 ): Effort => {
   const kg = bodyweightKg ?? DEFAULT_KG;
@@ -47,8 +57,8 @@ export const effort = (
   const kcal = worked.reduce((t, w) => t + ((MET[w.group ?? 'body'] ?? DEFAULT_MET) * 3.5 * kg) / 200 / 60 * w.seconds, 0);
   return {
     workSec,
-    sets: worked.length,
-    tonnage: worked.reduce((t, w) => t + (w.load ?? 0) * w.reps, 0),
+    sets: worked.filter(w => w.type !== 'warmup' && w.type !== 'drop').length,
+    tonnage: worked.reduce((t, w) => t + (w.type === 'warmup' ? 0 : (w.load ?? 0) * w.reps), 0),
     kcal: Math.round(kcal),
     estimatedWeight: bodyweightKg === undefined,
   };
@@ -93,12 +103,13 @@ export const loadTrend = (results: SessionResult[], exerciseKey: string): { at: 
  * One entry per set actually done, from the logged steps plus the runsheet they came from.
  * The runsheet supplies how long a set was and how many rounds; the log supplies the load.
  * Without the runsheet it still works — a set is assumed, with the session's own average length.
+ * A row with per-set results gives one entry per set, each with its own load and type.
  */
 export const workedFrom = (
   r: SessionResult,
   runsheet: Runsheet | undefined,
   ex: (key: string) => { name: string; group?: ExerciseGroup }
-): { name: string; group?: ExerciseGroup; seconds: number; reps: number; load?: number }[] => {
+): (Worked & { name: string })[] => {
   const found = new Map<string, { step: ExerciseStep; rounds: number }>();
   for (const it of runsheet?.items ?? []) {
     if (it.kind === 'block') {
@@ -114,6 +125,8 @@ export const workedFrom = (
     const secs = hit ? setSeconds(hit.step) : fallback;
     const rounds = Math.max(1, s.reps?.length || hit?.rounds || 1);
     const reps = (n: number) => s.reps?.[n] ?? (hit?.step.forMode === 'reps' ? hit.step.forValue : 0);
+    if (s.sets?.length)
+      return s.sets.map(x => ({ name: meta.name, group: meta.group, seconds: secs, reps: x.reps ?? (hit?.step.forMode === 'reps' ? hit.step.forValue : 0), load: x.load ?? s.target, ...(x.type && x.type !== 'normal' ? { type: x.type } : {}) }));
     return Array.from({ length: rounds }, (_, n) => ({ name: meta.name, group: meta.group, seconds: secs, reps: reps(n), load: s.target }));
   });
 };

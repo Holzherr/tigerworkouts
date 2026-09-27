@@ -23,7 +23,7 @@ const results: SessionResult[] = [
     durationSec: 3780,
     notes: 'Felt "strong"\nshoulder ok',
     steps: [
-      { stepId: 'a', exerciseKey: 'bb_bench', sets: [{ load: 80, reps: 5 }, { load: 82.5, reps: 4, at: 312 } as never] },
+      { stepId: 'a', exerciseKey: 'bb_bench', sets: [{ load: 80, reps: 5, type: 'warmup' }, { load: 82.5, reps: 4, at: 312 }] },
       { stepId: 'b', exerciseKey: 'bw_pullup', sets: [{ reps: 10 }] },
       { stepId: 'c', exerciseKey: 'u_pec_deck', target: 55, reps: [12] },
     ],
@@ -38,14 +38,14 @@ describe('CSV export', () => {
   const rows = parseCsv(csv);
 
   it('writes one row per set, oldest session first', () => {
-    expect(rows[0]).toEqual(['date', 'workout', 'exercise', 'exercise_key', 'set', 'load', 'unit', 'reps', 'duration_seconds', 'set_time_seconds', 'notes']);
+    expect(rows[0]).toEqual(['date', 'workout', 'exercise', 'exercise_key', 'set', 'set_type', 'load', 'unit', 'reps', 'duration_seconds', 'set_time_seconds', 'notes']);
     expect(rows).toHaveLength(1 + 1 + 4);
-    expect(rows[1]).toEqual(['2026-09-25T18:00:00.000Z', 'Padel', '', '', '', '', '', '', '3600', '', '']);
-    expect(rows[2]).toEqual(['2026-09-26T17:02:00.000Z', 'Push, heavy', 'Barbell bench press', 'bb_bench', '1', '80', 'kg', '5', '3780', '', 'Felt "strong"\nshoulder ok']);
-    expect(rows[3].slice(4, 10)).toEqual(['2', '82.5', 'kg', '4', '3780', '312']);
-    expect(rows[4].slice(2, 8)).toEqual(['Pull-up', 'bw_pullup', '1', '', '', '10']);
+    expect(rows[1]).toEqual(['2026-09-25T18:00:00.000Z', 'Padel', '', '', '', '', '', '', '', '3600', '', '']);
+    expect(rows[2]).toEqual(['2026-09-26T17:02:00.000Z', 'Push, heavy', 'Barbell bench press', 'bb_bench', '1', 'warmup', '80', 'kg', '5', '3780', '', 'Felt "strong"\nshoulder ok']);
+    expect(rows[3].slice(4, 11)).toEqual(['2', 'normal', '82.5', 'kg', '4', '3780', '312']);
+    expect(rows[4].slice(2, 9)).toEqual(['Pull-up', 'bw_pullup', '1', 'normal', '', '', '10']);
     // an older result with no per-set rows still exports its load and reps
-    expect(rows[5].slice(2, 8)).toEqual(['Pec deck', 'u_pec_deck', '1', '55', 'kg', '12']);
+    expect(rows[5].slice(2, 9)).toEqual(['Pec deck', 'u_pec_deck', '1', 'normal', '55', 'kg', '12']);
   });
 
   it('quotes commas, quotes and line breaks', () => {
@@ -62,7 +62,7 @@ describe('CSV export', () => {
     expect(fresh.newExercises).toEqual([]);
     const push = fresh.sessions.find(s => s.title === 'Push, heavy')!;
     expect(push.steps.map(s => s.exerciseKey)).toEqual(['bb_bench', 'bw_pullup', 'u_pec_deck']);
-    expect(push.steps[0].sets).toEqual([{ load: 80, reps: 5 }, { load: 82.5, reps: 4 }]);
+    expect(push.steps[0].sets).toEqual([{ load: 80, reps: 5, type: 'warmup' }, { load: 82.5, reps: 4 }]);
     expect(push.notes).toBe('Felt "strong"\nshoulder ok');
   });
 });
@@ -93,7 +93,8 @@ describe('Hevy import', () => {
     expect(push.durationSec).toBe(63 * 60);
     expect(push.notes).toBe('Felt strong, shoulder ok');
     expect(push.exercises.map(e => e.name)).toEqual(['Bench Press (Barbell)', 'Pec Deck (Machine)', 'Plank']);
-    expect(push.exercises[0].sets).toEqual([{ load: 40, reps: 10 }, { load: 80, reps: 5 }, { load: 82.5, reps: 4 }]);
+    // Hevy's set_type carries: the 40 kg set is a warm-up.
+    expect(push.exercises[0].sets).toEqual([{ load: 40, reps: 10, type: 'warmup' }, { load: 80, reps: 5 }, { load: 82.5, reps: 4 }]);
     expect(push.exercises[2].sets).toEqual([{ seconds: 60 }]);
   });
 

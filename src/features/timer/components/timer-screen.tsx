@@ -5,7 +5,10 @@ import { ClipThumb } from '@/shared/components/ui/clip-thumb';
 import { Sheet } from '@/shared/components/ui/sheet';
 import { Stepper } from '@/shared/components/ui/stepper';
 import { cn, fmtClock, fmtNum } from '@/shared/utils/ui-utils';
-import { countLabel, forLabel, shortUnit, straightSetStep, type Block, type ExerciseStep, type Item, type Runsheet } from '@/features/runsheet/model';
+import { countLabel, forLabel, nextSetType, setMarks, shortUnit, showsLoad, straightSetStep, type Block, type ExerciseStep, type Item, type Runsheet, type SetType } from '@/features/runsheet/model';
+import { kitOf, type Equipment } from '@/features/runsheet/plates';
+import { PlatesButton } from '@/features/runsheet/components/plate-sheet';
+import { SetMark } from '@/features/runsheet/components/set-grid';
 import { lastSetLabel, lastTimeLabel } from '@/features/runsheet/last-used';
 import type { SetResult } from '@/features/runsheet/progression';
 import { SwipeToRemove } from '@/features/runsheet/components/swipe-to-remove';
@@ -42,6 +45,8 @@ export interface TimerScreenProps {
   /** Tones off. With `onToggleMute`, a speaker button in the header switches them. */
   muted?: boolean;
   onToggleMute?: () => void;
+  /** Settings → My equipment, for the plate calculator beside a barbell load. */
+  equipment?: Equipment;
   onFinish: () => void;
   onExit: () => void;
 }
@@ -57,6 +62,8 @@ export interface SetActions {
   /** Last time's set for a row. With `fill`, the row's hint is a button that copies it in. */
   lastFor?: (step: ExerciseStep, round: number) => SetResult | undefined;
   fill?: (slotId: string, set: SetResult) => void;
+  /** A tap on the set number: warm-up, normal, drop set, to failure. */
+  setType?: (slotId: string, type: SetType) => void;
 }
 
 /**
@@ -64,12 +71,16 @@ export interface SetActions {
  * set you are on highlighted, a tick to finish it. Done rows show what was done and are locked
  * until un-ticked. The rest between sets counts down above the grid.
  */
-const TimerSetGrid = ({ state, step, blockId, actions }: { state: R.RunState; step: ExerciseStep; blockId: string; actions: SetActions }) => {
+const TimerSetGrid = ({ state, step, blockId, actions, equipment }: { state: R.RunState; step: ExerciseStep; blockId: string; actions: SetActions; equipment?: Equipment }) => {
   const rows = state.slots.map((sl, idx) => ({ sl, idx })).filter(x => x.sl.blockId === blockId && x.sl.kind === 'work');
   const on = rows.find(x => x.idx >= state.i)?.sl.id;
   const [open, setOpen] = useState<string | null>(null);
   const editing = open ?? on;
-  const hasLoad = !!step.exercise.unit && step.loadFactor === undefined && step.targetPct === undefined;
+  // A load given as a % of a training max or × bodyweight shows once it is resolved into target.
+  const hasLoad = showsLoad(step);
+  const barbell = hasLoad && kitOf(step.exercise) === 'barbell';
+  const types = rows.map(x => R.typeAt(state, x.idx));
+  const marks = setMarks(types);
   const count = countLabel(step.forMode);
   const unit = shortUnit(step.exercise.unit);
   return (
@@ -82,7 +93,7 @@ const TimerSetGrid = ({ state, step, blockId, actions }: { state: R.RunState; st
         </div>
       </div>
       <div className="flex items-center gap-2 border-t border-line-soft pt-2 pb-1 text-[11px] font-bold tracking-widest text-muted uppercase">
-        <span className="w-8">Set</span>
+        <span className="w-9">Set</span>
         {hasLoad && <span className="flex-1">{unit}</span>}
         {count && <span className="flex-1">{count}</span>}
         <span className="w-11" />
@@ -102,10 +113,13 @@ const TimerSetGrid = ({ state, step, blockId, actions }: { state: R.RunState; st
         return (
           <div key={sl.id} className={cn('-mx-1 rounded-lg px-1 py-1.5', current && !done && 'bg-brand-soft', done && 'text-muted')}>
             <div className="flex items-center gap-2" onClick={() => !done && setOpen(sl.id)}>
-              <span className={cn('w-8 text-[16px] font-extrabold tabular-nums', current && !done && 'text-brand')}>{n + 1}</span>
+              <div className="w-9">
+                <SetMark mark={marks[n]} type={types[n]} label={`Set ${n + 1}`} onCycle={actions.setType ? () => actions.setType!(sl.id, nextSetType(types[n])) : undefined} className={cn('-ml-1 text-[16px]', current && !done && types[n] === 'normal' && 'text-brand')} />
+              </div>
               {hasLoad && (
-                <div className="flex-1">
+                <div className="flex flex-1 items-center">
                   {edit ? <Stepper size="sm" aria-label={`Set ${n + 1} load`} value={load ?? 0} step={step.exercise.step || 1} max={1000} onChange={t => actions.adjust(sl.id, t)} /> : <span className="text-[16px] font-bold tabular-nums">{load !== undefined ? fmtNum(load) : '—'}</span>}
+                  {barbell && !edit && <PlatesButton load={load} equipment={equipment} />}
                 </div>
               )}
               {count && (
@@ -134,11 +148,11 @@ const TimerSetGrid = ({ state, step, blockId, actions }: { state: R.RunState; st
               </button>
             </div>
             {hint && copy && Object.keys(copy).length ? (
-              <button type="button" aria-label={`Use last time for set ${n + 1}`} onClick={() => (actions.fill!(sl.id, copy), setOpen(sl.id))} className="ml-10 min-h-7 text-[12px] font-semibold text-brand-ink underline decoration-dotted underline-offset-2">
+              <button type="button" aria-label={`Use last time for set ${n + 1}`} onClick={() => (actions.fill!(sl.id, copy), setOpen(sl.id))} className="ml-11 min-h-7 text-[12px] font-semibold text-brand-ink underline decoration-dotted underline-offset-2">
                 {hint}
               </button>
             ) : (
-              hint && <div className="pl-10 text-[11px] text-muted">{hint}</div>
+              hint && <div className="pl-11 text-[11px] text-muted">{hint}</div>
             )}
           </div>
         );
@@ -163,7 +177,7 @@ const stepLine = (s: ExerciseStep) => [forLabel(s), s.target !== undefined ? `${
  * a ⋯ menu (previous, overview, stop), Pause and Skip/Done at equal size. Tap the Next row to see
  * what the coming block asks for; the overview sheet lists every part with progress.
  */
-export const TimerScreen = ({ runsheet, state, now, onDone, onSkip, onBack, onPause, onResume, onAdjust, onAdjustIncline, onSetReps, onDrop, onStartBlock, onAdjustStep, sets, onAdjustRest, lastFor, onFill, ghost, goal, muted, onToggleMute, onFinish, onExit }: TimerScreenProps) => {
+export const TimerScreen = ({ runsheet, state, now, onDone, onSkip, onBack, onPause, onResume, onAdjust, onAdjustIncline, onSetReps, onDrop, onStartBlock, onAdjustStep, sets, onAdjustRest, lastFor, onFill, ghost, goal, muted, onToggleMute, equipment, onFinish, onExit }: TimerScreenProps) => {
   const [confirmExit, setConfirmExit] = useState(false);
   const [menu, setMenu] = useState(false);
   const [overview, setOverview] = useState(false);
@@ -293,7 +307,7 @@ export const TimerScreen = ({ runsheet, state, now, onDone, onSkip, onBack, onPa
               </div>
             )}
 
-            {straight && slot?.blockId && !done && !lead && <TimerSetGrid key={slot.blockId} state={state} step={straight} blockId={slot.blockId} actions={sets!} />}
+            {straight && slot?.blockId && !done && !lead && <TimerSetGrid key={slot.blockId} state={state} step={straight} blockId={slot.blockId} actions={sets!} equipment={equipment} />}
 
             {slot && !done && !(straight && !lead) && (
               <SwipeToRemove onRemove={() => onDrop(slot.step.id)} disabled={isRest || paused} className="rounded-card">
@@ -328,7 +342,10 @@ export const TimerScreen = ({ runsheet, state, now, onDone, onSkip, onBack, onPa
                           <span className="text-[14px]">
                             {stepOf.exercise.unit === 'kph' ? 'Speed' : 'Weight'} <span className="text-muted">({shortUnit(stepOf.exercise.unit)})</span>
                           </span>
-                          <Stepper aria-label="Target" value={target ?? 0} step={stepOf.exercise.step} onChange={onAdjust} />
+                          <div className="flex items-center">
+                            {kitOf(stepOf.exercise) === 'barbell' && <PlatesButton load={target} equipment={equipment} />}
+                            <Stepper aria-label="Target" value={target ?? 0} step={stepOf.exercise.step} onChange={onAdjust} />
+                          </div>
                         </div>
                       )}
                       {isTreadmill(stepOf) && onAdjustIncline && (

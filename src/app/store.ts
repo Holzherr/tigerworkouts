@@ -5,6 +5,7 @@
 import { useSyncExternalStore } from 'react';
 import type { Runsheet } from '@/features/runsheet/model';
 import type { SessionResult, TrainingMaxes } from '@/features/runsheet/progression';
+import type { Equipment } from '@/features/runsheet/plates';
 import type { Avatar, Favorite } from '@/features/cloud/sync';
 import type { LibraryExercise } from '@/features/exercises/library';
 import { fromLegacySession, legacyWorkoutToRunsheet, readLegacyLocal } from '@/features/cloud/legacy';
@@ -14,6 +15,8 @@ export interface AppState {
   results: SessionResult[];
   trainingMaxes: TrainingMaxes;
   bodyweightKg?: number;
+  /** Settings → My equipment: the bar, plates, dumbbells and kettlebells you own. */
+  equipment?: Equipment;
   /** Bodyweight was asked for once after a workout and skipped; not asked again. */
   bodyweightAsked?: boolean;
   saved: string[];
@@ -95,6 +98,7 @@ const ACTIONS = {
     return { results: [{ ...res, id }, ...s.results.filter(r => r.id !== id)] };
   }),
   setTrainingMaxes: (tm: TrainingMaxes) => setState({ trainingMaxes: tm }),
+  setEquipment: (equipment: Equipment) => setState({ equipment }),
   setBodyweight: (kg: number) => setState({ bodyweightKg: kg, bodyweightAsked: true }),
   skipBodyweight: () => setState({ bodyweightAsked: true }),
   setSignedIn: (signedIn: boolean) => setState({ signedIn }),

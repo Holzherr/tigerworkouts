@@ -5,6 +5,7 @@
  * web app reads it for the stall options.
  */
 import { GROUP_LABEL, type LibraryExercise } from './library';
+import { snapToKit, type Equipment } from '@/features/runsheet/plates';
 
 export type Pattern = 'horizontalPress' | 'verticalPress' | 'horizontalPull' | 'verticalPull' | 'squat' | 'hinge' | 'lunge' | 'carry' | 'core' | 'cardio';
 
@@ -50,14 +51,14 @@ const loadKind = (e: LibraryExercise): LoadKind => {
 };
 
 /** Two dumbbells make roughly one machine's number, and a machine's leverage flatters it by about a
- * tenth. Guidance, not physics. Rounded to what the new exercise's steppers move by. */
-export const convertLoad = (target: number | undefined, from: LibraryExercise, to: LibraryExercise): number | undefined => {
+ * tenth. Guidance, not physics. Snapped to the nearest load you own for the new exercise (plates.ts),
+ * else rounded to what its steppers move by. */
+export const convertLoad = (target: number | undefined, from: LibraryExercise, to: LibraryExercise, kit?: Equipment): number | undefined => {
   if (target === undefined || target <= 0) return undefined;
   const [a, b] = [loadKind(from), loadKind(to)];
   if (a === 'none' || b === 'none') return undefined;
   const raw = a === 'perArm' && b === 'total' ? target * 2 * 1.1 : a === 'total' && b === 'perArm' ? target / 2 / 1.1 : target;
-  const step = to.step > 0 ? to.step : 1;
-  return Math.round(raw / step) * step;
+  return snapToKit(raw, { ...to, step: to.step > 0 ? to.step : 1 }, kit);
 };
 
 export interface Alternative {
@@ -68,7 +69,7 @@ export interface Alternative {
 }
 
 /** Same pattern, never the same exercise, a different kit group first, then by name. */
-export const alternatives = (key: string, target: number | undefined, library: Record<string, LibraryExercise>, limit = 5): Alternative[] => {
+export const alternatives = (key: string, target: number | undefined, library: Record<string, LibraryExercise>, limit = 5, kit?: Equipment): Alternative[] => {
   const ex = library[key];
   const wanted = ex && patternOf(ex);
   if (!ex || !wanted) return [];
@@ -76,5 +77,5 @@ export const alternatives = (key: string, target: number | undefined, library: R
     .filter(e => e.key !== ex.key && patternOf(e) === wanted)
     .sort((a, b) => (a.group === ex.group) !== (b.group === ex.group) ? (a.group === ex.group ? 1 : -1) : a.name < b.name ? -1 : a.name > b.name ? 1 : 0)
     .slice(0, limit)
-    .map(e => ({ exercise: e, target: convertLoad(target, ex, e), why: GROUP_LABEL[e.group] ?? e.group }));
+    .map(e => ({ exercise: e, target: convertLoad(target, ex, e, kit), why: GROUP_LABEL[e.group] ?? e.group }));
 };

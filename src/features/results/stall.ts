@@ -8,7 +8,7 @@
  * `ios/TigerWorkouts/Results/Stall.swift`.
  */
 import { scoreType, shortUnit, type Block, type Runsheet } from '@/features/runsheet/model';
-import type { SessionResult, SetResult } from '@/features/runsheet/progression';
+import { isWorking, type SessionResult, type SetResult } from '@/features/runsheet/progression';
 import { clock } from '@/features/runsheet/targets';
 import { exerciseHistory, fmtNum, kindOf } from './logbook';
 
@@ -102,7 +102,7 @@ export const exerciseStall = (results: SessionResult[], exercise: { key: string;
   if (kind === 'rounds') return undefined;
   const pick = (sets: SetResult[]): { value: number; set: SetResult } | undefined => {
     let out: { value: number; set: SetResult } | undefined;
-    for (const x of sets) {
+    for (const x of sets.filter(isWorking)) {
       const v = kind === 'strength' ? strength(x) : kind === 'load' ? x.load : x.reps;
       if (v !== undefined && v > 0 && (!out || v > out.value)) out = { value: v, set: x };
     }
@@ -113,7 +113,7 @@ export const exerciseStall = (results: SessionResult[], exercise: { key: string;
   if (!p) return undefined;
   // Bodyweight reps that never vary are a prescribed count in a circuit (Cindy's 10 push-ups a
   // round), not a max effort that stopped moving.
-  const window = history.filter(h => h.startedAt >= p.since).flatMap(h => h.sets).map(x => x.reps);
+  const window = history.filter(h => h.startedAt >= p.since).flatMap(h => h.sets.filter(isWorking)).map(x => x.reps);
   if (kind === 'reps' && window.every(r => r === window[0])) return undefined;
   const set = bests[p.index].best.set;
   const unit = shortUnit(exercise.unit);
