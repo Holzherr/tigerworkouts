@@ -217,7 +217,10 @@ final class WalkthroughUITests: XCTestCase {
         snap("21 Workout page, editable")
 
         // Hold and drag the rest above the rower.
-        rest.press(forDuration: 0.8, thenDragTo: rower)
+        // Onto the top edge of the row, not its middle: a row with history is taller ("last time"
+        // under the name), and a drop on its middle lands below it.
+        rest.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5))
+            .press(forDuration: 0.8, thenDragTo: rower.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.1)))
         sleep(1)
         XCTAssertLessThan(rest.frame.minY, rower.frame.minY, "dragging should reorder in place")
 
@@ -233,7 +236,8 @@ final class WalkthroughUITests: XCTestCase {
             app.swipeUp(velocity: .slow)
         }
         XCTAssertLessThan(squat.frame.minY, pullup.frame.minY)
-        pullup.press(forDuration: 0.8, thenDragTo: squat)
+        pullup.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5))
+            .press(forDuration: 0.8, thenDragTo: squat.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.1)))
         sleep(1)
         XCTAssertLessThan(pullup.frame.minY, squat.frame.minY, "dragging a header should move the whole block")
         snap("22b Block moved")
