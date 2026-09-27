@@ -471,6 +471,18 @@ final class WalkthroughUITests: XCTestCase {
         let discard = app.alerts.buttons["Discard"]
         if discard.waitForExistence(timeout: 3) { discard.tap() }
 
+        // testSettingsAndHealth can leave Health on with its sheet unanswered, and then the save
+        // waits on Health for the heart rate. This test is about the app's own history: Health off.
+        tap(app.tabBars.buttons["Me"])
+        for _ in 0..<4 where !(app.buttons["Settings"].exists && app.buttons["Settings"].isHittable) { app.swipeUp() }
+        tap(app.buttons["Settings"])
+        let health = app.switches["Apple Health"]
+        if health.waitForExistence(timeout: 5), (health.value as? String) == "1" {
+            health.coordinate(withNormalizedOffset: CGVector(dx: 0.93, dy: 0.5)).tap()
+            sleep(1)
+        }
+        home()
+
         open("Tabata This")
         tap(app.buttons["Start workout"])
         tap(app.buttons["End session"])
@@ -524,7 +536,10 @@ final class WalkthroughUITests: XCTestCase {
         XCTAssertFalse(app.buttons.matching(NSPredicate(format: "label CONTAINS 'effort 8'")).firstMatch.waitForExistence(timeout: 2), "the deleted session should be gone")
 
         // A seeded session that set a record: its card carries it.
-        tap(app.buttons.matching(NSPredicate(format: "label BEGINSWITH 'Push day'")).firstMatch)
+        // Earlier runs on the same simulator leave sessions above it: scroll until it shows.
+        let push = app.buttons.matching(NSPredicate(format: "label BEGINSWITH 'Push day'")).firstMatch
+        for _ in 0..<10 where !(push.exists && push.isHittable) { app.swipeUp(velocity: .slow) }
+        tap(push)
         for _ in 0..<3 { app.swipeUp(velocity: .slow) }
         tap(app.buttons["session-share"])
         XCTAssertTrue(app.images["share-card-image"].waitForExistence(timeout: 5))
