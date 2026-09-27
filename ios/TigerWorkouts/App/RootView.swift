@@ -64,7 +64,7 @@ struct RootView: View {
             presenting: interrupted
         ) { pending in
             Button("Resume") {
-                running = SessionRunner(resuming: pending.sheet).map(logOnFinish)
+                running = SessionRunner(resuming: pending.sheet, history: store.results).map(logOnFinish)
                 interrupted = nil
             }
             // The workout happened whether or not the app survived it.
@@ -86,7 +86,7 @@ struct RootView: View {
     }
 
     private func start(_ sheet: Runsheet, from origin: SessionOrigin?) {
-        running = logOnFinish(SessionRunner(runsheet: sheet, startedFrom: origin))
+        running = logOnFinish(SessionRunner(runsheet: sheet, startedFrom: origin, history: store.results))
     }
 
     /// The workout is logged when it finishes, not when Done is tapped: the finished screen says

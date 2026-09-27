@@ -42,6 +42,7 @@
 		803AE9BCD05107F29333C35D /* AppStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = FDF28E18F9E37CEC3D289A43 /* AppStoreTests.swift */; };
 		850AFBF105DB3760187260D8 /* LastUsed.swift in Sources */ = {isa = PBXBuildFile; fileRef = A49A094C79F8B5520AF51CD2 /* LastUsed.swift */; };
 		85CDCDD2B5F6F3BF1A21BAC2 /* DiscoverView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 70A2BD32BBFA62B93E613882 /* DiscoverView.swift */; };
+		8CF31441EEAD7E63BB021F59 /* GymLoggingTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BD77652B9CB4664C909E3D23 /* GymLoggingTests.swift */; };
 		8E5013531B6B4CE2A1DD5C76 /* Editing.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A7C84C7FDDB4BA9A91FFEDD /* Editing.swift */; };
 		9B8A7823988AF5778174C44D /* Effort.swift in Sources */ = {isa = PBXBuildFile; fileRef = 624618DA7F3194F1EB9B1818 /* Effort.swift */; };
 		9BCF69C9560146E675BE5C19 /* Keychain.swift in Sources */ = {isa = PBXBuildFile; fileRef = 781B4703341F053F08AE0613 /* Keychain.swift */; };
@@ -54,6 +55,7 @@
 		B2D8DF3941B699A1D99EDC07 /* SessionLiveActivity.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87A0379EA6B428BEE7F68638 /* SessionLiveActivity.swift */; };
 		B7DD621A22E46957F60BF22D /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 8ECD0D99BECC297562625D45 /* PrivacyInfo.xcprivacy */; };
 		B9014443750E9D5F6AF43DB2 /* exercises.json in Resources */ = {isa = PBXBuildFile; fileRef = DCDAF2AE594C1D1C9FF54BED /* exercises.json */; };
+		B94DD6FF7CBCC9A9D1EF4E16 /* Pace.swift in Sources */ = {isa = PBXBuildFile; fileRef = A65AE7B65D7C8828B39D771D /* Pace.swift */; };
 		BBACBD2D9C5BC0AD173F50AE /* ExerciseHistoryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 699AC7356AFB42E1FBDBB705 /* ExerciseHistoryView.swift */; };
 		BD58BD2C57D64222EFB4016E /* Store+Seed.swift in Sources */ = {isa = PBXBuildFile; fileRef = E5781B7F687C93695308579E /* Store+Seed.swift */; };
 		BF9C0753D6515E001F1F5077 /* Logbook.swift in Sources */ = {isa = PBXBuildFile; fileRef = DC7FFB0283E5C4857E56066A /* Logbook.swift */; };
@@ -162,6 +164,7 @@
 		A063D7FDBD9EAB4C94F2CABE /* AlternativesTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AlternativesTests.swift; sourceTree = "<group>"; };
 		A3A09492CA4F6D818301F1C5 /* Supabase.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Supabase.swift; sourceTree = "<group>"; };
 		A49A094C79F8B5520AF51CD2 /* LastUsed.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LastUsed.swift; sourceTree = "<group>"; };
+		A65AE7B65D7C8828B39D771D /* Pace.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Pace.swift; sourceTree = "<group>"; };
 		AE20C98A55B3D5F64BE65F19 /* WorkoutIcon.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkoutIcon.swift; sourceTree = "<group>"; };
 		B3B6B0782F16CEA9ECD79A1E /* SessionResult.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionResult.swift; sourceTree = "<group>"; };
 		B468F247F04E6A279F2AD6D2 /* NextUpTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NextUpTests.swift; sourceTree = "<group>"; };
@@ -169,6 +172,7 @@
 		B5D498E61C4056DA33C03731 /* TimerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TimerView.swift; sourceTree = "<group>"; };
 		B98162A061F4395442DDC3C1 /* TigerWorkoutsApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TigerWorkoutsApp.swift; sourceTree = "<group>"; };
 		BD57C95FC26995ED5E6E25CF /* ExerciseSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExerciseSheet.swift; sourceTree = "<group>"; };
+		BD77652B9CB4664C909E3D23 /* GymLoggingTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GymLoggingTests.swift; sourceTree = "<group>"; };
 		BEBB7BC4CAC7E345AFA74D2B /* WorkoutDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkoutDetailView.swift; sourceTree = "<group>"; };
 		C1CA40FB23F26CFD0D7CB467 /* WalkthroughUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WalkthroughUITests.swift; sourceTree = "<group>"; };
 		D003D2F2D1E93454087D5B01 /* TigerWorkoutsUITests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = TigerWorkoutsUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -206,6 +210,7 @@
 		381EA085C0F8C1C35476A6B3 /* Engine */ = {
 			isa = PBXGroup;
 			children = (
+				A65AE7B65D7C8828B39D771D /* Pace.swift */,
 				36B599742F16E34DF89CB346 /* Runner.swift */,
 				B5764E5C8674AB9AF9B73008 /* SessionRunner.swift */,
 			);
@@ -298,6 +303,7 @@
 				FDF28E18F9E37CEC3D289A43 /* AppStoreTests.swift */,
 				2333BFB4C8394D4D3D82D69F /* CatalogueTests.swift */,
 				03B24D2D55EFBC42BB378AFE /* EditingTests.swift */,
+				BD77652B9CB4664C909E3D23 /* GymLoggingTests.swift */,
 				3D87622F139D50161B1F5C9C /* HapticsTests.swift */,
 				DF2925A193B28392EB5F9746 /* LiveActivityTests.swift */,
 				22C7059BA09D0BDACDF216B7 /* LogbookTests.swift */,
@@ -551,6 +557,7 @@
 				803AE9BCD05107F29333C35D /* AppStoreTests.swift in Sources */,
 				221B3BEEFB080270A1DD6C50 /* CatalogueTests.swift in Sources */,
 				4A186DEED593C0BA6739F608 /* EditingTests.swift in Sources */,
+				8CF31441EEAD7E63BB021F59 /* GymLoggingTests.swift in Sources */,
 				05E59B570AE45E1D3609914C /* HapticsTests.swift in Sources */,
 				EB9FAD39D8876DE07D18AB3E /* LiveActivityTests.swift in Sources */,
 				F7998BA235C2AF9735912F93 /* LogbookTests.swift in Sources */,
@@ -588,6 +595,7 @@
 				CE6C3853163855B33A084ECB /* Media.swift in Sources */,
 				2A6C2DD0A0F51FEDD7B70319 /* Muscles.swift in Sources */,
 				D58253526B7751F2479E7770 /* NextUp.swift in Sources */,
+				B94DD6FF7CBCC9A9D1EF4E16 /* Pace.swift in Sources */,
 				62145373B9595B72AECF4A68 /* RootView.swift in Sources */,
 				B01FA0C771DEBBD6B2393CF8 /* Runner.swift in Sources */,
 				50E8634E2A5C17D76A16EFE7 /* Runsheet.swift in Sources */,

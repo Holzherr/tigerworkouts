@@ -20,6 +20,10 @@ final class SessionRunner {
     var onFinished: ((SessionResult) -> Void)?
     /// What was handed to `onFinished`, and what the finished screen shows.
     private(set) var finalResult: SessionResult?
+    /// The last session of this workout with times kept; nil when there is none.
+    private(set) var rival: SessionResult? = nil
+    /// "Round 4 — 12 s ahead", recomputed when the run changes, not on every tick.
+    private(set) var ghost: Pace.Ghost? = nil
     private var cuedSlot: String?
     private var cuedPhase: Phase?
     private var lastTick: Int?
@@ -27,19 +31,27 @@ final class SessionRunner {
     /// Runs the runsheet exactly as handed over. The workout screen seeds the last-used numbers
     /// once, before they are seen, and whatever is set on it after that is what starts here —
     /// seeding again at this point put last time's numbers back over what had just been set.
-    init(runsheet: Runsheet, startedFrom: SessionOrigin? = nil) {
+    ///
+    /// `history` gives the open reps (a range, a max) last time's numbers, set for set, and picks
+    /// the last session of this workout to race on the header.
+    init(runsheet: Runsheet, startedFrom: SessionOrigin? = nil, history: [SessionResult] = []) {
         self.runsheet = runsheet
         self.startedFrom = startedFrom
-        self.state = Runner.start(runsheet, now: Date().timeIntervalSince1970 * 1000)
+        let fresh = Runner.start(runsheet, now: Date().timeIntervalSince1970 * 1000)
+        self.state = history.isEmpty ? fresh : Runner.prefillReps(fresh) { step, round in
+            LastTime.sets(history, for: step).flatMap { $0.indices.contains(round) ? $0[round].reps : nil }
+        }
+        self.rival = Pace.lastTimed(history, runsheetId: runsheet.id ?? runsheet.title)
     }
 
     /// Resume a session the app was killed in the middle of. It comes back paused at the moment
     /// it was last saved, so the time the phone spent closed never counts as workout time and
     /// nothing starts counting down before you are ready.
-    init?(resuming runsheet: Runsheet) {
+    init?(resuming runsheet: Runsheet, history: [SessionResult] = []) {
         guard let saved = SessionRunner.readSaved(), saved.state.runsheetId == (runsheet.id ?? runsheet.title) else { return nil }
         self.runsheet = runsheet
         self.startedFrom = nil
+        self.rival = Pace.lastTimed(history, runsheetId: runsheet.id ?? runsheet.title, excluding: SessionRunner.rowId(saved.state))
         let at = saved.savedAt.timeIntervalSince1970 * 1000
         self.state = saved.state.phase == .running || saved.state.phase == .lead
             ? Runner.pause(saved.state, now: at)
@@ -121,7 +133,10 @@ final class SessionRunner {
         now = Date().timeIntervalSince1970 * 1000
         let before = state
         state = Runner.tick(state, now: now)
-        if state != before { save() }
+        if state != before {
+            save()
+            refreshGhost()
+        }
         deliver()
         fireCues()
         pushActivity()
@@ -148,7 +163,12 @@ final class SessionRunner {
     }
 
     private var activityState: SessionActivityAttributes.ContentState {
-        SessionRunner.activityState(state, runsheet: runsheet, now: now)
+        SessionRunner.activityState(state, runsheet: runsheet, now: now, ghost: ghost.map { "\($0.label) · \($0.short)" })
+    }
+
+    private func refreshGhost() {
+        guard let rival else { return }
+        ghost = Pace.ghost(Runner.toResult(state, runsheet, now: now), against: rival, blockOf: Pace.blockOf(runsheet))
     }
 
     private var isRestSlot: Bool { slot?.kind == .rest }
@@ -160,7 +180,7 @@ final class SessionRunner {
     /// version put live progress in here, changed it every 100 ms tick, and the flood got the one
     /// update that mattered (lead-in to first exercise) dropped, leaving "Get ready 0:00" on the
     /// Lock Screen. The countdown needs no updates at all: it is sent as the instant it ends.
-    nonisolated static func activityState(_ state: RunState, runsheet: Runsheet, now: Double) -> SessionActivityAttributes.ContentState {
+    nonisolated static func activityState(_ state: RunState, runsheet: Runsheet, now: Double, ghost: String? = nil) -> SessionActivityAttributes.ContentState {
         let slot = Runner.current(state)
         let next = Runner.next(state)
         let isRest = slot?.kind == .rest
@@ -204,7 +224,8 @@ final class SessionRunner {
             endsAt: state.endsAt.map { Date(timeIntervalSince1970: $0 / 1000) },
             startedAt: Date(timeIntervalSince1970: state.slotStartedAt / 1000),
             progress: progress,
-            isDone: state.phase == .done
+            isDone: state.phase == .done,
+            ghost: state.phase == .done ? nil : ghost
         )
     }
 
@@ -259,6 +280,7 @@ final class SessionRunner {
         now = Date().timeIntervalSince1970 * 1000
         state = change(state, now)
         save()
+        refreshGhost()
         deliver()
         fireCues()
         pushActivity()
@@ -328,6 +350,24 @@ final class SessionRunner {
     }
 
     func setReps(_ reps: Double) { apply { s, _ in Runner.setReps(s, reps: reps) } }
+
+    /// −15 s / +15 s on the rest counting down.
+    func adjustRest(by seconds: Double) {
+        apply { Runner.adjustRest($0, now: $1, by: seconds) }
+        Haptics.shared.play(.tick)
+    }
+
+    /// Whether the running slot is a rest that −15 s / +15 s can move: not an EMOM's wait.
+    var restAdjustable: Bool {
+        guard let slot, slot.kind == .rest, !slot.untilBoundary, slot.seconds != nil else { return false }
+        return state.phase == .running || state.phase == .paused
+    }
+
+    /// Last time's numbers into a set that is not done yet — a row of the grid, or the running set.
+    func fill(_ slotId: String, with set: SetResult) {
+        apply { Runner.fillSet($0, now: $1, slotId: slotId, with: set) }
+        Haptics.shared.play(.tick)
+    }
 
     // MARK: - The set grid
 

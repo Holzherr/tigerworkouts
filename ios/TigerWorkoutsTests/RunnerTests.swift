@@ -452,7 +452,7 @@ struct HonestLoggingTests {
         s = Runner.setReps(s, reps: 6)
         s = Runner.advance(s, now: 60_000)
         let pr = Runner.toResult(s, Self.press(), now: 60_000).steps[0]
-        #expect(pr.sets == [SetResult(reps: 10, load: 20), SetResult(reps: 8, load: 22.5), SetResult(reps: 6, load: 22.5)])
+        #expect(pr.sets == [SetResult(reps: 10, load: 20, at: 20), SetResult(reps: 8, load: 22.5, at: 40), SetResult(reps: 6, load: 22.5, at: 60)])
         #expect(pr.reps == [10, 8, 6])
     }
 

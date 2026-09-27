@@ -7,6 +7,8 @@ enum Switches {
     static let haptics = "haptics"
     static let sound = "sound"
     static let liveActivity = "liveActivity"
+    /// Seconds a rest gets when one is added in the editor. 30 until set under Settings.
+    static let defaultRest = "defaultRestSec"
 
     /// On unless switched off: a switch never touched has no stored value.
     static func isOn(_ key: String, in defaults: UserDefaults = .standard) -> Bool {
