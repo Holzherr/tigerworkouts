@@ -102,6 +102,28 @@ struct RunTests {
         #expect(s.pausedMs == 45_000)
     }
 
+    @Test("extendRest moves the end of a running rest, and only a rest")
+    func extendRest() {
+        var s = Runner.tick(Runner.start(Fixtures.interval(), now: 0), now: 5_000)
+        #expect(Runner.extendRest(s, now: 6_000, by: 15) == s) // work: untouched
+        s = Runner.advance(s, now: 20_000) // on to the 10 s rest, ends at 30 s
+        s = Runner.extendRest(s, now: 21_000, by: 15)
+        #expect(s.endsAt == 45_000)
+        s = Runner.extendRest(s, now: 22_000, by: -60) // past now: ends on the next tick
+        #expect(s.endsAt == 22_000)
+        let t = Runner.tick(s, now: 22_000)
+        #expect(t.slots[t.i].kind == .work)
+    }
+
+    @Test("extendRest while paused moves what is left")
+    func extendRestPaused() {
+        var s = Runner.advance(Runner.tick(Runner.start(Fixtures.interval(), now: 0), now: 5_000), now: 20_000)
+        s = Runner.pause(s, now: 25_000) // 5 s left
+        s = Runner.extendRest(s, now: 26_000, by: 15)
+        s = Runner.resume(s, now: 30_000)
+        #expect(s.endsAt == 50_000)
+    }
+
     @Test("adjust logs a change with the time into the step")
     func adjust() {
         var s = Runner.tick(Runner.start(Fixtures.interval(), now: 0), now: 5_000)

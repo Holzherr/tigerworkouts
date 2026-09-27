@@ -24,6 +24,26 @@ struct SessionActivityAttributes: ActivityAttributes {
         /// The session is over. The clock then holds still at what it came to: with nothing left to
         /// count down, an interval counts up instead and the card reads as a workout still running.
         var isDone = false
+        /// What is on the bar and how many, for the set in front of you — or, during a rest, the one
+        /// coming up: "60 kg × 8", "12 reps". Nil for a timed step with nothing to load.
+        var setLine: String?
+        /// Which buttons the card offers. None while paused or done.
+        var action: Action = .none
+        /// Names the phase and slot the card was drawn for. A tap carries it back, so a button on a
+        /// card that is behind the session (a rest that already ran out) does nothing rather than
+        /// acting on whatever is running now.
+        var token = ""
+
+        enum Action: String, Codable, Hashable {
+            /// Nothing to tap: paused or finished.
+            case none
+            /// Lead-in or a block gate: Start.
+            case start
+            /// A set or step: Done.
+            case done
+            /// A counted-down rest: +15 s and Skip rest.
+            case rest
+        }
 
         /// What the Lock Screen shows as the clock, either way round.
         var timerRange: ClosedRange<Date> {

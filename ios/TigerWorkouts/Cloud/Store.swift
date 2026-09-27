@@ -62,6 +62,7 @@ final class Store {
         seedLogbookIfAsked()
         #endif
         loaded = true
+        shareUpNext()
         user = await Supabase.shared.user
         await readBodyweightFromHealth()
         await sync()
@@ -395,5 +396,6 @@ final class Store {
             pendingDeletes: pendingDeletes
         )
         try? JSONEncoder().encode(c).write(to: cacheURL, options: .atomic)
+        shareUpNext()
     }
 }

@@ -273,6 +273,19 @@ export const resume = (s: RunState, now: number): RunState => {
   return { ...s, blockStart, phase: wasLead ? 'lead' : 'running', pausedAt: undefined, pausedMs: s.pausedMs + gap, slotStartedAt: s.slotStartedAt + gap, endsAt: s.remainingMs !== undefined ? now + s.remainingMs : undefined, remainingMs: undefined };
 };
 
+/**
+ * Lengthen (or, with a negative `by`, shorten) the rest that is running, in seconds. Only a
+ * counted-down rest moves; a work slot or a user-paced step is left alone. A rest shortened past
+ * now ends on the next tick. Paused, it moves what is left instead.
+ */
+export const extendRest = (s: RunState, now: number, by: number): RunState => {
+  const c = current(s);
+  if (!c || c.kind !== 'rest') return s;
+  if (s.phase === 'running' && s.endsAt !== undefined) return { ...s, endsAt: Math.max(now, s.endsAt + by * 1000) };
+  if (s.phase === 'paused' && s.remainingMs !== undefined) return { ...s, remainingMs: Math.max(0, s.remainingMs + by * 1000) };
+  return s;
+};
+
 /** Go back one slot (restarts its countdown). */
 export const back = (s: RunState, now: number): RunState => (s.i > 0 ? enter(s, s.i - 1, now) : s);
 

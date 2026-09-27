@@ -98,6 +98,7 @@ final class SessionRunner {
         Cues.shared.begin()
         SessionActivityController.shared.clearStale()
         SessionActivityController.shared.start(title: runsheet.title, state: activityState)
+        SessionControls.active = self
         UIApplication.shared.isIdleTimerDisabled = true
         timer?.invalidate()
         // 10 Hz: the countdown reads smoothly and a cue never lands more than 100 ms late.
@@ -115,6 +116,7 @@ final class SessionRunner {
         UIApplication.shared.isIdleTimerDisabled = false
         Cues.shared.end()
         SessionActivityController.shared.end(activityState)
+        if SessionControls.active === self { SessionControls.active = nil }
     }
 
     private func tick() {
@@ -148,7 +150,7 @@ final class SessionRunner {
     }
 
     private var activityState: SessionActivityAttributes.ContentState {
-        SessionRunner.activityState(state, runsheet: runsheet, now: now)
+        SessionRunner.lockScreenState(state, runsheet: runsheet, now: now)
     }
 
     private var isRestSlot: Bool { slot?.kind == .rest }
@@ -458,5 +460,75 @@ final class SessionRunner {
     static func clearSaved(startedAt: Double) {
         guard readSaved()?.state.startedAt == startedAt else { return }
         clearSaved()
+    }
+}
+
+// MARK: - Lock Screen controls
+
+extension SessionRunner: SessionControllable {
+    /// Lengthen the running rest (or shorten it, with a negative number). Nothing on a work step.
+    func extendRest(by seconds: Double) {
+        apply { Runner.extendRest($0, now: $1, by: seconds) }
+    }
+
+    /// A button on the Lock Screen card, run in the app's process by an App Intent. A tap from a
+    /// card that is behind the session does nothing: acting on whatever is running now would tick a
+    /// set nobody meant to tick.
+    func control(_ control: SessionControl, token: String?) {
+        activityLog.info("control \(control.rawValue, privacy: .public) from \(token ?? "-", privacy: .public) at \(SessionRunner.token(self.state), privacy: .public)")
+        if let token, token != SessionRunner.token(state) { return }
+        switch control {
+        case .done:
+            if state.phase == .ready { startBlock() } else if state.phase == .running || state.phase == .lead { done() }
+        case .skipRest:
+            if state.phase == .running, isRestSlot { skip() }
+        case .extendRest:
+            if isRestSlot { extendRest(by: 15) }
+        }
+    }
+
+    /// `activityState` plus what the card's buttons need: the set's load and reps, which buttons to
+    /// show, and the token a tap carries back. Everything in it holds still for the length of a
+    /// slot, like the rest of the card.
+    nonisolated static func lockScreenState(_ state: RunState, runsheet: Runsheet, now: Double) -> SessionActivityAttributes.ContentState {
+        var content = activityState(state, runsheet: runsheet, now: now)
+        let slot = Runner.current(state)
+        switch state.phase {
+        case .lead, .ready: content.action = .start
+        case .running: content.action = slot?.kind == .rest ? (state.endsAt == nil ? .done : .rest) : .done
+        case .paused, .done: content.action = .none
+        }
+        // During a rest, and before a block, the set to get ready for is the next piece of work.
+        let from = state.phase == .lead ? 0 : state.i
+        let work = state.slots.indices.first { $0 >= from && state.slots[$0].kind == .work }
+        content.setLine = state.phase == .done ? nil : work.flatMap { setLine(state, $0) }
+        content.token = token(state)
+        return content
+    }
+
+    nonisolated static func token(_ state: RunState) -> String {
+        "\(state.phase.rawValue):\(Runner.current(state)?.id ?? "-")"
+    }
+
+    /// "60 kg × 8", "60 kg × max", "12 reps", "28 kg" — what to load and how many, the way it is
+    /// said in a gym. Reps counted so far win over the plan. Nil when there is neither.
+    nonisolated static func setLine(_ state: RunState, _ idx: Int) -> String? {
+        guard let slot = state.slots[safe: idx], let ex = slot.exercise else { return nil }
+        let load = ex.hasSetting ? Runner.effectiveTarget(state, idx).map { t in
+            ex.shortUnit.isEmpty ? Format.number(t) : "\(Format.number(t)) \(ex.shortUnit)"
+        } : nil
+        var count: String?
+        switch ex.forMode {
+        case .reps: count = Format.number(state.actuals[slot.id]?.reps ?? ex.forValue)
+        case .amrap: count = state.actuals[slot.id]?.reps.map(Format.number) ?? "\(Format.number(ex.forValue))+"
+        case .max: count = state.actuals[slot.id]?.reps.map(Format.number) ?? "max"
+        default: count = nil
+        }
+        switch (load, count) {
+        case let (l?, c?): return "\(l) × \(c)"
+        case let (l?, nil): return l
+        case let (nil, c?): return c == "max" ? "Max reps" : "\(c) reps"
+        default: return nil
+        }
     }
 }

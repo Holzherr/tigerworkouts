@@ -22,7 +22,14 @@ What you get that the PWA cannot do:
   loop, held open only for the length of a session.
 - **The session on the Lock Screen.** A Live Activity with the exercise, the countdown and the
   progress bar, plus the Dynamic Island. The clock is sent as the instant it ends rather than as a
-  number, so iOS ticks it down itself and the app only pushes on a real transition.
+  number, so iOS ticks it down itself and the app only pushes on a real transition. The card has
+  buttons that work without unlocking: Done on a set, Start at a block, +15 s and Skip rest on a
+  rest, and it shows the set's load × reps. They are App Intents (`Shared/SessionIntents.swift`)
+  that run in the app's process and reach the running session through `SessionControls.active`.
+- **Up next on the home screen.** A small and a medium widget with the same pick as the Up next
+  card and this week's count; a tap opens that workout's page. The app writes what it shows into
+  the App Group `group.com.holzherr.tigerworkouts` (`Shared/UpNextShare.swift`), which has to be
+  enabled for both bundle ids in the developer portal before it works on a device.
 - **Apple Health, both ways.** A finished session becomes an `HKWorkout` typed by what the session
   mostly was, so it counts towards the rings. Coming back the other way: your bodyweight, so the
   calorie figure stops assuming 80 kg, and your heart rate across the session, which turns that
@@ -47,6 +54,7 @@ TigerWorkouts/
   Resources/  exercises.json, workouts.json — generated, never hand-edited
 TigerWorkoutsWidgets/
               SessionLiveActivity — the Lock Screen and Dynamic Island views
+              UpNextWidget — the home-screen widget
 ```
 
 No third-party dependencies. The Supabase client is four endpoints hand-rolled on URLSession
