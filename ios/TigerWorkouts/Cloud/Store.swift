@@ -57,7 +57,9 @@ final class Store {
     // MARK: - Lifecycle
 
     /// Health is opt-in, and off until the toggle in Me has been turned on.
-    var healthEnabled: Bool { UserDefaults.standard.bool(forKey: "health") }
+    var healthEnabled: Bool { healthOverride ?? UserDefaults.standard.bool(forKey: "health") }
+    /// Tests set this so a simulator with the Health switch on never writes a real workout.
+    var healthOverride: Bool?
 
     func load() async {
         await Task.detached(priority: .userInitiated) { Library.shared.load() }.value

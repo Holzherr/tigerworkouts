@@ -16,6 +16,7 @@ struct StoreSaveTests {
     func listedBeforeSummary() async throws {
         let store = Store()
         store.cacheName = "test-cache-\(UUID().uuidString).json"
+        store.healthOverride = false
         let gate = Gate()
         store.deviceSummary = { _, _ in
             gate.asked = true
@@ -41,6 +42,7 @@ struct StoreSaveTests {
     func editDuringSummary() async throws {
         let store = Store()
         store.cacheName = "test-cache-\(UUID().uuidString).json"
+        store.healthOverride = false
         let gate = Gate()
         store.deviceSummary = { _, _ in
             gate.asked = true
