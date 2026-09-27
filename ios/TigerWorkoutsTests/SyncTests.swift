@@ -35,6 +35,28 @@ struct SyncTests {
         #expect(back?.id == "s-x")
     }
 
+    @Test("startedFrom sits at the top of the row's data, and is absent when unset")
+    func startedFrom() {
+        // The six literals the web app writes (SessionOrigin in progression.ts), in its order.
+        #expect(SessionOrigin.allCases.map(\.rawValue) == ["recommended", "saved", "search", "mine", "history", "link"])
+
+        let mine = SessionResult(runsheetId: "u-1", title: "Mine", startedAt: "2026-09-27T10:00:00.000Z", id: "s-a", startedFrom: "mine")
+        let data = SessionRow.encode(mine, owner: "u")["data"] as! [String: Any]
+        #expect(data["startedFrom"] as? String == "mine")
+        #expect(SessionRow.decode(id: "s-a", data: json(data))?.startedFrom == "mine")
+
+        let unset = SessionRow.encode(SessionResult(runsheetId: "u-1", title: "Mine", startedAt: "2026-09-27T10:00:00.000Z"), owner: "u")["data"] as! [String: Any]
+        #expect(unset["startedFrom"] == nil)
+
+        // A row the web wrote: decodes, and re-encodes with the value it came with.
+        let web: [String: Any] = ["format": "v2", "blocks": [], "runsheetId": "cf-girls-fran", "startedAt": "2026-09-20T10:00:00.000Z", "startedFrom": "recommended", "steps": []]
+        let r = SessionRow.decode(id: "s-y", data: json(web))
+        #expect(r?.startedFrom == "recommended")
+        #expect((SessionRow.encode(r!, owner: "u")["data"] as! [String: Any])["startedFrom"] as? String == "recommended")
+        // A row from before the field existed still decodes.
+        #expect(SessionRow.decode(id: "s-z", data: json(["format": "v2", "blocks": [], "runsheetId": "w", "startedAt": "2026-09-01T10:00:00.000Z"]))?.startedFrom == nil)
+    }
+
     @Test("a v0.9 session converts, keeping the load actually used")
     func legacy() {
         let legacy: [String: Any] = [

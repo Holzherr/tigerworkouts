@@ -9,6 +9,14 @@ describe('session rows', () => {
     expect((row.data as { startedFrom?: string }).startedFrom).toBe('recommended');
     expect(fromRow({ id: row.id, data: row.data })).toEqual(r);
   });
+  it('reads a row the iOS app wrote, with startedFrom at the top of data', () => {
+    // Exactly what SessionRow.encode in ios/TigerWorkouts/Model/SessionResult.swift produces.
+    const data = { format: 'v2', blocks: [], id: 's-1758960000000-run', runsheetId: 'u-1', startedFrom: 'mine', title: 'Mine', startedAt: '2026-09-27T10:00:00.000Z', endedAt: '2026-09-27T10:20:00.000Z', durationSec: 1200, completed: true, steps: [] };
+    const r = fromRow({ id: 's-1758960000000-run', data });
+    expect(r.startedFrom).toBe('mine');
+    expect(r.runsheetId).toBe('u-1');
+    expect(r).not.toHaveProperty('format');
+  });
   it('reads a row written before the field existed', () => {
     const row = toRow({ id: 's-z', runsheetId: 'cf-girls-fran', startedAt: '2026-09-01T10:00:00.000Z', steps: [] }, 'u');
     expect(fromRow({ id: row.id, data: row.data }).startedFrom).toBeUndefined();
