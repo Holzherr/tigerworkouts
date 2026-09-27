@@ -208,3 +208,29 @@ export const setLabel = (x: SetResult, unit = ''): string => {
 };
 
 export { num as fmtNum };
+
+/** A record set in one session: the exercise and its best set that beat the record standing before it. */
+export interface SessionPR {
+  exerciseKey: string;
+  set: SetResult;
+}
+
+const sameSession = (a: SessionResult, b: SessionResult) => (a.id && b.id ? a.id === b.id : a.runsheetId === b.runsheetId && a.startedAt === b.startedAt);
+
+/**
+ * Records this session set, one per exercise: of the sets flagged as a PR by `exerciseHistory`
+ * (against everything logged before it), the best one. Sessions after this one are ignored, so an
+ * old session keeps the PRs it set at the time. `all` may or may not already hold `result`.
+ */
+export const sessionPRs = (result: SessionResult, all: SessionResult[]): SessionPR[] => {
+  const upTo = [...all.filter(r => !sameSession(r, result) && r.startedAt <= result.startedAt), result];
+  const out: SessionPR[] = [];
+  for (const key of new Set(result.steps.map(s => s.exerciseKey))) {
+    const mine = exerciseHistory(upTo, key).find(s => s.startedAt === result.startedAt && s.runsheetId === result.runsheetId);
+    const prs = mine ? mine.sets.filter((_, i) => mine.prs[i]) : [];
+    if (!prs.length) continue;
+    const score = (x: SetResult) => e1rm(x) ?? x.load ?? x.reps ?? 0;
+    out.push({ exerciseKey: key, set: prs.reduce((a, b) => (score(b) > score(a) ? b : a)) });
+  }
+  return out;
+};

@@ -18,8 +18,15 @@ final class Health {
     private var writes: Set<HKSampleType> {
         var types: Set<HKSampleType> = [HKObjectType.workoutType()]
         if let energy = HKObjectType.quantityType(forIdentifier: .activeEnergyBurned) { types.insert(energy) }
+        if #available(iOS 18.0, *) { types.insert(HKQuantityType(.workoutEffortScore)) }
         return types
     }
+
+    /// Workouts written this run, by session id, so an effort tapped after the save can be tied to
+    /// the right one. Only this run's: an effort changed later in History does not reach Health.
+    private var written: [String: HKWorkout] = [:]
+    /// The effort sample tied to each of those, replaced when the effort changes.
+    private var efforts: [String: HKSample] = [:]
 
     private var reads: Set<HKObjectType> {
         var types: Set<HKObjectType> = [HKObjectType.workoutType()]
@@ -70,10 +77,43 @@ final class Health {
                 try await builder.addMetadata([HKMetadataKeyWorkoutBrandName: title])
             }
             try await builder.endCollection(at: end)
-            _ = try await builder.finishWorkout()
+            if let workout = try await builder.finishWorkout() { written[result.rowId] = workout }
             return true
         } catch {
             return false
+        }
+    }
+
+    /// Writes the session's effort (1–10) to Health as a workout effort score tied to the workout
+    /// saved for it, replacing one written before; nil takes it off. iOS 18 and later only: the
+    /// type and the relate call do not exist before. Asks for the one new permission the first
+    /// time, which on a phone that turned Health on before this shipped is a second, short sheet.
+    func setEffort(_ rpe: Double?, for rowId: String) async {
+        guard #available(iOS 18.0, *), isAvailable, let workout = written[rowId] else { return }
+        let type = HKQuantityType(.workoutEffortScore)
+        if store.authorizationStatus(for: type) == .notDetermined {
+            try? await store.requestAuthorization(toShare: [type], read: [])
+        }
+        guard store.authorizationStatus(for: type) == .sharingAuthorized else { return }
+        if let old = efforts.removeValue(forKey: rowId) {
+            _ = await Self.completion { self.store.unrelateWorkoutEffortSample(old, from: workout, activity: nil, completion: $0) }
+            try? await store.delete(old)
+        }
+        guard let rpe, (1...10).contains(rpe) else { return }
+        let sample = HKQuantitySample(
+            type: type,
+            quantity: HKQuantity(unit: .appleEffortScore(), doubleValue: rpe),
+            start: workout.startDate,
+            end: workout.endDate
+        )
+        if await Self.completion({ self.store.relateWorkoutEffortSample(sample, with: workout, activity: nil, completion: $0) }) {
+            efforts[rowId] = sample
+        }
+    }
+
+    private static func completion(_ call: (@escaping @Sendable (Bool, Error?) -> Void) -> Void) async -> Bool {
+        await withCheckedContinuation { continuation in
+            call { ok, _ in continuation.resume(returning: ok) }
         }
     }
 

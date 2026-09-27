@@ -210,3 +210,29 @@ enum Logbook {
         }
     }
 }
+
+extension Logbook {
+    /// A record set in one session: the exercise and its best set that beat the record standing before it.
+    struct SessionPR: Hashable, Sendable {
+        var exerciseKey: String
+        var set: SetResult
+    }
+
+    /// Records this session set, one per exercise: of the sets flagged as a PR by `history` (against
+    /// everything logged before it), the best one. Sessions after this one are ignored, so an old
+    /// session keeps the PRs it set at the time. `all` may or may not already hold `result`.
+    static func sessionPRs(_ result: SessionResult, all: [SessionResult]) -> [SessionPR] {
+        let upTo = all.filter { !Celebrate.same($0, result) && $0.startedAt <= result.startedAt } + [result]
+        var seen = Set<String>()
+        var out: [SessionPR] = []
+        for key in result.steps.map(\.exerciseKey) where seen.insert(key).inserted {
+            guard let mine = history(upTo, exerciseKey: key).first(where: { $0.startedAt == result.startedAt && $0.runsheetId == result.runsheetId }) else { continue }
+            let prs = zip(mine.sets, mine.prs).filter(\.1).map(\.0)
+            let score = { (x: SetResult) in e1rm(x) ?? x.load ?? x.reps ?? 0 }
+            guard var best = prs.first else { continue }
+            for x in prs.dropFirst() where score(x) > score(best) { best = x }
+            out.append(SessionPR(exerciseKey: key, set: best))
+        }
+        return out
+    }
+}

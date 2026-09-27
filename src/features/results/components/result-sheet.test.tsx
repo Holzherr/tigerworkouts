@@ -38,3 +38,31 @@ describe('ResultSheet keeps what the timer logged', () => {
     expect(saved.steps.find(x => x.exerciseKey === 'bw_squat')?.sets).toEqual([{ reps: 15 }]);
   });
 });
+
+describe('ResultSheet celebration and effort', () => {
+  const initial: SessionResult = { id: 's-now', runsheetId: 'p', startedAt: '2026-09-27T10:00:00Z', steps: [{ stepId: 's1', exerciseKey: 'kb_swing', sets: [{ load: 32, reps: 10 }] }] };
+  const before: SessionResult = { id: 's-old', runsheetId: 'p', startedAt: '2026-09-20T10:00:00Z', steps: [{ stepId: 's1', exerciseKey: 'kb_swing', sets: [{ load: 28, reps: 10 }] }] };
+
+  it('leads with the workout count and the record set today', () => {
+    render(<ResultSheet runsheet={priyanka()} initial={initial} history={[before]} onSave={vi.fn()} />);
+    expect(screen.getByText('Workout 2')).toBeTruthy();
+    expect(screen.getByText('New record')).toBeTruthy();
+  });
+
+  it('saves the effort tapped, and nothing when none is', () => {
+    const onSave = vi.fn();
+    render(<ResultSheet runsheet={priyanka()} initial={initial} onSave={onSave} />);
+    fireEvent.click(screen.getByLabelText('Effort 7'));
+    fireEvent.click(screen.getByText('Save result'));
+    expect(onSave.mock.calls[0][0].rpe).toBe(7);
+  });
+
+  it('a second tap on the same number clears it', () => {
+    const onSave = vi.fn();
+    render(<ResultSheet runsheet={priyanka()} initial={initial} onSave={onSave} />);
+    fireEvent.click(screen.getByLabelText('Effort 7'));
+    fireEvent.click(screen.getByLabelText('Effort 7'));
+    fireEvent.click(screen.getByText('Save result'));
+    expect(onSave.mock.calls[0][0].rpe).toBeUndefined();
+  });
+});

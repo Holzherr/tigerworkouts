@@ -12,11 +12,18 @@ import { scoreType, type ExerciseStep, type Runsheet } from '@/features/runsheet
 import { fmtScore, nextLoads, resolveTarget, type NextLoad, type SessionOrigin, type SessionResult, type StepResult, type TrainingMaxes } from '@/features/runsheet/progression';
 import { ScoreEntry } from './score-entry';
 import { BodyweightPrompt } from './bodyweight-prompt';
+import { celebrate } from '../celebrate';
+import { shareCardData } from '../share-card';
+import { CelebrationCard } from './celebration-card';
+import { EffortRow } from './effort-row';
+import { ShareCardSheet } from './share-card-sheet';
 
 export interface ResultSheetProps {
   runsheet: Runsheet;
   /** Earlier results of this runsheet, newest first, for the progression rules. */
   history?: SessionResult[];
+  /** Every session logged, any workout, for the workout count, streak and records. Defaults to `history`. */
+  allResults?: SessionResult[];
   trainingMaxes?: TrainingMaxes;
   bodyweightKg?: number;
   startedAt?: string;
@@ -33,17 +40,20 @@ export interface ResultSheetProps {
 const exerciseSteps = (r: Runsheet): ExerciseStep[] => r.items.flatMap(it => (it.kind === 'block' ? it.steps : it.kind === 'ref' ? [] : [it])).filter((s): s is ExerciseStep => s.kind === 'exercise');
 
 /**
- * End-of-session sheet. Top: the score entry for the workout's score type. Middle: one line per
+ * End-of-session sheet. Top: the score entry for the workout's score type. Then the celebration
+ * (workout count, streak, records set, deltas vs last time, Share) and the 1–10 effort row. Middle: one line per
  * exercise with the load used and, for program sessions, a "made it / missed" toggle and the
  * reps on any 5+ or max set. Bottom: "Next time" lines produced by the progression rules, then
  * Save. Pure: the host stores the result and updates training maxes.
  */
-export const ResultSheet = ({ runsheet, history = [], trainingMaxes = {}, bodyweightKg, startedAt, initial, startedFrom, onSave, onCancel, onBodyweight }: ResultSheetProps) => {
+export const ResultSheet = ({ runsheet, history = [], allResults = history, trainingMaxes = {}, bodyweightKg, startedAt, initial, startedFrom, onSave, onCancel, onBodyweight }: ResultSheetProps) => {
   const type = scoreType(runsheet);
   const steps = useMemo(() => exerciseSteps(runsheet), [runsheet]);
   const hasProgression = !!runsheet.progression || runsheet.items.some(i => i.kind === 'block' && i.progression);
   const [score, setScore] = useState<number | undefined>(initial?.score);
   const [notes, setNotes] = useState('');
+  const [rpe, setRpe] = useState<number | undefined>(initial?.rpe);
+  const [sharing, setSharing] = useState(false);
   // What the timer logged beyond one row per planned step — a step swapped mid-session has a row
   // per exercise — rides through untouched, and each row keeps its per-set results.
   const matched = (s: ExerciseStep) => initial?.steps?.find(x => x.stepId === s.id && x.exerciseKey === s.exercise.key) ?? initial?.steps?.find(x => x.stepId === s.id);
@@ -56,7 +66,9 @@ export const ResultSheet = ({ runsheet, history = [], trainingMaxes = {}, bodywe
       })
     )
   );
-  const result: SessionResult = { ...initial, runsheetId: runsheet.id ?? runsheet.title, title: runsheet.title, startedAt: initial?.startedAt ?? startedAt ?? new Date().toISOString(), endedAt: initial?.endedAt ?? new Date().toISOString(), score, scoreText: score !== undefined ? fmtScore(type, score) : undefined, steps: [...Object.values(rows), ...extra], notes: notes || undefined, startedFrom };
+  const result: SessionResult = { ...initial, runsheetId: runsheet.id ?? runsheet.title, title: runsheet.title, startedAt: initial?.startedAt ?? startedAt ?? new Date().toISOString(), endedAt: initial?.endedAt ?? new Date().toISOString(), score, scoreText: score !== undefined ? fmtScore(type, score) : undefined, steps: [...Object.values(rows), ...extra], notes: notes || undefined, rpe, startedFrom };
+  const celebration = celebrate(result, allResults);
+  const exerciseName = (k: string) => ({ name: LIB[k]?.name ?? k, unit: LIB[k]?.unit });
   const next = useMemo(() => nextLoads(runsheet, result, history, trainingMaxes), [runsheet, result, history, trainingMaxes]);
   const set = (id: string, patch: Partial<StepResult>) => setRows(r => ({ ...r, [id]: { ...r[id], ...patch } }));
   const seen = new Set<string>();
@@ -70,6 +82,8 @@ export const ResultSheet = ({ runsheet, history = [], trainingMaxes = {}, bodywe
         {type !== 'none' && <ScoreEntry type={type} value={score} onChange={setScore} className="mt-3" />}
       </header>
       <div className="min-h-0 flex-1 space-y-2 overflow-y-auto px-3 py-3">
+        <CelebrationCard celebration={celebration} scoreType={type} exercise={exerciseName} onShare={() => setSharing(true)} />
+        <EffortRow value={rpe} onChange={setRpe} />
         <SessionStats result={result} worked={workedFrom(result, runsheet, k => ({ name: LIB[k]?.name ?? k, group: LIB[k]?.group }))} history={history} bodyweightKg={bodyweightKg} />
         {onBodyweight && bodyweightKg === undefined && <BodyweightPrompt onSave={kg => onBodyweight(kg)} onSkip={() => onBodyweight(undefined)} />}
         {steps.map(s => {
@@ -138,6 +152,7 @@ export const ResultSheet = ({ runsheet, history = [], trainingMaxes = {}, bodywe
         )}
         <textarea value={notes} onChange={e => setNotes(e.target.value)} placeholder="Notes (how it felt, what to change)" rows={2} className="w-full rounded-card border border-line bg-surface px-3 py-2 text-[16px] outline-none focus:border-hint" />
       </div>
+      {sharing && <ShareCardSheet open={sharing} onOpenChange={setSharing} data={shareCardData(result, celebration, type, exerciseName)} />}
       <div className="safe-bottom shrink-0 border-t border-line bg-surface p-3">
         <div className="flex gap-2">
           <Button block onClick={() => onSave(result, next)}>

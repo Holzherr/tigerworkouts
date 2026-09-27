@@ -49,6 +49,10 @@ enum SessionOrigin: String, CaseIterable, Sendable {
 /// One finished session. The shape the web app writes as `data` on a `sessions` row, so both
 /// apps read each other's history without a migration.
 struct SessionResult: Codable, Hashable, Sendable, Identifiable {
+    enum CodingKeys: String, CodingKey, CaseIterable {
+        case id, runsheetId, startedFrom, title, startedAt, endedAt, durationSec, completed, activity, device, score, scoreText, steps, notes, rpe
+    }
+
     var id: String?
     var runsheetId: String
     /// A `SessionOrigin` literal, kept as the string it came with so a row written by a newer web
@@ -65,6 +69,9 @@ struct SessionResult: Codable, Hashable, Sendable, Identifiable {
     var scoreText: String?
     var steps: [StepResult] = []
     var notes: String?
+    /// How hard the session felt, 1–10, tapped on the finish screen. Apple Health's workout effort
+    /// scale; the web writes the same field.
+    var rpe: Double?
 
     var rowId: String { id ?? "\(runsheetId)@\(startedAt)" }
     var startedDate: Date { ISO8601.date(startedAt) ?? .distantPast }
@@ -100,6 +107,7 @@ struct SessionResult: Codable, Hashable, Sendable, Identifiable {
         scoreText = try c.decodeIfPresent(String.self, forKey: .scoreText)
         steps = try c.decodeIfPresent([StepResult].self, forKey: .steps) ?? []
         notes = try c.decodeIfPresent(String.self, forKey: .notes)
+        rpe = try c.decodeIfPresent(Double.self, forKey: .rpe)
     }
 }
 
@@ -223,17 +231,44 @@ enum SessionRow {
 
     /// The row body to upsert. New sessions go up as v2 with an empty `blocks[]`, exactly as the
     /// web app writes them, so the old app can still read the row without choking.
-    static func encode(_ r: SessionResult, owner: String) -> [String: Any] {
-        var data: [String: Any] = ["format": "v2", "blocks": []]
+    ///
+    /// `existing` is the row's `data` as the server has it, when there is one. The result is laid
+    /// over it rather than replacing it, so whatever the web app keeps there that this app does not
+    /// read (`legacy`, fields added later) survives an edit made on the phone. A v0.9 row keeps its
+    /// own shape, with the edited dates, duration and notes on top and the full result under `v2`,
+    /// as `toRow` in sync.ts writes it.
+    static func encode(_ r: SessionResult, owner: String, existing: [String: Any]? = nil) -> [String: Any] {
+        var obj: [String: Any] = [:]
         if let body = try? JSONEncoder().encode(r),
-           let obj = try? JSONSerialization.jsonObject(with: body) as? [String: Any] {
-            data.merge(obj) { _, new in new }
+           let o = try? JSONSerialization.jsonObject(with: body) as? [String: Any] {
+            obj = o
         }
+        /// Keys this app owns: cleared first, so a field emptied on the phone (notes, effort) goes.
+        func laid(over base: [String: Any]) -> [String: Any] {
+            var d = base
+            for key in SessionResult.CodingKeys.allCases.map(\.stringValue) { d.removeValue(forKey: key) }
+            d.merge(obj) { _, new in new }
+            return d
+        }
+        var data: [String: Any]
+        if let existing, existing["format"] as? String != "v2", existing["startedAt"] != nil {
+            data = existing
+            data["notes"] = r.notes ?? ""
+            data["startedAt"] = r.startedAt
+            if let end = r.endedAt { data["endedAt"] = end }
+            if let d = r.durationSec { data["duration_min"] = Int((d / 60).rounded()) }
+            data["v2"] = laid(over: existing["v2"] as? [String: Any] ?? [:])
+        } else {
+            data = laid(over: existing ?? [:])
+            data["format"] = "v2"
+            if data["blocks"] == nil { data["blocks"] = [] as [Any] }
+        }
+        let legacyType = data["v2"] != nil ? (data["type"] as? String ?? "workout") : nil
         return [
             "id": r.rowId,
             "owner": owner,
             "workout_id": r.activity != nil ? NSNull() : r.runsheetId,
-            "type": r.activity != nil ? "activity" : "v2",
+            "type": r.activity != nil ? "activity" : legacyType ?? "v2",
             "title": r.displayTitle,
             "started_at": r.startedAt,
             "ended_at": r.endedAt ?? NSNull(),

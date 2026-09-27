@@ -18,6 +18,10 @@ final class Store {
     private(set) var pending: [SessionResult] = []
     private var pendingWorkouts: [Runsheet] = []
     private var pendingWorkoutDeletes: [String] = []
+    /// Sessions deleted on the phone that the server still has.
+    private var pendingDeletes: [String] = []
+    /// Changes made on the finish screen before `save` had put the result in the list.
+    private var amendments: [String: [(inout SessionResult) -> Void]] = [:]
 
     var signedIn: Bool { user != nil }
 
@@ -77,11 +81,13 @@ final class Store {
         defer { syncing = false }
         do {
             try await flushPending()
+            try await flushDeletes()
             try await flushWorkouts()
             async let sessions = Supabase.shared.sessions()
             async let workouts = Supabase.shared.workouts()
             async let prefs = Supabase.shared.prefs()
-            results = try await sessions
+            // What the phone changed while the fetch was out wins over the server's older copy.
+            results = Self.merged(remote: try await sessions, pending: pending, deleting: pendingDeletes)
             let remote = try await workouts
             let queued = Dictionary(pendingWorkouts.map { ($0.key, $0) }, uniquingKeysWith: { _, last in last })
             let deleting = Set(pendingWorkoutDeletes)
@@ -97,6 +103,16 @@ final class Store {
         } catch {
             syncError = error.localizedDescription
         }
+    }
+
+    /// The server's sessions with what the phone has not pushed yet laid over them: queued edits
+    /// replace their row, queued deletes stay gone.
+    nonisolated static func merged(remote: [SessionResult], pending: [SessionResult], deleting: [String]) -> [SessionResult] {
+        let gone = Set(deleting)
+        var byId: [String: SessionResult] = [:]
+        for r in remote where !gone.contains(r.rowId) { byId[r.rowId] = r }
+        for r in pending where !gone.contains(r.rowId) { byId[r.rowId] = r }
+        return byId.values.sorted { $0.startedAt > $1.startedAt }
     }
 
     /// Ends the account session and nothing else. What is on the phone stays: History keeps the
@@ -124,6 +140,7 @@ final class Store {
            let end = r.endedAt.flatMap(ISO8601.date) ?? r.durationSec.map({ start.addingTimeInterval($0) }) {
             r.device = await Health.shared.summary(from: start, to: end)
         }
+        for change in amendments.removeValue(forKey: r.rowId) ?? [] { change(&r) }
         results.removeAll { $0.rowId == r.rowId }
         results.insert(r, at: 0)
         results.sort { $0.startedAt > $1.startedAt }
@@ -141,6 +158,7 @@ final class Store {
     }
 
     /// The session also belongs in Health, typed by what it mostly was, counting towards the rings.
+    /// An effort tapped while the workout was being written is attached once it is there.
     private func writeToHealth(_ r: SessionResult) async {
         guard healthEnabled else { return }
         let runsheet = workout(id: r.runsheetId)
@@ -148,7 +166,70 @@ final class Store {
         // Health's own figure wins when the watch was on; ours is only an estimate.
         let kcal = r.device?.calories.map { Int($0) }
             ?? EffortModel.effort(r, worked: worked, bodyweightKg: bodyweightKg).kcal
-        await Health.shared.save(r, runsheet: runsheet, worked: worked, kcal: kcal)
+        guard await Health.shared.save(r, runsheet: runsheet, worked: worked, kcal: kcal) else { return }
+        if let rpe = results.first(where: { $0.rowId == r.rowId })?.rpe {
+            await Health.shared.setEffort(rpe, for: r.rowId)
+        }
+    }
+
+    // MARK: - Changing a logged session
+
+    /// Change a session by id. The finish screen can get here before `save` has the result in the
+    /// list (it is still asking Health for the heart rate); the change is then held and applied as
+    /// the result goes in.
+    @discardableResult
+    func amend(_ rowId: String, _ change: @escaping (inout SessionResult) -> Void) -> Task<Void, Never>? {
+        guard var r = results.first(where: { $0.rowId == rowId }) else {
+            amendments[rowId, default: []].append(change)
+            return nil
+        }
+        change(&r)
+        return update(r)
+    }
+
+    /// An edit from History or the finish screen. The list and the cache change at once, so the
+    /// next tap on a stepper builds on this one; the server follows, queued like a new session when
+    /// it cannot be reached. The row on the server is merged, not replaced (`SessionRow.encode`),
+    /// so the web app's own fields on it survive.
+    @discardableResult
+    func update(_ result: SessionResult) -> Task<Void, Never>? {
+        let before = results.first { $0.rowId == result.rowId }
+        guard before != result else { return nil }
+        results.removeAll { $0.rowId == result.rowId }
+        results.append(result)
+        results.sort { $0.startedAt > $1.startedAt }
+        pending.removeAll { $0.rowId == result.rowId }
+        pending.append(result)
+        writeCache()
+        let effortChanged = before?.rpe != result.rpe
+        return Task {
+            do {
+                try await flushPending()
+            } catch {
+                syncError = error.localizedDescription
+            }
+            writeCache()
+            if healthEnabled, effortChanged {
+                await Health.shared.setEffort(result.rpe, for: result.rowId)
+            }
+        }
+    }
+
+    /// Gone from the phone at once and from the account as soon as it can be reached; the web app
+    /// drops it from its own list on its next sync. The Health workout, if any, stays: Health owns it.
+    func delete(_ result: SessionResult) async {
+        let id = result.rowId
+        results.removeAll { $0.rowId == id }
+        pending.removeAll { $0.rowId == id }
+        amendments[id] = nil
+        if !pendingDeletes.contains(id) { pendingDeletes.append(id) }
+        writeCache()
+        do {
+            try await flushDeletes()
+        } catch {
+            syncError = error.localizedDescription
+        }
+        writeCache()
     }
 
     // MARK: - Prefs
@@ -240,19 +321,37 @@ final class Store {
         if let failure { throw failure }
     }
 
+    /// Only what was sent comes off the queue: an edit queued while the batch was in flight is a
+    /// different value and stays for the next push.
     private func flushPending() async throws {
         guard await Supabase.shared.isSignedIn, !pending.isEmpty else { return }
-        var stillPending: [SessionResult] = []
+        var sent: [SessionResult] = []
         var failure: Error?
         for r in pending {
             do {
                 try await Supabase.shared.save(r)
+                sent.append(r)
             } catch {
-                stillPending.append(r)
                 failure = error
             }
         }
-        pending = stillPending
+        pending.removeAll { sent.contains($0) }
+        if let failure { throw failure }
+    }
+
+    private func flushDeletes() async throws {
+        guard await Supabase.shared.isSignedIn, !pendingDeletes.isEmpty else { return }
+        var done: [String] = []
+        var failure: Error?
+        for id in pendingDeletes {
+            do {
+                try await Supabase.shared.deleteSession(id: id)
+                done.append(id)
+            } catch {
+                failure = error
+            }
+        }
+        pendingDeletes.removeAll { done.contains($0) }
         if let failure { throw failure }
     }
 
@@ -266,6 +365,7 @@ final class Store {
         var saved: [String]
         var pendingWorkouts: [Runsheet]?
         var pendingWorkoutDeletes: [String]?
+        var pendingDeletes: [String]?
     }
 
     private var cacheURL: URL {
@@ -284,13 +384,15 @@ final class Store {
         saved = Set(c.saved)
         pendingWorkouts = c.pendingWorkouts ?? []
         pendingWorkoutDeletes = c.pendingWorkoutDeletes ?? []
+        pendingDeletes = c.pendingDeletes ?? []
     }
 
     private func writeCache() {
         let c = Cache(
             results: results, myWorkouts: myWorkouts, pending: pending,
             bodyweightKg: bodyweightKg, saved: Array(saved),
-            pendingWorkouts: pendingWorkouts, pendingWorkoutDeletes: pendingWorkoutDeletes
+            pendingWorkouts: pendingWorkouts, pendingWorkoutDeletes: pendingWorkoutDeletes,
+            pendingDeletes: pendingDeletes
         )
         try? JSONEncoder().encode(c).write(to: cacheURL, options: .atomic)
     }

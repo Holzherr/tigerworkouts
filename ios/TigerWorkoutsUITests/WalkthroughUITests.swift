@@ -406,6 +406,76 @@ final class WalkthroughUITests: XCTestCase {
         snap("29 Timed exercise history")
     }
 
+    /// After the session: the finish screen's count, records, effort and notes, the share card, then
+    /// the session in History — edited, started again, and deleted.
+    func testAfterTheSession() {
+        app.terminate()
+        app.launchArguments = ["-seedLogbook"]
+        app.launch()
+        let discard = app.alerts.buttons["Discard"]
+        if discard.waitForExistence(timeout: 3) { discard.tap() }
+
+        open("Tabata This")
+        tap(app.buttons["Start workout"])
+        tap(app.buttons["End session"])
+        tap(app.buttons["Finish and save"])
+        XCTAssertTrue(app.staticTexts["Workout saved"].waitForExistence(timeout: 10))
+        let count = app.staticTexts.matching(NSPredicate(format: "label BEGINSWITH 'Workout ' AND label != 'Workout saved'")).firstMatch
+        XCTAssertTrue(count.waitForExistence(timeout: 5), "the finish screen should lead with the workout count")
+        snap("36 Finish, celebration")
+
+        tap(app.buttons["effort-8"])
+        XCTAssertTrue(app.staticTexts["8 · Hard"].waitForExistence(timeout: 3), "one tap sets the effort")
+        let notes = app.descendants(matching: .any)["finish-notes"].firstMatch
+        tap(notes)
+        notes.typeText("Legs gone by round 6")
+        app.swipeDown(velocity: .slow)
+        snap("37 Finish, effort and notes")
+
+        tap(app.buttons["share-card"])
+        XCTAssertTrue(app.images["share-card-image"].waitForExistence(timeout: 5), "Share should show the card")
+        snap("38 Share card")
+        tap(app.navigationBars["Share"].buttons["Close"])
+        tap(app.buttons["Done"])
+
+        // In History the session shows its effort, and every field can be changed.
+        tap(app.tabBars.buttons["History"])
+        let row = app.buttons.matching(NSPredicate(format: "label BEGINSWITH 'Tabata This' AND label CONTAINS 'effort 8'")).firstMatch
+        XCTAssertTrue(row.waitForExistence(timeout: 5), "the effort should show in History")
+        snap("39 History with effort")
+        row.tap()
+        XCTAssertTrue(app.staticTexts["8 · Hard"].waitForExistence(timeout: 5))
+        for _ in 0..<3 { app.swipeUp(velocity: .slow) }
+        let more = app.buttons["session-duration-Increment"]
+        tap(more)
+        tap(more)
+        snap("40 Session detail, edited")
+
+        // Do it again: the same workout, straight into the timer.
+        tap(app.buttons["Do it again"])
+        XCTAssertTrue(app.buttons["End session"].waitForExistence(timeout: 5), "Do it again should start the workout")
+        tap(app.buttons["End session"])
+        tap(app.buttons["Finish and save"])
+        tap(app.buttons["Done"])
+
+        // Delete asks first.
+        for _ in 0..<3 { app.swipeUp(velocity: .slow) }
+        tap(app.buttons["Delete session"])
+        XCTAssertTrue(app.buttons["Delete"].waitForExistence(timeout: 3), "delete should ask first")
+        snap("41 Delete, confirm")
+        app.buttons["Delete"].tap()
+        XCTAssertTrue(app.navigationBars["History"].waitForExistence(timeout: 5), "a deleted session closes")
+        XCTAssertFalse(app.buttons.matching(NSPredicate(format: "label CONTAINS 'effort 8'")).firstMatch.waitForExistence(timeout: 2), "the deleted session should be gone")
+
+        // A seeded session that set a record: its card carries it.
+        tap(app.buttons.matching(NSPredicate(format: "label BEGINSWITH 'Push day'")).firstMatch)
+        for _ in 0..<3 { app.swipeUp(velocity: .slow) }
+        tap(app.buttons["session-share"])
+        XCTAssertTrue(app.images["share-card-image"].waitForExistence(timeout: 5))
+        snap("42 Share card with a record")
+        tap(app.navigationBars["Share"].buttons["Close"])
+    }
+
     // MARK: - Helpers
 
     private func open(_ title: String) {
