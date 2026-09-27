@@ -287,7 +287,7 @@ describe('honest logging', () => {
     s = R.setReps(s, 6);
     s = advance(s, 60000);
     const pr = toResult(s, sheet, 60000).steps[0];
-    expect(pr.sets).toEqual([{ reps: 10, load: 20 }, { reps: 8, load: 22.5 }, { reps: 6, load: 22.5 }]);
+    expect(pr.sets).toEqual([{ reps: 10, load: 20, at: 20 }, { reps: 8, load: 22.5, at: 40 }, { reps: 6, load: 22.5, at: 60 }]);
     expect(pr.reps).toEqual([10, 8, 6]);
   });
 });
@@ -335,7 +335,7 @@ describe('per-set prescription', () => {
   it('logs each set at its prescribed load and reps', () => {
     let s = tick(start(pyramid(full), 0), 5000);
     for (let t = 10000; s.phase !== 'done'; t += 10000) s = advance(s, t);
-    expect(toResult(s, pyramid(full), 100000).steps[0].sets).toEqual([{ reps: 10, load: 60 }, { reps: 8, load: 70 }, { reps: 6, load: 80 }]);
+    expect(toResult(s, pyramid(full), 100000).steps[0].sets).toEqual([{ reps: 10, load: 60, at: 10 }, { reps: 8, load: 70, at: 30 }, { reps: 6, load: 80, at: 50 }]);
   });
   it('a swap drops the planned loads for the swap target, keeping the reps', () => {
     let s = tick(start(pyramid(full), 0), 5000);
@@ -372,7 +372,7 @@ describe('the set grid', () => {
     s = R.setRepsAt(s, first, 7);
     s = R.completeSet(s, 23000, first);
     expect(s.i).toBe(1); // the cursor did not move
-    expect(toResult(s, sheet(), 30000).steps[0].sets).toEqual([{ reps: 7, load: 22.5 }]);
+    expect(toResult(s, sheet(), 30000).steps[0].sets).toEqual([{ reps: 7, load: 22.5, at: 23 }]);
   });
   it('a skipped set can be ticked afterwards', () => {
     let s = tick(start(sheet(), 0), 5000);
@@ -380,7 +380,7 @@ describe('the set grid', () => {
     s = advance(s, 20000, { skipped: true });
     expect(toResult(s, sheet(), 21000).steps).toEqual([]);
     s = R.completeSet(s, 21000, first);
-    expect(toResult(s, sheet(), 22000).steps[0].sets).toEqual([{ reps: 8, load: 20 }]);
+    expect(toResult(s, sheet(), 22000).steps[0].sets).toEqual([{ reps: 8, load: 20, at: 21 }]);
     expect(s.blockDone.b).toBe(1);
   });
   it('ticking the next set during the rest ends the rest and logs the set in one tap', () => {
@@ -408,5 +408,128 @@ describe('cap clock', () => {
     expect(R.capLeft(s, 90000)).toBe(40);
     const plain = tick(start(interval(), 0), 5000);
     expect(R.capLeft(plain, 6000)).toBeUndefined();
+  });
+});
+
+describe('rest controls', () => {
+  const sheet = (): Runsheet => ({ id: 'g', title: 'Grid', items: [{ kind: 'block', id: 'b', name: 'Bench', repeat: 3, restBetweenSec: 90, steps: [{ ...makeExercise(EX.db_incline_press, { target: 20, forMode: 'reps', forValue: 8 }), id: 'pr' }, { ...makeRest(60), id: 'r' }] }] });
+  const onRest = () => advance(tick(start(sheet(), 0), 5000), 20000); // set 1 done at 20 s, 60 s rest from there
+
+  it('+15 s and −15 s move the running rest and its length', () => {
+    let s = onRest();
+    expect(s.slots[s.i].kind).toBe('rest');
+    s = R.adjustRest(s, 30000, 15);
+    expect(s.endsAt).toBe(95000);
+    expect(s.slots[s.i].seconds).toBe(75);
+    s = R.adjustRest(s, 31000, -15);
+    s = R.adjustRest(s, 32000, -15);
+    expect(s.endsAt).toBe(65000);
+    expect(s.slots[s.i].seconds).toBe(45);
+  });
+  it('taking more than is left ends the rest at the next tick', () => {
+    let s = R.adjustRest(onRest(), 75000, -15); // 5 s left
+    expect(s.endsAt).toBe(75000);
+    s = tick(s, 75000);
+    expect(s.slots[s.i].step.id).toBe('b:between');
+  });
+  it('works on a paused rest', () => {
+    let s = pause(onRest(), 30000); // 50 s left
+    s = R.adjustRest(s, 40000, 15);
+    expect(s.remainingMs).toBe(65000);
+    s = resume(s, 50000);
+    expect(s.endsAt).toBe(115000);
+  });
+  it('the rest between rounds takes it too', () => {
+    const s = tick(onRest(), 80000); // the step rest ends: the rest between rounds
+    expect(s.slots[s.i].step.id).toBe('b:between');
+    const before = s.endsAt!;
+    expect(R.adjustRest(s, 151000, 15).endsAt).toBe(before + 15000);
+  });
+  it('leaves work and an EMOM wait alone', () => {
+    const work = tick(start(sheet(), 0), 5000);
+    expect(R.adjustRest(work, 6000, 15)).toBe(work);
+    const emom: Runsheet = { id: 'e', title: 'E', items: [{ kind: 'block', id: 'b', name: 'E', repeat: 2, mode: 'emom', everySec: 60, steps: [{ ...makeExercise(EX.bw_burpee, { forMode: 'reps', forValue: 5 }), id: 'x' }] }] };
+    const wait = advance(tick(start(emom, 0), 5000), 20000);
+    expect(wait.slots[wait.i].untilBoundary).toBe(true);
+    expect(R.adjustRest(wait, 21000, 15)).toBe(wait);
+  });
+});
+
+describe('last time into the set', () => {
+  const range = (): Runsheet => ({ id: 'g', title: 'Grid', items: [{ kind: 'block', id: 'b', name: 'Bench', repeat: 3, steps: [{ ...makeExercise(EX.db_incline_press, { target: 20, forMode: 'reps', forValue: 8 }), forMax: 12, id: 'pr' }, { ...makeRest(60), id: 'r' }] }] });
+  const ids = (s: R.RunState) => s.slots.filter(x => x.kind === 'work').map(x => x.id);
+
+  it('fillSet puts load and reps on a set to come', () => {
+    let s = tick(start(range(), 0), 5000);
+    s = R.fillSet(s, 6000, ids(s)[1], { load: 22.5, reps: 10 });
+    expect(R.targetOf(s, s.slots.find(x => x.id === ids(s)[1])!)).toBe(22.5);
+    expect(s.actuals[ids(s)[1]].reps).toBe(10);
+  });
+  it('fillSet leaves a done set alone', () => {
+    let s = advance(tick(start(range(), 0), 5000), 20000);
+    const before = s;
+    s = R.fillSet(s, 21000, ids(s)[0], { load: 30, reps: 12 });
+    expect(s).toBe(before);
+  });
+  it('prefillReps fills a range from last time, set by set', () => {
+    const last = [11, 10, 9];
+    const s = R.prefillReps(start(range(), 0), (_, round) => last[round]);
+    expect(ids(s).map(id => s.actuals[id]?.reps)).toEqual([11, 10, 9]);
+    expect(toResult(advance(tick(s, 5000), 20000), range(), 21000).steps[0].sets?.[0].reps).toBe(11);
+  });
+  it('prefillReps leaves fixed reps, prescribed sets and circuits alone', () => {
+    const fixed: Runsheet = { id: 'f', title: 'F', items: [{ kind: 'block', id: 'b', name: 'B', repeat: 2, steps: [{ ...makeExercise(EX.db_incline_press, { forMode: 'reps', forValue: 8 }), id: 'pr' }] }] };
+    const f = start(fixed, 0);
+    expect(R.prefillReps(f, () => 11)).toBe(f);
+    const circuit: Runsheet = { id: 'c', title: 'C', items: [{ kind: 'block', id: 'b', name: 'B', repeat: 2, steps: [{ ...makeExercise(EX.bw_pullup, { forMode: 'max', forValue: 0 }), id: 'a' }, { ...makeExercise(EX.bw_pushup, { forMode: 'reps', forValue: 10 }), id: 'b2' }] }] };
+    const c = start(circuit, 0);
+    expect(R.prefillReps(c, () => 11)).toBe(c);
+  });
+});
+
+describe('set times and round splits', () => {
+  it('each set keeps its session time, pauses excluded', () => {
+    const sheet: Runsheet = { id: 'p', title: 'Press', items: [{ kind: 'block', id: 'b', name: 'B', repeat: 2, steps: [{ ...makeExercise(EX.db_incline_press, { target: 20, forMode: 'reps', forValue: 8 }), id: 'pr' }] }] };
+    let s = tick(start(sheet, 0), 5000);
+    s = advance(s, 20000);
+    s = pause(s, 25000);
+    s = resume(s, 55000); // 30 s paused
+    s = advance(s, 70000);
+    const r = toResult(s, sheet, 70000);
+    expect(r.steps[0].sets?.map(x => x.at)).toEqual([20, 40]);
+    expect(r.splits).toBeUndefined(); // one exercise for sets: its times are on the sets
+  });
+  it('a circuit logs when each round finished', () => {
+    let s = tick(start(interval(), 0), 5000);
+    for (let t = 5000; t <= 200000 && s.phase !== 'done'; t += 1000) s = tick(s, t);
+    const r = toResult(s, interval(), 200000);
+    // swings 30 s, rest 10, press 30, rest 10: round 1's press done at 5 + 70 = 75 s
+    expect(r.splits).toEqual([{ blockId: 'b', at: [75, 155] }]);
+  });
+  it("an amrap's half round at the cap is not a split", () => {
+    let s = tick(start(cindy(), 0), 5000);
+    s = advance(s, 15000);
+    s = advance(s, 25000); // round 1 at 25 s
+    s = advance(s, 35000); // half of round 2
+    s = tick(s, 65000); // cap
+    const r = toResult(s, cindy(), 65000);
+    expect(r.splits).toEqual([{ blockId: 'b', at: [25] }]);
+  });
+  it('a round with a skipped exercise still closes when the next begins', () => {
+    let s = tick(start(cindy(), 0), 5000);
+    s = advance(s, 15000);
+    s = advance(s, 25000, { skipped: true });
+    s = advance(s, 35000);
+    s = advance(s, 45000);
+    expect(toResult(s, cindy(), 46000).splits).toEqual([{ blockId: 'b', at: [15, 45] }]);
+  });
+  it('un-ticking a set drops its time', () => {
+    const sheet: Runsheet = { id: 'p', title: 'Press', items: [{ kind: 'block', id: 'b', name: 'B', repeat: 2, steps: [{ ...makeExercise(EX.db_incline_press, { target: 20, forMode: 'reps', forValue: 8 }), id: 'pr' }] }] };
+    let s = advance(tick(start(sheet, 0), 5000), 20000);
+    const first = s.slots[0].id;
+    s = R.reopenSet(s, first);
+    expect(s.actuals[first].at).toBeUndefined();
+    s = R.completeSet(s, 30000, first);
+    expect(s.actuals[first].at).toBe(30);
   });
 });

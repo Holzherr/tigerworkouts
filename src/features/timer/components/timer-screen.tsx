@@ -6,6 +6,8 @@ import { Sheet } from '@/shared/components/ui/sheet';
 import { Stepper } from '@/shared/components/ui/stepper';
 import { cn, fmtClock, fmtNum } from '@/shared/utils/ui-utils';
 import { countLabel, forLabel, shortUnit, straightSetStep, type Block, type ExerciseStep, type Item, type Runsheet } from '@/features/runsheet/model';
+import { lastSetLabel, lastTimeLabel } from '@/features/runsheet/last-used';
+import type { SetResult } from '@/features/runsheet/progression';
 import { SwipeToRemove } from '@/features/runsheet/components/swipe-to-remove';
 import { ExerciseSheet } from '@/features/runsheet/components/exercise-sheet';
 import * as R from '../runner';
@@ -28,6 +30,13 @@ export interface TimerScreenProps {
   onAdjustStep?: (stepId: string, patch: { target?: number; incline?: number }) => void;
   /** The set grid a straight-set block runs as. Without it those blocks show the card like any other. */
   sets?: SetActions;
+  /** −15 s / +15 s on the rest counting down. */
+  onAdjustRest?: (deltaSec: number) => void;
+  /** What this exercise was done at last time; the hint on the card copies it into the set. */
+  lastFor?: (step: ExerciseStep) => SetResult | undefined;
+  onFill?: (slotId: string, set: SetResult) => void;
+  /** "Round 4 — 12 s ahead" against the last session of this workout. */
+  ghost?: string;
   onFinish: () => void;
   onExit: () => void;
 }
@@ -40,6 +49,9 @@ export interface SetActions {
   /** Un-tick a done set so its weight can be put right. */
   reopen: (slotId: string) => void;
   hintFor?: (step: ExerciseStep, round: number) => string | undefined;
+  /** Last time's set for a row. With `fill`, the row's hint is a button that copies it in. */
+  lastFor?: (step: ExerciseStep, round: number) => SetResult | undefined;
+  fill?: (slotId: string, set: SetResult) => void;
 }
 
 /**
@@ -79,7 +91,9 @@ const TimerSetGrid = ({ state, step, blockId, actions }: { state: R.RunState; st
         const edit = !done && sl.id === editing;
         const live = state.phase === 'running' || state.phase === 'paused';
         const canTick = done || idx < state.i || (live && (idx === state.i || (current && state.slots.slice(state.i, idx).every(x => x.kind === 'rest'))));
-        const hint = actions.hintFor?.(step, n);
+        const last = actions.lastFor?.(step, n);
+        const hint = last ? lastSetLabel(last) : actions.hintFor?.(step, n);
+        const copy = last && actions.fill && !done ? { ...(hasLoad && last.load !== undefined ? { load: last.load } : {}), ...(count && last.reps !== undefined ? { reps: last.reps } : {}) } : undefined;
         return (
           <div key={sl.id} className={cn('-mx-1 rounded-lg px-1 py-1.5', current && !done && 'bg-brand-soft', done && 'text-muted')}>
             <div className="flex items-center gap-2" onClick={() => !done && setOpen(sl.id)}>
@@ -114,7 +128,13 @@ const TimerSetGrid = ({ state, step, blockId, actions }: { state: R.RunState; st
                 <Check className="size-5" />
               </button>
             </div>
-            {hint && <div className="pl-10 text-[11px] text-muted">{hint}</div>}
+            {hint && copy && Object.keys(copy).length ? (
+              <button type="button" aria-label={`Use last time for set ${n + 1}`} onClick={() => (actions.fill!(sl.id, copy), setOpen(sl.id))} className="ml-10 min-h-7 text-[12px] font-semibold text-brand-ink underline decoration-dotted underline-offset-2">
+                {hint}
+              </button>
+            ) : (
+              hint && <div className="pl-10 text-[11px] text-muted">{hint}</div>
+            )}
           </div>
         );
       })}
@@ -138,7 +158,7 @@ const stepLine = (s: ExerciseStep) => [forLabel(s), s.target !== undefined ? `${
  * a ⋯ menu (previous, overview, stop), Pause and Skip/Done at equal size. Tap the Next row to see
  * what the coming block asks for; the overview sheet lists every part with progress.
  */
-export const TimerScreen = ({ runsheet, state, now, onDone, onSkip, onBack, onPause, onResume, onAdjust, onAdjustIncline, onSetReps, onDrop, onStartBlock, onAdjustStep, sets, onFinish, onExit }: TimerScreenProps) => {
+export const TimerScreen = ({ runsheet, state, now, onDone, onSkip, onBack, onPause, onResume, onAdjust, onAdjustIncline, onSetReps, onDrop, onStartBlock, onAdjustStep, sets, onAdjustRest, lastFor, onFill, ghost, onFinish, onExit }: TimerScreenProps) => {
   const [confirmExit, setConfirmExit] = useState(false);
   const [menu, setMenu] = useState(false);
   const [overview, setOverview] = useState(false);
@@ -174,6 +194,9 @@ export const TimerScreen = ({ runsheet, state, now, onDone, onSkip, onBack, onPa
   const part = slot ? partOf(slot.part) : undefined;
   const straight = sets && part?.kind === 'block' && slot?.blockId ? straightSetStep(part) : undefined;
 
+  const restAdjustable = !!onAdjustRest && isRest && timed && !slot?.untilBoundary && (state.phase === 'running' || paused);
+  const last = slot && stepOf?.kind === 'exercise' && !done && !lead ? lastFor?.(stepOf) : undefined;
+  const lastLabel = last && stepOf?.kind === 'exercise' ? lastTimeLabel(last, stepOf) : undefined;
   const partLabel = slot ? `${slot.parts > 1 ? `Block ${slot.part + 1} of ${slot.parts}` : ''}${slot.mode !== 'loose' ? `${slot.parts > 1 ? ' · ' : ''}${MODE_LABEL[slot.mode]} ${slot.round + 1}${slot.mode === 'amrap' ? '' : ` of ${slot.rounds}`}` : ''}` : runsheet.title;
 
   return (
@@ -193,6 +216,11 @@ export const TimerScreen = ({ runsheet, state, now, onDone, onSkip, onBack, onPa
             <div className="text-[12px] tabular-nums text-white/60">{fmtClock(total)}</div>
           </button>
         </div>
+        {ghost && !done && (
+          <div className="mt-1.5 w-fit rounded-full bg-white/10 px-2.5 py-0.5 text-[13px] font-bold tabular-nums" aria-label="Against last time">
+            {ghost}
+          </div>
+        )}
         <button type="button" onClick={() => setOverview(true)} className="relative mt-2 block h-2 w-full overflow-hidden rounded-full bg-white/15" aria-label="Workout overview">
           <div className="absolute inset-y-0 left-0 bg-white/35 transition-[width] duration-300" style={{ width: `${Math.round(all * 100)}%` }} />
           <div className="absolute inset-y-0 left-0 bg-brand transition-[width] duration-200" style={{ width: `${Math.round(progress * 100)}%` }} />
@@ -228,6 +256,16 @@ export const TimerScreen = ({ runsheet, state, now, onDone, onSkip, onBack, onPa
             ) : (
               <div className="pb-1" />
             )}
+            {restAdjustable && (
+              <div className="-mt-1 flex justify-center gap-2 pb-3">
+                <Button variant="dark" onClick={() => onAdjustRest!(-15)} aria-label="15 seconds less rest" className="min-w-20 bg-white/10 tabular-nums">
+                  −15 s
+                </Button>
+                <Button variant="dark" onClick={() => onAdjustRest!(15)} aria-label="15 seconds more rest" className="min-w-20 bg-white/10 tabular-nums">
+                  +15 s
+                </Button>
+              </div>
+            )}
             {lead && <div className="-mt-2 pb-3 text-center text-[13px] text-white/60">Get ready</div>}
             {!timed && !lead && !done && slot && <div className="-mt-2 pb-3 text-center text-[13px] text-white/60">{isRest ? 'Rest' : straight ? 'Tick the set when you finish it' : 'Tap Done when finished'}</div>}
             {capLeft !== undefined && !lead && !done && (
@@ -254,6 +292,14 @@ export const TimerScreen = ({ runsheet, state, now, onDone, onSkip, onBack, onPa
                         {stepOf?.kind === 'exercise' ? forLabel(stepOf) : `${slot.seconds ?? 0}s`}
                         {stepOf?.kind === 'exercise' && stepOf.exercise.cue ? ` · ${stepOf.exercise.cue}` : ''}
                       </div>
+                      {lastLabel &&
+                        (onFill ? (
+                          <button type="button" aria-label="Use last time" onClick={() => onFill(slot.id, last!)} className="mt-0.5 min-h-7 text-left text-[13px] font-semibold text-brand-ink underline decoration-dotted underline-offset-2">
+                            {lastLabel[0].toUpperCase() + lastLabel.slice(1)}
+                          </button>
+                        ) : (
+                          <div className="text-[13px] font-semibold text-brand-ink">{lastLabel[0].toUpperCase() + lastLabel.slice(1)}</div>
+                        ))}
                     </div>
                   </div>
                   {stepOf?.kind === 'exercise' && (
