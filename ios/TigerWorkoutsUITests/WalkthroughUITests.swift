@@ -525,6 +525,58 @@ final class WalkthroughUITests: XCTestCase {
         snap("29 Timed exercise history")
     }
 
+    /// My equipment clears and stays clear; training maxes list every % TM lift.
+    func testClearEquipmentAndMaxes() {
+        tap(app.tabBars.buttons["Me"])
+        for _ in 0..<4 where !(app.buttons["Settings"].exists && app.buttons["Settings"].isHittable) { app.swipeUp() }
+        tap(app.buttons["Settings"])
+        let kit = app.buttons["my-equipment"]
+        for _ in 0..<6 where !(kit.exists && kit.isHittable) { app.swipeUp() }
+        tap(kit)
+        XCTAssertTrue(app.navigationBars["My equipment"].waitForExistence(timeout: 5))
+        // Clearing the kit sticks, rather than coming back on the next sync.
+        let tens = app.steppers["plates-10"]
+        XCTAssertTrue(tens.waitForExistence(timeout: 5))
+        tens.buttons.element(boundBy: 1).tap()
+        let clear = app.buttons["clear-equipment"]
+        snap("77 My equipment, clear")
+        tap(clear)
+        XCTAssertFalse(clear.waitForExistence(timeout: 2), "cleared equipment should leave nothing to clear")
+        app.navigationBars.buttons.element(boundBy: 0).tap()
+        XCTAssertTrue(app.buttons["my-equipment"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.buttons["my-equipment"].label.contains("Not set"))
+
+        // Training maxes for every lift a workout loads as % TM, and a way to take them all off.
+        tap(app.buttons["training-maxes"])
+        XCTAssertTrue(app.navigationBars["Training maxes"].waitForExistence(timeout: 5))
+        snap("78 Training maxes")
+    }
+
+    /// A past session opened from an exercise's history starts again from there, on last time's loads.
+    func testDoItAgainFromExerciseHistory() {
+        app.terminate()
+        app.launchArguments = ["-seedPace"]
+        app.launch()
+        let discard = app.alerts.buttons["Discard"]
+        if discard.waitForExistence(timeout: 3) { discard.tap() }
+
+        tap(app.tabBars.buttons["History"])
+        tap(app.navigationBars["History"].buttons["Exercises"])
+        tap(app.buttons.matching(NSPredicate(format: "label BEGINSWITH[c] 'Pull'")).firstMatch)
+        let session = app.buttons.matching(NSPredicate(format: "label CONTAINS[c] 'Cindy'")).firstMatch
+        for _ in 0..<6 where !(session.exists && session.isHittable) { app.swipeUp() }
+        tap(session)
+        let again = app.buttons["do-it-again"]
+        for _ in 0..<6 where !(again.exists && again.isHittable) { app.swipeUp() }
+        snap("80 Session from an exercise's history")
+        tap(again)
+        XCTAssertTrue(app.buttons["End session"].waitForExistence(timeout: 8), "Do it again should start the timer from here too")
+        snap("81 Started again from an exercise's history")
+        tap(app.buttons["End session"])
+        let drop = app.buttons.matching(NSPredicate(format: "label BEGINSWITH[c] 'Discard'")).firstMatch
+        if drop.waitForExistence(timeout: 3) { drop.tap() } else { tap(app.buttons["Finish and save"]); tap(app.buttons["Done"]) }
+    }
+
     /// After the session: the finish screen's count, records, effort and notes, the share card, then
     /// the session in History — edited, started again, and deleted.
     func testAfterTheSession() {
@@ -808,6 +860,7 @@ final class WalkthroughUITests: XCTestCase {
         tap(kit)
         XCTAssertTrue(app.navigationBars["My equipment"].waitForExistence(timeout: 5))
         snap("76 My equipment")
+
     }
 
 }

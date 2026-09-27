@@ -117,13 +117,17 @@ struct UpNextWidgetTests {
         return [a, b]
     }
 
-    @Test("carries the Up next pick and a link to its page")
+    @Test("carries the Up next pick and a link that starts it")
     func pick() {
         let now = ISO8601DateFormatter().date(from: "2026-09-24T12:00:00Z")!
         let snap = Store.upNextSnapshot(all: all, results: [did("a", "2026-09-23T10:00:00Z")], now: now)
         #expect(snap.workoutId == "b")
         #expect(snap.reason == "Next in P")
-        #expect(snap.url.absoluteString == "tigerworkouts://w/b")
+        #expect(snap.url.absoluteString == "tigerworkouts://do/b")
+        #expect(UpNextSnapshot.workoutId(fromStart: snap.url) == "b")
+        var odd = snap
+        odd.workoutId = "u-1 my/day"
+        #expect(UpNextSnapshot.workoutId(fromStart: odd.url) == "u-1 my/day")
     }
 
     @Test("counts this week at draw time, so Monday starts from nothing")

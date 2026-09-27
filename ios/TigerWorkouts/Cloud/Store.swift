@@ -20,6 +20,8 @@ final class Store {
         didSet { Equipment.store(equipment) }
     }
     var saved: Set<String> = []
+    /// When each synced pref was last changed on this phone (PrefsMerge): the newer side wins a sync.
+    private(set) var prefsUpdatedAt: [String: String] = [:]
     /// Exercises this account made, here or on the web. Mirrored into `Library.shared` so lookups
     /// find them; kept here too so a view that lists them redraws when one is added.
     private(set) var customExercises: [String: LibraryExercise] = [:]
@@ -59,7 +61,8 @@ final class Store {
 
     /// How many times this account has run a given workout — the "done 5×" chip.
     func doneCount(_ runsheetId: String) -> Int {
-        results.filter { $0.runsheetId == runsheetId }.count
+        let ids = workout(id: runsheetId)?.lineage ?? [runsheetId]
+        return results.filter { ids.contains($0.runsheetId) }.count
     }
 
     // MARK: - Lifecycle
@@ -89,7 +92,10 @@ final class Store {
     /// Health holds a bodyweight already; asking for it again would be the wrong answer.
     func readBodyweightFromHealth() async {
         guard healthEnabled, let kg = await Health.shared.bodyweightKg() else { return }
+        guard kg != bodyweightKg else { return }
+        // Newer than whatever the server holds, so a sync sends it up rather than taking the old one.
         bodyweightKg = kg
+        touched("bodyweightKg")
         writeCache()
     }
 
@@ -107,7 +113,7 @@ final class Store {
             mergeCustom(try await Supabase.shared.exercises())
             async let sessions = Supabase.shared.sessions()
             async let workouts = Supabase.shared.workouts()
-            async let prefs = Supabase.shared.prefs()
+            async let prefs = Supabase.shared.rawPrefs()
             // What the phone changed while the fetch was out wins over the server's older copy.
             results = Self.merged(remote: try await sessions, pending: pending, deleting: pendingDeletes)
             let remote = try await workouts
@@ -117,16 +123,30 @@ final class Store {
                 .filter { !deleting.contains($0.key) }
                 .map { queued[$0.key] ?? $0 }
                 + queued.values.filter { q in !remote.contains { $0.key == q.key } }
-            let p = try await prefs
-            bodyweightKg = p.bodyweightKg ?? bodyweightKg
-            trainingMaxes = trainingMaxes.merging(p.trainingMaxes) { _, remote in remote }
-            equipment = p.equipment ?? equipment
-            saved = Set(p.saved).union(saved)
+            let before = results
+            try await syncPrefs(remote: try await prefs)
+            await effortsLearned(before: before)
             user = await Supabase.shared.user
             writeCache()
         } catch {
             syncError = error.localizedDescription
         }
+    }
+
+    /// An effort this phone did not have before a sync (entered on the web, or changed there) goes
+    /// to Health for a session this phone wrote there; Health finds it by session id.
+    private func effortsLearned(before: [SessionResult]) async {
+        guard healthEnabled else { return }
+        for r in Self.effortChanges(before: before, after: results) {
+            await Health.shared.setEffort(r.rpe, for: r)
+        }
+    }
+
+    /// Sessions whose effort a sync changed. A session new to the phone is not one: this phone
+    /// never wrote it to Health.
+    nonisolated static func effortChanges(before: [SessionResult], after: [SessionResult]) -> [SessionResult] {
+        let old = Dictionary(before.map { ($0.rowId, $0.rpe) }, uniquingKeysWith: { a, _ in a })
+        return after.filter { r in old[r.rowId].map { $0 != r.rpe } ?? false }
     }
 
     /// The server's sessions with what the phone has not pushed yet laid over them: queued edits
@@ -145,6 +165,31 @@ final class Store {
         await Supabase.shared.signOut()
         user = nil
         writeCache()
+    }
+
+    /// Deletes the account and its data on the server. `clearPhone` also forgets everything here;
+    /// otherwise History and your workouts stay on the phone, as after signing out, but nothing is
+    /// queued to go up to the account that no longer exists. Returns whether the sign-in went too.
+    func deleteAccount(clearPhone: Bool) async throws -> Bool {
+        let account = try await Supabase.shared.deleteAccount()
+        user = nil
+        pending = []
+        pendingWorkouts = []
+        pendingWorkoutDeletes = []
+        pendingDeletes = []
+        pendingExercises = []
+        if clearPhone {
+            results = []
+            myWorkouts = []
+            saved = []
+            trainingMaxes = [:]
+            equipment = nil
+            bodyweightKg = nil
+            prefsUpdatedAt = [:]
+            customExercises = [:]
+        }
+        writeCache()
+        return account
     }
 
     /// Sessions on the phone that the server does not have yet.
@@ -205,8 +250,8 @@ final class Store {
         let kcal = r.device?.calories.map { Int($0) }
             ?? EffortModel.effort(r, worked: worked, bodyweightKg: bodyweightKg).kcal
         guard await Health.shared.save(r, runsheet: runsheet, worked: worked, kcal: kcal) else { return }
-        if let rpe = results.first(where: { $0.rowId == r.rowId })?.rpe {
-            await Health.shared.setEffort(rpe, for: r.rowId)
+        if let current = results.first(where: { $0.rowId == r.rowId }), let rpe = current.rpe {
+            await Health.shared.setEffort(rpe, for: current)
         }
     }
 
@@ -248,7 +293,7 @@ final class Store {
             }
             writeCache()
             if healthEnabled, effortChanged {
-                await Health.shared.setEffort(result.rpe, for: result.rowId)
+                await Health.shared.setEffort(result.rpe, for: result)
             }
         }
     }
@@ -274,36 +319,96 @@ final class Store {
 
     func toggleSaved(_ key: String) async {
         if saved.contains(key) { saved.remove(key) } else { saved.insert(key) }
+        touched("saved")
         await writePrefs()
     }
 
     func setBodyweight(_ kg: Double) async {
+        guard kg != bodyweightKg else { return }
         bodyweightKg = kg
+        touched("bodyweightKg")
         await writePrefs()
     }
 
+    /// Nil takes the max off.
     func setTrainingMax(_ key: String, _ kg: Double?) async {
+        guard trainingMaxes[key] != kg else { return }
         trainingMaxes[key] = kg
+        touched("trainingMaxes")
         await writePrefs()
     }
 
-    func setEquipment(_ e: Equipment) async {
-        equipment = e.isEmpty ? nil : e
+    func clearTrainingMaxes() async {
+        guard !trainingMaxes.isEmpty else { return }
+        trainingMaxes = [:]
+        touched("trainingMaxes")
         await writePrefs()
     }
 
-    /// A workout as the timer runs it: shared parts (refs) inlined, then loads given as a % of a
-    /// training max or × bodyweight worked out into kilos you can load.
+    /// An empty kit clears it: suggested loads go back to the defaults.
+    func setEquipment(_ e: Equipment?) async {
+        let next = (e?.isEmpty ?? true) ? nil : e
+        guard next != equipment else { return }
+        equipment = next
+        touched("equipment")
+        await writePrefs()
+    }
+
+    private func touched(_ field: String) {
+        prefsUpdatedAt[field] = PrefsMerge.stamp()
+    }
+
+    /// This phone's side of the prefs, as JSON. The saved list sorted, so an unchanged set reads
+    /// the same every time.
+    var localPrefs: PrefsMerge.Side {
+        var values: [String: Any] = ["saved": saved.sorted(), "trainingMaxes": trainingMaxes]
+        if let bodyweightKg { values["bodyweightKg"] = bodyweightKg }
+        if let equipment, let data = try? JSONEncoder().encode(equipment), let json = try? JSONSerialization.jsonObject(with: data) {
+            values["equipment"] = json
+        }
+        return PrefsMerge.Side(values: values, updatedAt: prefsUpdatedAt)
+    }
+
+    /// Merge the server's prefs with this phone's, field by field (PrefsMerge), keep the result, and
+    /// write it back when this phone had something newer. Only the fields this app uses are taken;
+    /// the web's own ride through on the row untouched.
+    func syncPrefs(remote raw: [String: Any]) async throws {
+        let m = PrefsMerge.merge(local: localPrefs, remote: PrefsMerge.remote(raw))
+        applyPrefs(m)
+        writeCache()
+        if m.push { try await Supabase.shared.writePrefs(PrefsMerge.row(existing: raw, m)) }
+    }
+
+    func applyPrefs(_ m: PrefsMerge.Merged) {
+        let p = Supabase.prefs(from: m.values)
+        saved = Set(p.saved)
+        trainingMaxes = p.trainingMaxes
+        bodyweightKg = p.bodyweightKg
+        equipment = p.equipment
+        prefsUpdatedAt = m.updatedAt.filter { ["saved", "trainingMaxes", "bodyweightKg", "equipment"].contains($0.key) }
+    }
+
+    /// What a session starts on: last time's loads carried over, then a program's rules applied to
+    /// them (+2.5 kg after a clean session, the deload after repeated misses). The workout page
+    /// seeds with this before it shows the numbers; so do Up next and Do it again.
+    func seeded(_ r: Runsheet) -> Runsheet {
+        ProgressionRules.progressed(Settings.withLastUsed(r, results: results), results: results, kit: equipment)
+    }
+
+    /// A workout as the timer runs it: shared parts (refs) inlined — each seeded first, since the
+    /// page that seeded the workout saw them only as refs — then loads given as a % of a training
+    /// max or × bodyweight worked out into kilos you can load.
     func prepared(_ r: Runsheet) -> Runsheet {
-        Relative.resolve(Relative.resolveRefs(r, lookup: workout(id:)), maxes: trainingMaxes, bodyweightKg: bodyweightKg, kit: equipment)
+        Relative.resolve(Relative.resolveRefs(r, lookup: { self.workout(id: $0).map(self.seeded) }), maxes: trainingMaxes, bodyweightKg: bodyweightKg, kit: equipment)
     }
 
-    /// Cache first so the change survives the app being killed, then the server when there is one.
+    /// Cache first so the change survives the app being killed, then the server when there is one:
+    /// read, merged field by field, written back.
     private func writePrefs() async {
         writeCache()
         guard await Supabase.shared.isSignedIn else { return }
         do {
-            try await Supabase.shared.savePrefs(bodyweightKg: bodyweightKg, saved: Array(saved), trainingMaxes: trainingMaxes, equipment: equipment)
+            try await syncPrefs(remote: try await Supabase.shared.rawPrefs())
             syncError = nil
         } catch {
             syncError = error.localizedDescription
@@ -452,6 +557,7 @@ final class Store {
         var pendingExercises: [LibraryExercise]?
         var trainingMaxes: [String: Double]?
         var equipment: Equipment?
+        var prefsUpdatedAt: [String: String]?
     }
 
     /// The file the cache lives in. Tests point it elsewhere so they never touch the app's own.
@@ -480,6 +586,7 @@ final class Store {
         pendingExercises = c.pendingExercises ?? []
         trainingMaxes = c.trainingMaxes ?? [:]
         equipment = c.equipment
+        prefsUpdatedAt = c.prefsUpdatedAt ?? [:]
     }
 
     private func writeCache() {
@@ -489,7 +596,7 @@ final class Store {
             pendingWorkouts: pendingWorkouts, pendingWorkoutDeletes: pendingWorkoutDeletes,
             pendingDeletes: pendingDeletes,
             customExercises: Array(customExercises.values), pendingExercises: pendingExercises,
-            trainingMaxes: trainingMaxes, equipment: equipment
+            trainingMaxes: trainingMaxes, equipment: equipment, prefsUpdatedAt: prefsUpdatedAt
         )
         try? JSONEncoder().encode(c).write(to: cacheURL, options: .atomic)
         shareUpNext()

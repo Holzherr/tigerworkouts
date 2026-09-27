@@ -52,19 +52,20 @@ struct EditingTests {
         #expect(withRest.items.compactMap(\.asBlock).first?.steps.count == 2)
     }
 
-    @Test("a copy shares no ids with the original")
+    @Test("an edited copy keeps the program day and step ids, and points back at the original")
     func duplicate() {
-        let (original, _) = sheetWithOneBlock()
+        var (original, _) = sheetWithOneBlock()
+        original.program = ProgramRef(name: "StrongLifts 5×5", day: "A", order: 1)
         let copy = Edit.duplicate(original, creator: "Nick")
         #expect(copy.id != original.id)
         #expect(copy.title == "Mine (mine)")
-        // Step ids are what a logged session keys its loads by; two workouts must not share them,
-        // or last-used carry-over would leak between them.
-        let originalIds = Set(original.exerciseSteps.map(\.id))
-        let copyIds = Set(copy.exerciseSteps.map(\.id))
-        #expect(originalIds.isDisjoint(with: copyIds))
-        #expect(copy.items.compactMap(\.asBlock)[0].id != original.items.compactMap(\.asBlock)[0].id)
-        #expect(copy.exerciseSteps.map(\.exercise.key) == original.exerciseSteps.map(\.exercise.key))
+        // Sessions key their loads by step id and are found by runsheet id: the copy keeps both
+        // threads, so Up next, last time, pace and stalls carry on from the original's history.
+        #expect(copy.exerciseSteps.map(\.id) == original.exerciseSteps.map(\.id))
+        #expect(copy.program == original.program)
+        #expect(copy.copyOf == original.key)
+        #expect(copy.lineage == [copy.key, original.key])
+        #expect(Edit.duplicate(copy, creator: "Nick").copyOf == original.key)
     }
 
     @Test("removing and reordering")

@@ -206,6 +206,8 @@ struct SettingsView: View {
     @AppStorage(Intent.storageKey) private var intent = Intent.maintain.rawValue
     @State private var signingIn = false
     @State private var healthError: String?
+    @State private var confirmDelete = false
+    @State private var deleteMessage: String?
 
     var body: some View {
         Form {
@@ -218,7 +220,12 @@ struct SettingsView: View {
                         Text(error).font(.footnote).foregroundStyle(.red)
                     }
                     Button("Sign out", role: .destructive) { Task { await store.signOut() } }
+                    Button("Delete account", role: .destructive) { confirmDelete = true }
+                        .accessibilityIdentifier("delete-account")
                 } else {
+                    if let deleteMessage {
+                        Text(deleteMessage).font(.footnote).foregroundStyle(Brand.muted)
+                    }
                     Button("Sign in") { signingIn = true }
                 }
             } header: {
@@ -269,7 +276,7 @@ struct SettingsView: View {
                 }
                 .accessibilityIdentifier("my-equipment")
                 NavigationLink {
-                    TrainingMaxesView(exercises: TrainingMaxesView.bigFour.map { Library.shared.exercise($0)?.ref ?? .placeholder(key: $0) }, needsBodyweight: true)
+                    TrainingMaxesView(exercises: TrainingMaxesView.lifts(in: store.allWorkouts, maxes: store.trainingMaxes) { Library.shared.exercise($0)?.ref ?? .placeholder(key: $0) }, needsBodyweight: true)
                 } label: {
                     LabeledContent("Training maxes", value: store.trainingMaxes.isEmpty ? "Not set" : "\(store.trainingMaxes.count) set")
                 }
@@ -306,28 +313,52 @@ struct SettingsView: View {
         .sheet(isPresented: $signingIn) {
             SignInView { await store.sync() }
         }
+        .confirmationDialog("Delete your account?", isPresented: $confirmDelete, titleVisibility: .visible) {
+            Button("Delete account, keep this phone’s history", role: .destructive) { deleteAccount(clearPhone: false) }
+            Button("Delete account and clear this phone", role: .destructive) { deleteAccount(clearPhone: true) }
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            Text("Your sessions, workouts, exercises and settings are deleted from the server, and the account with them. This cannot be undone.")
+        }
         .onChange(of: haptics) { _, on in Haptics.shared.enabled = on }
         .onChange(of: sound) { _, on in Cues.shared.enabled = on }
         .onChange(of: liveActivity) { _, on in SessionActivityController.shared.enabled = on }
         .onChange(of: health) { _, on in
-            guard on else { return }
-            healthError = nil
-            Task {
-                do {
-                    try await Health.shared.requestAuthorisation()
-                    // The request returns quietly when the question was answered before, sheet or
-                    // no sheet. Whether writing is allowed is the only answer iOS gives back.
-                    guard Health.shared.canWrite else {
-                        health = false
-                        healthError = HealthError.notAllowed.localizedDescription
-                        return
-                    }
-                    await store.readBodyweightFromHealth()
-                } catch {
-                    // Turn the switch back rather than leave it claiming something untrue, and say why.
+            healthChanged(on)
+        }
+    }
+
+    private func deleteAccount(clearPhone: Bool) {
+        Task {
+            do {
+                let all = try await store.deleteAccount(clearPhone: clearPhone)
+                deleteMessage = all
+                    ? "Account deleted."
+                    : "Your data is deleted from the server and you are signed out. The sign-in itself could not be removed yet."
+            } catch {
+                store.syncError = "Could not delete: \(error.localizedDescription)"
+            }
+        }
+    }
+
+    private func healthChanged(_ on: Bool) {
+        guard on else { return }
+        healthError = nil
+        Task {
+            do {
+                try await Health.shared.requestAuthorisation()
+                // The request returns quietly when the question was answered before, sheet or
+                // no sheet. Whether writing is allowed is the only answer iOS gives back.
+                guard Health.shared.canWrite else {
                     health = false
-                    healthError = error.localizedDescription
+                    healthError = HealthError.notAllowed.localizedDescription
+                    return
                 }
+                await store.readBodyweightFromHealth()
+            } catch {
+                // Turn the switch back rather than leave it claiming something untrue, and say why.
+                health = false
+                healthError = error.localizedDescription
             }
         }
     }

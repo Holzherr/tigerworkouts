@@ -76,7 +76,7 @@ enum Targets {
         let type = r.effectiveScore
         guard type == .rounds || type == .time || type == .reps else { return nil }
         let recent = results
-            .filter { $0.runsheetId == r.key && $0.activity == nil && ($0.score ?? 0) > 0 && (type != .time || $0.completed != false) }
+            .filter { r.owns($0) && $0.activity == nil && ($0.score ?? 0) > 0 && (type != .time || $0.completed != false) }
             .sorted { $0.startedAt < $1.startedAt }
             .suffix(3)
             .compactMap(\.score)

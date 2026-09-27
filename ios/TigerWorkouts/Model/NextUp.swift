@@ -11,11 +11,15 @@ struct NextUp: Hashable {
 
     static func find(in all: [Runsheet], results: [SessionResult]) -> NextUp? {
         let byId = Dictionary(all.map { ($0.key, $0) }, uniquingKeysWith: { first, _ in first })
+        // Your edited copy of a day replaces the day, whether the last session ran the copy or the original.
+        let copies = Dictionary(all.compactMap { r in r.copyOf.map { ($0, r) } }, uniquingKeysWith: { first, _ in first })
         guard let latest = results.sorted(by: { $0.startedAt > $1.startedAt }).first(where: { byId[$0.runsheetId] != nil }),
-              let last = byId[latest.runsheetId] else { return nil }
+              let last = copies[latest.runsheetId] ?? byId[latest.runsheetId] else { return nil }
+        func root(_ r: Runsheet) -> String { r.copyOf ?? r.key }
         if let program = last.program?.name, !program.isEmpty {
-            let days = all.filter { $0.program?.name == program }.sorted { ($0.program?.order ?? 0) < ($1.program?.order ?? 0) }
-            if days.count > 1, let i = days.firstIndex(where: { $0.key == last.key }) {
+            let days = all.filter { $0.program?.name == program && !(copies[$0.key] != nil && $0.copyOf == nil) }
+                .sorted { ($0.program?.order ?? 0) < ($1.program?.order ?? 0) }
+            if days.count > 1, let i = days.firstIndex(where: { root($0) == root(last) }) {
                 return NextUp(runsheet: days[(i + 1) % days.count], reason: "Next in \(program)", lastAt: latest.startedDate)
             }
         }

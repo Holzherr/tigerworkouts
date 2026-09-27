@@ -49,6 +49,13 @@ struct CSVTests {
         #expect(csv == expected)
     }
 
+    @Test("a Windows line break in notes is quoted like any other")
+    func windowsLineBreak() {
+        #expect(CSVExport.field("Felt heavy\r\nNext time 60") == "\"Felt heavy\r\nNext time 60\"")
+        #expect(CSVExport.field("a\nb") == "\"a\nb\"")
+        #expect(CSVExport.field("plain") == "plain")
+    }
+
     @Test("numbers read like the web's")
     func numbers() {
         #expect(CSVExport.number(80) == "80")

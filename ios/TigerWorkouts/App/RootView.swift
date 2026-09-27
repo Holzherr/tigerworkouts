@@ -7,6 +7,8 @@ struct RootView: View {
     @State private var tab = Tab.workouts
     @State private var running: SessionRunner?
     @State private var interrupted: Interrupted?
+    /// A workout the Up next widget asked to start, waiting for the catalogue on a cold launch.
+    @State private var widgetStart: String?
 
     /// A session the app was killed in the middle of, waiting for a decision.
     private struct Interrupted {
@@ -32,6 +34,7 @@ struct RootView: View {
                 .tabItem { Label("Me", systemImage: "person.crop.circle") }
                 .tag(Tab.me)
         }
+        .environment(\.startSession, StartSession(run: start))
         .fullScreenCover(item: $running) { runner in
             TimerView(runner: runner, appearance: colorScheme) { running = nil }
         }
@@ -84,10 +87,29 @@ struct RootView: View {
         }
         .onChange(of: scenePhase) { _, phase in Self.scenePhaseChanged(to: phase) }
         // A workout link lands on the Workouts tab, whichever tab was open.
-        .onOpenURL { url in if url.host == "w" { tab = .workouts } }
+        .onOpenURL { url in
+            if url.host == "w" { tab = .workouts }
+            // The Up next widget: tigerworkouts://do/<id> starts the session, as home's Start does.
+            if url.host == "do", let id = UpNextSnapshot.workoutId(fromStart: url) {
+                widgetStart = id
+                startFromWidget()
+            }
+        }
+        .onChange(of: store.loaded) { _, _ in startFromWidget() }
+    }
+
+    /// Runs once the catalogue is in (the lookup finds nothing before), and not over a session
+    /// already running or one waiting for its resume question.
+    private func startFromWidget() {
+        guard let id = widgetStart, store.loaded else { return }
+        widgetStart = nil
+        guard running == nil, interrupted == nil, SessionRunner.readSaved() == nil, let sheet = store.workout(id: id) else { return }
+        tab = .workouts
+        start(store.seeded(sheet), from: .home)
     }
 
     private func start(_ sheet: Runsheet, from origin: SessionOrigin?) {
+        guard running == nil else { return }
         // Refs inlined and % TM / × bodyweight loads worked out, so every loaded set shows a weight.
         running = logOnFinish(SessionRunner(runsheet: store.prepared(sheet), startedFrom: origin, history: store.results))
     }
@@ -108,6 +130,23 @@ struct RootView: View {
     static func scenePhaseChanged(to phase: ScenePhase, restart: @MainActor () -> Void = { Haptics.shared.restart() }) {
         guard phase == .active else { return }
         restart()
+    }
+}
+
+/// Starts a session from anywhere below the root, however deep the navigation: a past session
+/// opened from an exercise's history has no closure handed down to it.
+struct StartSession {
+    var run: (Runsheet, SessionOrigin?) -> Void = { _, _ in }
+}
+
+private struct StartSessionKey: EnvironmentKey {
+    static let defaultValue = StartSession()
+}
+
+extension EnvironmentValues {
+    var startSession: StartSession {
+        get { self[StartSessionKey.self] }
+        set { self[StartSessionKey.self] = newValue }
     }
 }
 

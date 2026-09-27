@@ -91,6 +91,20 @@ actor Supabase {
         persist()
     }
 
+    /// Deletes everything the server holds for this account, then the account. The rows go first,
+    /// under row-level security, so the data is gone even before `delete_account()` (migration
+    /// 0006) is applied; that function removes the sign-in and the profile. Signs out once the
+    /// data is gone. Returns whether the sign-in itself went too.
+    func deleteAccount() async throws -> Bool {
+        guard let uid = session?.user.id else { throw SupabaseError(message: "Not signed in") }
+        for table in ["sessions", "workouts", "exercises", "user_state", "device_metrics"] {
+            _ = try await request("rest/v1/\(table)?owner=eq.\(uid)", method: "DELETE", headers: ["Prefer": "return=minimal"])
+        }
+        let account = (try? await request("rest/v1/rpc/delete_account", method: "POST", body: [String: Any]())) != nil
+        signOut()
+        return account
+    }
+
     // MARK: - Requests
 
     /// `path` carries its own query string, so it is appended as text: appending it as a path
@@ -383,22 +397,20 @@ actor Supabase {
         var equipment: Equipment?
     }
 
-    /// Writes back the prefs this app owns, merged into whatever else is on the row — the web app
-    /// keeps the name, units and avatar in the same JSON and must not lose them.
-    func savePrefs(bodyweightKg: Double?, saved: [String], trainingMaxes: [String: Double]? = nil, equipment: Equipment? = nil) async throws {
+    /// The whole prefs JSON as the server has it. Throws rather than answering "nothing" when it
+    /// cannot be read: a write built on an empty read would wipe the web's name and avatar.
+    func rawPrefs() async throws -> [String: Any] {
         guard let uid = session?.user.id else { throw SupabaseError(message: "Not signed in") }
-        var prefs: [String: Any] = [:]
-        if let (data, _) = try? await request("rest/v1/user_state?select=prefs&owner=eq.\(uid)"),
-           let rows = try? JSONSerialization.jsonObject(with: data) as? [[String: Any]],
-           let existing = rows.first?["prefs"] as? [String: Any] {
-            prefs = existing
+        let (data, _) = try await request("rest/v1/user_state?select=prefs&owner=eq.\(uid)")
+        guard let rows = try JSONSerialization.jsonObject(with: data) as? [[String: Any]] else {
+            throw SupabaseError(message: "Could not read settings")
         }
-        prefs["saved"] = saved
-        if let bodyweightKg { prefs["bodyweightKg"] = bodyweightKg }
-        if let trainingMaxes, !trainingMaxes.isEmpty { prefs["trainingMaxes"] = trainingMaxes }
-        if let equipment, let data = try? JSONEncoder().encode(equipment), let json = try? JSONSerialization.jsonObject(with: data) {
-            prefs["equipment"] = json
-        }
+        return rows.first?["prefs"] as? [String: Any] ?? [:]
+    }
+
+    /// Writes the prefs JSON whole; the caller has merged it over `rawPrefs()` (PrefsMerge.row).
+    func writePrefs(_ prefs: [String: Any]) async throws {
+        guard let uid = session?.user.id else { throw SupabaseError(message: "Not signed in") }
         _ = try await request(
             "rest/v1/user_state?on_conflict=owner",
             method: "POST",

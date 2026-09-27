@@ -137,8 +137,8 @@ struct DiscoverView: View {
                 }
             }
             .onOpenURL { url in
-                // tigerworkouts://w/<id>: "Open in the app" on a workout page of the website, and
-                // the Up next widget.
+                // tigerworkouts://w/<id>: "Open in the app" on a workout page of the website. The
+                // Up next widget's tigerworkouts://do/<id> starts the session (RootView).
                 guard url.host == "w", let id = url.pathComponents.dropFirst().first?.removingPercentEncoding else { return }
                 if store.loaded { openLink(id) } else { pendingLink = id }
             }
@@ -195,7 +195,7 @@ struct DiscoverView: View {
 
                 Button {
                     // What the workout page would show: last time's numbers carried over.
-                    onStart(Settings.withLastUsed(next.runsheet, results: store.results), .home)
+                    onStart(store.seeded(next.runsheet), .home)
                 } label: {
                     Label("Start", systemImage: "play.fill")
                         .font(.system(size: 17, weight: .semibold))

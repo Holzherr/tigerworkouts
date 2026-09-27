@@ -90,7 +90,7 @@ struct WorkoutDetailView: View {
             // time's numbers back over what had just been set here.
             guard !seeded else { return }
             seeded = true
-            runsheet = Settings.withLastUsed(runsheet, results: store.results)
+            runsheet = store.seeded(runsheet)
             if isNew && runsheet.title.isEmpty { naming = true }
         }
         .toolbar {
@@ -180,7 +180,7 @@ struct WorkoutDetailView: View {
             return
         }
         let copy = Edit.duplicate(next, creator: store.user?.email)
-        // The copy has fresh ids; an open sheet follows its step across.
+        // The copy keeps its step ids; an open sheet follows its step across either way.
         let renamed = Dictionary(zip(Edit.ids(next), Edit.ids(copy)), uniquingKeysWith: { a, _ in a })
         let wasSaved = saved
         runsheet = copy
@@ -196,6 +196,9 @@ struct WorkoutDetailView: View {
         flushSave()
         var copy = Edit.duplicate(runsheet, creator: store.user?.email)
         if store.isMine(runsheet) { copy.title = "\(runsheet.title) (copy)" }
+        // A workout of its own beside the original, not the original edited: its own history.
+        copy.copyOf = nil
+        copy.program = nil
         runsheet = copy
         Task { await store.saveWorkout(copy) }
     }

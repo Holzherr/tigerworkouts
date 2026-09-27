@@ -22,8 +22,9 @@ final class Health {
         return types
     }
 
-    /// Workouts written this run, by session id, so an effort tapped after the save can be tied to
-    /// the right one. Only this run's: an effort changed later in History does not reach Health.
+    /// Workouts written this run, by session id. After a relaunch the workout is found again by
+    /// the session id it carries (`HKMetadataKeyExternalUUID`), or for one written before that, by
+    /// its start time among this app's own.
     private var written: [String: HKWorkout] = [:]
     /// The effort sample tied to each of those, replaced when the effort changes.
     private var efforts: [String: HKSample] = [:]
@@ -73,9 +74,9 @@ final class Health {
                 )
                 try await builder.addSamples([sample])
             }
-            if let title = result.title {
-                try await builder.addMetadata([HKMetadataKeyWorkoutBrandName: title])
-            }
+            var metadata: [String: Any] = [HKMetadataKeyExternalUUID: result.rowId]
+            if let title = result.title { metadata[HKMetadataKeyWorkoutBrandName] = title }
+            try await builder.addMetadata(metadata)
             try await builder.endCollection(at: end)
             if let workout = try await builder.finishWorkout() { written[result.rowId] = workout }
             return true
@@ -85,19 +86,25 @@ final class Health {
     }
 
     /// Writes the session's effort (1–10) to Health as a workout effort score tied to the workout
-    /// saved for it, replacing one written before; nil takes it off. iOS 18 and later only: the
-    /// type and the relate call do not exist before. Asks for the one new permission the first
-    /// time, which on a phone that turned Health on before this shipped is a second, short sheet.
-    func setEffort(_ rpe: Double?, for rowId: String) async {
-        guard #available(iOS 18.0, *), isAvailable, let workout = written[rowId] else { return }
+    /// saved for it, replacing one written before; nil takes it off. Works for any session this
+    /// phone wrote to Health, in this run or an earlier one — an effort changed after a relaunch,
+    /// or entered on the web and learnt in a sync. iOS 18 and later only: the type and the relate
+    /// call do not exist before. Asks for the one new permission the first time.
+    func setEffort(_ rpe: Double?, for result: SessionResult) async {
+        guard #available(iOS 18.0, *), isAvailable, canWrite else { return }
+        let rowId = result.rowId
+        guard let workout = await workout(for: result) else { return }
         let type = HKQuantityType(.workoutEffortScore)
         if store.authorizationStatus(for: type) == .notDetermined {
             try? await store.requestAuthorization(toShare: [type], read: [])
         }
         guard store.authorizationStatus(for: type) == .sharingAuthorized else { return }
-        if let old = efforts.removeValue(forKey: rowId) {
-            _ = await Self.completion { self.store.unrelateWorkoutEffortSample(old, from: workout, activity: nil, completion: $0) }
-            try? await store.delete(old)
+        // The one written this run, else whatever of ours Health has tied to the workout.
+        var old: [HKSample] = efforts.removeValue(forKey: rowId).map { [$0] } ?? []
+        if old.isEmpty { old = await relatedEfforts(workout) }
+        for sample in old {
+            _ = await Self.completion { self.store.unrelateWorkoutEffortSample(sample, from: workout, activity: nil, completion: $0) }
+            try? await store.delete(sample)
         }
         guard let rpe, (1...10).contains(rpe) else { return }
         let sample = HKQuantitySample(
@@ -108,6 +115,45 @@ final class Health {
         )
         if await Self.completion({ self.store.relateWorkoutEffortSample(sample, with: workout, activity: nil, completion: $0) }) {
             efforts[rowId] = sample
+        }
+    }
+
+    /// The workout this app saved for a session: from this run, else by the session id on it, else
+    /// (written before the id was kept) by its start time among this app's own workouts.
+    private func workout(for result: SessionResult) async -> HKWorkout? {
+        if let w = written[result.rowId] { return w }
+        let mine = HKQuery.predicateForObjects(from: .default())
+        let byId = HKQuery.predicateForObjects(withMetadataKey: HKMetadataKeyExternalUUID, allowedValues: [result.rowId])
+        if let w = await workouts(matching: NSCompoundPredicate(andPredicateWithSubpredicates: [mine, byId])).first {
+            written[result.rowId] = w
+            return w
+        }
+        guard let start = ISO8601.date(result.startedAt) else { return nil }
+        let around = HKQuery.predicateForSamples(withStart: start.addingTimeInterval(-1), end: start.addingTimeInterval(24 * 3600), options: .strictStartDate)
+        let hit = await workouts(matching: NSCompoundPredicate(andPredicateWithSubpredicates: [mine, around]))
+            .first { abs($0.startDate.timeIntervalSince(start)) < 1 }
+        if let hit { written[result.rowId] = hit }
+        return hit
+    }
+
+    private func workouts(matching predicate: NSPredicate) async -> [HKWorkout] {
+        await withCheckedContinuation { continuation in
+            let q = HKSampleQuery(sampleType: .workoutType(), predicate: predicate, limit: 5, sortDescriptors: nil) { _, samples, _ in
+                continuation.resume(returning: (samples as? [HKWorkout]) ?? [])
+            }
+            store.execute(q)
+        }
+    }
+
+    @available(iOS 18.0, *)
+    private func relatedEfforts(_ workout: HKWorkout) async -> [HKSample] {
+        let related = HKQuery.predicateForWorkoutEffortSamplesRelated(workout: workout, activity: nil)
+        let mine = HKQuery.predicateForObjects(from: .default())
+        return await withCheckedContinuation { continuation in
+            let q = HKSampleQuery(sampleType: HKQuantityType(.workoutEffortScore), predicate: NSCompoundPredicate(andPredicateWithSubpredicates: [related, mine]), limit: HKObjectQueryNoLimit, sortDescriptors: nil) { _, samples, _ in
+                continuation.resume(returning: samples ?? [])
+            }
+            store.execute(q)
         }
     }
 

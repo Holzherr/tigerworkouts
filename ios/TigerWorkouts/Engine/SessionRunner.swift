@@ -44,7 +44,7 @@ final class SessionRunner {
         self.state = history.isEmpty ? fresh : Runner.prefillReps(fresh) { step, round in
             LastTime.sets(history, for: step).flatMap { $0.indices.contains(round) ? $0[round].reps : nil }
         }
-        self.rival = Pace.lastTimed(history, runsheetId: runsheet.id ?? runsheet.title)
+        self.rival = Pace.lastTimed(history, runsheetIds: runsheet.lineage)
         self.today = Targets.today(runsheet, results: history, intent: Intent.current(), kit: Equipment.current())
     }
 
@@ -55,7 +55,7 @@ final class SessionRunner {
         guard let saved = SessionRunner.readSaved(), saved.state.runsheetId == (runsheet.id ?? runsheet.title) else { return nil }
         self.runsheet = runsheet
         self.startedFrom = nil
-        self.rival = Pace.lastTimed(history, runsheetId: runsheet.id ?? runsheet.title, excluding: SessionRunner.rowId(saved.state))
+        self.rival = Pace.lastTimed(history, runsheetIds: runsheet.lineage, excluding: SessionRunner.rowId(saved.state))
         self.today = Targets.today(runsheet, results: history.filter { $0.id != SessionRunner.rowId(saved.state) }, intent: Intent.current(), kit: Equipment.current())
         let at = saved.savedAt.timeIntervalSince1970 * 1000
         self.state = saved.state.phase == .running || saved.state.phase == .lead
