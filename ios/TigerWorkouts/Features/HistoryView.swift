@@ -111,17 +111,22 @@ struct HistoryView: View {
             WorkoutIcon(runsheet: store.workout(id: s.runsheetId) ?? Runsheet(id: s.runsheetId, title: s.displayTitle), size: 44)
             VStack(alignment: .leading, spacing: 4) {
                 Text(s.displayTitle).font(.headline).foregroundStyle(Brand.ink)
-                HStack(spacing: 8) {
-                    Text(s.startedDate.formatted(date: .abbreviated, time: .shortened))
-                    if let d = s.durationSec, d > 0 { Text("· \(Format.duration(d))") }
-                    if s.completed == false { Text("· part done") }
-                    if let rpe = s.rpe { Text("· effort \(Int(rpe))") }
-                }
-                .font(.footnote)
+                // One line of text, so on a narrow phone it wraps as a sentence; separate Texts in
+                // an HStack squeezed the date into a column of its own.
+                Text(historyLine(s))
+                    .font(.footnote)
                 .foregroundStyle(Brand.muted)
             }
         }
         .padding(.vertical, 4)
+    }
+
+    private func historyLine(_ s: SessionResult) -> String {
+        var parts = [s.startedDate.formatted(date: .abbreviated, time: .shortened)]
+        if let d = s.durationSec, d > 0 { parts.append(Format.duration(d)) }
+        if s.completed == false { parts.append("part done") }
+        if let rpe = s.rpe { parts.append("effort \(Int(rpe))") }
+        return parts.joined(separator: " · ")
     }
 }
 

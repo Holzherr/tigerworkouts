@@ -70,7 +70,7 @@ struct SessionLiveActivity: Widget {
                     Text([context.state.detail, context.state.ghost].compactMap { $0 }.joined(separator: " · "))
                         .font(.caption)
                         .foregroundStyle(.secondary)
-                        .lineLimit(1)
+                        .lineLimit(2)
                     if let line = context.state.setLine {
                         Text(line)
                             .font(.subheadline.weight(.semibold))
@@ -84,6 +84,10 @@ struct SessionLiveActivity: Widget {
                     .font(.system(size: 34, weight: .bold, design: .rounded))
                     .monospacedDigit()
                     .foregroundStyle(tint(context.state))
+                    // A timer Text takes all the width it is offered, which cut the detail line to
+                    // "Set 1 · 4 s b…" on a 390 pt phone. "59:59" is the widest it gets.
+                    .frame(width: 96, alignment: .trailing)
+                    .minimumScaleFactor(0.7)
             }
             ProgressView(value: context.state.progress)
                 .tint(tint(context.state))

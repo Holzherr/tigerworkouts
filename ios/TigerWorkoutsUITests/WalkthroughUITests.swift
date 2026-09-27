@@ -306,12 +306,15 @@ final class WalkthroughUITests: XCTestCase {
         snap("21 Workout page, editable")
 
         // Hold and drag the rest above the rower.
-        // Onto the top edge of the row, not its middle: a row with history is taller ("last time"
-        // under the name), and a drop on its middle lands below it.
-        rest.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5))
-            .press(forDuration: 0.8, thenDragTo: rower.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.1)))
-        sleep(1)
-        XCTAssertLessThan(rest.frame.minY, rower.frame.minY, "dragging should reorder in place")
+        // The page opens with these rows at the bottom, right above the Start bar. A drag that
+        // starts there makes the list auto-scroll under the finger, so where it drops depended on
+        // how tall the rows above had come out and how fast the run was: the flake. Scroll them
+        // to the middle first.
+        centre([rower, rest])
+        drag(rest, onto: rower)
+        // The first edit swaps the catalogue workout for a copy with fresh ids, so every row is
+        // replaced and animates in; read the order once that settles rather than after a fixed wait.
+        waitFor("dragging should reorder in place") { rest.frame.minY < rower.frame.minY }
 
         // A catalogue workout is never written over: the first edit silently makes it yours.
         XCTAssertTrue(app.navigationBars["Tabata This (mine)"].waitForExistence(timeout: 5))
@@ -321,14 +324,13 @@ final class WalkthroughUITests: XCTestCase {
         let squat = app.buttons.matching(NSPredicate(format: "label BEGINSWITH[c] 'Tabata Squat'")).firstMatch
         let pullup = app.buttons.matching(NSPredicate(format: "label BEGINSWITH[c] 'Tabata Pull-up'")).firstMatch
         XCTAssertTrue(squat.waitForExistence(timeout: 3))
-        for _ in 0..<4 where !(squat.isHittable && pullup.isHittable) {
-            app.swipeUp(velocity: .slow)
-        }
+        // The list only builds rows near the screen: bring Pull-up into it before measuring. A
+        // swipe flings on and could carry Squat off the top, so scroll in held steps instead.
+        reveal(pullup)
+        centre([squat, pullup])
         XCTAssertLessThan(squat.frame.minY, pullup.frame.minY)
-        pullup.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5))
-            .press(forDuration: 0.8, thenDragTo: squat.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.1)))
-        sleep(1)
-        XCTAssertLessThan(pullup.frame.minY, squat.frame.minY, "dragging a header should move the whole block")
+        drag(pullup, onto: squat)
+        waitFor("dragging a header should move the whole block") { pullup.frame.minY < squat.frame.minY }
         snap("22b Block moved")
 
         // Add straight from the page.
@@ -345,6 +347,13 @@ final class WalkthroughUITests: XCTestCase {
         tap(app.buttons["Delete"])
         XCTAssertFalse(swing.waitForExistence(timeout: 2))
         snap("23 My copy, edited")
+
+        // Every run made another "Tabata This (mine)", and once enough of them filled the search
+        // results, open("Tabata This") in a later test landed on one with its rest moved first.
+        tap(app.navigationBars["Tabata This (mine)"].buttons["Edit"])
+        tap(app.buttons["Delete workout"])
+        tap(app.buttons["Delete"].firstMatch)
+        XCTAssertTrue(app.navigationBars["Tiger"].waitForExistence(timeout: 5), "deleting the copy should go back")
     }
 
     func testWriteAWorkout() {
@@ -699,6 +708,14 @@ final class WalkthroughUITests: XCTestCase {
         search.typeText(title)
         // BEGINSWITH would also match a copy an earlier run saved as "<title> (mine)".
         let exact = app.buttons.matching(NSPredicate(format: "label == %@ OR label BEGINSWITH %@", title, title + ",")).firstMatch
+        // Copies ("<title> (mine)") list first; the catalogue row can sit below them, out of the
+        // lazily built list until it is scrolled to.
+        if !exact.waitForExistence(timeout: 2) {
+            app.keyboards.buttons["search"].firstMatch.tap()
+            for _ in 0..<15 where !exact.waitForExistence(timeout: 1) {
+                app.scrollViews.firstMatch.swipeUp(velocity: .slow)
+            }
+        }
         let row = exact.exists ? exact : app.buttons.matching(NSPredicate(format: "label BEGINSWITH %@", title)).firstMatch
         tap(row)
         XCTAssertTrue(app.buttons["Start workout"].waitForExistence(timeout: 5))
@@ -722,6 +739,55 @@ final class WalkthroughUITests: XCTestCase {
     private func tap(_ element: XCUIElement, file: StaticString = #filePath, line: UInt = #line) {
         XCTAssertTrue(element.waitForExistence(timeout: 8), "missing: \(element)", file: file, line: line)
         element.tap()
+    }
+
+    /// Scrolls until the elements sit in the middle band of the screen: clear of the navigation
+    /// bar and the Start bar, and of the edges where a drag makes a list auto-scroll. Each scroll
+    /// ends in a hold so it stops where it was dragged to instead of flinging on.
+    private func centre(_ elements: [XCUIElement], file: StaticString = #filePath, line: UInt = #line) {
+        let screen = app.windows.firstMatch.frame
+        let band = (screen.minY + screen.height * 0.2)...(screen.minY + screen.height * 0.7)
+        for _ in 0..<6 {
+            let top = elements.map(\.frame.minY).min() ?? 0
+            let bottom = elements.map(\.frame.maxY).max() ?? 0
+            if band.contains(top), band.contains(bottom) { return }
+            let shift = (band.lowerBound + band.upperBound) / 2 - (top + bottom) / 2
+            // A drag this short would land as a tap on a row.
+            if abs(shift) < 20 { return }
+            let from = app.windows.firstMatch.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: shift < 0 ? 0.65 : 0.35))
+            from.press(forDuration: 0.05, thenDragTo: from.withOffset(CGVector(dx: 0, dy: shift)), withVelocity: .slow, thenHoldForDuration: 0.4)
+        }
+        XCTFail("could not scroll \(elements) into the middle of the screen", file: file, line: line)
+    }
+
+    /// Scrolls down a third of the screen at a time, each step held so the list stops there,
+    /// until the element is on screen.
+    private func reveal(_ element: XCUIElement, file: StaticString = #filePath, line: UInt = #line) {
+        let window = app.windows.firstMatch
+        for _ in 0..<8 where !(element.exists && element.isHittable) {
+            let from = window.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.65))
+            from.press(forDuration: 0.05, thenDragTo: from.withOffset(CGVector(dx: 0, dy: -window.frame.height / 3)), withVelocity: .slow, thenHoldForDuration: 0.4)
+        }
+        XCTAssertTrue(element.isHittable, "could not scroll to \(element)", file: file, line: line)
+    }
+
+    /// Hold a row until the list lifts it, move it slowly onto the top edge of another, and hold
+    /// there before letting go. A 0.8 s press followed by a fast move was a race: on a busy
+    /// simulator the list lifted the row only after the finger had already moved, so the row went
+    /// back where it was (seen on the screen recording of a failed full run). The slow move and
+    /// the hold at the end give the list time to lift the row and to settle on where it lands.
+    private func drag(_ row: XCUIElement, onto target: XCUIElement) {
+        // The top edge of the target, not its middle: a row with history is taller ("last time"
+        // under the name), and a drop on its middle lands below it.
+        row.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5))
+            .press(forDuration: 1.2, thenDragTo: target.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.1)),
+                   withVelocity: .slow, thenHoldForDuration: 0.6)
+    }
+
+    /// Polls a condition on the screen until it holds, instead of sleeping a fixed time and hoping.
+    private func waitFor(_ message: String, timeout: TimeInterval = 5, file: StaticString = #filePath, line: UInt = #line, _ condition: @escaping () -> Bool) {
+        let met = XCTNSPredicateExpectation(predicate: NSPredicate { _, _ in condition() }, object: nil)
+        XCTAssertEqual(XCTWaiter().wait(for: [met], timeout: timeout), .completed, message, file: file, line: line)
     }
 
     private func snap(_ name: String) {
@@ -815,7 +881,10 @@ final class WalkthroughUITests: XCTestCase {
         tap(app.buttons["Plates for 60 kg"].firstMatch)
         XCTAssertTrue(app.staticTexts["20 kg bar + 20 per side"].waitForExistence(timeout: 5), "the calculator should load 60 kg as a 20 each side")
         snap("73 Plate calculator")
-        app.swipeDown(velocity: .fast)
+        // Close it by a tap above the sheet. A swipe from the screen's middle started above the
+        // half sheet on a Pro Max, and a swipe on the sheet's text did not move it either.
+        app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.12)).tap()
+        XCTAssertFalse(app.staticTexts["20 kg bar + 20 per side"].waitForExistence(timeout: 2) && app.staticTexts["20 kg bar + 20 per side"].isHittable, "the plate sheet should close")
         XCTAssertTrue(app.buttons["Tick set 1"].waitForExistence(timeout: 5))
 
         // A tap on a set number changes its type: set 3 becomes a warm-up.

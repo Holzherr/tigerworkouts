@@ -216,8 +216,10 @@ struct DiscoverView: View {
             Divider()
             HStack(spacing: 8) {
                 Image(systemName: "chart.line.uptrend.xyaxis").foregroundStyle(Brand.coral)
-                Text(NextUp.weekLine(streak)).font(.subheadline.weight(.semibold)).foregroundStyle(Brand.ink)
-                Text("· \(streak.total) all time").font(.subheadline).foregroundStyle(Brand.muted)
+                // One Text, so a long week line wraps as a sentence instead of splitting into two columns.
+                Text("\(Text(NextUp.weekLine(streak)).fontWeight(.semibold).foregroundStyle(Brand.ink)) \(Text("· \(streak.total) all time").foregroundStyle(Brand.muted))")
+                    .font(.subheadline)
+                Spacer(minLength: 0)
             }
         }
         .padding(16)
