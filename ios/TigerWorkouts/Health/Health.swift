@@ -73,14 +73,30 @@ final class Health {
                 )
                 try await builder.addSamples([sample])
             }
-            if let title = result.title {
-                try await builder.addMetadata([HKMetadataKeyWorkoutBrandName: title])
-            }
+            // The session id goes on the workout so a Discard can find it again, after a relaunch too.
+            var metadata: [String: Any] = [HKMetadataKeyExternalUUID: result.rowId]
+            if let title = result.title { metadata[HKMetadataKeyWorkoutBrandName] = title }
+            try await builder.addMetadata(metadata)
             try await builder.endCollection(at: end)
             if let workout = try await builder.finishWorkout() { written[result.rowId] = workout }
             return true
         } catch {
             return false
+        }
+    }
+
+    /// Takes the workout written for a session back out of Health, with its effort: a discarded
+    /// session is not a workout. Found by the session id on it when it was not written this run.
+    func deleteWorkout(for rowId: String) async {
+        guard isAvailable else { return }
+        if let effort = efforts.removeValue(forKey: rowId) { try? await store.delete(effort) }
+        if let workout = written.removeValue(forKey: rowId) {
+            try? await store.delete(workout)
+            return
+        }
+        let predicate = HKQuery.predicateForObjects(withMetadataKey: HKMetadataKeyExternalUUID, allowedValues: [rowId])
+        await withCheckedContinuation { (done: CheckedContinuation<Void, Never>) in
+            store.deleteObjects(of: HKObjectType.workoutType(), predicate: predicate) { _, _, _ in done.resume() }
         }
     }
 

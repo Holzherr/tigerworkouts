@@ -29,16 +29,22 @@ struct SessionActivityAttributes: ActivityAttributes {
         /// What is on the bar and how many, for the set in front of you — or, during a rest, the one
         /// coming up: "60 kg × 8", "12 reps". Nil for a timed step with nothing to load.
         var setLine: String?
-        /// Which buttons the card offers. None while paused or done.
+        /// Which buttons the card offers: Resume while paused, none once done.
         var action: Action = .none
+        /// When the block's own clock runs out — an AMRAP's or a for-time block's cap, the minute on
+        /// EMOM work — and what to call it. Nil for a block without one.
+        var capEndsAt: Date?
+        var capLabel: String?
         /// Names the phase and slot the card was drawn for. A tap carries it back, so a button on a
         /// card that is behind the session (a rest that already ran out) does nothing rather than
         /// acting on whatever is running now.
         var token = ""
 
         enum Action: String, Codable, Hashable {
-            /// Nothing to tap: paused or finished.
+            /// Nothing to tap: finished.
             case none
+            /// Paused: Resume.
+            case resume
             /// Lead-in or a block gate: Start.
             case start
             /// A set or step: Done.

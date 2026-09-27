@@ -19,6 +19,8 @@ struct SetResult: Codable, Hashable, Sendable {
 struct RoundSplit: Codable, Hashable, Sendable {
     var blockId: String
     var at: [Double]
+    /// Session time the block started at, same clock as `at`. Nil on sessions logged before it was kept.
+    var from: Double? = nil
 }
 
 /// What was logged for one exercise step in a session.

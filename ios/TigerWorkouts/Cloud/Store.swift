@@ -35,6 +35,9 @@ final class Store {
     private var pendingDeletes: [String] = []
     /// Changes made on the finish screen before `save` had put the result in the list.
     private var amendments: [String: [(inout SessionResult) -> Void]] = [:]
+    /// Sessions discarded on the finish screen. A save still in flight for one (pushing it, asking
+    /// Health for the heart rate, writing it to Health) must not bring it back.
+    private var discarded: Set<String> = []
 
     var signedIn: Bool { user != nil }
 
@@ -163,6 +166,7 @@ final class Store {
     func save(_ result: SessionResult, stored: () -> Void = {}) async {
         var r = result
         if r.id == nil { r.id = "s-\(Int(Date().timeIntervalSince1970 * 1000))-\(UUID().uuidString.prefix(4))" }
+        guard !discarded.contains(r.rowId) else { return stored() }
         for change in amendments.removeValue(forKey: r.rowId) ?? [] { change(&r) }
         results.removeAll { $0.rowId == r.rowId }
         results.insert(r, at: 0)
@@ -177,6 +181,8 @@ final class Store {
             syncError = error.localizedDescription
         }
         writeCache()
+        // Discarded while it was being pushed: the push may have landed after the delete.
+        if discarded.contains(r.rowId) { return await redelete(r.rowId) }
         if let start = ISO8601.date(r.startedAt),
            let end = r.endedAt.flatMap(ISO8601.date) ?? r.durationSec.map({ start.addingTimeInterval($0) }),
            let device = await deviceSummary(start, end),
@@ -198,13 +204,14 @@ final class Store {
     /// The session also belongs in Health, typed by what it mostly was, counting towards the rings.
     /// An effort tapped while the workout was being written is attached once it is there.
     private func writeToHealth(_ r: SessionResult) async {
-        guard healthEnabled else { return }
+        guard healthEnabled, !discarded.contains(r.rowId) else { return }
         let runsheet = workout(id: r.runsheetId)
         let worked = EffortModel.workedFrom(r, runsheet: runsheet)
         // Health's own figure wins when the watch was on; ours is only an estimate.
         let kcal = r.device?.calories.map { Int($0) }
             ?? EffortModel.effort(r, worked: worked, bodyweightKg: bodyweightKg).kcal
         guard await Health.shared.save(r, runsheet: runsheet, worked: worked, kcal: kcal) else { return }
+        if discarded.contains(r.rowId) { return await Health.shared.deleteWorkout(for: r.rowId) }
         if let rpe = results.first(where: { $0.rowId == r.rowId })?.rpe {
             await Health.shared.setEffort(rpe, for: r.rowId)
         }
@@ -260,6 +267,26 @@ final class Store {
         results.removeAll { $0.rowId == id }
         pending.removeAll { $0.rowId == id }
         amendments[id] = nil
+        if !pendingDeletes.contains(id) { pendingDeletes.append(id) }
+        writeCache()
+        do {
+            try await flushDeletes()
+        } catch {
+            syncError = error.localizedDescription
+        }
+        writeCache()
+    }
+
+    /// Discard, from the finish screen. The session was logged the moment it ended, so it goes the
+    /// way a delete does — off the phone, out of the queue, off the server — and out of Health as
+    /// well, where a delete from History leaves it: nobody did this workout.
+    func discard(_ result: SessionResult) async {
+        discarded.insert(result.rowId)
+        await delete(result)
+        if healthEnabled { await Health.shared.deleteWorkout(for: result.rowId) }
+    }
+
+    private func redelete(_ id: String) async {
         if !pendingDeletes.contains(id) { pendingDeletes.append(id) }
         writeCache()
         do {
@@ -418,6 +445,9 @@ final class Store {
             }
         }
         pending.removeAll { sent.contains($0) }
+        // One discarded while it was on its way up is on the server again: it goes back on the
+        // delete queue.
+        for r in sent where discarded.contains(r.rowId) && !pendingDeletes.contains(r.rowId) { pendingDeletes.append(r.rowId) }
         if let failure { throw failure }
     }
 

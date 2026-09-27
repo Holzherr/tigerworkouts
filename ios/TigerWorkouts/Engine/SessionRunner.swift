@@ -27,6 +27,9 @@ final class SessionRunner {
     /// Today's target, read once from history at the start: the timer shows its part for the round
     /// or set in hand, beside the race against last time.
     private(set) var today: Targets.Today? = nil
+    /// The screen is kept awake, the tick runs and the audio is held: from `begin` until the
+    /// session is done or the timer closes, whichever comes first.
+    private(set) var holding = false
     private var cuedSlot: String?
     private var cuedPhase: Phase?
     private var lastTick: Int?
@@ -87,6 +90,8 @@ final class SessionRunner {
     var blockElapsed: Double { Runner.blockElapsed(state, now: now) }
     /// Time left on an amrap's or a capped for-time block's clock; nil for an uncapped block.
     var capLeft: Double? { Runner.capLeft(state, now: now) }
+    /// Time left in an EMOM's minute, on its work.
+    var minuteLeft: Double? { Runner.minuteLeft(state, now: now) }
     var isDone: Bool { state.phase == .done }
     var target: Double? { slot.flatMap { Runner.targetOf(state, $0) } }
     var incline: Double? {
@@ -117,6 +122,7 @@ final class SessionRunner {
         SessionActivityController.shared.start(title: runsheet.title, state: activityState)
         SessionControls.active = self
         UIApplication.shared.isIdleTimerDisabled = true
+        holding = true
         timer?.invalidate()
         // 10 Hz: the countdown reads smoothly and a cue never lands more than 100 ms late.
         timer = Timer.scheduledTimer(withTimeInterval: 0.1, repeats: true) { [weak self] _ in
@@ -130,6 +136,7 @@ final class SessionRunner {
     func end() {
         timer?.invalidate()
         timer = nil
+        holding = false
         UIApplication.shared.isIdleTimerDisabled = false
         Cues.shared.end()
         SessionActivityController.shared.end(activityState)
@@ -147,6 +154,20 @@ final class SessionRunner {
         deliver()
         fireCues()
         pushActivity()
+        release()
+    }
+
+    /// A finished session lets go of the phone: the screen may sleep, the tick stops and the audio
+    /// goes once the finish tone has played. Left to the timer screen closing, a phone put down on
+    /// the finish screen stayed awake and held the audio session for as long as it was left there.
+    private func release() {
+        guard state.phase == .done, holding else { return }
+        holding = false
+        timer?.invalidate()
+        timer = nil
+        UIApplication.shared.isIdleTimerDisabled = false
+        Cues.shared.endAfterFinish()
+        if SessionControls.active === self { SessionControls.active = nil }
     }
 
     /// Hand the result over the first time the session is done. A countdown can finish the session
@@ -293,6 +314,7 @@ final class SessionRunner {
         deliver()
         fireCues()
         pushActivity()
+        release()
     }
 
     func startBlock() { apply { Runner.startBlock($0, now: $1) } }
@@ -552,6 +574,8 @@ extension SessionRunner: SessionControllable {
             if state.phase == .running, isRestSlot { skip() }
         case .extendRest:
             if isRestSlot { extendRest(by: 15) }
+        case .resume:
+            if state.phase == .paused { pauseOrResume() }
         }
     }
 
@@ -564,7 +588,19 @@ extension SessionRunner: SessionControllable {
         switch state.phase {
         case .lead, .ready: content.action = .start
         case .running: content.action = slot?.kind == .rest ? (state.endsAt == nil ? .done : .rest) : .done
-        case .paused, .done: content.action = .none
+        case .paused: content.action = .resume
+        case .done: content.action = .none
+        }
+        // The block's own clock where it has one, as the instant it runs out: a cap on an AMRAP or
+        // a for-time block, the minute on EMOM work. Held still while paused.
+        if state.phase == .running, let slot, let id = slot.blockId, let began = state.blockStart[id] {
+            if let cap = slot.capSec {
+                content.capEndsAt = Date(timeIntervalSince1970: (began + cap * 1000) / 1000)
+                content.capLabel = "left in the block"
+            } else if slot.mode == .emom, slot.kind == .work, let every = slot.everySec {
+                content.capEndsAt = Date(timeIntervalSince1970: (began + Double(slot.round + 1) * every * 1000) / 1000)
+                content.capLabel = "left in the minute"
+            }
         }
         // During a rest, and before a block, the set to get ready for is the next piece of work.
         let from = state.phase == .lead ? 0 : state.i

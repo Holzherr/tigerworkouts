@@ -33,6 +33,8 @@ struct Slot: Identifiable, Hashable, Sendable, Codable {
     /// Which top-level item this slot belongs to, 0-based, and how many there are.
     var part: Int
     var parts: Int
+    /// The item's role: a warm-up or cool-down is not part of a for-time score.
+    var role: ItemRole?
 
     var exercise: ExerciseStep? { step.asExercise }
 
@@ -91,6 +93,14 @@ struct RunState: Hashable, Sendable, Codable {
     /// Slots completed per block, for AMRAP scoring.
     var blockDone: [String: Int] = [:]
     var leadSec: Double = Runner.leadSec
+    /// What a pause interrupted, so resuming goes back to it: the lead-in or a running slot.
+    /// Optional, like the two below, so a run saved by an older build still decodes.
+    var pausedFrom: Phase?
+    /// Session time, seconds, pauses excluded, at which each part (block or loose step) started
+    /// and was left. A for-time score is the time spent in the main parts: no lead-in, no gate, no
+    /// warm-up.
+    var partAt: [Int: Double]?
+    var partOut: [Int: Double]?
 }
 
 enum Runner {
@@ -112,11 +122,13 @@ enum Runner {
         let parts = r.items.filter { if case .ref = $0 { return false } else { return true } }.count
         var part = -1
 
+        var role: ItemRole?
+
         func push(_ step: Step, _ make: (inout Slot) -> Void) {
             guard !skip.contains(step.id) else { return }
             var slot = Slot(
                 id: "\(step.id)#\(n)", kind: step.asExercise == nil ? .rest : .work, step: step,
-                seconds: step.clockSeconds, mode: .loose, round: 0, rounds: 1, part: part, parts: parts
+                seconds: step.clockSeconds, mode: .loose, round: 0, rounds: 1, part: part, parts: parts, role: role
             )
             n += 1
             make(&slot)
@@ -126,6 +138,7 @@ enum Runner {
         for item in r.items {
             if case .ref = item { continue }
             part += 1
+            role = item.role
             guard let b = item.asBlock else {
                 if let s = item.asStep { push(s) { $0.mode = .loose; $0.round = 0; $0.rounds = 1 } }
                 continue
@@ -138,7 +151,7 @@ enum Runner {
                 out.append(Slot(
                     id: "\(b.id):between#\(n)", kind: .rest, step: step, seconds: rest,
                     blockId: b.id, blockName: b.name, mode: SlotMode(rawValue: mode.rawValue) ?? .rounds,
-                    round: round, rounds: rounds, part: part, parts: parts
+                    round: round, rounds: rounds, part: part, parts: parts, role: role
                 ))
                 n += 1
             }
@@ -172,7 +185,7 @@ enum Runner {
                     out.append(Slot(
                         id: "\(b.id):wait#\(n)", kind: .rest, step: wait, seconds: every,
                         blockId: b.id, blockName: b.name, mode: slotMode, round: m, rounds: b.repeatCount,
-                        untilBoundary: true, everySec: every, part: part, parts: parts
+                        untilBoundary: true, everySec: every, part: part, parts: parts, role: role
                     ))
                     n += 1
                 }
@@ -254,10 +267,21 @@ enum Runner {
         return max(0, cap - blockElapsed(s, now: now))
     }
 
+    /// EMOM work: seconds left in the minute (or whatever the interval is) the set belongs to.
+    static func minuteLeft(_ s: RunState, now: Double) -> Double? {
+        guard let c = current(s), c.mode == .emom, c.kind == .work, let every = c.everySec,
+              s.phase == .running || s.phase == .paused else { return nil }
+        return max(0, Double(c.round + 1) * every - blockElapsed(s, now: now))
+    }
+
     /// Move to slot i. Entering a new part going forward parks the timer in `ready` until the user
     /// taps Start block, so equipment changes do not eat the countdown.
-    private static func enter(_ s: RunState, _ i: Int, _ now: Double) -> RunState {
-        var s = s
+    private static func enter(_ given: RunState, _ i: Int, _ now: Double) -> RunState {
+        // Moving on from a paused timer takes the pause out first, so it never counts as work.
+        var s = given.phase == .paused ? resume(given, now: now) : given
+        if s.phase == .running, let cur = current(s), s.slots.indices.contains(i) ? s.slots[i].part != cur.part : true {
+            s.partOut = (s.partOut ?? [:]).merging([cur.part: elapsed(s, now: now)]) { _, new in new }
+        }
         if i >= s.slots.count {
             s.i = i; s.phase = .done; s.endsAt = nil; s.endedAt = now
             return s
@@ -315,13 +339,20 @@ enum Runner {
     private static func activate(_ s: RunState, _ i: Int, _ now: Double) -> RunState {
         var s = s
         let slot = s.slots[i]
+        if s.partAt?[slot.part] == nil { s.partAt = (s.partAt ?? [:]).merging([slot.part: elapsed(s, now: now)]) { _, new in new } }
         if let id = slot.blockId, s.blockStart[id] == nil { s.blockStart[id] = now }
 
         var seconds = slot.seconds
         if slot.untilBoundary, let id = slot.blockId, let every = slot.everySec, let began = s.blockStart[id] {
+            // The wait ends on its own minute's boundary. A minute that overran has none left: the
+            // next minute starts at once and catches up, rather than the block quietly growing a minute.
             let into = (now - began) / 1000
-            let boundary = ((into / every).rounded(.down) + 1) * every
-            seconds = max(0, boundary - into)
+            let left = Double(slot.round + 1) * every - into
+            if left <= 0 {
+                s.i = i
+                return enter(s, i + 1, now)
+            }
+            seconds = left
         }
         // A capped block that has run out: skip its remaining slots.
         if let cap = slot.capSec, let id = slot.blockId, let began = s.blockStart[id] {
@@ -341,14 +372,15 @@ enum Runner {
     }
 
     /// Advance past the current slot: Done, countdown finished, or skip.
-    static func advance(_ s: RunState, now: Double, skipped: Bool = false) -> RunState {
-        if s.phase == .done { return s }
+    static func advance(_ given: RunState, now: Double, skipped: Bool = false) -> RunState {
+        if given.phase == .done { return given }
+        // Done on a paused timer: the pause comes out first, and a paused lead-in is still a lead-in.
+        var s = given.phase == .paused ? resume(given, now: now) : given
         if s.phase == .lead { return enter(s, 0, now) }
         if s.phase == .ready {
             let sameParts = s.i + 1 < s.slots.count && s.slots[s.i + 1].part == s.slots[s.i].part
             return activate(s, sameParts ? s.i + 1 : s.i, now)
         }
-        var s = s
         if let c = current(s), !skipped {
             var a = s.actuals[c.id] ?? Actual()
             a.doneAt = now
@@ -408,6 +440,7 @@ enum Runner {
     static func pause(_ s: RunState, now: Double) -> RunState {
         guard s.phase == .running || s.phase == .lead else { return s }
         var s = s
+        s.pausedFrom = s.phase
         s.phase = .paused
         s.pausedAt = now
         s.remainingMs = s.endsAt.map { max(0, $0 - now) }
@@ -418,9 +451,11 @@ enum Runner {
         guard s.phase == .paused, let pausedAt = s.pausedAt else { return s }
         var s = s
         let gap = now - pausedAt
-        let wasLead = s.i == 0 && s.blockStart.isEmpty && s.remainingMs != nil && s.slotStartedAt == s.startedAt
+        // A run paused before pausedFrom was kept: the lead-in is the only pause before any block starts.
+        let wasLead = s.pausedFrom.map { $0 == .lead } ?? (s.i == 0 && s.blockStart.isEmpty && s.remainingMs != nil && s.slotStartedAt == s.startedAt)
         s.phase = wasLead ? .lead : .running
         s.pausedAt = nil
+        s.pausedFrom = nil
         s.pausedMs += gap
         s.slotStartedAt += gap
         if let block = current(s)?.blockId, let began = s.blockStart[block] { s.blockStart[block] = began + gap }
@@ -429,9 +464,12 @@ enum Runner {
         return s
     }
 
-    /// Go back one slot, restarting its countdown.
+    /// Go back one slot, restarting its countdown. The step gone back to is no longer done until it
+    /// is done again, so an AMRAP round is not counted twice.
     static func back(_ s: RunState, now: Double) -> RunState {
-        s.i > 0 ? enter(s, s.i - 1, now) : s
+        guard s.i > 0, s.phase != .lead, s.phase != .done else { return s }
+        let prev = s.slots[s.i - 1]
+        return enter(prev.kind == .work ? reopenSet(s, slotId: prev.id) : s, s.i - 1, now)
     }
 
     /// Lengthen (or, with a negative `by`, shorten) the rest that is counting down, running or
@@ -709,8 +747,12 @@ enum Runner {
         return s.phase == .ready && tail.isEmpty ? enter(s, s.i, now) : s
     }
 
-    static func finish(_ s: RunState, now: Double) -> RunState {
-        var s = s
+    static func finish(_ given: RunState, now: Double) -> RunState {
+        // Finished while paused: the pause is not workout time.
+        var s = given.phase == .paused ? resume(given, now: now) : given
+        if s.phase == .running, let cur = current(s), s.partOut?[cur.part] == nil {
+            s.partOut = (s.partOut ?? [:]).merging([cur.part: elapsed(s, now: now)]) { _, new in new }
+        }
         s.phase = .done
         s.endedAt = now
         s.endsAt = nil
@@ -823,10 +865,18 @@ enum Runner {
             )
         }
 
+        // A set of the step left undone (skipped, never reached) is a missed session for the
+        // progression rules, not a success. An AMRAP's rounds are a guess, so its undone ones say nothing.
+        for (idx, slot) in s.slots.enumerated() {
+            guard slot.kind == .work, let ex = slot.exercise, slot.mode != .amrap, s.actuals[slot.id]?.doneAt == nil,
+                  typeAt(s, idx) != .warmup else { continue }
+            steps["\(ex.id)|\(ex.exercise.key)"]?.success = false
+        }
+
         var score: Double?
         switch type {
         case .time:
-            score = durationSec
+            score = timeScore(s, now: now) ?? durationSec
         case .rounds:
             if let amrap = r.items.compactMap(\.asBlock).first(where: { $0.mode == .amrap }) {
                 let done = s.blockDone[amrap.id] ?? 0
@@ -856,6 +906,21 @@ enum Runner {
         let split = splits(s)
         result.splits = split.isEmpty ? nil : split
         return result
+    }
+
+    /// Seconds spent in the main parts — blocks and loose steps that are not a warm-up or cool-down —
+    /// each from its start to when it was left: the lead-in and the time parked at a Start block
+    /// gate fall between parts, and pauses are out of the session clock already. Nil when no main
+    /// part has started.
+    private static func timeScore(_ s: RunState, now: Double) -> Double? {
+        let end = elapsed(s, now: now)
+        var total: Double?
+        for (part, at) in s.partAt ?? [:] {
+            let role = s.slots.first { $0.part == part }?.role ?? .main
+            guard role == .main else { continue }
+            total = (total ?? 0) + max(0, (s.partOut?[part] ?? end) - at)
+        }
+        return total?.rounded()
     }
 
     /// Session time a slot was done at. A run saved before `at` was kept falls back to its clock
@@ -893,7 +958,8 @@ enum Runner {
                 guard let latest = times.max(), closed else { break }
                 at.append(latest)
             }
-            if !at.isEmpty { out.append(RoundSplit(blockId: block, at: at)) }
+            let from = all.first.flatMap { s.partAt?[$0.part] }?.rounded()
+            if !at.isEmpty { out.append(RoundSplit(blockId: block, at: at, from: from)) }
         }
         return out
     }

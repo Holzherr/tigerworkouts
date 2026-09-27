@@ -6,7 +6,7 @@ import Foundation
 /// one, it only hands it to iOS. In the app, the running session registers itself here, so a tap
 /// reaches the one `SessionRunner` there is instead of a copy.
 enum SessionControl: String, Sendable {
-    case done, skipRest, extendRest
+    case done, skipRest, extendRest, resume
 }
 
 @MainActor
@@ -72,6 +72,23 @@ struct ExtendRestIntent: LiveActivityIntent {
     @MainActor
     func perform() async throws -> some IntentResult {
         SessionControls.send(.extendRest, token: token)
+        return .result()
+    }
+}
+
+struct ResumeSessionIntent: LiveActivityIntent {
+    static var title: LocalizedStringResource = "Resume workout"
+    static var description = IntentDescription("Resumes a paused session.")
+
+    @Parameter(title: "Card")
+    var token: String?
+
+    init() {}
+    init(token: String) { self.token = token }
+
+    @MainActor
+    func perform() async throws -> some IntentResult {
+        SessionControls.send(.resume, token: token)
         return .result()
     }
 }

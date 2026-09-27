@@ -220,13 +220,16 @@ struct TimerView: View {
         .padding(.horizontal, 16)
     }
 
-    /// An amrap or a capped for-time block runs against a clock of its own; this is what is left of it.
+    /// An amrap or a capped for-time block runs against a clock of its own, and EMOM work against its
+    /// minute; this is what is left of it.
     @ViewBuilder
     private var capClock: some View {
-        if let left = runner.capLeft, runner.state.phase == .running || runner.state.phase == .paused {
+        if let clock = runner.capLeft.map({ (left: $0, of: "block") }) ?? runner.minuteLeft.map({ (left: $0, of: "minute") }),
+           runner.state.phase == .running || runner.state.phase == .paused {
+            let left = clock.left
             HStack(spacing: 6) {
                 Image(systemName: "timer")
-                Text("\(Format.clock(left)) left in the block").monospacedDigit()
+                Text("\(Format.clock(left)) left in the \(clock.of)").monospacedDigit()
             }
             .font(.subheadline.weight(.bold))
             .foregroundStyle(left <= 10 ? Brand.coral : Brand.Night.text)
@@ -667,6 +670,17 @@ struct TimerView: View {
                     .buttonStyle(BigButtonStyle())
             } else {
                 HStack(spacing: 10) {
+                    // Undoes a stray Done — on the Lock Screen too, where there is no way back.
+                    Button {
+                        runner.back()
+                    } label: {
+                        Image(systemName: "backward.end.fill")
+                    }
+                    .buttonStyle(NightButtonStyle())
+                    .frame(maxWidth: 72)
+                    .disabled(runner.state.i == 0 || runner.state.phase == .lead)
+                    .accessibilityLabel("Previous step")
+
                     Button {
                         runner.pauseOrResume()
                     } label: {
@@ -734,6 +748,13 @@ struct TimerView: View {
     // MARK: - Finished
 
     private var finished: some View {
-        FinishView(result: runner.finalResult ?? runner.result(), runsheet: runner.runsheet, onClose: onClose)
+        let result = runner.finalResult ?? runner.result()
+        let startedAt = runner.state.startedAt
+        return FinishView(result: result, runsheet: runner.runsheet, onClose: onClose) {
+            // The crash-safe copy goes too, or the next launch would log the session again.
+            SessionRunner.clearSaved(startedAt: startedAt)
+            Task { await store.discard(result) }
+            onClose()
+        }
     }
 }
