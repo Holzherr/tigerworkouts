@@ -47,7 +47,8 @@ import { WorkoutIcon } from '@/shared/components/ui/workout-icon';
 import { defaultIcon } from '@/features/workouts/icon';
 import { useActions, useAppState } from './app/store';
 import { providers, sendCode, signInGoogle, signOut, verifyCode } from '@/features/cloud/client';
-import { getVolume, setVolume } from '@/features/timer/use-runner';
+import { getDefaultRest, getMuted, getVolume, setDefaultRest, setMuted, setVolume } from '@/features/timer/use-runner';
+import { ghost as paceGhost, lastTimed } from '@/features/timer/pace';
 import { deviceFor, fetchCreator, fetchPublicWorkouts, type CreatorProfile } from '@/features/cloud/sync';
 import { useCloudSync } from '@/features/cloud/use-sync';
 import { SessionDetailScreen } from '@/features/results/components/session-detail-screen';
@@ -133,6 +134,7 @@ export default function App() {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [importOpen, setImportOpen] = useState(false);
   const [volume, setVol] = useState(getVolume);
+  const [defaultRest, setRest] = useState(getDefaultRest);
   const [dnd, setDndState] = useState<DndVariant>(() => { try { return (localStorage.getItem('tiger:dnd') as DndVariant) || 'classic'; } catch { return 'classic'; } });
   const setDnd = (v: DndVariant) => { setDndState(v); try { localStorage.setItem('tiger:dnd', v); } catch { /* ignore */ } };
   // Google shows on the sign-in card only when the Supabase project has the provider enabled.
@@ -236,6 +238,7 @@ export default function App() {
           hintFor={lastTime}
           setHintFor={lastSetHint}
           refTitle={refTitle}
+          autoRest={defaultRest}
           mode="author"
           dndVariant={dnd}
           onTextChange={t => { const out = applyCommands(r, t, library); setDraft(out.runsheet); say(out.applied.length ? out.applied.join(' · ') : `Didn't understand “${t}”`); }}
@@ -273,6 +276,7 @@ export default function App() {
           hintFor={lastTime}
           setHintFor={lastSetHint}
           refTitle={refTitle}
+          autoRest={defaultRest}
           mode="tonight"
           dndVariant={dnd}
           onTextChange={t => { const out = applyCommands(r, t, library); setDraft(out.runsheet); say(out.applied.length ? out.applied.join(' · ') : `Didn't understand “${t}”`); }}
@@ -311,7 +315,7 @@ export default function App() {
   if (route.name === 'do') {
     const r = draft ?? byId.get(route.id);
     if (!r) return shell('discover', <Missing />);
-    return <RunRoute key={route.id} runsheet={withLastUsed(resolveRefs(r, lookup), st.results)} setHintFor={lastSetHint} onLog={res => act.addResult({ ...res, runsheetId: wid(r) })} onFinish={res => (setPending({ ...res, runsheetId: wid(r) }), go(`/result/${encodeURIComponent(route.id)}`))} onExit={() => (Runner.clearPersisted(), go(`/w/${encodeURIComponent(route.id)}`))} />;
+    return <RunRoute key={route.id} runsheet={withLastUsed(resolveRefs(r, lookup), st.results)} results={st.results} onLog={res => act.addResult({ ...res, runsheetId: wid(r) })} onFinish={res => (setPending({ ...res, runsheetId: wid(r) }), go(`/result/${encodeURIComponent(route.id)}`))} onExit={() => (Runner.clearPersisted(), go(`/w/${encodeURIComponent(route.id)}`))} />;
   }
   if (route.name === 'session') {
     const res = st.results.find(x => x.id === route.id);
@@ -467,7 +471,7 @@ export default function App() {
             </Button>
           )}
         </MeScreen>
-        <SettingsSheet open={settingsOpen} onOpenChange={setSettingsOpen} name={st.name} avatar={st.avatar} units={st.units} email={cloud.user?.email ?? undefined} volume={volume} onVolume={v => { setVolume(v); setVol(v); }} dnd={dnd} onDnd={setDnd} onChange={act.setProfile} onInvite={invite} onSignOut={cloud.user ? out : undefined} />
+        <SettingsSheet open={settingsOpen} onOpenChange={setSettingsOpen} name={st.name} avatar={st.avatar} units={st.units} email={cloud.user?.email ?? undefined} volume={volume} onVolume={v => { setVolume(v); setVol(v); }} defaultRest={defaultRest} onDefaultRest={v => { setDefaultRest(v); setRest(getDefaultRest()); }} dnd={dnd} onDnd={setDnd} onChange={act.setProfile} onInvite={invite} onSignOut={cloud.user ? out : undefined} />
         {tmSheet()}
         <ImportCsvSheet open={importOpen} onOpenChange={setImportOpen} results={st.results} library={library} onImport={p => (act.importSessions(p.sessions, p.newExercises), say(`${p.sessions.length} ${p.sessions.length === 1 ? 'session' : 'sessions'} added to History`))} />
       </>
@@ -518,8 +522,18 @@ export default function App() {
  * result sheet is saved. Until then it lived only in memory: the persisted run was cleared at done,
  * so a reload or a closed tab on the result sheet lost it. The sheet then edits the logged row.
  */
-const RunRoute = ({ runsheet, onLog, onFinish, onExit, setHintFor }: { runsheet: Runsheet; onLog: (r: SessionResult) => void; onFinish: (r: SessionResult) => void; onExit: () => void; setHintFor?: (step: ExerciseStep, round: number) => string | undefined }) => {
-  const { state, now, act } = useRunner(runsheet, { resume: true });
+const RunRoute = ({ runsheet, results, onLog, onFinish, onExit }: { runsheet: Runsheet; results: SessionResult[]; onLog: (r: SessionResult) => void; onFinish: (r: SessionResult) => void; onExit: () => void }) => {
+  // Open reps (a range, a max) start on what was done last time, set for set.
+  const { state, now, act } = useRunner(runsheet, { resume: true, seed: s => Runner.prefillReps(s, (step, round) => lastSets(results, step)?.[round]?.reps) });
+  // The last session of this workout with times kept, raced on the header. Fixed for the session.
+  const [rival] = useState(() => lastTimed(results, runsheet.id ?? runsheet.title));
+  const [muted, setMute] = useState(getMuted);
+  const blockOf = useMemo(() => {
+    const m = new Map<string, string>();
+    for (const it of runsheet.items) if (it.kind === 'block') for (const st of it.steps) m.set(st.id, it.id);
+    return (id: string) => m.get(id);
+  }, [runsheet]);
+  const pace = useMemo(() => (rival ? paceGhost(Runner.toResult(state, runsheet, state.endedAt ?? state.startedAt), rival, blockOf) : undefined), [rival, state, runsheet, blockOf]);
   const logged = useRef<SessionResult | null>(null);
   const log = (s: Runner.RunState) => {
     if (!logged.current) {
@@ -535,7 +549,7 @@ const RunRoute = ({ runsheet, onLog, onFinish, onExit, setHintFor }: { runsheet:
   });
   return (
     <div className="relative h-dvh">
-      <TimerScreen runsheet={runsheet} state={state} now={now} onDone={act.done} onSkip={act.skip} onBack={act.back} onPause={act.pause} onResume={act.resume} onAdjust={act.adjust} onAdjustIncline={act.adjustIncline} onSetReps={act.setReps} onDrop={act.drop} onStartBlock={act.startBlock} onAdjustStep={act.adjustStep} sets={{ adjust: act.adjustAt, setReps: act.setRepsAt, complete: act.completeSet, reopen: act.reopenSet, hintFor: setHintFor }} onFinish={() => { const res = log(state.phase === 'done' ? state : Runner.finish(state, Date.now())); Runner.clearPersisted(); onFinish(res); }} onExit={onExit} />
+      <TimerScreen runsheet={runsheet} state={state} now={now} onDone={act.done} onSkip={act.skip} onBack={act.back} onPause={act.pause} onResume={act.resume} onAdjust={act.adjust} onAdjustIncline={act.adjustIncline} onSetReps={act.setReps} onDrop={act.drop} onStartBlock={act.startBlock} onAdjustStep={act.adjustStep} sets={{ adjust: act.adjustAt, setReps: act.setRepsAt, complete: act.completeSet, reopen: act.reopenSet, lastFor: (step, round) => lastSets(results, step)?.[round], fill: act.fillSet }} onAdjustRest={act.extendRest} lastFor={step => lastSet(results, step)} onFill={act.fillSet} ghost={pace?.text} muted={muted} onToggleMute={() => { setMuted(!muted); setMute(!muted); }} onFinish={() => { const res = log(state.phase === 'done' ? state : Runner.finish(state, Date.now())); Runner.clearPersisted(); onFinish(res); }} onExit={onExit} />
     </div>
   );
 };

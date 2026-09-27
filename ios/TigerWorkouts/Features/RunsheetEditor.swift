@@ -18,6 +18,8 @@ struct RunsheetEditor<Header: View>: View {
     var apply: (Runsheet) -> Void
     @ViewBuilder var header: () -> Header
 
+    /// Settings → Default rest: what an added rest starts at.
+    @AppStorage(Switches.defaultRest) private var defaultRest = 30.0
     @State private var editingRest: RestStep?
     @State private var editingBlock: Block?
     @State private var picking: PickTarget?
@@ -154,7 +156,7 @@ struct RunsheetEditor<Header: View>: View {
             Button { picking = PickTarget(blockId: blockId) } label: {
                 Label("Add exercise", systemImage: "plus")
             }
-            Button { apply(Edit.addRest(runsheet, to: blockId)) } label: {
+            Button { apply(Edit.addRest(runsheet, to: blockId, seconds: defaultRest)) } label: {
                 Label("Add rest", systemImage: "pause")
             }
             Spacer()

@@ -3,8 +3,8 @@
  * transition takes `now` in ms so it can be tested without a clock. The React hook adds the
  * interval, sounds, wake lock and persistence.
  */
-import { plannedSet, rungSteps, scoreType, type Block, type ExerciseRef, type Runsheet, type SetPlan, type Step } from '@/features/runsheet/model';
-import type { SessionResult, StepResult } from '@/features/runsheet/progression';
+import { plannedSet, rungSteps, scoreType, type Block, type ExerciseRef, type ExerciseStep, type Runsheet, type SetPlan, type Step } from '@/features/runsheet/model';
+import type { RoundSplit, SessionResult, SetResult, StepResult } from '@/features/runsheet/progression';
 
 export interface Slot {
   id: string;
@@ -40,6 +40,8 @@ export interface Actual {
   reps?: number;
   changes: { atSec: number; target: number }[];
   doneAt?: number;
+  /** Session time when it was done, seconds, pauses excluded. */
+  at?: number;
 }
 
 export interface RunState {
@@ -227,7 +229,7 @@ export const advance = (s: RunState, now: number, opts: { skipped?: boolean } = 
   const actuals = { ...s.actuals };
   const blockDone = { ...s.blockDone };
   if (c && !opts.skipped) {
-    actuals[c.id] = { ...(actuals[c.id] ?? { changes: [] }), doneAt: now };
+    actuals[c.id] = { ...(actuals[c.id] ?? { changes: [] }), doneAt: now, at: Math.round(elapsed(s, now)) };
     if (c.blockId && c.kind === 'work') blockDone[c.blockId] = (blockDone[c.blockId] ?? 0) + 1;
   }
   const st = { ...s, actuals, blockDone };
@@ -273,21 +275,25 @@ export const resume = (s: RunState, now: number): RunState => {
   return { ...s, blockStart, phase: wasLead ? 'lead' : 'running', pausedAt: undefined, pausedMs: s.pausedMs + gap, slotStartedAt: s.slotStartedAt + gap, endsAt: s.remainingMs !== undefined ? now + s.remainingMs : undefined, remainingMs: undefined };
 };
 
+/** Go back one slot (restarts its countdown). */
+export const back = (s: RunState, now: number): RunState => (s.i > 0 ? enter(s, s.i - 1, now) : s);
+
 /**
- * Lengthen (or, with a negative `by`, shorten) the rest that is running, in seconds. Only a
- * counted-down rest moves; a work slot or a user-paced step is left alone. A rest shortened past
- * now ends on the next tick. Paused, it moves what is left instead.
+ * Lengthen (or, with a negative `by`, shorten) the rest that is counting down, running or paused:
+ * the timer's −15 s / +15 s and the Lock Screen's +15 s. The slot's length moves with it, so the
+ * ring and the overall progress stay true. A rest shortened past now ends on the next tick. A work
+ * slot, a user-paced step and an EMOM's wait (the minute's clock, not a rest) are left alone.
  */
 export const extendRest = (s: RunState, now: number, by: number): RunState => {
   const c = current(s);
-  if (!c || c.kind !== 'rest') return s;
-  if (s.phase === 'running' && s.endsAt !== undefined) return { ...s, endsAt: Math.max(now, s.endsAt + by * 1000) };
-  if (s.phase === 'paused' && s.remainingMs !== undefined) return { ...s, remainingMs: Math.max(0, s.remainingMs + by * 1000) };
-  return s;
+  if (!c || c.kind !== 'rest' || c.untilBoundary || c.seconds === undefined) return s;
+  const left = s.phase === 'running' && s.endsAt !== undefined ? s.endsAt - now : s.phase === 'paused' && s.remainingMs !== undefined ? s.remainingMs : undefined;
+  if (left === undefined) return s;
+  const nextLeft = Math.max(0, left + by * 1000);
+  const moved = (nextLeft - left) / 1000;
+  const slots = s.slots.map((sl, i) => (i === s.i ? { ...sl, seconds: Math.max(0, (sl.seconds ?? 0) + moved) } : sl));
+  return s.phase === 'running' ? { ...s, slots, endsAt: now + nextLeft } : { ...s, slots, remainingMs: nextLeft };
 };
-
-/** Go back one slot (restarts its countdown). */
-export const back = (s: RunState, now: number): RunState => (s.i > 0 ? enter(s, s.i - 1, now) : s);
 
 /** Change the load/speed of the current work step; logged with the time into the slot. */
 export const adjust = (s: RunState, now: number, target: number): RunState => {
@@ -365,7 +371,7 @@ export const completeSet = (s: RunState, now: number, slotId: string): RunState 
   }
   if (idx > s.i) return s;
   const blockDone = sl.blockId ? { ...s.blockDone, [sl.blockId]: (s.blockDone[sl.blockId] ?? 0) + 1 } : s.blockDone;
-  return { ...s, blockDone, actuals: { ...s.actuals, [slotId]: { ...(s.actuals[slotId] ?? { changes: [] }), doneAt: now } } };
+  return { ...s, blockDone, actuals: { ...s.actuals, [slotId]: { ...(s.actuals[slotId] ?? { changes: [] }), doneAt: now, at: Math.round(elapsed(s, now)) } } };
 };
 /** Un-tick a done set so its weight and reps can be put right. It is not logged until ticked again. */
 export const reopenSet = (s: RunState, slotId: string): RunState => {
@@ -374,8 +380,46 @@ export const reopenSet = (s: RunState, slotId: string): RunState => {
   if (!sl || a?.doneAt === undefined) return s;
   const rest = { ...a };
   delete rest.doneAt;
+  delete rest.at;
   const blockDone = sl.blockId ? { ...s.blockDone, [sl.blockId]: Math.max(0, (s.blockDone[sl.blockId] ?? 0) - 1) } : s.blockDone;
   return { ...s, blockDone, actuals: { ...s.actuals, [slotId]: rest } };
+};
+
+/** Last time's numbers into a set that is not done yet: its load and its reps, either or both. */
+export const fillSet = (s: RunState, now: number, slotId: string, set: SetResult): RunState => {
+  let st = s;
+  if (set.load !== undefined) st = adjustAt(st, now, slotId, set.load);
+  if (set.reps !== undefined) st = setRepsAt(st, slotId, set.reps);
+  return st;
+};
+
+/** A set whose reps the plan leaves open — a range (8–12), a max, or reps-plus — in a block that is
+ * one exercise done for sets. */
+const openReps = (s: RunState, sl: Slot) =>
+  sl.kind === 'work' &&
+  sl.step.kind === 'exercise' &&
+  sl.plan?.reps === undefined &&
+  (sl.step.forMax !== undefined || sl.step.forMode === 'max' || sl.step.forMode === 'amrap') &&
+  !!sl.blockId &&
+  s.slots.every(x => x.blockId !== sl.blockId || x.kind !== 'work' || x.step.id === sl.step.id);
+/**
+ * Fill the reps of every open set still to come from last time's matching set (`last` gets the
+ * step and the set's round), so the grid starts on what was done rather than on the bottom of the
+ * range. A set with reps already set is left alone.
+ */
+export const prefillReps = (s: RunState, last: (step: ExerciseStep, round: number) => number | undefined): RunState => {
+  const actuals = { ...s.actuals };
+  let changed = false;
+  for (const sl of s.slots) {
+    if (!openReps(s, sl) || sl.step.kind !== 'exercise') continue;
+    const a = actuals[sl.id];
+    if (a?.doneAt !== undefined || a?.reps !== undefined) continue;
+    const reps = last(sl.step, sl.round);
+    if (reps === undefined) continue;
+    actuals[sl.id] = { ...(a ?? { changes: [] }), reps };
+    changed = true;
+  }
+  return changed ? { ...s, actuals } : s;
 };
 
 /** Drop a step for the rest of the session: remove every remaining slot of it. */
@@ -535,7 +579,8 @@ export const toResult = (s: RunState, r: Runsheet, now: number): SessionResult =
     const target = effectiveTarget(s, idx);
     const incline = effectiveIncline(s, idx);
     const reps = a.reps !== undefined ? a.reps : slot.step.forMode === 'reps' ? slot.step.forValue : undefined;
-    const set = { ...(reps !== undefined ? { reps } : {}), ...(target !== undefined ? { load: target } : {}) };
+    const at = doneAtSec(s, a);
+    const set = { ...(reps !== undefined ? { reps } : {}), ...(target !== undefined ? { load: target } : {}), ...(at !== undefined ? { at } : {}) };
     steps.set(key, { stepId: slot.step.id, exerciseKey: slot.step.exercise.key, target, ...(incline !== undefined ? { incline } : {}), reps: [...(prev?.reps ?? []), ...(reps !== undefined ? [reps] : [])], success: prev?.success ?? true, sets: [...(prev?.sets ?? []), set] });
   }
   let score: number | undefined;
@@ -551,7 +596,49 @@ export const toResult = (s: RunState, r: Runsheet, now: number): SessionResult =
       score = rounds + Math.min(999, extraReps) / 1000;
     }
   } else if (type === 'reps') score = [...steps.values()].reduce((t, x) => t + (x.reps?.reduce((a, b) => a + b, 0) ?? 0), 0);
-  return { runsheetId: s.runsheetId, startedAt: new Date(s.startedAt).toISOString(), endedAt: new Date(s.endedAt ?? now).toISOString(), score, steps: [...steps.values()], notes: undefined, durationSec, completed: s.phase === 'done' && s.i >= s.slots.length, title: r.title };
+  const split = splits(s);
+  return { runsheetId: s.runsheetId, startedAt: new Date(s.startedAt).toISOString(), endedAt: new Date(s.endedAt ?? now).toISOString(), score, steps: [...steps.values()], ...(split.length ? { splits: split } : {}), notes: undefined, durationSec, completed: s.phase === 'done' && s.i >= s.slots.length, title: r.title };
+};
+
+/** Session time a slot was done at. A run saved before `at` was kept falls back to its clock time
+ * less every pause, which is right unless the pause came after it. */
+const doneAtSec = (s: RunState, a: Actual | undefined): number | undefined => {
+  if (a?.doneAt === undefined) return undefined;
+  return a.at ?? Math.max(0, Math.round((a.doneAt - s.startedAt - s.pausedMs) / 1000));
+};
+
+/**
+ * When each round of a circuit or AMRAP finished: the latest tick in the round. A block of one
+ * exercise done for sets is left out — its set times are on the sets. A round counts once it is
+ * closed (its last exercise done, or a later round begun); the first round that is not ends the
+ * list, so an AMRAP's half round at the cap is not a split.
+ */
+export const splits = (s: RunState): RoundSplit[] => {
+  const blocks = new Map<string, Map<number, Slot[]>>();
+  for (const sl of s.slots) {
+    if (sl.kind !== 'work' || !sl.blockId) continue;
+    const rounds = blocks.get(sl.blockId) ?? new Map<number, Slot[]>();
+    rounds.set(sl.round, [...(rounds.get(sl.round) ?? []), sl]);
+    blocks.set(sl.blockId, rounds);
+  }
+  const out: RoundSplit[] = [];
+  for (const [blockId, rounds] of blocks) {
+    const all = [...rounds.values()].flat();
+    const circuit = all.some(sl => sl.mode === 'amrap' || sl.mode === 'fortime') || [...rounds.values()].some(r => r.length > 1);
+    if (!circuit) continue;
+    const at: number[] = [];
+    const order = [...rounds.keys()].sort((a, b) => a - b);
+    for (const [k, r] of order.entries()) {
+      const round = rounds.get(r)!;
+      const times = round.map(sl => doneAtSec(s, s.actuals[sl.id])).filter((t): t is number => t !== undefined);
+      const later = order.slice(k + 1).some(r => rounds.get(r)!.some(sl => s.actuals[sl.id]?.doneAt !== undefined));
+      const closed = s.actuals[round[round.length - 1].id]?.doneAt !== undefined || later;
+      if (!times.length || !closed) break;
+      at.push(Math.max(...times));
+    }
+    if (at.length) out.push({ blockId, at });
+  }
+  return out;
 };
 
 // ── persistence ──

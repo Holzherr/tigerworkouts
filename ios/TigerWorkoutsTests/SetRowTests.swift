@@ -66,7 +66,7 @@ struct SetPlanTests {
             t += 10_000
         }
         let sets = Runner.toResult(s, Self.pyramid(Self.full), now: 100_000).steps[0].sets
-        #expect(sets == [SetResult(reps: 10, load: 60), SetResult(reps: 8, load: 70), SetResult(reps: 6, load: 80)])
+        #expect(sets == [SetResult(reps: 10, load: 60, at: 10), SetResult(reps: 8, load: 70, at: 30), SetResult(reps: 6, load: 80, at: 50)])
     }
 
     @Test("a swap drops the planned loads for the swap target, keeping the reps")
@@ -129,7 +129,7 @@ struct SetGridTests {
         s = Runner.setRepsAt(s, slotId: first, reps: 7)
         s = Runner.completeSet(s, now: 23_000, slotId: first)
         #expect(s.i == 1) // the cursor did not move
-        #expect(Runner.toResult(s, Self.sheet(), now: 30_000).steps[0].sets == [SetResult(reps: 7, load: 22.5)])
+        #expect(Runner.toResult(s, Self.sheet(), now: 30_000).steps[0].sets == [SetResult(reps: 7, load: 22.5, at: 23)])
     }
 
     @Test("a skipped set can be ticked afterwards")
@@ -139,7 +139,7 @@ struct SetGridTests {
         s = Runner.advance(s, now: 20_000, skipped: true)
         #expect(Runner.toResult(s, Self.sheet(), now: 21_000).steps.isEmpty)
         s = Runner.completeSet(s, now: 21_000, slotId: first)
-        #expect(Runner.toResult(s, Self.sheet(), now: 22_000).steps[0].sets == [SetResult(reps: 8, load: 20)])
+        #expect(Runner.toResult(s, Self.sheet(), now: 22_000).steps[0].sets == [SetResult(reps: 8, load: 20, at: 21)])
         #expect(s.blockDone["b"] == 1)
     }
 

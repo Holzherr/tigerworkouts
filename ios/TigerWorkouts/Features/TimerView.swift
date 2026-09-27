@@ -11,6 +11,8 @@ struct TimerView: View {
     /// Bodyweight is asked for once, on a finish screen, and never again once answered or skipped.
     @AppStorage("bodyweightAsked") private var bodyweightAsked = false
     @State private var bodyweightDraft = EffortModel.defaultBodyweightKg
+    /// Settings → Tones, switched from the top bar too. It holds for later sessions.
+    @AppStorage(Switches.sound) private var sound = true
 
     @State private var showOverview = false
     @State private var editing: ExerciseStep?
@@ -101,10 +103,13 @@ struct TimerView: View {
                     Text(runner.slot?.blockName ?? runner.runsheet.title)
                         .font(.headline)
                         .lineLimit(1)
+                    // Wraps rather than truncates: "Block 2 of 9 · Round 3 of 8" beside three buttons
+                    // does not fit one line on the narrower phones.
                     Text(whereabouts)
                         .font(.subheadline)
                         .foregroundStyle(Brand.Night.muted)
-                        .lineLimit(1)
+                        .lineLimit(2)
+                        .fixedSize(horizontal: false, vertical: true)
                 }
                 Spacer(minLength: 8)
                 VStack(alignment: .trailing, spacing: 1) {
@@ -115,6 +120,16 @@ struct TimerView: View {
                         .foregroundStyle(Brand.Night.muted)
                         .monospacedDigit()
                 }
+                Button {
+                    sound.toggle()
+                    Cues.shared.enabled = sound
+                } label: {
+                    Image(systemName: sound ? "speaker.wave.2.fill" : "speaker.slash.fill")
+                        .font(.system(size: 16, weight: .bold))
+                        .frame(width: 44, height: 44)
+                        .background(Brand.Night.raised, in: Circle())
+                }
+                .accessibilityLabel(sound ? "Mute tones" : "Unmute tones")
                 Button { showOverview = true } label: {
                     Image(systemName: "list.bullet")
                         .font(.system(size: 16, weight: .bold))
@@ -122,6 +137,18 @@ struct TimerView: View {
                         .background(Brand.Night.raised, in: Circle())
                 }
                 .accessibilityLabel("Session overview")
+            }
+            if let ghost = runner.ghost {
+                // Racing the last session of this workout: one signed number, at the latest round or set.
+                Text(ghost.text)
+                    .font(.subheadline.weight(.bold))
+                    .monospacedDigit()
+                    .padding(.horizontal, 12)
+                    .frame(height: 28)
+                    .background(Brand.Night.raised, in: Capsule())
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .accessibilityLabel("Against last time: \(ghost.text)")
+                    .accessibilityIdentifier("ghost")
             }
             GeometryReader { geo in
                 ZStack(alignment: .leading) {
@@ -263,6 +290,13 @@ struct TimerView: View {
                         .foregroundStyle(Brand.Night.muted)
                         .monospacedDigit()
                 }
+                if runner.restAdjustable {
+                    HStack(spacing: 10) {
+                        restNudge("−15 s", label: "15 seconds less rest") { runner.extendRest(by: -15); Haptics.shared.play(.tick) }
+                        restNudge("+15 s", label: "15 seconds more rest") { runner.extendRest(by: 15); Haptics.shared.play(.tick) }
+                    }
+                    .padding(.top, 8)
+                }
             } else {
                 Text(Format.clock(runner.clock.spent))
                     .font(.system(size: size, weight: .heavy, design: .rounded))
@@ -300,17 +334,39 @@ struct TimerView: View {
                             .font(.subheadline)
                             .foregroundStyle(Brand.muted)
                             .lineLimit(3)
-                        if let last = LastTime.label(store.results, for: ex) {
-                            Text(last.prefix(1).uppercased() + last.dropFirst())
-                                .font(.subheadline.weight(.semibold))
-                                .foregroundStyle(Brand.coralInk)
-                        }
                     }
                     Spacer(minLength: 0)
                 }
                 .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
+
+            if let set = LastTime.set(store.results, for: ex), let last = LastTime.label(set, for: ex) {
+                let text = last.prefix(1).uppercased() + last.dropFirst()
+                // On the running set, a tap puts last time's weight and reps in.
+                if adjustable, let slot = runner.slot, slot.exercise?.id == ex.id, runner.state.phase == .running || runner.state.phase == .paused {
+                    Button { runner.fill(slot.id, with: SetResult(reps: runner.countsReps ? set.reps : nil, load: ex.hasSetting ? set.load : nil)) } label: {
+                        Text(text)
+                            .font(.subheadline.weight(.semibold))
+                            .underline(pattern: .dot)
+                            .foregroundStyle(Brand.coralInk)
+                            .frame(minHeight: 32)
+                            .contentShape(Rectangle())
+                    }
+                    .buttonStyle(.plain)
+                    .padding(.leading, 118)
+                    .padding(.top, -10)
+                    .accessibilityLabel("Use last time")
+                    .accessibilityValue(last)
+                    .accessibilityIdentifier("use-last-time")
+                } else {
+                    Text(text)
+                        .font(.subheadline.weight(.semibold))
+                        .foregroundStyle(Brand.coralInk)
+                        .padding(.leading, 118)
+                        .padding(.top, -10)
+                }
+            }
 
             if adjustable, ex.hasSetting {
                 Divider()
@@ -400,7 +456,7 @@ struct TimerView: View {
             .foregroundStyle(Brand.muted)
 
             ForEach(rows) { row in
-                setRow(row, ex, hint: last.indices.contains(row.number - 1) ? LastTime.setLabel(last[row.number - 1]) : nil)
+                setRow(row, ex, last: last.indices.contains(row.number - 1) ? last[row.number - 1] : nil)
             }
         }
         .padding(14)
@@ -410,7 +466,8 @@ struct TimerView: View {
         .accessibilityIdentifier("timer-set-grid")
     }
 
-    private func setRow(_ row: SessionRunner.SetRow, _ ex: ExerciseStep, hint: String?) -> some View {
+    private func setRow(_ row: SessionRunner.SetRow, _ ex: ExerciseStep, last: SetResult?) -> some View {
+        let hint = LastTime.setLabel(last)
         let editable = !row.done && (openSet == row.slotId || (openSet == nil && row.current))
         return VStack(alignment: .leading, spacing: 2) {
             HStack(spacing: 8) {
@@ -456,7 +513,23 @@ struct TimerView: View {
             }
             .monospacedDigit()
             .foregroundStyle(row.done ? Brand.muted : Brand.ink)
-            if let hint {
+            if let hint, let last, !row.done {
+                // Tap to copy last time's set into this row.
+                Button {
+                    openSet = row.slotId
+                    runner.fill(row.slotId, with: SetResult(reps: ex.countLabel == nil ? nil : last.reps, load: ex.hasSetLoad ? last.load : nil))
+                } label: {
+                    Text(hint)
+                        .font(.caption.weight(.semibold))
+                        .underline(pattern: .dot)
+                        .foregroundStyle(Brand.coralInk)
+                        .frame(minHeight: 28)
+                        .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+                .padding(.leading, 38)
+                .accessibilityLabel("Use last time for set \(row.number)")
+            } else if let hint {
                 Text(hint).font(.caption).foregroundStyle(Brand.muted).padding(.leading, 38)
             }
         }
@@ -470,6 +543,19 @@ struct TimerView: View {
     private func detail(_ ex: ExerciseStep) -> String {
         let cue = ex.exercise.cue ?? Library.shared.exercise(ex.exercise.key)?.cue ?? ""
         return cue.isEmpty ? ex.forLabel : "\(ex.forLabel) · \(cue)"
+    }
+
+    private func restNudge(_ title: String, label: String, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            Text(title)
+                .font(.headline)
+                .monospacedDigit()
+                .frame(width: 88, height: 48)
+                .background(Brand.Night.raised, in: Capsule())
+                .foregroundStyle(Brand.Night.text)
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel(label)
     }
 
     private func nudge(_ symbol: String, label: String, action: @escaping () -> Void) -> some View {

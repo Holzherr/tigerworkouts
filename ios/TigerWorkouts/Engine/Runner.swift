@@ -54,6 +54,8 @@ struct Actual: Hashable, Sendable, Codable {
     var reps: Double?
     var changes: [Change] = []
     var doneAt: Double?
+    /// Session time when it was done, seconds, pauses excluded.
+    var at: Double?
 }
 
 struct Clock: Hashable, Sendable {
@@ -311,6 +313,7 @@ enum Runner {
         if let c = current(s), !skipped {
             var a = s.actuals[c.id] ?? Actual()
             a.doneAt = now
+            a.at = elapsed(s, now: now).rounded()
             s.actuals[c.id] = a
             if let id = c.blockId, c.kind == .work { s.blockDone[id, default: 0] += 1 }
         }
@@ -387,23 +390,26 @@ enum Runner {
         return s
     }
 
-    /// Lengthen (or, with a negative `by`, shorten) the rest that is running, in seconds. Only a
-    /// counted-down rest moves; a work slot or a user-paced step is left alone. A rest shortened
-    /// past now ends on the next tick. Paused, it moves what is left instead.
-    static func extendRest(_ s: RunState, now: Double, by: Double) -> RunState {
-        guard let c = current(s), c.kind == .rest else { return s }
-        var s = s
-        if s.phase == .running, let end = s.endsAt {
-            s.endsAt = max(now, end + by * 1000)
-        } else if s.phase == .paused, let left = s.remainingMs {
-            s.remainingMs = max(0, left + by * 1000)
-        }
-        return s
-    }
-
     /// Go back one slot, restarting its countdown.
     static func back(_ s: RunState, now: Double) -> RunState {
         s.i > 0 ? enter(s, s.i - 1, now) : s
+    }
+
+    /// Lengthen (or, with a negative `by`, shorten) the rest that is counting down, running or
+    /// paused: the timer's −15 s / +15 s and the Lock Screen's +15 s. The slot's length moves with
+    /// it, so the ring and the overall progress stay true. A rest shortened past now ends on the
+    /// next tick. A work slot, a user-paced step and an EMOM's wait are left alone.
+    static func extendRest(_ s: RunState, now: Double, by deltaSec: Double) -> RunState {
+        guard let c = current(s), c.kind == .rest, !c.untilBoundary, let seconds = c.seconds else { return s }
+        let left: Double
+        if s.phase == .running, let end = s.endsAt { left = end - now }
+        else if s.phase == .paused, let remaining = s.remainingMs { left = remaining }
+        else { return s }
+        let nextLeft = max(0, left + deltaSec * 1000)
+        var s = s
+        s.slots[s.i].seconds = max(0, seconds + (nextLeft - left) / 1000)
+        if s.phase == .running { s.endsAt = now + nextLeft } else { s.remainingMs = nextLeft }
+        return s
     }
 
     // MARK: - Adjustments
@@ -512,6 +518,7 @@ enum Runner {
         var s = s
         var a = s.actuals[slotId] ?? Actual()
         a.doneAt = now
+        a.at = elapsed(s, now: now).rounded()
         s.actuals[slotId] = a
         if let block = s.slots[idx].blockId { s.blockDone[block, default: 0] += 1 }
         return s
@@ -522,7 +529,41 @@ enum Runner {
         guard let idx = s.slots.firstIndex(where: { $0.id == slotId }), s.actuals[slotId]?.doneAt != nil else { return s }
         var s = s
         s.actuals[slotId]?.doneAt = nil
+        s.actuals[slotId]?.at = nil
         if let block = s.slots[idx].blockId { s.blockDone[block] = max(0, (s.blockDone[block] ?? 0) - 1) }
+        return s
+    }
+
+    /// Last time's numbers into a set that is not done yet: its load and its reps, either or both.
+    static func fillSet(_ s: RunState, now: Double, slotId: String, with set: SetResult) -> RunState {
+        var st = s
+        if let load = set.load { st = adjustAt(st, now: now, slotId: slotId, target: load) }
+        if let reps = set.reps { st = setRepsAt(st, slotId: slotId, reps: reps) }
+        return st
+    }
+
+    /// A set whose reps the plan leaves open — a range (8–12), a max, or reps-plus — in a block that
+    /// is one exercise done for sets.
+    private static func openReps(_ s: RunState, _ sl: Slot) -> Bool {
+        guard sl.kind == .work, let e = sl.exercise, sl.plan?.reps == nil, let block = sl.blockId else { return false }
+        guard e.forMax != nil || e.forMode == .max || e.forMode == .amrap else { return false }
+        return s.slots.allSatisfy { $0.blockId != block || $0.kind != .work || $0.step.id == sl.step.id }
+    }
+
+    /// Fill the reps of every open set still to come from last time's matching set (`last` gets the
+    /// step and the set's round), so the grid starts on what was done rather than on the bottom of
+    /// the range. A set with reps already set is left alone.
+    static func prefillReps(_ s: RunState, last: (ExerciseStep, Int) -> Double?) -> RunState {
+        var s = s
+        for sl in s.slots where openReps(s, sl) {
+            guard let e = sl.exercise else { continue }
+            let a = s.actuals[sl.id]
+            if a?.doneAt != nil || a?.reps != nil { continue }
+            guard let reps = last(e, sl.round) else { continue }
+            var next = a ?? Actual()
+            next.reps = reps
+            s.actuals[sl.id] = next
+        }
         return s
     }
 
@@ -735,7 +776,7 @@ enum Runner {
                 incline: effectiveIncline(s, idx),
                 reps: reps.isEmpty ? nil : reps,
                 success: prev?.success ?? true,
-                sets: (prev?.sets ?? []) + [SetResult(reps: done, load: target)]
+                sets: (prev?.sets ?? []) + [SetResult(reps: done, load: target, at: doneAtSec(s, a))]
             )
         }
 
@@ -759,7 +800,7 @@ enum Runner {
             score = nil
         }
 
-        return SessionResult(
+        var result = SessionResult(
             runsheetId: s.runsheetId,
             title: r.title,
             startedAt: ISO8601.string(Date(timeIntervalSince1970: s.startedAt / 1000)),
@@ -769,5 +810,48 @@ enum Runner {
             score: score,
             steps: order.compactMap { steps[$0] }
         )
+        let split = splits(s)
+        result.splits = split.isEmpty ? nil : split
+        return result
+    }
+
+    /// Session time a slot was done at. A run saved before `at` was kept falls back to its clock
+    /// time less every pause, which is right unless the pause came after it.
+    private static func doneAtSec(_ s: RunState, _ a: Actual?) -> Double? {
+        guard let a, let doneAt = a.doneAt else { return nil }
+        return a.at ?? max(0, ((doneAt - s.startedAt - s.pausedMs) / 1000).rounded())
+    }
+
+    /// When each round of a circuit or AMRAP finished: the latest tick in the round. A block of one
+    /// exercise done for sets is left out — its set times are on the sets. A round counts once it
+    /// is closed (its last exercise done, or a later round begun); the first round that is not
+    /// ends the list, so an AMRAP's half round at the cap is not a split.
+    static func splits(_ s: RunState) -> [RoundSplit] {
+        var blocks: [String] = []
+        var rounds: [String: [Int: [Slot]]] = [:]
+        for sl in s.slots where sl.kind == .work {
+            guard let block = sl.blockId else { continue }
+            if rounds[block] == nil { blocks.append(block) }
+            rounds[block, default: [:]][sl.round, default: []].append(sl)
+        }
+        var out: [RoundSplit] = []
+        for block in blocks {
+            guard let byRound = rounds[block] else { continue }
+            let all = byRound.values.flatMap { $0 }
+            let circuit = all.contains { $0.mode == .amrap || $0.mode == .fortime } || byRound.values.contains { $0.count > 1 }
+            guard circuit else { continue }
+            let order = byRound.keys.sorted()
+            var at: [Double] = []
+            for (k, r) in order.enumerated() {
+                let round = byRound[r] ?? []
+                let times = round.compactMap { doneAtSec(s, s.actuals[$0.id]) }
+                let later = order.dropFirst(k + 1).contains { byRound[$0]?.contains { s.actuals[$0.id]?.doneAt != nil } == true }
+                let closed = round.last.map { s.actuals[$0.id]?.doneAt != nil } == true || later
+                guard let latest = times.max(), closed else { break }
+                at.append(latest)
+            }
+            if !at.isEmpty { out.append(RoundSplit(blockId: block, at: at)) }
+        }
+        return out
     }
 }

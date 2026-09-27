@@ -35,5 +35,32 @@ extension Store {
         let ids = Set(seed.compactMap(\.id))
         results = (results.filter { !ids.contains($0.rowId) } + seed).sorted { $0.startedAt > $1.startedAt }
     }
+
+    /// `-seedPace` on launch: a timed Cindy (a round a minute) and a timed Iron Base A, dated an
+    /// hour back — newer than earlier runs' sessions, older than anything this run logs — so the
+    /// timer has a last time to race and last-time sets to tap. Fixed ids, so launching with it
+    /// again replaces them.
+    func seedPaceIfAsked(_ arguments: [String] = ProcessInfo.processInfo.arguments) {
+        guard arguments.contains("-seedPace") else { return }
+        let then = ISO8601.string(Date().addingTimeInterval(-3_600))
+        let rounds: [Double] = (1...8).map { Double($0) * 60 }
+        var cindy = SessionResult(runsheetId: "cf-girls-cindy", title: "Cindy", startedAt: then, durationSec: 1_200, completed: true,
+                                  steps: [
+                                    StepResult(stepId: "s1", exerciseKey: "bw_pullup", sets: rounds.map { SetResult(reps: 5, at: $0 - 40) }),
+                                    StepResult(stepId: "s2", exerciseKey: "bw_pushup", sets: rounds.map { SetResult(reps: 10, at: $0 - 20) }),
+                                    StepResult(stepId: "s3", exerciseKey: "bw_squat", sets: rounds.map { SetResult(reps: 15, at: $0) }),
+                                  ],
+                                  id: "seed-pace-cindy")
+        cindy.splits = [RoundSplit(blockId: "b1", at: rounds)]
+        let iron = SessionResult(runsheetId: "coach-iron-30", title: "Iron Base · Whole Body A", startedAt: then, durationSec: 1_800, completed: true,
+                                 steps: [StepResult(stepId: "s3", exerciseKey: "cable_lat_pulldown", target: 45, sets: [
+                                    SetResult(reps: 10, load: 45, at: 900), SetResult(reps: 9, load: 45, at: 990),
+                                    SetResult(reps: 8, load: 45, at: 1_080), SetResult(reps: 8, load: 42.5, at: 1_170),
+                                 ])],
+                                 id: "seed-pace-iron")
+        let seed = [cindy, iron]
+        let ids = Set(seed.compactMap(\.id))
+        results = (results.filter { !ids.contains($0.rowId) } + seed).sorted { $0.startedAt > $1.startedAt }
+    }
 }
 #endif

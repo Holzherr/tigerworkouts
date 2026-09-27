@@ -195,6 +195,67 @@ final class WalkthroughUITests: XCTestCase {
         tap(app.buttons["Done"])
     }
 
+    /// Logging in the gym: last time's set in one tap, ±15 s on the rest, and the header racing the
+    /// last session of the same workout.
+    func testGymLogging() {
+        app.terminate()
+        app.launchArguments = ["-seedPace"]
+        app.launch()
+        let discard = app.alerts.buttons["Discard"]
+        if discard.waitForExistence(timeout: 3) { discard.tap() }
+
+        open("Iron Base · Whole Body A")
+        tap(app.buttons["Start workout"])
+        XCTAssertTrue(app.buttons["End session"].waitForExistence(timeout: 5))
+        let startPull = app.buttons["Start Pull"]
+        for _ in 0..<60 where !startPull.exists {
+            let start = app.buttons.matching(NSPredicate(format: "label BEGINSWITH 'Start ' AND label != 'Start workout'")).firstMatch
+            if start.exists, start.isHittable {
+                start.tap()
+            } else if app.buttons["Skip"].exists {
+                app.buttons["Skip"].tap()
+            }
+        }
+        tap(startPull)
+        // Tones off from the top bar, then back on so later walks keep them.
+        tap(app.buttons["Mute tones"])
+        XCTAssertTrue(app.buttons["Unmute tones"].waitForExistence(timeout: 3), "the speaker should show tones are off")
+        snap("36a Tones muted on the timer")
+        tap(app.buttons["Unmute tones"])
+        let useLast = app.buttons["Use last time for set 1"]
+        XCTAssertTrue(useLast.waitForExistence(timeout: 5), "a set with a last time should offer it")
+        snap("37 Last time on each set")
+        useLast.tap()
+        snap("38 Last time copied into set 1")
+
+        tap(app.buttons["Tick set 1"])
+        let more = app.buttons["15 seconds more rest"]
+        XCTAssertTrue(more.waitForExistence(timeout: 5), "a rest should take ±15 s")
+        more.tap()
+        XCTAssertTrue(app.descendants(matching: .any)["ghost"].waitForExistence(timeout: 5), "a timed last session should be raced")
+        snap("39 Rest with ±15 s, racing last time")
+        tap(app.buttons["End session"])
+        tap(app.buttons["Finish and save"])
+        tap(app.buttons["Done"])
+
+        // A fresh launch rather than navigating back: the seed is back to the only timed Cindy.
+        app.terminate()
+        app.launch()
+        if discard.waitForExistence(timeout: 3) { discard.tap() }
+        open("Cindy")
+        tap(app.buttons["Start workout"])
+        let done = app.buttons["Done"]
+        XCTAssertTrue(app.descendants(matching: .any)["cap-left"].waitForExistence(timeout: 12))
+        XCTAssertTrue(app.buttons["use-last-time"].waitForExistence(timeout: 3), "the card should offer last time")
+        snap("40 Last time on the card")
+        for _ in 0..<3 { tap(done) }
+        XCTAssertTrue(app.descendants(matching: .any)["ghost"].waitForExistence(timeout: 5), "round 1 should be raced against last time")
+        snap("41 Round 1 against last time")
+        tap(app.buttons["End session"])
+        tap(app.buttons["Finish and save"])
+        tap(app.buttons["Done"])
+    }
+
     /// An AMRAP runs against its cap, and the timer says how much of it is left.
     func testCapClock() {
         open("Cindy")
