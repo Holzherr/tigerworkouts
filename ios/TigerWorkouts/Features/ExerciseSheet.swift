@@ -17,6 +17,11 @@ struct ExerciseSheet: View {
     var onAmount: (() -> Void)?
 
     @Environment(\.dismiss) private var dismiss
+    @Environment(Store.self) private var store
+
+    private var hasHistory: Bool {
+        store.results.contains { $0.steps.contains { $0.exerciseKey == step.exercise.key } }
+    }
 
     private var unit: String { step.shortUnit }
     private var increment: Double { step.exercise.step == 0 ? 1 : step.exercise.step }
@@ -61,6 +66,21 @@ struct ExerciseSheet: View {
                     }
                     if showsIncline, let incline {
                         stepper(title: "Incline", unit: "%", value: incline, by: 0.5)
+                    }
+
+                    if hasHistory {
+                        NavigationLink { ExerciseHistoryView(exerciseKey: step.exercise.key) } label: {
+                            HStack {
+                                Text("History").foregroundStyle(Brand.body)
+                                Spacer()
+                                Text("Chart and records").font(.footnote).foregroundStyle(Brand.muted)
+                                Image(systemName: "chevron.right").font(.footnote.weight(.semibold)).foregroundStyle(Brand.faint)
+                            }
+                            .padding(16)
+                            .contentShape(Rectangle())
+                        }
+                        .buttonStyle(.plain)
+                        .cardSurface()
                     }
 
                     if appliesFromHere, target != nil {

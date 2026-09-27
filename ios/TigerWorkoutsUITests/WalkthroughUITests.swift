@@ -308,6 +308,45 @@ final class WalkthroughUITests: XCTestCase {
         snap("18 Lock Screen, after a transition while locked")
     }
 
+    /// The logbook: History → Exercises → one lift's chart, records and sessions; then the same
+    /// screen from a session's exercise row.
+    func testLogbook() {
+        app.terminate()
+        app.launchArguments = ["-seedLogbook"]
+        app.launch()
+        let discard = app.alerts.buttons["Discard"]
+        if discard.waitForExistence(timeout: 3) { discard.tap() }
+
+        tap(app.tabBars.buttons["History"])
+        tap(app.navigationBars["History"].buttons["Exercises"])
+        XCTAssertTrue(app.navigationBars["Exercises"].waitForExistence(timeout: 5))
+        snap("26 Exercises")
+
+        tap(app.buttons.matching(NSPredicate(format: "label BEGINSWITH[c] 'Barbell bench press'")).firstMatch)
+        XCTAssertTrue(app.staticTexts["Best est. 1RM"].waitForExistence(timeout: 5), "a lift should show its records")
+        // The session card is a link, so its PR tag is read as part of the link's label.
+        let pr = app.descendants(matching: .any).matching(NSPredicate(format: "label CONTAINS[c] 'personal record'")).firstMatch
+        XCTAssertTrue(pr.waitForExistence(timeout: 3), "a set that beat a record should be marked")
+        snap("27 Exercise history")
+        app.swipeUp()
+        snap("28 Exercise history, sessions")
+
+        // A session's exercise row opens the same logbook.
+        tap(app.navigationBars.buttons.element(boundBy: 0))
+        tap(app.navigationBars.buttons.element(boundBy: 0))
+        tap(app.buttons.matching(NSPredicate(format: "label BEGINSWITH[c] 'Heavy singles'")).firstMatch)
+        tap(app.buttons.matching(NSPredicate(format: "label BEGINSWITH[c] 'Barbell bench press'")).firstMatch)
+        XCTAssertTrue(app.staticTexts["Best est. 1RM"].waitForExistence(timeout: 5))
+
+        // Timed work shows what exists: top speed and sessions.
+        tap(app.navigationBars.buttons.element(boundBy: 0))
+        tap(app.navigationBars.buttons.element(boundBy: 0))
+        tap(app.navigationBars["History"].buttons["Exercises"])
+        tap(app.buttons.matching(NSPredicate(format: "label BEGINSWITH[c] 'Treadmill sprints'")).firstMatch)
+        XCTAssertTrue(app.staticTexts["Top speed"].waitForExistence(timeout: 5))
+        snap("29 Timed exercise history")
+    }
+
     // MARK: - Helpers
 
     private func open(_ title: String) {

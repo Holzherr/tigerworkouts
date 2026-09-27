@@ -64,6 +64,13 @@ struct HistoryView: View {
                 }
             }
             .navigationTitle("History")
+            .toolbar {
+                if store.results.contains(where: { !$0.steps.isEmpty }) {
+                    ToolbarItem(placement: .topBarTrailing) {
+                        NavigationLink("Exercises") { ExerciseListView() }
+                    }
+                }
+            }
             .sheet(isPresented: $signingIn) {
                 SignInView { await store.sync() }
             }
@@ -118,12 +125,17 @@ struct SessionDetailView: View {
                         Text("Logged").font(.headline).padding(14)
                         ForEach(result.steps) { step in
                             Divider().padding(.leading, 14)
-                            HStack {
-                                Text(Library.shared.name(step.exerciseKey)).foregroundStyle(Brand.ink)
-                                Spacer()
-                                Text(detail(step)).font(.footnote).foregroundStyle(Brand.muted)
+                            NavigationLink { ExerciseHistoryView(exerciseKey: step.exerciseKey) } label: {
+                                HStack {
+                                    Text(Library.shared.name(step.exerciseKey)).foregroundStyle(Brand.ink)
+                                    Spacer()
+                                    Text(detail(step)).font(.footnote).foregroundStyle(Brand.muted)
+                                    Image(systemName: "chevron.right").font(.footnote.weight(.semibold)).foregroundStyle(Brand.faint)
+                                }
+                                .padding(14)
+                                .contentShape(Rectangle())
                             }
-                            .padding(14)
+                            .buttonStyle(.plain)
                         }
                     }
                     .frame(maxWidth: .infinity, alignment: .leading)

@@ -1,4 +1,4 @@
-import { ChevronLeft, Copy, HeartPulse, Trash2 } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Copy, HeartPulse, Trash2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { Button } from '@/shared/components/ui/button';
 import { Chip } from '@/shared/components/ui/chip';
@@ -24,6 +24,8 @@ export interface SessionDetailScreenProps {
   /** Every session, for the streak line under the stats. */
   history?: SessionResult[];
   bodyweightKg?: number;
+  /** Opens an exercise's history from its row. */
+  onExercise?: (exerciseKey: string) => void;
 }
 
 const hr = (d: Record<string, unknown>) => {
@@ -36,7 +38,7 @@ const hr = (d: Record<string, unknown>) => {
  * (load, reps, dropped), heart rate from a matched watch record when there is one, editable
  * date and notes, Repeat, and a Copy for pasting to a coach. Delete at the bottom.
  */
-export const SessionDetailScreen = ({ result: r, runsheet, exercise, loadDevice, onBack, onChange, onDelete, onRepeat, history = [], bodyweightKg }: SessionDetailScreenProps) => {
+export const SessionDetailScreen = ({ result: r, runsheet, exercise, loadDevice, onBack, onChange, onDelete, onRepeat, history = [], bodyweightKg, onExercise }: SessionDetailScreenProps) => {
   const [device, setDevice] = useState<ReturnType<typeof hr>[] | null>(null);
   useEffect(() => {
     let alive = true;
@@ -78,8 +80,9 @@ export const SessionDetailScreen = ({ result: r, runsheet, exercise, loadDevice,
           <div className="overflow-hidden rounded-card border border-line bg-surface [&>*+*]:border-t [&>*+*]:border-line-soft">
             {r.steps.map(s => {
               const ex = exercise(s.exerciseKey);
+              const Row = onExercise ? 'button' : 'div';
               return (
-                <div key={`${s.stepId}|${s.exerciseKey}`} className="flex items-center gap-2.5 px-3 py-2">
+                <Row key={`${s.stepId}|${s.exerciseKey}`} {...(onExercise ? { type: 'button' as const, onClick: () => onExercise(s.exerciseKey) } : {})} className="flex w-full items-center gap-2.5 px-3 py-2 text-left">
                   <ClipThumb size="sm" clip={ex.clip} poster={ex.poster} icon={ex.icon ?? '🏋️'} />
                   <div className="min-w-0 flex-1 truncate text-[14px] font-semibold">{ex.name}</div>
                   <div className="text-[13px] tabular-nums">
@@ -87,7 +90,8 @@ export const SessionDetailScreen = ({ result: r, runsheet, exercise, loadDevice,
                     {s.reps?.length ? `${s.target !== undefined && ex.unit && ex.unit !== 'reps' ? ' · ' : ''}${s.reps.join(', ')} reps` : ''}
                   </div>
                   {s.success === false && <Chip size="sm" variant="danger">missed</Chip>}
-                </div>
+                  {onExercise && <ChevronRight className="size-4 shrink-0 text-faint" />}
+                </Row>
               );
             })}
           </div>
