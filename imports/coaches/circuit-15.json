@@ -28,7 +28,15 @@
       "id": "w1",
       "exercise": "bw_jumping_jack",
       "forMode": "seconds",
-      "forValue": 45,
+      "forValue": 60,
+      "role": "warmup"
+    },
+    {
+      "kind": "exercise",
+      "id": "w2",
+      "exercise": "bw_squat",
+      "forMode": "reps",
+      "forValue": 15,
       "role": "warmup"
     },
     {
@@ -36,7 +44,7 @@
       "id": "b1",
       "name": "The circuit",
       "mode": "rounds",
-      "repeat": 4,
+      "repeat": 3,
       "steps": [
         {
           "kind": "exercise",
@@ -63,7 +71,7 @@
         {
           "kind": "rest",
           "id": "r1",
-          "seconds": 60
+          "seconds": 90
         }
       ]
     },

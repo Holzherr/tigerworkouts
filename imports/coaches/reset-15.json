@@ -28,7 +28,7 @@
       "id": "s1",
       "exercise": "yoga_cat_cow",
       "forMode": "seconds",
-      "forValue": 90
+      "forValue": 60
     },
     {
       "kind": "exercise",
@@ -51,7 +51,7 @@
       "id": "s6",
       "exercise": "bw_knee_roll",
       "forMode": "seconds",
-      "forValue": 60
+      "forValue": 45
     },
     {
       "kind": "block",

@@ -57,7 +57,7 @@
         {
           "kind": "rest",
           "id": "r1",
-          "seconds": 90
+          "seconds": 80
         },
         {
           "kind": "exercise",
@@ -70,7 +70,7 @@
         {
           "kind": "rest",
           "id": "r2",
-          "seconds": 90
+          "seconds": 80
         }
       ],
       "progression": {

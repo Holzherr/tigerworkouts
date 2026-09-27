@@ -38,7 +38,7 @@
       "id": "s2",
       "exercise": "bw_stretch_calf",
       "forMode": "seconds",
-      "forValue": 45,
+      "forValue": 60,
       "perSide": true
     },
     {
@@ -46,7 +46,7 @@
       "id": "s3",
       "exercise": "bw_stretch_hip_flexor",
       "forMode": "seconds",
-      "forValue": 45,
+      "forValue": 60,
       "perSide": true
     },
     {
@@ -54,7 +54,7 @@
       "id": "b1",
       "name": "Trunk",
       "mode": "rounds",
-      "repeat": 2,
+      "repeat": 4,
       "steps": [
         {
           "kind": "exercise",

@@ -64,4 +64,15 @@ struct CatalogueTests {
         #expect(back.items.count == original.items.count)
         #expect(back.exerciseSteps.map(\.exercise.key) == original.exerciseSteps.map(\.exercise.key))
     }
+
+    /// The phone computes its own minutes pill, so the web test alone does not cover what it shows.
+    @Test("a coach session's pill shows the length its programme promises")
+    func coachLengths() {
+        let coached = library.workouts.map(\.runsheet).filter { $0.key.hasPrefix("coach-") }
+        #expect(coached.count >= 12)
+        for w in coached {
+            let promised = Int(w.program?.day.split(separator: " ").first ?? "")
+            #expect(w.minutes == promised, "\(w.key): \(w.minutes) min, says \(w.program?.day ?? "nothing")")
+        }
+    }
 }
