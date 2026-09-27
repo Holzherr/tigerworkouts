@@ -77,7 +77,8 @@ const TimerSetGrid = ({ state, step, blockId, actions }: { state: R.RunState; st
         const load = R.effectiveTarget(state, idx);
         const reps = a?.reps ?? (sl.step.kind === 'exercise' ? sl.step.forValue : 0);
         const edit = !done && sl.id === editing;
-        const canTick = done || idx < state.i || (idx === state.i && state.phase !== 'ready');
+        const live = state.phase === 'running' || state.phase === 'paused';
+        const canTick = done || idx < state.i || (live && (idx === state.i || (current && state.slots.slice(state.i, idx).every(x => x.kind === 'rest'))));
         const hint = actions.hintFor?.(step, n);
         return (
           <div key={sl.id} className={cn('-mx-1 rounded-lg px-1 py-1.5', current && !done && 'bg-brand-soft', done && 'text-muted')}>

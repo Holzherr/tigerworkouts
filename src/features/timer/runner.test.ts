@@ -383,6 +383,16 @@ describe('the set grid', () => {
     expect(toResult(s, sheet(), 22000).steps[0].sets).toEqual([{ reps: 8, load: 20 }]);
     expect(s.blockDone.b).toBe(1);
   });
+  it('ticking the next set during the rest ends the rest and logs the set in one tap', () => {
+    let s = tick(start(sheet(), 0), 5000);
+    s = advance(s, 20000); // set 1 done, rest running
+    expect(s.slots[s.i].kind).toBe('rest');
+    s = R.completeSet(s, 50000, ids(s)[1]);
+    expect(s.actuals[ids(s)[1]].doneAt).toBe(50000);
+    expect(s.slots[s.i].kind).toBe('rest'); // on to the rest after set 2
+    expect(s.blockDone.b).toBe(2);
+    expect(toResult(s, sheet(), 51000).steps[0].sets).toHaveLength(2);
+  });
   it('a set not reached yet cannot be ticked', () => {
     const s = tick(start(sheet(), 0), 5000);
     expect(R.completeSet(s, 6000, ids(s)[2])).toBe(s);

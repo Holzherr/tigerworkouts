@@ -334,14 +334,23 @@ export const setRepsAt = (s: RunState, slotId: string, reps: number): RunState =
   if (!sl || sl.kind !== 'work' || s.actuals[slotId]?.doneAt !== undefined) return s;
   return { ...s, actuals: { ...s.actuals, [slotId]: { ...(s.actuals[slotId] ?? { changes: [] }), reps } } };
 };
-/** The tick on a set row. The running set is Done (advance). A set passed without a tick (skipped,
- * or un-ticked to fix its weight) is logged where it is and the cursor stays put. */
+/** Only rest stands between the cursor and slot idx, inside one block: the set after the rest. */
+const onlyRestBefore = (s: RunState, idx: number) => idx > s.i && s.slots.slice(s.i, idx).every(sl => sl.kind === 'rest' && sl.blockId === s.slots[idx].blockId);
+/** The tick on a set row. The running set is Done (advance). The set after a rest ends the rest
+ * early and is done in the same tap — people start before the rest runs out. A set passed without
+ * a tick (skipped, or un-ticked to fix its weight) is logged where it is and the cursor stays put. */
 export const completeSet = (s: RunState, now: number, slotId: string): RunState => {
   const idx = slotIndex(s, slotId);
   const sl = s.slots[idx];
   if (!sl || sl.kind !== 'work' || s.actuals[slotId]?.doneAt !== undefined) return s;
-  if (idx === s.i && (s.phase === 'running' || s.phase === 'paused')) return advance(s, now);
-  if (idx >= s.i) return s;
+  if (s.phase !== 'running' && s.phase !== 'paused' && idx >= s.i) return s;
+  if (idx === s.i) return advance(s, now);
+  if (onlyRestBefore(s, idx)) {
+    let st = s;
+    while (st.i < idx) st = advance(st, now, { skipped: true });
+    return st.i === idx ? advance(st, now) : st;
+  }
+  if (idx > s.i) return s;
   const blockDone = sl.blockId ? { ...s.blockDone, [sl.blockId]: (s.blockDone[sl.blockId] ?? 0) + 1 } : s.blockDone;
   return { ...s, blockDone, actuals: { ...s.actuals, [slotId]: { ...(s.actuals[slotId] ?? { changes: [] }), doneAt: now } } };
 };

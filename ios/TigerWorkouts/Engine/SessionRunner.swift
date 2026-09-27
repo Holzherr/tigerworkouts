@@ -355,7 +355,9 @@ final class SessionRunner {
             let sl = state.slots[idx]
             let a = state.actuals[sl.id]
             let done = a?.doneAt != nil
-            let running = idx == state.i && state.phase != .ready && state.phase != .lead
+            let live = state.phase == .running || state.phase == .paused
+            // The set after a rest can be ticked too: it ends the rest early.
+            let running = live && (idx == state.i || (idx == on && state.slots[state.i..<idx].allSatisfy { $0.kind == .rest }))
             return SetRow(
                 slotId: sl.id,
                 number: n + 1,

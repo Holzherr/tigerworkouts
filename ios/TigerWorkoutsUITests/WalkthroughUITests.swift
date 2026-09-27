@@ -150,6 +150,11 @@ final class WalkthroughUITests: XCTestCase {
         XCTAssertTrue(app.staticTexts["Rest"].waitForExistence(timeout: 3), "the rest between sets counts down")
         snap("28 Rest between sets")
 
+        // Starting before the rest runs out: the tick on set 2 ends the rest and logs the set.
+        tap(app.buttons["Tick set 2"])
+        XCTAssertTrue(app.buttons["Un-tick set 2"].waitForExistence(timeout: 5), "ticking the next set during the rest should log it")
+        snap("28b Set 2 ticked during the rest")
+
         tap(app.buttons["Un-tick set 1"])
         XCTAssertTrue(app.buttons["Set 1 load, more"].waitForExistence(timeout: 5), "an un-ticked set can be changed")
         snap("29 Set un-ticked to fix its weight")

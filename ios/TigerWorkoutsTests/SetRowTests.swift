@@ -143,6 +143,18 @@ struct SetGridTests {
         #expect(s.blockDone["b"] == 1)
     }
 
+    @Test("ticking the next set during the rest ends the rest and logs the set in one tap")
+    func tickDuringRest() {
+        var s = Runner.tick(Runner.start(Self.sheet(), now: 0), now: 5_000)
+        s = Runner.advance(s, now: 20_000) // set 1 done, rest running
+        #expect(s.slots[s.i].kind == .rest)
+        s = Runner.completeSet(s, now: 50_000, slotId: Self.ids(s)[1])
+        #expect(s.actuals[Self.ids(s)[1]]?.doneAt == 50_000)
+        #expect(s.slots[s.i].kind == .rest) // on to the rest after set 2
+        #expect(s.blockDone["b"] == 2)
+        #expect(Runner.toResult(s, Self.sheet(), now: 51_000).steps[0].sets?.count == 2)
+    }
+
     @Test("a set not reached yet cannot be ticked")
     func notYet() {
         let s = Runner.tick(Runner.start(Self.sheet(), now: 0), now: 5_000)

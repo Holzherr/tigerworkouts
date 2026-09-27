@@ -479,12 +479,21 @@ enum Runner {
         return s
     }
 
-    /// The tick on a set row. The running set is Done (advance). A set passed without a tick
-    /// (skipped, or un-ticked to fix its weight) is logged where it is and the cursor stays put.
+    /// The tick on a set row. The running set is Done (advance). The set after a rest ends the rest
+    /// early and is done in the same tap — people start before the rest runs out. A set passed
+    /// without a tick (skipped, or un-ticked to fix its weight) is logged where it is and the
+    /// cursor stays put.
     static func completeSet(_ s: RunState, now: Double, slotId: String) -> RunState {
         guard let idx = s.slots.firstIndex(where: { $0.id == slotId }), s.slots[idx].kind == .work,
               s.actuals[slotId]?.doneAt == nil else { return s }
-        if idx == s.i, s.phase == .running || s.phase == .paused { return advance(s, now: now) }
+        let live = s.phase == .running || s.phase == .paused
+        if !live, idx >= s.i { return s }
+        if idx == s.i { return advance(s, now: now) }
+        if idx > s.i, s.slots[s.i..<idx].allSatisfy({ $0.kind == .rest && $0.blockId == s.slots[idx].blockId }) {
+            var st = s
+            while st.i < idx { st = advance(st, now: now, skipped: true) }
+            return st.i == idx ? advance(st, now: now) : st
+        }
         guard idx < s.i else { return s }
         var s = s
         var a = s.actuals[slotId] ?? Actual()
