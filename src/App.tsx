@@ -45,7 +45,7 @@ import { WorkoutIcon } from '@/shared/components/ui/workout-icon';
 import { defaultIcon } from '@/features/workouts/icon';
 import { useActions, useAppState } from './app/store';
 import { providers, sendCode, signInGoogle, signOut, verifyCode } from '@/features/cloud/client';
-import { getDefaultRest, getVolume, setDefaultRest, setVolume } from '@/features/timer/use-runner';
+import { getDefaultRest, getMuted, getVolume, setDefaultRest, setMuted, setVolume } from '@/features/timer/use-runner';
 import { ghost as paceGhost, lastTimed } from '@/features/timer/pace';
 import { deviceFor, fetchCreator, fetchPublicWorkouts, type CreatorProfile } from '@/features/cloud/sync';
 import { useCloudSync } from '@/features/cloud/use-sync';
@@ -516,6 +516,7 @@ const RunRoute = ({ runsheet, results, onLog, onFinish, onExit }: { runsheet: Ru
   const { state, now, act } = useRunner(runsheet, { resume: true, seed: s => Runner.prefillReps(s, (step, round) => lastSets(results, step)?.[round]?.reps) });
   // The last session of this workout with times kept, raced on the header. Fixed for the session.
   const [rival] = useState(() => lastTimed(results, runsheet.id ?? runsheet.title));
+  const [muted, setMute] = useState(getMuted);
   const blockOf = useMemo(() => {
     const m = new Map<string, string>();
     for (const it of runsheet.items) if (it.kind === 'block') for (const st of it.steps) m.set(st.id, it.id);
@@ -537,7 +538,7 @@ const RunRoute = ({ runsheet, results, onLog, onFinish, onExit }: { runsheet: Ru
   });
   return (
     <div className="relative h-dvh">
-      <TimerScreen runsheet={runsheet} state={state} now={now} onDone={act.done} onSkip={act.skip} onBack={act.back} onPause={act.pause} onResume={act.resume} onAdjust={act.adjust} onAdjustIncline={act.adjustIncline} onSetReps={act.setReps} onDrop={act.drop} onStartBlock={act.startBlock} onAdjustStep={act.adjustStep} sets={{ adjust: act.adjustAt, setReps: act.setRepsAt, complete: act.completeSet, reopen: act.reopenSet, lastFor: (step, round) => lastSets(results, step)?.[round], fill: act.fillSet }} onAdjustRest={act.extendRest} lastFor={step => lastSet(results, step)} onFill={act.fillSet} ghost={pace?.text} onFinish={() => { const res = log(state.phase === 'done' ? state : Runner.finish(state, Date.now())); Runner.clearPersisted(); onFinish(res); }} onExit={onExit} />
+      <TimerScreen runsheet={runsheet} state={state} now={now} onDone={act.done} onSkip={act.skip} onBack={act.back} onPause={act.pause} onResume={act.resume} onAdjust={act.adjust} onAdjustIncline={act.adjustIncline} onSetReps={act.setReps} onDrop={act.drop} onStartBlock={act.startBlock} onAdjustStep={act.adjustStep} sets={{ adjust: act.adjustAt, setReps: act.setRepsAt, complete: act.completeSet, reopen: act.reopenSet, lastFor: (step, round) => lastSets(results, step)?.[round], fill: act.fillSet }} onAdjustRest={act.extendRest} lastFor={step => lastSet(results, step)} onFill={act.fillSet} ghost={pace?.text} muted={muted} onToggleMute={() => { setMuted(!muted); setMute(!muted); }} onFinish={() => { const res = log(state.phase === 'done' ? state : Runner.finish(state, Date.now())); Runner.clearPersisted(); onFinish(res); }} onExit={onExit} />
     </div>
   );
 };

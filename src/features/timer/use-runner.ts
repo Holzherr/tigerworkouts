@@ -21,6 +21,24 @@ export const setVolume = (v: number) => {
     /* ignore */
   }
 };
+const MUTE_KEY = 'tiger:mute';
+/** Tones off, from the timer's speaker button. Read on every beep, so it takes effect at once and
+ * holds for later sessions. The buzz is not affected. */
+export const getMuted = () => {
+  try {
+    return localStorage.getItem(MUTE_KEY) === '1';
+  } catch {
+    return false;
+  }
+};
+export const setMuted = (on: boolean) => {
+  try {
+    if (on) localStorage.setItem(MUTE_KEY, '1');
+    else localStorage.removeItem(MUTE_KEY);
+  } catch {
+    /* ignore */
+  }
+};
 const REST_KEY = 'tiger:rest';
 /** Seconds a rest gets when one is added in the editor. 30 unless Settings says otherwise. */
 export const getDefaultRest = () => {
@@ -47,7 +65,7 @@ const beep = (freq = 880, ms = 120) => {
     o.connect(g);
     g.connect(actx.destination);
     const vol = getVolume();
-    if (vol <= 0) return;
+    if (vol <= 0 || getMuted()) return;
     g.gain.setValueAtTime(vol, actx.currentTime);
     g.gain.exponentialRampToValueAtTime(0.001, actx.currentTime + ms / 1000);
     o.start();

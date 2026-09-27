@@ -217,6 +217,11 @@ final class WalkthroughUITests: XCTestCase {
             }
         }
         tap(startPull)
+        // Tones off from the top bar, then back on so later walks keep them.
+        tap(app.buttons["Mute tones"])
+        XCTAssertTrue(app.buttons["Unmute tones"].waitForExistence(timeout: 3), "the speaker should show tones are off")
+        snap("36a Tones muted on the timer")
+        tap(app.buttons["Unmute tones"])
         let useLast = app.buttons["Use last time for set 1"]
         XCTAssertTrue(useLast.waitForExistence(timeout: 5), "a set with a last time should offer it")
         snap("37 Last time on each set")

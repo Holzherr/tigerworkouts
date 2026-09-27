@@ -11,6 +11,8 @@ struct TimerView: View {
     /// Bodyweight is asked for once, on a finish screen, and never again once answered or skipped.
     @AppStorage("bodyweightAsked") private var bodyweightAsked = false
     @State private var bodyweightDraft = EffortModel.defaultBodyweightKg
+    /// Settings → Tones, switched from the top bar too. It holds for later sessions.
+    @AppStorage(Switches.sound) private var sound = true
 
     @State private var showOverview = false
     @State private var editing: ExerciseStep?
@@ -105,6 +107,7 @@ struct TimerView: View {
                         .font(.subheadline)
                         .foregroundStyle(Brand.Night.muted)
                         .lineLimit(1)
+                        .minimumScaleFactor(0.8)
                 }
                 Spacer(minLength: 8)
                 VStack(alignment: .trailing, spacing: 1) {
@@ -115,6 +118,16 @@ struct TimerView: View {
                         .foregroundStyle(Brand.Night.muted)
                         .monospacedDigit()
                 }
+                Button {
+                    sound.toggle()
+                    Cues.shared.enabled = sound
+                } label: {
+                    Image(systemName: sound ? "speaker.wave.2.fill" : "speaker.slash.fill")
+                        .font(.system(size: 16, weight: .bold))
+                        .frame(width: 44, height: 44)
+                        .background(Brand.Night.raised, in: Circle())
+                }
+                .accessibilityLabel(sound ? "Mute tones" : "Unmute tones")
                 Button { showOverview = true } label: {
                     Image(systemName: "list.bullet")
                         .font(.system(size: 16, weight: .bold))

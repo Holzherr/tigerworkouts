@@ -1,4 +1,4 @@
-import { Check, ChevronLeft, ChevronRight, List, MoreHorizontal, Pause, Play, SkipForward, Square } from 'lucide-react';
+import { Check, ChevronLeft, ChevronRight, List, MoreHorizontal, Pause, Play, SkipForward, Square, Volume2, VolumeX } from 'lucide-react';
 import { useState } from 'react';
 import { Button } from '@/shared/components/ui/button';
 import { ClipThumb } from '@/shared/components/ui/clip-thumb';
@@ -37,6 +37,9 @@ export interface TimerScreenProps {
   onFill?: (slotId: string, set: SetResult) => void;
   /** "Round 4 — 12 s ahead" against the last session of this workout. */
   ghost?: string;
+  /** Tones off. With `onToggleMute`, a speaker button in the header switches them. */
+  muted?: boolean;
+  onToggleMute?: () => void;
   onFinish: () => void;
   onExit: () => void;
 }
@@ -158,7 +161,7 @@ const stepLine = (s: ExerciseStep) => [forLabel(s), s.target !== undefined ? `${
  * a ⋯ menu (previous, overview, stop), Pause and Skip/Done at equal size. Tap the Next row to see
  * what the coming block asks for; the overview sheet lists every part with progress.
  */
-export const TimerScreen = ({ runsheet, state, now, onDone, onSkip, onBack, onPause, onResume, onAdjust, onAdjustIncline, onSetReps, onDrop, onStartBlock, onAdjustStep, sets, onAdjustRest, lastFor, onFill, ghost, onFinish, onExit }: TimerScreenProps) => {
+export const TimerScreen = ({ runsheet, state, now, onDone, onSkip, onBack, onPause, onResume, onAdjust, onAdjustIncline, onSetReps, onDrop, onStartBlock, onAdjustStep, sets, onAdjustRest, lastFor, onFill, ghost, muted, onToggleMute, onFinish, onExit }: TimerScreenProps) => {
   const [confirmExit, setConfirmExit] = useState(false);
   const [menu, setMenu] = useState(false);
   const [overview, setOverview] = useState(false);
@@ -211,6 +214,11 @@ export const TimerScreen = ({ runsheet, state, now, onDone, onSkip, onBack, onPa
               {capLeft === undefined && slot?.mode === 'fortime' ? ` · ${fmtClock(bElapsed)}` : ''}
             </div>
           </div>
+          {onToggleMute && (
+            <button type="button" onClick={onToggleMute} aria-label={muted ? 'Unmute tones' : 'Mute tones'} aria-pressed={!!muted} className="ml-auto grid size-11 shrink-0 place-items-center rounded-full bg-white/10">
+              {muted ? <VolumeX className="size-5" /> : <Volume2 className="size-5" />}
+            </button>
+          )}
           <button type="button" onClick={() => setOverview(true)} className="shrink-0 text-right" aria-label="Workout overview">
             <div className="text-[15px] font-bold tabular-nums">{Math.round(all * 100)}%</div>
             <div className="text-[12px] tabular-nums text-white/60">{fmtClock(total)}</div>
