@@ -54,6 +54,9 @@ final class Store {
         await Task.detached(priority: .userInitiated) { Library.shared.load() }.value
         catalogue = Library.shared.workouts.map(\.runsheet)
         readCache()
+        #if DEBUG
+        seedLogbookIfAsked()
+        #endif
         loaded = true
         user = await Supabase.shared.user
         await readBodyweightFromHealth()

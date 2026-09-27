@@ -243,9 +243,12 @@ final class WalkthroughUITests: XCTestCase {
         XCTAssertTrue(app.navigationBars["Me"].waitForExistence(timeout: 5))
         snap("16 Me")
         for _ in 0..<4 where !(app.buttons["Settings"].exists && app.buttons["Settings"].isHittable) { app.swipeUp() }
-        // The spot the exercise logbook goes, marked and not yet live.
-        XCTAssertTrue(app.staticTexts["Exercises"].waitForExistence(timeout: 5))
         snap("16a Me, scrolled")
+        // The exercise logbook opens from Me as well as from History.
+        tap(app.buttons.matching(NSPredicate(format: "label BEGINSWITH 'Exercises'")).firstMatch)
+        XCTAssertTrue(app.navigationBars["Exercises"].waitForExistence(timeout: 5))
+        app.navigationBars["Exercises"].buttons.element(boundBy: 0).tap()
+        XCTAssertTrue(app.navigationBars["Me"].waitForExistence(timeout: 5))
         tap(app.buttons["Settings"])
         XCTAssertTrue(app.navigationBars["Settings"].waitForExistence(timeout: 5))
         // The simulator has no haptic hardware, and the row says so rather than staying quiet.
@@ -298,6 +301,48 @@ final class WalkthroughUITests: XCTestCase {
         XCUIDevice.shared.perform(lock)
         sleep(2)
         snap("18 Lock Screen, after a transition while locked")
+    }
+
+    /// The logbook: History → Exercises → one lift's chart, records and sessions; then the same
+    /// screen from a session's exercise row.
+    func testLogbook() {
+        app.terminate()
+        app.launchArguments = ["-seedLogbook"]
+        app.launch()
+        let discard = app.alerts.buttons["Discard"]
+        if discard.waitForExistence(timeout: 3) { discard.tap() }
+
+        tap(app.tabBars.buttons["History"])
+        tap(app.navigationBars["History"].buttons["Exercises"])
+        XCTAssertTrue(app.navigationBars["Exercises"].waitForExistence(timeout: 5))
+        snap("26 Exercises")
+
+        tap(app.buttons.matching(NSPredicate(format: "label BEGINSWITH[c] 'Barbell bench press'")).firstMatch)
+        XCTAssertTrue(app.staticTexts["Best est. 1RM"].waitForExistence(timeout: 5), "a lift should show its records")
+        // The session card is a link, so its PR tag is read as part of the link's label.
+        let pr = app.descendants(matching: .any).matching(NSPredicate(format: "label CONTAINS[c] 'personal record'")).firstMatch
+        XCTAssertTrue(pr.waitForExistence(timeout: 3), "a set that beat a record should be marked")
+        snap("27 Exercise history")
+        app.swipeUp()
+        snap("28 Exercise history, sessions")
+
+        // A session's exercise row opens the same logbook.
+        tap(app.navigationBars.buttons.element(boundBy: 0))
+        tap(app.navigationBars.buttons.element(boundBy: 0))
+        // Sessions other walkthroughs logged today sit above the seeded ones; scroll down to it.
+        let heavy = app.buttons.matching(NSPredicate(format: "label BEGINSWITH[c] 'Heavy singles'")).firstMatch
+        for _ in 0..<8 where !(heavy.exists && heavy.isHittable) { app.swipeUp() }
+        tap(heavy)
+        tap(app.buttons.matching(NSPredicate(format: "label BEGINSWITH[c] 'Barbell bench press'")).firstMatch)
+        XCTAssertTrue(app.staticTexts["Best est. 1RM"].waitForExistence(timeout: 5))
+
+        // Timed work shows what exists: top speed and sessions.
+        tap(app.navigationBars.buttons.element(boundBy: 0))
+        tap(app.navigationBars.buttons.element(boundBy: 0))
+        tap(app.navigationBars["History"].buttons["Exercises"])
+        tap(app.buttons.matching(NSPredicate(format: "label BEGINSWITH[c] 'Treadmill sprints'")).firstMatch)
+        XCTAssertTrue(app.staticTexts["Top speed"].waitForExistence(timeout: 5))
+        snap("29 Timed exercise history")
     }
 
     // MARK: - Helpers

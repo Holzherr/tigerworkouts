@@ -1,3 +1,4 @@
+import { ChevronRight } from 'lucide-react';
 import { ClipThumb } from '@/shared/components/ui/clip-thumb';
 import { Sheet } from '@/shared/components/ui/sheet';
 import { Stepper } from '@/shared/components/ui/stepper';
@@ -14,6 +15,8 @@ export interface ExerciseSheetProps {
   incline?: number;
   /** Line under the steppers, e.g. "applies from here on". */
   note?: string;
+  /** Opens this exercise's logbook: every session it was done in, its chart and records. */
+  onHistory?: () => void;
 }
 
 const isTreadmill = (s: ExerciseStep) => s.exercise.unit === 'kph' || s.incline !== undefined;
@@ -23,7 +26,7 @@ const isTreadmill = (s: ExerciseStep) => s.exercise.unit === 'kph' || s.incline 
  * as steppers rather than text. There is no separate edit mode — if a screen passes a handler
  * the value is editable where you are reading it.
  */
-export const ExerciseSheet = ({ step: s, onOpenChange, onTarget, onIncline, target, incline, note }: ExerciseSheetProps) => (
+export const ExerciseSheet = ({ step: s, onOpenChange, onTarget, onIncline, target, incline, note, onHistory }: ExerciseSheetProps) => (
   <Sheet open={!!s} onOpenChange={onOpenChange} title={s?.exercise.name}>
     {s && (
       <div className="space-y-3">
@@ -57,6 +60,14 @@ export const ExerciseSheet = ({ step: s, onOpenChange, onTarget, onIncline, targ
           </div>
         )}
         {note && <p className="text-[12px] text-muted">{note}</p>}
+        {onHistory && (
+          <button type="button" onClick={onHistory} className="flex w-full items-center justify-between gap-3 rounded-card border border-line bg-surface px-3 py-2.5 text-left active:bg-line-soft">
+            <span className="text-[15px] font-semibold">History</span>
+            <span className="flex items-center gap-1 text-[13px] text-muted">
+              Chart and records <ChevronRight className="size-4 text-faint" />
+            </span>
+          </button>
+        )}
       </div>
     )}
   </Sheet>

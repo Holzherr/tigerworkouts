@@ -24,11 +24,8 @@ export interface MeScreenProps {
   onSettings: () => void;
   onOpenHistory: () => void;
   onOpenWeek: () => void;
-  /**
-   * The Exercises logbook entry. Its screen is built on another branch; until it lands this slot
-   * shows a disabled row so the place is visible.
-   */
-  exercises?: React.ReactNode;
+  /** Opens the exercise logbook: every exercise logged, then its history. */
+  onOpenExercises?: () => void;
   /** Account and app settings, rendered under a "Settings" heading at the bottom. */
   children?: React.ReactNode;
 }
@@ -40,7 +37,7 @@ const heading = 'px-1 pt-2 text-[11px] font-bold tracking-widest text-muted uppe
  * Then four tiles two by two (sessions, this week, weeks running, time trained), the streak row, the body map
  * for the last four weeks, the Exercises row, bodyweight, and the settings passed as children last.
  */
-export const MeScreen = ({ name, avatar, status, results, load, bodyweightKg, onBodyweight, onSettings, onOpenHistory, onOpenWeek, exercises, children }: MeScreenProps) => {
+export const MeScreen = ({ name, avatar, status, results, load, bodyweightKg, onBodyweight, onSettings, onOpenHistory, onOpenWeek, onOpenExercises, children }: MeScreenProps) => {
   const s = streak(results);
   return (
     <div className="flex h-full flex-col bg-canvas">
@@ -76,15 +73,15 @@ export const MeScreen = ({ name, avatar, status, results, load, bodyweightKg, on
         {results.length === 0 && <div className="px-1 py-2 text-[13px] text-muted">Finish a workout and your weeks, streak and what you worked show up here.</div>}
 
         <div className={heading}>You</div>
-        {exercises ?? (
-          <div aria-disabled className="flex items-center gap-3 rounded-card border border-line bg-surface px-3 py-2.5 opacity-60">
-            <Dumbbell className="size-5 text-muted" />
+        {onOpenExercises && (
+          <button type="button" onClick={onOpenExercises} className="flex w-full items-center gap-3 rounded-card border border-line bg-surface px-3 py-2.5 text-left active:bg-line-soft">
+            <Dumbbell className="size-5 text-brand" />
             <span className="min-w-0 flex-1">
               <span className="block text-[14px] font-semibold">Exercises</span>
-              <span className="block text-[12px] text-muted">Every exercise you have logged, coming soon</span>
+              <span className="block text-[12px] text-muted">Every exercise you have logged, and how it is going</span>
             </span>
             <ChevronRight className="size-4 text-faint" />
-          </div>
+          </button>
         )}
         <div className="flex items-center justify-between gap-3 rounded-card border border-line bg-surface px-3 py-2">
           <div className="min-w-0">

@@ -49,6 +49,8 @@ import { getVolume, setVolume } from '@/features/timer/use-runner';
 import { deviceFor, fetchCreator, fetchPublicWorkouts, type CreatorProfile } from '@/features/cloud/sync';
 import { useCloudSync } from '@/features/cloud/use-sync';
 import { SessionDetailScreen } from '@/features/results/components/session-detail-screen';
+import { ExerciseHistoryScreen } from '@/features/results/components/exercise-history-screen';
+import { ExerciseListScreen } from '@/features/results/components/exercise-list-screen';
 import { FULL_LIBRARY as LIB } from '@/features/workouts/imported';
 
 
@@ -59,7 +61,7 @@ const TABS = [
 ] as const;
 type Tab = (typeof TABS)[number]['id'];
 
-type Route = { name: 'tab'; tab: Tab; sub?: string } | { name: 'new' } | { name: 'workout' | 'edit' | 'follow' | 'result' | 'do' | 'session' | 'import' | 'log' | 'creator'; id: string };
+type Route = { name: 'tab'; tab: Tab; sub?: string } | { name: 'new' } | { name: 'workout' | 'edit' | 'follow' | 'result' | 'do' | 'session' | 'import' | 'log' | 'creator' | 'exercise'; id: string };
 
 const parse = (hash: string): Route => {
   const seg = hash.replace(/^#\/?/, '').split('/');
@@ -72,6 +74,7 @@ const parse = (hash: string): Route => {
   if (seg[0] === 'do' && id) return { name: 'do', id };
   if (seg[0] === 's' && id) return { name: 'session', id };
   if (seg[0] === 'c' && id) return { name: 'creator', id };
+  if (seg[0] === 'x' && id) return { name: 'exercise', id };
   if (seg[0] === 'import' && seg[1]) return { name: 'import', id: seg.slice(1).join('/') };
   if (seg[0] === 'log' && seg[1]) return { name: 'log', id: seg.slice(1).join('/') };
   return { name: 'tab', tab: seg[0] === 'history' || seg[0] === 'me' ? seg[0] : 'discover', sub: seg[1] };
@@ -80,6 +83,8 @@ const go = (path: string) => {
   location.hash = path;
 };
 const wid = (r: Runsheet) => r.id ?? r.title;
+const back = (fallback: string) => (history.length > 1 ? history.back() : go(fallback));
+const exerciseLink = (key: string) => `/x/${encodeURIComponent(key)}`;
 const usesRelativeLoads = (r: Runsheet) => r.items.some(i => (i.kind === 'block' ? i.steps : i.kind === 'ref' ? [] : [i]).some(s => s.kind === 'exercise' && (s.targetPct !== undefined || s.loadFactor !== undefined)));
 
 export default function App() {
@@ -182,6 +187,8 @@ export default function App() {
           runsheet={r}
           history={st.results.filter(x => x.runsheetId === wid(r))}
           lastTime={lastTime}
+          onExerciseHistory={s => go(exerciseLink(s.exercise.key))}
+          hasHistory={s => st.results.some(x => x.steps.some(y => y.exerciseKey === s.exercise.key))}
           onBack={() => go('/discover')}
           onStart={() => (setDraft(null), go(`/do/${encodeURIComponent(route.id)}`))}
           onEditAndStart={() => (setDraft(structuredClone(resolveRefs(r, lookup))), go(`/edit/${encodeURIComponent(route.id)}`))}
@@ -316,8 +323,13 @@ export default function App() {
           onChange={p => act.updateResult(res.id!, p)}
           onDelete={() => (act.deleteResult(res.id!), go('/history'))}
           onRepeat={r ? () => open(r, 'history') : undefined}
+          onExercise={k => go(exerciseLink(k))}
         />
     );
+  }
+  if (route.name === 'exercise') {
+    const ex = library[route.id] ?? { key: route.id, name: route.id, unit: '', step: 1 };
+    return full(<ExerciseHistoryScreen key={route.id} exercise={ex} results={st.results} onBack={() => back('/history/exercises')} onSession={id => go(`/s/${encodeURIComponent(id)}`)} />);
   }
   if (route.name === 'result') {
     const r = draft ?? byId.get(route.id);
@@ -358,12 +370,22 @@ export default function App() {
 
   const tab: Tab = route.name === 'tab' ? route.tab : 'discover';
   const sub = route.name === 'tab' ? route.sub : undefined;
+  if (tab === 'history' && sub === 'exercises') {
+    return shell('history', <ExerciseListScreen results={st.results} exercise={k => library[k] ?? { key: k, name: k, unit: '', step: 1 }} onBack={() => go('/history')} onOpen={k => go(exerciseLink(k))} />);
+  }
   if (tab === 'history') {
     return shell(
       'history',
       <div className="flex h-full flex-col bg-canvas">
         <header className="safe-top bg-surface px-4 pt-3 pb-2">
-          <h1 className="text-[22px] font-extrabold">History</h1>
+          <div className="flex items-center justify-between">
+            <h1 className="text-[22px] font-extrabold">History</h1>
+            {st.results.some(r => r.steps.length) && (
+              <Button variant="text" size="sm" onClick={() => go('/history/exercises')}>
+                Exercises
+              </Button>
+            )}
+          </div>
         </header>
         <div className="min-h-0 flex-1 space-y-2 overflow-y-auto px-3 py-3">
           <div className="px-1 text-[11px] font-bold tracking-widest text-muted uppercase">{sub === 'week' ? 'Last 7 days' : 'Sessions'}</div>
@@ -408,6 +430,7 @@ export default function App() {
           onSettings={() => setSettingsOpen(true)}
           onOpenHistory={() => go('/history')}
           onOpenWeek={() => go('/history/week')}
+          onOpenExercises={() => go('/history/exercises')}
         >
           {!cloud.user && <SignInCard title="Sign in to sync" reasons={['Sessions logged here are kept on this device until you do', 'Same account as the iPhone app: one history on both', 'No password: we email you a 6-digit code']} onSendCode={sendCode} onVerify={async (e, c) => { await verifyCode(e, c); act.setSignedIn(true); }} onGoogle={google ? signInGoogle : undefined} />}
           {cloud.user && (

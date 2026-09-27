@@ -50,17 +50,17 @@ struct MeView: View {
                 .listRowInsets(EdgeInsets(top: 5, leading: 0, bottom: 5, trailing: 0))
 
                 Section("You") {
-                    // Exercises logbook: its screen is built on another branch. Swap this row for
-                    // a NavigationLink to it when it lands.
-                    HStack(spacing: 12) {
-                        Image(systemName: "dumbbell").foregroundStyle(Brand.muted)
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text("Exercises").foregroundStyle(Brand.ink)
-                            Text("Every exercise you have logged, coming soon").font(.footnote).foregroundStyle(Brand.muted)
+                    NavigationLink {
+                        ExerciseListView()
+                    } label: {
+                        HStack(spacing: 12) {
+                            Image(systemName: "dumbbell").foregroundStyle(Brand.coral)
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text("Exercises").foregroundStyle(Brand.ink)
+                                Text("Every exercise you have logged, and how it is going").font(.footnote).foregroundStyle(Brand.muted)
+                            }
                         }
                     }
-                    .opacity(0.6)
-                    .accessibilityIdentifier("exercises-logbook")
 
                     Stepper(
                         value: Binding(

@@ -72,7 +72,7 @@ void EX;
 const RESULTS = [0, 1, 2, 8, 9, 15].map((d, i) => ({ runsheetId: 'x', title: 'Fran', startedAt: new Date(Date.now() - d * 864e5).toISOString(), durationSec: 1500 + i * 120, steps: [] }));
 export const Me: Story = {
   render: () => (
-    <MeScreen name="Nick" avatar={{ emoji: '🐯', color: '#ff4d2e' }} status="Signed in as nick@example.com" results={RESULTS} load={{ quads: 1, glutes: 0.8, back: 0.5, chest: 0.3 }} bodyweightKg={82} onBodyweight={() => {}} onSettings={() => {}} onOpenHistory={() => {}} onOpenWeek={() => {}}>
+    <MeScreen name="Nick" avatar={{ emoji: '🐯', color: '#ff4d2e' }} status="Signed in as nick@example.com" results={RESULTS} load={{ quads: 1, glutes: 0.8, back: 0.5, chest: 0.3 }} bodyweightKg={82} onBodyweight={() => {}} onSettings={() => {}} onOpenHistory={() => {}} onOpenWeek={() => {}} onOpenExercises={() => {}}>
       <Button variant="ghost" block>
         Training maxes
       </Button>
