@@ -233,7 +233,10 @@ final class WalkthroughUITests: XCTestCase {
         tap(app.buttons["Finish and save"])
         tap(app.buttons["Done"])
 
-        home()
+        // A fresh launch rather than navigating back: the seed is back to the only timed Cindy.
+        app.terminate()
+        app.launch()
+        if discard.waitForExistence(timeout: 3) { discard.tap() }
         open("Cindy")
         tap(app.buttons["Start workout"])
         let done = app.buttons["Done"]
