@@ -218,8 +218,11 @@ final class WalkthroughUITests: XCTestCase {
         // The permission sheet is the system's, presented over the app.
         sleep(4)
         snap("17 Health permission")
-        XCTAssertFalse(app.staticTexts.matching(NSPredicate(format: "label CONTAINS[c] 'entitlement'")).firstMatch.exists,
-                       "HealthKit refused for want of the entitlement")
+        // Only a signed build carries the entitlement; CI builds unsigned and says so.
+        if ProcessInfo.processInfo.environment["UNSIGNED_BUILD"] != "1" {
+            XCTAssertFalse(app.staticTexts.matching(NSPredicate(format: "label CONTAINS[c] 'entitlement'")).firstMatch.exists,
+                           "HealthKit refused for want of the entitlement")
+        }
     }
 
     func testLockScreen() {
