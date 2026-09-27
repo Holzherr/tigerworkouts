@@ -4,14 +4,20 @@ import SwiftUI
 /// the way people ask for it: benchmarks, programs, protocols, NHS routines, follow-alongs.
 struct DiscoverView: View {
     @Environment(Store.self) private var store
-    var onStart: (Runsheet) -> Void
+    var onStart: (Runsheet, SessionOrigin?) -> Void
 
     @State private var tab: Tab = .forYou
     @State private var query = ""
     @State private var filter: Kind?
     @State private var writing: Runsheet?
     /// Workouts pushed on this stack; a tigerworkouts://w/<id> link from the website lands here.
-    @State private var path: [String] = []
+    @State private var path: [Opened] = []
+
+    /// A workout on the stack, with the list it was tapped in: the session it starts records that.
+    struct Opened: Hashable {
+        var key: String
+        var from: SessionOrigin?
+    }
 
     enum Tab: String, CaseIterable, Identifiable {
         case saved = "Saved", forYou = "For you", browse = "Browse"
@@ -102,9 +108,9 @@ struct DiscoverView: View {
             .scrollDismissesKeyboard(.immediately)
             .searchable(text: $query, prompt: "Workout, exercise or tag")
             .navigationTitle("Tiger")
-            .navigationDestination(for: String.self) { id in
-                if let sheet = store.workout(id: id) {
-                    WorkoutDetailView(runsheet: sheet, onStart: onStart)
+            .navigationDestination(for: Opened.self) { opened in
+                if let sheet = store.workout(id: opened.key) {
+                    WorkoutDetailView(runsheet: sheet, startedFrom: opened.from, onStart: onStart)
                 }
             }
             .toolbar {
@@ -127,7 +133,7 @@ struct DiscoverView: View {
                 // tigerworkouts://w/<id>: "Open in the app" on a workout page of the website.
                 guard url.host == "w", let id = url.pathComponents.dropFirst().first?.removingPercentEncoding,
                       store.workout(id: id) != nil else { return }
-                path = [id]
+                path = [Opened(key: id, from: .link)]
             }
             // New workout opens an empty one on the workout screen: the one editor.
             .navigationDestination(item: $writing) { sheet in
@@ -202,12 +208,12 @@ struct DiscoverView: View {
     private var forYou: some View {
         if !recent.isEmpty {
             section("Pick up again", subtitle: "What you do most") {
-                carousel(recent.prefix(10).map(\.sheet), large: true)
+                carousel(recent.prefix(10).map(\.sheet), large: true, from: .history)
             }
         }
         if !store.myWorkouts.isEmpty {
             section("Mine", subtitle: "Workouts you wrote") {
-                carousel(store.myWorkouts, large: false)
+                carousel(store.myWorkouts, large: false, from: .mine)
             }
         }
         ForEach(Kind.allCases) { kind in
@@ -217,7 +223,7 @@ struct DiscoverView: View {
                     filter = kind
                     tab = .browse
                 }) {
-                    carousel(Array(sheets.prefix(12)), large: false)
+                    carousel(Array(sheets.prefix(12)), large: false, from: .search)
                 }
             }
         }
@@ -239,7 +245,7 @@ struct DiscoverView: View {
             }
             .padding(.top, 40)
         } else {
-            list(sheets)
+            list(sheets, from: .saved)
         }
     }
 
@@ -263,7 +269,7 @@ struct DiscoverView: View {
             .font(.subheadline)
             .foregroundStyle(Brand.muted)
             .padding(.horizontal, 16)
-        list(found)
+        list(found, from: .search)
     }
 
     // MARK: - Pieces
@@ -286,11 +292,11 @@ struct DiscoverView: View {
         }
     }
 
-    private func carousel(_ sheets: [Runsheet], large: Bool) -> some View {
+    private func carousel(_ sheets: [Runsheet], large: Bool, from: SessionOrigin) -> some View {
         ScrollView(.horizontal) {
             LazyHStack(alignment: .top, spacing: 12) {
                 ForEach(sheets, id: \.key) { sheet in
-                    NavigationLink(value: sheet.key) {
+                    NavigationLink(value: Opened(key: sheet.key, from: from)) {
                         WorkoutTile(runsheet: sheet, done: store.doneCount(sheet.key), large: large)
                     }
                     .buttonStyle(.plain)
@@ -301,11 +307,11 @@ struct DiscoverView: View {
         .scrollIndicators(.hidden)
     }
 
-    private func list(_ sheets: [Runsheet]) -> some View {
+    private func list(_ sheets: [Runsheet], from: SessionOrigin) -> some View {
         LazyVStack(spacing: 0) {
             ForEach(Array(sheets.enumerated()), id: \.element.key) { index, sheet in
                 if index > 0 { Divider().padding(.leading, 80) }
-                NavigationLink(value: sheet.key) {
+                NavigationLink(value: Opened(key: sheet.key, from: from)) {
                     WorkoutRow(runsheet: sheet, done: store.doneCount(sheet.key))
                 }
                 .buttonStyle(.plain)

@@ -85,8 +85,8 @@ struct RootView: View {
         .onChange(of: scenePhase) { _, phase in Self.scenePhaseChanged(to: phase) }
     }
 
-    private func start(_ sheet: Runsheet) {
-        running = logOnFinish(SessionRunner(runsheet: sheet))
+    private func start(_ sheet: Runsheet, from origin: SessionOrigin?) {
+        running = logOnFinish(SessionRunner(runsheet: sheet, startedFrom: origin))
     }
 
     /// The workout is logged when it finishes, not when Done is tapped: the finished screen says

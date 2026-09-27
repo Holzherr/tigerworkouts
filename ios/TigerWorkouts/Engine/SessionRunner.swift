@@ -10,6 +10,9 @@ final class SessionRunner {
     private(set) var state: RunState
     private(set) var now: Double = Date().timeIntervalSince1970 * 1000
     private(set) var runsheet: Runsheet
+    /// The list the workout was tapped in, written on the result so the web's origins breakdown
+    /// counts gym sessions too. Only a path that knows it sets it; a resumed session has none.
+    let startedFrom: SessionOrigin?
 
     private var timer: Timer?
     /// Called once, the moment the session reaches done — not when Done is tapped. Until the store
@@ -24,8 +27,9 @@ final class SessionRunner {
     /// Runs the runsheet exactly as handed over. The workout screen seeds the last-used numbers
     /// once, before they are seen, and whatever is set on it after that is what starts here —
     /// seeding again at this point put last time's numbers back over what had just been set.
-    init(runsheet: Runsheet) {
+    init(runsheet: Runsheet, startedFrom: SessionOrigin? = nil) {
         self.runsheet = runsheet
+        self.startedFrom = startedFrom
         self.state = Runner.start(runsheet, now: Date().timeIntervalSince1970 * 1000)
     }
 
@@ -35,6 +39,7 @@ final class SessionRunner {
     init?(resuming runsheet: Runsheet) {
         guard let saved = SessionRunner.readSaved(), saved.state.runsheetId == (runsheet.id ?? runsheet.title) else { return nil }
         self.runsheet = runsheet
+        self.startedFrom = nil
         let at = saved.savedAt.timeIntervalSince1970 * 1000
         self.state = saved.state.phase == .running || saved.state.phase == .lead
             ? Runner.pause(saved.state, now: at)
@@ -414,6 +419,7 @@ final class SessionRunner {
     func result() -> SessionResult {
         var r = Runner.toResult(state, runsheet, now: Date().timeIntervalSince1970 * 1000)
         r.id = Self.rowId(state)
+        r.startedFrom = startedFrom?.rawValue
         return r
     }
 

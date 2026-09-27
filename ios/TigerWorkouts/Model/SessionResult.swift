@@ -40,11 +40,20 @@ struct ActivityLog: Codable, Hashable, Sendable {
     var intensity: String?
 }
 
+/// The list the user tapped to reach the workout, in the web app's words (`SessionOrigin` in
+/// progression.ts): a Discover feed, their own list, a past session, or a share link.
+enum SessionOrigin: String, CaseIterable, Sendable {
+    case recommended, saved, search, mine, history, link
+}
+
 /// One finished session. The shape the web app writes as `data` on a `sessions` row, so both
 /// apps read each other's history without a migration.
 struct SessionResult: Codable, Hashable, Sendable, Identifiable {
     var id: String?
     var runsheetId: String
+    /// A `SessionOrigin` literal, kept as the string it came with so a row written by a newer web
+    /// app still decodes. Unset for a resumed session and rows from before it was recorded.
+    var startedFrom: String?
     var title: String?
     var startedAt: String
     var endedAt: String?
@@ -61,9 +70,10 @@ struct SessionResult: Codable, Hashable, Sendable, Identifiable {
     var startedDate: Date { ISO8601.date(startedAt) ?? .distantPast }
     var displayTitle: String { title ?? activity?.name ?? runsheetId }
 
-    init(runsheetId: String, title: String?, startedAt: String, endedAt: String? = nil, durationSec: Double? = nil, completed: Bool? = nil, score: Double? = nil, steps: [StepResult] = [], notes: String? = nil, id: String? = nil) {
+    init(runsheetId: String, title: String?, startedAt: String, endedAt: String? = nil, durationSec: Double? = nil, completed: Bool? = nil, score: Double? = nil, steps: [StepResult] = [], notes: String? = nil, id: String? = nil, startedFrom: String? = nil) {
         self.id = id
         self.runsheetId = runsheetId
+        self.startedFrom = startedFrom
         self.title = title
         self.startedAt = startedAt
         self.endedAt = endedAt
@@ -78,6 +88,7 @@ struct SessionResult: Codable, Hashable, Sendable, Identifiable {
         let c = try decoder.container(keyedBy: CodingKeys.self)
         id = try c.decodeIfPresent(String.self, forKey: .id)
         runsheetId = try c.decodeIfPresent(String.self, forKey: .runsheetId) ?? ""
+        startedFrom = try c.decodeIfPresent(String.self, forKey: .startedFrom)
         title = try c.decodeIfPresent(String.self, forKey: .title)
         startedAt = try c.decodeIfPresent(String.self, forKey: .startedAt) ?? ISO8601.string(Date())
         endedAt = try c.decodeIfPresent(String.self, forKey: .endedAt)

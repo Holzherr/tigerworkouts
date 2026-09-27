@@ -8,7 +8,9 @@ struct WorkoutDetailView: View {
     @State var runsheet: Runsheet
     /// A workout being written from ＋: it saves itself once it has a name and an exercise.
     var isNew = false
-    var onStart: (Runsheet) -> Void
+    /// The list this screen was reached from, handed to the session it starts.
+    var startedFrom: SessionOrigin? = nil
+    var onStart: (Runsheet, SessionOrigin?) -> Void
 
     @State private var editing: ExerciseStep?
     @State private var changingAmount: ExerciseStep?
@@ -249,7 +251,7 @@ struct WorkoutDetailView: View {
     private var bottomBar: some View {
         HStack(spacing: 10) {
             Button {
-                onStart(runsheet)
+                onStart(runsheet, startedFrom)
             } label: {
                 Label("Start workout", systemImage: "play.fill")
             }
