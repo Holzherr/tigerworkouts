@@ -66,7 +66,8 @@ struct SessionLiveActivity: Widget {
                         .font(.title3.weight(.bold))
                         .lineLimit(1)
                         .minimumScaleFactor(0.7)
-                    Text(context.state.detail)
+                    // "Exercise 2 of 3 · Round 4 · 12 s ahead" when there is a last time to race.
+                    Text([context.state.detail, context.state.ghost].compactMap { $0 }.joined(separator: " · "))
                         .font(.caption)
                         .foregroundStyle(.secondary)
                         .lineLimit(1)

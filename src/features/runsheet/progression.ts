@@ -25,6 +25,16 @@ export const resolveTarget = (s: ExerciseStep, tms: TrainingMaxes, bodyweightKg?
 export interface SetResult {
   reps?: number;
   load?: number;
+  /** When the set was ticked, in seconds of session time (pauses excluded). Unset on rows from
+   * before times were kept. */
+  at?: number;
+}
+
+/** When each round of a circuit or AMRAP block finished, in seconds of session time. at[0] is
+ * round 1. A round left unfinished (the AMRAP cap came mid-round) is not in the list. */
+export interface RoundSplit {
+  blockId: string;
+  at: number[];
 }
 
 export interface StepResult {
@@ -67,6 +77,8 @@ export interface SessionResult {
   score?: number;
   scoreText?: string;
   steps: StepResult[];
+  /** Round times per circuit or AMRAP block; unset on rows from before times were kept. */
+  splits?: RoundSplit[];
   notes?: string;
   /** How hard the session felt, 1–10, tapped on the finish screen. Apple Health's workout effort scale. */
   rpe?: number;

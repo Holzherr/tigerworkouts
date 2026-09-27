@@ -24,6 +24,8 @@ struct SessionActivityAttributes: ActivityAttributes {
         /// The session is over. The clock then holds still at what it came to: with nothing left to
         /// count down, an interval counts up instead and the card reads as a workout still running.
         var isDone = false
+        /// "Round 4 · 12 s ahead" against the last session of this workout. Nil without one.
+        var ghost: String? = nil
         /// What is on the bar and how many, for the set in front of you — or, during a rest, the one
         /// coming up: "60 kg × 8", "12 reps". Nil for a timed step with nothing to load.
         var setLine: String?

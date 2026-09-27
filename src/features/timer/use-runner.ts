@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { Runsheet } from '@/features/runsheet/model';
+import type { SetResult } from '@/features/runsheet/progression';
 import * as R from './runner';
 
 let actx: AudioContext | null = null;
@@ -20,6 +21,41 @@ export const setVolume = (v: number) => {
     /* ignore */
   }
 };
+const MUTE_KEY = 'tiger:mute';
+/** Tones off, from the timer's speaker button. Read on every beep, so it takes effect at once and
+ * holds for later sessions. The buzz is not affected. */
+export const getMuted = () => {
+  try {
+    return localStorage.getItem(MUTE_KEY) === '1';
+  } catch {
+    return false;
+  }
+};
+export const setMuted = (on: boolean) => {
+  try {
+    if (on) localStorage.setItem(MUTE_KEY, '1');
+    else localStorage.removeItem(MUTE_KEY);
+  } catch {
+    /* ignore */
+  }
+};
+const REST_KEY = 'tiger:rest';
+/** Seconds a rest gets when one is added in the editor. 30 unless Settings says otherwise. */
+export const getDefaultRest = () => {
+  try {
+    const v = Number(localStorage.getItem(REST_KEY));
+    return v > 0 ? v : 30;
+  } catch {
+    return 30;
+  }
+};
+export const setDefaultRest = (sec: number) => {
+  try {
+    localStorage.setItem(REST_KEY, String(Math.max(5, Math.round(sec))));
+  } catch {
+    /* ignore */
+  }
+};
 const beep = (freq = 880, ms = 120) => {
   try {
     actx = actx ?? new (window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext)();
@@ -29,7 +65,7 @@ const beep = (freq = 880, ms = 120) => {
     o.connect(g);
     g.connect(actx.destination);
     const vol = getVolume();
-    if (vol <= 0) return;
+    if (vol <= 0 || getMuted()) return;
     g.gain.setValueAtTime(vol, actx.currentTime);
     g.gain.exponentialRampToValueAtTime(0.001, actx.currentTime + ms / 1000);
     o.start();
@@ -51,12 +87,14 @@ const vib = (p: number | number[]) => {
  * Drives the runner: 200 ms ticks, 3-2-1 beeps and an end tone, haptics on transitions, a screen
  * wake lock while running, persistence on every change so an iOS reload resumes where it was.
  */
-export const useRunner = (runsheet: Runsheet, opts: { resume?: boolean; silent?: boolean; persist?: boolean } = {}) => {
+export const useRunner = (runsheet: Runsheet, opts: { resume?: boolean; silent?: boolean; persist?: boolean; /** Applied to a fresh start only, never to a resumed run. */ seed?: (s: R.RunState) => R.RunState } = {}) => {
   const silent = !!opts.silent;
   const persist = opts.persist !== false;
   const [state, setState] = useState<R.RunState>(() => {
     const saved = opts.resume ? R.loadPersisted() : null;
-    return saved && saved.runsheetId === (runsheet.id ?? runsheet.title) ? saved : R.start(runsheet, Date.now());
+    if (saved && saved.runsheetId === (runsheet.id ?? runsheet.title)) return saved;
+    const fresh = R.start(runsheet, Date.now());
+    return opts.seed ? opts.seed(fresh) : fresh;
   });
   const [now, setNow] = useState(Date.now());
   const lastBeep = useRef<number>(-1);
@@ -163,6 +201,8 @@ export const useRunner = (runsheet: Runsheet, opts: { resume?: boolean; silent?:
     setRepsAt: useCallback((slotId: string, n: number) => setState(s => R.setRepsAt(s, slotId, n)), []),
     completeSet: useCallback((slotId: string) => setState(s => R.completeSet(s, Date.now(), slotId)), []),
     reopenSet: useCallback((slotId: string) => setState(s => R.reopenSet(s, slotId)), []),
+    extendRest: useCallback((deltaSec: number) => setState(s => R.extendRest(s, Date.now(), deltaSec)), []),
+    fillSet: useCallback((slotId: string, set: SetResult) => setState(s => R.fillSet(s, Date.now(), slotId, set)), []),
     drop: useCallback((stepId: string) => setState(s => R.drop(s, Date.now(), stepId)), []),
     finish: useCallback(() => setState(s => R.finish(s, Date.now())), []),
   };

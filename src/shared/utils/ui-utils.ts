@@ -5,8 +5,10 @@ export const cn = (...inputs: ClassValue[]) => twMerge(clsx(inputs));
 
 /** 90 → "1:30", 30 → "0:30", 600 → "10:00" */
 export const fmtClock = (seconds: number) => {
-  const m = Math.floor(seconds / 60);
-  const s = Math.round(seconds % 60);
+  // Round the whole first: 59.6 s is 1:00, not 0:60.
+  const t = Math.round(seconds);
+  const m = Math.floor(t / 60);
+  const s = t % 60;
   return `${m}:${s.toString().padStart(2, '0')}`;
 };
 

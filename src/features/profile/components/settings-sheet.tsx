@@ -28,6 +28,9 @@ export interface SettingsSheetProps {
   /** Timer beep volume 0–1. */
   volume?: number;
   onVolume?: (v: number) => void;
+  /** Seconds a rest gets when one is added in the editor. */
+  defaultRest?: number;
+  onDefaultRest?: (sec: number) => void;
   /** Editor drag-and-drop behaviour under test. */
   dnd?: DndVariant;
   onDnd?: (v: DndVariant) => void;
@@ -47,7 +50,7 @@ export const AvatarView = ({ name, avatar, size = 56 }: { name: string; avatar?:
  * Settings sheet: avatar preview with name field, emoji and colour chips, photo upload (resized
  * to 256px and stored as a data URL), units dropdown, Invite someone, Sign out.
  */
-export const SettingsSheet = ({ open, onOpenChange, name, avatar, units, email, onChange, onInvite, onSignOut, volume, onVolume, dnd, onDnd }: SettingsSheetProps) => {
+export const SettingsSheet = ({ open, onOpenChange, name, avatar, units, email, onChange, onInvite, onSignOut, volume, onVolume, defaultRest, onDefaultRest, dnd, onDnd }: SettingsSheetProps) => {
   const file = useRef<HTMLInputElement>(null);
   const onPhoto = (f: File) => {
     const img = new Image();
@@ -101,6 +104,14 @@ export const SettingsSheet = ({ open, onOpenChange, name, avatar, units, email, 
         <div className="flex items-center justify-between gap-3">
           <span className="text-[14px]">Timer volume</span>
           <Stepper aria-label="Timer volume" value={Math.round((volume ?? 0.8) * 10)} min={0} max={10} step={1} onChange={v => onVolume(v / 10)} />
+        </div>
+      )}
+      {onDefaultRest && (
+        <div className="flex items-center justify-between gap-3">
+          <span className="text-[14px]">
+            Default rest <span className="text-muted">(s)</span>
+          </span>
+          <Stepper aria-label="Default rest" value={defaultRest ?? 30} min={5} max={600} step={15} onChange={onDefaultRest} />
         </div>
       )}
       <Button variant="ghost" block onClick={onInvite}>

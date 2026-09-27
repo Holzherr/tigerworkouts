@@ -103,6 +103,12 @@ const ACTIONS = {
   setProfile: (p: Partial<Pick<AppState, 'name' | 'avatar' | 'units'>>) => setState(p),
   setFavorites: (favorites: Favorite[]) => setState({ favorites }),
   addExercise: (e: LibraryExercise) => setState(s => ({ exercises: { ...s.exercises, [e.key]: e } })),
+  /** A CSV import: its sessions into History and the exercises it had to create into the library. */
+  importSessions: (results: SessionResult[], exercises: LibraryExercise[]) =>
+    setState(s => ({
+      exercises: { ...s.exercises, ...Object.fromEntries(exercises.map(e => [e.key, e])) },
+      results: [...results.filter(r => !s.results.some(x => x.id === r.id)), ...s.results].sort((a, b) => b.startedAt.localeCompare(a.startedAt)),
+    })),
   toggleSaved: (id: string) => setState(s => ({ saved: s.saved.includes(id) ? s.saved.filter(x => x !== id) : [...s.saved, id] })),
 };
 

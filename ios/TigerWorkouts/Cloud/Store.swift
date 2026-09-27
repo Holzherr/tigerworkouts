@@ -12,6 +12,11 @@ final class Store {
     var myWorkouts: [Runsheet] = []
     var bodyweightKg: Double?
     var saved: Set<String> = []
+    /// Exercises this account made, here or on the web. Mirrored into `Library.shared` so lookups
+    /// find them; kept here too so a view that lists them redraws when one is added.
+    private(set) var customExercises: [String: LibraryExercise] = [:]
+    /// Made on this phone and not yet on the server.
+    private var pendingExercises: [LibraryExercise] = []
     var syncing = false
     var syncError: String?
     /// Sessions logged while offline or signed out, waiting for a window to push.
@@ -60,6 +65,7 @@ final class Store {
         readCache()
         #if DEBUG
         seedLogbookIfAsked()
+        seedPaceIfAsked()
         #endif
         loaded = true
         shareUpNext()
@@ -84,6 +90,9 @@ final class Store {
             try await flushPending()
             try await flushDeletes()
             try await flushWorkouts()
+            try await flushExercises()
+            // Union, as the web does: an exercise made on either side appears on both.
+            mergeCustom(try await Supabase.shared.exercises())
             async let sessions = Supabase.shared.sessions()
             async let workouts = Supabase.shared.workouts()
             async let prefs = Supabase.shared.prefs()
@@ -132,15 +141,14 @@ final class Store {
     /// Show it in History straight away, then get it to the server. A failed push is queued, not
     /// lost: the workout happened whatever the network thinks. `stored` runs once the result is in
     /// the cache on disk, the point from which a killed app still has it.
+    ///
+    /// The heart rate from Health comes after: asking for it can take a minute (an unanswered
+    /// permission sheet, a slow query), and until the result is in the list and on disk History
+    /// misses the session and the crash-safe copy of the timer stays behind. When a summary does
+    /// arrive it is added to the row as it then stands and pushed again, so the web app sees it too.
     func save(_ result: SessionResult, stored: () -> Void = {}) async {
         var r = result
         if r.id == nil { r.id = "s-\(Int(Date().timeIntervalSince1970 * 1000))-\(UUID().uuidString.prefix(4))" }
-        // Attach the heart rate before the row goes anywhere, so the web app sees it too.
-        if healthEnabled,
-           let start = ISO8601.date(r.startedAt),
-           let end = r.endedAt.flatMap(ISO8601.date) ?? r.durationSec.map({ start.addingTimeInterval($0) }) {
-            r.device = await Health.shared.summary(from: start, to: end)
-        }
         for change in amendments.removeValue(forKey: r.rowId) ?? [] { change(&r) }
         results.removeAll { $0.rowId == r.rowId }
         results.insert(r, at: 0)
@@ -155,7 +163,22 @@ final class Store {
             syncError = error.localizedDescription
         }
         writeCache()
+        if let start = ISO8601.date(r.startedAt),
+           let end = r.endedAt.flatMap(ISO8601.date) ?? r.durationSec.map({ start.addingTimeInterval($0) }),
+           let device = await deviceSummary(start, end),
+           var current = results.first(where: { $0.rowId == r.rowId }) {
+            current.device = device
+            await update(current)?.value
+            r = current
+        }
         await writeToHealth(r)
+    }
+
+    /// Health's heart-rate summary over a session's window; nil with Health off or the watch not
+    /// worn. A property so a test can hold it back.
+    var deviceSummary: @MainActor (Date, Date) async -> DeviceSummary? = { start, end in
+        guard UserDefaults.standard.bool(forKey: "health") else { return nil }
+        return await Health.shared.summary(from: start, to: end)
     }
 
     /// The session also belongs in Health, typed by what it mostly was, counting towards the rings.
@@ -255,6 +278,34 @@ final class Store {
         } catch {
             syncError = error.localizedDescription
         }
+    }
+
+    // MARK: - Your own exercises
+
+    /// Saved on the phone first, then pushed; usable straight away everywhere the catalogue is.
+    func addExercise(_ e: LibraryExercise) async {
+        mergeCustom([e])
+        pendingExercises.removeAll { $0.key == e.key }
+        pendingExercises.append(e)
+        writeCache()
+        do {
+            try await flushExercises()
+            syncError = nil
+        } catch {
+            syncError = error.localizedDescription
+        }
+        writeCache()
+    }
+
+    private func mergeCustom(_ list: [LibraryExercise]) {
+        for e in list { customExercises[e.key] = e }
+        Library.shared.addCustom(list)
+    }
+
+    private func flushExercises() async throws {
+        guard await Supabase.shared.isSignedIn, !pendingExercises.isEmpty else { return }
+        try await Supabase.shared.saveExercises(pendingExercises)
+        pendingExercises = []
     }
 
     // MARK: - Your own workouts
@@ -367,17 +418,25 @@ final class Store {
         var pendingWorkouts: [Runsheet]?
         var pendingWorkoutDeletes: [String]?
         var pendingDeletes: [String]?
+        var customExercises: [LibraryExercise]?
+        var pendingExercises: [LibraryExercise]?
     }
+
+    /// The file the cache lives in. Tests point it elsewhere so they never touch the app's own.
+    var cacheName = "tiger-cache.json"
 
     private var cacheURL: URL {
         let dir = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
         try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
-        return dir.appendingPathComponent("tiger-cache.json")
+        return dir.appendingPathComponent(cacheName)
     }
 
     private func readCache() {
-        guard let data = try? Data(contentsOf: cacheURL),
-              let c = try? Library.shared.decoder.decode(Cache.self, from: data) else { return }
+        guard let data = try? Data(contentsOf: cacheURL) else { return }
+        // Your own exercises first, so a workout that names one by key resolves to it.
+        struct Custom: Decodable { var customExercises: [LibraryExercise]? }
+        mergeCustom((try? JSONDecoder().decode(Custom.self, from: data))?.customExercises ?? [])
+        guard let c = try? Library.shared.decoder.decode(Cache.self, from: data) else { return }
         results = c.results
         myWorkouts = c.myWorkouts
         pending = c.pending
@@ -386,6 +445,7 @@ final class Store {
         pendingWorkouts = c.pendingWorkouts ?? []
         pendingWorkoutDeletes = c.pendingWorkoutDeletes ?? []
         pendingDeletes = c.pendingDeletes ?? []
+        pendingExercises = c.pendingExercises ?? []
     }
 
     private func writeCache() {
@@ -393,7 +453,8 @@ final class Store {
             results: results, myWorkouts: myWorkouts, pending: pending,
             bodyweightKg: bodyweightKg, saved: Array(saved),
             pendingWorkouts: pendingWorkouts, pendingWorkoutDeletes: pendingWorkoutDeletes,
-            pendingDeletes: pendingDeletes
+            pendingDeletes: pendingDeletes,
+            customExercises: Array(customExercises.values), pendingExercises: pendingExercises
         )
         try? JSONEncoder().encode(c).write(to: cacheURL, options: .atomic)
         shareUpNext()

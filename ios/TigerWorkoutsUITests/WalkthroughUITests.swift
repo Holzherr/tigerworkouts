@@ -195,6 +195,67 @@ final class WalkthroughUITests: XCTestCase {
         tap(app.buttons["Done"])
     }
 
+    /// Logging in the gym: last time's set in one tap, ±15 s on the rest, and the header racing the
+    /// last session of the same workout.
+    func testGymLogging() {
+        app.terminate()
+        app.launchArguments = ["-seedPace"]
+        app.launch()
+        let discard = app.alerts.buttons["Discard"]
+        if discard.waitForExistence(timeout: 3) { discard.tap() }
+
+        open("Iron Base · Whole Body A")
+        tap(app.buttons["Start workout"])
+        XCTAssertTrue(app.buttons["End session"].waitForExistence(timeout: 5))
+        let startPull = app.buttons["Start Pull"]
+        for _ in 0..<60 where !startPull.exists {
+            let start = app.buttons.matching(NSPredicate(format: "label BEGINSWITH 'Start ' AND label != 'Start workout'")).firstMatch
+            if start.exists, start.isHittable {
+                start.tap()
+            } else if app.buttons["Skip"].exists {
+                app.buttons["Skip"].tap()
+            }
+        }
+        tap(startPull)
+        // Tones off from the top bar, then back on so later walks keep them.
+        tap(app.buttons["Mute tones"])
+        XCTAssertTrue(app.buttons["Unmute tones"].waitForExistence(timeout: 3), "the speaker should show tones are off")
+        snap("36a Tones muted on the timer")
+        tap(app.buttons["Unmute tones"])
+        let useLast = app.buttons["Use last time for set 1"]
+        XCTAssertTrue(useLast.waitForExistence(timeout: 5), "a set with a last time should offer it")
+        snap("37 Last time on each set")
+        useLast.tap()
+        snap("38 Last time copied into set 1")
+
+        tap(app.buttons["Tick set 1"])
+        let more = app.buttons["15 seconds more rest"]
+        XCTAssertTrue(more.waitForExistence(timeout: 5), "a rest should take ±15 s")
+        more.tap()
+        XCTAssertTrue(app.descendants(matching: .any)["ghost"].waitForExistence(timeout: 5), "a timed last session should be raced")
+        snap("39 Rest with ±15 s, racing last time")
+        tap(app.buttons["End session"])
+        tap(app.buttons["Finish and save"])
+        tap(app.buttons["Done"])
+
+        // A fresh launch rather than navigating back: the seed is back to the only timed Cindy.
+        app.terminate()
+        app.launch()
+        if discard.waitForExistence(timeout: 3) { discard.tap() }
+        open("Cindy")
+        tap(app.buttons["Start workout"])
+        let done = app.buttons["Done"]
+        XCTAssertTrue(app.descendants(matching: .any)["cap-left"].waitForExistence(timeout: 12))
+        XCTAssertTrue(app.buttons["use-last-time"].waitForExistence(timeout: 3), "the card should offer last time")
+        snap("40 Last time on the card")
+        for _ in 0..<3 { tap(done) }
+        XCTAssertTrue(app.descendants(matching: .any)["ghost"].waitForExistence(timeout: 5), "round 1 should be raced against last time")
+        snap("41 Round 1 against last time")
+        tap(app.buttons["End session"])
+        tap(app.buttons["Finish and save"])
+        tap(app.buttons["Done"])
+    }
+
     /// An AMRAP runs against its cap, and the timer says how much of it is left.
     func testCapClock() {
         open("Cindy")
@@ -471,8 +532,8 @@ final class WalkthroughUITests: XCTestCase {
         let discard = app.alerts.buttons["Discard"]
         if discard.waitForExistence(timeout: 3) { discard.tap() }
 
-        // testSettingsAndHealth can leave Health on with its sheet unanswered, and then the save
-        // waits on Health for the heart rate. This test is about the app's own history: Health off.
+        // testSettingsAndHealth can leave Health on with its sheet unanswered. This test is about the
+        // app's own history, not Health's permission sheets: Health off.
         tap(app.tabBars.buttons["Me"])
         for _ in 0..<4 where !(app.buttons["Settings"].exists && app.buttons["Settings"].isHittable) { app.swipeUp() }
         tap(app.buttons["Settings"])
@@ -490,7 +551,7 @@ final class WalkthroughUITests: XCTestCase {
         XCTAssertTrue(app.staticTexts["Workout saved"].waitForExistence(timeout: 10))
         let count = app.staticTexts.matching(NSPredicate(format: "label BEGINSWITH 'Workout ' AND label != 'Workout saved'")).firstMatch
         XCTAssertTrue(count.waitForExistence(timeout: 5), "the finish screen should lead with the workout count")
-        snap("36 Finish, celebration")
+        snap("50 Finish, celebration")
 
         tap(app.buttons["effort-8"])
         XCTAssertTrue(app.staticTexts["8 · Hard"].waitForExistence(timeout: 3), "one tap sets the effort")
@@ -498,11 +559,11 @@ final class WalkthroughUITests: XCTestCase {
         tap(notes)
         notes.typeText("Legs gone by round 6")
         app.swipeDown(velocity: .slow)
-        snap("37 Finish, effort and notes")
+        snap("51 Finish, effort and notes")
 
         tap(app.buttons["share-card"])
         XCTAssertTrue(app.images["share-card-image"].waitForExistence(timeout: 5), "Share should show the card")
-        snap("38 Share card")
+        snap("52 Share card")
         tap(app.navigationBars["Share"].buttons["Close"])
         tap(app.buttons["Done"])
 
@@ -510,14 +571,14 @@ final class WalkthroughUITests: XCTestCase {
         tap(app.tabBars.buttons["History"])
         let row = app.buttons.matching(NSPredicate(format: "label BEGINSWITH 'Tabata This' AND label CONTAINS 'effort 8'")).firstMatch
         XCTAssertTrue(row.waitForExistence(timeout: 5), "the effort should show in History")
-        snap("39 History with effort")
+        snap("53 History with effort")
         row.tap()
         XCTAssertTrue(app.staticTexts["8 · Hard"].waitForExistence(timeout: 5))
         for _ in 0..<3 { app.swipeUp(velocity: .slow) }
         let more = app.buttons["session-duration-Increment"]
         tap(more)
         tap(more)
-        snap("40 Session detail, edited")
+        snap("54 Session detail, edited")
 
         // Do it again: the same workout, straight into the timer.
         tap(app.buttons["Do it again"])
@@ -530,7 +591,7 @@ final class WalkthroughUITests: XCTestCase {
         for _ in 0..<3 { app.swipeUp(velocity: .slow) }
         tap(app.buttons["Delete session"])
         XCTAssertTrue(app.buttons["Delete"].waitForExistence(timeout: 3), "delete should ask first")
-        snap("41 Delete, confirm")
+        snap("55 Delete, confirm")
         app.buttons["Delete"].tap()
         XCTAssertTrue(app.navigationBars["History"].waitForExistence(timeout: 5), "a deleted session closes")
         XCTAssertFalse(app.buttons.matching(NSPredicate(format: "label CONTAINS 'effort 8'")).firstMatch.waitForExistence(timeout: 2), "the deleted session should be gone")
@@ -543,8 +604,58 @@ final class WalkthroughUITests: XCTestCase {
         for _ in 0..<3 { app.swipeUp(velocity: .slow) }
         tap(app.buttons["session-share"])
         XCTAssertTrue(app.images["share-card-image"].waitForExistence(timeout: 5))
-        snap("42 Share card with a record")
+        snap("56 Share card with a record")
         tap(app.navigationBars["Share"].buttons["Close"])
+    }
+
+    func testOwnExerciseAndExport() {
+        app.terminate()
+        app.launchArguments = ["-seedLogbook"]
+        app.launch()
+        let discard = app.alerts.buttons["Discard"]
+        if discard.waitForExistence(timeout: 3) { discard.tap() }
+
+        // A machine the catalogue does not have, made from the picker and used straight away.
+        XCTAssertTrue(app.navigationBars["Tiger"].waitForExistence(timeout: 10))
+        tap(app.buttons["New workout"])
+        let name = app.textFields["Name"]
+        tap(name)
+        name.typeText("Machine day")
+        tap(app.buttons["Done"])
+        tap(app.buttons["Add exercise"].firstMatch)
+        let search = app.searchFields["Exercise"]
+        tap(search)
+        search.typeText("Hammer chest press")
+        snap("38 Picker, offering a new exercise")
+        tap(app.buttons["add-new-exercise"])
+        XCTAssertTrue(app.navigationBars["New exercise"].waitForExistence(timeout: 5))
+        XCTAssertEqual(app.textFields["new-exercise-name"].value as? String, "Hammer chest press", "the search carries over as the name")
+        tap(app.buttons.matching(NSPredicate(format: "label BEGINSWITH 'Equipment'")).firstMatch)
+        tap(app.buttons["Barbell & machines"])
+        snap("39 New exercise")
+        tap(app.buttons["save-new-exercise"])
+        XCTAssertTrue(app.buttons.matching(NSPredicate(format: "label BEGINSWITH[c] 'Hammer chest press'")).firstMatch.waitForExistence(timeout: 5),
+                      "the new exercise should be in the workout")
+        snap("40 Workout with your own exercise")
+
+        // It is in the picker from now on, marked as yours.
+        tap(app.buttons["Add exercise"].firstMatch)
+        tap(app.searchFields["Exercise"])
+        app.searchFields["Exercise"].typeText("Hammer")
+        XCTAssertTrue(app.staticTexts["yours · kg"].waitForExistence(timeout: 5))
+        snap("41 Picker with your own exercise")
+        tap(app.buttons.matching(NSPredicate(format: "label BEGINSWITH[c] 'Hammer chest press'")).firstMatch)
+
+        // History out as CSV, from Me.
+        tap(app.tabBars.buttons["Me"])
+        let export = app.buttons["export-history"]
+        for _ in 0..<4 where !(export.exists && export.isHittable) { app.swipeUp() }
+        snap("42 Me, export history")
+        tap(export)
+        XCTAssertTrue(app.otherElements["ActivityListView"].waitForExistence(timeout: 10) || app.navigationBars["UIActivityContentView"].waitForExistence(timeout: 2),
+                      "export should open the share sheet")
+        sleep(1)
+        snap("43 Export share sheet")
     }
 
     // MARK: - Helpers

@@ -62,6 +62,18 @@ struct MeView: View {
                         }
                     }
 
+                    ShareLink(item: HistoryCSV(results: store.results), preview: SharePreview(CSVExport.fileName())) {
+                        HStack(spacing: 12) {
+                            Image(systemName: "square.and.arrow.up").foregroundStyle(Brand.coral)
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text("Export history").foregroundStyle(Brand.ink)
+                                Text("Every set you have logged, as a CSV file").font(.footnote).foregroundStyle(Brand.muted)
+                            }
+                        }
+                    }
+                    .disabled(store.results.isEmpty)
+                    .accessibilityIdentifier("export-history")
+
                     Stepper(
                         value: Binding(
                             get: { store.bodyweightKg ?? EffortModel.defaultBodyweightKg },
@@ -177,6 +189,7 @@ struct SettingsView: View {
     @AppStorage(Switches.haptics) private var haptics = true
     @AppStorage(Switches.sound) private var sound = true
     @AppStorage(Switches.liveActivity) private var liveActivity = true
+    @AppStorage(Switches.defaultRest) private var defaultRest = 30.0
     @AppStorage("health") private var health = false
     @State private var signingIn = false
     @State private var healthError: String?
@@ -213,10 +226,14 @@ struct SettingsView: View {
                     .foregroundStyle(Brand.muted)
                 Toggle("Tones", isOn: $sound)
                 Toggle("Lock Screen card", isOn: $liveActivity)
+                Stepper(value: $defaultRest, in: 15...600, step: 15) {
+                    LabeledContent("Default rest", value: Format.clock(defaultRest))
+                }
+                .accessibilityIdentifier("default-rest")
             } header: {
                 Text("In the gym")
             } footer: {
-                Text("Every change of exercise, rest or block. Tones still play with the phone locked; the buzz works while Tiger is open.")
+                Text("Every change of exercise, rest or block. Tones still play with the phone locked; the buzz works while Tiger is open. Default rest is what a rest added in the editor starts at.")
             }
 
             Section {

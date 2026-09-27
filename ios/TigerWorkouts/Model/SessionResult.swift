@@ -4,6 +4,16 @@ import Foundation
 struct SetResult: Codable, Hashable, Sendable {
     var reps: Double?
     var load: Double?
+    /// When the set was ticked, in seconds of session time (pauses excluded). Nil on rows from
+    /// before times were kept.
+    var at: Double? = nil
+}
+
+/// When each round of a circuit or AMRAP block finished, in seconds of session time. `at[0]` is
+/// round 1. A round left unfinished (the AMRAP cap came mid-round) is not in the list.
+struct RoundSplit: Codable, Hashable, Sendable {
+    var blockId: String
+    var at: [Double]
 }
 
 /// What was logged for one exercise step in a session.
@@ -50,7 +60,7 @@ enum SessionOrigin: String, CaseIterable, Sendable {
 /// apps read each other's history without a migration.
 struct SessionResult: Codable, Hashable, Sendable, Identifiable {
     enum CodingKeys: String, CodingKey, CaseIterable {
-        case id, runsheetId, startedFrom, title, startedAt, endedAt, durationSec, completed, activity, device, score, scoreText, steps, notes, rpe
+        case id, runsheetId, startedFrom, title, startedAt, endedAt, durationSec, completed, activity, device, score, scoreText, steps, splits, notes, rpe
     }
 
     var id: String?
@@ -68,6 +78,8 @@ struct SessionResult: Codable, Hashable, Sendable, Identifiable {
     var score: Double?
     var scoreText: String?
     var steps: [StepResult] = []
+    /// Round times per circuit or AMRAP block; nil on rows from before times were kept.
+    var splits: [RoundSplit]?
     var notes: String?
     /// How hard the session felt, 1–10, tapped on the finish screen. Apple Health's workout effort
     /// scale; the web writes the same field.
@@ -106,6 +118,7 @@ struct SessionResult: Codable, Hashable, Sendable, Identifiable {
         score = try c.decodeIfPresent(Double.self, forKey: .score)
         scoreText = try c.decodeIfPresent(String.self, forKey: .scoreText)
         steps = try c.decodeIfPresent([StepResult].self, forKey: .steps) ?? []
+        splits = try c.decodeIfPresent([RoundSplit].self, forKey: .splits)
         notes = try c.decodeIfPresent(String.self, forKey: .notes)
         rpe = try c.decodeIfPresent(Double.self, forKey: .rpe)
     }
