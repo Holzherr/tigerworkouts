@@ -63,13 +63,18 @@ export const ResultSheet = ({ runsheet, history = [], allResults = history, trai
   const [notes, setNotes] = useState('');
   const [rpe, setRpe] = useState<number | undefined>(initial?.rpe);
   const [sharing, setSharing] = useState(false);
+  const [confirmDiscard, setConfirmDiscard] = useState(false);
+  // From the timer, a step it did not log was not done — skipped or never reached — and gets no row:
+  // a row with the planned load would count as sets done. Without a timer run (Log only) every
+  // planned step is there to fill in by hand.
+  const fromTimer = initial?.steps !== undefined;
   // What the timer logged beyond one row per planned step — a step swapped mid-session has a row
   // per exercise — rides through untouched, and each row keeps its per-set results.
   const matched = (s: ExerciseStep) => initial?.steps?.find(x => x.stepId === s.id && x.exerciseKey === s.exercise.key) ?? initial?.steps?.find(x => x.stepId === s.id);
   const extra = (initial?.steps ?? []).filter(x => !steps.some(s => matched(s) === x));
   const [rows, setRows] = useState<Record<string, StepResult>>(() =>
     Object.fromEntries(
-      steps.map(s => {
+      steps.filter(s => !fromTimer || matched(s)).map(s => {
         const rec = matched(s);
         return [s.id, { ...rec, stepId: s.id, exerciseKey: rec?.exerciseKey ?? s.exercise.key, target: rec?.target ?? resolveTarget(s, trainingMaxes, bodyweightKg, equipment), success: rec?.success ?? (hasRule(s) ? true : undefined), reps: rec?.reps ?? (s.forMode === 'amrap' || s.forMode === 'max' ? [s.forValue] : undefined) }];
       })
@@ -98,6 +103,7 @@ export const ResultSheet = ({ runsheet, history = [], allResults = history, trai
         <SessionStats result={result} worked={workedFrom(result, runsheet, k => ({ name: LIB[k]?.name ?? k, group: LIB[k]?.group }))} history={history} bodyweightKg={bodyweightKg} />
         {onBodyweight && bodyweightKg === undefined && <BodyweightPrompt onSave={kg => onBodyweight(kg)} onSkip={() => onBodyweight(undefined)} />}
         {steps.map(s => {
+          if (!rows[s.id]) return null;
           if (seen.has(s.exercise.key) && s.forMode !== 'amrap' && s.forMode !== 'max') return null;
           seen.add(s.exercise.key);
           const row = rows[s.id];
@@ -174,16 +180,31 @@ export const ResultSheet = ({ runsheet, history = [], allResults = history, trai
       </div>
       {sharing && <ShareCardSheet open={sharing} onOpenChange={setSharing} data={shareCardData(result, celebration, type, exerciseName)} />}
       <div className="safe-bottom shrink-0 border-t border-line bg-surface p-3">
-        <div className="flex gap-2">
-          <Button block onClick={() => onSave(result, next)}>
-            <Check /> Save result
-          </Button>
-          {onCancel && (
-            <Button variant="ghost" onClick={onCancel}>
-              Discard
+        {confirmDiscard ? (
+          <div>
+            <p className="pb-2 text-[13px] text-muted">This workout is already in History. Discard takes it out, here and on your other devices.</p>
+            <div className="flex gap-2">
+              <Button block variant="danger" onClick={onCancel}>
+                Discard workout
+              </Button>
+              <Button variant="ghost" onClick={() => setConfirmDiscard(false)}>
+                Keep
+              </Button>
+            </div>
+          </div>
+        ) : (
+          <div className="flex gap-2">
+            <Button block onClick={() => onSave(result, next)}>
+              <Check /> Save result
             </Button>
-          )}
-        </div>
+            {onCancel && (
+              // A session the timer logged is already saved: Discard deletes it, so it asks first.
+              <Button variant="ghost" onClick={() => (initial?.id ? setConfirmDiscard(true) : onCancel())}>
+                Discard
+              </Button>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );

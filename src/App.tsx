@@ -154,8 +154,14 @@ export default function App() {
   const [toast, setToast] = useState<string | null>(null);
   const say = (m: string) => { setToast(m); setTimeout(() => setToast(null), 2500); };
   const invite = async () => { const out = await shareLink('TigerWorkouts', location.origin + location.pathname); say(out === 'copied' ? 'Link copied' : out === 'shared' ? 'Shared' : 'Could not share'); };
-  const [draft, setDraft] = useState<Runsheet | null>(null); // one-off edited copy for "Edit & start"
-  const [pending, setPending] = useState<Partial<SessionResult> | null>(null); // what the timer recorded, for the result sheet
+  // A one-off edited copy for "Edit & start", and what the timer recorded for the result sheet. Each
+  // belongs to one workout: left over from another, it must not stand in for this one.
+  const [drafted, setDrafted] = useState<{ for: string; r: Runsheet } | null>(null);
+  const draftOf = (id: string) => (drafted?.for === id ? drafted.r : null);
+  const draftFor = (id: string) => (r: Runsheet | null) => setDrafted(r && { for: id, r });
+  const [pending, setPending] = useState<Partial<SessionResult> | null>(null);
+  // The workout whose kept run the Discover card asked to resume: that one picks up without asking.
+  const [resumeFor, setResumeFor] = useState<string | null>(null);
   const open = (r: Runsheet, origin?: SessionOrigin) => (setFrom(origin), go(`/w/${encodeURIComponent(wid(r))}`));
   const [tmOpen, setTmOpen] = useState(false);
   const [intent, setIntentState] = useState<Intent>(getIntent);
@@ -219,8 +225,8 @@ export default function App() {
           onExerciseHistory={s => go(exerciseLink(s.exercise.key))}
           hasHistory={s => st.results.some(x => x.steps.some(y => y.exerciseKey === s.exercise.key))}
           onBack={() => go('/discover')}
-          onStart={() => (setDraft(null), go(`/do/${encodeURIComponent(route.id)}`))}
-          onEditAndStart={() => (setDraft(structuredClone(resolveRefs(r, lookup))), go(`/edit/${encodeURIComponent(route.id)}`))}
+          onStart={() => (setDrafted(null), go(`/do/${encodeURIComponent(route.id)}`))}
+          onEditAndStart={() => (draftFor(route.id)(structuredClone(resolveRefs(r, lookup))), go(`/edit/${encodeURIComponent(route.id)}`))}
           onFollowAlong={r.video ? () => go(`/follow/${encodeURIComponent(route.id)}`) : undefined}
           onLogOnly={() => go(`/result/${encodeURIComponent(route.id)}`)}
           onSave={() => act.toggleSaved(route.id)}
@@ -237,24 +243,24 @@ export default function App() {
     return full(<CreatorRoute key={route.id} id={route.id} onOpen={r => open(r)} onShare={async () => { const out = await shareLink('TigerWorkouts', location.href); say(out === 'copied' ? 'Link copied' : out === 'shared' ? 'Shared' : 'Could not share'); }} />);
   }
   if (route.name === 'new') {
-    const r: Runsheet = draft ?? { title: '', creator: st.name, items: [] };
+    const r: Runsheet = draftOf('new') ?? { title: '', creator: st.name, items: [] };
     const saveMine = (): Runsheet => {
       const title = r.title.trim() || 'My workout';
       const id = `u-${Date.now().toString(36)}`;
       const mine: Runsheet = { ...r, id, title, creator: st.name, source: { title, author: st.name, kind: 'user' }, program: undefined, icon: r.icon ?? defaultIcon(id) };
       act.saveWorkout(mine);
-      setDraft(null);
+      setDrafted(null);
       return mine;
     };
     return full(
       <>
         <EditorScreen
           runsheet={r}
-          onChange={setDraft}
+          onChange={draftFor('new')}
           onPickExercise={pick}
           onSwapExercise={pick}
-          onBack={() => (setDraft(null), go('/discover/saved'))}
-          onReset={() => setDraft(null)}
+          onBack={() => (setDrafted(null), go('/discover/saved'))}
+          onReset={() => setDrafted(null)}
           onSaveAsMine={() => { const m = saveMine(); say('Saved to My workouts'); go(`/w/${encodeURIComponent(m.id!)}`); }}
           onStart={() => { const m = saveMine(); go(`/do/${encodeURIComponent(m.id!)}`); }}
           resolveTarget={resolve}
@@ -265,26 +271,26 @@ export default function App() {
           autoRest={defaultRest}
           mode="author"
           dndVariant={dnd}
-          onTextChange={t => { const out = applyCommands(r, t, library); setDraft(out.runsheet); say(out.applied.length ? out.applied.join(' · ') : `Didn't understand “${t}”`); }}
+          onTextChange={t => { const out = applyCommands(r, t, library); draftFor('new')(out.runsheet); say(out.applied.length ? out.applied.join(' · ') : `Didn't understand “${t}”`); }}
           onPastePlan={() => setPasteOpen(true)}
         />
-        <PasteSheet open={pasteOpen} onOpenChange={setPasteOpen} library={library} onUse={items => { setDraft({ ...r, items }); setPasteOpen(false); }} />
+        <PasteSheet open={pasteOpen} onOpenChange={setPasteOpen} library={library} onUse={items => { draftFor('new')({ ...r, items }); setPasteOpen(false); }} />
       </>
     );
   }
   if (route.name === 'edit') {
     const base = byId.get(route.id);
-    const r = draft ?? (base ? structuredClone(resolveRefs(base, lookup)) : null);
+    const r = draftOf(route.id) ?? (base ? structuredClone(resolveRefs(base, lookup)) : null);
     if (!r) return shell('discover', <Missing />);
     return full(
       <>
         <EditorScreen
           runsheet={r}
-          onChange={setDraft}
+          onChange={draftFor(route.id)}
           onPickExercise={pick}
           onSwapExercise={pick}
-          onBack={() => (setDraft(null), go(`/w/${encodeURIComponent(route.id)}`))}
-          onReset={() => setDraft(base ? structuredClone(resolveRefs(base, lookup)) : null)}
+          onBack={() => (setDrafted(null), go(`/w/${encodeURIComponent(route.id)}`))}
+          onReset={() => draftFor(route.id)(base ? structuredClone(resolveRefs(base, lookup)) : null)}
           onStart={() => go(`/do/${encodeURIComponent(route.id)}`)}
           onSaveAsMine={() => {
             // Your own workout saves in place; anything else becomes a copy of yours.
@@ -292,7 +298,7 @@ export default function App() {
             const id = own ? base!.id! : `u-${Date.now().toString(36)}`;
             const mine: Runsheet = { ...r, id, creator: own ? r.creator : st.name, source: own ? r.source : { title: r.title, url: r.source?.url, author: r.source?.author ?? r.creator, kind: 'user' }, program: own ? r.program : undefined, icon: r.icon ?? defaultIcon(id), public: own ? r.public : false, ownerId: undefined };
             act.saveWorkout(mine);
-            setDraft(null);
+            setDrafted(null);
             say(own ? 'Saved' : 'Saved to My workouts');
             go(`/w/${encodeURIComponent(id)}`);
           }}
@@ -304,10 +310,10 @@ export default function App() {
           autoRest={defaultRest}
           mode="tonight"
           dndVariant={dnd}
-          onTextChange={t => { const out = applyCommands(r, t, library); setDraft(out.runsheet); say(out.applied.length ? out.applied.join(' · ') : `Didn't understand “${t}”`); }}
+          onTextChange={t => { const out = applyCommands(r, t, library); draftFor(route.id)(out.runsheet); say(out.applied.length ? out.applied.join(' · ') : `Didn't understand “${t}”`); }}
           onPastePlan={() => setPasteOpen(true)}
         />
-        <PasteSheet open={pasteOpen} onOpenChange={setPasteOpen} library={library} onUse={items => { setDraft({ ...r, items }); setPasteOpen(false); }} />
+        <PasteSheet open={pasteOpen} onOpenChange={setPasteOpen} library={library} onUse={items => { draftFor(route.id)({ ...r, items }); setPasteOpen(false); }} />
       </>
     );
   }
@@ -338,12 +344,12 @@ export default function App() {
     );
   }
   if (route.name === 'do') {
-    const r = draft ?? byId.get(route.id);
+    const r = draftOf(route.id) ?? byId.get(route.id);
     if (!r) return shell('discover', <Missing />);
     // Refs inlined, last time's loads carried in, then % of a training max and × bodyweight worked
     // out, so the timer shows and logs a weight for every loaded set.
     const run = resolveLoads(withLastUsed(resolveRefs(r, lookup), st.results), st.trainingMaxes, st.bodyweightKg, st.equipment);
-    return <RunRoute key={route.id} runsheet={run} results={st.results} intent={intent} equipment={st.equipment} onLog={res => act.addResult({ ...res, runsheetId: wid(r) })} onFinish={res => (setPending({ ...res, runsheetId: wid(r) }), go(`/result/${encodeURIComponent(route.id)}`))} onExit={() => (Runner.clearPersisted(), go(`/w/${encodeURIComponent(route.id)}`))} />;
+    return <RunRoute key={route.id} runsheet={run} results={st.results} intent={intent} equipment={st.equipment} resume={resumeFor === route.id} onLog={res => act.addResult({ ...res, runsheetId: wid(r) })} onFinish={res => (setResumeFor(null), setPending({ ...res, runsheetId: wid(r) }), go(`/result/${encodeURIComponent(route.id)}`))} onExit={() => (setResumeFor(null), Runner.clearPersisted(), go(`/w/${encodeURIComponent(route.id)}`))} />;
   }
   if (route.name === 'session') {
     const res = st.results.find(x => x.id === route.id);
@@ -371,8 +377,10 @@ export default function App() {
     return full(<ExerciseHistoryScreen key={route.id} exercise={ex} results={st.results} onBack={() => back('/history/exercises')} onSession={id => go(`/s/${encodeURIComponent(id)}`)} stall={stall} onDismissStall={stall ? () => dismiss(stall) : undefined} onExercise={k => go(exerciseLink(k))} />);
   }
   if (route.name === 'result') {
-    const r = draft ?? byId.get(route.id);
+    const r = draftOf(route.id) ?? byId.get(route.id);
     if (!r) return shell('discover', <Missing />);
+    // What the timer recorded, if it was this workout's run.
+    const logged = pending && pending.runsheetId === wid(r) ? pending : null;
     return full(
       <>
         <ResultSheet
@@ -381,18 +389,24 @@ export default function App() {
           allResults={st.results}
           trainingMaxes={st.trainingMaxes}
           bodyweightKg={st.bodyweightKg}
-          initial={pending ?? undefined}
+          initial={logged ?? undefined}
           startedFrom={from}
           intent={intent}
           equipment={st.equipment}
           onBodyweight={st.bodyweightKg === undefined && !st.bodyweightAsked ? kg => (kg === undefined ? act.skipBodyweight() : act.setBodyweight(kg)) : undefined}
-          onCancel={() => (setPending(null), go(`/w/${encodeURIComponent(route.id)}`))}
+          onCancel={() => {
+            // The timer logged the session the moment it ended: Discard takes that row out again.
+            if (logged?.id) act.deleteResult(logged.id);
+            setPending(null);
+            setDrafted(null);
+            go(`/w/${encodeURIComponent(route.id)}`);
+          }}
           onSave={(res, next) => {
             act.addResult({ ...res, runsheetId: wid(r) });
             const tm = { ...st.trainingMaxes };
             for (const n of next) if (n.to !== undefined && n.reason.includes('training max')) tm[n.exerciseKey] = n.to;
             act.setTrainingMaxes(tm);
-            setDraft(null);
+            setDrafted(null);
             setPending(null);
             say('Workout saved');
             go('/history');
@@ -520,11 +534,11 @@ export default function App() {
     );
   }
   const initialTab: DiscoverTab = sub === 'search' ? 'search' : sub === 'foryou' ? 'recommended' : 'saved';
-  const saved = Runner.loadPersisted();
+  const saved = Runner.loadPersisted()?.state;
   const above = (
     <>
       {saved && byId.has(saved.runsheetId) && (
-        <button type="button" onClick={() => go(`/do/${encodeURIComponent(saved.runsheetId)}`)} className="flex w-full items-center gap-3 rounded-card border border-brand-line bg-brand-soft px-3 py-2.5 text-left">
+        <button type="button" onClick={() => (setDrafted(null), setResumeFor(saved.runsheetId), go(`/do/${encodeURIComponent(saved.runsheetId)}`))} className="flex w-full items-center gap-3 rounded-card border border-brand-line bg-brand-soft px-3 py-2.5 text-left">
           <div className="min-w-0 flex-1">
             <div className="text-[14px] font-bold">Resume {saved.title}</div>
             <div className="text-[12px] text-muted">Step {saved.i + 1} of {saved.slots.length}</div>
@@ -558,10 +572,10 @@ export default function App() {
       today={nextToday}
       stall={nextStall}
       onOpen={() => open(next.runsheet, 'home')}
-      onStart={() => (setDraft(null), setFrom('home'), go(`/do/${encodeURIComponent(wid(next.runsheet))}`))}
+      onStart={() => (setDrafted(null), setFrom('home'), go(`/do/${encodeURIComponent(wid(next.runsheet))}`))}
     />
   );
-  return shell('discover', <DiscoverScreen key={initialTab} initialTab={initialTab} workouts={all} results={st.results} savedIds={st.saved} above={above} top={top} onCreate={() => (setDraft(null), go('/new'))} onOpen={open} onOpenProgram={(_, days) => open(days[0], 'search')} />);
+  return shell('discover', <DiscoverScreen key={initialTab} initialTab={initialTab} workouts={all} results={st.results} savedIds={st.saved} above={above} top={top} onCreate={() => (setDrafted(null), go('/new'))} onOpen={open} onOpenProgram={(_, days) => open(days[0], 'search')} />);
 }
 
 /**
@@ -569,9 +583,52 @@ export default function App() {
  * result sheet is saved. Until then it lived only in memory: the persisted run was cleared at done,
  * so a reload or a closed tab on the result sheet lost it. The sheet then edits the logged row.
  */
-const RunRoute = ({ runsheet, results, intent, equipment, onLog, onFinish, onExit }: { runsheet: Runsheet; results: SessionResult[]; intent: Intent; equipment?: Equipment; onLog: (r: SessionResult) => void; onFinish: (r: SessionResult) => void; onExit: () => void }) => {
+type RunRouteProps = { runsheet: Runsheet; results: SessionResult[]; intent: Intent; equipment?: Equipment; onLog: (r: SessionResult) => void; onFinish: (r: SessionResult) => void; onExit: () => void };
+
+/**
+ * A run of this workout kept on the device (a reload, a closed tab) is asked about, not picked up
+ * silently: Start and Edit & start mean a new session, and the kept one may be hours old. Resumed,
+ * it comes back paused where it was left, so the time away is not workout time. A run of another
+ * workout is never offered here. The Discover card's Resume (`resume`) has asked already.
+ */
+const RunRoute = ({ resume, ...props }: RunRouteProps & { resume?: boolean }) => {
+  const [kept] = useState(() => Runner.loadPersisted(props.runsheet.id ?? props.runsheet.title));
+  const [from, setFrom] = useState<Runner.RunState | 'fresh' | null>(() => (!kept ? 'fresh' : resume ? Runner.restore(kept.state, kept.savedAt) : null));
+  if (from) return <RunSession {...props} from={from === 'fresh' ? undefined : from} />;
+  const partial = kept && Object.values(kept.state.actuals).some(a => a.doneAt !== undefined);
+  const saveWhatWasDone = () => {
+    const done = Runner.finish(Runner.restore(kept!.state, kept!.savedAt), kept!.savedAt);
+    const res = { ...Runner.toResult(done, props.runsheet, kept!.savedAt), id: Runner.sessionId(done) };
+    props.onLog(res);
+    Runner.clearPersisted();
+    props.onFinish(res);
+  };
+  return (
+    <div className="flex h-dvh flex-col items-center justify-center gap-3 bg-ink px-6 text-center text-white">
+      <div className="text-[22px] font-extrabold">Pick up where you left off?</div>
+      <div className="text-[14px] text-white/70">
+        {props.runsheet.title} was left at step {Math.min(kept!.state.i + 1, kept!.state.slots.length)} of {kept!.state.slots.length}, {Math.max(1, Math.round((Date.now() - kept!.savedAt) / 60000))} min ago.
+      </div>
+      <div className="mt-2 flex w-full max-w-xs flex-col gap-2">
+        <Button block variant="brand" onClick={() => setFrom(Runner.restore(kept!.state, kept!.savedAt))}>
+          Resume
+        </Button>
+        {partial && (
+          <Button block variant="dark" className="bg-white/10" onClick={saveWhatWasDone}>
+            Save what I did
+          </Button>
+        )}
+        <Button block variant="dark" className="bg-white/10" onClick={() => (Runner.clearPersisted(), setFrom('fresh'))}>
+          Start over
+        </Button>
+      </div>
+    </div>
+  );
+};
+
+const RunSession = ({ runsheet, results, intent, equipment, onLog, onFinish, onExit, from }: RunRouteProps & { from?: Runner.RunState }) => {
   // Open reps (a range, a max) start on what was done last time, set for set.
-  const { state, now, act } = useRunner(runsheet, { resume: true, seed: s => Runner.prefillReps(s, (step, round) => lastSets(results, step)?.[round]?.reps) });
+  const { state, now, act } = useRunner(runsheet, { from, seed: s => Runner.prefillReps(s, (step, round) => lastSets(results, step)?.[round]?.reps) });
   // The last session of this workout with times kept, raced on the header. Fixed for the session.
   const [rival] = useState(() => lastTimed(results, runsheet.id ?? runsheet.title));
   const [muted, setMute] = useState(getMuted);

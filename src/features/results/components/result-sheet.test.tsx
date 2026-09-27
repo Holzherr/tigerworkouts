@@ -87,3 +87,26 @@ describe('ResultSheet made it / missed', () => {
     expect(saved.steps.find(x => x.stepId === 'row')?.success).toBeUndefined();
   });
 });
+
+describe('ResultSheet logs only what was done', () => {
+  const initial: SessionResult = { id: 's-now-run', runsheetId: 'p', startedAt: '2026-09-27T10:00:00Z', steps: [{ stepId: 's1', exerciseKey: 'kb_swing', target: 28, success: true, sets: [{ load: 28 }] }] };
+  it('has no row for a step the timer never logged', () => {
+    const onSave = vi.fn();
+    render(<ResultSheet runsheet={priyanka()} initial={initial} onSave={onSave} />);
+    expect(screen.queryByText('Incline chest press')).toBeNull();
+    fireEvent.click(screen.getByText('Save result'));
+    const saved: SessionResult = onSave.mock.calls[0][0];
+    expect(saved.steps.map(x => x.stepId)).toEqual(['s1']);
+  });
+  it('without a timer run, every planned step is there to log by hand', () => {
+    expect(save().steps.map(x => x.stepId)).toEqual(['s1', 's2', 's3', 's4', 's5', 's6']);
+  });
+  it('Discard of a logged session asks first, then discards', () => {
+    const onCancel = vi.fn();
+    render(<ResultSheet runsheet={priyanka()} initial={initial} onSave={vi.fn()} onCancel={onCancel} />);
+    fireEvent.click(screen.getByText('Discard'));
+    expect(onCancel).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByText('Discard workout'));
+    expect(onCancel).toHaveBeenCalledOnce();
+  });
+});

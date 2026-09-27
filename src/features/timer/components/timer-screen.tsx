@@ -192,7 +192,7 @@ export const TimerScreen = ({ runsheet, state, now, onDone, onSkip, onBack, onPa
   const total = R.elapsed(state, now);
   const paused = state.phase === 'paused';
   const ready = state.phase === 'ready';
-  const lead = state.phase === 'lead' || (paused && state.i === 0 && Object.keys(state.blockStart).length === 0);
+  const lead = state.phase === 'lead' || (paused && (state.pausedFrom ? state.pausedFrom === 'lead' : state.i === 0 && Object.keys(state.blockStart).length === 0));
   const done = state.phase === 'done';
   const bElapsed = R.blockElapsed(state, now);
   const stepOf = slot?.step;
@@ -206,6 +206,7 @@ export const TimerScreen = ({ runsheet, state, now, onDone, onSkip, onBack, onPa
   const progress = slot?.seconds && clock.left !== undefined ? 1 - clock.left / slot.seconds : 0;
   const all = R.overall(state, now);
   const capLeft = R.capLeft(state, now);
+  const minuteLeft = R.minuteLeft(state, now);
   const items = partItems(runsheet);
   const nextIsNewPart = !!nxt && !!slot && nxt.part !== slot.part;
   const partOf = (p: number) => items[p];
@@ -304,6 +305,11 @@ export const TimerScreen = ({ runsheet, state, now, onDone, onSkip, onBack, onPa
             )}
             {lead && <div className="-mt-2 pb-3 text-center text-[13px] text-white/60">Get ready</div>}
             {!timed && !lead && !done && slot && <div className="-mt-2 pb-3 text-center text-[13px] text-white/60">{isRest ? 'Rest' : straight ? 'Tick the set when you finish it' : 'Tap Done when finished'}</div>}
+            {minuteLeft !== undefined && !lead && !done && (
+              <div className={cn('mx-auto mb-3 w-fit rounded-full bg-white/10 px-3 py-1 text-[13px] font-bold tabular-nums', minuteLeft <= 10 && 'text-brand')} aria-label="Time left in the minute">
+                {fmtClock(minuteLeft)} left in the minute
+              </div>
+            )}
             {capLeft !== undefined && !lead && !done && (
               <div className="mx-auto mb-3 w-fit rounded-full bg-white/10 px-3 py-1 text-[13px] font-bold tabular-nums" aria-label="Time left in the block">
                 {fmtClock(capLeft)} left in the block
@@ -394,7 +400,7 @@ export const TimerScreen = ({ runsheet, state, now, onDone, onSkip, onBack, onPa
             {done && (
               <div className="rounded-card bg-white/10 p-4 text-center">
                 <div className="text-[18px] font-extrabold">Done</div>
-                <div className="mt-1 text-[13px] text-white/70">{fmtClock(total)} · log the result to keep it</div>
+                <div className="mt-1 text-[13px] text-white/70">{fmtClock(total)} · saved to History</div>
               </div>
             )}
             {!isRest && !done && !lead && !straight && <div className="pt-2 text-center text-[11px] text-white/40">Swipe the card left to drop this exercise for tonight</div>}

@@ -87,12 +87,11 @@ const vib = (p: number | number[]) => {
  * Drives the runner: 200 ms ticks, 3-2-1 beeps and an end tone, haptics on transitions, a screen
  * wake lock while running, persistence on every change so an iOS reload resumes where it was.
  */
-export const useRunner = (runsheet: Runsheet, opts: { resume?: boolean; silent?: boolean; persist?: boolean; /** Applied to a fresh start only, never to a resumed run. */ seed?: (s: R.RunState) => R.RunState } = {}) => {
+export const useRunner = (runsheet: Runsheet, opts: { /** A kept run to carry on with (see `R.restore`); the caller asks first. */ from?: R.RunState; silent?: boolean; persist?: boolean; /** Applied to a fresh start only, never to a resumed run. */ seed?: (s: R.RunState) => R.RunState } = {}) => {
   const silent = !!opts.silent;
   const persist = opts.persist !== false;
   const [state, setState] = useState<R.RunState>(() => {
-    const saved = opts.resume ? R.loadPersisted() : null;
-    if (saved && saved.runsheetId === (runsheet.id ?? runsheet.title)) return saved;
+    if (opts.from) return opts.from;
     const fresh = R.start(runsheet, Date.now());
     return opts.seed ? opts.seed(fresh) : fresh;
   });
