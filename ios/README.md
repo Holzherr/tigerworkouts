@@ -44,7 +44,7 @@ What you get that the PWA cannot do:
 TigerWorkouts/
   Model/      Runsheet, Library, SessionResult, LastUsed, Editing — Codable mirrors of the TS model
   Engine/     Runner (a port of runner.ts, pure), SessionRunner (tick, haptics, sound, disk)
-  Results/    Effort (METs, streak, tonnage), Muscles (name-first matcher)
+  Results/    Effort (METs, streak, tonnage), Muscles (name-first matcher), Logbook, CSV export
   Cloud/      Supabase (GoTrue + PostgREST over URLSession), Store, Keychain
   Health/     Health (HKWorkout out; bodyweight and heart rate in)
   Feedback/   Haptics (Core Haptics), Cues (AVAudioEngine), SessionActivityController
