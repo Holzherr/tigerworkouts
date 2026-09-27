@@ -279,16 +279,17 @@ export const resume = (s: RunState, now: number): RunState => {
 export const back = (s: RunState, now: number): RunState => (s.i > 0 ? enter(s, s.i - 1, now) : s);
 
 /**
- * −15 s / +15 s on the rest that is counting down, running or paused. The slot's length moves with
- * it, so the ring and the overall progress stay true. Taking more than is left ends the rest at the
- * next tick. An EMOM's wait is the minute's clock, not a rest, and is left alone.
+ * Lengthen (or, with a negative `by`, shorten) the rest that is counting down, running or paused:
+ * the timer's −15 s / +15 s and the Lock Screen's +15 s. The slot's length moves with it, so the
+ * ring and the overall progress stay true. A rest shortened past now ends on the next tick. A work
+ * slot, a user-paced step and an EMOM's wait (the minute's clock, not a rest) are left alone.
  */
-export const adjustRest = (s: RunState, now: number, deltaSec: number): RunState => {
+export const extendRest = (s: RunState, now: number, by: number): RunState => {
   const c = current(s);
   if (!c || c.kind !== 'rest' || c.untilBoundary || c.seconds === undefined) return s;
   const left = s.phase === 'running' && s.endsAt !== undefined ? s.endsAt - now : s.phase === 'paused' && s.remainingMs !== undefined ? s.remainingMs : undefined;
   if (left === undefined) return s;
-  const nextLeft = Math.max(0, left + deltaSec * 1000);
+  const nextLeft = Math.max(0, left + by * 1000);
   const moved = (nextLeft - left) / 1000;
   const slots = s.slots.map((sl, i) => (i === s.i ? { ...sl, seconds: Math.max(0, (sl.seconds ?? 0) + moved) } : sl));
   return s.phase === 'running' ? { ...s, slots, endsAt: now + nextLeft } : { ...s, slots, remainingMs: nextLeft };

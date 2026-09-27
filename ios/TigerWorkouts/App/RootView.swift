@@ -83,6 +83,8 @@ struct RootView: View {
             Text("\(pending.sheet.title) was still running when the app closed, \(pending.savedAt.formatted(.relative(presentation: .named))).")
         }
         .onChange(of: scenePhase) { _, phase in Self.scenePhaseChanged(to: phase) }
+        // A workout link lands on the Workouts tab, whichever tab was open.
+        .onOpenURL { url in if url.host == "w" { tab = .workouts } }
     }
 
     private func start(_ sheet: Runsheet, from origin: SessionOrigin?) {

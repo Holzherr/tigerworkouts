@@ -52,6 +52,23 @@ describe('run', () => {
     expect(Math.round((s.endsAt! - 60000) / 1000)).toBe(20);
     expect(s.pausedMs).toBe(45000);
   });
+  it('extendRest moves the end of a running rest, and only a rest', () => {
+    let s = tick(start(interval(), 0), 5000);
+    expect(R.extendRest(s, 6000, 15)).toBe(s); // work: untouched
+    s = advance(s, 20000); // on to the 10 s rest, ends at 30 s
+    s = R.extendRest(s, 21000, 15);
+    expect(s.endsAt).toBe(45000);
+    s = R.extendRest(s, 22000, -60); // past now: ends on the next tick
+    expect(s.endsAt).toBe(22000);
+    expect(tick(s, 22000).slots[tick(s, 22000).i].kind).toBe('work');
+  });
+  it('extendRest while paused moves what is left', () => {
+    let s = advance(tick(start(interval(), 0), 5000), 20000);
+    s = pause(s, 25000); // 5 s left
+    s = R.extendRest(s, 26000, 15);
+    s = resume(s, 30000);
+    expect(s.endsAt).toBe(50000);
+  });
   it('adjust logs a change with the time into the step', () => {
     let s = tick(start(interval(), 0), 5000);
     s = adjust(s, 12000, 32);
@@ -418,23 +435,23 @@ describe('rest controls', () => {
   it('+15 s and −15 s move the running rest and its length', () => {
     let s = onRest();
     expect(s.slots[s.i].kind).toBe('rest');
-    s = R.adjustRest(s, 30000, 15);
+    s = R.extendRest(s, 30000, 15);
     expect(s.endsAt).toBe(95000);
     expect(s.slots[s.i].seconds).toBe(75);
-    s = R.adjustRest(s, 31000, -15);
-    s = R.adjustRest(s, 32000, -15);
+    s = R.extendRest(s, 31000, -15);
+    s = R.extendRest(s, 32000, -15);
     expect(s.endsAt).toBe(65000);
     expect(s.slots[s.i].seconds).toBe(45);
   });
   it('taking more than is left ends the rest at the next tick', () => {
-    let s = R.adjustRest(onRest(), 75000, -15); // 5 s left
+    let s = R.extendRest(onRest(), 75000, -15); // 5 s left
     expect(s.endsAt).toBe(75000);
     s = tick(s, 75000);
     expect(s.slots[s.i].step.id).toBe('b:between');
   });
   it('works on a paused rest', () => {
     let s = pause(onRest(), 30000); // 50 s left
-    s = R.adjustRest(s, 40000, 15);
+    s = R.extendRest(s, 40000, 15);
     expect(s.remainingMs).toBe(65000);
     s = resume(s, 50000);
     expect(s.endsAt).toBe(115000);
@@ -443,15 +460,15 @@ describe('rest controls', () => {
     const s = tick(onRest(), 80000); // the step rest ends: the rest between rounds
     expect(s.slots[s.i].step.id).toBe('b:between');
     const before = s.endsAt!;
-    expect(R.adjustRest(s, 151000, 15).endsAt).toBe(before + 15000);
+    expect(R.extendRest(s, 151000, 15).endsAt).toBe(before + 15000);
   });
   it('leaves work and an EMOM wait alone', () => {
     const work = tick(start(sheet(), 0), 5000);
-    expect(R.adjustRest(work, 6000, 15)).toBe(work);
+    expect(R.extendRest(work, 6000, 15)).toBe(work);
     const emom: Runsheet = { id: 'e', title: 'E', items: [{ kind: 'block', id: 'b', name: 'E', repeat: 2, mode: 'emom', everySec: 60, steps: [{ ...makeExercise(EX.bw_burpee, { forMode: 'reps', forValue: 5 }), id: 'x' }] }] };
     const wait = advance(tick(start(emom, 0), 5000), 20000);
     expect(wait.slots[wait.i].untilBoundary).toBe(true);
-    expect(R.adjustRest(wait, 21000, 15)).toBe(wait);
+    expect(R.extendRest(wait, 21000, 15)).toBe(wait);
   });
 });
 

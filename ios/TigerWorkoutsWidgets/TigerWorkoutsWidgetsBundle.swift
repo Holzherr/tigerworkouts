@@ -5,5 +5,6 @@ import WidgetKit
 struct TigerWorkoutsWidgetsBundle: WidgetBundle {
     var body: some Widget {
         SessionLiveActivity()
+        UpNextWidget()
     }
 }

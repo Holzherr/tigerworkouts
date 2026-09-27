@@ -183,7 +183,7 @@ export const useRunner = (runsheet: Runsheet, opts: { resume?: boolean; silent?:
     setRepsAt: useCallback((slotId: string, n: number) => setState(s => R.setRepsAt(s, slotId, n)), []),
     completeSet: useCallback((slotId: string) => setState(s => R.completeSet(s, Date.now(), slotId)), []),
     reopenSet: useCallback((slotId: string) => setState(s => R.reopenSet(s, slotId)), []),
-    adjustRest: useCallback((deltaSec: number) => setState(s => R.adjustRest(s, Date.now(), deltaSec)), []),
+    extendRest: useCallback((deltaSec: number) => setState(s => R.extendRest(s, Date.now(), deltaSec)), []),
     fillSet: useCallback((slotId: string, set: SetResult) => setState(s => R.fillSet(s, Date.now(), slotId, set)), []),
     drop: useCallback((stepId: string) => setState(s => R.drop(s, Date.now(), stepId)), []),
     finish: useCallback(() => setState(s => R.finish(s, Date.now())), []),

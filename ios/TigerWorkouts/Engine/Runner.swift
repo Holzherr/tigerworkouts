@@ -395,10 +395,11 @@ enum Runner {
         s.i > 0 ? enter(s, s.i - 1, now) : s
     }
 
-    /// −15 s / +15 s on the rest that is counting down, running or paused. The slot's length moves
-    /// with it, so the ring and the overall progress stay true. Taking more than is left ends the
-    /// rest at the next tick. An EMOM's wait is the minute's clock, not a rest, and is left alone.
-    static func adjustRest(_ s: RunState, now: Double, by deltaSec: Double) -> RunState {
+    /// Lengthen (or, with a negative `by`, shorten) the rest that is counting down, running or
+    /// paused: the timer's −15 s / +15 s and the Lock Screen's +15 s. The slot's length moves with
+    /// it, so the ring and the overall progress stay true. A rest shortened past now ends on the
+    /// next tick. A work slot, a user-paced step and an EMOM's wait are left alone.
+    static func extendRest(_ s: RunState, now: Double, by deltaSec: Double) -> RunState {
         guard let c = current(s), c.kind == .rest, !c.untilBoundary, let seconds = c.seconds else { return s }
         let left: Double
         if s.phase == .running, let end = s.endsAt { left = end - now }

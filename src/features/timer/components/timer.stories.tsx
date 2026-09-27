@@ -12,7 +12,7 @@ const pyramid = (): Runsheet => ({ id: 'pyramid', title: 'Bench pyramid', items:
 
 const Live = ({ runsheet, ghost }: { runsheet: Runsheet; ghost?: string }) => {
   const { state, now, act } = useRunner(runsheet, { persist: false });
-  return <TimerScreen runsheet={runsheet} state={state} now={now} onDone={act.done} onSkip={act.skip} onBack={act.back} onPause={act.pause} onResume={act.resume} onAdjust={act.adjust} onSetReps={act.setReps} onDrop={act.drop} onStartBlock={act.startBlock} onAdjustIncline={act.adjustIncline} sets={{ adjust: act.adjustAt, setReps: act.setRepsAt, complete: act.completeSet, reopen: act.reopenSet, lastFor: (_, i) => (i < 2 ? { load: 57.5 + i * 5, reps: 8 } : undefined), fill: act.fillSet }} onAdjustRest={act.adjustRest} lastFor={() => ({ load: 20, reps: 12 })} onFill={act.fillSet} ghost={ghost} onFinish={() => alert(JSON.stringify(R.toResult(state, runsheet, Date.now()), null, 1))} onExit={() => alert('exit')} />;
+  return <TimerScreen runsheet={runsheet} state={state} now={now} onDone={act.done} onSkip={act.skip} onBack={act.back} onPause={act.pause} onResume={act.resume} onAdjust={act.adjust} onSetReps={act.setReps} onDrop={act.drop} onStartBlock={act.startBlock} onAdjustIncline={act.adjustIncline} sets={{ adjust: act.adjustAt, setReps: act.setRepsAt, complete: act.completeSet, reopen: act.reopenSet, lastFor: (_, i) => (i < 2 ? { load: 57.5 + i * 5, reps: 8 } : undefined), fill: act.fillSet }} onAdjustRest={act.extendRest} lastFor={() => ({ load: 20, reps: 12 })} onFill={act.fillSet} ghost={ghost} onFinish={() => alert(JSON.stringify(R.toResult(state, runsheet, Date.now()), null, 1))} onExit={() => alert('exit')} />;
 };
 
 const meta = {

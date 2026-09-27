@@ -21,18 +21,18 @@ struct RestControlTests {
     func moves() {
         var s = Self.onRest()
         #expect(s.slots[s.i].kind == .rest)
-        s = Runner.adjustRest(s, now: 30_000, by: 15)
+        s = Runner.extendRest(s, now: 30_000, by: 15)
         #expect(s.endsAt == 95_000)
         #expect(s.slots[s.i].seconds == 75)
-        s = Runner.adjustRest(s, now: 31_000, by: -15)
-        s = Runner.adjustRest(s, now: 32_000, by: -15)
+        s = Runner.extendRest(s, now: 31_000, by: -15)
+        s = Runner.extendRest(s, now: 32_000, by: -15)
         #expect(s.endsAt == 65_000)
         #expect(s.slots[s.i].seconds == 45)
     }
 
     @Test("taking more than is left ends the rest at the next tick")
     func endsRest() {
-        var s = Runner.adjustRest(Self.onRest(), now: 75_000, by: -15) // 5 s left
+        var s = Runner.extendRest(Self.onRest(), now: 75_000, by: -15) // 5 s left
         #expect(s.endsAt == 75_000)
         s = Runner.tick(s, now: 75_000)
         #expect(s.slots[s.i].step.id == "b:between")
@@ -41,7 +41,7 @@ struct RestControlTests {
     @Test("works on a paused rest")
     func paused() {
         var s = Runner.pause(Self.onRest(), now: 30_000) // 50 s left
-        s = Runner.adjustRest(s, now: 40_000, by: 15)
+        s = Runner.extendRest(s, now: 40_000, by: 15)
         #expect(s.remainingMs == 65_000)
         s = Runner.resume(s, now: 50_000)
         #expect(s.endsAt == 115_000)
@@ -51,20 +51,20 @@ struct RestControlTests {
     func between() {
         let s = Runner.tick(Self.onRest(), now: 80_000)
         #expect(s.slots[s.i].step.id == "b:between")
-        #expect(Runner.adjustRest(s, now: 81_000, by: 15).endsAt == s.endsAt! + 15_000)
+        #expect(Runner.extendRest(s, now: 81_000, by: 15).endsAt == s.endsAt! + 15_000)
     }
 
     @Test("leaves work and an EMOM wait alone")
     func leavesAlone() {
         let work = Runner.tick(Runner.start(Self.sheet(), now: 0), now: 5_000)
-        #expect(Runner.adjustRest(work, now: 6_000, by: 15) == work)
+        #expect(Runner.extendRest(work, now: 6_000, by: 15) == work)
         let emom = Runsheet(id: "e", title: "E", items: [.block(Block(
             id: "b", name: "E", repeatCount: 2, mode: .emom,
             steps: [Fixtures.work("x", Fixtures.burpee, forMode: .reps, forValue: 5)], everySec: 60
         ))])
         let wait = Runner.advance(Runner.tick(Runner.start(emom, now: 0), now: 5_000), now: 20_000)
         #expect(wait.slots[wait.i].untilBoundary)
-        #expect(Runner.adjustRest(wait, now: 21_000, by: 15) == wait)
+        #expect(Runner.extendRest(wait, now: 21_000, by: 15) == wait)
     }
 }
 

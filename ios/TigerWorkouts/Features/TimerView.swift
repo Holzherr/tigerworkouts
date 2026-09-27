@@ -277,8 +277,8 @@ struct TimerView: View {
                 }
                 if runner.restAdjustable {
                     HStack(spacing: 10) {
-                        restNudge("−15 s", label: "15 seconds less rest") { runner.adjustRest(by: -15) }
-                        restNudge("+15 s", label: "15 seconds more rest") { runner.adjustRest(by: 15) }
+                        restNudge("−15 s", label: "15 seconds less rest") { runner.extendRest(by: -15); Haptics.shared.play(.tick) }
+                        restNudge("+15 s", label: "15 seconds more rest") { runner.extendRest(by: 15); Haptics.shared.play(.tick) }
                     }
                     .padding(.top, 8)
                 }

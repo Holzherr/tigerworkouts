@@ -420,6 +420,62 @@ final class WalkthroughUITests: XCTestCase {
         snap("18 Lock Screen, after a transition while locked")
     }
 
+    /// The card's buttons, with the phone locked: Done on a set, then +15 s and Skip on the rest.
+    /// A lifting block, because its sets wait for Done and its rests are long enough for the
+    /// Lock Screen to be read between taps.
+    func testLockScreenControls() {
+        open("Iron Base · Whole Body A")
+        tap(app.buttons["Start workout"])
+        XCTAssertTrue(app.buttons["End session"].waitForExistence(timeout: 5))
+        let startPull = app.buttons["Start Pull"]
+        for _ in 0..<60 where !startPull.exists {
+            let start = app.buttons.matching(NSPredicate(format: "label BEGINSWITH 'Start ' AND label != 'Start workout'")).firstMatch
+            if start.exists, start.isHittable {
+                start.tap()
+            } else if app.buttons["Skip"].exists {
+                app.buttons["Skip"].tap()
+            }
+        }
+        tap(startPull)
+        XCTAssertTrue(app.buttons["Tick set 1"].waitForExistence(timeout: 5))
+
+        let lock = NSSelectorFromString("pressLockButton")
+        guard XCUIDevice.shared.responds(to: lock) else { return }
+        XCUIDevice.shared.perform(lock)
+        sleep(1)
+        XCUIDevice.shared.perform(lock)
+        let springboard = XCUIApplication(bundleIdentifier: "com.apple.springboard")
+        for label in ["Allow", "Always Allow"] where springboard.buttons[label].waitForExistence(timeout: 2) {
+            springboard.buttons[label].tap()
+        }
+
+        let done = springboard.buttons["Done"]
+        XCTAssertTrue(done.waitForExistence(timeout: 10), "the card should offer Done on a set")
+        snap("18b Lock Screen, Done on a set")
+        done.tap()
+        let more = springboard.buttons["+15 s"]
+        XCTAssertTrue(more.waitForExistence(timeout: 10), "Done on the card should move the session on to the rest")
+        sleep(1) // let the card finish its transition
+        snap("18c Lock Screen, rest with +15 s and Skip")
+        more.tap()
+        sleep(2)
+        snap("18d Lock Screen, 15 s added")
+        tap(springboard.buttons["Skip rest"])
+        XCTAssertTrue(done.waitForExistence(timeout: 10), "Skip rest should start the next set")
+        snap("18e Lock Screen, rest skipped")
+    }
+
+    /// The Up next widget's tap: a workout link on a cold launch, before the catalogue has loaded,
+    /// still lands on that workout's page with Start on it.
+    func testWorkoutLinkOnColdLaunch() {
+        app.terminate()
+        app.open(URL(string: "tigerworkouts://w/proto-tabata-this")!)
+        XCTAssertTrue(app.buttons["Start workout"].waitForExistence(timeout: 15), "a workout link should open that workout")
+        XCTAssertTrue(app.staticTexts["Tabata This"].exists || app.navigationBars.staticTexts["Tabata This"].exists
+                      || app.staticTexts.matching(NSPredicate(format: "label CONTAINS 'Tabata This'")).firstMatch.exists)
+        snap("37 Workout opened from a link on a cold launch")
+    }
+
     /// The logbook: History → Exercises → one lift's chart, records and sessions; then the same
     /// screen from a session's exercise row.
     func testLogbook() {
