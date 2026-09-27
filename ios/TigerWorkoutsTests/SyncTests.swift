@@ -38,7 +38,7 @@ struct SyncTests {
     @Test("startedFrom sits at the top of the row's data, and is absent when unset")
     func startedFrom() {
         // The six literals the web app writes (SessionOrigin in progression.ts), in its order.
-        #expect(SessionOrigin.allCases.map(\.rawValue) == ["recommended", "saved", "search", "mine", "history", "link"])
+        #expect(SessionOrigin.allCases.map(\.rawValue) == ["recommended", "saved", "search", "mine", "history", "link", "home"])
 
         let mine = SessionResult(runsheetId: "u-1", title: "Mine", startedAt: "2026-09-27T10:00:00.000Z", id: "s-a", startedFrom: "mine")
         let data = SessionRow.encode(mine, owner: "u")["data"] as! [String: Any]

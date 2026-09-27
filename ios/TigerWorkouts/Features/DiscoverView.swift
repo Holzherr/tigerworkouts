@@ -154,7 +154,7 @@ struct DiscoverView: View {
                 .foregroundStyle(Brand.coralInk)
             HStack(spacing: 12) {
                 Button {
-                    path = [next.runsheet.key]
+                    path = [Opened(key: next.runsheet.key, from: .home)]
                 } label: {
                     HStack(spacing: 12) {
                         WorkoutIcon(runsheet: next.runsheet, size: 52)
@@ -177,7 +177,7 @@ struct DiscoverView: View {
 
                 Button {
                     // What the workout page would show: last time's numbers carried over.
-                    onStart(Settings.withLastUsed(next.runsheet, results: store.results))
+                    onStart(Settings.withLastUsed(next.runsheet, results: store.results), .home)
                 } label: {
                     Label("Start", systemImage: "play.fill")
                         .font(.system(size: 17, weight: .semibold))
