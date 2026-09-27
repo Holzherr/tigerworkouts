@@ -29,12 +29,13 @@ struct SessionLiveActivity: Widget {
                         Text(context.state.headline)
                             .font(.headline)
                             .lineLimit(1)
-                        Text(context.state.detail)
+                        Text([context.state.detail, context.state.setLine].compactMap { $0 }.joined(separator: " · "))
                             .font(.caption)
                             .foregroundStyle(.secondary)
                             .lineLimit(1)
                         ProgressView(value: context.state.progress)
                             .tint(tint(context.state))
+                        controls(context.state)
                     }
                 }
             } compactLeading: {
@@ -54,19 +55,13 @@ struct SessionLiveActivity: Widget {
     }
 
     private func lockScreen(_ context: ActivityViewContext<SessionActivityAttributes>) -> some View {
-        VStack(alignment: .leading, spacing: 10) {
-            HStack {
-                Text(context.attributes.title)
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                    .lineLimit(1)
-                Spacer()
-                if context.state.isPaused {
-                    Text("Paused").font(.caption.weight(.semibold)).foregroundStyle(.secondary)
-                }
-            }
-            HStack(alignment: .firstTextBaseline) {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack(alignment: .top) {
                 VStack(alignment: .leading, spacing: 2) {
+                    Text(context.state.isPaused ? "\(context.attributes.title) · Paused" : context.attributes.title)
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
+                        .lineLimit(1)
                     Text(context.state.headline)
                         .font(.title3.weight(.bold))
                         .lineLimit(1)
@@ -75,6 +70,12 @@ struct SessionLiveActivity: Widget {
                         .font(.caption)
                         .foregroundStyle(.secondary)
                         .lineLimit(1)
+                    if let line = context.state.setLine {
+                        Text(line)
+                            .font(.subheadline.weight(.semibold))
+                            .monospacedDigit()
+                            .lineLimit(1)
+                    }
                 }
                 Spacer(minLength: 12)
                 clock(context.state)
@@ -84,8 +85,43 @@ struct SessionLiveActivity: Widget {
             }
             ProgressView(value: context.state.progress)
                 .tint(tint(context.state))
+            controls(context.state)
         }
-        .padding(16)
+        .padding(14)
+    }
+
+    /// Done on a set, Start at a gate, +15 s and Skip on a rest. Each runs in the app's process
+    /// (see `SessionIntents`), and the card redraws from the update that follows.
+    @ViewBuilder
+    private func controls(_ state: SessionActivityAttributes.ContentState) -> some View {
+        switch state.action {
+        case .none:
+            EmptyView()
+        case .start:
+            HStack(spacing: 8) {
+                Button(intent: CompleteStepIntent(token: state.token)) { pill("Start", "play.fill", filled: true, state) }
+            }
+            .buttonStyle(.plain)
+        case .done:
+            HStack(spacing: 8) {
+                Button(intent: CompleteStepIntent(token: state.token)) { pill("Done", "checkmark", filled: true, state) }
+            }
+            .buttonStyle(.plain)
+        case .rest:
+            HStack(spacing: 8) {
+                Button(intent: ExtendRestIntent(token: state.token)) { pill("+15 s", "plus", filled: false, state) }
+                Button(intent: SkipRestIntent(token: state.token)) { pill("Skip rest", "forward.end.fill", filled: true, state) }
+            }
+            .buttonStyle(.plain)
+        }
+    }
+
+    private func pill(_ title: String, _ icon: String, filled: Bool, _ state: SessionActivityAttributes.ContentState) -> some View {
+        Label(title, systemImage: icon)
+            .font(.subheadline.weight(.semibold))
+            .frame(maxWidth: .infinity, minHeight: 36)
+            .foregroundStyle(filled ? Color.white : tint(state))
+            .background(filled ? tint(state) : Color.white.opacity(0.14), in: Capsule())
     }
 
     /// A paused clock has to be a still number: an interval keeps running whatever the app does.

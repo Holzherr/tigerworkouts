@@ -12,6 +12,9 @@ struct DiscoverView: View {
     @State private var writing: Runsheet?
     /// Workouts pushed on this stack; a tigerworkouts://w/<id> link from the website lands here.
     @State private var path: [Opened] = []
+    /// A link that arrived before the catalogue was in — a cold launch from the Up next widget —
+    /// opened once it is.
+    @State private var pendingLink: String?
 
     /// A workout on the stack, with the list it was tapped in: the session it starts records that.
     struct Opened: Hashable {
@@ -130,16 +133,27 @@ struct DiscoverView: View {
                 }
             }
             .onOpenURL { url in
-                // tigerworkouts://w/<id>: "Open in the app" on a workout page of the website.
-                guard url.host == "w", let id = url.pathComponents.dropFirst().first?.removingPercentEncoding,
-                      store.workout(id: id) != nil else { return }
-                path = [Opened(key: id, from: .link)]
+                // tigerworkouts://w/<id>: "Open in the app" on a workout page of the website, and
+                // the Up next widget.
+                guard url.host == "w", let id = url.pathComponents.dropFirst().first?.removingPercentEncoding else { return }
+                if store.loaded { openLink(id) } else { pendingLink = id }
+            }
+            .onChange(of: store.loaded) { _, loaded in
+                guard loaded, let id = pendingLink else { return }
+                pendingLink = nil
+                openLink(id)
             }
             // New workout opens an empty one on the workout screen: the one editor.
             .navigationDestination(item: $writing) { sheet in
                 WorkoutDetailView(runsheet: sheet, isNew: true, onStart: onStart)
             }
         }
+    }
+
+    private func openLink(_ id: String) {
+        guard store.workout(id: id) != nil else { return }
+        query = ""
+        path = [Opened(key: id, from: .link)]
     }
 
     // MARK: - Up next

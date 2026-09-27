@@ -130,15 +130,6 @@ enum EffortModel {
     }
 }
 
-extension Calendar {
-    /// Weeks start on Monday, the way the web app's streak counts them.
-    static let iso8601Monday: Calendar = {
-        var c = Calendar(identifier: .iso8601)
-        c.firstWeekday = 2
-        return c
-    }()
-}
-
 extension Array {
     subscript(safe i: Int) -> Element? { indices.contains(i) ? self[i] : nil }
 }

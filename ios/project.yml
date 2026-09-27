@@ -39,12 +39,17 @@ targets:
     platform: iOS
     sources:
       - TigerWorkoutsWidgets
-      # The activity's shape is shared with the app rather than duplicated.
+      # The activity's shape, its buttons and the Up next snapshot are shared with the app rather
+      # than duplicated.
       - path: TigerWorkouts/Shared/SessionActivity.swift
+      - path: TigerWorkouts/Shared/SessionIntents.swift
+      - path: TigerWorkouts/Shared/UpNextShare.swift
+      - path: TigerWorkouts/Shared/UpNextWidgetView.swift
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.holzherr.tigerworkouts.widgets
         INFOPLIST_FILE: TigerWorkoutsWidgets/Info.plist
+        CODE_SIGN_ENTITLEMENTS: TigerWorkoutsWidgets/TigerWorkoutsWidgets.entitlements
         SKIP_INSTALL: YES
         TARGETED_DEVICE_FAMILY: "1"
 
