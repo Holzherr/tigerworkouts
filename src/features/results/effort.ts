@@ -85,9 +85,16 @@ export const streak = (results: SessionResult[], today = new Date()): Streak => 
   const wk = (iso: string) => startOfWeek(new Date(iso)).getTime();
   const counts = new Map<number, number>();
   for (const r of results) counts.set(wk(r.startedAt), (counts.get(wk(r.startedAt)) ?? 0) + 1);
+  // Step back by calendar week, not by 7 × 24 h: the week holding a clock change is 167 or 169
+  // hours long, and a fixed step misses the Monday midnight the sessions are keyed by.
+  const before = (t: number) => {
+    const d = new Date(t);
+    d.setDate(d.getDate() - 7);
+    return d.getTime();
+  };
   let weeks = 0;
-  for (let w = week; counts.get(w); w -= 7 * 86400_000) weeks++;
-  return { weeks, thisWeek: counts.get(week) ?? 0, lastWeek: counts.get(week - 7 * 86400_000) ?? 0, total: results.length };
+  for (let w = week; counts.get(w); w = before(w)) weeks++;
+  return { weeks, thisWeek: counts.get(week) ?? 0, lastWeek: counts.get(before(week)) ?? 0, total: results.length };
 };
 
 /** The same exercise's load over time, newest last, for "is it going up". */

@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { addSet, editSet, plannedSet, removeSet, straightSetStep, flatten, fromLegacy, groupOnto, insertAfter, makeExercise, makeRest, moveRow, moveRowTo, moveToTopLevel, rebuild, removeStep, isEmptyMain, repeatAsRounds, startBlock, runsheetSeconds, type Block, type ExerciseRef, type Item } from './model';
+import { addSet, editSet, plannedSet, removeSet, straightSetStep, flatten, fromLegacy, groupOnto, insertAfter, makeExercise, makeRest, moveRow, moveRowTo, moveToTopLevel, rebuild, removeStep, isEmptyMain, repeatAsRounds, startBlock, runsheetSeconds, editedCopy, ofWorkout, type Block, type ExerciseRef, type Item, type Runsheet } from './model';
+import { EX, priyanka, withStarter } from './fixtures';
 
 const KB: ExerciseRef = { key: 'kb_swing', name: 'Kettlebell swings', unit: 'kg', step: 4 };
 const PRESS: ExerciseRef = { key: 'db_incline_press', name: 'Incline chest press', unit: 'kg per arm', step: 2.5 };
@@ -219,5 +220,31 @@ describe('straight sets', () => {
     expect(c.repeat).toBe(2);
     expect(step(c).sets).toEqual([{ reps: 8, load: 20 }, { reps: 8, load: 20 }]);
     expect(removeSet({ ...bench(), repeat: 1 }).repeat).toBe(1);
+  });
+});
+
+describe('editedCopy', () => {
+  it('keeps the program day and step ids, and points back at the original', () => {
+    const original: Runsheet = { id: 'sl-a', title: 'StrongLifts A', program: { name: 'StrongLifts 5×5', day: 'A', order: 1 }, public: true, items: [{ ...makeExercise(EX.bb_back_squat, { target: 60 }), id: 'sq' }] };
+    const edited = { ...structuredClone(original), title: 'StrongLifts A (heavier)' };
+    const copy = editedCopy(edited, original, 'u-1', 'Nick');
+    expect(copy).toMatchObject({ id: 'u-1', creator: 'Nick', program: original.program, copyOf: 'sl-a', public: false });
+    expect(copy.items[0].id).toBe('sq');
+    expect(editedCopy(copy, copy, 'u-2', 'Nick').copyOf).toBe('sl-a');
+  });
+  it('makes the original\'s sessions count as the copy\'s history', () => {
+    const is = ofWorkout({ id: 'u-1', title: 'x', copyOf: 'sl-a' });
+    expect(is({ runsheetId: 'sl-a' }) && is({ runsheetId: 'u-1' }) && !is({ runsheetId: 'sl-b' })).toBe(true);
+  });
+});
+
+describe('withStarter', () => {
+  const mine: Runsheet = { id: 'u-1', title: 'Mine', items: [] };
+  it('shows Priyanka\'s circuit until you have your own workouts', () => {
+    expect(withStarter([], []).map(w => w.id)).toEqual([priyanka().id]);
+    expect(withStarter([mine], []).map(w => w.id)).toEqual(['u-1']);
+  });
+  it('keeps it once it has sessions, whatever else is saved', () => {
+    expect(withStarter([mine], [{ runsheetId: priyanka().id! }]).map(w => w.id)).toEqual(['u-1', priyanka().id]);
   });
 });

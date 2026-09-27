@@ -7,7 +7,7 @@
  * next card — and a dismissed one stays dismissed. Pure; ported one for one to
  * `ios/TigerWorkouts/Results/Stall.swift`.
  */
-import { scoreType, shortUnit, type Block, type Runsheet } from '@/features/runsheet/model';
+import { ofWorkout, scoreType, shortUnit, type Block, type Runsheet } from '@/features/runsheet/model';
 import { isWorking, type SessionResult, type SetResult } from '@/features/runsheet/progression';
 import { clock } from '@/features/runsheet/targets';
 import { exerciseHistory, fmtNum, kindOf } from './logbook';
@@ -156,8 +156,9 @@ export const workoutStall = (r: Runsheet, results: SessionResult[], now: Date): 
   const type = scoreType(r);
   if (type !== 'rounds' && type !== 'time' && type !== 'reps') return undefined;
   const rid = r.id ?? r.title;
+  const mine = ofWorkout(r);
   const pts = results
-    .filter(x => x.runsheetId === rid && !x.activity && x.score !== undefined && x.score > 0 && (type !== 'time' || x.completed !== false))
+    .filter(x => mine(x) && !x.activity && x.score !== undefined && x.score > 0 && (type !== 'time' || x.completed !== false))
     .sort((a, b) => a.startedAt.localeCompare(b.startedAt))
     .map(x => ({ at: x.startedAt, value: x.score! }));
   const p = plateau(pts, now, type === 'time');

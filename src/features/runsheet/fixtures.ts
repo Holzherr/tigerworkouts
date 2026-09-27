@@ -47,3 +47,11 @@ export const loose = (): Runsheet => ({
     { ...makeExercise(EX.pushup, { forMode: 'reps', forValue: 12 }), id: 'l4' },
   ],
 });
+
+/** Priyanka's circuit, the starter workout: shown until you have workouts of your own, and kept
+ * for good once it has sessions, so its history never turns into "Workout not found". */
+export const withStarter = (workouts: Runsheet[], results: { runsheetId: string }[]): Runsheet[] => {
+  const p = priyanka();
+  if (workouts.some(w => w.id === p.id)) return workouts;
+  return !workouts.length || results.some(x => x.runsheetId === p.id) ? [...workouts, p] : workouts;
+};

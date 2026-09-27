@@ -5,7 +5,6 @@ import {
   TouchSensor,
   closestCenter,
   pointerWithin,
-  useDroppable,
   useSensor,
   useSensors,
   type CollisionDetection,
@@ -17,8 +16,8 @@ import { SortableContext, useSortable, verticalListSortingStrategy } from '@dnd-
 import { CSS, getEventCoordinates } from '@dnd-kit/utilities';
 import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { cn } from '@/shared/utils/ui-utils';
-import { appendToBlock, straightSetStep, flatten, groupOnto, isEmptyMain, repeatAsRounds, startBlock, insertAfter, makeRest, moveRow, moveRowTo, moveToTopLevel, removeItem, removeStep, replaceStep, ROLE_LABEL, updateBlock, type Block, type ExerciseStep, type Item, type ItemRole, type Row, type Step } from '../model';
-import { ArrowDown, ArrowUp, CornerRightUp, Link2, Repeat, X } from 'lucide-react';
+import { appendToBlock, straightSetStep, flatten, groupOnto, isEmptyMain, repeatAsRounds, startBlock, insertAfter, makeRest, moveRow, moveRowTo, removeItem, removeStep, replaceStep, ROLE_LABEL, updateBlock, type Block, type ExerciseStep, type Item, type ItemRole, type Row, type Step } from '../model';
+import { Link2, Repeat, X } from 'lucide-react';
 import { Button } from '@/shared/components/ui/button';
 import { AddTile, SeamInsert, type AddKind } from './add-controls';
 import { BlockBracket, BlockHeader } from './block-bracket';
@@ -49,42 +48,12 @@ export interface RunsheetListProps {
   /** Title lookup for ref items (embedded runsheets). */
   refTitle?: (runsheetId: string) => string | undefined;
   className?: string;
-  /**
-   * How rows move. `classic`: the original flat sortable. `seams`: while dragging, wide "drop here"
-   * targets appear between top-level items so a step can leave a block. `pointer`: the drop spot
-   * follows the finger (top/bottom third of a row = before/after, bottom of a block's last step =
-   * out of the block) with a coral insertion line. `buttons`: no dragging; expand a row for
-   * Up / Down / Out of block buttons.
-   */
-  variant?: DndVariant;
 }
-export type DndVariant = 'classic' | 'seams' | 'pointer' | 'buttons';
-export const DND_VARIANTS: { value: DndVariant; label: string }[] = [
-  { value: 'classic', label: 'Classic drag' },
-  { value: 'seams', label: 'A · Drop zones between blocks' },
-  { value: 'pointer', label: 'B · Insertion line follows finger' },
-  { value: 'buttons', label: 'C · Up / Down / Out buttons' },
-];
 
-/** Wide drop targets between top-level items, only while a step is being dragged (variant A). */
-const seamsFirst: CollisionDetection = args => {
-  const seams = args.droppableContainers.filter(c => String(c.id).startsWith('seam:'));
-  const hit = pointerWithin({ ...args, droppableContainers: seams });
-  if (hit.length) return hit;
-  return closestCenter({ ...args, droppableContainers: args.droppableContainers.filter(c => !String(c.id).startsWith('seam:')) });
-};
-/** The row under the finger, else the nearest (variant B). */
+/** The row under the finger, else the nearest. */
 const underPointer: CollisionDetection = args => {
   const hit = pointerWithin(args);
   return hit.length ? hit : closestCenter(args);
-};
-const DropSeam = ({ id, label }: { id: string; label: string }) => {
-  const { setNodeRef, isOver } = useDroppable({ id });
-  return (
-    <div ref={setNodeRef} className={cn('my-1 flex h-11 items-center justify-center rounded-card border-2 border-dashed text-[12px] font-semibold transition-colors', isOver ? 'border-brand bg-brand-soft text-brand-ink' : 'border-hint bg-canvas text-muted')}>
-      {label}
-    </div>
-  );
 };
 
 const GROUP_DWELL_MS = 250;
@@ -93,12 +62,13 @@ const LIFT_MS = 350;
 
 /**
  * The editable runsheet. Rows are one flat sortable list (dnd-kit): loose steps, block headers,
- * block steps and an invisible end marker per block. Drag between rows to reorder; hold a lifted
+ * block steps and an invisible end marker per block. Drag a row and a coral line shows where it
+ * lands, following the finger (the one drag style since 22 Sep); hold a lifted
  * row over the middle of another for 250ms and it becomes a group target (orange ring): release
  * to make a block or join one. Blocks drag as a chunk by their header. Tap a row to expand it,
  * swipe or ✕ to remove, ＋ on a seam to insert there.
  */
-export const RunsheetList = ({ items, onChange, onPickExercise, onSwapExercise, expandedId: expandedProp, onExpandedChange, autoRest = 30, resolveTarget, hintFor, setHintFor, equipment, refTitle, className, variant = 'classic' }: RunsheetListProps) => {
+export const RunsheetList = ({ items, onChange, onPickExercise, onSwapExercise, expandedId: expandedProp, onExpandedChange, autoRest = 30, resolveTarget, hintFor, setHintFor, equipment, refTitle, className }: RunsheetListProps) => {
   const [expandedLocal, setExpandedLocal] = useState<string | null>(null);
   const expandedId = expandedProp === undefined ? expandedLocal : expandedProp;
   const setExpanded = (id: string | null) => (onExpandedChange ? onExpandedChange(id) : setExpandedLocal(id));
@@ -112,12 +82,10 @@ export const RunsheetList = ({ items, onChange, onPickExercise, onSwapExercise, 
   const [insertion, setInsertion] = useState<{ id: string; where: 'before' | 'after' } | null>(null);
   const dwell = useRef<{ id: string; since: number } | null>(null);
 
-  const dragSensors = useSensors(
+  const sensors = useSensors(
     useSensor(MouseSensor, { activationConstraint: { distance: 8 } }),
     useSensor(TouchSensor, { activationConstraint: { delay: LIFT_MS, tolerance: 6 } })
   );
-  const noSensors = useSensors();
-  const sensors = variant === 'buttons' ? noSensors : dragSensors;
 
   const onDragStart = (e: DragStartEvent) => {
     setActiveId(String(e.active.id));
@@ -127,14 +95,12 @@ export const RunsheetList = ({ items, onChange, onPickExercise, onSwapExercise, 
 
   const onDragMove = (e: DragMoveEvent) => {
     const { active, over } = e;
-    if (over && String(over.id).startsWith('seam:')) {
-      dwell.current = null;
-      setGroupTarget(null);
-      return;
-    }
     const overRow = over ? rows.find(r => r.id === over.id) : undefined;
     const activeRow = rows.find(r => r.id === active.id);
-    if (variant === 'pointer') {
+    // The drop spot follows the finger (Nick, 22 Sep: variant B): the top or bottom third of a row
+    // is before or after it, the bottom of a block's last step is out of the block, and a coral
+    // line shows where it will land.
+    {
       const start = e.activatorEvent ? getEventCoordinates(e.activatorEvent) : null;
       const y = start ? start.y + e.delta.y : undefined;
       if (over && overRow && y !== undefined && over.id !== active.id && overRow.type !== 'block-end') {
@@ -187,12 +153,7 @@ export const RunsheetList = ({ items, onChange, onPickExercise, onSwapExercise, 
     setInsertion(null);
     dwell.current = null;
     if (!over) return;
-    if (String(over.id).startsWith('seam:')) {
-      const after = String(over.id).slice(5);
-      onChange(moveToTopLevel(items, String(active.id), after === 'start' ? null : after));
-      return;
-    }
-    if (variant === 'pointer' && !target && ins) {
+    if (!target && ins) {
       onChange(moveRowTo(items, String(active.id), ins.id, ins.where));
       return;
     }
@@ -245,36 +206,11 @@ export const RunsheetList = ({ items, onChange, onPickExercise, onSwapExercise, 
   const dissolvingBlockId = activeRow?.type === 'step' && activeRow.blockId && (items.find(i => i.id === activeRow.blockId) as Block | undefined)?.steps.length === 2 ? activeRow.blockId : null;
 
   // ── render ──
-  const nudge = (id: string, dir: 'up' | 'down' | 'out') => {
-    const idx = rows.findIndex(r => r.id === id);
-    const row = rows[idx];
-    if (!row || row.type !== 'step') return;
-    if (dir === 'out' && row.blockId) return onChange(moveRowTo(items, id, `${row.blockId}:end`, 'after'));
-    const other = dir === 'up' ? rows[idx - 1] : rows[idx + 1];
-    if (!other) return;
-    onChange(moveRow(items, id, other.id));
-  };
-  const moveButtons = (row: Extract<Row, { type: 'step' }>) =>
-    variant === 'buttons' && expandedId === row.id ? (
-      <div className="flex gap-2 border-t border-line bg-canvas px-2 py-2">
-        <Button variant="ghost" size="sm" onClick={() => nudge(row.id, 'up')} disabled={rows.findIndex(r => r.id === row.id) === 0}>
-          <ArrowUp /> Up
-        </Button>
-        <Button variant="ghost" size="sm" onClick={() => nudge(row.id, 'down')} disabled={rows.findIndex(r => r.id === row.id) >= rows.length - 1}>
-          <ArrowDown /> Down
-        </Button>
-        {row.blockId && (
-          <Button variant="ghost" size="sm" onClick={() => nudge(row.id, 'out')}>
-            <CornerRightUp /> Out of block
-          </Button>
-        )}
-      </div>
-    ) : null;
   const renderStep = (row: Extract<Row, { type: 'step' }>, inBlock: boolean) => (
     <SortableStep
       key={row.id}
       id={row.id}
-      disabled={expandedId === row.id || variant === 'buttons'}
+      disabled={expandedId === row.id}
       className={cn(
         !inBlock && 'rounded-card border border-line bg-surface',
         groupTarget === row.id && 'rounded-card ring-2 ring-brand ring-offset-2 ring-offset-canvas',
@@ -297,13 +233,10 @@ export const RunsheetList = ({ items, onChange, onPickExercise, onSwapExercise, 
             resolvedTarget={row.step.kind === 'exercise' && resolveTarget ? resolveTarget(row.step) : undefined}
             hint={row.step.kind === 'exercise' ? hintFor?.(row.step) : undefined}
           />
-          {moveButtons(row)}
         </SwipeToRemove>
       )}
     />
   );
-  const draggingStep = !!activeId && activeRow?.type === 'step';
-  const seam = (afterId: string | null, key: string) => (variant === 'seams' && draggingStep ? <DropSeam key={key} id={`seam:${afterId ?? 'start'}`} label={afterId ? 'Drop here · outside blocks' : 'Drop here · first'} /> : null);
 
   const blocks: React.ReactNode[] = [];
   let i = 0;
@@ -322,8 +255,6 @@ export const RunsheetList = ({ items, onChange, onPickExercise, onSwapExercise, 
       </div>
     );
   };
-  const first = seam(null, 'seam-start');
-  if (first) blocks.push(first);
   while (i < rows.length) {
     const r = rows[i];
     if (r.type === 'ref') {
@@ -351,7 +282,6 @@ export const RunsheetList = ({ items, onChange, onPickExercise, onSwapExercise, 
           {divider(r)}
           {renderStep(r, false)}
           {!activeId && <SeamInsert onInsert={k => add(k, { after: r.id })} className="mt-2" />}
-          {seam(r.id, `seam-${r.id}`)}
         </Fragment>
       );
       i++;
@@ -397,8 +327,6 @@ export const RunsheetList = ({ items, onChange, onPickExercise, onSwapExercise, 
           )}
         />
       );
-      const after = seam(block.id, `seam-${block.id}`);
-      if (after) blocks.push(after);
       i = j + 1;
       continue;
     }
@@ -406,7 +334,7 @@ export const RunsheetList = ({ items, onChange, onPickExercise, onSwapExercise, 
   }
 
   return (
-    <DndContext sensors={sensors} collisionDetection={variant === 'seams' ? seamsFirst : variant === 'pointer' ? underPointer : closestCenter} onDragStart={onDragStart} onDragMove={onDragMove} onDragEnd={onDragEnd} onDragCancel={() => (setActiveId(null), setGroupTarget(null), setInsertion(null))}>
+    <DndContext sensors={sensors} collisionDetection={underPointer} onDragStart={onDragStart} onDragMove={onDragMove} onDragEnd={onDragEnd} onDragCancel={() => (setActiveId(null), setGroupTarget(null), setInsertion(null))}>
       <SortableContext items={ids} strategy={verticalListSortingStrategy}>
         <div className={cn('space-y-2', className)}>
           {blocks}

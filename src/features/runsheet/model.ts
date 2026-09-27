@@ -189,8 +189,35 @@ export interface Runsheet {
   public?: boolean;
   /** Who owns it, filled in when read from the cloud; never saved into the workout itself. */
   ownerId?: string;
+  /** Set on the silent copy made when someone else's workout is edited: the id it was copied from.
+   * Its sessions stay this workout's history, so Up next, pace and stalls keep the thread. */
+  copyOf?: string;
   items: Item[];
 }
+
+/**
+ * The silent copy made when a workout you do not own is edited and saved. It keeps the program
+ * day and every step id, and remembers what it was copied from, so the sessions already logged
+ * against the original still count as its history (Up next, last time, pace, stalls). Private.
+ */
+export const editedCopy = (edited: Runsheet, original: Runsheet, id: string, creator: string): Runsheet => ({
+  ...edited,
+  id,
+  creator,
+  source: { title: edited.title, url: edited.source?.url, author: edited.source?.author ?? edited.creator, kind: 'user' },
+  program: original.program,
+  copyOf: original.copyOf ?? original.id ?? original.title,
+  public: false,
+  ownerId: undefined,
+});
+
+/** The ids a workout's sessions are logged under: its own, and the one it was copied from. */
+export const lineage = (r: Pick<Runsheet, 'id' | 'title' | 'copyOf'>): string[] => [r.id ?? r.title, ...(r.copyOf ? [r.copyOf] : [])];
+/** A test for "this session was a run of this workout (or of the workout it was copied from)". */
+export const ofWorkout = (r: Pick<Runsheet, 'id' | 'title' | 'copyOf'>) => {
+  const ids = lineage(r);
+  return (x: { runsheetId: string }) => ids.includes(x.runsheetId);
+};
 
 let seq = 0;
 export const uid = (prefix = 's') => `${prefix}-${Date.now().toString(36)}${(seq++).toString(36)}`;

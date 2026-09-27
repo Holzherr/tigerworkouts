@@ -1,4 +1,5 @@
 import { ChevronLeft, ChevronRight, ExternalLink, Globe, Lock, Pencil, Play, Share2, Smartphone, Video } from 'lucide-react';
+import { localDate } from '@/shared/utils/dates';
 import { Fragment, useState } from 'react';
 import { Button } from '@/shared/components/ui/button';
 import { Chip } from '@/shared/components/ui/chip';
@@ -148,7 +149,7 @@ export const WorkoutPreviewScreen = ({ runsheet: r, history = [], lastTime, onBa
             )}
             {last && (
               <div className="flex-1 rounded-card border border-line bg-surface px-3 py-2">
-                <div className="text-[11px] font-bold tracking-widest text-muted uppercase">Last · {last.startedAt.slice(0, 10)}</div>
+                <div className="text-[11px] font-bold tracking-widest text-muted uppercase">Last · {localDate(last.startedAt)}</div>
                 <div className="text-[17px] font-extrabold tabular-nums">{last.score !== undefined ? fmtScore(score, last.score, last.scoreText) : 'done'}</div>
               </div>
             )}

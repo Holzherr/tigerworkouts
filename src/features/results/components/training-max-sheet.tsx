@@ -2,6 +2,7 @@ import { Stepper } from '@/shared/components/ui/stepper';
 import { ClipThumb } from '@/shared/components/ui/clip-thumb';
 import type { ExerciseRef, ExerciseStep, Runsheet } from '@/features/runsheet/model';
 import { resolveTarget, type TrainingMaxes } from '@/features/runsheet/progression';
+import { setMax } from '../training-maxes';
 
 export interface TrainingMaxSheetProps {
   /** Exercises to show; defaults to every % TM exercise in `runsheet`. */
@@ -41,7 +42,7 @@ export const TrainingMaxSheet = ({ exercises, runsheet, values, onChange, bodywe
             <div className="flex items-center gap-2.5">
               <ClipThumb size="sm" clip={ex.clip} poster={ex.poster} icon={ex.icon} />
               <div className="min-w-0 flex-1 truncate text-[14px] font-semibold">{ex.name}</div>
-              <Stepper aria-label={`${ex.name} training max`} value={values[ex.key] ?? 0} step={ex.step || 2.5} min={0} max={500} onChange={v => onChange({ ...values, [ex.key]: v })} />
+              <Stepper aria-label={`${ex.name} training max`} value={values[ex.key] ?? 0} step={ex.step || 2.5} min={0} max={500} onChange={v => onChange(setMax(values, ex.key, v))} />
             </div>
             {pcts.length > 0 && values[ex.key] !== undefined && (
               <div className="mt-1.5 flex flex-wrap gap-x-3 text-[12px] text-muted">

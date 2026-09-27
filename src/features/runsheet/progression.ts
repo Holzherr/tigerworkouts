@@ -107,6 +107,21 @@ export interface SessionResult {
 
 const exerciseSteps = (items: Item[]): ExerciseStep[] => items.flatMap(it => (it.kind === 'block' ? it.steps : it.kind === 'ref' ? [] : [it])).filter((s): s is ExerciseStep => s.kind === 'exercise');
 
+/** Two copies of one logged session: the row as saved and the result sheet's copy of it. */
+const sameSession = (a: SessionResult, b: SessionResult) => a === b || (a.id !== undefined && a.id === b.id) || (a.runsheetId === b.runsheetId && a.startedAt === b.startedAt);
+
+/**
+ * The load a step was worked at. `target` is the last working set's load, so a drop set at the end
+ * (100 then 60) would make 60 the next session's start; the last set that was not a drop stands
+ * in for it then. A `target` edited on the result sheet matches no set and is kept.
+ */
+export const workingLoad = (res: Pick<StepResult, 'target' | 'sets'>): number | undefined => {
+  const sets = res.sets ?? [];
+  const drop = sets.filter(x => x.type === 'drop' && x.load !== undefined);
+  if (!drop.length || res.target === undefined || !drop.some(x => x.load === res.target)) return res.target;
+  return sets.filter(x => x.type !== 'drop' && x.type !== 'warmup' && x.load !== undefined).at(-1)?.load ?? res.target;
+};
+
 /** Consecutive failures per exercise key, from the most recent sessions of this runsheet. */
 export const failStreak = (history: SessionResult[], exerciseKey: string): number => {
   let n = 0;
@@ -144,7 +159,7 @@ export const nextLoads = (r: Runsheet, last: SessionResult, history: SessionResu
     if (!rule) continue;
     const res = last.steps.find(x => x.stepId === s.id || x.exerciseKey === key);
     if (!res) continue;
-    const from = res.target ?? resolveTarget(s, tms, undefined, kit);
+    const from = workingLoad(res) ?? resolveTarget(s, tms, undefined, kit);
     // amrap-driven training max bump (5/3/1, GreySkull, nSuns)
     if (s.forMode === 'amrap' && rule.amrapBumpAt !== undefined && rule.tmBumpKg) {
       const reps = res.reps?.at(-1);
@@ -161,12 +176,42 @@ export const nextLoads = (r: Runsheet, last: SessionResult, history: SessionResu
       const to = up > from ? up : (nextLoadUp(from, s.exercise, kit) ?? from);
       out.push({ exerciseKey: key, name: s.exercise.name, from, to, reason: to === from ? `all sets done: already the heaviest you own` : `all sets done: +${rule.onSuccessKg} kg${Math.abs(to - from - rule.onSuccessKg) > 1e-6 ? `, ${fmtKg(to)} kg is the next you can load` : ''}` });
     } else if (!res.success && rule.deloadPct && rule.failAfter) {
-      const streak = failStreak([last, ...history.filter(h => h !== last)], key);
+      // `last` is the result sheet's copy of a row already in `history`: match it by id, not identity.
+      const streak = failStreak([last, ...history.filter(h => !sameSession(h, last))], key);
       if (streak >= rule.failAfter) out.push({ exerciseKey: key, name: s.exercise.name, from, to: snapToKit(from * (1 - rule.deloadPct / 100), s.exercise, kit), reason: `${streak} failed sessions: deload ${rule.deloadPct}%` });
       else out.push({ exerciseKey: key, name: s.exercise.name, from, to: from, reason: `missed reps (${streak}/${rule.failAfter}): repeat the weight` });
     }
   }
   return out;
+};
+
+/**
+ * The next session of a program, loaded as its rules say: each ruled exercise starts at what the
+ * rule made of the last session that did it (+2.5 kg after a clean session, the same weight after
+ * a miss, the deload after `failAfter` misses). The result sheet shows the same numbers as "next
+ * time"; this is where they take effect. Loads taken from a training max are left to the TM, which
+ * the result sheet bumps.
+ */
+export const progressed = (r: Runsheet, results: SessionResult[], tms: TrainingMaxes = {}, kit?: Equipment): Runsheet => {
+  if (!results.length) return r;
+  const blocks = r.items.filter((i): i is Block => i.kind === 'block');
+  const ruled = (s: ExerciseStep) => (blocks.find(b => b.steps.some(x => x.id === s.id))?.progression ?? r.progression) !== undefined;
+  const newest = [...results].sort((a, b) => b.startedAt.localeCompare(a.startedAt));
+  const to = new Map<string, number>();
+  for (const s of exerciseSteps(r.items)) {
+    const key = s.exercise.key;
+    if (to.has(key) || !ruled(s) || s.targetPct !== undefined || s.loadFactor !== undefined || typeof s.target !== 'number') continue;
+    const last = newest.find(h => h.steps.some(x => x.exerciseKey === key && x.success !== undefined));
+    if (!last) continue;
+    const line = nextLoads(r, { ...last, steps: last.steps.filter(x => x.exerciseKey === key) }, newest, tms, kit).find(n => n.exerciseKey === key && !n.reason.includes('training max'));
+    if (line?.to !== undefined) to.set(key, line.to);
+  }
+  if (!to.size) return r;
+  const step = (s: ExerciseStep): ExerciseStep => {
+    const t = to.get(s.exercise.key);
+    return t === undefined || !ruled(s) || s.targetPct !== undefined || s.loadFactor !== undefined || typeof s.target !== 'number' ? s : { ...s, target: t };
+  };
+  return { ...r, items: r.items.map(it => (it.kind === 'block' ? { ...it, steps: it.steps.map(x => (x.kind === 'exercise' ? step(x) : x)) } : it.kind === 'exercise' ? step(it) : it)) };
 };
 
 const fmtKg = (n: number) => (Number.isInteger(n) ? `${n}` : `${Math.round(n * 100) / 100}`);
