@@ -371,6 +371,9 @@ export const replan = (s: RunState, r: Runsheet, now: number): RunState => {
   return s.phase === 'ready' && tail.length === 0 ? enter(st, s.i, now) : st;
 };
 
+/** One id per session, so logging it at the end and saving its result sheet is one row, not two. */
+export const sessionId = (s: RunState) => `s-${Math.round(s.startedAt).toString(36)}-run`;
+
 export const finish = (s: RunState, now: number): RunState => ({ ...s, phase: 'done', endedAt: now, endsAt: undefined });
 
 /** The load in force at slot index idx: the latest adjustment made on any earlier round of the same

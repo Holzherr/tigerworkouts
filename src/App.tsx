@@ -295,7 +295,7 @@ export default function App() {
   if (route.name === 'do') {
     const r = draft ?? byId.get(route.id);
     if (!r) return shell('discover', <Missing />);
-    return <RunRoute key={route.id} runsheet={withLastUsed(resolveRefs(r, lookup), st.results)} onFinish={res => (setPending(res), go(`/result/${encodeURIComponent(route.id)}`))} onExit={() => (Runner.clearPersisted(), go(`/w/${encodeURIComponent(route.id)}`))} />;
+    return <RunRoute key={route.id} runsheet={withLastUsed(resolveRefs(r, lookup), st.results)} onLog={res => act.addResult({ ...res, runsheetId: wid(r) })} onFinish={res => (setPending({ ...res, runsheetId: wid(r) }), go(`/result/${encodeURIComponent(route.id)}`))} onExit={() => (Runner.clearPersisted(), go(`/w/${encodeURIComponent(route.id)}`))} />;
   }
   if (route.name === 'session') {
     const res = st.results.find(x => x.id === route.id);
@@ -460,11 +460,29 @@ export default function App() {
   return shell('discover', <DiscoverScreen key={initialTab} initialTab={initialTab} workouts={all} results={st.results} savedIds={st.saved} above={above} onCreate={() => (setDraft(null), go('/new'))} onOpen={open} onOpenProgram={(_, days) => open(days[0], 'search')} />);
 }
 
-const RunRoute = ({ runsheet, onFinish, onExit }: { runsheet: Runsheet; onFinish: (r: Partial<SessionResult>) => void; onExit: () => void }) => {
+/**
+ * The workout is logged the moment it ends — the countdown running out or Finish — not when its
+ * result sheet is saved. Until then it lived only in memory: the persisted run was cleared at done,
+ * so a reload or a closed tab on the result sheet lost it. The sheet then edits the logged row.
+ */
+const RunRoute = ({ runsheet, onLog, onFinish, onExit }: { runsheet: Runsheet; onLog: (r: SessionResult) => void; onFinish: (r: SessionResult) => void; onExit: () => void }) => {
   const { state, now, act } = useRunner(runsheet, { resume: true });
+  const logged = useRef<SessionResult | null>(null);
+  const log = (s: Runner.RunState) => {
+    if (!logged.current) {
+      logged.current = { ...Runner.toResult(s, runsheet, s.endedAt ?? Date.now()), id: Runner.sessionId(s) };
+      onLog(logged.current);
+    }
+    return logged.current;
+  };
+  // useRunner clears the persisted run in its own effect at done; this one runs in the same
+  // commit, and the store writes localStorage synchronously, so there is no moment with neither.
+  useEffect(() => {
+    if (state.phase === 'done') log(state);
+  });
   return (
     <div className="relative h-dvh">
-      <TimerScreen runsheet={runsheet} state={state} now={now} onDone={act.done} onSkip={act.skip} onBack={act.back} onPause={act.pause} onResume={act.resume} onAdjust={act.adjust} onAdjustIncline={act.adjustIncline} onSetReps={act.setReps} onDrop={act.drop} onStartBlock={act.startBlock} onAdjustStep={act.adjustStep} onFinish={() => { const done = Runner.finish(state, Date.now()); Runner.clearPersisted(); onFinish(Runner.toResult(done, runsheet, Date.now())); }} onExit={onExit} />
+      <TimerScreen runsheet={runsheet} state={state} now={now} onDone={act.done} onSkip={act.skip} onBack={act.back} onPause={act.pause} onResume={act.resume} onAdjust={act.adjust} onAdjustIncline={act.adjustIncline} onSetReps={act.setReps} onDrop={act.drop} onStartBlock={act.startBlock} onAdjustStep={act.adjustStep} onFinish={() => { const res = log(state.phase === 'done' ? state : Runner.finish(state, Date.now())); Runner.clearPersisted(); onFinish(res); }} onExit={onExit} />
     </div>
   );
 };
