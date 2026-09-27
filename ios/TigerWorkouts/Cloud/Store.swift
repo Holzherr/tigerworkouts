@@ -99,14 +99,16 @@ final class Store {
         }
     }
 
+    /// Ends the account session and nothing else. What is on the phone stays: History keeps the
+    /// sessions already logged, and anything still queued goes up with the next sign-in.
     func signOut() async {
         await Supabase.shared.signOut()
         user = nil
-        results = []
-        myWorkouts = []
-        saved = []
         writeCache()
     }
+
+    /// Sessions on the phone that the server does not have yet.
+    var unsyncedCount: Int { pending.count }
 
     // MARK: - Saving a session
 

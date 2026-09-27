@@ -41,6 +41,11 @@ final class WalkthroughUITests: XCTestCase {
     func testBrowseRunAndFinish() {
         XCTAssertTrue(app.navigationBars["Tiger"].waitForExistence(timeout: 10))
         snap("01 Workouts")
+        // The last carousel has to clear the tab bar.
+        for _ in 0..<6 { app.swipeUp() }
+        snap("01b Workouts, scrolled to the end")
+        app.swipeDown()
+        app.swipeDown()
 
         open("Tabata This")
         snap("02 Workout detail")
@@ -80,10 +85,36 @@ final class WalkthroughUITests: XCTestCase {
         snap("08 Finished")
         app.swipeUp()
         snap("09 Finished, stats")
+        // Asked once, on the first finish screen with no bodyweight; later runs never see it.
+        let saveWeight = app.buttons["Save"]
+        if app.staticTexts["What do you weigh?"].exists && saveWeight.exists {
+            snap("09b Bodyweight, asked once")
+            saveWeight.tap()
+            XCTAssertFalse(app.staticTexts["What do you weigh?"].waitForExistence(timeout: 2))
+        }
         tap(app.buttons["Done"])
 
         tap(app.tabBars.buttons["History"])
         snap("10 History")
+
+        // Home now knows you: the next thing to do, one tap to start it.
+        home()
+        XCTAssertTrue(app.buttons["up-next"].waitForExistence(timeout: 5), "with history, home should offer what to do next")
+        snap("10b Home, up next")
+
+        tap(app.tabBars.buttons["Me"])
+        XCTAssertTrue(app.navigationBars["Me"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.staticTexts["Last 4 weeks"].waitForExistence(timeout: 5))
+        snap("10c Me, profile")
+        app.swipeUp()
+        snap("10d Me, profile scrolled")
+
+        home()
+        tap(app.buttons.matching(NSPredicate(format: "label BEGINSWITH 'Start '")).firstMatch)
+        XCTAssertTrue(app.buttons["End session"].waitForExistence(timeout: 5), "Start on home should run the workout straight away")
+        tap(app.buttons["End session"])
+        tap(app.buttons["Finish and save"])
+        tap(app.buttons["Done"])
     }
 
     /// The bench is taken: the session carries on with the machine, from here to the end.
@@ -225,8 +256,8 @@ final class WalkthroughUITests: XCTestCase {
 
     func testWriteAWorkout() {
         XCTAssertTrue(app.navigationBars["Tiger"].waitForExistence(timeout: 10))
-        tap(app.buttons["Write a workout"])
-        // ＋ opens the workout screen itself, asking for a name first.
+        tap(app.buttons["New workout"])
+        // New workout opens the workout screen itself, asking for a name first.
         let name = app.textFields["Name"]
         XCTAssertTrue(name.waitForExistence(timeout: 5))
         snap("11 New workout")
@@ -234,6 +265,9 @@ final class WalkthroughUITests: XCTestCase {
         name.typeText("Swings and sprints")
         tap(app.buttons["Done"])
         XCTAssertTrue(app.navigationBars["Swings and sprints"].waitForExistence(timeout: 5))
+        // Nothing to run yet, so nothing to start.
+        XCTAssertFalse(app.buttons["Start workout"].exists, "an empty workout should not offer Start")
+        snap("11b New workout, named, empty")
 
         tap(app.buttons["Add exercise"].firstMatch)
         XCTAssertTrue(app.navigationBars["Add exercise"].waitForExistence(timeout: 5))
@@ -245,6 +279,7 @@ final class WalkthroughUITests: XCTestCase {
 
         let swing = app.buttons.matching(NSPredicate(format: "label BEGINSWITH[c] 'Kettlebell swing'")).firstMatch
         XCTAssertTrue(swing.waitForExistence(timeout: 5))
+        XCTAssertTrue(app.buttons["Start workout"].waitForExistence(timeout: 3), "one exercise is enough to start")
         snap("13 Workout screen with an exercise")
 
         tap(swing)
@@ -263,18 +298,35 @@ final class WalkthroughUITests: XCTestCase {
     func testSettingsAndHealth() {
         tap(app.tabBars.buttons["Me"])
         XCTAssertTrue(app.navigationBars["Me"].waitForExistence(timeout: 5))
+        snap("16 Me")
+        for _ in 0..<4 where !(app.buttons["Settings"].exists && app.buttons["Settings"].isHittable) { app.swipeUp() }
+        snap("16a Me, scrolled")
+        // The exercise logbook opens from Me as well as from History.
+        tap(app.buttons.matching(NSPredicate(format: "label BEGINSWITH 'Exercises'")).firstMatch)
+        XCTAssertTrue(app.navigationBars["Exercises"].waitForExistence(timeout: 5))
+        app.navigationBars["Exercises"].buttons.element(boundBy: 0).tap()
+        XCTAssertTrue(app.navigationBars["Me"].waitForExistence(timeout: 5))
+        tap(app.buttons["Settings"])
+        XCTAssertTrue(app.navigationBars["Settings"].waitForExistence(timeout: 5))
         // The simulator has no haptic hardware, and the row says so rather than staying quiet.
         XCTAssertTrue(app.staticTexts["Haptic engine: not on this device"].waitForExistence(timeout: 5))
         tap(app.buttons["Test buzz"])
-        snap("16 Me")
+        snap("16b Settings")
 
         let health = app.switches["Apple Health"]
         XCTAssertTrue(health.waitForExistence(timeout: 5))
         // A SwiftUI toggle flips on its knob, not on the middle of the row, which is the label.
-        health.coordinate(withNormalizedOffset: CGVector(dx: 0.93, dy: 0.5)).tap()
-        // The permission sheet is the system's, presented over the app.
+        let knob = health.coordinate(withNormalizedOffset: CGVector(dx: 0.93, dy: 0.5))
+        // An earlier run can leave it on; start from off so the tap asks.
+        if (health.value as? String) == "1" { knob.tap(); sleep(1) }
+        knob.tap()
+        // The permission sheet is the system's, presented over the app. If it does not come up,
+        // the switch goes back off and the row under it has to say why.
         sleep(4)
         snap("17 Health permission")
+        if (health.value as? String) == "0" {
+            XCTAssertTrue(app.descendants(matching: .any)["health-error"].exists, "Health turned itself off without saying why")
+        }
         // Only a signed build carries the entitlement; CI builds unsigned and says so.
         if ProcessInfo.processInfo.environment["UNSIGNED_BUILD"] != "1" {
             XCTAssertFalse(app.staticTexts.matching(NSPredicate(format: "label CONTAINS[c] 'entitlement'")).firstMatch.exists,
@@ -334,7 +386,10 @@ final class WalkthroughUITests: XCTestCase {
         // A session's exercise row opens the same logbook.
         tap(app.navigationBars.buttons.element(boundBy: 0))
         tap(app.navigationBars.buttons.element(boundBy: 0))
-        tap(app.buttons.matching(NSPredicate(format: "label BEGINSWITH[c] 'Heavy singles'")).firstMatch)
+        // Sessions other walkthroughs logged today sit above the seeded ones; scroll down to it.
+        let heavy = app.buttons.matching(NSPredicate(format: "label BEGINSWITH[c] 'Heavy singles'")).firstMatch
+        for _ in 0..<8 where !(heavy.exists && heavy.isHittable) { app.swipeUp() }
+        tap(heavy)
         tap(app.buttons.matching(NSPredicate(format: "label BEGINSWITH[c] 'Barbell bench press'")).firstMatch)
         XCTAssertTrue(app.staticTexts["Best est. 1RM"].waitForExistence(timeout: 5))
 
@@ -360,6 +415,21 @@ final class WalkthroughUITests: XCTestCase {
         let row = exact.exists ? exact : app.buttons.matching(NSPredicate(format: "label BEGINSWITH %@", title)).firstMatch
         tap(row)
         XCTAssertTrue(app.buttons["Start workout"].waitForExistence(timeout: 5))
+    }
+
+    /// Back to the top of the Workouts tab with the search cleared, where the Up next card lives.
+    private func home() {
+        tap(app.tabBars.buttons["Workouts"])
+        for _ in 0..<3 where !app.navigationBars["Tiger"].exists {
+            app.navigationBars.buttons.element(boundBy: 0).tap()
+        }
+        // The search that found the workout is still filled in; the card only shows without one.
+        let clear = app.navigationBars["Tiger"].buttons["Clear text"]
+        if clear.exists { clear.tap() }
+        for label in ["Close", "Cancel"] where app.navigationBars["Tiger"].buttons[label].exists {
+            app.navigationBars["Tiger"].buttons[label].tap()
+        }
+        XCTAssertTrue(app.navigationBars["Tiger"].waitForExistence(timeout: 5))
     }
 
     private func tap(_ element: XCUIElement, file: StaticString = #filePath, line: UInt = #line) {

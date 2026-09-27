@@ -21,24 +21,25 @@ struct HistoryView: View {
                 if store.results.isEmpty {
                     VStack(spacing: 18) {
                         Spacer()
-                        Image(systemName: store.signedIn ? "figure.strengthtraining.functional" : "clock.arrow.circlepath")
+                        Image(systemName: "figure.strengthtraining.functional")
                             .font(.system(size: 44, weight: .semibold))
                             .foregroundStyle(Brand.coral)
                             .frame(width: 96, height: 96)
                             .background(Brand.coralSoft, in: Circle())
-                        Text(store.signedIn ? "No sessions yet" : "Your history lives in your account")
+                        Text("No sessions yet")
                             .font(.title2.weight(.heavy))
                             .foregroundStyle(Brand.ink)
                             .multilineTextAlignment(.center)
+                        // Signed out, a session is still saved: on this phone, queued for the account.
                         Text(store.signedIn
                              ? "Finish a workout and it lands here, with what you lifted and what you worked."
-                             : "Sign in and every session you've logged — here or on tigerworkouts.com — shows up.")
+                             : "Finish a workout and it lands here, saved on this phone. Sign in to see what you logged on tigerworkouts.com too.")
                             .font(.callout)
                             .foregroundStyle(Brand.muted)
                             .multilineTextAlignment(.center)
                         if !store.signedIn {
                             Button("Sign in") { signingIn = true }
-                                .buttonStyle(BigButtonStyle())
+                                .buttonStyle(BigButtonStyle(filled: false))
                                 .padding(.top, 6)
                         }
                         Spacer()
@@ -49,6 +50,21 @@ struct HistoryView: View {
                     .background(Brand.canvas)
                 } else {
                     List {
+                        if !store.signedIn {
+                            Section {
+                                Button { signingIn = true } label: {
+                                    VStack(alignment: .leading, spacing: 2) {
+                                        Text("Saved on this phone").font(.subheadline.weight(.semibold)).foregroundStyle(Brand.ink)
+                                        Text(store.unsyncedCount > 0
+                                             ? "\(store.unsyncedCount) waiting to sync. Sign in to add them to your account."
+                                             : "Sign in to sync them to your account.")
+                                            .font(.footnote)
+                                            .foregroundStyle(Brand.muted)
+                                    }
+                                }
+                                .accessibilityIdentifier("history-signed-out")
+                            }
+                        }
                         ForEach(months, id: \.label) { month in
                             Section(month.label) {
                                 ForEach(month.sessions) { session in

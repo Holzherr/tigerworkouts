@@ -9,6 +9,7 @@ import { ManageFavoritesSheet, QuickLogRow, QuickLogSheet } from '@/features/res
 import type { Favorite } from '@/features/cloud/sync';
 import { Button } from '@/shared/components/ui/button';
 import { SettingsSheet } from './settings-sheet';
+import { MeScreen } from './me-screen';
 
 const meta = {
   title: 'Profile/Sheets',
@@ -67,3 +68,15 @@ export const QuickLog: Story = { render: () => <Quick /> };
 export const Import: Story = { render: () => <ImportScreen runsheet={priyanka()} onSave={() => alert('saved')} onDiscard={() => alert('discard')} /> };
 export const ImportBroken: Story = { render: () => <ImportScreen runsheet={null} onSave={() => {}} onDiscard={() => {}} /> };
 void EX;
+
+const RESULTS = [0, 1, 2, 8, 9, 15].map((d, i) => ({ runsheetId: 'x', title: 'Fran', startedAt: new Date(Date.now() - d * 864e5).toISOString(), durationSec: 1500 + i * 120, steps: [] }));
+export const Me: Story = {
+  render: () => (
+    <MeScreen name="Nick" avatar={{ emoji: '🐯', color: '#ff4d2e' }} status="Signed in as nick@example.com" results={RESULTS} load={{ quads: 1, glutes: 0.8, back: 0.5, chest: 0.3 }} bodyweightKg={82} onBodyweight={() => {}} onSettings={() => {}} onOpenHistory={() => {}} onOpenWeek={() => {}} onOpenExercises={() => {}}>
+      <Button variant="ghost" block>
+        Training maxes
+      </Button>
+    </MeScreen>
+  ),
+};
+export const MeFirstRun: Story = { render: () => <MeScreen name="Nick" status="Not signed in · sessions are kept on this device" results={[]} load={{}} onBodyweight={() => {}} onSettings={() => {}} onOpenHistory={() => {}} onOpenWeek={() => {}} /> };

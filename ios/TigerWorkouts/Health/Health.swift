@@ -177,10 +177,13 @@ final class Health {
 
 enum HealthError: LocalizedError {
     case unavailable
+    /// Asked, and not allowed: turned down on the sheet now or earlier, when iOS no longer shows it.
+    case notAllowed
 
     var errorDescription: String? {
         switch self {
         case .unavailable: "Health is not available on this device."
+        case .notAllowed: "Health did not allow TigerWorkouts to save workouts. Turn it on in the Health app: your profile, Apps, TigerWorkouts."
         }
     }
 }

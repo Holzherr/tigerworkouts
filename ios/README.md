@@ -121,7 +121,7 @@ xcrun simctl spawn booted log stream --predicate 'subsystem == "com.holzherr.tig
 
 ## Writing workouts
 
-Tap ＋ on the Workouts tab, or open any catalogue workout and pick "Make a copy I can edit" — a
+Tap New workout on the Workouts tab, or open any catalogue workout and pick "Make a copy I can edit" — a
 catalogue workout is never written over, and a copy gets fresh step ids, because a logged session
 keys its loads by step id and two workouts must not share them.
 

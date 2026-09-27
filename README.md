@@ -92,7 +92,7 @@ imported workouts, scores and progression, follow-along videos, Discover with re
 with your history, saved-not-done, and the next day of a program in progress; a creator done twice
 outranks any exercise overlap; For you sends the user to Search when history yields no picks),
 settings, share links, quick log, post-workout stats with a body map, offline via a service worker.
-Each session records where it was started (`startedFrom`: a Discover tab, the Me tab, Repeat, a
+Each session records where it was started (`startedFrom`: a Discover tab, the Up next card on home, the Me tab, Repeat, a
 share link) so the share started from a home recommendation can be measured.
 
 Not yet: imperial units in the UI (stored only), Fitbit heart rate is read on the session page but

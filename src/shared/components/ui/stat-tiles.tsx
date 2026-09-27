@@ -9,12 +9,14 @@ export interface Stat {
 
 export interface StatTilesProps {
   stats: readonly Stat[];
+  /** Tiles per row; defaults to all of them in one row. */
+  columns?: number;
   className?: string;
 }
 
 /** Row of equal white tiles: big tabular number over an 11px label. Three across on a phone. A tile with onClick renders as a button. */
-export const StatTiles = ({ stats, className }: StatTilesProps) => (
-  <div className={cn('grid gap-2', className)} style={{ gridTemplateColumns: `repeat(${stats.length}, 1fr)` }}>
+export const StatTiles = ({ stats, columns, className }: StatTilesProps) => (
+  <div className={cn('grid gap-2', className)} style={{ gridTemplateColumns: `repeat(${columns ?? stats.length}, 1fr)` }}>
     {stats.map(s => {
       const inner = (
         <>

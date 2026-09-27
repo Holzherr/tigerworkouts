@@ -67,3 +67,5 @@ const Scores = () => {
   );
 };
 export const ScoreEntries: Story = { render: () => <Scores /> };
+/** First finish with no bodyweight: the ask sits under the stats, once. */
+export const AsksBodyweight: Story = { args: { runsheet: cindy(), onSave: () => {}, onBodyweight: () => {} } };

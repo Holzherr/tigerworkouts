@@ -75,6 +75,9 @@ struct DiscoverView: View {
         NavigationStack(path: $path) {
             ScrollView {
                 VStack(alignment: .leading, spacing: 22) {
+                    if !searching, let next = NextUp.find(in: store.allWorkouts, results: store.results) {
+                        nextUpCard(next)
+                    }
                     if !searching {
                         Picker("Feed", selection: $tab) {
                             ForEach(Tab.allCases) { Text($0.rawValue).tag($0) }
@@ -92,7 +95,8 @@ struct DiscoverView: View {
                     }
                 }
                 .padding(.vertical, 8)
-                .padding(.bottom, 24)
+                // Room under the last carousel so it clears the floating tab bar.
+                .padding(.bottom, 40)
             }
             .background(Brand.canvas)
             .scrollDismissesKeyboard(.immediately)
@@ -108,9 +112,15 @@ struct DiscoverView: View {
                     Button {
                         writing = Edit.newRunsheet(creator: store.user?.email)
                     } label: {
-                        Image(systemName: "plus")
+                        // Spelled out: a bare ＋ in the corner did not read as "write a workout".
+                        HStack(spacing: 4) {
+                            Image(systemName: "plus")
+                            Text("New workout")
+                        }
+                        .font(.subheadline.weight(.semibold))
+                        .fixedSize()
                     }
-                    .accessibilityLabel("Write a workout")
+                    .accessibilityLabel("New workout")
                 }
             }
             .onOpenURL { url in
@@ -119,11 +129,71 @@ struct DiscoverView: View {
                       store.workout(id: id) != nil else { return }
                 path = [id]
             }
-            // ＋ opens a new, empty workout on the workout screen: the one editor.
+            // New workout opens an empty one on the workout screen: the one editor.
             .navigationDestination(item: $writing) { sheet in
                 WorkoutDetailView(runsheet: sheet, isNew: true, onStart: onStart)
             }
         }
+    }
+
+    // MARK: - Up next
+
+    /// Only once there is history: the next day of the program you are on, or your last workout,
+    /// one tap from launch, and the week so far. The first run stays the catalogue.
+    private func nextUpCard(_ next: NextUp) -> some View {
+        let streak = EffortModel.streak(store.results)
+        return VStack(alignment: .leading, spacing: 12) {
+            Text(next.reason)
+                .font(.footnote.weight(.bold))
+                .foregroundStyle(Brand.coralInk)
+            HStack(spacing: 12) {
+                Button {
+                    path = [next.runsheet.key]
+                } label: {
+                    HStack(spacing: 12) {
+                        WorkoutIcon(runsheet: next.runsheet, size: 52)
+                        VStack(alignment: .leading, spacing: 3) {
+                            Text(next.runsheet.title)
+                                .font(.headline)
+                                .foregroundStyle(Brand.ink)
+                                .lineLimit(2)
+                                .multilineTextAlignment(.leading)
+                            Text(["\(next.runsheet.minutes) min", next.runsheet.program?.day].compactMap { $0 }.filter { !$0.isEmpty }.joined(separator: " · "))
+                                .font(.footnote)
+                                .foregroundStyle(Brand.muted)
+                        }
+                        Spacer(minLength: 0)
+                    }
+                    .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+                .accessibilityIdentifier("up-next")
+
+                Button {
+                    // What the workout page would show: last time's numbers carried over.
+                    onStart(Settings.withLastUsed(next.runsheet, results: store.results))
+                } label: {
+                    Label("Start", systemImage: "play.fill")
+                        .font(.system(size: 17, weight: .semibold))
+                        .padding(.horizontal, 18)
+                        .frame(minHeight: Tap.regular)
+                        .foregroundStyle(.white)
+                        .background(Brand.coral, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("Start \(next.runsheet.title)")
+            }
+            Divider()
+            HStack(spacing: 8) {
+                Image(systemName: "chart.line.uptrend.xyaxis").foregroundStyle(Brand.coral)
+                Text(NextUp.weekLine(streak)).font(.subheadline.weight(.semibold)).foregroundStyle(Brand.ink)
+                Text("· \(streak.total) all time").font(.subheadline).foregroundStyle(Brand.muted)
+            }
+        }
+        .padding(16)
+        .background(Brand.surface, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
+        .overlay(RoundedRectangle(cornerRadius: 18, style: .continuous).strokeBorder(Brand.brandLine))
+        .padding(.horizontal, 16)
     }
 
     // MARK: - For you
@@ -162,7 +232,7 @@ struct DiscoverView: View {
             ContentUnavailableView {
                 Label("Nothing saved yet", systemImage: "bookmark")
             } description: {
-                Text("Tap the bookmark on any workout, or write your own with +.")
+                Text("Tap the bookmark on any workout, or write your own with New workout.")
             } actions: {
                 Button("Browse workouts") { tab = .browse }
                     .buttonStyle(.borderedProminent)

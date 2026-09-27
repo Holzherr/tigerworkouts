@@ -1,12 +1,10 @@
-import { Flame, History, ImageUp, Settings, User } from 'lucide-react';
+import { Flame, History, ImageUp, User } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { DiscoverScreen, type DiscoverTab } from '@/features/discover/components/discover-screen';
 import { LandingScreen } from '@/features/landing/components/landing-screen';
 import { TimerDemo } from '@/features/landing/components/timer-demo';
 import { SignInCard } from '@/features/auth/components/sign-in-card';
-import { StatTiles } from '@/shared/components/ui/stat-tiles';
 import { FULL_LIBRARY } from '@/features/workouts/imported';
-import { WorkoutCard } from '@/features/discover/components/workout-card';
 import { WorkoutPreviewScreen } from '@/features/discover/components/workout-preview-screen';
 import { EditorScreen } from '@/features/runsheet/components/editor-screen';
 import type { DndVariant } from '@/features/runsheet/components/runsheet-list';
@@ -21,7 +19,12 @@ import { CreatorPageCard } from '@/features/creators/components/creator-page-car
 import { cn } from '@/shared/utils/ui-utils';
 import { ExercisePicker } from '@/features/exercises/components/exercise-picker';
 import type { LibraryExercise } from '@/features/exercises/library';
-import { AvatarView, SettingsSheet } from '@/features/profile/components/settings-sheet';
+import { SettingsSheet } from '@/features/profile/components/settings-sheet';
+import { MeScreen } from '@/features/profile/components/me-screen';
+import { NextUpCard } from '@/features/discover/components/next-up-card';
+import { nextUp } from '@/features/discover/next-up';
+import { streak, workedFrom } from '@/features/results/effort';
+import { muscleLoad } from '@/features/results/muscles';
 import { ImportScreen } from '@/features/share/components/import-screen';
 import { LogImportScreen } from '@/features/results/components/log-import-screen';
 import { decodeLogged, decodeShared, shareLink, shareUrl } from '@/features/share/share';
@@ -343,6 +346,7 @@ export default function App() {
           bodyweightKg={st.bodyweightKg}
           initial={pending ?? undefined}
           startedFrom={from}
+          onBodyweight={st.bodyweightKg === undefined && !st.bodyweightAsked ? kg => (kg === undefined ? act.skipBodyweight() : act.setBodyweight(kg)) : undefined}
           onCancel={() => (setPending(null), go(`/w/${encodeURIComponent(route.id)}`))}
           onSave={(res, next) => {
             act.addResult({ ...res, runsheetId: wid(r) });
@@ -388,7 +392,12 @@ export default function App() {
         </header>
         <div className="min-h-0 flex-1 space-y-2 overflow-y-auto px-3 py-3">
           <div className="px-1 text-[11px] font-bold tracking-widest text-muted uppercase">{sub === 'week' ? 'Last 7 days' : 'Sessions'}</div>
-          {st.results.length === 0 && <div className="py-10 text-center text-[13px] text-muted">No sessions yet. Open a workout and log one.</div>}
+          {st.results.length === 0 && <div className="py-10 text-center text-[13px] text-muted">No sessions yet. Finish a workout and it lands here.</div>}
+          {!cloud.user && st.results.length > 0 && (
+            <button type="button" onClick={() => go('/me')} className="block w-full px-1 text-left text-[12px] text-muted">
+              Kept on this device. <span className="font-bold text-brand">Sign in</span> to sync them to your account.
+            </button>
+          )}
           {st.results.filter(r => sub !== 'week' || Date.now() - Date.parse(r.startedAt) < 7 * 864e5).map((res, i) => {
             const r = byId.get(res.runsheetId);
             return (
@@ -407,25 +416,26 @@ export default function App() {
     );
   }
   if (tab === 'me') {
+    const since = Date.now() - 28 * 864e5;
+    const load = muscleLoad(st.results.filter(r => Date.parse(r.startedAt) >= since).flatMap(r => workedFrom(r, byId.get(r.runsheetId), k => ({ name: LIB[k]?.name ?? k, group: LIB[k]?.group }))));
+    const out = () => signOut().then(() => (act.setSignedIn(false), setSettingsOpen(false), go('/discover')));
     return shell(
       'me',
-      <div className="flex h-full flex-col bg-canvas">
-        <header className="safe-top bg-surface px-4 pt-3 pb-2">
-          <div className="flex items-center gap-3">
-            <AvatarView name={st.name} avatar={st.avatar} size={48} />
-            <div className="min-w-0 flex-1">
-              <h1 className="truncate text-[22px] font-extrabold">{st.name}</h1>
-              <div className="text-[12px] text-muted">{cloud.user ? `Signed in as ${cloud.user.email}` : 'Not signed in · logs stay on this phone'}</div>
-            </div>
-            <Button variant="quiet" size="icon" aria-label="Settings" onClick={() => setSettingsOpen(true)}>
-              <Settings />
-            </Button>
-          </div>
-        </header>
-        <SettingsSheet open={settingsOpen} onOpenChange={setSettingsOpen} name={st.name} avatar={st.avatar} units={st.units} email={cloud.user?.email ?? undefined} volume={volume} onVolume={v => { setVolume(v); setVol(v); }} dnd={dnd} onDnd={setDnd} onChange={act.setProfile} onInvite={invite} onSignOut={cloud.user ? () => signOut().then(() => (act.setSignedIn(false), setSettingsOpen(false), go('/discover'))) : undefined} />
-        <div className="min-h-0 flex-1 space-y-2 overflow-y-auto px-3 py-3">
-          <StatTiles stats={[{ value: st.results.length, label: 'sessions', onClick: () => go('/history') }, { value: st.results.filter(r => Date.now() - Date.parse(r.startedAt) < 7 * 864e5).length, label: 'this week', onClick: () => go('/history/week') }, { value: st.saved.length, label: 'saved', onClick: () => go('/discover/saved') }]} />
-          {!cloud.user && <SignInCard onSendCode={sendCode} onVerify={async (e, c) => { await verifyCode(e, c); act.setSignedIn(true); }} onGoogle={google ? signInGoogle : undefined} />}
+      <>
+        <MeScreen
+          name={st.name}
+          avatar={st.avatar}
+          status={cloud.user ? `Signed in as ${cloud.user.email}` : 'Not signed in · sessions are kept on this device'}
+          results={st.results}
+          load={load}
+          bodyweightKg={st.bodyweightKg}
+          onBodyweight={act.setBodyweight}
+          onSettings={() => setSettingsOpen(true)}
+          onOpenHistory={() => go('/history')}
+          onOpenWeek={() => go('/history/week')}
+          onOpenExercises={() => go('/history/exercises')}
+        >
+          {!cloud.user && <SignInCard title="Sign in to sync" reasons={['Sessions logged here are kept on this device until you do', 'Same account as the iPhone app: one history on both', 'No password: we email you a 6-digit code']} onSendCode={sendCode} onVerify={async (e, c) => { await verifyCode(e, c); act.setSignedIn(true); }} onGoogle={google ? signInGoogle : undefined} />}
           {cloud.user && (
             <div className="flex items-center justify-between rounded-card border border-line bg-surface px-3 py-2 text-[13px]">
               <span className={st.syncError ? 'text-danger' : 'text-muted'}>{st.syncError ? `Sync error: ${st.syncError}` : st.lastSync ? `Synced ${new Date(st.lastSync).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })} · ${cloud.user.email}` : 'Syncing…'}</span>
@@ -435,28 +445,25 @@ export default function App() {
             </div>
           )}
           {cloud.user && <CreatorPageCard publicCount={st.workouts.filter(w => w.public).length} onOpenPage={key => go(`/c/${encodeURIComponent(key)}`)} />}
+          <Button variant="ghost" block onClick={() => setSettingsOpen(true)}>
+            Name, avatar and app settings
+          </Button>
           <Button variant="ghost" block onClick={() => setTmOpen(true)}>
             Training maxes
           </Button>
-          {tmSheet()}
           {cloud.user && (
-            <Button variant="quiet" block onClick={() => signOut().then(() => (act.setSignedIn(false), go('/discover')))}>
+            <Button variant="quiet" block onClick={out}>
               Sign out
             </Button>
           )}
-          <div className="pt-2 text-[11px] font-bold tracking-widest text-muted uppercase">Saved</div>
-          {st.saved
-            .map(id => byId.get(id))
-            .filter((r): r is Runsheet => !!r)
-            .map(r => (
-              <WorkoutCard key={wid(r)} runsheet={r} compact onOpen={() => open(r, 'mine')} />
-            ))}
-          {st.saved.length === 0 && <div className="text-[13px] text-muted">Nothing saved yet.</div>}
-        </div>
-      </div>
+        </MeScreen>
+        <SettingsSheet open={settingsOpen} onOpenChange={setSettingsOpen} name={st.name} avatar={st.avatar} units={st.units} email={cloud.user?.email ?? undefined} volume={volume} onVolume={v => { setVolume(v); setVol(v); }} dnd={dnd} onDnd={setDnd} onChange={act.setProfile} onInvite={invite} onSignOut={cloud.user ? out : undefined} />
+        {tmSheet()}
+      </>
     );
   }
-  if (!st.signedIn && !cloud.user && sub !== 'search') {
+  // The landing page is the first run only: anyone with sessions on this device goes straight to them, signed in or not.
+  if (!st.signedIn && !cloud.user && st.results.length === 0 && sub !== 'search') {
     const clips = ['kb_swing', 'db_incline_press', 'sprint', 'lat_raise', 'db_shoulder_press', 'incline_walk'].map(k => ({ clip: EX[k].clip, poster: EX[k].poster, name: EX[k].name }));
     const stills = Object.values(LIB).filter(e => e.poster).slice(0, 28).map(e => e.poster!);
     return (
@@ -482,7 +489,17 @@ export default function App() {
       )}
     </>
   );
-  return shell('discover', <DiscoverScreen key={initialTab} initialTab={initialTab} workouts={all} results={st.results} savedIds={st.saved} above={above} onCreate={() => (setDraft(null), go('/new'))} onOpen={open} onOpenProgram={(_, days) => open(days[0], 'search')} />);
+  const next = nextUp(all, st.results);
+  const top = next && (
+    <NextUpCard
+      runsheet={next.runsheet}
+      reason={next.reason}
+      streak={streak(st.results)}
+      onOpen={() => open(next.runsheet, 'home')}
+      onStart={() => (setDraft(null), setFrom('home'), go(`/do/${encodeURIComponent(wid(next.runsheet))}`))}
+    />
+  );
+  return shell('discover', <DiscoverScreen key={initialTab} initialTab={initialTab} workouts={all} results={st.results} savedIds={st.saved} above={above} top={top} onCreate={() => (setDraft(null), go('/new'))} onOpen={open} onOpenProgram={(_, days) => open(days[0], 'search')} />);
 }
 
 /**

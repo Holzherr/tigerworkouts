@@ -3,6 +3,7 @@ import SwiftUI
 struct RootView: View {
     @Environment(Store.self) private var store
     @Environment(\.scenePhase) private var scenePhase
+    @Environment(\.colorScheme) private var colorScheme
     @State private var tab = Tab.workouts
     @State private var running: SessionRunner?
     @State private var interrupted: Interrupted?
@@ -32,7 +33,7 @@ struct RootView: View {
                 .tag(Tab.me)
         }
         .fullScreenCover(item: $running) { runner in
-            TimerView(runner: runner) { running = nil }
+            TimerView(runner: runner, appearance: colorScheme) { running = nil }
         }
         // Asked, not assumed: reopening the app after abandoning a workout must not throw you
         // back into its timer. The lookup waits for the catalogue, or it finds nothing.
