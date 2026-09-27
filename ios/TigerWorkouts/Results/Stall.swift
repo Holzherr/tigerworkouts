@@ -86,7 +86,8 @@ enum Stall {
     static func exercise(_ results: [SessionResult], exercise: ExerciseRef, now: Date, swap: Swap? = nil) -> Found? {
         let history = Array(Logbook.history(results, exerciseKey: exercise.key).reversed())
         let kind = Logbook.kind(history)
-        guard kind != .rounds else { return nil }
+        // Timed and distance work is not stalled on: a 40 s interval never grows.
+        guard Logbook.isLift(kind) else { return nil }
         func pick(_ sets: [SetResult]) -> (value: Double, set: SetResult)? {
             var out: (value: Double, set: SetResult)?
             for x in sets where x.isWorking {

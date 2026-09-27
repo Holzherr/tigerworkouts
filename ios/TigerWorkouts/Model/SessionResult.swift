@@ -9,6 +9,13 @@ struct SetResult: Codable, Hashable, Sendable {
     var at: Double? = nil
     /// Warm-up, drop set or to failure; nil for a normal set and on rows from before types.
     var type: SetType? = nil
+    /// Time actually worked on the set, seconds: a countdown for as long as it ran (Done early keeps
+    /// the real time), a hold or a distance for as long as it took. Nil on rows from before it was kept.
+    var seconds: Double? = nil
+    /// Distance covered, metres: the plan's unless changed on the timer or afterwards.
+    var meters: Double? = nil
+    /// Calories on the machine's counter: the plan's unless changed.
+    var calories: Double? = nil
 
     /// Anything but a warm-up counts as work.
     var isWorking: Bool { type != .warmup }

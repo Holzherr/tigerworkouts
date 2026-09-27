@@ -2,10 +2,11 @@ import CoreTransferable
 import Foundation
 import UniformTypeIdentifiers
 
-/// History as CSV, one row per set. A port of `toCsv` in `src/features/results/csv.ts`: the same
+/// History as CSV, one row per set. `seconds` is the time worked on the set, `set_time_seconds`
+/// when in the session it was ticked, `duration_seconds` the whole session's length. A port of `toCsv` in `src/features/results/csv.ts`: the same
 /// columns in the same order, so a file from either app reads the same and imports back into the web.
 enum CSVExport {
-    static let columns = ["date", "workout", "exercise", "exercise_key", "set", "set_type", "load", "unit", "reps", "duration_seconds", "set_time_seconds", "notes"]
+    static let columns = ["date", "workout", "exercise", "exercise_key", "set", "set_type", "load", "unit", "reps", "seconds", "meters", "calories", "duration_seconds", "set_time_seconds", "notes"]
 
     /// A set type in a file, in Hevy's words, which the web export uses too.
     static func typeWord(_ t: SetType?) -> String {
@@ -43,15 +44,15 @@ enum CSVExport {
                 [number(r.durationSec ?? r.activity.map { $0.minutes * 60 }), number(at), r.notes ?? ""]
             }
             if r.steps.isEmpty {
-                rows.append(line(head + ["", "", "", "", "", "", ""] + tail()))
+                rows.append(line(head + ["", "", "", "", "", "", "", "", "", ""] + tail()))
                 continue
             }
             for s in r.steps {
                 let ex = exercise(s.exerciseKey)
                 let sets = Logbook.sets(of: s)
-                if sets.isEmpty { rows.append(line(head + [ex.name, s.exerciseKey, "", "", "", ex.unit, ""] + tail())) }
+                if sets.isEmpty { rows.append(line(head + [ex.name, s.exerciseKey, "", "", "", ex.unit, "", "", "", ""] + tail())) }
                 for (i, x) in sets.enumerated() {
-                    rows.append(line(head + [ex.name, s.exerciseKey, String(i + 1), typeWord(x.type), number(x.load), ex.unit, number(x.reps)] + tail(x.at)))
+                    rows.append(line(head + [ex.name, s.exerciseKey, String(i + 1), typeWord(x.type), number(x.load), ex.unit, number(x.reps), number(x.seconds), number(x.meters), number(x.calories)] + tail(x.at)))
                 }
             }
         }

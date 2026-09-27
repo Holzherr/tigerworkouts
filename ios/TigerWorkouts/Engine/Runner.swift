@@ -60,6 +60,11 @@ struct Actual: Hashable, Sendable, Codable {
     var at: Double?
     /// The set's type changed on the grid; over the plan's.
     var type: SetType?
+    /// Seconds worked on the set, kept when it is done: see `workedSeconds`.
+    var seconds: Double?
+    /// Distance or calories done, changed from the plan on the timer card or the set grid.
+    var meters: Double?
+    var calories: Double?
 }
 
 struct Clock: Hashable, Sendable {
@@ -383,6 +388,7 @@ enum Runner {
         }
         if let c = current(s), !skipped {
             var a = s.actuals[c.id] ?? Actual()
+            if let worked = workedSeconds(s, c, now) { a.seconds = worked }
             a.doneAt = now
             a.at = elapsed(s, now: now).rounded()
             s.actuals[c.id] = a
@@ -390,6 +396,24 @@ enum Runner {
         }
         if let c = current(s) { s = extendAmrap(s, c) }
         return enter(s, s.i + 1, now)
+    }
+
+    /// The work a set's time says something about: a countdown (a plank, a 40 s interval), a max
+    /// effort, a distance or a calorie count. A set of reps is left out — its time is mostly the
+    /// rest before the tick — and so is a follow-along video segment.
+    static func timesWork(_ sl: Slot) -> Bool {
+        guard sl.kind == .work, let e = sl.exercise, e.forMode != .segment else { return false }
+        return sl.seconds != nil || e.forMode == .max || e.forMode == .meters || e.forMode == .calories
+    }
+
+    /// Seconds spent on the running slot, pauses out: for a countdown, as long as it ran — the
+    /// whole interval when it ran out, less when it was ended early. Nil for work whose time says
+    /// nothing, and for a set done the moment it began (ticked straight after its rest).
+    private static func workedSeconds(_ s: RunState, _ c: Slot, _ now: Double) -> Double? {
+        guard timesWork(c), s.phase == .running else { return nil }
+        let spent = max(0, (now - s.slotStartedAt) / 1000)
+        let sec = (c.seconds.map { min($0, spent) } ?? spent).rounded()
+        return sec > 0 ? sec : nil
     }
 
     /// Leaving the last expanded round of a capped amrap before its cap: add one more round (and
@@ -549,7 +573,49 @@ enum Runner {
         return s
     }
 
+    /// The metres or calories done on the running distance or calorie step, when not what the plan said.
+    static func setAmount(_ s: RunState, value: Double) -> RunState {
+        guard let c = current(s) else { return s }
+        return setAmountAt(s, slotId: c.id, value: value)
+    }
+
+    enum Amount: String, Sendable { case meters, calories }
+
+    /// Which field a step's amount goes in: metres or calories for a step done for either, or for a
+    /// rower, ski erg or bike on the clock (the machine counts what you did); nil for other work.
+    static func amountField(_ sl: Slot?) -> Amount? {
+        guard let sl, sl.kind == .work, let e = sl.exercise else { return nil }
+        if e.forMode == .meters { return .meters }
+        if e.forMode == .calories { return .calories }
+        switch Measure.of(e.exercise.unit) {
+        case .meters: return .meters
+        case .calories: return .calories
+        default: return nil
+        }
+    }
+
+    /// What a distance or calorie set did: changed on the card or the grid, else the plan's distance
+    /// or calories. A timed piece on a machine has no plan for it, so only what was entered.
+    static func amountAt(_ s: RunState, _ sl: Slot) -> Double? {
+        guard let f = amountField(sl), let e = sl.exercise else { return nil }
+        let a = s.actuals[sl.id]
+        let set = f == .meters ? a?.meters : a?.calories
+        let planned = (f == .meters && e.forMode == .meters) || (f == .calories && e.forMode == .calories)
+        return set ?? (planned ? e.forValue : nil)
+    }
+
     // MARK: - The set grid
+
+    /// Metres or calories for one set from its row. A done set is locked like its reps.
+    static func setAmountAt(_ s: RunState, slotId: String, value: Double) -> RunState {
+        guard let idx = s.slots.firstIndex(where: { $0.id == slotId }), let f = amountField(s.slots[idx]),
+              s.actuals[slotId]?.doneAt == nil else { return s }
+        var s = s
+        var a = s.actuals[slotId] ?? Actual()
+        if f == .meters { a.meters = value } else { a.calories = value }
+        s.actuals[slotId] = a
+        return s
+    }
 
     /// Change the load of one set from its row: the running set as `adjust` does, a set still to
     /// come as if set ahead, a done set only after it has been un-ticked.
@@ -607,6 +673,7 @@ enum Runner {
         var s = s
         s.actuals[slotId]?.doneAt = nil
         s.actuals[slotId]?.at = nil
+        s.actuals[slotId]?.seconds = nil
         if let block = s.slots[idx].blockId { s.blockDone[block] = max(0, (s.blockDone[block] ?? 0) - 1) }
         return s
     }
@@ -616,6 +683,7 @@ enum Runner {
         var st = s
         if let load = set.load { st = adjustAt(st, now: now, slotId: slotId, target: load) }
         if let reps = set.reps { st = setRepsAt(st, slotId: slotId, reps: reps) }
+        if let amount = set.meters ?? set.calories { st = setAmountAt(st, slotId: slotId, value: amount) }
         return st
     }
 
@@ -853,7 +921,13 @@ enum Runner {
             // load worked at and its reps are not work, so they stay out of both.
             let warm = type == .warmup
             if let done, !warm { reps.append(done) }
-            let target = effectiveTarget(s, idx)
+            // An exercise counted in metres, seconds or calories has no load: its unit is the measure.
+            let target = Measure.of(ex.exercise.unit) != nil ? nil : effectiveTarget(s, idx)
+            let f = amountField(slot)
+            let amount = amountAt(s, slot)
+            var set = SetResult(reps: done, load: target, at: doneAtSec(s, a), type: type == .normal ? nil : type)
+            set.seconds = a.seconds
+            if f == .meters { set.meters = amount } else if f == .calories { set.calories = amount }
             steps[key] = StepResult(
                 stepId: ex.id,
                 exerciseKey: ex.exercise.key,
@@ -861,7 +935,7 @@ enum Runner {
                 incline: effectiveIncline(s, idx),
                 reps: reps.isEmpty ? nil : reps,
                 success: prev?.success ?? true,
-                sets: (prev?.sets ?? []) + [SetResult(reps: done, load: target, at: doneAtSec(s, a), type: type == .normal ? nil : type)]
+                sets: (prev?.sets ?? []) + [set]
             )
         }
 

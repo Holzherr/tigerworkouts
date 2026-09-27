@@ -525,3 +525,18 @@ extension Decoder {
         userInfo[.exerciseLibrary] as? [String: ExerciseRef]
     }
 }
+
+/// An exercise whose unit is the measure of the work — a rower in metres, a plank in seconds, a
+/// bike in calories — rather than a load. Its `target` is not a weight in hand. `measureOf` in model.ts.
+enum Measure: String, Sendable {
+    case meters, seconds, calories
+
+    static func of(_ unit: String?) -> Measure? {
+        switch unit {
+        case "m": return .meters
+        case "s": return .seconds
+        case "cal": return .calories
+        default: return nil
+        }
+    }
+}

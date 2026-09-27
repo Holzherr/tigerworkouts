@@ -17,7 +17,7 @@ struct ExerciseHistoryView: View {
     var body: some View {
         let history = Logbook.history(store.results, exerciseKey: exerciseKey)
         let records = Logbook.records(store.results, exerciseKey: exerciseKey)
-        let points = Logbook.points(history, kind: records.kind)
+        let points = Logbook.points(history, kind: records.kind, per: paceOver)
         ScrollView {
             VStack(alignment: .leading, spacing: 16) {
                 HStack(spacing: 12) {
@@ -38,7 +38,7 @@ struct ExerciseHistoryView: View {
                         }
                     }
                     LazyVGrid(columns: [GridItem(.flexible(), spacing: 10), GridItem(.flexible(), spacing: 10)], spacing: 10) {
-                        ForEach(tiles(records, last: history.first?.startedAt), id: \.label) { tile($0) }
+                        ForEach(tiles(records, last: history.first?.startedAt, history: history), id: \.label) { tile($0) }
                     }
                     Text("Sessions")
                         .font(.caption.weight(.semibold))
@@ -65,30 +65,48 @@ struct ExerciseHistoryView: View {
 
     // MARK: - Chart
 
+    /// Pace per 500 m on a rower or ski erg, as their monitors show it; per km for anything else.
+    private var paceOver: Double { Library.shared.exercise(exerciseKey)?.group == .rower ? 500 : 1000 }
+
     private func chartLabel(_ kind: Logbook.Kind) -> String {
         let u = unit.isEmpty ? "" : " · \(unit)"
         switch kind {
         case .strength: return "Estimated 1RM\(u)"
         case .load: return unit == "kph" ? "Top speed · kph" : "Top load\(u)"
         case .reps: return "Most reps in a set"
+        case .pace: return "Fastest pace · per \(paceOver == 500 ? "500 m" : "km")"
+        case .distance: return "Furthest in a set · m"
+        case .calories: return "Most calories in a set"
+        case .time: return "Longest set"
         case .rounds: return "Rounds per session"
         }
     }
 
     private func chart(_ points: [Logbook.Point], kind: Logbook.Kind) -> some View {
-        VStack(alignment: .leading, spacing: 8) {
+        // A pace is better lower: plotted negated so better is still up, labelled as the time.
+        let flip = Logbook.lowerIsBetter(kind)
+        let timeAxis = kind == .pace || kind == .time
+        return VStack(alignment: .leading, spacing: 8) {
             Text(chartLabel(kind)).font(.footnote.weight(.semibold)).foregroundStyle(Brand.muted)
             Chart {
                 ForEach(points, id: \.self) { p in
-                    LineMark(x: .value("Date", p.date), y: .value("Best", p.value))
+                    LineMark(x: .value("Date", p.date), y: .value("Best", flip ? -p.value : p.value))
                         .foregroundStyle(Brand.coral)
                         .lineStyle(StrokeStyle(lineWidth: 2.5, lineCap: .round, lineJoin: .round))
-                    PointMark(x: .value("Date", p.date), y: .value("Best", p.value))
+                    PointMark(x: .value("Date", p.date), y: .value("Best", flip ? -p.value : p.value))
                         .foregroundStyle(Brand.coral)
                         .symbolSize(p == points.last ? 70 : 30)
                 }
             }
             .chartYScale(domain: .automatic(includesZero: false))
+            .chartYAxis {
+                AxisMarks { v in
+                    AxisGridLine()
+                    AxisValueLabel {
+                        if let n = v.as(Double.self) { Text(timeAxis ? Logbook.duration(abs(n)) : Format.number(abs(n))) }
+                    }
+                }
+            }
             .chartXAxis { AxisMarks(values: .automatic(desiredCount: 3)) { AxisValueLabel(format: .dateTime.day().month(.abbreviated)) } }
             .frame(height: 150)
             .accessibilityLabel("\(chartLabel(kind)), \(points.count) sessions")
@@ -107,7 +125,7 @@ struct ExerciseHistoryView: View {
     }
 
     /// What records mean for this kind of work. Timed work gets what exists rather than blanks.
-    private func tiles(_ r: Logbook.Records, last: String?) -> [Tile] {
+    private func tiles(_ r: Logbook.Records, last: String?, history: [Logbook.Session] = []) -> [Tile] {
         let u = unit.isEmpty ? "" : " \(unit)"
         func t(_ label: String, _ rec: Logbook.Rec?, _ value: (Double) -> String, withSet: Bool = false) -> [Tile] {
             guard let rec else { return [] }
@@ -125,6 +143,19 @@ struct ExerciseHistoryView: View {
             return t(unit == "kph" ? "Top speed" : "Heaviest", r.heaviest, { "\(Format.number($0))\(u)" }) + [sessions]
         case .reps:
             return t("Most reps", r.reps, { Format.number($0) }) + [sessions]
+        case .pace:
+            // The distances with a fastest time, the most done first: at most two tiles.
+            var done: [Int: Int] = [:]
+            for x in history.flatMap(\.sets) where x.meters != nil && x.seconds != nil { done[Logbook.distKey(x.meters!), default: 0] += 1 }
+            let fastest = r.fastest.sorted { (done[$0.key] ?? 0, -$0.key) > (done[$1.key] ?? 0, -$1.key) }.prefix(2)
+                .map { Tile(label: "Fastest \($0.key) m", value: Logbook.duration($0.value.value), sub: date($0.value.at)) }
+            return Array((fastest + t("Furthest", r.distance, { "\(Format.number($0)) m" }, withSet: true) + [sessions]).prefix(4))
+        case .distance:
+            return t("Furthest", r.distance, { "\(Format.number($0)) m" }) + [sessions]
+        case .calories:
+            return t("Most calories", r.calories, { "\(Format.number($0)) cal" }, withSet: true) + [sessions]
+        case .time:
+            return t("Longest", r.longest, { Logbook.duration($0) }) + [sessions]
         case .rounds:
             return [sessions]
         }
@@ -223,7 +254,7 @@ struct ExerciseListView: View {
 }
 
 /// Wraps its children onto as many lines as they need, left to right.
-private struct FlowRow: Layout {
+struct FlowRow: Layout {
     var spacing: CGFloat = 6
 
     func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) -> CGSize {

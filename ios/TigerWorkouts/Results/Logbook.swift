@@ -23,8 +23,15 @@ enum Logbook {
 
     /// What the chart and records measure, from what was logged: `strength` load and reps
     /// (estimated 1RM), `load` load only (a weight held, a treadmill speed), `reps` reps only
-    /// (bodyweight), `rounds` neither — timed work, counted in rounds.
-    enum Kind: String, Hashable { case strength, load, reps, rounds }
+    /// (bodyweight), `pace` distance with a time (a 500 m row: fastest pace), `distance` distance
+    /// alone (most metres), `calories` a calorie count, `time` time alone (a plank: longest),
+    /// `rounds` none of these — sets from before times were kept.
+    enum Kind: String, Hashable { case strength, load, reps, pace, distance, calories, time, rounds }
+
+    /// The kinds that are about load and reps, which stalls and targets read.
+    static func isLift(_ k: Kind) -> Bool { k == .strength || k == .load || k == .reps }
+    /// Lower is better on the chart: pace.
+    static func lowerIsBetter(_ k: Kind) -> Bool { k == .pace }
 
     struct Rec: Hashable {
         var value: Double
@@ -42,6 +49,14 @@ enum Logbook {
         var reps: Rec?
         /// Load × reps summed over a session.
         var volume: Rec?
+        /// Longest timed set that is not a distance or calorie count: a hold, an interval. Seconds.
+        var longest: Rec?
+        /// Most metres in a set.
+        var distance: Rec?
+        /// Most calories in a set.
+        var calories: Rec?
+        /// Fastest time for each distance done, keyed by whole metres. Lower is better.
+        var fastest: [Int: Rec] = [:]
     }
 
     struct Point: Hashable {
@@ -67,6 +82,17 @@ enum Logbook {
     // A warm-up is logged and shown, but it is never a record, never volume and never a session's best.
     private static func loaded(_ x: SetResult) -> Bool { x.isWorking && (x.load ?? 0) > 0 }
     private static func counted(_ x: SetResult) -> Bool { x.isWorking && (x.reps ?? 0) > 0 }
+    private static func distanced(_ x: SetResult) -> Bool { x.isWorking && (x.meters ?? 0) > 0 }
+    private static func burned(_ x: SetResult) -> Bool { x.isWorking && (x.calories ?? 0) > 0 }
+    private static func timed(_ x: SetResult) -> Bool { x.isWorking && (x.seconds ?? 0) > 0 }
+    /// A set whose time is the work: timed, and not a distance or calorie count done against the clock.
+    private static func held(_ x: SetResult) -> Bool { timed(x) && !distanced(x) && !burned(x) }
+
+    /// Pace in seconds per `per` metres (500 for a rower, 1000 for a run).
+    static func pace(_ x: SetResult, per: Double = 1000) -> Double? {
+        guard distanced(x), timed(x) else { return nil }
+        return x.seconds! / x.meters! * per
+    }
 
     /// Sets above this many reps say nothing reliable about a one-rep max.
     static let e1rmMaxReps: Double = 10
@@ -110,6 +136,10 @@ enum Logbook {
         if all.contains(where: { loaded($0) && counted($0) }) { return .strength }
         if all.contains(where: loaded) { return .load }
         if all.contains(where: counted) { return .reps }
+        if all.contains(where: { distanced($0) && timed($0) }) { return .pace }
+        if all.contains(where: distanced) { return .distance }
+        if all.contains(where: burned) { return .calories }
+        if all.contains(where: timed) { return .time }
         return .rounds
     }
 
@@ -122,11 +152,15 @@ enum Logbook {
     /// The session's best set in the chart's terms: estimated 1RM, top load, most reps, or rounds.
     /// A strength session whose sets were all above 10 reps has no estimate, so its point falls
     /// back to the top load — a lower number on the same line, rather than a gap.
-    static func best(_ sets: [SetResult], kind: Kind) -> Double? {
+    static func best(_ sets: [SetResult], kind: Kind, per: Double = 1000) -> Double? {
         switch kind {
         case .strength: return sets.compactMap(e1rm).max() ?? sets.filter(loaded).compactMap(\.load).max()
         case .load: return sets.filter(loaded).compactMap(\.load).max()
         case .reps: return sets.filter(counted).compactMap(\.reps).max()
+        case .pace: return sets.compactMap { pace($0, per: per) }.min()
+        case .distance: return sets.filter(distanced).compactMap(\.meters).max()
+        case .calories: return sets.filter(burned).compactMap(\.calories).max()
+        case .time: return sets.filter(held).compactMap(\.seconds).max()
         case .rounds:
             let n = sets.filter(\.isWorking).count
             return n == 0 ? nil : Double(n)
@@ -134,10 +168,10 @@ enum Logbook {
     }
 
     /// One point per session, oldest first — what the chart draws.
-    static func points(_ history: [Session], kind: Kind? = nil) -> [Point] {
+    static func points(_ history: [Session], kind: Kind? = nil, per: Double = 1000) -> [Point] {
         let k = kind ?? self.kind(history)
         return history.sorted { $0.startedAt < $1.startedAt }.compactMap { s in
-            best(s.sets, kind: k).map { Point(at: s.startedAt, value: $0) }
+            best(s.sets, kind: k, per: per).map { Point(at: s.startedAt, value: $0) }
         }
     }
 
@@ -147,11 +181,22 @@ enum Logbook {
         return Rec(value: value, at: at, set: set)
     }
 
+    /// A distance as a record key: whole metres.
+    static func distKey(_ m: Double) -> Int { Int(m.rounded()) }
+
     private static func adding(_ x: SetResult, at: String, to r: Records) -> Records {
         var r = r
         r.heaviest = better(r.heaviest, loaded(x) ? x.load : nil, at: at, set: x)
         r.e1rm = better(r.e1rm, e1rm(x), at: at, set: x)
         r.reps = better(r.reps, counted(x) ? x.reps : nil, at: at, set: x)
+        r.longest = better(r.longest, held(x) ? x.seconds : nil, at: at, set: x)
+        r.distance = better(r.distance, distanced(x) ? x.meters : nil, at: at, set: x)
+        r.calories = better(r.calories, burned(x) ? x.calories : nil, at: at, set: x)
+        if distanced(x), timed(x), let sec = x.seconds {
+            let k = distKey(x.meters!)
+            // Lower wins, and a tie keeps the date it was first done.
+            if r.fastest[k].map({ sec < $0.value }) ?? true { r.fastest[k] = Rec(value: sec, at: at, set: x) }
+        }
         return r
     }
 
@@ -176,14 +221,21 @@ enum Logbook {
     /// Does this set beat a record standing before it. A loaded set: a heavier load or a better
     /// estimated 1RM — more reps at a light weight is not a PR. An unloaded (bodyweight) set: more
     /// reps. Only an existing record can be beaten, so the first time is not a PR, nor is a tie.
+    /// A distance: a faster time over the same distance, or further than ever. Calories: more. A
+    /// hold or an interval: longer.
     static func isRecord(_ x: SetResult, before: Records) -> Bool {
         if loaded(x) {
             if let h = before.heaviest, x.load! > h.value { return true }
             if let e = e1rm(x), let b = before.e1rm, e > b.value { return true }
             return false
         }
-        if counted(x), let m = before.reps, x.reps! > m.value { return true }
-        return false
+        if counted(x) { return before.reps.map { x.reps! > $0.value } ?? false }
+        if distanced(x) {
+            if timed(x), let f = before.fastest[distKey(x.meters!)], x.seconds! < f.value { return true }
+            return before.distance.map { x.meters! > $0.value } ?? false
+        }
+        if burned(x) { return before.calories.map { x.calories! > $0.value } ?? false }
+        return held(x) && (before.longest.map { x.seconds! > $0.value } ?? false)
     }
 
     /// Everything ever logged, most recently done first.
@@ -203,14 +255,27 @@ enum Logbook {
         return m.values.sorted { ($0.lastAt, $1.exerciseKey) > ($1.lastAt, $0.exerciseKey) }
     }
 
-    /// "100 × 5", "14.5 kph", "12 reps", or "" for a round with nothing counted.
+    /// A time worked: "45 s" under a minute, "1:05" from one.
+    static func duration(_ sec: Double) -> String {
+        let t = Int(sec.rounded())
+        return t < 60 ? "\(t) s" : String(format: "%d:%02d", t / 60, t % 60)
+    }
+
+    /// "100 × 5", "14.5 kph", "12 reps", "500 m in 1:41", "20 cal", "1:00", or "" for a round with
+    /// nothing counted. A load or reps with a time adds it: "24 kg · 40 s".
     static func label(_ x: SetResult, unit: String = "") -> String {
+        let time = (x.seconds ?? 0) > 0 ? duration(x.seconds!) : ""
+        if let m = x.meters { return "\(Format.number(m)) m" + (time.isEmpty ? "" : " in \(time)") }
+        if let c = x.calories { return "\(Format.number(c)) cal" + (time.isEmpty ? "" : " in \(time)") }
+        let base: String
         switch (x.load, x.reps) {
-        case let (load?, reps?): return "\(Format.number(load)) × \(Format.number(reps))"
-        case let (load?, nil): return unit.isEmpty ? Format.number(load) : "\(Format.number(load)) \(unit)"
-        case let (nil, reps?): return "\(Format.number(reps)) reps"
-        default: return ""
+        case let (load?, reps?): base = "\(Format.number(load)) × \(Format.number(reps))"
+        case let (load?, nil): base = unit.isEmpty ? Format.number(load) : "\(Format.number(load)) \(unit)"
+        case let (nil, reps?): base = "\(Format.number(reps)) reps"
+        default: base = ""
         }
+        if base.isEmpty { return time }
+        return time.isEmpty ? base : "\(base) · \(time)"
     }
 }
 
@@ -231,7 +296,7 @@ extension Logbook {
         for key in result.steps.map(\.exerciseKey) where seen.insert(key).inserted {
             guard let mine = history(upTo, exerciseKey: key).first(where: { $0.startedAt == result.startedAt && $0.runsheetId == result.runsheetId }) else { continue }
             let prs = zip(mine.sets, mine.prs).filter(\.1).map(\.0)
-            let score = { (x: SetResult) in e1rm(x) ?? x.load ?? x.reps ?? 0 }
+            let score = { (x: SetResult) in e1rm(x) ?? x.load ?? x.reps ?? x.meters ?? x.calories ?? x.seconds ?? 0 }
             guard var best = prs.first else { continue }
             for x in prs.dropFirst() where score(x) > score(best) { best = x }
             out.append(SessionPR(exerciseKey: key, set: best))

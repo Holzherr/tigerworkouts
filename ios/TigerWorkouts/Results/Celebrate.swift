@@ -15,6 +15,8 @@ enum Celebrate {
         var ordinal: Int
         var streak: Streak
         var prs: [Logbook.SessionPR]
+        /// A round faster than any before it in this workout, per block.
+        var rounds: [Rounds.PR] = []
         /// Load × reps over the whole session. Nil when nothing was both loaded and counted.
         var volume: Double?
         /// The previous session of the same workout, if there is one.
@@ -55,6 +57,7 @@ enum Celebrate {
             ordinal: before.count + 1,
             streak: EffortModel.streak(others.filter { $0.startedAt <= result.startedAt } + [result], today: today ?? result.startedDate),
             prs: Logbook.sessionPRs(result, all: all),
+            rounds: Rounds.prs(result, all: all),
             volume: volume,
             last: last,
             deltas: Deltas(score: diff(result.score, last?.score), durationSec: diff(result.durationSec, last?.durationSec), volume: diff(volume, lastVolume))
