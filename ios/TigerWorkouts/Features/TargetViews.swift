@@ -46,7 +46,7 @@ struct StallCard: View {
                 Text(stall.line)
                     .font(.headline)
                     .foregroundStyle(Brand.ink)
-                Text("\(stall.sessions) sessions without a new best. Two ways out:")
+                Text("\(stall.sessions - 1) sessions since without a new best. Two ways out:")
                     .font(.footnote)
                     .foregroundStyle(Brand.muted)
             }
