@@ -127,7 +127,7 @@ final class WalkthroughUITests: XCTestCase {
             app.swipeUp(velocity: .slow)
         }
         XCTAssertTrue(grid.waitForExistence(timeout: 5), "a one-exercise block should show its sets")
-        snap("26 Set grid on the workout page")
+        snap("31 Set grid on the workout page")
 
         tap(app.buttons["Start workout"])
         XCTAssertTrue(app.buttons["End session"].waitForExistence(timeout: 5))
@@ -143,21 +143,21 @@ final class WalkthroughUITests: XCTestCase {
         }
         tap(startPull)
         XCTAssertTrue(app.buttons["Tick set 1"].waitForExistence(timeout: 5), "the timer should show the sets")
-        snap("27 Set grid on the timer")
+        snap("32 Set grid on the timer")
 
         tap(app.buttons["Tick set 1"])
         XCTAssertTrue(app.buttons["Un-tick set 1"].waitForExistence(timeout: 5), "a ticked set shows as done")
         XCTAssertTrue(app.staticTexts["Rest"].waitForExistence(timeout: 3), "the rest between sets counts down")
-        snap("28 Rest between sets")
+        snap("33 Rest between sets")
 
         // Starting before the rest runs out: the tick on set 2 ends the rest and logs the set.
         tap(app.buttons["Tick set 2"])
         XCTAssertTrue(app.buttons["Un-tick set 2"].waitForExistence(timeout: 5), "ticking the next set during the rest should log it")
-        snap("28b Set 2 ticked during the rest")
+        snap("34 Set 2 ticked during the rest")
 
         tap(app.buttons["Un-tick set 1"])
         XCTAssertTrue(app.buttons["Set 1 load, more"].waitForExistence(timeout: 5), "an un-ticked set can be changed")
-        snap("29 Set un-ticked to fix its weight")
+        snap("35 Set un-ticked to fix its weight")
 
         tap(app.buttons["End session"])
         tap(app.buttons["Finish and save"])
@@ -170,7 +170,7 @@ final class WalkthroughUITests: XCTestCase {
         tap(app.buttons["Start workout"])
         let cap = app.descendants(matching: .any)["cap-left"].firstMatch
         XCTAssertTrue(cap.waitForExistence(timeout: 12), "a capped block should show the time left on it")
-        snap("30 Cap clock on an AMRAP")
+        snap("36 Cap clock on an AMRAP")
         tap(app.buttons["End session"])
         tap(app.buttons["Finish and save"])
         tap(app.buttons["Done"])
