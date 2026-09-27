@@ -64,8 +64,9 @@ enum Logbook {
         return s.target.map { [SetResult(reps: nil, load: $0)] } ?? []
     }
 
-    private static func loaded(_ x: SetResult) -> Bool { (x.load ?? 0) > 0 }
-    private static func counted(_ x: SetResult) -> Bool { (x.reps ?? 0) > 0 }
+    // A warm-up is logged and shown, but it is never a record, never volume and never a session's best.
+    private static func loaded(_ x: SetResult) -> Bool { x.isWorking && (x.load ?? 0) > 0 }
+    private static func counted(_ x: SetResult) -> Bool { x.isWorking && (x.reps ?? 0) > 0 }
 
     /// Sets above this many reps say nothing reliable about a one-rep max.
     static let e1rmMaxReps: Double = 10
@@ -126,7 +127,9 @@ enum Logbook {
         case .strength: return sets.compactMap(e1rm).max() ?? sets.filter(loaded).compactMap(\.load).max()
         case .load: return sets.filter(loaded).compactMap(\.load).max()
         case .reps: return sets.filter(counted).compactMap(\.reps).max()
-        case .rounds: return sets.isEmpty ? nil : Double(sets.count)
+        case .rounds:
+            let n = sets.filter(\.isWorking).count
+            return n == 0 ? nil : Double(n)
         }
     }
 

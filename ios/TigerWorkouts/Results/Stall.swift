@@ -89,7 +89,7 @@ enum Stall {
         guard kind != .rounds else { return nil }
         func pick(_ sets: [SetResult]) -> (value: Double, set: SetResult)? {
             var out: (value: Double, set: SetResult)?
-            for x in sets {
+            for x in sets where x.isWorking {
                 let v: Double? = switch kind {
                 case .strength: strength(x)
                 case .load: x.load
@@ -103,7 +103,7 @@ enum Stall {
         guard let p = plateau(bests.map { Point(at: $0.at, value: $0.best.value) }, now: now) else { return nil }
         // Bodyweight reps that never vary are a prescribed count in a circuit (Cindy's 10 push-ups a
         // round), not a max effort that stopped moving.
-        let window = history.filter { $0.startedAt >= p.since }.flatMap(\.sets).map(\.reps)
+        let window = history.filter { $0.startedAt >= p.since }.flatMap(\.sets).filter(\.isWorking).map(\.reps)
         if kind == .reps, window.allSatisfy({ $0 == window.first ?? nil }) { return nil }
         let set = bests[p.index].best.set
         let unit = exercise.unit.replacingOccurrences(of: " per arm", with: "").replacingOccurrences(of: " per side", with: "").trimmingCharacters(in: .whitespaces)
@@ -157,7 +157,7 @@ enum Stall {
         let bestLoad = Logbook.history(results, exerciseKey: key).flatMap(\.sets).compactMap(\.load).max()
         let step = ExerciseStep(id: "stall", exercise: ref, target: bestLoad, forMode: .reps, forValue: 8)
         // One that carries the load over first: a bench stall is better met by a machine than a dip.
-        let options = Alternatives.options(for: step, limit: 20)
+        let options = Alternatives.options(for: step, limit: 20, kit: Equipment.current())
         guard let alt = options.first(where: { $0.target != nil }) ?? options.first else { return plain }
         let unit = alt.exercise.unit.replacingOccurrences(of: " per arm", with: "").replacingOccurrences(of: " per side", with: "").trimmingCharacters(in: .whitespaces)
         return exercise(results, exercise: ref, now: now, swap: Swap(key: alt.exercise.key, name: alt.exercise.name, target: alt.target, unit: unit.isEmpty ? nil : unit))

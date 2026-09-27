@@ -12,7 +12,7 @@ struct CSVTests {
             runsheetId: "w", title: "Push, heavy", startedAt: "2026-09-26T17:02:00.000Z", durationSec: 3780,
             steps: [
                 StepResult(stepId: "a", exerciseKey: "bb_bench", target: nil, incline: nil, reps: nil, success: nil,
-                           sets: [SetResult(reps: 5, load: 80), SetResult(reps: 4, load: 82.5)]),
+                           sets: [SetResult(reps: 5, load: 80, type: .warmup), SetResult(reps: 4, load: 82.5)]),
                 StepResult(stepId: "b", exerciseKey: "bw_pullup", target: nil, incline: nil, reps: nil, success: nil, sets: [SetResult(reps: 10, load: nil)]),
                 StepResult(stepId: "c", exerciseKey: "u_pec_deck", target: 55, incline: nil, reps: [12], success: nil),
             ],
@@ -34,15 +34,15 @@ struct CSVTests {
     func rows() {
         let csv = CSVExport.csv(results, exercise: name)
         let expected = """
-        date,workout,exercise,exercise_key,set,load,unit,reps,duration_seconds,set_time_seconds,notes
-        2026-09-25T18:00:00.000Z,Padel,,,,,,,3600,,
-        2026-09-26T17:02:00.000Z,"Push, heavy",Barbell bench press,bb_bench,1,80,kg,5,3780,,"Felt ""strong""
+        date,workout,exercise,exercise_key,set,set_type,load,unit,reps,duration_seconds,set_time_seconds,notes
+        2026-09-25T18:00:00.000Z,Padel,,,,,,,,3600,,
+        2026-09-26T17:02:00.000Z,"Push, heavy",Barbell bench press,bb_bench,1,warmup,80,kg,5,3780,,"Felt ""strong""
         shoulder ok"
-        2026-09-26T17:02:00.000Z,"Push, heavy",Barbell bench press,bb_bench,2,82.5,kg,4,3780,,"Felt ""strong""
+        2026-09-26T17:02:00.000Z,"Push, heavy",Barbell bench press,bb_bench,2,normal,82.5,kg,4,3780,,"Felt ""strong""
         shoulder ok"
-        2026-09-26T17:02:00.000Z,"Push, heavy",Pull-up,bw_pullup,1,,,10,3780,,"Felt ""strong""
+        2026-09-26T17:02:00.000Z,"Push, heavy",Pull-up,bw_pullup,1,normal,,,10,3780,,"Felt ""strong""
         shoulder ok"
-        2026-09-26T17:02:00.000Z,"Push, heavy",Pec deck,u_pec_deck,1,55,kg,12,3780,,"Felt ""strong""
+        2026-09-26T17:02:00.000Z,"Push, heavy",Pec deck,u_pec_deck,1,normal,55,kg,12,3780,,"Felt ""strong""
         shoulder ok"
 
         """

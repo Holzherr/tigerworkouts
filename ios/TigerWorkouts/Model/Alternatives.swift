@@ -72,8 +72,9 @@ enum Alternatives {
     }
 
     /// Two dumbbells make roughly one machine's number, and a machine's own leverage flatters it by
-    /// about a tenth. Guidance, not physics: the first set tells you the truth.
-    static func convert(_ target: Double?, from: LibraryExercise, to: LibraryExercise) -> Double? {
+    /// about a tenth. Guidance, not physics: the first set tells you the truth. Snapped to the
+    /// nearest load you own for the new exercise, else rounded to what its steppers move by.
+    static func convert(_ target: Double?, from: LibraryExercise, to: LibraryExercise, kit: Equipment? = nil) -> Double? {
         guard let target, target > 0 else { return nil }
         let raw: Double
         switch (load(from), load(to)) {
@@ -82,12 +83,13 @@ enum Alternatives {
         case (.none, _), (_, .none): return nil
         default: raw = target
         }
-        let step = to.step > 0 ? to.step : 1
-        return (raw / step).rounded() * step
+        var ref = to.ref
+        ref.step = to.step > 0 ? to.step : 1
+        return Plates.snap(raw, ref, kit)
     }
 
     /// Alternatives for a step, nearest equipment first: the same pattern, never the same exercise.
-    static func options(for step: ExerciseStep, limit: Int = 5) -> [Option] {
+    static func options(for step: ExerciseStep, limit: Int = 5, kit: Equipment? = nil) -> [Option] {
         let library = Library.shared
         guard let exercise = library.exercise(step.exercise.key),
               let wanted = pattern(of: exercise) else { return [] }
@@ -103,7 +105,7 @@ enum Alternatives {
             .map { alternative in
                 Option(
                     exercise: alternative,
-                    target: convert(step.target, from: exercise, to: alternative),
+                    target: convert(step.target, from: exercise, to: alternative, kit: kit),
                     why: library.groupLabels[alternative.group.rawValue] ?? alternative.group.rawValue.capitalized
                 )
             }

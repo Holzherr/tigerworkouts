@@ -387,6 +387,9 @@ struct TimerView: View {
                         }
                     }
                     Spacer()
+                    if Plates.kit(ex.exercise) == .barbell {
+                        PlatesButton(load: runner.slot?.exercise?.id == ex.id ? runner.target : runner.plannedTarget(ex.id) ?? ex.target)
+                    }
                     nudge("minus", label: "Less") { runner.nudgeTarget(-1) }
                     VStack(spacing: 0) {
                         Text((runner.slot?.exercise?.id == ex.id ? runner.target : runner.plannedTarget(ex.id) ?? ex.target).map(Format.number) ?? "—")
@@ -480,16 +483,19 @@ struct TimerView: View {
         let editable = !row.done && (openSet == row.slotId || (openSet == nil && row.current))
         return VStack(alignment: .leading, spacing: 2) {
             HStack(spacing: 8) {
-                Text("\(row.number)")
-                    .font(.system(size: 18, weight: .heavy, design: .rounded))
-                    .foregroundStyle(row.current && !row.done ? Brand.coralInk : Brand.ink)
-                    .frame(width: 30, alignment: .leading)
+                SetMarkButton(mark: row.mark, type: row.type, label: "Set \(row.number)", highlight: row.current && !row.done) {
+                    runner.cycleSetType(row.slotId)
+                }
+                .frame(width: 30, alignment: .leading)
                 if ex.hasSetLoad {
                     Group {
                         if editable {
                             MiniStepper(value: row.load ?? 0, label: "Set \(row.number) load", onTint: row.current) { runner.nudgeSetLoad(row.slotId, $0) }
                         } else {
-                            Text(row.load.map(Format.number) ?? "—").font(.system(size: 18, weight: .bold, design: .rounded))
+                            HStack(spacing: 2) {
+                                Text(row.load.map(Format.number) ?? "—").font(.system(size: 18, weight: .bold, design: .rounded))
+                                if Plates.kit(ex.exercise) == .barbell { PlatesButton(load: row.load) }
+                            }
                         }
                     }
                     .frame(maxWidth: .infinity)

@@ -192,8 +192,9 @@ extension ExerciseStep {
         }
     }
 
-    /// The set grid shows a load column: an absolute weight or speed, not % TM or × BW.
-    var hasSetLoad: Bool { hasSetting && loadFactor == nil && targetPct == nil }
+    /// The set grid shows a load column: an absolute weight or speed, or a % TM / × BW load once
+    /// `Relative.resolve` has worked it out into `target`.
+    var hasSetLoad: Bool { hasSetting && (target != nil || (loadFactor == nil && targetPct == nil)) }
 
     var shortUnit: String {
         exercise.unit

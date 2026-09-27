@@ -374,9 +374,18 @@ actor Supabase {
         )
     }
 
-    /// Writes back the two prefs this app owns, merged into whatever else is on the row — the web
-    /// app keeps the name, units and training maxes in the same JSON and must not lose them.
-    func savePrefs(bodyweightKg: Double?, saved: [String]) async throws {
+    /// What the phone keeps on `user_state.prefs`, beside what only the web reads (name, units,
+    /// avatar).
+    struct Prefs {
+        var bodyweightKg: Double?
+        var saved: [String] = []
+        var trainingMaxes: [String: Double] = [:]
+        var equipment: Equipment?
+    }
+
+    /// Writes back the prefs this app owns, merged into whatever else is on the row — the web app
+    /// keeps the name, units and avatar in the same JSON and must not lose them.
+    func savePrefs(bodyweightKg: Double?, saved: [String], trainingMaxes: [String: Double]? = nil, equipment: Equipment? = nil) async throws {
         guard let uid = session?.user.id else { throw SupabaseError(message: "Not signed in") }
         var prefs: [String: Any] = [:]
         if let (data, _) = try? await request("rest/v1/user_state?select=prefs&owner=eq.\(uid)"),
@@ -386,6 +395,10 @@ actor Supabase {
         }
         prefs["saved"] = saved
         if let bodyweightKg { prefs["bodyweightKg"] = bodyweightKg }
+        if let trainingMaxes, !trainingMaxes.isEmpty { prefs["trainingMaxes"] = trainingMaxes }
+        if let equipment, let data = try? JSONEncoder().encode(equipment), let json = try? JSONSerialization.jsonObject(with: data) {
+            prefs["equipment"] = json
+        }
         _ = try await request(
             "rest/v1/user_state?on_conflict=owner",
             method: "POST",
@@ -394,13 +407,27 @@ actor Supabase {
         )
     }
 
-    /// Bodyweight and the saved list, kept on `user_state.prefs` by the web app.
-    func prefs() async throws -> (bodyweightKg: Double?, saved: [String]) {
-        guard let uid = session?.user.id else { return (nil, []) }
+    /// Bodyweight, the saved list, training maxes and equipment, kept on `user_state.prefs` by
+    /// the web app.
+    func prefs() async throws -> Prefs {
+        guard let uid = session?.user.id else { return Prefs() }
         let (data, _) = try await request("rest/v1/user_state?select=prefs&owner=eq.\(uid)")
         guard let rows = try JSONSerialization.jsonObject(with: data) as? [[String: Any]],
-              let prefs = rows.first?["prefs"] as? [String: Any] else { return (nil, []) }
-        return (prefs["bodyweightKg"] as? Double, prefs["saved"] as? [String] ?? [])
+              let prefs = rows.first?["prefs"] as? [String: Any] else { return Prefs() }
+        return Self.prefs(from: prefs)
+    }
+
+    /// The prefs JSON read into what the phone uses; a field it cannot read is left unset.
+    nonisolated static func prefs(from json: [String: Any]) -> Prefs {
+        var out = Prefs(bodyweightKg: (json["bodyweightKg"] as? NSNumber)?.doubleValue, saved: json["saved"] as? [String] ?? [])
+        if let tm = json["trainingMaxes"] as? [String: Any] {
+            out.trainingMaxes = tm.compactMapValues { ($0 as? NSNumber)?.doubleValue }
+        }
+        if let e = json["equipment"], JSONSerialization.isValidJSONObject(e),
+           let data = try? JSONSerialization.data(withJSONObject: e) {
+            out.equipment = try? JSONDecoder().decode(Equipment.self, from: data)
+        }
+        return out
     }
 }
 

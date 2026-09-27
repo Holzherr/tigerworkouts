@@ -7,14 +7,17 @@ struct WorkedSet: Hashable, Sendable {
     var seconds: Double
     var reps: Double
     var load: Double?
+    /// Warm-up, drop set or to failure; nil for a normal set.
+    var type: SetType? = nil
 }
 
 struct Effort: Hashable, Sendable {
     /// Seconds of actual work, rest excluded.
     var workSec: Double
-    /// Sets completed across the session.
+    /// Sets completed across the session. A warm-up is not a set of work, and a drop set is part of
+    /// the set before it.
     var sets: Int
-    /// kg moved: load × reps, summed. Zero for a session with no weights.
+    /// kg moved: load × reps, summed, warm-ups left out. Zero for a session with no weights.
     var tonnage: Double
     var kcal: Int
     /// True when bodyweight is a guess, so the screen can say so.
@@ -49,8 +52,8 @@ enum EffortModel {
         }
         return Effort(
             workSec: summed > 0 ? summed : (r.durationSec ?? 0),
-            sets: worked.count,
-            tonnage: worked.reduce(0.0) { $0 + ($1.load ?? 0) * $1.reps },
+            sets: worked.filter { $0.type != .warmup && $0.type != .drop }.count,
+            tonnage: worked.reduce(0.0) { $0 + ($1.type == .warmup ? 0 : ($1.load ?? 0) * $1.reps) },
             kcal: Int(kcal.rounded()),
             estimatedWeight: bodyweightKg == nil
         )
@@ -113,6 +116,12 @@ enum EffortModel {
             let name = library.name(s.exerciseKey)
             let group = library.group(s.exerciseKey)
             let secs = hit.map { setSeconds($0.step) } ?? fallback
+            // A row with per-set results gives one entry per set, each with its own load and type.
+            if let sets = s.sets, !sets.isEmpty {
+                return sets.map { x in
+                    WorkedSet(name: name, group: group, seconds: secs, reps: x.reps ?? (hit?.step.forMode == .reps ? (hit?.step.forValue ?? 0) : 0), load: x.load ?? s.target, type: x.type == .normal ? nil : x.type)
+                }
+            }
             let rounds = max(1, s.reps?.count ?? hit?.rounds ?? 1)
             return (0..<rounds).map { n in
                 let reps = s.reps?[safe: n] ?? (hit?.step.forMode == .reps ? (hit?.step.forValue ?? 0) : 0)

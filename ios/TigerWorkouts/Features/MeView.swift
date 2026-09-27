@@ -185,6 +185,18 @@ struct MeView: View {
 
 /// Account, the gym switches, Health and what the app holds: everything Me used to be.
 struct SettingsView: View {
+    /// "20 kg bar, 12 plates · 4 dumbbells", or "Not set".
+    static func equipmentSummary(_ e: Equipment?) -> String {
+        guard let e else { return "Not set" }
+        let plates = (e.plates ?? []).reduce(0) { $0 + $1.count }
+        let parts = [
+            plates > 0 ? "\(Format.number(e.barKg ?? Plates.defaultBarKg)) kg bar, \(plates) plates" : "",
+            (e.dumbbells ?? []).isEmpty ? "" : "\((e.dumbbells ?? []).count) dumbbells",
+            (e.kettlebells ?? []).isEmpty ? "" : "\((e.kettlebells ?? []).count) kettlebells",
+        ].filter { !$0.isEmpty }
+        return parts.isEmpty ? "Not set" : parts.joined(separator: " · ")
+    }
+
     @Environment(Store.self) private var store
     @AppStorage(Switches.haptics) private var haptics = true
     @AppStorage(Switches.sound) private var sound = true
@@ -247,6 +259,25 @@ struct SettingsView: View {
                 Text("Suggestions")
             } footer: {
                 Text("\((Intent(rawValue: intent) ?? .maintain).note) Sets the Today targets and Next time. Ignoring a suggestion costs nothing.")
+            }
+
+            Section {
+                NavigationLink {
+                    EquipmentView()
+                } label: {
+                    LabeledContent("My equipment", value: Self.equipmentSummary(store.equipment))
+                }
+                .accessibilityIdentifier("my-equipment")
+                NavigationLink {
+                    TrainingMaxesView(exercises: TrainingMaxesView.bigFour.map { Library.shared.exercise($0)?.ref ?? .placeholder(key: $0) }, needsBodyweight: true)
+                } label: {
+                    LabeledContent("Training maxes", value: store.trainingMaxes.isEmpty ? "Not set" : "\(store.trainingMaxes.count) set")
+                }
+                .accessibilityIdentifier("training-maxes")
+            } header: {
+                Text("Loads")
+            } footer: {
+                Text("Suggested loads snap to the weights you own, and the plate calculator uses your plates. Training maxes turn a 65% TM set into kilos.")
             }
 
             Section {

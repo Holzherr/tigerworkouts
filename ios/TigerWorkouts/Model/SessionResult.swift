@@ -7,6 +7,11 @@ struct SetResult: Codable, Hashable, Sendable {
     /// When the set was ticked, in seconds of session time (pauses excluded). Nil on rows from
     /// before times were kept.
     var at: Double? = nil
+    /// Warm-up, drop set or to failure; nil for a normal set and on rows from before types.
+    var type: SetType? = nil
+
+    /// Anything but a warm-up counts as work.
+    var isWorking: Bool { type != .warmup }
 }
 
 /// When each round of a circuit or AMRAP block finished, in seconds of session time. `at[0]` is

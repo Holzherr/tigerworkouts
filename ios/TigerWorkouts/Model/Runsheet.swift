@@ -195,12 +195,51 @@ struct ExerciseStep: Codable, Hashable, Sendable, Identifiable {
     }
 }
 
+/// What a set is for (`SetType` in model.ts). normal is a working set; a warm-up is left out of
+/// records, volume, stalls and targets; a drop set follows the set before it with no rest and no set
+/// number of its own; failure is a working set taken to failure. Nil on a plan or a result means
+/// normal. Encoded as the web writes it.
+enum SetType: String, Codable, Sendable, CaseIterable {
+    case normal, warmup, drop, failure
+
+    /// The next type in the cycle a tap on the set number walks: 1 → W → D → F → 1.
+    var next: SetType {
+        let all = SetType.allCases
+        return all[(all.firstIndex(of: self)! + 1) % all.count]
+    }
+
+    var label: String {
+        switch self {
+        case .normal: "Normal"
+        case .warmup: "Warm-up"
+        case .drop: "Drop set"
+        case .failure: "Failure"
+        }
+    }
+
+    /// W for a warm-up, D for a drop set, F for to failure, and a running count of the normal sets
+    /// otherwise — a drop set is part of the set before it, so it is not a new number.
+    static func marks(_ types: [SetType?]) -> [String] {
+        var n = 0
+        return types.map { t in
+            switch t ?? .normal {
+            case .warmup: return "W"
+            case .drop: return "D"
+            case .failure: return "F"
+            case .normal: n += 1; return String(n)
+            }
+        }
+    }
+}
+
 /// One prescribed set. `reps` stands in for forValue (the count, or the seconds of a timed set).
 struct SetPlan: Codable, Hashable, Sendable {
     var reps: Double?
     var load: Double?
+    /// Nil for a normal set. Never carried to the sets after it, unlike reps and load.
+    var type: SetType? = nil
 
-    var isEmpty: Bool { reps == nil && load == nil }
+    var isEmpty: Bool { reps == nil && load == nil && type == nil }
 }
 
 extension ExerciseStep {
@@ -217,6 +256,12 @@ extension ExerciseStep {
             i -= 1
         }
         return (reps ?? forValue, load ?? target)
+    }
+
+    /// The type of one planned set; normal when the plan says nothing.
+    func plannedType(_ round: Int) -> SetType {
+        guard let plans = sets, plans.indices.contains(round) else { return .normal }
+        return plans[round].type ?? .normal
     }
 }
 

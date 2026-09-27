@@ -86,7 +86,7 @@ struct NextTimeView: View {
     @AppStorage(Intent.storageKey) private var intent = Intent.maintain.rawValue
 
     var body: some View {
-        let lines = Targets.nextTime(runsheet, done: result, history: history, intent: Intent(rawValue: intent) ?? .maintain)
+        let lines = Targets.nextTime(runsheet, done: result, history: history, intent: Intent(rawValue: intent) ?? .maintain, kit: Equipment.current())
         if !lines.isEmpty {
             VStack(alignment: .leading, spacing: 8) {
                 Text("Next time")

@@ -457,6 +457,10 @@ export const drop = (s: RunState, now: number, stepId: string): RunState => {
   return c?.step.id === stepId ? enter(st, s.i, now) : st;
 };
 
+/** A swap drops the plan's loads (they were for the planned exercise) but keeps its reps and the set's type. */
+const keptOnSwap = (plan: SetPlan | undefined): SetPlan | undefined =>
+  plan && (plan.reps !== undefined || plan.type !== undefined) ? { ...(plan.reps !== undefined ? { reps: plan.reps } : {}), ...(plan.type ? { type: plan.type } : {}) } : undefined;
+
 /**
  * Swap the exercise of a step for another, from the current slot to the end of the session.
  * The machine Nick planned for is taken, so the session carries on with what is free — rounds
@@ -467,8 +471,7 @@ export const swap = (s: RunState, now: number, stepId: string, to: ExerciseRef, 
   const slots = s.slots.map((sl, idx) => {
     if (idx < s.i || sl.step.id !== stepId || sl.step.kind !== 'exercise') return sl;
     // The plan's loads were for the planned exercise; the swap's target stands in for them.
-    const plan = sl.plan?.reps !== undefined ? { reps: sl.plan.reps } : undefined;
-    return { ...sl, step: { ...sl.step, exercise: to, target }, plan };
+    return { ...sl, step: { ...sl.step, exercise: to, target }, plan: keptOnSwap(sl.plan) };
   });
   const st = { ...s, slots };
   return c?.step.id === stepId ? enter(st, s.i, now) : st;
@@ -519,7 +522,7 @@ export const replan = (s: RunState, r: Runsheet, now: number): RunState => {
     let plan = sl.plan;
     if (step.kind === 'exercise' && w?.kind === 'exercise' && w.exercise.key !== step.exercise.key) {
       step = { ...step, exercise: w.exercise, target: w.target };
-      plan = plan?.reps !== undefined ? { reps: plan.reps } : undefined;
+      plan = keptOnSwap(plan);
     }
     const a = ahead.get(step.id);
     if (a && !tail.some(t => t.step.id === step.id)) actuals[id] = a;

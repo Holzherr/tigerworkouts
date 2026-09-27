@@ -145,10 +145,21 @@ enum Targets {
         reps.allSatisfy { $0 == reps[0] } ? Format.number(reps[0]) : reps.map(Format.number).joined(separator: ", ")
     }
 
+    /// A per-set plan whose working sets differ (a pyramid, ramping sets). Warm-ups before
+    /// straight sets do not make one.
+    private static func pyramid(_ s: ExerciseStep) -> Bool {
+        let work = (s.sets ?? []).indices.filter { s.sets![$0].type != .warmup }.map { s.plannedSet($0) }
+        guard let first = work.first else { return false }
+        return work.contains { $0.reps != first.reps || $0.load != first.load }
+    }
+
     /// Today's sets for one step, from its sets last time (`LastTime.sets`). Only steps counted in
-    /// reps whose load is theirs to change.
-    static func set(_ s: ExerciseStep, last: [SetResult]?, intent: Intent = .maintain) -> SetTarget? {
-        guard let last, !last.isEmpty, (s.sets ?? []).isEmpty, s.targetPct == nil, s.loadFactor == nil else { return nil }
+    /// reps whose load is theirs to change: no pyramid, no relative load, nothing on a speed. Last
+    /// time's warm-ups and drop sets are not the work, so they are left out. The next load up is
+    /// the next one `kit` can make (a 24 kg bell goes to 28, not 26.5).
+    static func set(_ s: ExerciseStep, last all: [SetResult]?, intent: Intent = .maintain, kit: Equipment? = nil) -> SetTarget? {
+        let last = all?.filter { $0.type != .warmup && $0.type != .drop }
+        guard let last, !last.isEmpty, !pyramid(s), s.targetPct == nil, s.loadFactor == nil else { return nil }
         guard [.reps, .amrap, .max].contains(s.forMode) else { return nil }
         let unit = s.shortUnit
         guard unit != "kph" else { return nil }
@@ -167,12 +178,12 @@ enum Targets {
         guard s.forMode == .reps else { return nil }
         let working = last.filter { $0.load == top && ($0.reps ?? 0) > 0 }.compactMap(\.reps)
         guard !working.isEmpty else { return nil }
-        let step = s.exercise.step > 0 ? s.exercise.step : 2.5
+        let up = Plates.nextUp(top, s.exercise, kit)
         let bottom = s.forValue
-        let ceiling = s.forMax ?? bankTop(load: top, step: step, reps: bottom)
-        let next = ((top + step) * 100).rounded() / 100
+        let ceiling = s.forMax ?? (up.map { bankTop(load: top, step: $0 - top, reps: bottom) } ?? bottom * 2)
+        let next = up.map { ($0 * 100).rounded() / 100 } ?? top
         let u = unit.isEmpty ? "" : " \(unit)"
-        if intent != .restore && working.allSatisfy({ $0 >= ceiling }) {
+        if up != nil && intent != .restore && working.allSatisfy({ $0 >= ceiling }) {
             let reps = working.map { _ in bottom }
             return make(load: next, reps: reps, jump: true, text: "\(Format.number(next))\(u) × \(repsText(reps))",
                         reason: "\(Format.number(ceiling)) reps at \(Format.number(top))\(u) on every set: up to \(Format.number(next))\(u)")
@@ -180,22 +191,23 @@ enum Targets {
         // A rep or two more a set, never past the ceiling, never fewer than was done.
         let reps = working.map { max($0, min(ceiling, $0 + add)) }
         return make(load: top, reps: reps, jump: false, text: "\(Format.number(top))\(u) × \(repsText(reps))",
-                    reason: add > 0 ? "bank reps: \(Format.number(next))\(u) once every set reaches \(Format.number(ceiling))" : "what you did last time")
+                    reason: add == 0 ? "what you did last time" : up == nil ? "bank reps: \(Format.number(top))\(u) is the heaviest you own" : "bank reps: \(Format.number(next))\(u) once every set reaches \(Format.number(ceiling))")
     }
 
-    private static func ruled(_ r: Runsheet, _ s: ExerciseStep) -> Bool {
+    /// A programme's own progression rule covers this step: the runsheet's, or its block's.
+    static func ruled(_ r: Runsheet, _ s: ExerciseStep) -> Bool {
         r.progression != nil || r.items.compactMap(\.asBlock).contains { $0.progression != nil && $0.steps.contains { $0.id == s.id } }
     }
 
     /// A target per step, first step of each exercise only, skipping warm-ups and steps a
     /// programme's own progression rules already move.
-    static func sets(_ r: Runsheet, results: [SessionResult], intent: Intent = .maintain) -> [SetTarget] {
+    static func sets(_ r: Runsheet, results: [SessionResult], intent: Intent = .maintain, kit: Equipment? = nil) -> [SetTarget] {
         var seen = Set<String>()
         var out: [SetTarget] = []
         for s in r.exerciseSteps {
             if seen.contains(s.exercise.key) || (s.role ?? .main) != .main || ruled(r, s) { continue }
             seen.insert(s.exercise.key)
-            if let t = set(s, last: LastTime.sets(results, for: s), intent: intent) { out.append(t) }
+            if let t = set(s, last: LastTime.sets(results, for: s), intent: intent, kit: kit) { out.append(t) }
         }
         return out
     }
@@ -208,11 +220,11 @@ enum Targets {
     }
 
     /// The one line for the Up next card and the top of the workout page.
-    static func today(_ r: Runsheet, results: [SessionResult], intent: Intent = .maintain) -> Today? {
+    static func today(_ r: Runsheet, results: [SessionResult], intent: Intent = .maintain, kit: Equipment? = nil) -> Today? {
         if let score = score(r, results: results, intent: intent) {
             return Today(text: score.text, detail: score.detail, score: score, sets: [])
         }
-        let all = sets(r, results: results, intent: intent)
+        let all = sets(r, results: results, intent: intent, kit: kit)
         guard let first = all.first else { return nil }
         let more = all.count > 1 ? " · \(all.count - 1) more on the workout page" : ""
         return Today(text: "\(first.name) \(first.text)", detail: "\(first.reason)\(more)", score: nil, sets: all)
@@ -220,14 +232,16 @@ enum Targets {
 
     /// The target for where the timer is: the score's pace for a round of the main block, or the
     /// set's load × reps for a straight set.
-    static func timer(_ t: Today?, blockId: String?, stepId: String?, round: Int, runsheet r: Runsheet) -> String? {
+    /// A warm-up or a drop set has no target; `set` counts the working sets before this one, so a
+    /// warm-up first does not shift the reps.
+    static func timer(_ t: Today?, blockId: String?, stepId: String?, round: Int, runsheet r: Runsheet, type: SetType = .normal, set setNo: Int? = nil) -> String? {
         guard let t else { return nil }
         if let score = t.score, let main = mainBlock(r), blockId == main.id {
             let pace = score.pace.map { " · \(clock($0)) a round" } ?? ""
             return score.kind == .time ? "Target \(clock(score.aim))\(pace)" : "Target \(Format.number(score.aim))+\(pace)"
         }
-        guard let set = t.sets.first(where: { $0.stepId == stepId }) else { return nil }
-        let reps = set.reps[min(round, set.reps.count - 1)]
+        guard let set = t.sets.first(where: { $0.stepId == stepId }), type != .warmup, type != .drop else { return nil }
+        let reps = set.reps[min(setNo ?? round, set.reps.count - 1)]
         if let load = set.load { return "Target \(Format.number(load)) × \(Format.number(reps))" }
         return "Target \(Format.number(reps)) reps"
     }
@@ -242,14 +256,14 @@ enum Targets {
 
     /// The finish screen's "Next time", read as if the session just done were the newest: the score
     /// to aim for, then a line per exercise not already moved by a programme's rules (`covered`).
-    static func nextTime(_ r: Runsheet, done: SessionResult, history: [SessionResult], intent: Intent = .maintain, covered: [String] = []) -> [NextTimeLine] {
+    static func nextTime(_ r: Runsheet, done: SessionResult, history: [SessionResult], intent: Intent = .maintain, covered: [String] = [], kit: Equipment? = nil) -> [NextTimeLine] {
         var now = done
         if now.runsheetId.isEmpty { now.runsheetId = r.key }
         let all = history.filter { $0 != done && ($0.id == nil || $0.id != done.id) } + [now]
         if let score = score(r, results: all, intent: intent) {
             return [NextTimeLine(key: "score", name: r.title, text: score.text, reason: score.detail)]
         }
-        return sets(r, results: all, intent: intent)
+        return sets(r, results: all, intent: intent, kit: kit)
             .filter { !covered.contains($0.exerciseKey) }
             .map { NextTimeLine(key: $0.exerciseKey, name: $0.name, text: $0.text, reason: $0.reason) }
     }

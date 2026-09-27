@@ -11,6 +11,14 @@ final class Store {
     var results: [SessionResult] = []
     var myWorkouts: [Runsheet] = []
     var bodyweightKg: Double?
+    /// kg per exercise key, for loads written as a % of a training max (5/3/1, nSuns). Synced on
+    /// `user_state.prefs.trainingMaxes` with the web's Training maxes sheet.
+    var trainingMaxes: [String: Double] = [:]
+    /// Settings → My equipment. Synced on `user_state.prefs.equipment`; mirrored into UserDefaults
+    /// for the engine (`Equipment.current()`).
+    var equipment: Equipment? {
+        didSet { Equipment.store(equipment) }
+    }
     var saved: Set<String> = []
     /// Exercises this account made, here or on the web. Mirrored into `Library.shared` so lookups
     /// find them; kept here too so a view that lists them redraws when one is added.
@@ -110,6 +118,8 @@ final class Store {
                 + queued.values.filter { q in !remote.contains { $0.key == q.key } }
             let p = try await prefs
             bodyweightKg = p.bodyweightKg ?? bodyweightKg
+            trainingMaxes = trainingMaxes.merging(p.trainingMaxes) { _, remote in remote }
+            equipment = p.equipment ?? equipment
             saved = Set(p.saved).union(saved)
             user = await Supabase.shared.user
             writeCache()
@@ -271,12 +281,28 @@ final class Store {
         await writePrefs()
     }
 
+    func setTrainingMax(_ key: String, _ kg: Double?) async {
+        trainingMaxes[key] = kg
+        await writePrefs()
+    }
+
+    func setEquipment(_ e: Equipment) async {
+        equipment = e.isEmpty ? nil : e
+        await writePrefs()
+    }
+
+    /// A workout as the timer runs it: shared parts (refs) inlined, then loads given as a % of a
+    /// training max or × bodyweight worked out into kilos you can load.
+    func prepared(_ r: Runsheet) -> Runsheet {
+        Relative.resolve(Relative.resolveRefs(r, lookup: workout(id:)), maxes: trainingMaxes, bodyweightKg: bodyweightKg, kit: equipment)
+    }
+
     /// Cache first so the change survives the app being killed, then the server when there is one.
     private func writePrefs() async {
         writeCache()
         guard await Supabase.shared.isSignedIn else { return }
         do {
-            try await Supabase.shared.savePrefs(bodyweightKg: bodyweightKg, saved: Array(saved))
+            try await Supabase.shared.savePrefs(bodyweightKg: bodyweightKg, saved: Array(saved), trainingMaxes: trainingMaxes, equipment: equipment)
             syncError = nil
         } catch {
             syncError = error.localizedDescription
@@ -423,6 +449,8 @@ final class Store {
         var pendingDeletes: [String]?
         var customExercises: [LibraryExercise]?
         var pendingExercises: [LibraryExercise]?
+        var trainingMaxes: [String: Double]?
+        var equipment: Equipment?
     }
 
     /// The file the cache lives in. Tests point it elsewhere so they never touch the app's own.
@@ -449,6 +477,8 @@ final class Store {
         pendingWorkoutDeletes = c.pendingWorkoutDeletes ?? []
         pendingDeletes = c.pendingDeletes ?? []
         pendingExercises = c.pendingExercises ?? []
+        trainingMaxes = c.trainingMaxes ?? [:]
+        equipment = c.equipment
     }
 
     private func writeCache() {
@@ -457,7 +487,8 @@ final class Store {
             bodyweightKg: bodyweightKg, saved: Array(saved),
             pendingWorkouts: pendingWorkouts, pendingWorkoutDeletes: pendingWorkoutDeletes,
             pendingDeletes: pendingDeletes,
-            customExercises: Array(customExercises.values), pendingExercises: pendingExercises
+            customExercises: Array(customExercises.values), pendingExercises: pendingExercises,
+            trainingMaxes: trainingMaxes, equipment: equipment
         )
         try? JSONEncoder().encode(c).write(to: cacheURL, options: .atomic)
         shareUpNext()

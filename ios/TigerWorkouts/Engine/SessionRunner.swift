@@ -45,7 +45,7 @@ final class SessionRunner {
             LastTime.sets(history, for: step).flatMap { $0.indices.contains(round) ? $0[round].reps : nil }
         }
         self.rival = Pace.lastTimed(history, runsheetId: runsheet.id ?? runsheet.title)
-        self.today = Targets.today(runsheet, results: history, intent: Intent.current())
+        self.today = Targets.today(runsheet, results: history, intent: Intent.current(), kit: Equipment.current())
     }
 
     /// Resume a session the app was killed in the middle of. It comes back paused at the moment
@@ -56,7 +56,7 @@ final class SessionRunner {
         self.runsheet = runsheet
         self.startedFrom = nil
         self.rival = Pace.lastTimed(history, runsheetId: runsheet.id ?? runsheet.title, excluding: SessionRunner.rowId(saved.state))
-        self.today = Targets.today(runsheet, results: history.filter { $0.id != SessionRunner.rowId(saved.state) }, intent: Intent.current())
+        self.today = Targets.today(runsheet, results: history.filter { $0.id != SessionRunner.rowId(saved.state) }, intent: Intent.current(), kit: Equipment.current())
         let at = saved.savedAt.timeIntervalSince1970 * 1000
         self.state = saved.state.phase == .running || saved.state.phase == .lead
             ? Runner.pause(saved.state, now: at)
@@ -386,6 +386,9 @@ final class SessionRunner {
         var id: String { slotId }
         var slotId: String
         var number: Int
+        /// What the set number shows: 1, 2, 3, or W / D / F for a warm-up, drop set or to failure.
+        var mark: String = ""
+        var type: SetType = .normal
         var load: Double?
         var reps: Double
         var done: Bool
@@ -399,6 +402,8 @@ final class SessionRunner {
         guard let blockId = slot?.blockId else { return [] }
         let work = state.slots.indices.filter { state.slots[$0].blockId == blockId && state.slots[$0].kind == .work }
         let on = work.first { $0 >= state.i }
+        let types = work.map { Runner.typeAt(state, $0) }
+        let marks = SetType.marks(types)
         return work.enumerated().map { n, idx in
             let sl = state.slots[idx]
             let a = state.actuals[sl.id]
@@ -409,6 +414,8 @@ final class SessionRunner {
             return SetRow(
                 slotId: sl.id,
                 number: n + 1,
+                mark: marks[n],
+                type: types[n],
                 load: Runner.effectiveTarget(state, idx),
                 reps: a?.reps ?? sl.exercise?.forValue ?? 0,
                 done: done,
@@ -424,6 +431,14 @@ final class SessionRunner {
         } else {
             apply { Runner.completeSet($0, now: $1, slotId: slotId) }
         }
+        Haptics.shared.play(.tick)
+    }
+
+    /// A tap on the set number: normal → warm-up → drop set → to failure → normal.
+    func cycleSetType(_ slotId: String) {
+        guard let idx = state.slots.firstIndex(where: { $0.id == slotId }) else { return }
+        let next = Runner.typeAt(state, idx).next
+        apply { s, _ in Runner.setTypeAt(s, slotId: slotId, type: next) }
         Haptics.shared.play(.tick)
     }
 
@@ -460,7 +475,12 @@ final class SessionRunner {
     var goal: String? {
         // During a rest, what the next set or round is for.
         guard let slot = slot?.kind == .rest ? state.slots.dropFirst(state.i + 1).first(where: { $0.kind == .work }) : slot else { return nil }
-        return Targets.timer(today, blockId: slot.blockId, stepId: slot.exercise?.id, round: slot.round, runsheet: runsheet)
+        guard let idx = state.slots.firstIndex(of: slot) else { return nil }
+        // Which working set this is: warm-ups before it do not count.
+        let setNo = state.slots[..<idx].indices.filter { j in
+            state.slots[j].kind == .work && state.slots[j].blockId == slot.blockId && state.slots[j].step.id == slot.step.id && Runner.typeAt(state, j) != .warmup
+        }.count
+        return Targets.timer(today, blockId: slot.blockId, stepId: slot.exercise?.id, round: slot.round, runsheet: runsheet, type: Runner.typeAt(state, idx), set: setNo)
     }
 
     func plannedTarget(_ stepId: String) -> Double? { Runner.plannedTarget(state, stepId: stepId) }

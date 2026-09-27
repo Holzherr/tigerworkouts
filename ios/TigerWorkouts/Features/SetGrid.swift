@@ -1,7 +1,8 @@
 import SwiftUI
 
 /// A straight-set block (one exercise, rounds) in the editor: one row per set with its own load and
-/// reps, so a pyramid or ramping sets are written as they are done. Add set copies the last row;
+/// reps, so a pyramid or ramping sets are written as they are done. The set number is a button
+/// that steps the set through warm-up (W), normal, drop set (D) and to failure (F). Add set copies the last row;
 /// Remove set drops it. Both change how many times the block repeats.
 struct SetPlanGrid: View {
     var block: Block
@@ -10,6 +11,8 @@ struct SetPlanGrid: View {
     /// Grey line under a set, e.g. last time's set of the same number.
     var hint: (Int) -> String? = { _ in nil }
     var apply: (_ change: (Runsheet) -> Runsheet) -> Void
+
+    private var marks: [String] { SetType.marks((0..<block.repeatCount).map { step.plannedType($0) }) }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
@@ -29,12 +32,12 @@ struct SetPlanGrid: View {
                 Divider()
                 VStack(alignment: .leading, spacing: 2) {
                     HStack(spacing: 8) {
-                        Text("\(round + 1)")
-                            .font(.body.weight(.heavy))
-                            .monospacedDigit()
-                            .foregroundStyle(Brand.ink)
-                            .frame(width: 36, alignment: .leading)
+                        SetMarkButton(mark: marks[round], type: step.plannedType(round), label: "Set \(round + 1)", cycle: locked ? nil : {
+                            apply { Edit.editSet($0, block: block.id, round: round, type: step.plannedType(round).next) }
+                        })
+                        .frame(width: 36, alignment: .leading)
                         if step.hasSetLoad {
+                            if Plates.kit(step.exercise) == .barbell { PlatesButton(load: planned.load) }
                             MiniStepper(value: planned.load ?? 0, label: "Set \(round + 1) load", disabled: locked) { direction in
                                 let next = max(0, (planned.load ?? 0) + direction * (step.exercise.step == 0 ? 1 : step.exercise.step))
                                 apply { Edit.editSet($0, block: block.id, round: round, load: next) }

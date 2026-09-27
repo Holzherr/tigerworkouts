@@ -305,15 +305,17 @@ enum Edit {
 
     /// Change one set of a straight-set block. Every set is written out with what it showed first,
     /// so the edit changes that row and no other.
-    static func editSet(_ r: Runsheet, block blockId: String, round: Int, reps: Double? = nil, load: Double? = nil) -> Runsheet {
+    static func editSet(_ r: Runsheet, block blockId: String, round: Int, reps: Double? = nil, load: Double? = nil, type: SetType? = nil) -> Runsheet {
         updateStraightSet(r, block: blockId) { b, step in
             var sets = (0..<max(b.repeatCount, step.sets?.count ?? 0)).map { i in
                 let p = step.plannedSet(i)
-                return SetPlan(reps: p.reps, load: p.load)
+                let t = step.plannedType(i)
+                return SetPlan(reps: p.reps, load: p.load, type: t == .normal ? nil : t)
             }
             guard sets.indices.contains(round) else { return }
             if let reps { sets[round].reps = reps }
             if let load { sets[round].load = load }
+            if let type { sets[round].type = type == .normal ? nil : type }
             step.sets = sets
         }
     }

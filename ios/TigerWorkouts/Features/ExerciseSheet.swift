@@ -25,7 +25,7 @@ struct ExerciseSheet: View {
 
     private var unit: String { step.shortUnit }
     private var increment: Double { step.exercise.step == 0 ? 1 : step.exercise.step }
-    private var alternatives: [Alternatives.Option] { Alternatives.options(for: step) }
+    private var alternatives: [Alternatives.Option] { Alternatives.options(for: step, kit: Equipment.current()) }
 
     private var showsIncline: Bool {
         incline != nil && (step.incline != nil || Library.shared.group(step.exercise.key).map { [.treadmill, .walk, .run].contains($0) } ?? false)

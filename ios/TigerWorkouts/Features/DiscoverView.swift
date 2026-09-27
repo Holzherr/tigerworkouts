@@ -207,7 +207,7 @@ struct DiscoverView: View {
                 .buttonStyle(.plain)
                 .accessibilityLabel("Start \(next.runsheet.title)")
             }
-            if let today = Targets.today(next.runsheet, results: store.results, intent: Intent(rawValue: intent) ?? .maintain) {
+            if let today = Targets.today(store.prepared(next.runsheet), results: store.results, intent: Intent(rawValue: intent) ?? .maintain, kit: store.equipment) {
                 TodayLine(today: today)
             }
             if let stall = Stall.forCard(next.runsheet, results: store.results, dismissed: dismissedStalls) {

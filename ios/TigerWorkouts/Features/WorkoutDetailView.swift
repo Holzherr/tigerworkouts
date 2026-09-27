@@ -24,7 +24,21 @@ struct WorkoutDetailView: View {
     private var saved: Bool { store.saved.contains(runsheet.key) }
     private var editable: Bool { isNew || store.isMine(runsheet) }
     /// Something to run: a new workout has no Start, length or icon until it has an exercise.
-    private var runnable: Bool { !runsheet.exerciseSteps.isEmpty }
+    private var runnable: Bool { !store.prepared(runsheet).exerciseSteps.isEmpty }
+
+    /// Other workouts embedded in this one (a shared warm-up), with what each holds. Resolved into
+    /// the session at Start; listed here so they are not a surprise.
+    private var refs: [(ref: RefItem, sheet: Runsheet?)] {
+        runsheet.items.compactMap { item in
+            guard case .ref(let r) = item else { return nil }
+            return (r, store.workout(id: r.runsheetId))
+        }
+    }
+
+    /// Steps whose load is a % of a training max or × bodyweight.
+    private var relative: [ExerciseStep] {
+        store.prepared(runsheet).exerciseSteps.filter { $0.targetPct != nil || $0.loadFactor != nil }
+    }
 
     var body: some View {
         RunsheetEditor(
@@ -41,6 +55,8 @@ struct WorkoutDetailView: View {
                 if runnable {
                     header
                     progress
+                    refRows
+                    trainingMaxLink
                 } else if !runsheet.title.isEmpty {
                     Text(runsheet.title)
                         .font(.system(size: 26, weight: .heavy))
@@ -224,10 +240,51 @@ struct WorkoutDetailView: View {
         .padding(.bottom, 4)
     }
 
+    /// One row per embedded workout: its role, its title and how many exercises it adds.
+    @ViewBuilder
+    private var refRows: some View {
+        ForEach(refs, id: \.ref.id) { item in
+            HStack(spacing: 10) {
+                Image(systemName: "link").foregroundStyle(Brand.coralInk)
+                VStack(alignment: .leading, spacing: 1) {
+                    Text("\((item.ref.role ?? .main).label): \(item.sheet?.title ?? "a workout not on this phone")")
+                        .font(.subheadline.weight(.semibold))
+                        .foregroundStyle(Brand.ink)
+                    Text(item.sheet.map { "\($0.exerciseSteps.count) exercises · runs where it sits in the list" } ?? "Skipped at Start")
+                        .font(.caption)
+                        .foregroundStyle(Brand.muted)
+                }
+            }
+            .accessibilityElement(children: .combine)
+            .accessibilityIdentifier("ref-row")
+        }
+    }
+
+    /// Loads given as a % of a training max: a way to set the maxes, and a note when one is missing.
+    @ViewBuilder
+    private var trainingMaxLink: some View {
+        let pct = relative.filter { $0.targetPct != nil }
+        let keys = Array(Set(pct.map(\.exercise.key))).sorted()
+        if !relative.isEmpty {
+            NavigationLink {
+                TrainingMaxesView(
+                    exercises: keys.map { k in pct.first { $0.exercise.key == k }!.exercise },
+                    needsBodyweight: relative.contains { $0.loadFactor != nil }
+                )
+            } label: {
+                let missing = keys.filter { store.trainingMaxes[$0] == nil }.count + (relative.contains { $0.loadFactor != nil } && store.bodyweightKg == nil ? 1 : 0)
+                Label(missing > 0 ? "Set \(missing == 1 ? "a training max" : "\(missing) training maxes") to see these loads in kilos" : "Training maxes", systemImage: "percent")
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(Brand.coralInk)
+            }
+            .accessibilityIdentifier("training-maxes-link")
+        }
+    }
+
     /// Today's target and, when the workout's score has stood still, its stall. Nothing on a first run.
     @ViewBuilder
     private var progress: some View {
-        if let today = Targets.today(runsheet, results: store.results, intent: Intent(rawValue: intent) ?? .maintain) {
+        if let today = Targets.today(store.prepared(runsheet), results: store.results, intent: Intent(rawValue: intent) ?? .maintain, kit: store.equipment) {
             TodayLine(today: today)
         }
         if let stall = Stall.workout(runsheet, results: store.results), !dismissedStalls.contains(stall.id) {
@@ -295,6 +352,11 @@ struct WorkoutDetailView: View {
     private func settingSummary(_ e: ExerciseStep) -> String {
         var parts: [String] = []
         if !e.loadLabel.isEmpty { parts.append(e.loadLabel) }
+        // 65% TM reads as the kilos it comes to, the way the timer will show it.
+        if e.targetPct != nil || e.loadFactor != nil,
+           let kg = Relative.target(e, maxes: store.trainingMaxes, bodyweightKg: store.bodyweightKg, kit: store.equipment) {
+            parts.append("\(Format.number(kg)) \(e.shortUnit)")
+        }
         if let incline = e.incline { parts.append("\(Format.number(incline))% incline") }
         if let last = LastTime.label(store.results, for: e) { parts.append(last) }
         return parts.joined(separator: " · ")

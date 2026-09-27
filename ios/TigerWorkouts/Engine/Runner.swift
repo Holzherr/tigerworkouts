@@ -56,6 +56,8 @@ struct Actual: Hashable, Sendable, Codable {
     var doneAt: Double?
     /// Session time when it was done, seconds, pauses excluded.
     var at: Double?
+    /// The set's type changed on the grid; over the plan's.
+    var type: SetType?
 }
 
 struct Clock: Hashable, Sendable {
@@ -260,12 +262,49 @@ enum Runner {
             s.i = i; s.phase = .done; s.endsAt = nil; s.endedAt = now
             return s
         }
+        if i > s.i, let drop = restBeforeDrop(s, i) { return enter(s, drop, now) }
         let slot = s.slots[i]
         if i > 0, i > s.i, slot.part != s.slots[i - 1].part {
             s.i = i; s.phase = .ready; s.slotStartedAt = now; s.endsAt = nil; s.remainingMs = nil
             return s
         }
         return activate(s, i, now)
+    }
+
+    /// A swap drops the plan's loads (they were for the planned exercise) but keeps its reps and the
+    /// set's type.
+    static func keptOnSwap(_ plan: SetPlan?) -> SetPlan? {
+        guard let plan, plan.reps != nil || plan.type != nil else { return nil }
+        return SetPlan(reps: plan.reps, type: plan.type)
+    }
+
+    /// The type of the set at slot idx: changed on the grid, else the plan's, else normal.
+    static func typeAt(_ s: RunState, _ idx: Int) -> SetType {
+        guard s.slots.indices.contains(idx) else { return .normal }
+        let sl = s.slots[idx]
+        return s.actuals[sl.id]?.type ?? sl.plan?.type ?? .normal
+    }
+
+    /// A drop set follows the set before it with no rest (Hevy's rule): when slot i is a rest in a
+    /// block and the next set of that block is a drop set, the index of that set; else nil.
+    private static func restBeforeDrop(_ s: RunState, _ i: Int) -> Int? {
+        let sl = s.slots[i]
+        guard sl.kind == .rest, !sl.untilBoundary, let block = sl.blockId, sl.mode == .rounds else { return nil }
+        var j = i
+        while j < s.slots.count, s.slots[j].kind == .rest, s.slots[j].blockId == block { j += 1 }
+        guard j < s.slots.count, s.slots[j].blockId == block, s.slots[j].kind == .work, typeAt(s, j) == .drop else { return nil }
+        return j
+    }
+
+    /// Mark a set warm-up, normal, drop or to failure, from its row. Any set, done or not: the type
+    /// is a label, not a number to lock.
+    static func setTypeAt(_ s: RunState, slotId: String, type: SetType) -> RunState {
+        guard let idx = s.slots.firstIndex(where: { $0.id == slotId }), s.slots[idx].kind == .work else { return s }
+        var s = s
+        var a = s.actuals[slotId] ?? Actual()
+        a.type = type
+        s.actuals[slotId] = a
+        return s
     }
 
     /// Start the block the timer is parked on.
@@ -593,7 +632,7 @@ enum Runner {
             var sl = sl
             sl.step = .exercise(e)
             // The plan's loads were for the planned exercise; the swap's target stands in for them.
-            sl.plan = sl.plan?.reps.map { SetPlan(reps: $0) }
+            sl.plan = Runner.keptOnSwap(sl.plan)
             return sl
         }
         return c?.step.id == stepId ? enter(s, s.i, now) : s
@@ -653,7 +692,7 @@ enum Runner {
                 e.exercise = w.exercise
                 e.target = w.target
                 sl.step = .exercise(e)
-                sl.plan = sl.plan?.reps.map { SetPlan(reps: $0) }
+                sl.plan = Runner.keptOnSwap(sl.plan)
             }
             if let a = ahead[sl.step.id], !tail.contains(where: { $0.step.id == sl.step.id }) { actuals[sl.id] = a }
             sl.part = partOf[sl.part] ?? base
@@ -767,16 +806,20 @@ enum Runner {
             if prev == nil { order.append(key) }
             var reps = prev?.reps ?? []
             let done = a.reps ?? (ex.forMode == .reps ? ex.forValue : nil)
-            if let done { reps.append(done) }
+            let type = typeAt(s, idx)
+            // `target` and `reps` are for readers from before per-set rows: a warm-up is not the
+            // load worked at and its reps are not work, so they stay out of both.
+            let warm = type == .warmup
+            if let done, !warm { reps.append(done) }
             let target = effectiveTarget(s, idx)
             steps[key] = StepResult(
                 stepId: ex.id,
                 exerciseKey: ex.exercise.key,
-                target: target,
+                target: warm ? (prev?.target ?? target) : target,
                 incline: effectiveIncline(s, idx),
                 reps: reps.isEmpty ? nil : reps,
                 success: prev?.success ?? true,
-                sets: (prev?.sets ?? []) + [SetResult(reps: done, load: target, at: doneAtSec(s, a))]
+                sets: (prev?.sets ?? []) + [SetResult(reps: done, load: target, at: doneAtSec(s, a), type: type == .normal ? nil : type)]
             )
         }
 
