@@ -413,3 +413,65 @@ struct SessionSafetyTests {
         #expect(SessionRunner.readSaved() == nil)
     }
 }
+
+/// Ported from 'honest logging' in `runner.test.ts` and 'last time, on the row' in `last-used.test.ts`.
+@Suite("honest logging")
+struct HonestLoggingTests {
+    static func press() -> Runsheet {
+        Runsheet(id: "p", title: "Press", items: [.block(Block(
+            id: "b", name: "B", repeatCount: 3,
+            steps: [Fixtures.work("pr", Fixtures.press, target: 20, forMode: .reps, forValue: 8)]
+        ))])
+    }
+
+    @Test("logs each set with the reps counted and the load in hand")
+    func perSet() {
+        var s = Runner.tick(Runner.start(Self.press(), now: 0), now: 5_000)
+        s = Runner.setReps(s, reps: 10)
+        s = Runner.advance(s, now: 20_000)
+        s = Runner.adjust(s, now: 21_000, target: 22.5)
+        s = Runner.advance(s, now: 40_000)
+        s = Runner.setReps(s, reps: 6)
+        s = Runner.advance(s, now: 60_000)
+        let pr = Runner.toResult(s, Self.press(), now: 60_000).steps[0]
+        #expect(pr.sets == [SetResult(reps: 10, load: 20), SetResult(reps: 8, load: 22.5), SetResult(reps: 6, load: 22.5)])
+        #expect(pr.reps == [10, 8, 6])
+    }
+
+    @Test("the stepper counts from the plan and logs what it shows")
+    @MainActor
+    func stepper() {
+        let runner = SessionRunner(runsheet: Self.press())
+        runner.done() // lead-in → first set
+        #expect(runner.reps == 8)
+        runner.nudgeReps(1)
+        runner.nudgeReps(1)
+        #expect(runner.reps == 10)
+        runner.done()
+        runner.finish()
+        #expect(runner.result().steps[0].sets?.first?.reps == 10)
+        SessionRunner.clearSaved()
+    }
+
+    private let bench = ExerciseStep(id: "e2", exercise: Fixtures.press, target: 15, forMode: .reps, forValue: 8)
+
+    private func session(_ at: String, _ steps: [StepResult], runsheet: String = "u-1") -> SessionResult {
+        SessionResult(runsheetId: runsheet, title: nil, startedAt: at, steps: steps, id: "s-\(at)")
+    }
+
+    @Test("shows the heaviest set of the newest session")
+    func newestTopSet() {
+        let label = LastTime.label([
+            session("2026-09-01T10:00:00Z", [StepResult(stepId: "e2", exerciseKey: "db_incline_press", sets: [SetResult(reps: 8, load: 60)])]),
+            session("2026-09-10T10:00:00Z", [StepResult(stepId: "e2", exerciseKey: "db_incline_press", sets: [SetResult(reps: 8, load: 55), SetResult(reps: 8, load: 57.5), SetResult(reps: 6, load: 57.5)])]),
+        ], for: bench)
+        #expect(label == "last time 57.5 × 8")
+    }
+
+    @Test("falls back to the same exercise elsewhere, and to results logged before sets")
+    func fallback() {
+        let label = LastTime.label([session("2026-09-02T10:00:00Z", [StepResult(stepId: "zz", exerciseKey: "db_incline_press", target: 20, reps: [8, 10])], runsheet: "other")], for: bench)
+        #expect(label == "last time 20 × 10")
+        #expect(LastTime.label([], for: bench) == nil)
+    }
+}

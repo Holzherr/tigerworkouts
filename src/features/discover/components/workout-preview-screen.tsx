@@ -13,6 +13,8 @@ import { KIND_LABEL } from './workout-card';
 export interface WorkoutPreviewScreenProps {
   runsheet: Runsheet;
   history?: SessionResult[];
+  /** "last time 57.5 × 8" under an exercise that has been done before. */
+  lastTime?: (step: ExerciseStep) => string | undefined;
   onBack?: () => void;
   onStart?: () => void;
   onEditAndStart?: () => void;
@@ -39,7 +41,7 @@ const SCORE_TEXT: Record<string, string> = { time: 'For time', rounds: 'AMRAP: r
  * Edit & start, Follow along for videos, Save. Tapping any exercise opens it — the clip, the cue,
  * and its numbers as steppers when the host can save them.
  */
-export const WorkoutPreviewScreen = ({ runsheet: r, history = [], onBack, onStart, onEditAndStart, onFollowAlong, onLogOnly, onSave, saved, onShare, onStepChange, onCreator, onTogglePublic, appHref }: WorkoutPreviewScreenProps) => {
+export const WorkoutPreviewScreen = ({ runsheet: r, history = [], lastTime, onBack, onStart, onEditAndStart, onFollowAlong, onLogOnly, onSave, saved, onShare, onStepChange, onCreator, onTogglePublic, appHref }: WorkoutPreviewScreenProps) => {
   const [open, setOpen] = useState<ExerciseStep | null>(null);
   const kind = r.source?.kind ?? 'user';
   const score = scoreType(r);
@@ -141,7 +143,10 @@ export const WorkoutPreviewScreen = ({ runsheet: r, history = [], onBack, onStar
                     ) : (
                       <button key={s.id} type="button" onClick={() => setOpen(s)} className="flex w-full items-center gap-2.5 px-3 py-1.5 text-left active:bg-line-soft">
                         <ClipThumb size="sm" clip={s.exercise.clip} poster={s.exercise.poster} icon={s.exercise.icon} />
-                        <div className="min-w-0 flex-1 truncate text-[14px]">{s.exercise.name}</div>
+                        <div className="min-w-0 flex-1">
+                          <div className="truncate text-[14px]">{s.exercise.name}</div>
+                          {lastTime?.(s) && <div className="truncate text-[12px] text-muted">{lastTime(s)}</div>}
+                        </div>
                         <span className="text-[13px] font-semibold tabular-nums">{[loadLabel(s), forLabel(s)].filter(Boolean).join(' · ')}</span>
                         <ChevronRight className="size-4 shrink-0 text-faint" />
                       </button>
@@ -164,7 +169,7 @@ export const WorkoutPreviewScreen = ({ runsheet: r, history = [], onBack, onStar
               <ClipThumb size="sm" clip={it.exercise.clip} poster={it.exercise.poster} icon={it.exercise.icon} />
               <div className="min-w-0 flex-1">
                 <div className="truncate text-[14px] font-semibold">{it.exercise.name}</div>
-                {role && <div className="text-[12px] text-muted">{role}</div>}
+                {(role || lastTime?.(it)) && <div className="truncate text-[12px] text-muted">{[role, lastTime?.(it)].filter(Boolean).join(' · ')}</div>}
               </div>
               <span className="text-[13px] font-semibold tabular-nums">{[loadLabel(it), forLabel(it)].filter(Boolean).join(' · ')}</span>
               <ChevronRight className="size-4 shrink-0 text-faint" />

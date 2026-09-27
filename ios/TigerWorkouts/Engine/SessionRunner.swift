@@ -322,6 +322,22 @@ final class SessionRunner {
 
     func setReps(_ reps: Double) { apply { s, _ in Runner.setReps(s, reps: reps) } }
 
+    /// Whether the running slot is done to a count, so has reps worth logging.
+    var countsReps: Bool { slot?.exercise?.countsReps == true }
+
+    /// The reps this set will log: what was counted, else the plan for a fixed count. Nil for a max
+    /// or reps-plus set nobody has counted yet — the plan there is a floor, not a result.
+    var reps: Double? {
+        guard let slot, let ex = slot.exercise, ex.countsReps else { return nil }
+        return state.actuals[slot.id]?.reps ?? (ex.forMode == .reps ? ex.forValue : nil)
+    }
+
+    func nudgeReps(_ direction: Double) {
+        guard let ex = slot?.exercise, ex.countsReps else { return }
+        setReps(max(0, (reps ?? ex.forValue) + (reps == nil ? 0 : direction)))
+        Haptics.shared.play(.tick)
+    }
+
     func plannedTarget(_ stepId: String) -> Double? { Runner.plannedTarget(state, stepId: stepId) }
     func plannedIncline(_ stepId: String) -> Double? { Runner.plannedIncline(state, stepId: stepId) }
 

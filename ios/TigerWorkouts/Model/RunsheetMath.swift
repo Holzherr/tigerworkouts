@@ -177,6 +177,9 @@ extension ExerciseStep {
         }
     }
 
+    /// Done to a count, so the reps done are worth logging: reps, reps-plus, max.
+    var countsReps: Bool { forMode == .reps || forMode == .amrap || forMode == .max }
+
     var shortUnit: String {
         exercise.unit
             .replacingOccurrences(of: " per arm", with: "")

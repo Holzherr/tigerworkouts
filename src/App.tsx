@@ -12,7 +12,7 @@ import { EditorScreen } from '@/features/runsheet/components/editor-screen';
 import type { DndVariant } from '@/features/runsheet/components/runsheet-list';
 import { EX, priyanka } from '@/features/runsheet/fixtures';
 import { makeExercise, resolveRefs, scoreType, type ExerciseStep, type Runsheet } from '@/features/runsheet/model';
-import { withLastUsed } from '@/features/runsheet/last-used';
+import { lastSet, lastTimeLabel, withLastUsed } from '@/features/runsheet/last-used';
 import { patchStep } from '@/features/runsheet/patch-step';
 import { applyCommands, parsePlan } from '@/features/runsheet/parse-text';
 import { isImage, readImport } from '@/features/runsheet/import-file';
@@ -106,6 +106,7 @@ export default function App() {
   const lookup = (id: string) => byId.get(id);
   const refTitle = (id: string) => byId.get(id)?.title;
   const resolve = (s: ExerciseStep) => resolveTarget(s, st.trainingMaxes, st.bodyweightKg);
+  const lastTime = (s: ExerciseStep) => lastTimeLabel(lastSet(st.results, s), s);
 
   // exercise picker as a promise so the editor can await a pick
   const [pickerOpen, setPickerOpen] = useState(false);
@@ -177,6 +178,7 @@ export default function App() {
         <WorkoutPreviewScreen
           runsheet={r}
           history={st.results.filter(x => x.runsheetId === wid(r))}
+          lastTime={lastTime}
           onBack={() => go('/discover')}
           onStart={() => (setDraft(null), go(`/do/${encodeURIComponent(route.id)}`))}
           onEditAndStart={() => (setDraft(structuredClone(resolveRefs(r, lookup))), go(`/edit/${encodeURIComponent(route.id)}`))}
@@ -217,6 +219,7 @@ export default function App() {
           onSaveAsMine={() => { const m = saveMine(); say('Saved to My workouts'); go(`/w/${encodeURIComponent(m.id!)}`); }}
           onStart={() => { const m = saveMine(); go(`/do/${encodeURIComponent(m.id!)}`); }}
           resolveTarget={resolve}
+          hintFor={lastTime}
           refTitle={refTitle}
           mode="author"
           dndVariant={dnd}
@@ -252,6 +255,7 @@ export default function App() {
             go(`/w/${encodeURIComponent(id)}`);
           }}
           resolveTarget={resolve}
+          hintFor={lastTime}
           refTitle={refTitle}
           mode="tonight"
           dndVariant={dnd}

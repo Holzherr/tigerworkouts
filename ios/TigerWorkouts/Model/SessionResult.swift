@@ -1,5 +1,11 @@
 import Foundation
 
+/// One set as it was done: the reps counted and the load in hand.
+struct SetResult: Codable, Hashable, Sendable {
+    var reps: Double?
+    var load: Double?
+}
+
 /// What was logged for one exercise step in a session.
 struct StepResult: Codable, Hashable, Sendable, Identifiable {
     var stepId: String
@@ -11,6 +17,8 @@ struct StepResult: Codable, Hashable, Sendable, Identifiable {
     /// Reps achieved, one entry per set.
     var reps: [Double]?
     var success: Bool?
+    /// Each set in order, with its own reps and load. `target` and `reps` stay for older readers.
+    var sets: [SetResult]?
 
     /// A step swapped mid-session has a row per exercise, so the step id alone is not unique.
     var id: String { "\(stepId)|\(exerciseKey)" }
