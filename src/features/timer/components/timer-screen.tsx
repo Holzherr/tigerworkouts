@@ -110,7 +110,7 @@ export const TimerScreen = ({ runsheet, state, now, onDone, onSkip, onBack, onPa
           <div className="py-4">
             <div className="text-[11px] font-bold tracking-widest text-brand uppercase">Next block · {slot.parts > 1 ? `${slot.part + 1} of ${slot.parts}` : ''}</div>
             <div className="mt-1 text-[28px] leading-tight font-black">{partTitle(partOf(slot.part))}</div>
-            <div className="mt-1 text-[13px] text-white/60">{slot.mode !== 'loose' ? `${slot.rounds} ${slot.mode === 'amrap' ? 'AMRAP' : 'rounds'}` : forLabel(stepOf as ExerciseStep)}</div>
+            <div className="mt-1 text-[13px] text-white/60">{slot.mode === 'amrap' ? `AMRAP${slot.capSec ? ` · ${Math.round(slot.capSec / 60)} min` : ''}` : slot.mode !== 'loose' ? `${slot.rounds} rounds` : forLabel(stepOf as ExerciseStep)}</div>
             <div className="mt-3 space-y-1.5">
               {stepsOf(partOf(slot.part)).map(s => (
                 <div key={s.id} className="flex items-center gap-2.5 rounded-card bg-white/10 px-3 py-2">

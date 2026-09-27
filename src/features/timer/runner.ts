@@ -57,7 +57,8 @@ export interface RunState {
   pausedAt?: number;
   actuals: Record<string, Actual>;
   dropped: string[];
-  /** ms at which each block's first slot started, for caps and EMOM boundaries. */
+  /** ms at which each block's first slot started, for caps and EMOM boundaries. A pause taken
+   * inside a block moves its start later by the pause, so the block's clock excludes it. */
   blockStart: Record<string, number>;
   /** Slots completed per block (for AMRAP scoring). */
   blockDone: Record<string, number>;
@@ -117,7 +118,9 @@ export const expand = (r: Runsheet, dropped: string[] = []): Slot[] => {
       continue;
     }
     const roundLen = b.steps.reduce((t, s) => t + estimate(s), 0);
-    const rounds = mode === 'amrap' ? Math.max(1, Math.ceil((b.timeCapSec ?? 600) / Math.max(15, roundLen))) + 2 : Math.max(1, b.repeat);
+    // An amrap's rounds are a guess to start from: a capped one grows a round at a time (see
+    // extendAmrap) and ends on the cap, however fast the rounds go.
+    const rounds = mode === 'amrap' ? Math.max(2, Math.ceil((b.timeCapSec ?? 600) / Math.max(15, roundLen))) : Math.max(1, b.repeat);
     for (let ri = 0; ri < rounds; ri++) {
       for (const s of b.steps) push(s, { ...base, round: ri, rounds, capSec: mode === 'amrap' || mode === 'fortime' ? b.timeCapSec : undefined });
       between(ri, rounds);
@@ -160,10 +163,8 @@ export const blockElapsed = (s: RunState, now: number) => {
   const c = current(s);
   if (!c?.blockId || s.blockStart[c.blockId] === undefined) return 0;
   const end = s.phase === 'paused' && s.pausedAt ? s.pausedAt : now;
-  return Math.max(0, (end - s.blockStart[c.blockId] - pausedSince(s, s.blockStart[c.blockId])) / 1000);
+  return Math.max(0, (end - s.blockStart[c.blockId]) / 1000);
 };
-// pauses are tracked globally; approximate per-block by ignoring pauses before the block started
-const pausedSince = (s: RunState, _sinceMs: number) => s.pausedMs;
 
 /** Move to slot i. Entering a new part (block or loose step) going forward parks the timer in
  * `ready` until the user taps Start block, so equipment changes don't eat the countdown. */
@@ -181,13 +182,13 @@ const activate = (s: RunState, i: number, now: number): RunState => {
   if (slot.blockId && blockStart[slot.blockId] === undefined) blockStart[slot.blockId] = now;
   let seconds = slot.seconds;
   if (slot.untilBoundary && slot.blockId && slot.everySec) {
-    const into = (now - blockStart[slot.blockId] - s.pausedMs) / 1000;
+    const into = (now - blockStart[slot.blockId]) / 1000;
     const boundary = (Math.floor(into / slot.everySec) + 1) * slot.everySec;
     seconds = Math.max(0, boundary - into);
   }
   // a capped block that has run out: skip its remaining slots
   if (slot.capSec && slot.blockId && blockStart[slot.blockId] !== undefined) {
-    const into = (now - blockStart[slot.blockId] - s.pausedMs) / 1000;
+    const into = (now - blockStart[slot.blockId]) / 1000;
     if (into >= slot.capSec) {
       let j = i;
       while (j < s.slots.length && s.slots[j].blockId === slot.blockId) j++;
@@ -209,7 +210,23 @@ export const advance = (s: RunState, now: number, opts: { skipped?: boolean } = 
     actuals[c.id] = { ...(actuals[c.id] ?? { changes: [] }), doneAt: now };
     if (c.blockId && c.kind === 'work') blockDone[c.blockId] = (blockDone[c.blockId] ?? 0) + 1;
   }
-  return enter({ ...s, actuals, blockDone }, s.i + 1, now);
+  const st = { ...s, actuals, blockDone };
+  return enter(c ? extendAmrap(st, c) : st, s.i + 1, now);
+};
+
+/** Leaving the last expanded round of a capped amrap before its cap: add one more round (and the
+ * rest before it), copied from the round just run so drops and swaps carry. */
+const extendAmrap = (s: RunState, c: Slot): RunState => {
+  if (c.mode !== 'amrap' || !c.capSec || !c.blockId || s.slots[s.i + 1]?.blockId === c.blockId) return s;
+  const round = c.round + 1;
+  const rounds = Math.max(c.rounds, round + 1);
+  const serial = (id: string) => Number(id.slice(id.lastIndexOf('#') + 1));
+  let n = s.slots.reduce((m, sl) => Math.max(m, serial(sl.id)), -1) + 1;
+  const copy = (sl: Slot): Slot => ({ ...sl, id: `${sl.id.slice(0, sl.id.lastIndexOf('#'))}#${n++}`, round, rounds });
+  const between = s.slots.find(sl => sl.blockId === c.blockId && sl.step.id === `${c.blockId}:between`);
+  const last = s.slots.filter(sl => sl.blockId === c.blockId && sl.round === c.round && sl.step.id !== `${c.blockId}:between`);
+  const added = [...(between ? [{ ...copy(between), round: c.round }] : []), ...last.map(copy)];
+  return { ...s, slots: [...s.slots.slice(0, s.i + 1), ...added, ...s.slots.slice(s.i + 1)] };
 };
 
 /** Countdown expiry check; call from the tick. */
@@ -218,7 +235,7 @@ export const tick = (s: RunState, now: number): RunState => {
   if (s.phase === 'running' && s.endsAt !== undefined && now >= s.endsAt) return advance(s, now);
   // amrap / fortime cap reached mid-slot
   const c = current(s);
-  if (s.phase === 'running' && c?.capSec && c.blockId && s.blockStart[c.blockId] !== undefined && (now - s.blockStart[c.blockId] - s.pausedMs) / 1000 >= c.capSec) {
+  if (s.phase === 'running' && c?.capSec && c.blockId && s.blockStart[c.blockId] !== undefined && (now - s.blockStart[c.blockId]) / 1000 >= c.capSec) {
     let j = s.i;
     while (j < s.slots.length && s.slots[j].blockId === c.blockId) j++;
     return enter(s, j, now);
@@ -231,7 +248,9 @@ export const resume = (s: RunState, now: number): RunState => {
   if (s.phase !== 'paused' || s.pausedAt === undefined) return s;
   const gap = now - s.pausedAt;
   const wasLead = s.i === 0 && s.blockStart && Object.keys(s.blockStart).length === 0 && s.remainingMs !== undefined && s.slotStartedAt === s.startedAt;
-  return { ...s, phase: wasLead ? 'lead' : 'running', pausedAt: undefined, pausedMs: s.pausedMs + gap, slotStartedAt: s.slotStartedAt + gap, endsAt: s.remainingMs !== undefined ? now + s.remainingMs : undefined, remainingMs: undefined };
+  const block = current(s)?.blockId;
+  const blockStart = block !== undefined && s.blockStart[block] !== undefined ? { ...s.blockStart, [block]: s.blockStart[block] + gap } : s.blockStart;
+  return { ...s, blockStart, phase: wasLead ? 'lead' : 'running', pausedAt: undefined, pausedMs: s.pausedMs + gap, slotStartedAt: s.slotStartedAt + gap, endsAt: s.remainingMs !== undefined ? now + s.remainingMs : undefined, remainingMs: undefined };
 };
 
 /** Go back one slot (restarts its countdown). */
@@ -354,13 +373,15 @@ export const replan = (s: RunState, r: Runsheet, now: number): RunState => {
 
 export const finish = (s: RunState, now: number): RunState => ({ ...s, phase: 'done', endedAt: now, endsAt: undefined });
 
-/** The load in force at slot index idx: the latest adjustment made on any earlier round of the same step, else the plan. */
+/** The load in force at slot index idx: the latest adjustment made on any earlier round of the same
+ * step with the same exercise, else the plan. A swap starts the load afresh from the swap's target. */
+const sameWork = (a: Slot, b: Slot) => a.step.id === b.step.id && (a.step.kind !== 'exercise' || b.step.kind !== 'exercise' || a.step.exercise.key === b.step.exercise.key);
 export const effectiveTarget = (s: RunState, idx: number): number | undefined => {
   const slot = s.slots[idx];
   if (!slot) return undefined;
   for (let j = idx; j >= 0; j--) {
     const sl = s.slots[j];
-    if (sl.step.id !== slot.step.id) continue;
+    if (!sameWork(sl, slot)) continue;
     const t = s.actuals[sl.id]?.target;
     if (t !== undefined) return t;
   }
@@ -371,7 +392,7 @@ export const effectiveIncline = (s: RunState, idx: number): number | undefined =
   if (!slot) return undefined;
   for (let j = idx; j >= 0; j--) {
     const sl = s.slots[j];
-    if (sl.step.id !== slot.step.id) continue;
+    if (!sameWork(sl, slot)) continue;
     const t = s.actuals[sl.id]?.incline;
     if (t !== undefined) return t;
   }
@@ -414,11 +435,13 @@ export const toResult = (s: RunState, r: Runsheet, now: number): SessionResult =
     if (slot.kind !== 'work' || slot.step.kind !== 'exercise') continue;
     const a = s.actuals[slot.id];
     if (!a?.doneAt) continue;
-    const key = slot.step.id;
+    // A step swapped mid-session logs one row per exercise, so the rounds done before the swap
+    // keep the exercise and load they were done with.
+    const key = `${slot.step.id}|${slot.step.exercise.key}`;
     const prev = steps.get(key);
     const target = effectiveTarget(s, idx);
     const incline = effectiveIncline(s, idx);
-    steps.set(key, { stepId: key, exerciseKey: slot.step.exercise.key, target, ...(incline !== undefined ? { incline } : {}), reps: [...(prev?.reps ?? []), ...(a.reps !== undefined ? [a.reps] : slot.step.forMode === 'reps' ? [slot.step.forValue] : [])], success: prev?.success ?? true });
+    steps.set(key, { stepId: slot.step.id, exerciseKey: slot.step.exercise.key, target, ...(incline !== undefined ? { incline } : {}), reps: [...(prev?.reps ?? []), ...(a.reps !== undefined ? [a.reps] : slot.step.forMode === 'reps' ? [slot.step.forValue] : [])], success: prev?.success ?? true });
   }
   let score: number | undefined;
   if (type === 'time') score = durationSec;

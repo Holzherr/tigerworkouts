@@ -32,6 +32,12 @@ struct Slot: Identifiable, Hashable, Sendable, Codable {
     var parts: Int
 
     var exercise: ExerciseStep? { step.asExercise }
+
+    /// "Round 3 of 8". An amrap runs until its cap, so it has no last round to count towards.
+    var roundLabel: String? {
+        if mode == .amrap { return "Round \(round + 1)" }
+        return rounds > 1 ? "Round \(round + 1) of \(rounds)" : nil
+    }
 }
 
 struct Change: Hashable, Sendable, Codable {
@@ -72,7 +78,8 @@ struct RunState: Hashable, Sendable, Codable {
     var pausedAt: Double?
     var actuals: [String: Actual] = [:]
     var dropped: [String] = []
-    /// ms at which each block's first slot started, for caps and EMOM boundaries.
+    /// ms at which each block's first slot started, for caps and EMOM boundaries. A pause taken
+    /// inside a block moves its start later by the pause, so the block's clock excludes it.
     var blockStart: [String: Double] = [:]
     /// Slots completed per block, for AMRAP scoring.
     var blockDone: [String: Int] = [:]
@@ -166,8 +173,10 @@ enum Runner {
             }
 
             let roundLen = b.steps.reduce(0.0) { $0 + estimate($1) }
+            // An amrap's rounds are a guess to start from: a capped one grows a round at a time
+            // (see `extendAmrap`) and ends on the cap, however fast the rounds go.
             let rounds: Int = mode == .amrap
-                ? max(1, Int(((b.timeCapSec ?? 600) / max(15, roundLen)).rounded(.up))) + 2
+                ? max(2, Int(((b.timeCapSec ?? 600) / max(15, roundLen)).rounded(.up)))
                 : max(1, b.repeatCount)
             let cap = (mode == .amrap || mode == .fortime) ? b.timeCapSec : nil
             for ri in 0..<rounds {
@@ -221,7 +230,7 @@ enum Runner {
     static func blockElapsed(_ s: RunState, now: Double) -> Double {
         guard let id = current(s)?.blockId, let began = s.blockStart[id] else { return 0 }
         let end = s.phase == .paused ? (s.pausedAt ?? now) : now
-        return max(0, (end - began - s.pausedMs) / 1000)
+        return max(0, (end - began) / 1000)
     }
 
     /// Move to slot i. Entering a new part going forward parks the timer in `ready` until the user
@@ -252,13 +261,13 @@ enum Runner {
 
         var seconds = slot.seconds
         if slot.untilBoundary, let id = slot.blockId, let every = slot.everySec, let began = s.blockStart[id] {
-            let into = (now - began - s.pausedMs) / 1000
+            let into = (now - began) / 1000
             let boundary = ((into / every).rounded(.down) + 1) * every
             seconds = max(0, boundary - into)
         }
         // A capped block that has run out: skip its remaining slots.
         if let cap = slot.capSec, let id = slot.blockId, let began = s.blockStart[id] {
-            let into = (now - began - s.pausedMs) / 1000
+            let into = (now - began) / 1000
             if into >= cap {
                 var j = i
                 while j < s.slots.count, s.slots[j].blockId == id { j += 1 }
@@ -288,7 +297,40 @@ enum Runner {
             s.actuals[c.id] = a
             if let id = c.blockId, c.kind == .work { s.blockDone[id, default: 0] += 1 }
         }
+        if let c = current(s) { s = extendAmrap(s, c) }
         return enter(s, s.i + 1, now)
+    }
+
+    /// Leaving the last expanded round of a capped amrap before its cap: add one more round (and
+    /// the rest before it), copied from the round just run so drops and swaps carry.
+    private static func extendAmrap(_ s: RunState, _ c: Slot) -> RunState {
+        guard c.mode == .amrap, c.capSec != nil, let block = c.blockId, next(s)?.blockId != block else { return s }
+        let round = c.round + 1
+        let rounds = max(c.rounds, round + 1)
+        let betweenId = "\(block):between"
+        func split(_ id: String) -> (base: Substring, serial: Int) {
+            guard let hash = id.lastIndex(of: "#") else { return (Substring(id), -1) }
+            return (id[..<hash], Int(id[id.index(after: hash)...]) ?? -1)
+        }
+        var n = s.slots.reduce(-1) { max($0, split($1.id).serial) } + 1
+        func copy(_ sl: Slot, round: Int) -> Slot {
+            var sl = sl
+            sl.id = "\(split(sl.id).base)#\(n)"
+            n += 1
+            sl.round = round
+            sl.rounds = rounds
+            return sl
+        }
+        var added: [Slot] = []
+        if let between = s.slots.first(where: { $0.blockId == block && $0.step.id == betweenId }) {
+            added.append(copy(between, round: c.round))
+        }
+        for sl in s.slots where sl.blockId == block && sl.round == c.round && sl.step.id != betweenId {
+            added.append(copy(sl, round: round))
+        }
+        var s = s
+        s.slots.insert(contentsOf: added, at: s.i + 1)
+        return s
     }
 
     /// Countdown expiry check; call from the tick.
@@ -296,7 +338,7 @@ enum Runner {
         if s.phase == .lead, let end = s.endsAt, now >= end { return enter(s, 0, now) }
         if s.phase == .running, let end = s.endsAt, now >= end { return advance(s, now: now) }
         if s.phase == .running, let c = current(s), let cap = c.capSec, let id = c.blockId, let began = s.blockStart[id],
-           (now - began - s.pausedMs) / 1000 >= cap {
+           (now - began) / 1000 >= cap {
             var j = s.i
             while j < s.slots.count, s.slots[j].blockId == id { j += 1 }
             return enter(s, j, now)
@@ -322,6 +364,7 @@ enum Runner {
         s.pausedAt = nil
         s.pausedMs += gap
         s.slotStartedAt += gap
+        if let block = current(s)?.blockId, let began = s.blockStart[block] { s.blockStart[block] = began + gap }
         s.endsAt = s.remainingMs.map { now + $0 }
         s.remainingMs = nil
         return s
@@ -503,17 +546,21 @@ enum Runner {
     // MARK: - Effective values
 
     /// The load in force at slot `idx`: the latest adjustment made on any earlier round of the
-    /// same step, else the plan.
+    /// same step with the same exercise, else the plan. A swap starts afresh from the swap's target.
     static func effectiveTarget(_ s: RunState, _ idx: Int) -> Double? {
         guard s.slots.indices.contains(idx) else { return nil }
         let slot = s.slots[idx]
         var j = idx
         while j >= 0 {
             let sl = s.slots[j]
-            if sl.step.id == slot.step.id, let t = s.actuals[sl.id]?.target { return t }
+            if sameWork(sl, slot), let t = s.actuals[sl.id]?.target { return t }
             j -= 1
         }
         return slot.exercise?.target
+    }
+
+    private static func sameWork(_ a: Slot, _ b: Slot) -> Bool {
+        a.step.id == b.step.id && a.exercise?.exercise.key == b.exercise?.exercise.key
     }
 
     static func effectiveIncline(_ s: RunState, _ idx: Int) -> Double? {
@@ -522,7 +569,7 @@ enum Runner {
         var j = idx
         while j >= 0 {
             let sl = s.slots[j]
-            if sl.step.id == slot.step.id, let t = s.actuals[sl.id]?.incline { return t }
+            if sameWork(sl, slot), let t = s.actuals[sl.id]?.incline { return t }
             j -= 1
         }
         return slot.exercise?.incline
@@ -576,7 +623,9 @@ enum Runner {
 
         for (idx, slot) in s.slots.enumerated() {
             guard slot.kind == .work, let ex = slot.exercise, let a = s.actuals[slot.id], a.doneAt != nil else { continue }
-            let key = ex.id
+            // A step swapped mid-session logs one row per exercise, so the rounds done before the
+            // swap keep the exercise and load they were done with.
+            let key = "\(ex.id)|\(ex.exercise.key)"
             let prev = steps[key]
             if prev == nil { order.append(key) }
             var reps = prev?.reps ?? []
@@ -586,7 +635,7 @@ enum Runner {
                 reps.append(ex.forValue)
             }
             steps[key] = StepResult(
-                stepId: key,
+                stepId: ex.id,
                 exerciseKey: ex.exercise.key,
                 target: effectiveTarget(s, idx),
                 incline: effectiveIncline(s, idx),

@@ -223,3 +223,55 @@ describe('replan: editing what is still to come', () => {
     expect(s.slots.length).toBe(2);
   });
 });
+
+describe('session safety', () => {
+  const warmThenCindy = (): Runsheet => ({ id: 'wc', title: 'Warm-up then Cindy', items: [{ ...makeExercise(EX.bw_squat, { forMode: 'seconds', forValue: 30 }), id: 'wu' }, ...cindy().items] });
+
+  it('a pause before a capped block does not stretch its cap', () => {
+    let s = tick(start(warmThenCindy(), 0), 5000); // warm-up running
+    s = pause(s, 10000);
+    s = resume(s, 110000); // 100 s paused in part 1
+    s = tick(s, 135000); // warm-up done, parked at the Cindy gate
+    expect(s.phase).toBe('ready');
+    s = R.startBlock(s, 140000);
+    expect(R.blockElapsed(s, 150000)).toBe(10);
+    s = tick(s, 140000 + 61000);
+    expect(s.phase).toBe('done');
+  });
+
+  it('a pause inside a capped block still extends that block', () => {
+    let s = tick(start(cindy(), 0), 5000);
+    s = pause(s, 15000);
+    s = resume(s, 45000); // 30 s paused, 10 s into the block
+    expect(R.blockElapsed(s, 45000)).toBe(10);
+    s = tick(s, 5000 + 61000);
+    expect(s.phase).toBe('running');
+    s = tick(s, 5000 + 30000 + 61000);
+    expect(s.phase).toBe('done');
+  });
+
+  it('an amrap runs to its cap however many rounds are done', () => {
+    let s = tick(start(cindy(), 0), 5000);
+    let t = 5000;
+    for (let k = 0; k < 20; k++) s = advance(s, (t += 2000)); // 10 rounds in 40 s
+    expect(s.phase).toBe('running');
+    expect(s.blockDone.b).toBe(20);
+    s = tick(s, 5000 + 61000);
+    expect(s.phase).toBe('done');
+    expect(toResult(s, cindy(), 70000).score).toBe(10);
+  });
+
+  it('a swap keeps the exercise and load of the rounds already done', () => {
+    let s = tick(start(interval(), 0), 5000);
+    s = adjust(s, 6000, 32);
+    s = advance(s, 20000); // swings round 1 at 32
+    s = advance(s, 21000); // rest
+    s = advance(s, 22000); // press
+    s = advance(s, 23000); // rest -> swings round 2
+    s = swap(s, 24000, 'sw', EX.bw_squat, 10);
+    for (let t = 25000; s.phase !== 'done'; t += 1000) s = advance(s, t);
+    const res = toResult(s, interval(), 40000);
+    const sw = res.steps.filter(x => x.stepId === 'sw');
+    expect(sw.map(x => [x.exerciseKey, x.target])).toEqual([['kb_swing', 32], ['bw_squat', 10]]);
+  });
+});

@@ -79,7 +79,7 @@ export const SessionDetailScreen = ({ result: r, runsheet, exercise, loadDevice,
             {r.steps.map(s => {
               const ex = exercise(s.exerciseKey);
               return (
-                <div key={s.stepId} className="flex items-center gap-2.5 px-3 py-2">
+                <div key={`${s.stepId}|${s.exerciseKey}`} className="flex items-center gap-2.5 px-3 py-2">
                   <ClipThumb size="sm" clip={ex.clip} poster={ex.poster} icon={ex.icon ?? '🏋️'} />
                   <div className="min-w-0 flex-1 truncate text-[14px] font-semibold">{ex.name}</div>
                   <div className="text-[13px] tabular-nums">

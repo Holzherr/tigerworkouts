@@ -12,7 +12,8 @@ struct StepResult: Codable, Hashable, Sendable, Identifiable {
     var reps: [Double]?
     var success: Bool?
 
-    var id: String { stepId }
+    /// A step swapped mid-session has a row per exercise, so the step id alone is not unique.
+    var id: String { "\(stepId)|\(exerciseKey)" }
 }
 
 /// Heart-rate summary attached after a workout, from Apple Health or another device. The web app
