@@ -24,7 +24,7 @@ struct RootView: View {
                 .tabItem { Label("Workouts", systemImage: "square.grid.2x2") }
                 .tag(Tab.workouts)
 
-            HistoryView()
+            HistoryView(onStart: start)
                 .tabItem { Label("History", systemImage: "clock.arrow.circlepath") }
                 .tag(Tab.history)
 

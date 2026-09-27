@@ -8,9 +8,6 @@ struct TimerView: View {
     /// handing `nil` back after `.dark` left the finish screen dark in a light app.
     var appearance: ColorScheme = .light
     var onClose: () -> Void
-    /// Bodyweight is asked for once, on a finish screen, and never again once answered or skipped.
-    @AppStorage("bodyweightAsked") private var bodyweightAsked = false
-    @State private var bodyweightDraft = EffortModel.defaultBodyweightKg
     /// Settings → Tones, switched from the top bar too. It holds for later sessions.
     @AppStorage(Switches.sound) private var sound = true
 
@@ -731,60 +728,6 @@ struct TimerView: View {
     // MARK: - Finished
 
     private var finished: some View {
-        let result = runner.finalResult ?? runner.result()
-        return ScrollView {
-            VStack(spacing: 20) {
-                VStack(spacing: 6) {
-                    Stripes().frame(width: 34, height: 28)
-                    Text("Workout saved").font(.largeTitle.weight(.bold))
-                    Text(runner.runsheet.title).font(.headline).foregroundStyle(Brand.muted)
-                }
-                .padding(.top, 24)
-
-                SessionStatsView(result: result, runsheet: runner.runsheet, history: store.results, bodyweightKg: store.bodyweightKg)
-
-                NextTimeView(runsheet: runner.runsheet, result: result, history: store.results)
-
-                if store.bodyweightKg == nil && !bodyweightAsked {
-                    bodyweightAsk
-                }
-
-                Button("Done") { onClose() }
-                    .buttonStyle(BigButtonStyle())
-            }
-            .padding(16)
-        }
-        .background(Brand.canvas)
-    }
-
-    /// Light and skippable: one stepper, Save or Skip. Health's figure, when there is one, has
-    /// already filled the bodyweight in, so this never shows then.
-    private var bodyweightAsk: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            Text("What do you weigh?").font(.headline).foregroundStyle(Brand.ink)
-            Text("The calorie estimate assumes \(Int(EffortModel.defaultBodyweightKg)) kg until you say. Change it any time under Me.")
-                .font(.footnote)
-                .foregroundStyle(Brand.muted)
-            Stepper(value: $bodyweightDraft, in: 35...200, step: 0.5) {
-                Text("\(Format.number(bodyweightDraft)) kg").font(.title3.weight(.bold)).monospacedDigit()
-            }
-            .accessibilityIdentifier("bodyweight-stepper")
-            HStack {
-                Button("Skip") { bodyweightAsked = true }
-                    .foregroundStyle(Brand.muted)
-                Spacer()
-                Button("Save") {
-                    bodyweightAsked = true
-                    let kg = bodyweightDraft
-                    Task { await store.setBodyweight(kg) }
-                }
-                .fontWeight(.semibold)
-                .foregroundStyle(Brand.coralInk)
-            }
-            .padding(.top, 2)
-        }
-        .padding(16)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .cardSurface()
+        FinishView(result: runner.finalResult ?? runner.result(), runsheet: runner.runsheet, onClose: onClose)
     }
 }

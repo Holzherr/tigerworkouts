@@ -261,14 +261,32 @@ actor Supabase {
         .sorted { $0.startedAt > $1.startedAt }
     }
 
+    /// Upserts the session, laid over the row's `data` as the server has it: an edit made here must
+    /// not drop what the web app keeps on the row and this app does not read.
     func save(_ result: SessionResult) async throws {
         guard let uid = session?.user.id else { throw SupabaseError(message: "Not signed in") }
+        let (data, _) = try await request("rest/v1/sessions?select=data&id=eq.\(Self.escape(result.rowId))&owner=eq.\(uid)")
+        let existing = (try? JSONSerialization.jsonObject(with: data) as? [[String: Any]])?.first?["data"] as? [String: Any]
         _ = try await request(
             "rest/v1/sessions?on_conflict=id",
             method: "POST",
-            body: [SessionRow.encode(result, owner: uid)],
+            body: [SessionRow.encode(result, owner: uid, existing: existing)],
             headers: ["Prefer": "resolution=merge-duplicates,return=minimal"]
         )
+    }
+
+    /// Deletes one session row; the web app drops it from its own list on its next sync.
+    func deleteSession(id: String) async throws {
+        guard let uid = session?.user.id else { throw SupabaseError(message: "Not signed in") }
+        _ = try await request(
+            "rest/v1/sessions?id=eq.\(Self.escape(id))&owner=eq.\(uid)",
+            method: "DELETE",
+            headers: ["Prefer": "return=minimal"]
+        )
+    }
+
+    static func escape(_ id: String) -> String {
+        id.addingPercentEncoding(withAllowedCharacters: .alphanumerics.union(CharacterSet(charactersIn: "-_"))) ?? id
     }
 
     /// The account's own workouts, on top of the bundled catalogue.

@@ -69,3 +69,21 @@ const Scores = () => {
 export const ScoreEntries: Story = { render: () => <Scores /> };
 /** First finish with no bodyweight: the ask sits under the stats, once. */
 export const AsksBodyweight: Story = { args: { runsheet: cindy(), onSave: () => {}, onBodyweight: () => {} } };
+
+const slRow = (squat: number, bench: number, row: number) => [
+  { stepId: 'sq-s', exerciseKey: 'bb_back_squat', target: squat, sets: Array.from({ length: 5 }, () => ({ load: squat, reps: 5 })) },
+  { stepId: 'bp-s', exerciseKey: 'bb_bench', target: bench, sets: Array.from({ length: 5 }, () => ({ load: bench, reps: 5 })) },
+  { stepId: 'rw-s', exerciseKey: 'bb_row', target: row, sets: Array.from({ length: 5 }, () => ({ load: row, reps: 5 })) },
+];
+const slPast: SessionResult[] = [
+  { id: 'a1', runsheetId: 'prog-stronglifts-a', title: 'StrongLifts 5×5 · Workout A', startedAt: '2026-09-15T07:00:00Z', durationSec: 3000, steps: slRow(55, 37.5, 32.5) },
+  { id: 'a2', runsheetId: 'prog-stronglifts-a', title: 'StrongLifts 5×5 · Workout A', startedAt: '2026-09-22T07:00:00Z', durationSec: 2940, steps: slRow(57.5, 40, 35) },
+];
+/** The finish screen after a session that beat two records: count, streak, PRs, deltas, then effort. */
+export const AfterRecords: Story = {
+  args: {
+    runsheet: stronglifts(),
+    history: slPast,
+    initial: { id: 'a3', runsheetId: 'prog-stronglifts-a', startedAt: '2026-09-27T07:00:00Z', durationSec: 2820, steps: slRow(60, 42.5, 35) },
+  },
+};

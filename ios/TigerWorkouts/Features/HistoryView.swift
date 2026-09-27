@@ -3,6 +3,8 @@ import SwiftUI
 struct HistoryView: View {
     @Environment(Store.self) private var store
     @State private var signingIn = false
+    /// Starts a workout again from one of its past sessions ("Do it again").
+    var onStart: (Runsheet, SessionOrigin?) -> Void = { _, _ in }
 
     private var months: [(label: String, sessions: [SessionResult])] {
         let f = DateFormatter()
@@ -69,7 +71,7 @@ struct HistoryView: View {
                             Section(month.label) {
                                 ForEach(month.sessions) { session in
                                     NavigationLink {
-                                        SessionDetailView(result: session)
+                                        SessionDetailView(result: session, onStart: onStart)
                                     } label: {
                                         row(session)
                                     }
@@ -113,6 +115,7 @@ struct HistoryView: View {
                     Text(s.startedDate.formatted(date: .abbreviated, time: .shortened))
                     if let d = s.durationSec, d > 0 { Text("· \(Format.duration(d))") }
                     if s.completed == false { Text("· part done") }
+                    if let rpe = s.rpe { Text("· effort \(Int(rpe))") }
                 }
                 .font(.footnote)
                 .foregroundStyle(Brand.muted)
@@ -122,24 +125,40 @@ struct HistoryView: View {
     }
 }
 
+/// One logged session: its stats, what was logged per exercise, and everything that can be changed
+/// after the fact, as on the web (`session-detail-screen.tsx`): date, duration, effort and notes,
+/// "Do it again", the share card, and Delete behind a confirmation.
 struct SessionDetailView: View {
     @Environment(Store.self) private var store
+    @Environment(\.dismiss) private var dismiss
     let result: SessionResult
+    var onStart: (Runsheet, SessionOrigin?) -> Void = { _, _ in }
+
+    @State private var notes = ""
+    @State private var confirmDelete = false
+    @State private var sharing = false
+    @FocusState private var notesFocused: Bool
+
+    /// The session as the store has it now, so an edit shows at once. Falls back to what was
+    /// tapped while it is being deleted.
+    private var session: SessionResult { store.results.first { $0.rowId == result.rowId } ?? result }
+    private var runsheet: Runsheet? { store.workout(id: session.runsheetId) }
+    private var scoreType: ScoreType { runsheet?.effectiveScore ?? .none }
 
     var body: some View {
         ScrollView {
             VStack(spacing: 16) {
                 SessionStatsView(
-                    result: result,
-                    runsheet: store.workout(id: result.runsheetId),
+                    result: session,
+                    runsheet: runsheet,
                     history: store.results,
                     bodyweightKg: store.bodyweightKg
                 )
 
-                if !result.steps.isEmpty {
+                if !session.steps.isEmpty {
                     VStack(alignment: .leading, spacing: 0) {
                         Text("Logged").font(.headline).padding(14)
-                        ForEach(result.steps) { step in
+                        ForEach(session.steps) { step in
                             Divider().padding(.leading, 14)
                             NavigationLink { ExerciseHistoryView(exerciseKey: step.exerciseKey) } label: {
                                 HStack {
@@ -157,12 +176,122 @@ struct SessionDetailView: View {
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .cardSurface()
                 }
+
+                edits
+
+                EffortRow(value: session.rpe) { value in change { $0.rpe = value } }
+
+                TextField("Notes", text: $notes, axis: .vertical)
+                    .lineLimit(3...8)
+                    .focused($notesFocused)
+                    .onSubmit(commitNotes)
+                    .accessibilityIdentifier("session-notes")
+                    .padding(14)
+                    .cardSurface()
+
+                HStack(spacing: 10) {
+                    if let runsheet {
+                        Button("Do it again") { onStart(runsheet, .history) }
+                            .buttonStyle(BigButtonStyle())
+                    }
+                    Button { sharing = true } label: {
+                        Label("Share", systemImage: "square.and.arrow.up")
+                    }
+                    .buttonStyle(BigButtonStyle(tint: Brand.ink, filled: false))
+                    .frame(maxWidth: runsheet == nil ? .infinity : 130)
+                    .accessibilityIdentifier("session-share")
+                }
+
+                Button(role: .destructive) { confirmDelete = true } label: {
+                    Label("Delete session", systemImage: "trash")
+                        .font(.body.weight(.semibold))
+                        .frame(maxWidth: .infinity, minHeight: Tap.regular)
+                }
+                .foregroundStyle(Color(light: 0xB91C1C, dark: 0xF87171))
             }
             .padding(16)
         }
+        .scrollDismissesKeyboard(.interactively)
         .background(Brand.canvas)
-        .navigationTitle(result.displayTitle)
+        .navigationTitle(session.displayTitle)
         .navigationBarTitleDisplayMode(.inline)
+        .onAppear { notes = session.notes ?? "" }
+        .onChange(of: notesFocused) { _, focused in if !focused { commitNotes() } }
+        .onDisappear(perform: commitNotes)
+        .confirmationDialog("Delete this session?", isPresented: $confirmDelete, titleVisibility: .visible) {
+            Button("Delete", role: .destructive) {
+                let doomed = session
+                dismiss()
+                Task { await store.delete(doomed) }
+            }
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            Text("It goes from History here and on tigerworkouts.com. A workout already in Apple Health stays there.")
+        }
+        .sheet(isPresented: $sharing) {
+            let c = Celebrate.celebrate(session, all: store.results)
+            ShareCardSheet(card: ShareCard(session, c, type: scoreType))
+        }
+    }
+
+    /// When it started and how long it took. Moving the start keeps the length; changing the
+    /// length moves the end.
+    private var edits: some View {
+        VStack(spacing: 0) {
+            DatePicker(
+                "Started",
+                selection: Binding(
+                    get: { session.startedDate },
+                    set: { date in
+                        change { r in
+                            let shift = date.timeIntervalSince(r.startedDate)
+                            r.startedAt = ISO8601.string(date)
+                            if let end = r.endedAt.flatMap(ISO8601.date) { r.endedAt = ISO8601.string(end.addingTimeInterval(shift)) }
+                        }
+                    }
+                )
+            )
+            .padding(.horizontal, 14)
+            .padding(.vertical, 8)
+            .accessibilityIdentifier("session-date")
+            if session.activity == nil {
+                Divider().padding(.leading, 14)
+                Stepper(
+                    value: Binding(
+                        get: { max(1, Int(((session.durationSec ?? 0) / 60).rounded())) },
+                        set: { minutes in
+                            change { r in
+                                r.durationSec = Double(minutes) * 60
+                                if r.endedAt != nil { r.endedAt = ISO8601.string(r.startedDate.addingTimeInterval(Double(minutes) * 60)) }
+                            }
+                        }
+                    ),
+                    in: 1...600
+                ) {
+                    HStack {
+                        Text("Duration")
+                        Spacer()
+                        Text("\(max(1, Int(((session.durationSec ?? 0) / 60).rounded()))) min").monospacedDigit().foregroundStyle(Brand.muted)
+                    }
+                }
+                .padding(.horizontal, 14)
+                .padding(.vertical, 8)
+                .accessibilityIdentifier("session-duration")
+            }
+        }
+        .cardSurface()
+    }
+
+    private func change(_ edit: @escaping (inout SessionResult) -> Void) {
+        var r = session
+        edit(&r)
+        store.update(r)
+    }
+
+    private func commitNotes() {
+        let value = notes.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard store.results.contains(where: { $0.rowId == result.rowId }), (session.notes ?? "") != value else { return }
+        change { $0.notes = value.isEmpty ? nil : value }
     }
 
     private func detail(_ s: StepResult) -> String {

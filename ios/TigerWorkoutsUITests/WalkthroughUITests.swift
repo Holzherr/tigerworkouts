@@ -525,53 +525,90 @@ final class WalkthroughUITests: XCTestCase {
         snap("29 Timed exercise history")
     }
 
-    /// Today's target and a stall, from seeded history: Jack at 7, 7 and 8 rounds, kettlebell swings
-    /// stuck at 24 kg × 10 for five weeks.
-    func testProgress() {
+    /// After the session: the finish screen's count, records, effort and notes, the share card, then
+    /// the session in History — edited, started again, and deleted.
+    func testAfterTheSession() {
         app.terminate()
-        app.launchArguments = ["-seedProgress"]
+        app.launchArguments = ["-seedLogbook"]
         app.launch()
         let discard = app.alerts.buttons["Discard"]
         if discard.waitForExistence(timeout: 3) { discard.tap() }
 
-        XCTAssertTrue(app.descendants(matching: .any)["today-target"].waitForExistence(timeout: 10), "Up next should carry a Today target")
-        XCTAssertTrue(app.descendants(matching: .any)["stall-line"].exists, "a stalled exercise should get one line on Up next")
-        snap("50 Up next with Today and a stall")
-
-        // The stall line opens the exercise's logbook, where the two options are.
-        tap(app.descendants(matching: .any)["stall-line"])
-        XCTAssertTrue(app.descendants(matching: .any)["stall-card"].waitForExistence(timeout: 5), "the logbook should show the stall")
-        snap("51 Exercise logbook with a stall")
-        tap(app.navigationBars.buttons.element(boundBy: 0))
-
-        tap(app.buttons["up-next"])
-        XCTAssertTrue(app.descendants(matching: .any)["today-target"].waitForExistence(timeout: 5), "the workout page should carry the Today target")
-        snap("52 Workout page with Today")
-        tap(app.buttons["Start workout"])
-        let target = app.descendants(matching: .any)["target"]
-        let start = app.buttons.matching(NSPredicate(format: "label BEGINSWITH 'Start ' AND label != 'Start workout'")).firstMatch
-        for _ in 0..<20 where !target.exists {
-            if start.exists, start.isHittable { start.tap() } else if app.buttons["Done"].exists { app.buttons["Done"].tap() } else if app.buttons["Skip"].exists { app.buttons["Skip"].tap() }
-            _ = target.waitForExistence(timeout: 1)
-        }
-        XCTAssertTrue(target.exists, "the AMRAP should show today's target")
-        snap("53 Timer with today's target")
-        tap(app.buttons["End session"])
-        tap(app.buttons["Finish and save"])
-        let next = app.descendants(matching: .any)["next-time"]
-        for _ in 0..<4 where !(next.exists && next.isHittable) { app.swipeUp() }
-        snap("54 Finish with Next time")
-        tap(app.buttons["Done"])
-
-        // Settings: how hard the suggestions push.
+        // testSettingsAndHealth can leave Health on with its sheet unanswered. This test is about the
+        // app's own history, not Health's permission sheets: Health off.
         tap(app.tabBars.buttons["Me"])
         for _ in 0..<4 where !(app.buttons["Settings"].exists && app.buttons["Settings"].isHittable) { app.swipeUp() }
         tap(app.buttons["Settings"])
-        let overreach = app.buttons["Overreach"]
-        for _ in 0..<6 where !(overreach.exists && overreach.isHittable) { app.swipeUp() }
-        app.swipeUp()
-        snap("55 Settings, suggestions")
-        tap(app.tabBars.buttons["Discover"].exists ? app.tabBars.buttons["Discover"] : app.tabBars.buttons.element(boundBy: 0))
+        let health = app.switches["Apple Health"]
+        for _ in 0..<4 where !(health.exists && health.isHittable) { app.swipeUp() }
+        if health.waitForExistence(timeout: 5), (health.value as? String) == "1" {
+            health.coordinate(withNormalizedOffset: CGVector(dx: 0.93, dy: 0.5)).tap()
+            sleep(1)
+        }
+        home()
+
+        open("Tabata This")
+        tap(app.buttons["Start workout"])
+        tap(app.buttons["End session"])
+        tap(app.buttons["Finish and save"])
+        XCTAssertTrue(app.staticTexts["Workout saved"].waitForExistence(timeout: 10))
+        let count = app.staticTexts.matching(NSPredicate(format: "label BEGINSWITH 'Workout ' AND label != 'Workout saved'")).firstMatch
+        XCTAssertTrue(count.waitForExistence(timeout: 5), "the finish screen should lead with the workout count")
+        snap("50 Finish, celebration")
+
+        tap(app.buttons["effort-8"])
+        XCTAssertTrue(app.staticTexts["8 · Hard"].waitForExistence(timeout: 3), "one tap sets the effort")
+        let notes = app.descendants(matching: .any)["finish-notes"].firstMatch
+        tap(notes)
+        notes.typeText("Legs gone by round 6")
+        app.swipeDown(velocity: .slow)
+        snap("51 Finish, effort and notes")
+
+        tap(app.buttons["share-card"])
+        XCTAssertTrue(app.images["share-card-image"].waitForExistence(timeout: 5), "Share should show the card")
+        snap("52 Share card")
+        tap(app.navigationBars["Share"].buttons["Close"])
+        tap(app.buttons["Done"])
+
+        // In History the session shows its effort, and every field can be changed.
+        tap(app.tabBars.buttons["History"])
+        let row = app.buttons.matching(NSPredicate(format: "label BEGINSWITH 'Tabata This' AND label CONTAINS 'effort 8'")).firstMatch
+        XCTAssertTrue(row.waitForExistence(timeout: 5), "the effort should show in History")
+        snap("53 History with effort")
+        row.tap()
+        XCTAssertTrue(app.staticTexts["8 · Hard"].waitForExistence(timeout: 5))
+        for _ in 0..<3 { app.swipeUp(velocity: .slow) }
+        let more = app.buttons["session-duration-Increment"]
+        tap(more)
+        tap(more)
+        snap("54 Session detail, edited")
+
+        // Do it again: the same workout, straight into the timer.
+        tap(app.buttons["Do it again"])
+        XCTAssertTrue(app.buttons["End session"].waitForExistence(timeout: 5), "Do it again should start the workout")
+        tap(app.buttons["End session"])
+        tap(app.buttons["Finish and save"])
+        tap(app.buttons["Done"])
+
+        // Delete asks first.
+        for _ in 0..<3 { app.swipeUp(velocity: .slow) }
+        tap(app.buttons["Delete session"])
+        XCTAssertTrue(app.buttons["Delete"].waitForExistence(timeout: 3), "delete should ask first")
+        snap("55 Delete, confirm")
+        app.buttons["Delete"].tap()
+        XCTAssertTrue(app.navigationBars["History"].waitForExistence(timeout: 5), "a deleted session closes")
+        XCTAssertFalse(app.buttons.matching(NSPredicate(format: "label CONTAINS 'effort 8'")).firstMatch.waitForExistence(timeout: 2), "the deleted session should be gone")
+
+        // A seeded session that set a record: its card carries it.
+        // Earlier runs on the same simulator leave sessions above it: scroll until it shows.
+        let push = app.buttons.matching(NSPredicate(format: "label BEGINSWITH 'Push day'")).firstMatch
+        for _ in 0..<10 where !(push.exists && push.isHittable) { app.swipeUp(velocity: .slow) }
+        tap(push)
+        for _ in 0..<3 { app.swipeUp(velocity: .slow) }
+        tap(app.buttons["session-share"])
+        XCTAssertTrue(app.images["share-card-image"].waitForExistence(timeout: 5))
+        snap("56 Share card with a record")
+        tap(app.navigationBars["Share"].buttons["Close"])
     }
 
     func testOwnExerciseAndExport() {
@@ -665,4 +702,54 @@ final class WalkthroughUITests: XCTestCase {
         shot.lifetime = .keepAlways
         add(shot)
     }
+
+    /// Today's target and a stall, from seeded history: Jack at 7, 7 and 8 rounds, kettlebell swings
+    /// stuck at 24 kg × 10 for five weeks.
+    func testProgress() {
+        app.terminate()
+        app.launchArguments = ["-seedProgress"]
+        app.launch()
+        let discard = app.alerts.buttons["Discard"]
+        if discard.waitForExistence(timeout: 3) { discard.tap() }
+
+        XCTAssertTrue(app.descendants(matching: .any)["today-target"].waitForExistence(timeout: 10), "Up next should carry a Today target")
+        XCTAssertTrue(app.descendants(matching: .any)["stall-line"].exists, "a stalled exercise should get one line on Up next")
+        snap("60 Up next with Today and a stall")
+
+        // The stall line opens the exercise's logbook, where the two options are.
+        tap(app.descendants(matching: .any)["stall-line"])
+        XCTAssertTrue(app.descendants(matching: .any)["stall-card"].waitForExistence(timeout: 5), "the logbook should show the stall")
+        snap("61 Exercise logbook with a stall")
+        tap(app.navigationBars.buttons.element(boundBy: 0))
+
+        tap(app.buttons["up-next"])
+        XCTAssertTrue(app.descendants(matching: .any)["today-target"].waitForExistence(timeout: 5), "the workout page should carry the Today target")
+        snap("62 Workout page with Today")
+        tap(app.buttons["Start workout"])
+        let target = app.descendants(matching: .any)["target"]
+        let start = app.buttons.matching(NSPredicate(format: "label BEGINSWITH 'Start ' AND label != 'Start workout'")).firstMatch
+        for _ in 0..<20 where !target.exists {
+            if start.exists, start.isHittable { start.tap() } else if app.buttons["Done"].exists { app.buttons["Done"].tap() } else if app.buttons["Skip"].exists { app.buttons["Skip"].tap() }
+            _ = target.waitForExistence(timeout: 1)
+        }
+        XCTAssertTrue(target.exists, "the AMRAP should show today's target")
+        snap("63 Timer with today's target")
+        tap(app.buttons["End session"])
+        tap(app.buttons["Finish and save"])
+        let next = app.descendants(matching: .any)["next-time"]
+        for _ in 0..<4 where !(next.exists && next.isHittable) { app.swipeUp() }
+        snap("64 Finish with Next time")
+        tap(app.buttons["Done"])
+
+        // Settings: how hard the suggestions push.
+        tap(app.tabBars.buttons["Me"])
+        for _ in 0..<4 where !(app.buttons["Settings"].exists && app.buttons["Settings"].isHittable) { app.swipeUp() }
+        tap(app.buttons["Settings"])
+        let overreach = app.buttons["Overreach"]
+        for _ in 0..<6 where !(overreach.exists && overreach.isHittable) { app.swipeUp() }
+        app.swipeUp()
+        snap("65 Settings, suggestions")
+        tap(app.tabBars.buttons["Discover"].exists ? app.tabBars.buttons["Discover"] : app.tabBars.buttons.element(boundBy: 0))
+    }
+
 }

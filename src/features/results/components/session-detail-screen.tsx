@@ -1,4 +1,4 @@
-import { ChevronLeft, ChevronRight, Copy, HeartPulse, Trash2 } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Copy, HeartPulse, Share2, Trash2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { Button } from '@/shared/components/ui/button';
 import { Chip } from '@/shared/components/ui/chip';
@@ -10,6 +10,10 @@ import { SessionStats } from './session-stats';
 import { fmtClock } from '@/shared/utils/ui-utils';
 import { scoreType, type ExerciseRef, type Runsheet } from '@/features/runsheet/model';
 import { fmtScore, type SessionResult } from '@/features/runsheet/progression';
+import { celebrate } from '../celebrate';
+import { shareCardData } from '../share-card';
+import { EffortRow } from './effort-row';
+import { ShareCardSheet } from './share-card-sheet';
 
 export interface SessionDetailScreenProps {
   result: SessionResult;
@@ -36,10 +40,12 @@ const hr = (d: Record<string, unknown>) => {
 /**
  * One logged session: title, date and time, score and duration tiles, what was done per exercise
  * (load, reps, dropped), heart rate from a matched watch record when there is one, editable
- * date and notes, Repeat, and a Copy for pasting to a coach. Delete at the bottom.
+ * date, duration, effort and notes, Repeat, the share card, and a Copy for pasting to a coach.
+ * Delete at the bottom.
  */
 export const SessionDetailScreen = ({ result: r, runsheet, exercise, loadDevice, onBack, onChange, onDelete, onRepeat, history = [], bodyweightKg, onExercise }: SessionDetailScreenProps) => {
   const [device, setDevice] = useState<ReturnType<typeof hr>[] | null>(null);
+  const [sharing, setSharing] = useState(false);
   useEffect(() => {
     let alive = true;
     loadDevice?.().then(rows => alive && setDevice(rows.map(x => hr(x.data)))).catch(() => alive && setDevice([]));
@@ -49,7 +55,7 @@ export const SessionDetailScreen = ({ result: r, runsheet, exercise, loadDevice,
   }, [loadDevice]);
   const type = runsheet ? scoreType(runsheet) : 'none';
   const dur = r.durationSec ?? (r.activity ? r.activity.minutes * 60 : undefined);
-  const text = [`${r.title ?? r.runsheetId} · ${r.startedAt.slice(0, 16).replace('T', ' ')}`, r.scoreText ? `Score: ${r.scoreText}` : '', dur ? `Duration: ${Math.round(dur / 60)} min` : '', ...r.steps.map(s => `- ${exercise(s.exerciseKey).name}: ${s.target !== undefined ? `${s.target} ${exercise(s.exerciseKey).unit}` : ''}${s.incline !== undefined ? `, incline ${s.incline}` : ''}${s.reps?.length ? ` × ${s.reps.join(', ')} reps` : ''}`), r.notes ? `Notes: ${r.notes}` : ''].filter(Boolean).join('\n');
+  const text = [`${r.title ?? r.runsheetId} · ${r.startedAt.slice(0, 16).replace('T', ' ')}`, r.scoreText ? `Score: ${r.scoreText}` : '', dur ? `Duration: ${Math.round(dur / 60)} min` : '', ...r.steps.map(s => `- ${exercise(s.exerciseKey).name}: ${s.target !== undefined ? `${s.target} ${exercise(s.exerciseKey).unit}` : ''}${s.incline !== undefined ? `, incline ${s.incline}` : ''}${s.reps?.length ? ` × ${s.reps.join(', ')} reps` : ''}`), r.rpe ? `Effort: ${r.rpe}/10` : '', r.notes ? `Notes: ${r.notes}` : ''].filter(Boolean).join('\n');
   return (
     <div className="flex h-full min-h-0 flex-col bg-canvas">
       <header className="safe-top shrink-0 bg-surface px-4 pt-2 pb-3">
@@ -59,6 +65,12 @@ export const SessionDetailScreen = ({ result: r, runsheet, exercise, loadDevice,
         <h1 className="mt-1 text-[20px] leading-tight font-extrabold">{r.title ?? r.activity?.name ?? r.runsheetId}</h1>
         <div className="mt-1 flex flex-wrap items-center gap-1.5 text-[13px] text-muted">
           <input type="datetime-local" value={r.startedAt.slice(0, 16)} onChange={e => e.target.value && onChange({ startedAt: new Date(e.target.value).toISOString() })} className="rounded-control border border-line bg-surface px-2 py-1 text-[14px] text-ink" aria-label="Date and time" />
+          {!r.activity && (
+            <label className="flex items-center gap-1">
+              <input type="number" inputMode="numeric" min={1} max={600} value={dur ? Math.round(dur / 60) : ''} onChange={e => { const m = Number(e.target.value); if (m > 0) onChange({ durationSec: m * 60, ...(r.endedAt ? { endedAt: new Date(Date.parse(r.startedAt) + m * 60_000).toISOString() } : {}) }); }} className="w-16 rounded-control border border-line bg-surface px-2 py-1 text-[14px] text-ink tabular-nums" aria-label="Duration in minutes" />
+              min
+            </label>
+          )}
           {r.completed === false && <Chip variant="warn">stopped early</Chip>}
           {r.activity?.intensity && <Chip variant="outline">{r.activity.intensity}</Chip>}
         </div>
@@ -96,6 +108,7 @@ export const SessionDetailScreen = ({ result: r, runsheet, exercise, loadDevice,
             })}
           </div>
         )}
+        <EffortRow value={r.rpe} onChange={rpe => onChange({ rpe })} />
         <textarea value={r.notes ?? ''} onChange={e => onChange({ notes: e.target.value || undefined })} placeholder="Notes" rows={3} className="w-full rounded-card border border-line bg-surface px-3 py-2 text-[16px] outline-none focus:border-hint" />
         <div className="flex gap-2">
           {onRepeat && (
@@ -103,10 +116,14 @@ export const SessionDetailScreen = ({ result: r, runsheet, exercise, loadDevice,
               Do it again
             </Button>
           )}
+          <Button variant="ghost" onClick={() => setSharing(true)} aria-label="Share card">
+            <Share2 />
+          </Button>
           <Button variant="ghost" onClick={() => navigator.clipboard?.writeText(text)}>
             <Copy /> Copy
           </Button>
         </div>
+        {sharing && <ShareCardSheet open={sharing} onOpenChange={setSharing} data={shareCardData(r, celebrate(r, history), type, k => exercise(k))} />}
         <Button variant="danger" block onClick={() => confirm('Delete this session?') && onDelete()}>
           <Trash2 /> Delete session
         </Button>

@@ -113,4 +113,65 @@ struct SyncTests {
         #expect(ISO8601.date("2026-09-06T10:00:00Z") != nil)
         #expect(ISO8601.date("2026-09-06T10:00:00.123456+00:00") != nil)
     }
+
+    @Test("an edit keeps what the web app keeps on the row, and clears a field emptied here")
+    func editMergesOverRow() {
+        let existing: [String: Any] = [
+            "format": "v2", "blocks": [] as [Any], "runsheetId": "w", "startedAt": "2026-09-06T10:00:00.000Z",
+            "notes": "old", "rpe": 6, "futureField": ["kept": true], "steps": [] as [Any],
+        ]
+        var r = SessionRow.decode(id: "s-1", data: json(existing))!
+        r.notes = nil
+        r.rpe = 8
+        r.durationSec = 1800
+        let data = SessionRow.encode(r, owner: "u", existing: existing)["data"] as! [String: Any]
+        #expect(data["format"] as? String == "v2")
+        #expect((data["futureField"] as? [String: Bool])?["kept"] == true)
+        #expect(data["notes"] == nil)
+        #expect(data["rpe"] as? Double == 8)
+        #expect(data["durationSec"] as? Double == 1800)
+        #expect(SessionRow.decode(id: "s-1", data: json(data))?.rpe == 8)
+    }
+
+    @Test("an edit to a v0.9 row keeps its shape, with the result under v2, as the web writes it")
+    func editKeepsLegacyShape() {
+        let legacy: [String: Any] = [
+            "id": "old-1", "workoutId": "w", "title": "Old", "type": "workout", "startedAt": "2026-01-01T10:00:00.000Z",
+            "duration_min": 30, "notes": "", "blocks": [["type": "sets", "exercises": [["ex": "bb_bench", "actual": 60]]]],
+        ]
+        var r = SessionRow.decode(id: "old-1", data: json(legacy))!
+        r.notes = "felt good"
+        r.durationSec = 2700
+        let row = SessionRow.encode(r, owner: "u", existing: legacy)
+        let data = row["data"] as! [String: Any]
+        #expect(row["type"] as? String == "workout")
+        #expect(data["format"] == nil)
+        #expect((data["blocks"] as? [Any])?.count == 1)
+        #expect(data["notes"] as? String == "felt good")
+        #expect(data["duration_min"] as? Int == 45)
+        #expect((data["v2"] as? [String: Any])?["notes"] as? String == "felt good")
+        let back = SessionRow.decode(id: "old-1", data: json(data))
+        #expect(back?.notes == "felt good")
+        #expect(back?.steps.first?.exerciseKey == "bb_bench")
+    }
+
+    @Test("effort rides on the row's data and reads back")
+    func effortRoundTrip() {
+        var r = SessionResult(runsheetId: "w", title: "W", startedAt: "2026-09-06T10:00:00.000Z", id: "s-e")
+        r.rpe = 7
+        let data = SessionRow.encode(r, owner: "u")["data"] as! [String: Any]
+        #expect(data["rpe"] as? Double == 7)
+        #expect(SessionRow.decode(id: "s-e", data: json(data))?.rpe == 7)
+    }
+
+    @Test("a sync keeps the phone's unpushed edits and deletes over the server's copy")
+    func mergeAfterFetch() {
+        func r(_ id: String, _ at: String, notes: String? = nil) -> SessionResult {
+            SessionResult(runsheetId: "w", title: "W", startedAt: at, notes: notes, id: id)
+        }
+        let remote = [r("a", "2026-09-01T10:00:00Z", notes: "server"), r("b", "2026-09-02T10:00:00Z"), r("c", "2026-09-03T10:00:00Z")]
+        let merged = Store.merged(remote: remote, pending: [r("a", "2026-09-01T10:00:00Z", notes: "phone"), r("d", "2026-09-04T10:00:00Z")], deleting: ["b"])
+        #expect(merged.map(\.rowId) == ["d", "c", "a"])
+        #expect(merged.last?.notes == "phone")
+    }
 }

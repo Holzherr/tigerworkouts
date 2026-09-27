@@ -80,6 +80,8 @@ export interface SessionResult {
   /** Round times per circuit or AMRAP block; unset on rows from before times were kept. */
   splits?: RoundSplit[];
   notes?: string;
+  /** How hard the session felt, 1–10, tapped on the finish screen. Apple Health's workout effort scale. */
+  rpe?: number;
 }
 
 const exerciseSteps = (items: Item[]): ExerciseStep[] => items.flatMap(it => (it.kind === 'block' ? it.steps : it.kind === 'ref' ? [] : [it])).filter((s): s is ExerciseStep => s.kind === 'exercise');
