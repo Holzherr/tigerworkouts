@@ -103,11 +103,13 @@ struct TimerView: View {
                     Text(runner.slot?.blockName ?? runner.runsheet.title)
                         .font(.headline)
                         .lineLimit(1)
+                    // Wraps rather than truncates: "Block 2 of 9 · Round 3 of 8" beside three buttons
+                    // does not fit one line on the narrower phones.
                     Text(whereabouts)
                         .font(.subheadline)
                         .foregroundStyle(Brand.Night.muted)
-                        .lineLimit(1)
-                        .minimumScaleFactor(0.8)
+                        .lineLimit(2)
+                        .fixedSize(horizontal: false, vertical: true)
                 }
                 Spacer(minLength: 8)
                 VStack(alignment: .trailing, spacing: 1) {
