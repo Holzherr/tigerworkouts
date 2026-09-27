@@ -38,6 +38,8 @@ export interface RunsheetListProps {
   autoRest?: number;
   /** Resolve % TM / × BW loads to kg for display. */
   resolveTarget?: (step: ExerciseStep) => number | undefined;
+  /** Grey line under a collapsed exercise, e.g. "last time 57.5 × 8". */
+  hintFor?: (step: ExerciseStep) => string | undefined;
   /** Title lookup for ref items (embedded runsheets). */
   refTitle?: (runsheetId: string) => string | undefined;
   className?: string;
@@ -90,7 +92,7 @@ const LIFT_MS = 350;
  * to make a block or join one. Blocks drag as a chunk by their header. Tap a row to expand it,
  * swipe or ✕ to remove, ＋ on a seam to insert there.
  */
-export const RunsheetList = ({ items, onChange, onPickExercise, onSwapExercise, expandedId: expandedProp, onExpandedChange, autoRest = 30, resolveTarget, refTitle, className, variant = 'classic' }: RunsheetListProps) => {
+export const RunsheetList = ({ items, onChange, onPickExercise, onSwapExercise, expandedId: expandedProp, onExpandedChange, autoRest = 30, resolveTarget, hintFor, refTitle, className, variant = 'classic' }: RunsheetListProps) => {
   const [expandedLocal, setExpandedLocal] = useState<string | null>(null);
   const expandedId = expandedProp === undefined ? expandedLocal : expandedProp;
   const setExpanded = (id: string | null) => (onExpandedChange ? onExpandedChange(id) : setExpandedLocal(id));
@@ -287,6 +289,7 @@ export const RunsheetList = ({ items, onChange, onPickExercise, onSwapExercise, 
             lifted={activeId === row.id}
             groupTarget={groupTarget === row.id}
             resolvedTarget={row.step.kind === 'exercise' && resolveTarget ? resolveTarget(row.step) : undefined}
+            hint={row.step.kind === 'exercise' ? hintFor?.(row.step) : undefined}
           />
           {moveButtons(row)}
         </SwipeToRemove>

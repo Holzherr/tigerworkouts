@@ -629,18 +629,17 @@ enum Runner {
             let prev = steps[key]
             if prev == nil { order.append(key) }
             var reps = prev?.reps ?? []
-            if let r = a.reps {
-                reps.append(r)
-            } else if ex.forMode == .reps {
-                reps.append(ex.forValue)
-            }
+            let done = a.reps ?? (ex.forMode == .reps ? ex.forValue : nil)
+            if let done { reps.append(done) }
+            let target = effectiveTarget(s, idx)
             steps[key] = StepResult(
                 stepId: ex.id,
                 exerciseKey: ex.exercise.key,
-                target: effectiveTarget(s, idx),
+                target: target,
                 incline: effectiveIncline(s, idx),
                 reps: reps.isEmpty ? nil : reps,
-                success: prev?.success ?? true
+                success: prev?.success ?? true,
+                sets: (prev?.sets ?? []) + [SetResult(reps: done, load: target)]
             )
         }
 

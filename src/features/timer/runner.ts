@@ -441,7 +441,9 @@ export const toResult = (s: RunState, r: Runsheet, now: number): SessionResult =
     const prev = steps.get(key);
     const target = effectiveTarget(s, idx);
     const incline = effectiveIncline(s, idx);
-    steps.set(key, { stepId: slot.step.id, exerciseKey: slot.step.exercise.key, target, ...(incline !== undefined ? { incline } : {}), reps: [...(prev?.reps ?? []), ...(a.reps !== undefined ? [a.reps] : slot.step.forMode === 'reps' ? [slot.step.forValue] : [])], success: prev?.success ?? true });
+    const reps = a.reps !== undefined ? a.reps : slot.step.forMode === 'reps' ? slot.step.forValue : undefined;
+    const set = { ...(reps !== undefined ? { reps } : {}), ...(target !== undefined ? { load: target } : {}) };
+    steps.set(key, { stepId: slot.step.id, exerciseKey: slot.step.exercise.key, target, ...(incline !== undefined ? { incline } : {}), reps: [...(prev?.reps ?? []), ...(reps !== undefined ? [reps] : [])], success: prev?.success ?? true, sets: [...(prev?.sets ?? []), set] });
   }
   let score: number | undefined;
   if (type === 'time') score = durationSec;

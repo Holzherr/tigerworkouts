@@ -250,6 +250,11 @@ struct TimerView: View {
                             .font(.subheadline)
                             .foregroundStyle(Brand.muted)
                             .lineLimit(3)
+                        if let last = LastTime.label(store.results, for: ex) {
+                            Text(last.prefix(1).uppercased() + last.dropFirst())
+                                .font(.subheadline.weight(.semibold))
+                                .foregroundStyle(Brand.coralInk)
+                        }
                     }
                     Spacer(minLength: 0)
                 }
@@ -279,6 +284,24 @@ struct TimerView: View {
                     nudge("plus", label: "More") { runner.nudgeTarget(1) }
                 }
                 .disabled(runner.slot?.exercise?.id != ex.id)
+            }
+
+            // What you did, not what the plan said: without this every rep in History was the
+            // planned rep.
+            if adjustable, runner.slot?.exercise?.id == ex.id, runner.countsReps {
+                Divider()
+                HStack(spacing: 10) {
+                    Text("Reps done").font(.subheadline.weight(.semibold)).foregroundStyle(Brand.body)
+                    Spacer()
+                    nudge("minus", label: "Fewer reps") { runner.nudgeReps(-1) }
+                    Text(runner.reps.map(Format.number) ?? "—")
+                        .font(.system(size: 26, weight: .bold, design: .rounded))
+                        .monospacedDigit()
+                        .foregroundStyle(Brand.ink)
+                        .frame(minWidth: 64)
+                        .accessibilityIdentifier("reps-done")
+                    nudge("plus", label: "More reps") { runner.nudgeReps(1) }
+                }
             }
         }
         .padding(16)

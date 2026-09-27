@@ -55,3 +55,46 @@ enum Settings {
         return out
     }
 }
+
+/// "last time 57.5 × 8" on a step's row. Ported from `lastSet` / `lastTimeLabel` in
+/// `src/features/runsheet/last-used.ts`.
+enum LastTime {
+    /// The set a row is judged by: the heaviest, then the most reps. Older results have no per-set
+    /// rows, so their one load and best rep count stand in.
+    static func topSet(_ s: StepResult) -> SetResult? {
+        let sets = s.sets?.isEmpty == false ? s.sets! : [SetResult(reps: s.reps?.max(), load: s.target)]
+        let best = sets.max { a, b in
+            (a.load ?? 0, a.reps ?? 0) < (b.load ?? 0, b.reps ?? 0)
+        }
+        guard let best, best.load != nil || best.reps != nil else { return nil }
+        return best
+    }
+
+    /// What this step was done at last time — the same step if it has history, else the same
+    /// exercise in any workout. Newest session first.
+    static func set(_ results: [SessionResult], for step: ExerciseStep) -> SetResult? {
+        let newest = results.sorted { $0.startedAt > $1.startedAt }
+        func find(_ match: (StepResult) -> Bool) -> SetResult? {
+            for r in newest {
+                if let hit = r.steps.first(where: { match($0) && topSet($0) != nil }) { return topSet(hit) }
+            }
+            return nil
+        }
+        return find { $0.stepId == step.id && $0.exerciseKey == step.exercise.key }
+            ?? find { $0.exerciseKey == step.exercise.key }
+    }
+
+    static func label(_ set: SetResult?, for step: ExerciseStep) -> String? {
+        guard let set else { return nil }
+        switch (set.load, set.reps) {
+        case let (load?, reps?): return "last time \(Format.number(load)) × \(Format.number(reps))"
+        case let (load?, nil): return step.shortUnit.isEmpty ? "last time \(Format.number(load))" : "last time \(Format.number(load)) \(step.shortUnit)"
+        case let (nil, reps?): return "last time \(Format.number(reps)) reps"
+        default: return nil
+        }
+    }
+
+    static func label(_ results: [SessionResult], for step: ExerciseStep) -> String? {
+        label(set(results, for: step), for: step)
+    }
+}

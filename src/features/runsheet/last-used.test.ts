@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { lastUsed, withLastUsed } from './last-used';
+import { lastSet, lastTimeLabel, lastUsed, withLastUsed } from './last-used';
 import type { SessionResult } from './progression';
 import type { Runsheet } from './model';
 
@@ -52,5 +52,26 @@ describe('what you used last time', () => {
     (r.items[1] as { target?: unknown }).target = { pct: 80 };
     const out = withLastUsed(r, [session('2026-09-10T10:00:00Z', [{ stepId: 'e2', exerciseKey: 'db_incline_press', target: 60 }])]);
     expect((out.items[1] as { target?: unknown }).target).toEqual({ pct: 80 });
+  });
+});
+
+describe('last time, on the row', () => {
+  const bench = { kind: 'exercise' as const, id: 'e2', exercise: press, target: 15, forMode: 'reps' as const, forValue: 8 };
+
+  it('shows the heaviest set of the newest session', () => {
+    const set = lastSet([
+      session('2026-09-01T10:00:00Z', [{ stepId: 'e2', exerciseKey: press.key, sets: [{ load: 60, reps: 8 }] }]),
+      session('2026-09-10T10:00:00Z', [{ stepId: 'e2', exerciseKey: press.key, sets: [{ load: 55, reps: 8 }, { load: 57.5, reps: 8 }, { load: 57.5, reps: 6 }] }]),
+    ], bench);
+    expect(lastTimeLabel(set, bench)).toBe('last time 57.5 × 8');
+  });
+
+  it('falls back to the same exercise in another workout, and to results logged before sets', () => {
+    const set = lastSet([{ id: 'x', runsheetId: 'other', startedAt: '2026-09-02T10:00:00Z', steps: [{ stepId: 'zz', exerciseKey: press.key, target: 20, reps: [8, 10] }] }], bench);
+    expect(lastTimeLabel(set, bench)).toBe('last time 20 × 10');
+  });
+
+  it('says nothing when there is no history', () => {
+    expect(lastTimeLabel(lastSet([], bench), bench)).toBeUndefined();
   });
 });

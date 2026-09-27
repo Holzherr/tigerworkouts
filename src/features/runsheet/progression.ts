@@ -21,6 +21,12 @@ export const resolveTarget = (s: ExerciseStep, tms: TrainingMaxes, bodyweightKg?
 };
 
 /** What was logged for one exercise step in a session. */
+/** One set as it was done: the reps counted and the load in hand. */
+export interface SetResult {
+  reps?: number;
+  load?: number;
+}
+
 export interface StepResult {
   stepId: string;
   exerciseKey: string;
@@ -32,6 +38,8 @@ export interface StepResult {
   reps?: number[];
   /** Every prescribed set hit its reps. */
   success?: boolean;
+  /** Each set in order, with its own reps and load. `target` and `reps` stay for older readers. */
+  sets?: SetResult[];
 }
 
 /** The list the user tapped to reach the workout: a Discover tab, the Me tab's saved list, Repeat on a past session, or a share link. */

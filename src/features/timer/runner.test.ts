@@ -275,3 +275,19 @@ describe('session safety', () => {
     expect(sw.map(x => [x.exerciseKey, x.target])).toEqual([['kb_swing', 32], ['bw_squat', 10]]);
   });
 });
+
+describe('honest logging', () => {
+  it('logs each set with the reps counted and the load in hand', () => {
+    const sheet: Runsheet = { id: 'p', title: 'Press', items: [{ kind: 'block', id: 'b', name: 'B', repeat: 3, steps: [{ ...makeExercise(EX.db_incline_press, { target: 20, forMode: 'reps', forValue: 8 }), id: 'pr' }] }] };
+    let s = tick(start(sheet, 0), 5000);
+    s = R.setReps(s, 10);
+    s = advance(s, 20000);
+    s = adjust(s, 21000, 22.5);
+    s = advance(s, 40000);
+    s = R.setReps(s, 6);
+    s = advance(s, 60000);
+    const pr = toResult(s, sheet, 60000).steps[0];
+    expect(pr.sets).toEqual([{ reps: 10, load: 20 }, { reps: 8, load: 22.5 }, { reps: 6, load: 22.5 }]);
+    expect(pr.reps).toEqual([10, 8, 6]);
+  });
+});

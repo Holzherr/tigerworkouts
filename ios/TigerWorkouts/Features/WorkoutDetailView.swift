@@ -257,6 +257,7 @@ struct WorkoutDetailView: View {
         var parts: [String] = []
         if !e.loadLabel.isEmpty { parts.append(e.loadLabel) }
         if let incline = e.incline { parts.append("\(Format.number(incline))% incline") }
+        if let last = LastTime.label(store.results, for: e) { parts.append(last) }
         return parts.joined(separator: " · ")
     }
 

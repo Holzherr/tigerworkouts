@@ -1,5 +1,5 @@
-import type { SessionResult } from './progression';
-import type { ExerciseStep, Item, Runsheet } from './model';
+import type { SessionResult, SetResult, StepResult } from './progression';
+import { shortUnit, type ExerciseStep, type Item, type Runsheet } from './model';
 
 export interface LastUsed {
   target?: number;
@@ -52,4 +52,38 @@ export const withLastUsed = (r: Runsheet, results: SessionResult[]): Runsheet =>
     return it;
   };
   return { ...r, items: r.items.map(item) };
+};
+
+/** The set a row is judged by: the heaviest, then the most reps. Older results have no per-set
+ * rows, so their one load and best rep count stand in. */
+const topSet = (s: StepResult): SetResult | undefined => {
+  const sets = s.sets?.length ? s.sets : [{ load: s.target, reps: s.reps?.length ? Math.max(...s.reps) : undefined }];
+  const best = [...sets].sort((a, b) => (b.load ?? 0) - (a.load ?? 0) || (b.reps ?? 0) - (a.reps ?? 0))[0];
+  return best && (best.load !== undefined || best.reps !== undefined) ? best : undefined;
+};
+
+/** What this step was done at last time — the same step if it has history, else the same exercise
+ * in any workout. Newest session first. */
+export const lastSet = (results: SessionResult[], step: ExerciseStep): SetResult | undefined => {
+  const newest = [...results].sort((a, b) => b.startedAt.localeCompare(a.startedAt));
+  const find = (match: (x: StepResult) => boolean) => {
+    for (const r of newest) {
+      const hit = r.steps.find(x => match(x) && topSet(x));
+      if (hit) return topSet(hit);
+    }
+    return undefined;
+  };
+  return find(x => x.stepId === step.id && x.exerciseKey === step.exercise.key) ?? find(x => x.exerciseKey === step.exercise.key);
+};
+
+const num = (n: number) => (Number.isInteger(n) ? `${n}` : `${Math.round(n * 10) / 10}`);
+
+/** "last time 57.5 × 8", "last time 20 kg", "last time 12 reps". */
+export const lastTimeLabel = (set: SetResult | undefined, step: ExerciseStep): string | undefined => {
+  if (!set) return undefined;
+  const unit = shortUnit(step.exercise.unit);
+  if (set.load !== undefined && set.reps !== undefined) return `last time ${num(set.load)} × ${num(set.reps)}`;
+  if (set.load !== undefined) return `last time ${num(set.load)}${unit ? ` ${unit}` : ''}`;
+  if (set.reps !== undefined) return `last time ${num(set.reps)} reps`;
+  return undefined;
 };
