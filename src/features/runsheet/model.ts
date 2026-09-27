@@ -325,6 +325,10 @@ export const removeSet = (b: Block): Block => {
  * one (% of a training max, × bodyweight) already resolved into `target` by `resolveLoads`. */
 export const showsLoad = (s: ExerciseStep) => !!s.exercise.unit && (s.target !== undefined || (s.loadFactor === undefined && s.targetPct === undefined));
 
+/** An exercise whose unit is the measure of the work — a rower in metres, a plank in seconds, a bike
+ * in calories — rather than a load. Its `target` is not a weight in hand. */
+export const measureOf = (unit: string | undefined): 'meters' | 'seconds' | 'calories' | undefined => (unit === 'm' ? 'meters' : unit === 's' ? 'seconds' : unit === 'cal' ? 'calories' : undefined);
+
 /** Column heading for the per-set count; undefined for modes with nothing to count per set. */
 export const countLabel = (m: ForMode): string | undefined =>
   m === 'reps' || m === 'amrap' ? 'Reps' : m === 'seconds' ? 'Sec' : m === 'minutes' ? 'Min' : m === 'meters' ? 'm' : m === 'calories' ? 'Cal' : undefined;

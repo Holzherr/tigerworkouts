@@ -8,7 +8,7 @@ import { fmtClock } from '@/shared/utils/ui-utils';
 import type { ScoreType } from '@/features/runsheet/model';
 import { fmtScore, type SessionResult } from '@/features/runsheet/progression';
 import { deltaLines, fmtKg, ordinalLabel, streakLabel, type Celebration } from './celebrate';
-import { setLabel, setsOf } from './logbook';
+import { fmtDur, setLabel, setsOf } from './logbook';
 
 export interface CardStat {
   label: string;
@@ -51,7 +51,7 @@ export const shareCardData = (r: SessionResult, c: Celebration, type: ScoreType,
   date: new Date(r.startedAt).toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' }),
   ordinal: ordinalLabel(c.ordinal),
   stats: cardStats(r, c, type),
-  prs: c.prs.map(p => ({ name: name(p.exerciseKey).name, set: setLabel(p.set, name(p.exerciseKey).unit?.replace(' per arm', '')) })),
+  prs: [...c.prs.map(p => ({ name: name(p.exerciseKey).name, set: setLabel(p.set, name(p.exerciseKey).unit?.replace(' per arm', '')) })), ...(c.rounds ?? []).map(r => ({ name: 'Fastest round', set: fmtDur(r.seconds) }))],
   deltas: deltaLines(c, type).map(({ label, text }) => ({ label, text })),
   streak: streakLabel(c.streak),
 });

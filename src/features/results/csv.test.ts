@@ -26,6 +26,8 @@ const results: SessionResult[] = [
       { stepId: 'a', exerciseKey: 'bb_bench', sets: [{ load: 80, reps: 5, type: 'warmup' }, { load: 82.5, reps: 4, at: 312 }] },
       { stepId: 'b', exerciseKey: 'bw_pullup', sets: [{ reps: 10 }] },
       { stepId: 'c', exerciseKey: 'u_pec_deck', target: 55, reps: [12] },
+      { stepId: 'd', exerciseKey: 'cardio_rower', sets: [{ meters: 500, seconds: 101, at: 900 }] },
+      { stepId: 'e', exerciseKey: 'cardio_assault_bike', sets: [{ calories: 20, seconds: 44 }] },
     ],
   },
   { id: 's-0', runsheetId: 'activity:Padel', title: 'Padel', startedAt: '2026-09-25T18:00:00.000Z', activity: { name: 'Padel', minutes: 60 }, steps: [] },
@@ -38,11 +40,14 @@ describe('CSV export', () => {
   const rows = parseCsv(csv);
 
   it('writes one row per set, oldest session first', () => {
-    expect(rows[0]).toEqual(['date', 'workout', 'exercise', 'exercise_key', 'set', 'set_type', 'load', 'unit', 'reps', 'duration_seconds', 'set_time_seconds', 'notes']);
-    expect(rows).toHaveLength(1 + 1 + 4);
-    expect(rows[1]).toEqual(['2026-09-25T18:00:00.000Z', 'Padel', '', '', '', '', '', '', '', '3600', '', '']);
-    expect(rows[2]).toEqual(['2026-09-26T17:02:00.000Z', 'Push, heavy', 'Barbell bench press', 'bb_bench', '1', 'warmup', '80', 'kg', '5', '3780', '', 'Felt "strong"\nshoulder ok']);
-    expect(rows[3].slice(4, 11)).toEqual(['2', 'normal', '82.5', 'kg', '4', '3780', '312']);
+    expect(rows[0]).toEqual(['date', 'workout', 'exercise', 'exercise_key', 'set', 'set_type', 'load', 'unit', 'reps', 'seconds', 'meters', 'calories', 'duration_seconds', 'set_time_seconds', 'notes']);
+    expect(rows).toHaveLength(1 + 1 + 6);
+    expect(rows[1]).toEqual(['2026-09-25T18:00:00.000Z', 'Padel', '', '', '', '', '', '', '', '', '', '', '3600', '', '']);
+    expect(rows[2]).toEqual(['2026-09-26T17:02:00.000Z', 'Push, heavy', 'Barbell bench press', 'bb_bench', '1', 'warmup', '80', 'kg', '5', '', '', '', '3780', '', 'Felt "strong"\nshoulder ok']);
+    expect(rows[3].slice(4, 14)).toEqual(['2', 'normal', '82.5', 'kg', '4', '', '', '', '3780', '312']);
+    // time worked, distance and calories each have a column
+    expect(rows[6].slice(3, 14)).toEqual(['cardio_rower', '1', 'normal', '', 'm', '', '101', '500', '', '3780', '900']);
+    expect(rows[7].slice(9, 12)).toEqual(['44', '', '20']);
     expect(rows[4].slice(2, 9)).toEqual(['Pull-up', 'bw_pullup', '1', 'normal', '', '', '10']);
     // an older result with no per-set rows still exports its load and reps
     expect(rows[5].slice(2, 9)).toEqual(['Pec deck', 'u_pec_deck', '1', 'normal', '55', 'kg', '12']);
@@ -61,8 +66,10 @@ describe('CSV export', () => {
     const fresh = planImport(back, [], lib);
     expect(fresh.newExercises).toEqual([]);
     const push = fresh.sessions.find(s => s.title === 'Push, heavy')!;
-    expect(push.steps.map(s => s.exerciseKey)).toEqual(['bb_bench', 'bw_pullup', 'u_pec_deck']);
+    expect(push.steps.map(s => s.exerciseKey)).toEqual(['bb_bench', 'bw_pullup', 'u_pec_deck', 'cardio_rower', 'cardio_assault_bike']);
     expect(push.steps[0].sets).toEqual([{ load: 80, reps: 5, type: 'warmup' }, { load: 82.5, reps: 4 }]);
+    expect(push.steps[3].sets).toEqual([{ meters: 500, seconds: 101 }]);
+    expect(push.steps[4].sets).toEqual([{ calories: 20, seconds: 44 }]);
     expect(push.notes).toBe('Felt "strong"\nshoulder ok');
   });
 });
@@ -103,8 +110,8 @@ describe('Hevy import', () => {
     const [push, legs] = [plan.sessions.find(s => s.title === 'Push Day')!, plan.sessions.find(s => s.title === 'Legs')!];
     expect(push.steps.map(s => s.exerciseKey)).toEqual(['bb_bench', 'u_pec_deck_machine', 'bw_plank']);
     expect(legs.steps[0].exerciseKey).toBe('bb_back_squat');
-    // a plank's time is its load, since the plank counts seconds
-    expect(push.steps[2].sets).toEqual([{ load: 60 }]);
+    // a plank's time is its time worked
+    expect(push.steps[2].sets).toEqual([{ seconds: 60 }]);
     expect(plan.newExercises).toEqual([{ key: 'u_pec_deck_machine', name: 'Pec Deck (Machine)', unit: 'kg', step: 2.5, group: 'barbell', cue: '' }]);
     expect(plan.matched).toContainEqual({ name: 'Bench Press (Barbell)', key: 'bb_bench' });
     expect(push.runsheetId).toBe('import:hevy');
@@ -120,6 +127,17 @@ describe('Hevy import', () => {
 
   it('gives the same session the same id on every import', () => {
     expect(planImport(hevy, [], FULL_LIBRARY).sessions.map(s => s.id)).toEqual(planImport(hevy, [], FULL_LIBRARY).sessions.map(s => s.id));
+  });
+
+  it('reads distance in km or miles into metres, with the time', () => {
+    const head = '"title","start_time","end_time","description","exercise_title","superset_id","exercise_notes","set_index","set_type","weight_kg","reps","distance_km","duration_seconds","rpe"';
+    const row = '"Row","26 Sep 2026, 18:02","26 Sep 2026, 18:30","","Rowing (Machine)",,"",0,"normal",,,0.5,101,';
+    const km = parseWorkoutCsv(`${head}\n${row}\n`) as ParsedCsv;
+    expect(km.sessions[0].exercises[0].sets).toEqual([{ meters: 500, seconds: 101 }]);
+    const mi = parseWorkoutCsv(`${head.replace('distance_km', 'distance_miles')}\n${row.replace('0.5', '1')}\n`) as ParsedCsv;
+    expect(mi.sessions[0].exercises[0].sets[0].meters).toBeCloseTo(1609.3, 1);
+    // an unmatched distance exercise counts in metres
+    expect(planImport(km, [], {}).newExercises[0]).toMatchObject({ unit: 'm' });
   });
 
   it('converts a pounds export', () => {
@@ -145,6 +163,14 @@ describe('Strong import', () => {
     const plan = planImport(strong, [], FULL_LIBRARY);
     expect(plan.sessions[0].steps.map(x => x.exerciseKey)).toEqual(['bb_bench', 'bw_pullup', 'u_landmine_press']);
     expect(plan.newExercises[0]).toMatchObject({ key: 'u_landmine_press', unit: 'kg', group: 'body' });
+  });
+
+  it('reads a distance in the unit the file gives, km when it gives none', () => {
+    const head = 'Date,Workout Name,Duration,Exercise Name,Set Order,Weight,Reps,Distance,Seconds,Notes,Workout Notes,RPE';
+    const s = parseWorkoutCsv(`${head}\n2026-09-20 09:15:00,Run,30m,Running,1,0,0,5.0,1500,,,\n`) as ParsedCsv;
+    expect(s.sessions[0].exercises[0].sets).toEqual([{ meters: 5000, seconds: 1500 }]);
+    const old = parseWorkoutCsv('Date;Workout Name;Duration;Exercise Name;Set Order;Weight;Weight Unit;Reps;Distance;Distance Unit;Seconds;Notes;Workout Notes;RPE\n2026-09-18 18:00:00;Run;45m;Running;1;;;;2;mi;900;;;\n') as ParsedCsv;
+    expect(old.sessions[0].exercises[0].sets[0].meters).toBeCloseTo(3218.7, 1);
   });
 
   it('reads the older semicolon format with a weight unit', () => {

@@ -46,6 +46,13 @@ export interface SetResult {
   at?: number;
   /** Warm-up, drop set or to failure; unset for a normal set and on rows from before types. */
   type?: SetType;
+  /** Time actually worked on the set, seconds: a countdown for as long as it ran (Done early keeps
+   * the real time), a hold or a distance for as long as it took. Unset on rows from before it was kept. */
+  seconds?: number;
+  /** Distance covered, metres: the plan's unless changed on the timer or afterwards. */
+  meters?: number;
+  /** Calories on the machine's counter: the plan's unless changed. */
+  calories?: number;
 }
 
 /** A set that counts as work: anything but a warm-up. */

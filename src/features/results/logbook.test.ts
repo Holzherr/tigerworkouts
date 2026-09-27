@@ -135,3 +135,49 @@ describe('the logbook', () => {
     expect(setLabel({})).toBe('');
   });
 });
+
+describe('timed and distance work in the logbook', () => {
+  const rows = [
+    session('2026-09-01T10:00:00Z', [{ stepId: 'r', exerciseKey: 'row', sets: [{ meters: 500, seconds: 110 }, { meters: 500, seconds: 106 }] }]),
+    session('2026-09-08T10:00:00Z', [{ stepId: 'r', exerciseKey: 'row', sets: [{ meters: 500, seconds: 104 }, { meters: 1000, seconds: 230 }] }]),
+    session('2026-09-15T10:00:00Z', [{ stepId: 'r', exerciseKey: 'row', sets: [{ meters: 500, seconds: 105 }, { meters: 1200 }] }]),
+  ];
+  const planks = [
+    session('2026-09-01T10:00:00Z', [{ stepId: 'p', exerciseKey: 'plank', sets: [{ seconds: 60 }, { seconds: 45 }] }]),
+    session('2026-09-03T10:00:00Z', [{ stepId: 'p', exerciseKey: 'plank', sets: [{ seconds: 75, type: 'warmup' }, { seconds: 62 }] }]),
+  ];
+  it('tells timed, distance and calorie work apart', () => {
+    expect(kindOf([{ sets: [{ meters: 500, seconds: 100 }] }])).toBe('pace');
+    expect(kindOf([{ sets: [{ meters: 500 }] }])).toBe('distance');
+    expect(kindOf([{ sets: [{ calories: 20, seconds: 40 }] }])).toBe('calories');
+    expect(kindOf([{ sets: [{ seconds: 60 }] }])).toBe('time');
+    expect(kindOf([{ sets: [{ load: 24, seconds: 40 }] }])).toBe('load'); // a carry: the weight leads
+  });
+  it('keeps the fastest time per distance, the furthest and the longest hold', () => {
+    const r = records(rows, 'row');
+    expect(r.kind).toBe('pace');
+    expect(r.fastest?.['500']).toMatchObject({ value: 104, at: '2026-09-08T10:00:00Z' });
+    expect(r.fastest?.['1000']?.value).toBe(230);
+    expect(r.distance?.value).toBe(1200);
+    const p = records(planks, 'plank');
+    expect(p.longest).toMatchObject({ value: 62, at: '2026-09-03T10:00:00Z' }); // the warm-up is not a record
+  });
+  it('charts the best pace per session, and the longest hold', () => {
+    expect(chartPoints(exerciseHistory(rows, 'row'), 'pace', 500).map(p => p.value)).toEqual([106, 104, 105]);
+    expect(chartPoints(exerciseHistory(planks, 'plank')).map(p => p.value)).toEqual([60, 62]);
+  });
+  it('marks a faster time over the same distance, further, more calories, a longer hold', () => {
+    const h = exerciseHistory(rows, 'row').reverse();
+    expect(h.map(s => s.prs)).toEqual([[false, false], [true, true], [false, true]]) // never in the first session;
+    expect(exerciseHistory(planks, 'plank')[0].prs).toEqual([false, true]);
+    const cal = records([session('2026-09-01T10:00:00Z', [{ stepId: 'b', exerciseKey: 'bike', sets: [{ calories: 20 }] }])], 'bike');
+    expect(isRecord({ calories: 21 }, cal)).toBe(true);
+    expect(isRecord({ calories: 20 }, cal)).toBe(false);
+  });
+  it('labels a set by what it measured', () => {
+    expect(setLabel({ meters: 500, seconds: 101 })).toBe('500 m in 1:41');
+    expect(setLabel({ calories: 20 })).toBe('20 cal');
+    expect(setLabel({ seconds: 45 })).toBe('45 s');
+    expect(setLabel({ load: 24, seconds: 40 }, 'kg')).toBe('24 kg · 40 s');
+  });
+});

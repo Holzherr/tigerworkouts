@@ -10,7 +10,9 @@ import { setsOf } from './logbook';
 
 // ── export ──
 
-export const EXPORT_COLUMNS = ['date', 'workout', 'exercise', 'exercise_key', 'set', 'set_type', 'load', 'unit', 'reps', 'duration_seconds', 'set_time_seconds', 'notes'] as const;
+/** `seconds` is the time worked on the set, `set_time_seconds` when in the session it was ticked,
+ * `duration_seconds` the whole session's length. */
+export const EXPORT_COLUMNS = ['date', 'workout', 'exercise', 'exercise_key', 'set', 'set_type', 'load', 'unit', 'reps', 'seconds', 'meters', 'calories', 'duration_seconds', 'set_time_seconds', 'notes'] as const;
 
 /** A set type in a file, in Hevy's words, which this export uses too. */
 const TYPE_WORD: Record<SetType, string> = { normal: 'normal', warmup: 'warmup', drop: 'dropset', failure: 'failure' };
@@ -42,14 +44,14 @@ export const toCsv = (results: SessionResult[], exercise: (key: string) => { nam
     const head = [r.startedAt, r.title ?? r.activity?.name ?? r.runsheetId];
     const tail = (set?: TimedSet) => [num(r.durationSec ?? (r.activity ? r.activity.minutes * 60 : undefined)), num(set?.at), r.notes ?? ''];
     if (!r.steps.length) {
-      rows.push(line([...head, '', '', '', '', '', '', '', ...tail()]));
+      rows.push(line([...head, '', '', '', '', '', '', '', '', '', '', ...tail()]));
       continue;
     }
     for (const s of r.steps) {
       const ex = exercise(s.exerciseKey);
       const sets = setsOf(s) as TimedSet[];
-      if (!sets.length) rows.push(line([...head, ex.name, s.exerciseKey, '', '', '', ex.unit ?? '', '', ...tail()]));
-      sets.forEach((x, i) => rows.push(line([...head, ex.name, s.exerciseKey, String(i + 1), setTypeWord(x.type), num(x.load), ex.unit ?? '', num(x.reps), ...tail(x)])));
+      if (!sets.length) rows.push(line([...head, ex.name, s.exerciseKey, '', '', '', ex.unit ?? '', '', '', '', '', ...tail()]));
+      sets.forEach((x, i) => rows.push(line([...head, ex.name, s.exerciseKey, String(i + 1), setTypeWord(x.type), num(x.load), ex.unit ?? '', num(x.reps), num(x.seconds), num(x.meters), num(x.calories), ...tail(x)])));
     }
   }
   return rows.join('\n') + '\n';
@@ -94,8 +96,8 @@ export const parseCsv = (text: string): string[][] => {
 export type CsvFormat = 'hevy' | 'strong' | 'tiger';
 export const FORMAT_LABEL: Record<CsvFormat, string> = { hevy: 'Hevy', strong: 'Strong', tiger: 'TigerWorkouts' };
 
-/** A set as a file has it: Hevy and Strong also time a set (a plank, a carry). */
-export type ImportedSet = SetResult & { seconds?: number };
+/** A set as a file has it: Hevy and Strong also time a set (a plank, a carry) and log a distance. */
+export type ImportedSet = SetResult;
 
 export interface ImportedExercise {
   name: string;
@@ -173,14 +175,20 @@ const group = (rows: string[][], read: (get: Row) => { session: Omit<ImportedSes
   return [...sessions.values()];
 };
 
-const set = (reps?: number, load?: number, seconds?: number, type?: SetType): ImportedSet => ({ ...(reps !== undefined ? { reps } : {}), ...(load !== undefined ? { load } : {}), ...(seconds !== undefined ? { seconds } : {}), ...(type ? { type } : {}) });
+const set = (reps?: number, load?: number, seconds?: number, type?: SetType, meters?: number, calories?: number): ImportedSet => ({ ...(reps !== undefined ? { reps } : {}), ...(load !== undefined ? { load } : {}), ...(seconds !== undefined ? { seconds } : {}), ...(meters !== undefined ? { meters } : {}), ...(calories !== undefined ? { calories } : {}), ...(type ? { type } : {}) });
+
+const MILE = 1609.344;
+/** A distance in metres from a number in km, miles or metres. */
+const metres = (n: number | undefined, unit: 'km' | 'mi' | 'm'): number | undefined => (n === undefined ? undefined : Math.round(n * (unit === 'km' ? 1000 : unit === 'mi' ? MILE : 1) * 10) / 10);
 
 /**
  * Hevy: title, start_time, end_time, description, exercise_title, superset_id, exercise_notes,
- * set_index, set_type, weight_kg (or weight_lbs), reps, distance_km, duration_seconds, rpe.
+ * set_index, set_type, weight_kg (or weight_lbs), reps, distance_km (or distance_miles),
+ * duration_seconds, rpe.
  */
 const hevy = (rows: string[][]): ImportedSession[] => {
   const lbs = rows[0].some(h => h.trim().toLowerCase() === 'weight_lbs');
+  const miles = rows[0].some(h => h.trim().toLowerCase() === 'distance_miles');
   return group(rows, get => {
     const start = parseDate(get('start_time'));
     if (!start) return null;
@@ -189,7 +197,7 @@ const hevy = (rows: string[][]): ImportedSession[] => {
     return {
       session: { title: get('title').trim() || 'Workout', startedAt: start.toISOString(), ...(end ? { endedAt: end.toISOString(), durationSec: Math.round((+end - +start) / 1000) } : {}), ...(get('description').trim() ? { notes: get('description').trim() } : {}) },
       exercise: get('exercise_title').trim(),
-      set: set(val(get('reps')), w === undefined ? undefined : lbs ? Math.round(w * LB * 100) / 100 : w, val(get('duration_seconds')), readSetType(get('set_type'))),
+      set: set(val(get('reps')), w === undefined ? undefined : lbs ? Math.round(w * LB * 100) / 100 : w, val(get('duration_seconds')), readSetType(get('set_type')), miles ? metres(val(get('distance_miles')), 'mi') : metres(val(get('distance_km')), 'km')),
     };
   });
 };
@@ -207,10 +215,13 @@ const strong = (rows: string[][]): ImportedSession[] =>
     const dur = parseDuration(get('duration'));
     const w = val(get('weight'));
     const lbs = /lb/i.test(get('weight unit'));
+    // Strong writes distance in the unit the app is set to; older files say which. Metric by default.
+    const du = get('distance unit').trim().toLowerCase();
+    const dist = metres(val(get('distance')), du.startsWith('mi') ? 'mi' : du === 'm' || du.startsWith('met') ? 'm' : 'km');
     return {
       session: { title: get('workout name').trim() || 'Workout', startedAt: start.toISOString(), ...(dur ? { durationSec: dur, endedAt: new Date(+start + dur * 1000).toISOString() } : {}), ...(get('workout notes').trim() ? { notes: get('workout notes').trim() } : {}) },
       exercise: get('exercise name').trim(),
-      set: set(val(get('reps')), w === undefined ? undefined : lbs ? Math.round(w * LB * 100) / 100 : w, val(get('seconds'))),
+      set: set(val(get('reps')), w === undefined ? undefined : lbs ? Math.round(w * LB * 100) / 100 : w, val(get('seconds')), undefined, dist),
     };
   });
 
@@ -225,7 +236,7 @@ const tiger = (rows: string[][]): ImportedSession[] =>
       exercise: get('exercise').trim(),
       key: get('exercise_key').trim() || undefined,
       unit: get('unit'),
-      set: get('set').trim() ? set(val(get('reps')), val(get('load')), undefined, readSetType(get('set_type'))) : undefined,
+      set: get('set').trim() ? set(val(get('reps')), val(get('load')), val(get('seconds')), readSetType(get('set_type')), val(get('meters')), val(get('calories'))) : undefined,
     };
   });
 
@@ -308,9 +319,9 @@ export const guessGroup = (name: string): ExerciseGroup => GROUP_WORDS.find(([re
 const slug = (name: string) => name.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, '');
 
 /** A new exercise as the picker makes one: `u_` key, unit and step, group from the name. */
-export const customExercise = (name: string, opts: { unit?: string; loaded?: boolean; timed?: boolean; key?: string } = {}): LibraryExercise => {
+export const customExercise = (name: string, opts: { unit?: string; loaded?: boolean; timed?: boolean; distance?: boolean; key?: string } = {}): LibraryExercise => {
   const g = guessGroup(name);
-  const unit = opts.unit ?? (opts.loaded ? (g === 'dumbbell' ? 'kg per arm' : 'kg') : opts.timed ? 's' : '');
+  const unit = opts.unit ?? (opts.loaded ? (g === 'dumbbell' ? 'kg per arm' : 'kg') : opts.distance ? 'm' : opts.timed ? 's' : '');
   return { key: opts.key ?? `u_${slug(name)}`, name: name.trim(), unit, step: unit === 'kph' ? 0.5 : unit ? 2.5 : 1, group: g, cue: '' };
 };
 
@@ -340,8 +351,6 @@ export interface ImportPlan {
   matched: { name: string; key: string }[];
 }
 
-/** A timed set goes in as its seconds where the exercise counts seconds (a plank); otherwise the time is dropped. */
-const toSet = ({ seconds, ...x }: ImportedSet, timed: boolean): SetResult => (timed && seconds !== undefined && x.load === undefined ? { ...x, load: seconds } : x);
 
 /** What importing the file would add, before anything is written. */
 export const planImport = (parsed: ParsedCsv, existing: SessionResult[], library: Record<string, LibraryExercise>): ImportPlan => {
@@ -356,7 +365,8 @@ export const planImport = (parsed: ParsedCsv, existing: SessionResult[], library
       if (!e.key && library[hit]) matched.set(e.name, hit);
       return hit;
     }
-    let ex = customExercise(e.name, { unit: e.unit, loaded: e.sets.some(x => (x.load ?? 0) > 0), timed: e.sets.some(x => x.seconds !== undefined && x.load === undefined && x.reps === undefined), key: e.key });
+    const bare = (x: ImportedSet) => x.load === undefined && x.reps === undefined;
+    let ex = customExercise(e.name, { unit: e.unit, loaded: e.sets.some(x => (x.load ?? 0) > 0), distance: e.sets.some(x => x.meters !== undefined && bare(x)), timed: e.sets.some(x => x.seconds !== undefined && x.meters === undefined && bare(x)), key: e.key });
     for (let n = 2; library[ex.key] || [...created.values()].some(c => c.key === ex.key); n++) ex = { ...ex, key: `${customExercise(e.name).key}_${n}` };
     created.set(e.name.trim().toLowerCase(), ex);
     return ex.key;
@@ -378,11 +388,8 @@ export const planImport = (parsed: ParsedCsv, existing: SessionResult[], library
       ...(s.endedAt ? { endedAt: s.endedAt } : {}),
       ...(s.durationSec ? { durationSec: s.durationSec } : {}),
       completed: true,
-      steps: s.exercises.map((e, i) => {
-        const key = keyFor(e);
-        const timed = (library[key] ?? [...created.values()].find(c => c.key === key))?.unit === 's';
-        return { stepId: `imp${i}`, exerciseKey: key, sets: e.sets.map(x => toSet(x, timed)) };
-      }),
+      // Time, distance and calories go in as the set's own fields, whatever the exercise's unit.
+      steps: s.exercises.map((e, i) => ({ stepId: `imp${i}`, exerciseKey: keyFor(e), sets: e.sets })),
       ...(s.notes ? { notes: s.notes } : {}),
     });
   }

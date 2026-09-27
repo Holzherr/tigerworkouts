@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, within } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import { priyanka } from '@/features/runsheet/fixtures';
 import type { SessionOrigin, SessionResult } from '@/features/runsheet/progression';
@@ -108,5 +108,26 @@ describe('ResultSheet logs only what was done', () => {
     expect(onCancel).not.toHaveBeenCalled();
     fireEvent.click(screen.getByText('Discard workout'));
     expect(onCancel).toHaveBeenCalledOnce();
+  });
+});
+
+describe('ResultSheet load and round times', () => {
+  it('a load changed here reaches the sets the logbook reads', () => {
+    const onSave = vi.fn();
+    const initial: SessionResult = { id: 's-l', runsheetId: 'p', startedAt: '2026-09-27T10:00:00Z', steps: [{ stepId: 's1', exerciseKey: 'kb_swing', target: 28, success: true, sets: [{ load: 28 }, { load: 28 }] }] };
+    render(<ResultSheet runsheet={priyanka()} initial={initial} onSave={onSave} />);
+    fireEvent.click(within(screen.getAllByRole('group', { name: 'Load used' })[0]).getByLabelText('Increase'));
+    fireEvent.click(screen.getByText('Save result'));
+    const row = onSave.mock.calls[0][0].steps.find((x: { stepId: string }) => x.stepId === 's1');
+    expect(row.sets.map((x: { load: number }) => x.load)).toEqual([32, 32]);
+    expect(row.target).toBe(32);
+  });
+  it('shows each round against the same round last time', () => {
+    const initial: SessionResult = { id: 's-r', runsheetId: 'p', startedAt: '2026-09-27T10:00:00Z', steps: [], splits: [{ blockId: 'b1', at: [100, 190], from: 5 }] };
+    const before: SessionResult = { id: 's-o', runsheetId: priyanka().id!, startedAt: '2026-09-20T10:00:00Z', steps: [], splits: [{ blockId: 'b1', at: [105, 200], from: 5 }] };
+    render(<ResultSheet runsheet={priyanka()} initial={initial} history={[before]} onSave={vi.fn()} />);
+    expect(screen.getByLabelText('Round times')).toBeTruthy();
+    expect(screen.getByLabelText('Round 2 1:30, fastest')).toBeTruthy();
+    expect(screen.getAllByText('−5 s')).toHaveLength(2);
   });
 });

@@ -3,12 +3,14 @@ import { Button } from '@/shared/components/ui/button';
 import { cn } from '@/shared/utils/ui-utils';
 import type { ScoreType } from '@/features/runsheet/model';
 import { deltaLines, ordinalLabel, streakLabel, type Celebration } from '../celebrate';
-import { setLabel } from '../logbook';
+import { fmtDur, setLabel } from '../logbook';
 
 export interface CelebrationCardProps {
   celebration: Celebration;
   scoreType: ScoreType;
   exercise: (key: string) => { name: string; unit?: string };
+  /** A block's name, for a fastest-round record. */
+  blockName?: (blockId: string) => string | undefined;
   /** Opens the share card. Left out, there is no Share button. */
   onShare?: () => void;
   className?: string;
@@ -20,8 +22,10 @@ export interface CelebrationCardProps {
  * last time of the same workout, an up or down arrow per number. Sections with nothing to say are
  * left out, so a first session shows only the count and the streak.
  */
-export const CelebrationCard = ({ celebration: c, scoreType, exercise, onShare, className }: CelebrationCardProps) => {
+export const CelebrationCard = ({ celebration: c, scoreType, exercise, blockName, onShare, className }: CelebrationCardProps) => {
   const deltas = deltaLines(c, scoreType);
+  const rounds = c.rounds ?? [];
+  const n = c.prs.length + rounds.length;
   return (
     <section className={cn('rounded-card border border-brand-line bg-brand-soft px-3 py-3', className)} aria-label="Celebration">
       <div className="flex items-start gap-2">
@@ -35,9 +39,9 @@ export const CelebrationCard = ({ celebration: c, scoreType, exercise, onShare, 
           </Button>
         )}
       </div>
-      {c.prs.length > 0 && (
+      {n > 0 && (
         <div className="mt-3">
-          <div className="text-[11px] font-bold tracking-widest text-brand-ink uppercase">{c.prs.length === 1 ? 'New record' : `${c.prs.length} new records`}</div>
+          <div className="text-[11px] font-bold tracking-widest text-brand-ink uppercase">{n === 1 ? 'New record' : `${n} new records`}</div>
           {c.prs.map(p => {
             const ex = exercise(p.exerciseKey);
             return (
@@ -48,6 +52,15 @@ export const CelebrationCard = ({ celebration: c, scoreType, exercise, onShare, 
               </div>
             );
           })}
+          {rounds.map(r => (
+            <div key={r.blockId} className="mt-1.5 flex items-center gap-2 text-[14px]">
+              <Medal className="size-4 shrink-0 text-brand" />
+              <span className="min-w-0 flex-1 truncate font-semibold">Fastest round{blockName?.(r.blockId) ? ` · ${blockName(r.blockId)}` : ''}</span>
+              <span className="font-extrabold tabular-nums">
+                {fmtDur(r.seconds)} <span className="text-[12px] font-semibold text-muted">was {fmtDur(r.was)}</span>
+              </span>
+            </div>
+          ))}
         </div>
       )}
       {deltas.length > 0 && (

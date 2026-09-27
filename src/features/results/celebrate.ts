@@ -7,6 +7,7 @@ import { fmtClock } from '@/shared/utils/ui-utils';
 import type { ScoreType } from '@/features/runsheet/model';
 import { fmtScore, type SessionResult } from '@/features/runsheet/progression';
 import { streak, type Streak } from './effort';
+import { roundPRs, type RoundPR } from './rounds';
 import { fmtNum, sessionPRs, sessionVolume, setsOf, type SessionPR } from './logbook';
 
 export interface Celebration {
@@ -14,6 +15,8 @@ export interface Celebration {
   ordinal: number;
   streak: Streak;
   prs: SessionPR[];
+  /** A round faster than any before it in this workout, per block. */
+  rounds: RoundPR[];
   /** Load × reps over the whole session. Undefined when nothing was both loaded and counted. */
   volume?: number;
   /** The previous session of the same workout, if there is one. */
@@ -49,6 +52,7 @@ export const celebrate = (result: SessionResult, all: SessionResult[], today = n
     ordinal: before.length + 1,
     streak: streak([...others.filter(r => r.startedAt <= result.startedAt), result], today),
     prs: sessionPRs(result, all),
+    rounds: roundPRs(result, all),
     ...(volume !== undefined ? { volume } : {}),
     ...(last ? { last } : {}),
     deltas,

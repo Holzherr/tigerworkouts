@@ -3,7 +3,7 @@
  * transition takes `now` in ms so it can be tested without a clock. The React hook adds the
  * interval, sounds, wake lock and persistence.
  */
-import { plannedSet, rungSteps, scoreType, type Block, type ExerciseRef, type ExerciseStep, type ItemRole, type Runsheet, type SetPlan, type SetType, type Step } from '@/features/runsheet/model';
+import { measureOf, plannedSet, rungSteps, scoreType, type Block, type ExerciseRef, type ExerciseStep, type ItemRole, type Runsheet, type SetPlan, type SetType, type Step } from '@/features/runsheet/model';
 import type { RoundSplit, SessionResult, SetResult, StepResult } from '@/features/runsheet/progression';
 
 export interface Slot {
@@ -46,6 +46,11 @@ export interface Actual {
   doneAt?: number;
   /** Session time when it was done, seconds, pauses excluded. */
   at?: number;
+  /** Seconds worked on the set, kept when it is done: see `workedSeconds`. */
+  seconds?: number;
+  /** Distance or calories done, changed from the plan on the timer card or the set grid. */
+  meters?: number;
+  calories?: number;
 }
 
 export interface RunState {
@@ -282,11 +287,27 @@ export const advance = (given: RunState, now: number, opts: { skipped?: boolean 
   const actuals = { ...s.actuals };
   const blockDone = { ...s.blockDone };
   if (c && !opts.skipped) {
-    actuals[c.id] = { ...(actuals[c.id] ?? { changes: [] }), doneAt: now, at: Math.round(elapsed(s, now)) };
+    const worked = workedSeconds(s, c, now);
+    actuals[c.id] = { ...(actuals[c.id] ?? { changes: [] }), doneAt: now, at: Math.round(elapsed(s, now)), ...(worked !== undefined ? { seconds: worked } : {}) };
     if (c.blockId && c.kind === 'work') blockDone[c.blockId] = (blockDone[c.blockId] ?? 0) + 1;
   }
   const st = { ...s, actuals, blockDone };
   return enter(c ? extendAmrap(st, c) : st, s.i + 1, now);
+};
+
+/** The work a set's time says something about: a countdown (a plank, a 40 s interval), a max
+ * effort, a distance or a calorie count. A set of reps is left out — its time is mostly the rest
+ * before the tick — and so is a follow-along video segment. */
+export const timesWork = (sl: Slot) => sl.kind === 'work' && sl.step.kind === 'exercise' && sl.step.forMode !== 'segment' && (sl.seconds !== undefined || sl.step.forMode === 'max' || sl.step.forMode === 'meters' || sl.step.forMode === 'calories');
+
+/** Seconds spent on the running slot, pauses out: for a countdown, as long as it ran — the whole
+ * interval when it ran out, less when it was ended early. Undefined for work whose time says
+ * nothing, and for a set done the moment it began (ticked straight after its rest). */
+const workedSeconds = (s: RunState, c: Slot, now: number): number | undefined => {
+  if (!timesWork(c) || s.phase !== 'running') return undefined;
+  const spent = Math.max(0, (now - s.slotStartedAt) / 1000);
+  const sec = Math.round(c.seconds !== undefined ? Math.min(c.seconds, spent) : spent);
+  return sec > 0 ? sec : undefined;
 };
 
 /** Leaving the last expanded round of a capped amrap before its cap: add one more round (and the
@@ -394,6 +415,28 @@ export const setReps = (s: RunState, reps: number): RunState => {
   return { ...s, actuals: { ...s.actuals, [c.id]: { ...(s.actuals[c.id] ?? { changes: [] }), reps } } };
 };
 
+/** The metres or calories done on the running distance or calorie step, when not what the plan said. */
+export const setAmount = (s: RunState, value: number): RunState => {
+  const c = current(s);
+  return c ? setAmountAt(s, c.id, value) : s;
+};
+/** Which field a step's amount goes in: metres or calories for a step done for either, or for a
+ * rower, ski erg or bike on the clock (the machine counts what you did); none for other work. */
+export const amountField = (sl: Slot | undefined): 'meters' | 'calories' | undefined => {
+  if (sl?.kind !== 'work' || sl.step.kind !== 'exercise') return undefined;
+  const { forMode, exercise } = sl.step;
+  if (forMode === 'meters' || forMode === 'calories') return forMode;
+  const m = measureOf(exercise.unit);
+  return m === 'meters' || m === 'calories' ? m : undefined;
+};
+/** What a distance or calorie set did: changed on the card or the grid, else the plan's distance or
+ * calories. A timed piece on a machine has no plan for it, so only what was entered. */
+export const amountAt = (s: RunState, sl: Slot): number | undefined => {
+  const f = amountField(sl);
+  if (!f || sl.step.kind !== 'exercise') return undefined;
+  return s.actuals[sl.id]?.[f] ?? (sl.step.forMode === f ? sl.step.forValue : undefined);
+};
+
 // ── the set grid ──
 const slotIndex = (s: RunState, slotId: string) => s.slots.findIndex(sl => sl.id === slotId);
 /** Change the load of one set from its row: the running set as `adjust` does, a set still to come
@@ -411,6 +454,13 @@ export const setRepsAt = (s: RunState, slotId: string, reps: number): RunState =
   const sl = s.slots[slotIndex(s, slotId)];
   if (!sl || sl.kind !== 'work' || s.actuals[slotId]?.doneAt !== undefined) return s;
   return { ...s, actuals: { ...s.actuals, [slotId]: { ...(s.actuals[slotId] ?? { changes: [] }), reps } } };
+};
+/** Metres or calories for one set from its row. A done set is locked like its reps. */
+export const setAmountAt = (s: RunState, slotId: string, value: number): RunState => {
+  const sl = s.slots[slotIndex(s, slotId)];
+  const f = amountField(sl);
+  if (!f || s.actuals[slotId]?.doneAt !== undefined) return s;
+  return { ...s, actuals: { ...s.actuals, [slotId]: { ...(s.actuals[slotId] ?? { changes: [] }), [f]: value } } };
 };
 /** Only rest stands between the cursor and slot idx, inside one block: the set after the rest. */
 const onlyRestBefore = (s: RunState, idx: number) => idx > s.i && s.slots.slice(s.i, idx).every(sl => sl.kind === 'rest' && sl.blockId === s.slots[idx].blockId);
@@ -440,6 +490,7 @@ export const reopenSet = (s: RunState, slotId: string): RunState => {
   const rest = { ...a };
   delete rest.doneAt;
   delete rest.at;
+  delete rest.seconds;
   const blockDone = sl.blockId ? { ...s.blockDone, [sl.blockId]: Math.max(0, (s.blockDone[sl.blockId] ?? 0) - 1) } : s.blockDone;
   return { ...s, blockDone, actuals: { ...s.actuals, [slotId]: rest } };
 };
@@ -449,6 +500,8 @@ export const fillSet = (s: RunState, now: number, slotId: string, set: SetResult
   let st = s;
   if (set.load !== undefined) st = adjustAt(st, now, slotId, set.load);
   if (set.reps !== undefined) st = setRepsAt(st, slotId, set.reps);
+  const amount = set.meters ?? set.calories;
+  if (amount !== undefined) st = setAmountAt(st, slotId, amount);
   return st;
 };
 
@@ -644,12 +697,15 @@ export const toResult = (s: RunState, r: Runsheet, now: number): SessionResult =
     // keep the exercise and load they were done with.
     const key = `${slot.step.id}|${slot.step.exercise.key}`;
     const prev = steps.get(key);
-    const target = effectiveTarget(s, idx);
+    // An exercise counted in metres, seconds or calories has no load: its unit is the measure.
+    const target = measureOf(slot.step.exercise.unit) ? undefined : effectiveTarget(s, idx);
     const incline = effectiveIncline(s, idx);
     const reps = a.reps !== undefined ? a.reps : slot.step.forMode === 'reps' ? slot.step.forValue : undefined;
     const at = doneAtSec(s, a);
     const type = typeAt(s, idx);
-    const set: SetResult = { ...(reps !== undefined ? { reps } : {}), ...(target !== undefined ? { load: target } : {}), ...(at !== undefined ? { at } : {}), ...(type !== 'normal' ? { type } : {}) };
+    const f = amountField(slot);
+    const amount = amountAt(s, slot);
+    const set: SetResult = { ...(reps !== undefined ? { reps } : {}), ...(target !== undefined ? { load: target } : {}), ...(at !== undefined ? { at } : {}), ...(type !== 'normal' ? { type } : {}), ...(a.seconds !== undefined ? { seconds: a.seconds } : {}), ...(f && amount !== undefined ? { [f]: amount } : {}) };
     // `target` and `reps` are for readers from before per-set rows: a warm-up is not the load
     // worked at and its reps are not work, so they stay out of both.
     const warm = type === 'warmup';

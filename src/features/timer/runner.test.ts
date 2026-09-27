@@ -743,3 +743,75 @@ describe('a run kept on the device', () => {
     R.clearPersisted();
   });
 });
+
+describe('timed and distance work', () => {
+  const plank = (): Runsheet => ({ id: 'pl', title: 'Plank', items: [{ kind: 'block', id: 'b', name: 'B', repeat: 2, steps: [{ ...makeExercise(EX.bw_plank, { forMode: 'seconds', forValue: 60 }), id: 'p' }, { ...makeRest(30), id: 'r' }] }] });
+  const row = (): Runsheet => ({ id: 'rw', title: 'Row', items: [{ ...makeExercise(EX.cardio_rower, { forMode: 'meters', forValue: 500 }), id: 'rw' }] });
+  it('a countdown that runs out logs its whole length', () => {
+    let s = tick(start(plank(), 0), 5000);
+    s = tick(s, 5000 + 60000 + 400); // a late tick
+    const r = toResult(s, plank(), 70000);
+    expect(r.steps[0].sets?.[0].seconds).toBe(60);
+    expect(r.steps[0].sets?.[0].load).toBeUndefined(); // seconds is the plank's unit, not a load
+  });
+  it('Done early keeps the time it ran, pauses out; Skip logs nothing', () => {
+    let s = tick(start(plank(), 0), 5000);
+    s = pause(s, 25000);
+    s = resume(s, 40000); // 15 s paused
+    s = advance(s, 57000); // 20 + 17 s held
+    expect(s.actuals[s.slots[0].id].seconds).toBe(37);
+    s = advance(s, 60000, { skipped: true }); // the rest
+    s = advance(s, 70000, { skipped: true }); // round 2 skipped
+    const r = toResult(s, plank(), 70000);
+    expect(r.steps[0].sets?.map(x => x.seconds)).toEqual([37]);
+  });
+  it('a distance logs the plan unless changed, and the time it took', () => {
+    let s = tick(start(row(), 0), 5000);
+    expect(R.amountAt(s, s.slots[0])).toBe(500);
+    let r = toResult(advance(s, 5000 + 101000), row(), 110000);
+    expect(r.steps[0].sets?.[0]).toMatchObject({ meters: 500, seconds: 101 });
+    s = R.setAmount(s, 480);
+    r = toResult(advance(s, 5000 + 99000), row(), 110000);
+    expect(r.steps[0].sets?.[0]).toMatchObject({ meters: 480, seconds: 99 });
+    expect(r.steps[0].sets?.[0].load).toBeUndefined();
+  });
+  it('a rower on the clock logs metres only when entered', () => {
+    const sheet: Runsheet = { id: 't', title: 'T', items: [{ ...makeExercise(EX.cardio_rower, { forMode: 'minutes', forValue: 2 }), id: 'x' }] };
+    let s = tick(start(sheet, 0), 5000);
+    expect(R.amountField(s.slots[0])).toBe('meters');
+    expect(R.amountAt(s, s.slots[0])).toBeUndefined();
+    s = R.setAmount(s, 540);
+    s = tick(s, 5000 + 120000);
+    expect(toResult(s, sheet, 130000).steps[0].sets?.[0]).toMatchObject({ meters: 540, seconds: 120 });
+  });
+  it('calories count on a calorie step; a set of reps keeps no time', () => {
+    const sheet: Runsheet = { id: 'c', title: 'C', items: [{ kind: 'block', id: 'b', name: 'B', repeat: 1, steps: [{ ...makeExercise(EX.cardio_assault_bike, { forMode: 'calories', forValue: 20 }), id: 'bk' }, { ...makeExercise(EX.bw_pushup, { forMode: 'reps', forValue: 10 }), id: 'pu' }] }] };
+    let s = tick(start(sheet, 0), 5000);
+    s = R.setAmount(s, 22);
+    s = advance(s, 45000);
+    s = advance(s, 65000);
+    const r = toResult(s, sheet, 65000);
+    expect(r.steps[0].sets?.[0]).toMatchObject({ calories: 22, seconds: 40 });
+    expect(r.steps[1].sets?.[0].seconds).toBeUndefined();
+  });
+  it('a done set is locked until un-ticked', () => {
+    let s = tick(start(row(), 0), 5000);
+    s = advance(s, 105000);
+    const id = s.slots[0].id;
+    expect(R.setAmountAt(s, id, 400)).toBe(s);
+  });
+  it('a set ticked straight after its rest has no time of its own', () => {
+    const sheet: Runsheet = { id: 'h', title: 'H', items: [{ kind: 'block', id: 'b', name: 'B', repeat: 2, restBetweenSec: 60, steps: [{ ...makeExercise(EX.bw_plank, { forMode: 'max', forValue: 0 }), id: 'h' }] }] };
+    let s = tick(start(sheet, 0), 5000);
+    s = advance(s, 50000); // 45 s hold
+    s = R.completeSet(s, 60000, s.slots[2].id); // ends the rest and ticks set 2 at once
+    const r = toResult(s, sheet, 60000);
+    expect(r.steps[0].sets?.map(x => x.seconds)).toEqual([45, undefined]);
+  });
+  it('for-time rounds are split per round', () => {
+    const sheet: Runsheet = { id: 'f', title: 'F', items: [{ kind: 'block', id: 'b', name: 'F', mode: 'fortime', repeat: 3, steps: [{ ...makeExercise(EX.bw_pullup, { forMode: 'reps', forValue: 5 }), id: 'a' }, { ...makeExercise(EX.bw_pushup, { forMode: 'reps', forValue: 10 }), id: 'c' }] }] };
+    let s = tick(start(sheet, 0), 5000);
+    for (const t of [20, 40, 70, 95, 130, 150]) s = advance(s, t * 1000);
+    expect(toResult(s, sheet, 150000).splits).toEqual([{ blockId: 'b', at: [40, 95, 150], from: 5 }]);
+  });
+});

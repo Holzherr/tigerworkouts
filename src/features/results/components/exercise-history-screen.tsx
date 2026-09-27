@@ -3,13 +3,15 @@ import { ClipThumb } from '@/shared/components/ui/clip-thumb';
 import { Button } from '@/shared/components/ui/button';
 import { shortUnit, type ExerciseRef } from '@/features/runsheet/model';
 import type { SessionResult } from '@/features/runsheet/progression';
-import { chartPoints, exerciseHistory, fmtNum, records, setLabel, type LogKind, type Rec, type Records } from '../logbook';
+import { chartPoints, exerciseHistory, fmtDur, fmtNum, lowerIsBetter, records, setLabel, type LogKind, type Rec, type Records } from '../logbook';
 import { ProgressChart } from './progress-chart';
 import { StallCard } from './targets';
 import type { Stall } from '../stall';
 
 export interface ExerciseHistoryScreenProps {
   exercise: ExerciseRef;
+  /** The catalogue group: a rower's pace reads per 500 m. */
+  group?: string;
   results: SessionResult[];
   onBack: () => void;
   /** Opens a session from its row. */
@@ -24,8 +26,27 @@ export interface ExerciseHistoryScreenProps {
 
 const date = (iso: string) => new Date(iso).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
 
-const chartLabel = (kind: LogKind, unit: string) =>
-  kind === 'strength' ? `Estimated 1RM${unit ? ` · ${unit}` : ''}` : kind === 'load' ? (unit === 'kph' ? 'Top speed · kph' : `Top load${unit ? ` · ${unit}` : ''}`) : kind === 'reps' ? 'Most reps in a set' : 'Rounds per session';
+/** Pace per 500 m on a rower or ski erg, as their monitors show it; per km for anything else. */
+export const paceOver = (group?: string) => (group === 'rower' ? 500 : 1000);
+
+const chartLabel = (kind: LogKind, unit: string, per: number) =>
+  kind === 'strength'
+    ? `Estimated 1RM${unit ? ` · ${unit}` : ''}`
+    : kind === 'load'
+      ? unit === 'kph'
+        ? 'Top speed · kph'
+        : `Top load${unit ? ` · ${unit}` : ''}`
+      : kind === 'reps'
+        ? 'Most reps in a set'
+        : kind === 'pace'
+          ? `Fastest pace · per ${per === 500 ? '500 m' : 'km'}`
+          : kind === 'distance'
+            ? 'Furthest in a set · m'
+            : kind === 'calories'
+              ? 'Most calories in a set'
+              : kind === 'time'
+                ? 'Longest set'
+                : 'Rounds per session';
 
 interface Tile {
   label: string;
@@ -33,8 +54,15 @@ interface Tile {
   sub?: string;
 }
 
+/** The distances with a fastest time, the most done first: at most two tiles. */
+const fastestTiles = (r: Records, done: Map<string, number>): Tile[] =>
+  Object.entries(r.fastest ?? {})
+    .sort((a, b) => (done.get(b[0]) ?? 0) - (done.get(a[0]) ?? 0) || Number(a[0]) - Number(b[0]))
+    .slice(0, 2)
+    .map(([m, rec]) => ({ label: `Fastest ${fmtNum(Number(m))} m`, value: fmtDur(rec.value), sub: date(rec.at) }));
+
 /** What records mean for this kind of work. Timed work gets what exists rather than blanks. */
-const tiles = (r: Records, unit: string, last?: string): Tile[] => {
+const tiles = (r: Records, unit: string, last?: string, done = new Map<string, number>()): Tile[] => {
   const u = unit ? ` ${unit}` : '';
   const t = (label: string, rec: Rec | undefined, value: (n: number) => string, withSet = false): Tile[] =>
     rec ? [{ label, value: value(rec.value), sub: [withSet && rec.set ? setLabel(rec.set) : '', date(rec.at)].filter(Boolean).join(' · ') }] : [];
@@ -43,6 +71,10 @@ const tiles = (r: Records, unit: string, last?: string): Tile[] => {
     return [...t('Heaviest', r.heaviest, n => `${fmtNum(n)}${u}`, true), ...t('Best est. 1RM', r.e1rm, n => `${fmtNum(n)}${u}`, true), ...t('Most reps', r.reps, n => fmtNum(n), true), ...t('Best volume', r.volume, n => `${fmtNum(Math.round(n))}${u}`)];
   if (r.kind === 'load') return [...t(unit === 'kph' ? 'Top speed' : 'Heaviest', r.heaviest, n => `${fmtNum(n)}${u}`), sessions];
   if (r.kind === 'reps') return [...t('Most reps', r.reps, n => fmtNum(n)), sessions];
+  if (r.kind === 'pace') return [...fastestTiles(r, done), ...t('Furthest', r.distance, n => `${fmtNum(n)} m`, true), sessions].slice(0, 4);
+  if (r.kind === 'distance') return [...t('Furthest', r.distance, n => `${fmtNum(n)} m`), sessions];
+  if (r.kind === 'calories') return [...t('Most calories', r.calories, n => `${fmtNum(n)} cal`, true), sessions];
+  if (r.kind === 'time') return [...t('Longest', r.longest, fmtDur), sessions];
   return [sessions];
 };
 
@@ -52,11 +84,16 @@ const tiles = (r: Records, unit: string, last?: string): Tile[] => {
  * the sessions newest first with their sets. A set that beat a record standing at the time carries
  * a small PR marker.
  */
-export const ExerciseHistoryScreen = ({ exercise: ex, results, onBack, onSession, backLabel = 'Back', stall, onDismissStall, onExercise }: ExerciseHistoryScreenProps) => {
+export const ExerciseHistoryScreen = ({ exercise: ex, group, results, onBack, onSession, backLabel = 'Back', stall, onDismissStall, onExercise }: ExerciseHistoryScreenProps) => {
   const history = exerciseHistory(results, ex.key);
   const rec = records(results, ex.key);
   const unit = shortUnit(ex.unit);
-  const points = chartPoints(history, rec.kind);
+  const per = paceOver(group);
+  const points = chartPoints(history, rec.kind, per);
+  // How often each distance was done, so the fastest-time tiles show the ones that matter.
+  const done = new Map<string, number>();
+  for (const x of history.flatMap(s => s.sets)) if (x.meters !== undefined && x.seconds !== undefined) done.set(String(Math.round(x.meters)), (done.get(String(Math.round(x.meters))) ?? 0) + 1);
+  const timeAxis = rec.kind === 'pace' || rec.kind === 'time';
   return (
     <div className="flex h-full min-h-0 flex-col bg-canvas">
       <header className="safe-top shrink-0 bg-surface px-4 pt-2 pb-3">
@@ -70,11 +107,11 @@ export const ExerciseHistoryScreen = ({ exercise: ex, results, onBack, onSession
       </header>
       <div className="min-h-0 flex-1 space-y-3 overflow-y-auto px-3 py-3">
         {history.length === 0 && <div className="py-10 text-center text-[13px] text-muted">Not logged yet. Finish a workout with it and it shows up here.</div>}
-        {points.length > 0 && <ProgressChart points={points} label={chartLabel(rec.kind, unit)} />}
+        {points.length > 0 && <ProgressChart points={points} label={chartLabel(rec.kind, unit, per)} format={timeAxis ? fmtDur : undefined} invert={lowerIsBetter(rec.kind)} />}
         {stall && onDismissStall && <StallCard stall={stall} onDismiss={onDismissStall} onExercise={onExercise} />}
         {history.length > 0 && (
           <div className="grid grid-cols-2 gap-2">
-            {tiles(rec, unit, history[0]?.startedAt).map(t => (
+            {tiles(rec, unit, history[0]?.startedAt, done).map(t => (
               <div key={t.label} className="rounded-card border border-line bg-surface px-3 py-2.5">
                 <div className="text-[11px] font-semibold text-muted">{t.label}</div>
                 <div className="text-[20px] font-black tabular-nums">{t.value}</div>

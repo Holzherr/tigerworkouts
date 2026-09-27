@@ -10,7 +10,7 @@
 import { scoreType, shortUnit, type Block, type Runsheet } from '@/features/runsheet/model';
 import { isWorking, type SessionResult, type SetResult } from '@/features/runsheet/progression';
 import { clock } from '@/features/runsheet/targets';
-import { exerciseHistory, fmtNum, kindOf } from './logbook';
+import { exerciseHistory, fmtNum, kindOf, liftKind } from './logbook';
 
 /** A stall needs the record session and at least three after it that did not beat it… */
 export const STALL_SESSIONS = 4;
@@ -99,7 +99,8 @@ const weeksText = (w: number) => (w === 1 ? 'a week' : `${w} weeks`);
 export const exerciseStall = (results: SessionResult[], exercise: { key: string; name: string; unit: string; step: number }, now: Date, swapFor?: (load: number | undefined) => Swap | undefined): Stall | undefined => {
   const history = exerciseHistory(results, exercise.key).reverse();
   const kind = kindOf(history);
-  if (kind === 'rounds') return undefined;
+  // Timed and distance work is not stalled on: a 40 s interval never grows.
+  if (!liftKind(kind)) return undefined;
   const pick = (sets: SetResult[]): { value: number; set: SetResult } | undefined => {
     let out: { value: number; set: SetResult } | undefined;
     for (const x of sets.filter(isWorking)) {

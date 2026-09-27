@@ -22,9 +22,11 @@ export interface LogSession {
 /**
  * What the chart and records measure, from what was logged:
  * `strength` load and reps (estimated 1RM), `load` load only (a weight held, a treadmill speed),
- * `reps` reps only (bodyweight), `rounds` neither — timed work, counted in rounds.
+ * `reps` reps only (bodyweight), `pace` distance with a time (a 500 m row: fastest pace),
+ * `distance` distance alone (most metres), `calories` a calorie count (most in a set), `time`
+ * time alone (a plank: longest), `rounds` none of these — sets from before times were kept.
  */
-export type LogKind = 'strength' | 'load' | 'reps' | 'rounds';
+export type LogKind = 'strength' | 'load' | 'reps' | 'pace' | 'distance' | 'calories' | 'time' | 'rounds';
 
 export interface Rec {
   value: number;
@@ -42,6 +44,14 @@ export interface Records {
   reps?: Rec;
   /** Load × reps summed over a session. */
   volume?: Rec;
+  /** Longest timed set that is not a distance or calorie count: a hold, an interval. Seconds. */
+  longest?: Rec;
+  /** Most metres in a set. */
+  distance?: Rec;
+  /** Most calories in a set. */
+  calories?: Rec;
+  /** Fastest time for each distance done, keyed by metres: `{ 500: 1:41 }`. Lower is better. */
+  fastest?: Record<string, Rec>;
 }
 
 /** A row's sets. Older results have no per-set rows: their one load and each rep count stand in. */
@@ -54,6 +64,11 @@ export const setsOf = (s: StepResult): SetResult[] => {
 // A warm-up is logged and shown, but it is never a record, never volume and never a session's best.
 const loaded = (x: SetResult) => isWorking(x) && x.load !== undefined && x.load > 0;
 const counted = (x: SetResult) => isWorking(x) && x.reps !== undefined && x.reps > 0;
+const distanced = (x: SetResult) => isWorking(x) && x.meters !== undefined && x.meters > 0;
+const burned = (x: SetResult) => isWorking(x) && x.calories !== undefined && x.calories > 0;
+const timed = (x: SetResult) => isWorking(x) && x.seconds !== undefined && x.seconds > 0;
+/** A set whose time is the work: timed, and not a distance or calorie count done against the clock. */
+const held = (x: SetResult) => timed(x) && !distanced(x) && !burned(x);
 
 /** Sets above this many reps say nothing reliable about a one-rep max. */
 export const E1RM_MAX_REPS = 10;
@@ -97,7 +112,21 @@ export const kindOf = (sessions: Pick<LogSession, 'sets'>[]): LogKind => {
   if (all.some(x => loaded(x) && counted(x))) return 'strength';
   if (all.some(loaded)) return 'load';
   if (all.some(counted)) return 'reps';
+  if (all.some(x => distanced(x) && timed(x))) return 'pace';
+  if (all.some(distanced)) return 'distance';
+  if (all.some(burned)) return 'calories';
+  if (all.some(timed)) return 'time';
   return 'rounds';
+};
+
+/** The kinds that are about load and reps, which stalls and targets read. */
+export const liftKind = (k: LogKind) => k === 'strength' || k === 'load' || k === 'reps';
+
+/** Pace in seconds per `per` metres (500 for a rower, 1000 for a run). */
+export const paceOf = (x: SetResult, per = 1000): number | undefined => (distanced(x) && timed(x) ? (x.seconds! / x.meters!) * per : undefined);
+const min = (ns: (number | undefined)[]) => {
+  const xs = ns.filter((n): n is number => n !== undefined);
+  return xs.length ? Math.min(...xs) : undefined;
 };
 
 const max = (ns: (number | undefined)[]) => {
@@ -114,16 +143,24 @@ export const sessionVolume = (s: Pick<LogSession, 'sets'>): number | undefined =
 const topLoad = (s: Pick<LogSession, 'sets'>) => max(s.sets.map(x => (loaded(x) ? x.load : undefined)));
 
 /**
- * The session's best set in the chart's terms: estimated 1RM, top load, most reps, or rounds.
+ * The session's best set in the chart's terms: estimated 1RM, top load, most reps, fastest pace
+ * (seconds per `per` metres, lower is better), most metres, most calories, longest time, or rounds.
  * A strength session whose sets were all above 10 reps has no estimate, so its point falls back
  * to the top load — a lower number on the same line, rather than a gap.
  */
-export const sessionBest = (s: Pick<LogSession, 'sets'>, kind: LogKind): number | undefined => {
+export const sessionBest = (s: Pick<LogSession, 'sets'>, kind: LogKind, per = 1000): number | undefined => {
   if (kind === 'strength') return max(s.sets.map(e1rm)) ?? topLoad(s);
   if (kind === 'load') return max(s.sets.map(x => (loaded(x) ? x.load : undefined)));
   if (kind === 'reps') return max(s.sets.map(x => (counted(x) ? x.reps : undefined)));
+  if (kind === 'pace') return min(s.sets.map(x => paceOf(x, per)));
+  if (kind === 'distance') return max(s.sets.map(x => (distanced(x) ? x.meters : undefined)));
+  if (kind === 'calories') return max(s.sets.map(x => (burned(x) ? x.calories : undefined)));
+  if (kind === 'time') return max(s.sets.map(x => (held(x) ? x.seconds : undefined)));
   return s.sets.filter(isWorking).length || undefined;
 };
+
+/** Lower is better on the chart: pace. */
+export const lowerIsBetter = (k: LogKind) => k === 'pace';
 
 export interface ChartPoint {
   at: string;
@@ -131,11 +168,11 @@ export interface ChartPoint {
 }
 
 /** One point per session, oldest first — what the chart draws. */
-export const chartPoints = (history: LogSession[], kind: LogKind = kindOf(history)): ChartPoint[] =>
+export const chartPoints = (history: LogSession[], kind: LogKind = kindOf(history), per = 1000): ChartPoint[] =>
   [...history]
     .sort((a, b) => a.startedAt.localeCompare(b.startedAt))
     .flatMap(s => {
-      const value = sessionBest(s, kind);
+      const value = sessionBest(s, kind, per);
       return value === undefined ? [] : [{ at: s.startedAt, value }];
     });
 
@@ -145,12 +182,31 @@ const empty = (kind: LogKind): Records => ({ kind, sessions: 0 });
 const better = (cur: Rec | undefined, value: number | undefined, at: string, set?: SetResult): Rec | undefined =>
   value !== undefined && (!cur || value > cur.value) ? { value, at, ...(set ? { set } : {}) } : cur;
 
-const addSet = (r: Records, x: SetResult, at: string): Records => ({
-  ...r,
-  heaviest: better(r.heaviest, loaded(x) ? x.load : undefined, at, x),
-  e1rm: better(r.e1rm, e1rm(x), at, x),
-  reps: better(r.reps, counted(x) ? x.reps : undefined, at, x),
-});
+/** The same for a time, where lower wins. */
+const faster = (cur: Rec | undefined, value: number | undefined, at: string, set?: SetResult): Rec | undefined =>
+  value !== undefined && (!cur || value < cur.value) ? { value, at, ...(set ? { set } : {}) } : cur;
+
+/** A distance as a record key: whole metres. */
+const distKey = (m: number) => String(Math.round(m));
+
+const addSet = (r: Records, x: SetResult, at: string): Records => {
+  const out: Records = {
+    ...r,
+    heaviest: better(r.heaviest, loaded(x) ? x.load : undefined, at, x),
+    e1rm: better(r.e1rm, e1rm(x), at, x),
+    reps: better(r.reps, counted(x) ? x.reps : undefined, at, x),
+    longest: better(r.longest, held(x) ? x.seconds : undefined, at, x),
+    distance: better(r.distance, distanced(x) ? x.meters : undefined, at, x),
+    calories: better(r.calories, burned(x) ? x.calories : undefined, at, x),
+  };
+  if (distanced(x) && timed(x)) {
+    const k = distKey(x.meters!);
+    const f = faster(r.fastest?.[k], x.seconds, at, x);
+    if (f !== r.fastest?.[k]) out.fastest = { ...r.fastest, [k]: f! };
+  }
+  for (const k of ['longest', 'distance', 'calories', 'fastest'] as const) if (out[k] === undefined) delete out[k];
+  return out;
+};
 
 const addSession = (r: Records, s: LogSession): Records => ({ ...r, sessions: r.sessions + 1, volume: better(r.volume, sessionVolume(s), s.startedAt) });
 
@@ -168,15 +224,22 @@ export const records = (results: SessionResult[], exerciseKey: string): Records 
 /**
  * Does this set beat a record standing before it. A loaded set: a heavier load or a better
  * estimated 1RM — more reps at a light weight is not a PR. An unloaded (bodyweight) set: more
- * reps. Only an existing record can be beaten, so the first time an exercise is done is not a PR,
- * and a tie is not one either.
+ * reps. A distance: a faster time over the same distance, or further than ever. Calories: more.
+ * A hold or an interval: longer. Only an existing record can be beaten, so the first time an
+ * exercise is done is not a PR, and a tie is not one either.
  */
 export const isRecord = (x: SetResult, before: Records): boolean => {
   if (loaded(x)) {
     const e = e1rm(x);
     return (!!before.heaviest && x.load! > before.heaviest.value) || (e !== undefined && !!before.e1rm && e > before.e1rm.value);
   }
-  return counted(x) && !!before.reps && x.reps! > before.reps.value;
+  if (counted(x)) return !!before.reps && x.reps! > before.reps.value;
+  if (distanced(x)) {
+    const f = timed(x) ? before.fastest?.[distKey(x.meters!)] : undefined;
+    return (!!f && x.seconds! < f.value) || (!!before.distance && x.meters! > before.distance.value);
+  }
+  if (burned(x)) return !!before.calories && x.calories! > before.calories.value;
+  return held(x) && !!before.longest && x.seconds! > before.longest.value;
 };
 
 export interface LoggedExercise {
@@ -200,12 +263,23 @@ export const loggedExercises = (results: SessionResult[]): LoggedExercise[] => {
 
 const num = (n: number) => (Number.isInteger(n) ? `${n}` : `${Math.round(n * 10) / 10}`);
 
-/** "100 × 5", "14.5 kph", "12 reps", or "" for a round with nothing counted. */
+/** A time worked: "45 s" under a minute, "1:05" from one. */
+export const fmtDur = (sec: number) => {
+  const t = Math.round(sec);
+  return t < 60 ? `${t} s` : `${Math.floor(t / 60)}:${String(t % 60).padStart(2, '0')}`;
+};
+
+/** "100 × 5", "14.5 kph", "12 reps", "500 m in 1:41", "20 cal", "1:00", or "" for a round with
+ * nothing counted. A load or reps with a time adds it: "24 kg · 40 s". */
 export const setLabel = (x: SetResult, unit = ''): string => {
-  if (x.load !== undefined && x.reps !== undefined) return `${num(x.load)} × ${num(x.reps)}`;
-  if (x.load !== undefined) return `${num(x.load)}${unit ? ` ${unit}` : ''}`;
-  if (x.reps !== undefined) return `${num(x.reps)} reps`;
-  return '';
+  const time = x.seconds !== undefined && x.seconds > 0 ? fmtDur(x.seconds) : '';
+  if (x.meters !== undefined) return `${num(x.meters)} m${time ? ` in ${time}` : ''}`;
+  if (x.calories !== undefined) return `${num(x.calories)} cal${time ? ` in ${time}` : ''}`;
+  let base = '';
+  if (x.load !== undefined && x.reps !== undefined) base = `${num(x.load)} × ${num(x.reps)}`;
+  else if (x.load !== undefined) base = `${num(x.load)}${unit ? ` ${unit}` : ''}`;
+  else if (x.reps !== undefined) base = `${num(x.reps)} reps`;
+  return base && time ? `${base} · ${time}` : base || time;
 };
 
 export { num as fmtNum };
@@ -230,7 +304,7 @@ export const sessionPRs = (result: SessionResult, all: SessionResult[]): Session
     const mine = exerciseHistory(upTo, key).find(s => s.startedAt === result.startedAt && s.runsheetId === result.runsheetId);
     const prs = mine ? mine.sets.filter((_, i) => mine.prs[i]) : [];
     if (!prs.length) continue;
-    const score = (x: SetResult) => e1rm(x) ?? x.load ?? x.reps ?? 0;
+    const score = (x: SetResult) => e1rm(x) ?? x.load ?? x.reps ?? x.meters ?? x.calories ?? x.seconds ?? 0;
     out.push({ exerciseKey: key, set: prs.reduce((a, b) => (score(b) > score(a) ? b : a)) });
   }
   return out;

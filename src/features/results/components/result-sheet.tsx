@@ -19,6 +19,8 @@ import { shareCardData } from '../share-card';
 import { CelebrationCard } from './celebration-card';
 import { EffortRow } from './effort-row';
 import { ShareCardSheet } from './share-card-sheet';
+import { SplitsCard } from './splits-card';
+import { withRowLoad } from '../edit-sets';
 
 export interface ResultSheetProps {
   runsheet: Runsheet;
@@ -86,6 +88,7 @@ export const ResultSheet = ({ runsheet, history = [], allResults = history, trai
   const next = useMemo(() => nextLoads(runsheet, result, history, trainingMaxes, equipment), [runsheet, result, history, trainingMaxes, equipment]);
   // Targets from history for what the programme rules do not move: the score, loads, reps.
   const targets = useMemo(() => nextTime(runsheet, result, history, intent, next.map(n => n.exerciseKey), equipment), [runsheet, result, history, intent, next, equipment]);
+  const blockName = (id: string) => runsheet.items.flatMap(i => (i.kind === 'block' && i.id === id ? [i.name] : []))[0];
   const set = (id: string, patch: Partial<StepResult>) => setRows(r => ({ ...r, [id]: { ...r[id], ...patch } }));
   const seen = new Set<string>();
 
@@ -98,7 +101,8 @@ export const ResultSheet = ({ runsheet, history = [], allResults = history, trai
         {type !== 'none' && <ScoreEntry type={type} value={score} onChange={setScore} className="mt-3" />}
       </header>
       <div className="min-h-0 flex-1 space-y-2 overflow-y-auto px-3 py-3">
-        <CelebrationCard celebration={celebration} scoreType={type} exercise={exerciseName} onShare={() => setSharing(true)} />
+        <CelebrationCard celebration={celebration} scoreType={type} exercise={exerciseName} blockName={blockName} onShare={() => setSharing(true)} />
+        <SplitsCard result={result} last={celebration.last} blockName={blockName} records={celebration.rounds} />
         <EffortRow value={rpe} onChange={setRpe} />
         <SessionStats result={result} worked={workedFrom(result, runsheet, k => ({ name: LIB[k]?.name ?? k, group: LIB[k]?.group }))} history={history} bodyweightKg={bodyweightKg} />
         {onBodyweight && bodyweightKg === undefined && <BodyweightPrompt onSave={kg => onBodyweight(kg)} onSkip={() => onBodyweight(undefined)} />}
@@ -119,7 +123,7 @@ export const ResultSheet = ({ runsheet, history = [], allResults = history, trai
                     {s.targetPct ? ` · ${s.targetPct}% TM` : ''}
                   </div>
                 </div>
-                {s.exercise.unit && s.exercise.unit !== 'reps' && <Stepper size="sm" aria-label="Load used" value={row.target ?? 0} step={s.exercise.step} onChange={t => set(s.id, { target: t })} />}
+                {s.exercise.unit && s.exercise.unit !== 'reps' && <Stepper size="sm" aria-label="Load used" value={row.target ?? 0} step={s.exercise.step} onChange={t => setRows(r => ({ ...r, [s.id]: withRowLoad(r[s.id], t) }))} />}
               </div>
               {(hasRule(s) || logsReps) && (
                 <div className="mt-2 flex items-center justify-between gap-2">

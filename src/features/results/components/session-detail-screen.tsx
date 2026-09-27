@@ -1,4 +1,4 @@
-import { ChevronLeft, ChevronRight, Copy, HeartPulse, Share2, Trash2 } from 'lucide-react';
+import { Check, ChevronLeft, ChevronRight, Copy, HeartPulse, Pencil, Share2, Trash2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { Button } from '@/shared/components/ui/button';
 import { Chip } from '@/shared/components/ui/chip';
@@ -14,6 +14,11 @@ import { celebrate } from '../celebrate';
 import { shareCardData } from '../share-card';
 import { EffortRow } from './effort-row';
 import { ShareCardSheet } from './share-card-sheet';
+import { editSet, rowKey } from '../edit-sets';
+import { setLabel, setsOf } from '../logbook';
+import { roundPRs } from '../rounds';
+import { LoggedSets } from './logged-sets';
+import { SplitsCard } from './splits-card';
 
 export interface SessionDetailScreenProps {
   result: SessionResult;
@@ -46,6 +51,7 @@ const hr = (d: Record<string, unknown>) => {
 export const SessionDetailScreen = ({ result: r, runsheet, exercise, loadDevice, onBack, onChange, onDelete, onRepeat, history = [], bodyweightKg, onExercise }: SessionDetailScreenProps) => {
   const [device, setDevice] = useState<ReturnType<typeof hr>[] | null>(null);
   const [sharing, setSharing] = useState(false);
+  const [editing, setEditing] = useState(false);
   useEffect(() => {
     let alive = true;
     loadDevice?.().then(rows => alive && setDevice(rows.map(x => hr(x.data)))).catch(() => alive && setDevice([]));
@@ -55,7 +61,10 @@ export const SessionDetailScreen = ({ result: r, runsheet, exercise, loadDevice,
   }, [loadDevice]);
   const type = runsheet ? scoreType(runsheet) : 'none';
   const dur = r.durationSec ?? (r.activity ? r.activity.minutes * 60 : undefined);
-  const text = [`${r.title ?? r.runsheetId} · ${r.startedAt.slice(0, 16).replace('T', ' ')}`, r.scoreText ? `Score: ${r.scoreText}` : '', dur ? `Duration: ${Math.round(dur / 60)} min` : '', ...r.steps.map(s => `- ${exercise(s.exerciseKey).name}: ${s.target !== undefined ? `${s.target} ${exercise(s.exerciseKey).unit}` : ''}${s.incline !== undefined ? `, incline ${s.incline}` : ''}${s.reps?.length ? ` × ${s.reps.join(', ')} reps` : ''}`), r.rpe ? `Effort: ${r.rpe}/10` : '', r.notes ? `Notes: ${r.notes}` : ''].filter(Boolean).join('\n');
+  const text = [`${r.title ?? r.runsheetId} · ${r.startedAt.slice(0, 16).replace('T', ' ')}`, r.scoreText ? `Score: ${r.scoreText}` : '', dur ? `Duration: ${Math.round(dur / 60)} min` : '', ...r.steps.map(s => `- ${exercise(s.exerciseKey).name}: ${setsOf(s).map(x => setLabel(x, exercise(s.exerciseKey).unit)).filter(Boolean).join(', ')}${s.incline !== undefined ? `, incline ${s.incline}` : ''}`), r.rpe ? `Effort: ${r.rpe}/10` : '', r.notes ? `Notes: ${r.notes}` : ''].filter(Boolean).join('\n');
+  // The last time this workout was done, for the round times; and the block names they are under.
+  const last = r.activity ? undefined : history.filter(x => x.runsheetId === r.runsheetId && !x.activity && x.startedAt < r.startedAt && x.id !== r.id).sort((a, b) => b.startedAt.localeCompare(a.startedAt))[0];
+  const blockName = (id: string) => runsheet?.items.flatMap(i => (i.kind === 'block' && i.id === id ? [i.name] : []))[0];
   return (
     <div className="flex h-full min-h-0 flex-col bg-canvas">
       <header className="safe-top shrink-0 bg-surface px-4 pt-2 pb-3">
@@ -88,25 +97,34 @@ export const SessionDetailScreen = ({ result: r, runsheet, exercise, loadDevice,
             </span>
           </div>
         )}
+        <SplitsCard result={r} last={last} blockName={blockName} records={roundPRs(r, history)} />
         {r.steps.length > 0 && (
-          <div className="overflow-hidden rounded-card border border-line bg-surface [&>*+*]:border-t [&>*+*]:border-line-soft">
-            {r.steps.map(s => {
-              const ex = exercise(s.exerciseKey);
-              const Row = onExercise ? 'button' : 'div';
-              return (
-                <Row key={`${s.stepId}|${s.exerciseKey}`} {...(onExercise ? { type: 'button' as const, onClick: () => onExercise(s.exerciseKey) } : {})} className="flex w-full items-center gap-2.5 px-3 py-2 text-left">
-                  <ClipThumb size="sm" clip={ex.clip} poster={ex.poster} icon={ex.icon ?? '🏋️'} />
-                  <div className="min-w-0 flex-1 truncate text-[14px] font-semibold">{ex.name}</div>
-                  <div className="text-[13px] tabular-nums">
-                    {s.target !== undefined && ex.unit && ex.unit !== 'reps' ? `${s.target} ${ex.unit}` : ''}
-                    {s.reps?.length ? `${s.target !== undefined && ex.unit && ex.unit !== 'reps' ? ' · ' : ''}${s.reps.join(', ')} reps` : ''}
+          <section aria-label="Sets" className="overflow-hidden rounded-card border border-line bg-surface">
+            <div className="flex items-center justify-between border-b border-line-soft px-3 py-1.5">
+              <span className="text-[11px] font-bold tracking-widest text-muted uppercase">Sets</span>
+              <Button variant="quiet" size="inline" onClick={() => setEditing(e => !e)} aria-pressed={editing}>
+                {editing ? <Check /> : <Pencil />} {editing ? 'Done' : 'Edit sets'}
+              </Button>
+            </div>
+            <div className="[&>*+*]:border-t [&>*+*]:border-line-soft">
+              {r.steps.map(s => {
+                const ex = exercise(s.exerciseKey);
+                const Head = onExercise && !editing ? 'button' : 'div';
+                return (
+                  <div key={rowKey(s)} className="px-3 py-2">
+                    <Head {...(onExercise && !editing ? { type: 'button' as const, onClick: () => onExercise(s.exerciseKey) } : {})} className="flex w-full items-center gap-2.5 pb-1.5 text-left">
+                      <ClipThumb size="sm" clip={ex.clip} poster={ex.poster} icon={ex.icon ?? '🏋️'} />
+                      <div className="min-w-0 flex-1 truncate text-[14px] font-semibold">{ex.name}</div>
+                      {s.incline !== undefined && <span className="text-[12px] text-muted">incline {s.incline}</span>}
+                      {s.success === false && <Chip size="sm" variant="danger">missed</Chip>}
+                      {onExercise && !editing && <ChevronRight className="size-4 shrink-0 text-faint" />}
+                    </Head>
+                    <LoggedSets row={s} exercise={ex} editing={editing} onEdit={(i, patch) => onChange({ steps: editSet(r, rowKey(s), i, patch).steps })} />
                   </div>
-                  {s.success === false && <Chip size="sm" variant="danger">missed</Chip>}
-                  {onExercise && <ChevronRight className="size-4 shrink-0 text-faint" />}
-                </Row>
-              );
-            })}
-          </div>
+                );
+              })}
+            </div>
+          </section>
         )}
         <EffortRow value={r.rpe} onChange={rpe => onChange({ rpe })} />
         <textarea value={r.notes ?? ''} onChange={e => onChange({ notes: e.target.value || undefined })} placeholder="Notes" rows={3} className="w-full rounded-card border border-line bg-surface px-3 py-2 text-[16px] outline-none focus:border-hint" />

@@ -5,7 +5,7 @@ import { ClipThumb } from '@/shared/components/ui/clip-thumb';
 import { Sheet } from '@/shared/components/ui/sheet';
 import { Stepper } from '@/shared/components/ui/stepper';
 import { cn, fmtClock, fmtNum } from '@/shared/utils/ui-utils';
-import { countLabel, forLabel, nextSetType, setMarks, shortUnit, showsLoad, straightSetStep, type Block, type ExerciseStep, type Item, type Runsheet, type SetType } from '@/features/runsheet/model';
+import { countLabel, forLabel, measureOf, nextSetType, setMarks, shortUnit, showsLoad, straightSetStep, type Block, type ExerciseStep, type Item, type Runsheet, type SetType } from '@/features/runsheet/model';
 import { kitOf, type Equipment } from '@/features/runsheet/plates';
 import { PlatesButton } from '@/features/runsheet/components/plate-sheet';
 import { SetMark } from '@/features/runsheet/components/set-grid';
@@ -27,6 +27,8 @@ export interface TimerScreenProps {
   onAdjust: (target: number) => void;
   onAdjustIncline?: (incline: number) => void;
   onSetReps: (reps: number) => void;
+  /** Metres or calories done on a distance or calorie step, when not the plan's. */
+  onSetAmount?: (value: number) => void;
   onDrop: (stepId: string) => void;
   onStartBlock?: () => void;
   /** Change a step from the overview, before it comes round. Applies to the rest of the session. */
@@ -54,6 +56,8 @@ export interface TimerScreenProps {
 export interface SetActions {
   adjust: (slotId: string, target: number) => void;
   setReps: (slotId: string, reps: number) => void;
+  /** Metres or calories for a distance or calorie set. */
+  setAmount?: (slotId: string, value: number) => void;
   /** The tick: Done on the running set, a late log on one passed without a tick. */
   complete: (slotId: string) => void;
   /** Un-tick a done set so its weight can be put right. */
@@ -77,12 +81,15 @@ const TimerSetGrid = ({ state, step, blockId, actions, equipment }: { state: R.R
   const [open, setOpen] = useState<string | null>(null);
   const editing = open ?? on;
   // A load given as a % of a training max or × bodyweight shows once it is resolved into target.
-  const hasLoad = showsLoad(step);
+  const hasLoad = showsLoad(step) && !measureOf(step.exercise.unit);
   const barbell = hasLoad && kitOf(step.exercise) === 'barbell';
   const types = rows.map(x => R.typeAt(state, x.idx));
   const marks = setMarks(types);
   const count = countLabel(step.forMode);
   const unit = shortUnit(step.exercise.unit);
+  // A distance or calorie set counts its metres or calories; a timed one shows the time it ran once done.
+  const amount = step.forMode === 'meters' || step.forMode === 'calories';
+  const clocked = step.forMode === 'seconds' || step.forMode === 'minutes';
   return (
     <div className="rounded-card bg-white p-3 text-ink" aria-label="Sets">
       <div className="flex items-center gap-3 pb-2">
@@ -103,7 +110,7 @@ const TimerSetGrid = ({ state, step, blockId, actions, equipment }: { state: R.R
         const done = a?.doneAt !== undefined;
         const current = sl.id === on;
         const load = R.effectiveTarget(state, idx);
-        const reps = a?.reps ?? (sl.step.kind === 'exercise' ? sl.step.forValue : 0);
+        const reps = amount ? (R.amountAt(state, sl) ?? 0) : clocked && done && a?.seconds !== undefined ? (step.forMode === 'minutes' ? a.seconds / 60 : a.seconds) : (a?.reps ?? (sl.step.kind === 'exercise' ? sl.step.forValue : 0));
         const edit = !done && sl.id === editing;
         const live = state.phase === 'running' || state.phase === 'paused';
         const canTick = done || idx < state.i || (live && (idx === state.i || (current && state.slots.slice(state.i, idx).every(x => x.kind === 'rest'))));
@@ -127,7 +134,11 @@ const TimerSetGrid = ({ state, step, blockId, actions, equipment }: { state: R.R
               )}
               {count && (
                 <div className="flex-1">
-                  {edit ? <Stepper size="sm" aria-label={`Set ${n + 1} ${count.toLowerCase()}`} value={reps} min={0} max={999} onChange={v => actions.setReps(sl.id, v)} /> : <span className="text-[16px] font-bold tabular-nums">{fmtNum(reps)}</span>}
+                  {edit && !clocked && (!amount || actions.setAmount) ? (
+                    <Stepper size="sm" aria-label={`Set ${n + 1} ${count.toLowerCase()}`} value={reps} min={0} max={amount ? 99999 : 999} step={step.forMode === 'meters' ? 10 : 1} onChange={v => (amount ? actions.setAmount!(sl.id, v) : actions.setReps(sl.id, v))} />
+                  ) : (
+                    <span className="text-[16px] font-bold tabular-nums">{fmtNum(Math.round(reps * 10) / 10)}</span>
+                  )}
                 </div>
               )}
               <button
@@ -180,7 +191,7 @@ const stepLine = (s: ExerciseStep) => [forLabel(s), s.target !== undefined ? `${
  * a ⋯ menu (previous, overview, stop), Pause and Skip/Done at equal size. Tap the Next row to see
  * what the coming block asks for; the overview sheet lists every part with progress.
  */
-export const TimerScreen = ({ runsheet, state, now, onDone, onSkip, onBack, onPause, onResume, onAdjust, onAdjustIncline, onSetReps, onDrop, onStartBlock, onAdjustStep, sets, onAdjustRest, lastFor, onFill, ghost, goal, muted, onToggleMute, equipment, onFinish, onExit }: TimerScreenProps) => {
+export const TimerScreen = ({ runsheet, state, now, onDone, onSkip, onBack, onPause, onResume, onAdjust, onAdjustIncline, onSetReps, onSetAmount, onDrop, onStartBlock, onAdjustStep, sets, onAdjustRest, lastFor, onFill, ghost, goal, muted, onToggleMute, equipment, onFinish, onExit }: TimerScreenProps) => {
   const [confirmExit, setConfirmExit] = useState(false);
   const [menu, setMenu] = useState(false);
   const [overview, setOverview] = useState(false);
@@ -202,6 +213,10 @@ export const TimerScreen = ({ runsheet, state, now, onDone, onSkip, onBack, onPa
   const reps = slot && stepOf?.kind === 'exercise' ? (state.actuals[slot.id]?.reps ?? (stepOf.forMode === 'reps' || stepOf.forMode === 'amrap' ? stepOf.forValue : 0)) : 0;
   const isRest = slot?.kind === 'rest';
   const timed = clock.left !== undefined;
+  // Timed work ends with Done early, which logs the time it ran; a rest or the lead-in is skipped.
+  const timedWork = timed && !isRest && !lead && slot?.kind === 'work' && R.timesWork(slot);
+  const amountField = slot ? R.amountField(slot) : undefined;
+  const amount = slot && amountField ? R.amountAt(state, slot) : undefined;
   const bigNumber = done ? fmtClock(total) : lead ? String(Math.ceil(clock.left ?? 0)) : timed ? fmtClock(clock.left ?? 0) : fmtClock(clock.spent);
   const progress = slot?.seconds && clock.left !== undefined ? 1 - clock.left / slot.seconds : 0;
   const all = R.overall(state, now);
@@ -346,7 +361,7 @@ export const TimerScreen = ({ runsheet, state, now, onDone, onSkip, onBack, onPa
                   </div>
                   {stepOf?.kind === 'exercise' && (
                     <div className="mt-3 space-y-2">
-                      {stepOf.exercise.unit && stepOf.exercise.unit !== 'reps' && (
+                      {stepOf.exercise.unit && stepOf.exercise.unit !== 'reps' && !measureOf(stepOf.exercise.unit) && (
                         <div className="flex items-center justify-between gap-3">
                           <span className="text-[14px]">
                             {stepOf.exercise.unit === 'kph' ? 'Speed' : 'Weight'} <span className="text-muted">({shortUnit(stepOf.exercise.unit)})</span>
@@ -367,6 +382,12 @@ export const TimerScreen = ({ runsheet, state, now, onDone, onSkip, onBack, onPa
                         <div className="flex items-center justify-between gap-3">
                           <span className="text-[14px]">Reps done</span>
                           <Stepper aria-label="Reps" value={reps} min={0} max={500} onChange={onSetReps} />
+                        </div>
+                      )}
+                      {amountField && onSetAmount && (
+                        <div className="flex items-center justify-between gap-3">
+                          <span className="text-[14px]">{amountField === 'meters' ? 'Metres done' : 'Calories done'}</span>
+                          <Stepper aria-label={amountField === 'meters' ? 'Metres' : 'Calories'} value={amount ?? 0} min={0} max={99999} step={amountField === 'meters' ? 10 : 1} onChange={onSetAmount} />
                         </div>
                       )}
                       {state.actuals[slot.id]?.changes.length ? <div className="text-[11px] text-muted">Changed: {state.actuals[slot.id].changes.map(c => `${fmtNum(c.target)} at ${c.atSec}s`).join(', ')}</div> : null}
@@ -430,7 +451,11 @@ export const TimerScreen = ({ runsheet, state, now, onDone, onSkip, onBack, onPa
             <Button block size="xl" variant="dark" onClick={paused ? onResume : onPause} className={cn('bg-white/10', paused && 'bg-white text-ink')}>
               {paused ? <Play /> : <Pause />} {paused ? 'Resume' : 'Pause'}
             </Button>
-            {timed || lead ? (
+            {timedWork ? (
+              <Button block size="xl" variant="ghost" onClick={onDone} className="border-white/20 bg-white/10 text-white">
+                <Check /> Done early
+              </Button>
+            ) : timed || lead ? (
               <Button block size="xl" variant="ghost" onClick={onSkip} className="border-white/20 bg-white/10 text-white">
                 <SkipForward /> Skip{isRest ? ' rest' : ''}
               </Button>
@@ -449,7 +474,7 @@ export const TimerScreen = ({ runsheet, state, now, onDone, onSkip, onBack, onPa
           <Button block variant="ghost" onClick={() => (setMenu(false), onBack())}>
             <ChevronLeft /> Previous step
           </Button>
-          {!timed && !lead && !ready && (
+          {(!timed || timedWork) && !lead && !ready && (
             <Button block variant="ghost" onClick={() => (setMenu(false), onSkip())}>
               <SkipForward /> Skip this step
             </Button>
