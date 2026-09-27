@@ -7,6 +7,7 @@ import SwiftUI
 struct ExerciseHistoryView: View {
     @Environment(Store.self) private var store
     let exerciseKey: String
+    @State private var dismissedStalls = StallDismissals.all()
 
     private var ref: ExerciseRef { Library.shared.exercise(exerciseKey)?.ref ?? .placeholder(key: exerciseKey) }
     private var unit: String {
@@ -30,6 +31,12 @@ struct ExerciseHistoryView: View {
                         .padding(.top, 24)
                 } else {
                     chart(points, kind: records.kind)
+                    if let stall = Stall.exercise(store.results, key: exerciseKey), !dismissedStalls.contains(stall.id) {
+                        StallCard(stall: stall) {
+                            StallDismissals.dismiss(stall.id)
+                            dismissedStalls = StallDismissals.all()
+                        }
+                    }
                     LazyVGrid(columns: [GridItem(.flexible(), spacing: 10), GridItem(.flexible(), spacing: 10)], spacing: 10) {
                         ForEach(tiles(records, last: history.first?.startedAt), id: \.label) { tile($0) }
                     }

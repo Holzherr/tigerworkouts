@@ -191,6 +191,7 @@ struct SettingsView: View {
     @AppStorage(Switches.liveActivity) private var liveActivity = true
     @AppStorage(Switches.defaultRest) private var defaultRest = 30.0
     @AppStorage("health") private var health = false
+    @AppStorage(Intent.storageKey) private var intent = Intent.maintain.rawValue
     @State private var signingIn = false
     @State private var healthError: String?
 
@@ -234,6 +235,18 @@ struct SettingsView: View {
                 Text("In the gym")
             } footer: {
                 Text("Every change of exercise, rest or block. Tones still play with the phone locked; the buzz works while Tiger is open. Default rest is what a rest added in the editor starts at.")
+            }
+
+            Section {
+                Picker("Suggestions", selection: $intent) {
+                    ForEach(Intent.allCases) { Text($0.label).tag($0.rawValue) }
+                }
+                .pickerStyle(.segmented)
+                .accessibilityIdentifier("intent")
+            } header: {
+                Text("Suggestions")
+            } footer: {
+                Text("\((Intent(rawValue: intent) ?? .maintain).note) Sets the Today targets and Next time. Ignoring a suggestion costs nothing.")
             }
 
             Section {

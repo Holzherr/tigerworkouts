@@ -18,6 +18,8 @@ struct WorkoutDetailView: View {
     @State private var confirmDelete = false
     @State private var seeded = false
     @State private var pendingSave: Task<Void, Never>?
+    @AppStorage(Intent.storageKey) private var intent = Intent.maintain.rawValue
+    @State private var dismissedStalls = StallDismissals.all()
 
     private var saved: Bool { store.saved.contains(runsheet.key) }
     private var editable: Bool { isNew || store.isMine(runsheet) }
@@ -38,6 +40,7 @@ struct WorkoutDetailView: View {
             Section {
                 if runnable {
                     header
+                    progress
                 } else if !runsheet.title.isEmpty {
                     Text(runsheet.title)
                         .font(.system(size: 26, weight: .heavy))
@@ -219,6 +222,20 @@ struct WorkoutDetailView: View {
             }
         }
         .padding(.bottom, 4)
+    }
+
+    /// Today's target and, when the workout's score has stood still, its stall. Nothing on a first run.
+    @ViewBuilder
+    private var progress: some View {
+        if let today = Targets.today(runsheet, results: store.results, intent: Intent(rawValue: intent) ?? .maintain) {
+            TodayLine(today: today)
+        }
+        if let stall = Stall.workout(runsheet, results: store.results), !dismissedStalls.contains(stall.id) {
+            StallCard(stall: stall) {
+                StallDismissals.dismiss(stall.id)
+                dismissedStalls = StallDismissals.all()
+            }
+        }
     }
 
     /// "Benchmark · CrossFit", "Program · StrongLifts · Day A" — what it is, and whose.

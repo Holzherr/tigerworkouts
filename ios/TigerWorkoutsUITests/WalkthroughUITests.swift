@@ -523,6 +523,55 @@ final class WalkthroughUITests: XCTestCase {
         snap("29 Timed exercise history")
     }
 
+    /// Today's target and a stall, from seeded history: Jack at 7, 7 and 8 rounds, kettlebell swings
+    /// stuck at 24 kg × 10 for five weeks.
+    func testProgress() {
+        app.terminate()
+        app.launchArguments = ["-seedProgress"]
+        app.launch()
+        let discard = app.alerts.buttons["Discard"]
+        if discard.waitForExistence(timeout: 3) { discard.tap() }
+
+        XCTAssertTrue(app.descendants(matching: .any)["today-target"].waitForExistence(timeout: 10), "Up next should carry a Today target")
+        XCTAssertTrue(app.descendants(matching: .any)["stall-line"].exists, "a stalled exercise should get one line on Up next")
+        snap("50 Up next with Today and a stall")
+
+        // The stall line opens the exercise's logbook, where the two options are.
+        tap(app.descendants(matching: .any)["stall-line"])
+        XCTAssertTrue(app.descendants(matching: .any)["stall-card"].waitForExistence(timeout: 5), "the logbook should show the stall")
+        snap("51 Exercise logbook with a stall")
+        tap(app.navigationBars.buttons.element(boundBy: 0))
+
+        tap(app.buttons["up-next"])
+        XCTAssertTrue(app.descendants(matching: .any)["today-target"].waitForExistence(timeout: 5), "the workout page should carry the Today target")
+        snap("52 Workout page with Today")
+        tap(app.buttons["Start workout"])
+        let target = app.descendants(matching: .any)["target"]
+        let start = app.buttons.matching(NSPredicate(format: "label BEGINSWITH 'Start ' AND label != 'Start workout'")).firstMatch
+        for _ in 0..<20 where !target.exists {
+            if start.exists, start.isHittable { start.tap() } else if app.buttons["Done"].exists { app.buttons["Done"].tap() } else if app.buttons["Skip"].exists { app.buttons["Skip"].tap() }
+            _ = target.waitForExistence(timeout: 1)
+        }
+        XCTAssertTrue(target.exists, "the AMRAP should show today's target")
+        snap("53 Timer with today's target")
+        tap(app.buttons["End session"])
+        tap(app.buttons["Finish and save"])
+        let next = app.descendants(matching: .any)["next-time"]
+        for _ in 0..<4 where !(next.exists && next.isHittable) { app.swipeUp() }
+        snap("54 Finish with Next time")
+        tap(app.buttons["Done"])
+
+        // Settings: how hard the suggestions push.
+        tap(app.tabBars.buttons["Me"])
+        for _ in 0..<4 where !(app.buttons["Settings"].exists && app.buttons["Settings"].isHittable) { app.swipeUp() }
+        tap(app.buttons["Settings"])
+        let overreach = app.buttons["Overreach"]
+        for _ in 0..<6 where !(overreach.exists && overreach.isHittable) { app.swipeUp() }
+        app.swipeUp()
+        snap("55 Settings, suggestions")
+        tap(app.tabBars.buttons["Discover"].exists ? app.tabBars.buttons["Discover"] : app.tabBars.buttons.element(boundBy: 0))
+    }
+
     func testOwnExerciseAndExport() {
         app.terminate()
         app.launchArguments = ["-seedLogbook"]

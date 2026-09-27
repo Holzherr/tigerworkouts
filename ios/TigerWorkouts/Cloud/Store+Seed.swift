@@ -62,5 +62,30 @@ extension Store {
         let ids = Set(seed.compactMap(\.id))
         results = (results.filter { !ids.contains($0.rowId) } + seed).sorted { $0.startedAt > $1.startedAt }
     }
+
+    /// `-seedProgress` on launch: Jack (a 20-minute AMRAP) three times at 7, 7 and 8 rounds, the
+    /// newest a minute back so Up next picks it with a Today target, and kettlebell swings stuck at
+    /// 24 kg × 10 for five weeks — three sessions of their own plus the swings inside each Jack — so
+    /// the card has a stall line and the logbook a stall card. Fixed ids: launching with it again
+    /// replaces them.
+    func seedProgressIfAsked(_ arguments: [String] = ProcessInfo.processInfo.arguments) {
+        guard arguments.contains("-seedProgress") else { return }
+        let day: TimeInterval = 86_400
+        func ago(_ d: Double) -> String { ISO8601.string(Date().addingTimeInterval(-d * day)) }
+        func swings(_ n: Int) -> StepResult {
+            StepResult(stepId: "s2", exerciseKey: "kb_swing", target: 24, reps: Array(repeating: 10, count: n), success: true,
+                       sets: Array(repeating: SetResult(reps: 10, load: 24), count: n))
+        }
+        var seed: [SessionResult] = [35, 28, 21].map { d in
+            SessionResult(runsheetId: "seed-swings", title: "Swings", startedAt: ago(d), durationSec: 1_800, completed: true,
+                          steps: [swings(3)], id: "seed-progress-swings-\(Int(d))")
+        }
+        for (d, rounds) in [(14.0, 7.0), (7.0, 7.0), (60.0 / day, 8.0)] {
+            seed.append(SessionResult(runsheetId: "cf-hero-jack", title: "Jack", startedAt: ago(d), durationSec: 1_200, completed: true,
+                                      score: rounds, steps: [swings(Int(rounds))], id: "seed-progress-jack-\(Int(d))"))
+        }
+        let ids = Set(seed.compactMap(\.id))
+        results = (results.filter { !ids.contains($0.rowId) } + seed).sorted { $0.startedAt > $1.startedAt }
+    }
 }
 #endif

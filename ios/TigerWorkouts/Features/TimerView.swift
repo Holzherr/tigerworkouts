@@ -150,6 +150,18 @@ struct TimerView: View {
                     .accessibilityLabel("Against last time: \(ghost.text)")
                     .accessibilityIdentifier("ghost")
             }
+            if let target = runner.goal, runner.state.phase != .done {
+                // Today's target for this round or set, quieter than the race.
+                Text(target)
+                    .font(.footnote.weight(.semibold))
+                    .monospacedDigit()
+                    .foregroundStyle(Brand.Night.muted)
+                    .padding(.horizontal, 12)
+                    .frame(height: 24)
+                    .overlay(Capsule().strokeBorder(Brand.Night.line))
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .accessibilityIdentifier("target")
+            }
             GeometryReader { geo in
                 ZStack(alignment: .leading) {
                     Capsule().fill(Brand.Night.line)
@@ -730,6 +742,8 @@ struct TimerView: View {
                 .padding(.top, 24)
 
                 SessionStatsView(result: result, runsheet: runner.runsheet, history: store.results, bodyweightKg: store.bodyweightKg)
+
+                NextTimeView(runsheet: runner.runsheet, result: result, history: store.results)
 
                 if store.bodyweightKg == nil && !bodyweightAsked {
                     bodyweightAsk

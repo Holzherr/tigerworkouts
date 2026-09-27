@@ -23,6 +23,7 @@
 		2A6C2DD0A0F51FEDD7B70319 /* Muscles.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8FA46D7EF60541FEC8764F65 /* Muscles.swift */; };
 		2B60AB7BAD0FA3BD84166265 /* RunnerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 38611D00C12C8D5497FC0713 /* RunnerTests.swift */; };
 		36C3F06105915FAA4D145D1E /* AppIcon.svg in Resources */ = {isa = PBXBuildFile; fileRef = FCF7BF4830AD9ACF61791DA9 /* AppIcon.svg */; };
+		36DCCDF6A5E45F3B7DA316BA /* TargetViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = 75787AFCCADC17A96827F19A /* TargetViews.swift */; };
 		3D397F79C87164A71BD55C60 /* WorkoutDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BEBB7BC4CAC7E345AFA74D2B /* WorkoutDetailView.swift */; };
 		46FA540A333C9B330185E064 /* SignInView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5ED4A3BC17499CADDE7EF681 /* SignInView.swift */; };
 		481FF8F0A58CF7ADF422A7DF /* TigerWorkoutsWidgetsBundle.swift in Sources */ = {isa = PBXBuildFile; fileRef = EB44DFADFF676E278E9CE784 /* TigerWorkoutsWidgetsBundle.swift */; };
@@ -177,6 +178,7 @@
 		62CA4732B4B2A3F75FD14AF1 /* ExercisePickerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExercisePickerView.swift; sourceTree = "<group>"; };
 		699AC7356AFB42E1FBDBB705 /* ExerciseHistoryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExerciseHistoryView.swift; sourceTree = "<group>"; };
 		70A2BD32BBFA62B93E613882 /* DiscoverView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DiscoverView.swift; sourceTree = "<group>"; };
+		75787AFCCADC17A96827F19A /* TargetViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TargetViews.swift; sourceTree = "<group>"; };
 		781B4703341F053F08AE0613 /* Keychain.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Keychain.swift; sourceTree = "<group>"; };
 		87A0379EA6B428BEE7F68638 /* SessionLiveActivity.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionLiveActivity.swift; sourceTree = "<group>"; };
 		8BCB1B34E80BE522AEA8C7A3 /* TigerWorkouts.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = TigerWorkouts.entitlements; sourceTree = "<group>"; };
@@ -421,6 +423,7 @@
 				1E38F7FA144B053254278A46 /* SetGrid.swift */,
 				5ED4A3BC17499CADDE7EF681 /* SignInView.swift */,
 				DB29B220F1D0DA49508EF0DE /* StepEditorView.swift */,
+				75787AFCCADC17A96827F19A /* TargetViews.swift */,
 				B5D498E61C4056DA33C03731 /* TimerView.swift */,
 				BEBB7BC4CAC7E345AFA74D2B /* WorkoutDetailView.swift */,
 				AE20C98A55B3D5F64BE65F19 /* WorkoutIcon.swift */,
@@ -666,6 +669,7 @@
 				62458617B29ED7E87271BFC1 /* Store.swift in Sources */,
 				698125144849D984B6BEEE2D /* Supabase.swift in Sources */,
 				601B733D86F5A743E7A82AAB /* Switches.swift in Sources */,
+				36DCCDF6A5E45F3B7DA316BA /* TargetViews.swift in Sources */,
 				E1086487A0AD37810BFC5884 /* Targets.swift in Sources */,
 				01BB8AD0F33A985650943AC6 /* Theme.swift in Sources */,
 				CA84645AFB81CCB16FAF4619 /* TigerWorkoutsApp.swift in Sources */,

@@ -79,6 +79,13 @@ struct StallTests {
         #expect(s.options[0].title == "Do 5 sets of 12 for three weeks")
     }
 
+    @Test("bodyweight reps that never vary are a circuit's count, not a stall")
+    func prescribed() {
+        let pu = ExerciseRef(key: "bw_pushup", name: "Push-ups", unit: "", step: 1)
+        let same = [35.0, 28, 21, 14].map { Self.did($0, pu.key, [Self.x(nil, 10), Self.x(nil, 10)]) }
+        #expect(Stall.exercise(same, exercise: pu, now: Self.now) == nil)
+    }
+
     // MARK: workout stalls
 
     @Test("rounds that stopped going up get an even pace and a break")

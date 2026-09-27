@@ -24,6 +24,9 @@ final class SessionRunner {
     private(set) var rival: SessionResult? = nil
     /// "Round 4 — 12 s ahead", recomputed when the run changes, not on every tick.
     private(set) var ghost: Pace.Ghost? = nil
+    /// Today's target, read once from history at the start: the timer shows its part for the round
+    /// or set in hand, beside the race against last time.
+    private(set) var today: Targets.Today? = nil
     private var cuedSlot: String?
     private var cuedPhase: Phase?
     private var lastTick: Int?
@@ -42,6 +45,7 @@ final class SessionRunner {
             LastTime.sets(history, for: step).flatMap { $0.indices.contains(round) ? $0[round].reps : nil }
         }
         self.rival = Pace.lastTimed(history, runsheetId: runsheet.id ?? runsheet.title)
+        self.today = Targets.today(runsheet, results: history, intent: Intent.current())
     }
 
     /// Resume a session the app was killed in the middle of. It comes back paused at the moment
@@ -52,6 +56,7 @@ final class SessionRunner {
         self.runsheet = runsheet
         self.startedFrom = nil
         self.rival = Pace.lastTimed(history, runsheetId: runsheet.id ?? runsheet.title, excluding: SessionRunner.rowId(saved.state))
+        self.today = Targets.today(runsheet, results: history.filter { $0.id != SessionRunner.rowId(saved.state) }, intent: Intent.current())
         let at = saved.savedAt.timeIntervalSince1970 * 1000
         self.state = saved.state.phase == .running || saved.state.phase == .lead
             ? Runner.pause(saved.state, now: at)
@@ -449,6 +454,13 @@ final class SessionRunner {
         guard let ex = slot?.exercise, ex.countsReps else { return }
         setReps(max(0, (reps ?? ex.forValue) + (reps == nil ? 0 : direction)))
         Haptics.shared.play(.tick)
+    }
+
+    /// "Target 24 × 10", "Target 8+ · 1:15 a round": today's target where the timer is now.
+    var goal: String? {
+        // During a rest, what the next set or round is for.
+        guard let slot = slot?.kind == .rest ? state.slots.dropFirst(state.i + 1).first(where: { $0.kind == .work }) : slot else { return nil }
+        return Targets.timer(today, blockId: slot.blockId, stepId: slot.exercise?.id, round: slot.round, runsheet: runsheet)
     }
 
     func plannedTarget(_ stepId: String) -> Double? { Runner.plannedTarget(state, stepId: stepId) }

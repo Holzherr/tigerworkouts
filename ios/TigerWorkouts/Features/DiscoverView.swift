@@ -15,6 +15,9 @@ struct DiscoverView: View {
     /// A link that arrived before the catalogue was in — a cold launch from the Up next widget —
     /// opened once it is.
     @State private var pendingLink: String?
+    @AppStorage(Intent.storageKey) private var intent = Intent.maintain.rawValue
+    /// Read again whenever home shows, so a stall dismissed on its page drops off the card.
+    @State private var dismissedStalls = StallDismissals.all()
 
     /// A workout on the stack, with the list it was tapped in: the session it starts records that.
     struct Opened: Hashable {
@@ -108,6 +111,7 @@ struct DiscoverView: View {
                 .padding(.bottom, 40)
             }
             .background(Brand.canvas)
+            .onAppear { dismissedStalls = StallDismissals.all() }
             .scrollDismissesKeyboard(.immediately)
             .searchable(text: $query, prompt: "Workout, exercise or tag")
             .navigationTitle("Tiger")
@@ -203,6 +207,12 @@ struct DiscoverView: View {
                 .buttonStyle(.plain)
                 .accessibilityLabel("Start \(next.runsheet.title)")
             }
+            if let today = Targets.today(next.runsheet, results: store.results, intent: Intent(rawValue: intent) ?? .maintain) {
+                TodayLine(today: today)
+            }
+            if let stall = Stall.forCard(next.runsheet, results: store.results, dismissed: dismissedStalls) {
+                stallLine(stall, in: next.runsheet)
+            }
             Divider()
             HStack(spacing: 8) {
                 Image(systemName: "chart.line.uptrend.xyaxis").foregroundStyle(Brand.coral)
@@ -214,6 +224,32 @@ struct DiscoverView: View {
         .background(Brand.surface, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
         .overlay(RoundedRectangle(cornerRadius: 18, style: .continuous).strokeBorder(Brand.brandLine))
         .padding(.horizontal, 16)
+    }
+
+    /// One quiet line under Up next when something in it has stalled; the options are a tap away.
+    @ViewBuilder
+    private func stallLine(_ stall: Stall.Found, in runsheet: Runsheet) -> some View {
+        let name = stall.exerciseKey.flatMap { Library.shared.exercise($0)?.name } ?? runsheet.title
+        let label = HStack(spacing: 6) {
+            Image(systemName: "pause.circle").foregroundStyle(Brand.coralInk)
+            Text("\(name) · \(stall.line) · two options")
+                .font(.footnote)
+                .foregroundStyle(Brand.body)
+                .lineLimit(2)
+                .multilineTextAlignment(.leading)
+            Spacer(minLength: 0)
+            Image(systemName: "chevron.right").font(.caption2.weight(.bold)).foregroundStyle(Brand.faint)
+        }
+        .contentShape(Rectangle())
+        Group {
+            if let key = stall.exerciseKey {
+                NavigationLink { ExerciseHistoryView(exerciseKey: key) } label: { label }
+            } else {
+                Button { path = [Opened(key: runsheet.key, from: .home)] } label: { label }
+            }
+        }
+        .buttonStyle(.plain)
+        .accessibilityIdentifier("stall-line")
     }
 
     // MARK: - For you

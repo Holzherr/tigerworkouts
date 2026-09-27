@@ -101,6 +101,10 @@ enum Stall {
         }
         let bests = history.compactMap { s in pick(s.sets).map { (at: s.startedAt, best: $0) } }
         guard let p = plateau(bests.map { Point(at: $0.at, value: $0.best.value) }, now: now) else { return nil }
+        // Bodyweight reps that never vary are a prescribed count in a circuit (Cindy's 10 push-ups a
+        // round), not a max effort that stopped moving.
+        let window = history.filter { $0.startedAt >= p.since }.flatMap(\.sets).map(\.reps)
+        if kind == .reps, window.allSatisfy({ $0 == window.first ?? nil }) { return nil }
         let set = bests[p.index].best.set
         let unit = exercise.unit.replacingOccurrences(of: " per arm", with: "").replacingOccurrences(of: " per side", with: "").trimmingCharacters(in: .whitespaces)
         let u = unit.isEmpty ? "" : " \(unit)"
@@ -146,13 +150,15 @@ enum Stall {
     }
 
     /// The same, with the swap taken from the alternatives data: the first option for this exercise
-    /// at its standing best load.
+    /// that takes a load at its standing best, else the first option.
     static func exercise(_ results: [SessionResult], key: String, now: Date = Date()) -> Found? {
         let ref = Library.shared.exercise(key)?.ref ?? .placeholder(key: key)
         guard let plain = exercise(results, exercise: ref, now: now) else { return nil }
         let bestLoad = Logbook.history(results, exerciseKey: key).flatMap(\.sets).compactMap(\.load).max()
         let step = ExerciseStep(id: "stall", exercise: ref, target: bestLoad, forMode: .reps, forValue: 8)
-        guard let alt = Alternatives.options(for: step, limit: 1).first else { return plain }
+        // One that carries the load over first: a bench stall is better met by a machine than a dip.
+        let options = Alternatives.options(for: step, limit: 20)
+        guard let alt = options.first(where: { $0.target != nil }) ?? options.first else { return plain }
         let unit = alt.exercise.unit.replacingOccurrences(of: " per arm", with: "").replacingOccurrences(of: " per side", with: "").trimmingCharacters(in: .whitespaces)
         return exercise(results, exercise: ref, now: now, swap: Swap(key: alt.exercise.key, name: alt.exercise.name, target: alt.target, unit: unit.isEmpty ? nil : unit))
     }
