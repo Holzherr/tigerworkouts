@@ -18,6 +18,17 @@ describe('store', () => {
     expect(beats).toBe(1);
     stop();
   });
+
+  it('saving a result with an id already logged replaces it rather than adding a second', () => {
+    setState({ results: [] });
+    const act = useActions();
+    act.addResult({ id: 's-x-run', runsheetId: 'w', startedAt: '2026-09-27T10:00:00Z', steps: [] });
+    act.addResult({ id: 's-x-run', runsheetId: 'w', startedAt: '2026-09-27T10:00:00Z', steps: [], score: 7 });
+    // Read back from disk: that copy is what survives a reload.
+    const logged = JSON.parse(localStorage.getItem('workout-hub-next:v1')!).results;
+    expect(logged).toHaveLength(1);
+    expect(logged[0].score).toBe(7);
+  });
 });
 
 describe('the signed-in effect', () => {

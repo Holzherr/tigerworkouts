@@ -18,7 +18,10 @@ final class Cues {
         case tick, work, rest, block, finish
     }
 
-    private let engine = AVAudioEngine()
+    /// Built on the first `begin`, not at launch: the app (and every unit test that touches a
+    /// runner) should not bring up audio hardware until a session wants it. On a CI simulator with
+    /// no audio device, building it here hung the test host.
+    private lazy var engine: AVAudioEngine = makeEngine()
     private let tones = AVAudioPlayerNode()
     private let keepAlive = AVAudioPlayerNode()
     private lazy var format = AVAudioFormat(standardFormatWithSampleRate: 44_100, channels: 1)!
@@ -26,23 +29,27 @@ final class Cues {
     private var running = false
     var enabled = Switches.isOn(Switches.sound)
 
-    private init() {
+    private func makeEngine() -> AVAudioEngine {
+        let engine = AVAudioEngine()
         engine.attach(tones)
         engine.attach(keepAlive)
         engine.connect(tones, to: engine.mainMixerNode, format: format)
         engine.connect(keepAlive, to: engine.mainMixerNode, format: format)
+        NotificationCenter.default.addObserver(forName: .AVAudioEngineConfigurationChange, object: engine, queue: .main) { [weak self] _ in
+            MainActor.assumeIsolated { self?.reopen(after: "route change") }
+        }
+        return engine
+    }
 
+    private init() {
         // A phone call, Siri or an alarm stops the engine, and with it the silent loop that holds
         // the background slot: the timer would stop at screen lock, silently, for the rest of the
-        // session. Plugging in or pulling out headphones stops the engine too.
+        // session. Plugging in or pulling out headphones stops it too (observed in `makeEngine`).
         let center = NotificationCenter.default
         center.addObserver(forName: AVAudioSession.interruptionNotification, object: nil, queue: .main) { [weak self] note in
             let raw = note.userInfo?[AVAudioSessionInterruptionTypeKey] as? UInt
             let ended = raw.flatMap(AVAudioSession.InterruptionType.init) == .ended
             MainActor.assumeIsolated { self?.interrupted(ended: ended) }
-        }
-        center.addObserver(forName: .AVAudioEngineConfigurationChange, object: engine, queue: .main) { [weak self] _ in
-            MainActor.assumeIsolated { self?.reopen(after: "route change") }
         }
     }
 

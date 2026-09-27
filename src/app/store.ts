@@ -86,7 +86,12 @@ export const useAppState = () => useSyncExternalStore(subscribe, () => state);
 const ACTIONS = {
   saveWorkout: (r: Runsheet) => setState(s => ({ workouts: [r, ...s.workouts.filter(w => w.id !== r.id)] })),
   deleteWorkout: (id: string) => setState(s => ({ workouts: s.workouts.filter(w => w.id !== id) })),
-  addResult: (res: SessionResult) => setState(s => ({ results: [{ ...res, id: res.id ?? 's-' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6) }, ...s.results] })),
+  /** Adds, or replaces the result with the same id: a timed session is logged when it ends and
+   * again, with the score and notes, when its result sheet is saved. */
+  addResult: (res: SessionResult) => setState(s => {
+    const id = res.id ?? 's-' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+    return { results: [{ ...res, id }, ...s.results.filter(r => r.id !== id)] };
+  }),
   setTrainingMaxes: (tm: TrainingMaxes) => setState({ trainingMaxes: tm }),
   setBodyweight: (kg: number) => setState({ bodyweightKg: kg }),
   setSignedIn: (signedIn: boolean) => setState({ signedIn }),

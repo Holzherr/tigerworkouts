@@ -41,15 +41,19 @@ export const ResultSheet = ({ runsheet, history = [], trainingMaxes = {}, bodywe
   const hasProgression = !!runsheet.progression || runsheet.items.some(i => i.kind === 'block' && i.progression);
   const [score, setScore] = useState<number | undefined>(initial?.score);
   const [notes, setNotes] = useState('');
+  // What the timer logged beyond one row per planned step — a step swapped mid-session has a row
+  // per exercise — rides through untouched, and each row keeps its per-set results.
+  const matched = (s: ExerciseStep) => initial?.steps?.find(x => x.stepId === s.id && x.exerciseKey === s.exercise.key) ?? initial?.steps?.find(x => x.stepId === s.id);
+  const extra = (initial?.steps ?? []).filter(x => !steps.some(s => matched(s) === x));
   const [rows, setRows] = useState<Record<string, StepResult>>(() =>
     Object.fromEntries(
       steps.map(s => {
-        const rec = initial?.steps?.find(x => x.stepId === s.id);
-        return [s.id, { stepId: s.id, exerciseKey: s.exercise.key, target: rec?.target ?? resolveTarget(s, trainingMaxes, bodyweightKg), success: rec?.success ?? (hasProgression ? true : undefined), reps: rec?.reps ?? (s.forMode === 'amrap' || s.forMode === 'max' ? [s.forValue] : undefined) }];
+        const rec = matched(s);
+        return [s.id, { ...rec, stepId: s.id, exerciseKey: rec?.exerciseKey ?? s.exercise.key, target: rec?.target ?? resolveTarget(s, trainingMaxes, bodyweightKg), success: rec?.success ?? (hasProgression ? true : undefined), reps: rec?.reps ?? (s.forMode === 'amrap' || s.forMode === 'max' ? [s.forValue] : undefined) }];
       })
     )
   );
-  const result: SessionResult = { ...initial, runsheetId: runsheet.id ?? runsheet.title, title: runsheet.title, startedAt: initial?.startedAt ?? startedAt ?? new Date().toISOString(), endedAt: initial?.endedAt ?? new Date().toISOString(), score, scoreText: score !== undefined ? fmtScore(type, score) : undefined, steps: Object.values(rows), notes: notes || undefined, startedFrom };
+  const result: SessionResult = { ...initial, runsheetId: runsheet.id ?? runsheet.title, title: runsheet.title, startedAt: initial?.startedAt ?? startedAt ?? new Date().toISOString(), endedAt: initial?.endedAt ?? new Date().toISOString(), score, scoreText: score !== undefined ? fmtScore(type, score) : undefined, steps: [...Object.values(rows), ...extra], notes: notes || undefined, startedFrom };
   const next = useMemo(() => nextLoads(runsheet, result, history, trainingMaxes), [runsheet, result, history, trainingMaxes]);
   const set = (id: string, patch: Partial<StepResult>) => setRows(r => ({ ...r, [id]: { ...r[id], ...patch } }));
   const seen = new Set<string>();

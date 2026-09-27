@@ -349,9 +349,12 @@ final class SessionRunner {
 
     // MARK: - Crash safety
 
+    /// Tests run in parallel and each gets its own file, so one test's save is never another's.
+    @TaskLocal static var savedName = "tiger-run.json"
+
     private static var savedURL: URL {
         FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
-            .appendingPathComponent("tiger-run.json")
+            .appendingPathComponent(savedName)
     }
 
     /// A finished session is written too: until the store has it, this file is the only copy.

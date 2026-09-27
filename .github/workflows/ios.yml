@@ -60,6 +60,10 @@ jobs:
           xcrun simctl bootstatus "$udid" -b
 
       - name: xcodebuild test ${{ matrix.suite }}
+        # Unsigned, so the app has no HealthKit entitlement; the walkthrough reads this (the
+        # TEST_RUNNER_ prefix is stripped on the way in) and skips the check that needs one.
+        env:
+          TEST_RUNNER_UNSIGNED_BUILD: "1"
         run: |
           xcodebuild test -project TigerWorkouts.xcodeproj -scheme TigerWorkouts \
             -destination "platform=iOS Simulator,id=${{ steps.sim.outputs.udid }}" \
