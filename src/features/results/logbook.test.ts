@@ -23,6 +23,20 @@ describe('the logbook', () => {
     expect(e1rm({ load: 100, reps: 5 })).toBeCloseTo(116.67, 1);
     expect(e1rm({ load: 100 })).toBeUndefined();
     expect(e1rm({ reps: 10 })).toBeUndefined();
+    expect(e1rm({ load: 100, reps: 10 })).toBeCloseTo(133.33, 1);
+    expect(e1rm({ load: 100, reps: 11 })).toBeUndefined(); // Epley overstates past 10
+  });
+
+  it('a set above 10 reps counts for most reps and volume, not the 1RM', () => {
+    const r = records([session('2026-09-01T10:00:00Z', [{ stepId: 'a', exerciseKey: 'bench', sets: [{ load: 60, reps: 5 }, { load: 40, reps: 15 }] }])], 'bench');
+    expect(r.e1rm?.value).toBe(70);
+    expect(r.reps).toMatchObject({ value: 15 });
+    expect(r.volume?.value).toBe(900);
+  });
+
+  it('charts top load for a session with only sets above 10 reps', () => {
+    const h = exerciseHistory([session('2026-09-01T10:00:00Z', [{ stepId: 'a', exerciseKey: 'bench', sets: [{ load: 60, reps: 5 }] }]), session('2026-09-02T10:00:00Z', [{ stepId: 'a', exerciseKey: 'bench', sets: [{ load: 40, reps: 15 }, { load: 45, reps: 12 }] }])], 'bench');
+    expect(chartPoints(h).map(p => p.value)).toEqual([70, 45]);
   });
 
   it('lists sessions newest first, with title and sets', () => {
@@ -92,6 +106,13 @@ describe('the logbook', () => {
     expect(isRecord({ load: 70, reps: 1 }, before)).toBe(true);
     expect(isRecord({ load: 60, reps: 8 }, before)).toBe(false);
     expect(isRecord({ reps: 11 }, before)).toBe(true);
+  });
+
+  it('more reps is a PR only without a load', () => {
+    const before = records(bench, 'bench'); // most reps 10, heaviest 65, e1RM 80
+    expect(isRecord({ load: 20, reps: 15 }, before)).toBe(false);
+    expect(isRecord({ reps: 12 }, before)).toBe(true);
+    expect(isRecord({ reps: 10 }, before)).toBe(false); // a tie
   });
 
   it('volume sums load × reps', () => {

@@ -67,11 +67,15 @@ enum Logbook {
     private static func loaded(_ x: SetResult) -> Bool { (x.load ?? 0) > 0 }
     private static func counted(_ x: SetResult) -> Bool { (x.reps ?? 0) > 0 }
 
+    /// Sets above this many reps say nothing reliable about a one-rep max.
+    static let e1rmMaxReps: Double = 10
+
     /// Estimated one-rep max by Epley: load × (1 + reps / 30), and the load itself for a single.
     /// Epley over a percentage table because it is one line on both platforms and within a few
-    /// percent of the tables up to about 10 reps; past that it flatters, which is fine for a trend.
+    /// percent of the tables up to about 10 reps. Past 10 it overstates, so those sets get no
+    /// estimate: they still count for most reps and for volume.
     static func e1rm(_ x: SetResult) -> Double? {
-        guard loaded(x), counted(x), let load = x.load, let reps = x.reps else { return nil }
+        guard loaded(x), counted(x), let load = x.load, let reps = x.reps, reps <= e1rmMaxReps else { return nil }
         return reps == 1 ? load : load * (1 + reps / 30)
     }
 
@@ -115,9 +119,11 @@ enum Logbook {
     }
 
     /// The session's best set in the chart's terms: estimated 1RM, top load, most reps, or rounds.
+    /// A strength session whose sets were all above 10 reps has no estimate, so its point falls
+    /// back to the top load — a lower number on the same line, rather than a gap.
     static func best(_ sets: [SetResult], kind: Kind) -> Double? {
         switch kind {
-        case .strength: return sets.compactMap(e1rm).max()
+        case .strength: return sets.compactMap(e1rm).max() ?? sets.filter(loaded).compactMap(\.load).max()
         case .load: return sets.filter(loaded).compactMap(\.load).max()
         case .reps: return sets.filter(counted).compactMap(\.reps).max()
         case .rounds: return sets.isEmpty ? nil : Double(sets.count)
@@ -164,11 +170,15 @@ enum Logbook {
         return r
     }
 
-    /// Does this set beat a record standing before it: a heavier load, a better estimated 1RM, or
-    /// more reps. Only an existing record can be beaten, so the first time is not a PR.
+    /// Does this set beat a record standing before it. A loaded set: a heavier load or a better
+    /// estimated 1RM — more reps at a light weight is not a PR. An unloaded (bodyweight) set: more
+    /// reps. Only an existing record can be beaten, so the first time is not a PR, nor is a tie.
     static func isRecord(_ x: SetResult, before: Records) -> Bool {
-        if loaded(x), let h = before.heaviest, x.load! > h.value { return true }
-        if let e = e1rm(x), let b = before.e1rm, e > b.value { return true }
+        if loaded(x) {
+            if let h = before.heaviest, x.load! > h.value { return true }
+            if let e = e1rm(x), let b = before.e1rm, e > b.value { return true }
+            return false
+        }
         if counted(x), let m = before.reps, x.reps! > m.value { return true }
         return false
     }

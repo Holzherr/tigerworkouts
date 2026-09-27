@@ -185,6 +185,7 @@ export default function App() {
           history={st.results.filter(x => x.runsheetId === wid(r))}
           lastTime={lastTime}
           onExerciseHistory={s => go(exerciseLink(s.exercise.key))}
+          hasHistory={s => st.results.some(x => x.steps.some(y => y.exerciseKey === s.exercise.key))}
           onBack={() => go('/discover')}
           onStart={() => (setDraft(null), go(`/do/${encodeURIComponent(route.id)}`))}
           onEditAndStart={() => (setDraft(structuredClone(resolveRefs(r, lookup))), go(`/edit/${encodeURIComponent(route.id)}`))}

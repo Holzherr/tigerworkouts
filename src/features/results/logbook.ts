@@ -54,13 +54,17 @@ export const setsOf = (s: StepResult): SetResult[] => {
 const loaded = (x: SetResult) => x.load !== undefined && x.load > 0;
 const counted = (x: SetResult) => x.reps !== undefined && x.reps > 0;
 
+/** Sets above this many reps say nothing reliable about a one-rep max. */
+export const E1RM_MAX_REPS = 10;
+
 /**
  * Estimated one-rep max by Epley: load × (1 + reps / 30), and the load itself for a single.
  * Epley over a percentage table because it is one line on both platforms and within a few percent
- * of the tables up to about 10 reps; past that it flatters, which is fine for a trend line.
+ * of the tables up to about 10 reps. Past 10 it overstates, so those sets get no estimate: they
+ * still count for most reps and for volume.
  */
 export const e1rm = (x: SetResult): number | undefined => {
-  if (!loaded(x) || !counted(x)) return undefined;
+  if (!loaded(x) || !counted(x) || x.reps! > E1RM_MAX_REPS) return undefined;
   return x.reps === 1 ? x.load! : x.load! * (1 + x.reps! / 30);
 };
 
@@ -106,9 +110,15 @@ export const sessionVolume = (s: Pick<LogSession, 'sets'>): number | undefined =
   return xs.length ? xs.reduce((n, x) => n + x.load! * x.reps!, 0) : undefined;
 };
 
-/** The session's best set in the chart's terms: estimated 1RM, top load, most reps, or rounds. */
+const topLoad = (s: Pick<LogSession, 'sets'>) => max(s.sets.map(x => (loaded(x) ? x.load : undefined)));
+
+/**
+ * The session's best set in the chart's terms: estimated 1RM, top load, most reps, or rounds.
+ * A strength session whose sets were all above 10 reps has no estimate, so its point falls back
+ * to the top load — a lower number on the same line, rather than a gap.
+ */
 export const sessionBest = (s: Pick<LogSession, 'sets'>, kind: LogKind): number | undefined => {
-  if (kind === 'strength') return max(s.sets.map(e1rm));
+  if (kind === 'strength') return max(s.sets.map(e1rm)) ?? topLoad(s);
   if (kind === 'load') return max(s.sets.map(x => (loaded(x) ? x.load : undefined)));
   if (kind === 'reps') return max(s.sets.map(x => (counted(x) ? x.reps : undefined)));
   return s.sets.length || undefined;
@@ -155,13 +165,18 @@ export const records = (results: SessionResult[], exerciseKey: string): Records 
 };
 
 /**
- * Does this set beat a record standing before it: a heavier load, a better estimated 1RM, or more
- * reps. Only an existing record can be beaten, so the first time an exercise is done is not a PR.
+ * Does this set beat a record standing before it. A loaded set: a heavier load or a better
+ * estimated 1RM — more reps at a light weight is not a PR. An unloaded (bodyweight) set: more
+ * reps. Only an existing record can be beaten, so the first time an exercise is done is not a PR,
+ * and a tie is not one either.
  */
-export const isRecord = (x: SetResult, before: Records): boolean =>
-  (loaded(x) && !!before.heaviest && x.load! > before.heaviest.value) ||
-  (e1rm(x) !== undefined && !!before.e1rm && e1rm(x)! > before.e1rm.value) ||
-  (counted(x) && !!before.reps && x.reps! > before.reps.value);
+export const isRecord = (x: SetResult, before: Records): boolean => {
+  if (loaded(x)) {
+    const e = e1rm(x);
+    return (!!before.heaviest && x.load! > before.heaviest.value) || (e !== undefined && !!before.e1rm && e > before.e1rm.value);
+  }
+  return counted(x) && !!before.reps && x.reps! > before.reps.value;
+};
 
 export interface LoggedExercise {
   exerciseKey: string;

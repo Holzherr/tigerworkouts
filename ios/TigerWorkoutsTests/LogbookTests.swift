@@ -37,6 +37,25 @@ struct LogbookTests {
         #expect(abs(Logbook.e1rm(set(100, 5))! - 116.67) < 0.01)
         #expect(Logbook.e1rm(set(100, nil)) == nil)
         #expect(Logbook.e1rm(set(nil, 10)) == nil)
+        #expect(abs(Logbook.e1rm(set(100, 10))! - 133.33) < 0.01)
+        #expect(Logbook.e1rm(set(100, 11)) == nil) // Epley overstates past 10
+    }
+
+    @Test("a set above 10 reps counts for most reps and volume, not the 1RM")
+    func highReps() {
+        let r = Logbook.records([session("2026-09-01T10:00:00Z", [row("bench", sets: [set(60, 5), set(40, 15)])])], exerciseKey: "bench")
+        #expect(r.e1rm?.value == 70)
+        #expect(r.reps?.value == 15)
+        #expect(r.volume?.value == 900)
+    }
+
+    @Test("charts top load for a session with only sets above 10 reps")
+    func highRepsChart() {
+        let h = Logbook.history([
+            session("2026-09-01T10:00:00Z", [row("bench", sets: [set(60, 5)])]),
+            session("2026-09-02T10:00:00Z", [row("bench", sets: [set(40, 15), set(45, 12)])]),
+        ], exerciseKey: "bench")
+        #expect(Logbook.points(h).map(\.value) == [70, 45])
     }
 
     @Test("lists sessions newest first, with title and sets")
@@ -122,6 +141,14 @@ struct LogbookTests {
         #expect(Logbook.isRecord(set(70, 1), before: before))
         #expect(!Logbook.isRecord(set(60, 8), before: before))
         #expect(Logbook.isRecord(set(nil, 11), before: before))
+    }
+
+    @Test("more reps is a PR only without a load")
+    func repsPR() {
+        let before = Logbook.records(bench, exerciseKey: "bench") // most reps 10, heaviest 65, e1RM 80
+        #expect(!Logbook.isRecord(set(20, 15), before: before))
+        #expect(Logbook.isRecord(set(nil, 12), before: before))
+        #expect(!Logbook.isRecord(set(nil, 10), before: before)) // a tie
     }
 
     @Test("volume sums load × reps")
