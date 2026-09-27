@@ -81,7 +81,7 @@ export const ImportCsvSheet = ({ open, onOpenChange, results, library, onImport,
   };
   return (
     <Sheet open={open} onOpenChange={o => (onOpenChange(o), o || reset())} title="Import history" height="88dvh">
-      <div className="flex min-h-0 flex-1 flex-col">
+      <div className="flex h-full min-h-0 flex-col">
         <div className="min-h-0 flex-1 overflow-y-auto pb-3">
           {plan ? (
             <ImportPreview plan={plan} exerciseName={k => library[k]?.name ?? plan.newExercises.find(e => e.key === k)?.name ?? k} />
@@ -98,7 +98,7 @@ export const ImportCsvSheet = ({ open, onOpenChange, results, library, onImport,
           {error && <p className="mt-3 rounded-card bg-canvas px-3 py-2 text-[13px] text-danger">{error}</p>}
         </div>
         <input ref={file} type="file" accept=".csv,text/csv" hidden onChange={e => { const f = e.target.files?.[0]; e.target.value = ''; if (f) void read(f); }} />
-        <div className="flex gap-2 border-t border-line pt-3">
+        <div className="sticky bottom-0 flex gap-2 border-t border-line bg-surface pt-3">
           {plan && plan.sessions.length > 0 ? (
             <>
               <Button block onClick={() => (onImport(plan), onOpenChange(false), reset())}>
