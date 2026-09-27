@@ -79,7 +79,10 @@ struct SetPlanGrid: View {
     }
 }
 
-/// Minus, the number, plus, small enough that two sit side by side on a set row.
+/// Minus, the number, plus, small enough that two sit side by side on a set row with a tick, on a
+/// 390 pt phone. Each button keeps a 44 pt tap target around a narrower chip; a long number
+/// shrinks before it pushes the row wider. Narrower still (a 375 pt phone), the targets drop to
+/// 38 pt rather than overflow the screen.
 struct MiniStepper: View {
     var value: Double
     var label: String
@@ -89,29 +92,42 @@ struct MiniStepper: View {
     var nudge: (Double) -> Void
 
     var body: some View {
-        HStack(spacing: 0) {
-            button("minus", "\(label), less") { nudge(-1) }
-            Text(Format.number(value))
-                .font(.system(size: 18, weight: .bold, design: .rounded))
-                .monospacedDigit()
-                .foregroundStyle(Brand.ink)
-                .frame(minWidth: 48)
-                .accessibilityLabel(label)
-                .accessibilityValue(Format.number(value))
-            button("plus", "\(label), more") { nudge(1) }
+        ViewThatFits(in: .horizontal) {
+            stepper(hit: 44)
+            stepper(hit: 38)
         }
         .opacity(disabled ? 0.5 : 1)
         .disabled(disabled)
     }
 
-    private func button(_ symbol: String, _ label: String, action: @escaping () -> Void) -> some View {
+    private func stepper(hit: CGFloat) -> some View {
+        HStack(spacing: 0) {
+            button("minus", "\(label), less", hit: hit) { nudge(-1) }
+            Text(Format.number(value))
+                .font(.system(size: 18, weight: .bold, design: .rounded))
+                .monospacedDigit()
+                .foregroundStyle(Brand.ink)
+                .lineLimit(1)
+                .minimumScaleFactor(0.5)
+                // The ideal width is fixed so a long number never makes ViewThatFits drop to the
+                // small targets; it shrinks the text instead.
+                .frame(minWidth: 28, idealWidth: 28, maxWidth: 56)
+                .accessibilityLabel(label)
+                .accessibilityValue(Format.number(value))
+            button("plus", "\(label), more", hit: hit) { nudge(1) }
+        }
+    }
+
+    private func button(_ symbol: String, _ label: String, hit: CGFloat, action: @escaping () -> Void) -> some View {
         Button(action: action) {
             Image(systemName: symbol)
                 .font(.system(size: 14, weight: .bold))
-                .frame(width: 38, height: 38)
+                .frame(width: 36, height: 38)
                 .background(onTint ? Brand.surface : Brand.coralSoft, in: RoundedRectangle(cornerRadius: 10, style: .continuous))
                 .overlay(RoundedRectangle(cornerRadius: 10, style: .continuous).strokeBorder(onTint ? Brand.brandLine : .clear))
                 .foregroundStyle(Brand.coralInk)
+                .frame(width: hit, height: 44)
+                .contentShape(Rectangle())
         }
         .buttonStyle(.borderless)
         .accessibilityLabel(label)

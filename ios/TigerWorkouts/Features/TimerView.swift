@@ -258,13 +258,24 @@ struct TimerView: View {
         }
     }
 
+    /// The biggest clock and demo that fit the height left. On a 390 × 844 phone an AMRAP with a
+    /// cap clock, a reps row and the block strip does not fit at full size: the column grew past
+    /// the screen and pushed the top bar under the status bar.
     private var circuitBody: some View {
-        VStack(spacing: 16) {
-            countdown(size: 110)
+        ViewThatFits(in: .vertical) {
+            circuitBody(clock: 110, demo: 104, spacing: 16)
+            circuitBody(clock: 84, demo: 80, spacing: 12)
+            circuitBody(clock: 64, demo: 64, spacing: 10)
+        }
+    }
+
+    private func circuitBody(clock: CGFloat, demo: CGFloat, spacing: CGFloat) -> some View {
+        VStack(spacing: spacing) {
+            countdown(size: clock)
             if isRest {
                 restCard
             } else if let ex = runner.slot?.exercise {
-                exerciseCard(ex, eyebrow: runner.stepPosition.map { "Exercise \($0.index) of \($0.count)" }, adjustable: true)
+                exerciseCard(ex, eyebrow: runner.stepPosition.map { "Exercise \($0.index) of \($0.count)" }, adjustable: true, demo: demo)
             }
             if let next = runner.nextSlot, !isRest {
                 nextCard(next)
@@ -321,11 +332,11 @@ struct TimerView: View {
 
     /// The exercise as a card you can read from a bench: the demo, the name, the cue, and the one
     /// number worth changing without opening anything — the weight in your hand.
-    private func exerciseCard(_ ex: ExerciseStep, eyebrow: String?, adjustable: Bool) -> some View {
+    private func exerciseCard(_ ex: ExerciseStep, eyebrow: String?, adjustable: Bool, demo: CGFloat = 104) -> some View {
         VStack(alignment: .leading, spacing: 14) {
             Button { editing = ex } label: {
                 HStack(alignment: .top, spacing: 14) {
-                    ExerciseDemo(ref: ex.exercise, size: 104)
+                    ExerciseDemo(ref: ex.exercise, size: demo)
                     VStack(alignment: .leading, spacing: 5) {
                         if let eyebrow {
                             Text(eyebrow)
@@ -363,7 +374,7 @@ struct TimerView: View {
                             .contentShape(Rectangle())
                     }
                     .buttonStyle(.plain)
-                    .padding(.leading, 118)
+                    .padding(.leading, demo + 14)
                     .padding(.top, -10)
                     .accessibilityLabel("Use last time")
                     .accessibilityValue(last)
@@ -372,7 +383,7 @@ struct TimerView: View {
                     Text(text)
                         .font(.subheadline.weight(.semibold))
                         .foregroundStyle(Brand.coralInk)
-                        .padding(.leading, 118)
+                        .padding(.leading, demo + 14)
                         .padding(.top, -10)
                 }
             }
@@ -456,12 +467,15 @@ struct TimerView: View {
             }
             .buttonStyle(.plain)
 
-            HStack(spacing: 8) {
-                Text("Set").frame(width: 30, alignment: .leading)
+            HStack(spacing: SetRowMetrics.spacing) {
+                Text("Set").frame(width: SetRowMetrics.number, alignment: .leading)
                 if ex.hasSetLoad { Text(ex.shortUnit).frame(maxWidth: .infinity) }
                 if let count = ex.countLabel { Text(count).frame(maxWidth: .infinity) }
                 Color.clear.frame(width: 44, height: 1)
             }
+            .padding(.horizontal, SetRowMetrics.inset)
+            .lineLimit(1)
+            .minimumScaleFactor(0.7)
             .font(.caption.weight(.bold))
             .textCase(.uppercase)
             .tracking(0.8)
@@ -471,7 +485,7 @@ struct TimerView: View {
                 setRow(row, ex, last: last.indices.contains(row.number - 1) && (last[row.number - 1].type ?? .normal) == row.type ? last[row.number - 1] : nil)
             }
         }
-        .padding(14)
+        .padding(12)
         .background(.white, in: RoundedRectangle(cornerRadius: 24, style: .continuous))
         .environment(\.colorScheme, .light)
         .accessibilityElement(children: .contain)
@@ -482,18 +496,18 @@ struct TimerView: View {
         let hint = LastTime.setLabel(last)
         let editable = !row.done && (openSet == row.slotId || (openSet == nil && row.current))
         return VStack(alignment: .leading, spacing: 2) {
-            HStack(spacing: 8) {
+            HStack(spacing: SetRowMetrics.spacing) {
                 SetMarkButton(mark: row.mark, type: row.type, label: "Set \(row.number)", highlight: row.current && !row.done) {
                     runner.cycleSetType(row.slotId)
                 }
-                .frame(width: 30, alignment: .leading)
+                .frame(width: SetRowMetrics.number, alignment: .leading)
                 if ex.hasSetLoad {
                     Group {
                         if editable {
                             MiniStepper(value: row.load ?? 0, label: "Set \(row.number) load", onTint: row.current) { runner.nudgeSetLoad(row.slotId, $0) }
                         } else {
                             HStack(spacing: 2) {
-                                Text(row.load.map(Format.number) ?? "—").font(.system(size: 18, weight: .bold, design: .rounded))
+                                Text(row.load.map(Format.number) ?? "—").font(.system(size: 18, weight: .bold, design: .rounded)).lineLimit(1).minimumScaleFactor(0.6)
                                 if Plates.kit(ex.exercise) == .barbell { PlatesButton(load: row.load) }
                             }
                         }
@@ -505,7 +519,7 @@ struct TimerView: View {
                         if editable {
                             MiniStepper(value: row.reps, label: "Set \(row.number) \(count.lowercased())", onTint: row.current) { runner.nudgeSetReps(row.slotId, $0) }
                         } else {
-                            Text(Format.number(row.reps)).font(.system(size: 18, weight: .bold, design: .rounded))
+                            Text(Format.number(row.reps)).font(.system(size: 18, weight: .bold, design: .rounded)).lineLimit(1).minimumScaleFactor(0.6)
                         }
                     }
                     .frame(maxWidth: .infinity)
@@ -542,13 +556,13 @@ struct TimerView: View {
                         .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
-                .padding(.leading, 38)
+                .padding(.leading, SetRowMetrics.number + SetRowMetrics.spacing)
                 .accessibilityLabel("Use last time for set \(row.number)")
             } else if let hint {
-                Text(hint).font(.caption).foregroundStyle(Brand.muted).padding(.leading, 38)
+                Text(hint).font(.caption).foregroundStyle(Brand.muted).padding(.leading, SetRowMetrics.number + SetRowMetrics.spacing)
             }
         }
-        .padding(.horizontal, 8)
+        .padding(.horizontal, SetRowMetrics.inset)
         .padding(.vertical, 6)
         .background(row.current && !row.done ? Brand.coralSoft : Color.clear, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
         .contentShape(Rectangle())
@@ -736,4 +750,13 @@ struct TimerView: View {
     private var finished: some View {
         FinishView(result: runner.finalResult ?? runner.result(), runsheet: runner.runsheet, onClose: onClose)
     }
+}
+
+/// The timer's set row, sized for a 390 pt phone: 16 pt screen gutters, the card's 12 pt padding
+/// and this inset leave 324 pt for the set mark (28 pt at its narrowest), two steppers (116 pt
+/// each at full tap size) and the 44 pt tick.
+private enum SetRowMetrics {
+    static let number: CGFloat = 28
+    static let spacing: CGFloat = 6
+    static let inset: CGFloat = 5
 }
