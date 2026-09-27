@@ -56,6 +56,7 @@ final class Store {
         readCache()
         #if DEBUG
         seedLogbookIfAsked()
+        seedPaceIfAsked()
         #endif
         loaded = true
         user = await Supabase.shared.user
