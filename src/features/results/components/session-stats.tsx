@@ -2,7 +2,7 @@ import { Flame, Repeat2, Timer, TrendingUp } from 'lucide-react';
 import { cn, fmtClock } from '@/shared/utils/ui-utils';
 import type { ExerciseGroup } from '@/features/exercises/library';
 import type { SessionResult } from '@/features/runsheet/progression';
-import { effort, streak, type Effort } from '../effort';
+import { effort, streak, type Effort, type Streak } from '../effort';
 import { muscleLoad } from '../muscles';
 import { BodyMap } from './body-map';
 
@@ -45,19 +45,24 @@ export const SessionStats = ({ result, worked, history = [], bodyweightKg, class
         <Tile icon={<Repeat2 className="size-3" />} label="Effort" value={tonnageLine(e) ?? fmtClock(e.workSec)} sub={tonnageLine(e) ? 'load × reps' : 'time under work'} />
       </div>
       {Object.keys(load).length > 0 && <BodyMap load={load} />}
-      <div className="flex items-center gap-2 rounded-card border border-line bg-surface px-3 py-2">
-        <TrendingUp className="size-4 shrink-0 text-brand" />
-        <div className="text-[13px]">
-          <span className="font-bold">
-            {s.thisWeek} this week
-            {s.weeks > 1 ? ` · ${s.weeks} weeks running` : ''}
-          </span>
-          <span className="text-muted">
-            {' '}
-            · {s.lastWeek} last week · {s.total} all time
-          </span>
-        </div>
-      </div>
+      <StreakLine streak={s} />
     </div>
   );
 };
+
+/** One white row: trend icon, "2 this week · 3 weeks running" in bold, last week and all time in grey. */
+export const StreakLine = ({ streak: s, className }: { streak: Streak; className?: string }) => (
+  <div className={cn('flex items-center gap-2 rounded-card border border-line bg-surface px-3 py-2', className)}>
+    <TrendingUp className="size-4 shrink-0 text-brand" />
+    <div className="text-[13px]">
+      <span className="font-bold">
+        {s.thisWeek} this week
+        {s.weeks > 1 ? ` · ${s.weeks} weeks running` : ''}
+      </span>
+      <span className="text-muted">
+        {' '}
+        · {s.lastWeek} last week · {s.total} all time
+      </span>
+    </div>
+  </div>
+);

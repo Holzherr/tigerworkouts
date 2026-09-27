@@ -36,13 +36,15 @@ export interface DiscoverScreenProps {
   /** `from` is the tab the card was in, so the session can record where it was started. */
   onOpen: (r: Runsheet, from: DiscoverTab) => void;
   onOpenProgram?: (name: string, days: Runsheet[]) => void;
-  /** Start a new workout from scratch. Shows the Create button in the header and the tile in Saved. */
+  /** Start a new workout from scratch. Shows the New workout button in the header and the tile in Saved. */
   onCreate?: () => void;
   initialTab?: DiscoverTab;
   initialFilter?: DiscoverFilter;
   title?: string;
   /** Rendered at the top of For you (Resume banner, quick log). */
   above?: React.ReactNode;
+  /** Rendered at the top of Saved and For you: what to do next and the week so far, once there is history. */
+  top?: React.ReactNode;
 }
 
 const wid = (r: Runsheet) => r.id ?? r.title;
@@ -58,15 +60,15 @@ const groupRecs = (recs: ReturnType<typeof recommend>) => {
 };
 
 /**
- * Home feed with three tabs in a segmented control under the title, and a Create button top
- * right. Saved (default): a Create tile, then the user's own and bookmarked workouts, most recently
+ * Home feed with three tabs in a segmented control under the title, and a white "New workout"
+ * button top right. With history, the `top` slot (the Up next card) sits above Saved and For you. Saved (default): a New workout tile, then the user's own and bookmarked workouts, most recently
  * done first. For you: ranked recommendations from history, each card with a one-line
  * reason ("Next in StrongLifts 5×5", "Because you did Fran"); with history but no picks, an empty
  * state that sends the user to Search. Search: the search field first;
  * with no query it shows filter chips and the full catalogue (programs collapsed to one row each),
  * with a query it shows matches only.
  */
-export const DiscoverScreen = ({ workouts, results = [], savedIds = [], onOpen, onOpenProgram, onCreate, initialTab = 'saved', initialFilter = 'all', title = 'Discover', above }: DiscoverScreenProps) => {
+export const DiscoverScreen = ({ workouts, results = [], savedIds = [], onOpen, onOpenProgram, onCreate, initialTab = 'saved', initialFilter = 'all', title = 'Discover', above, top }: DiscoverScreenProps) => {
   const [tab, setTab] = useState<DiscoverTab>(initialTab);
   const [q, setQ] = useState('');
   const [filter, setFilter] = useState<DiscoverFilter>(initialFilter);
@@ -113,8 +115,8 @@ export const DiscoverScreen = ({ workouts, results = [], savedIds = [], onOpen, 
         <div className="flex items-center justify-between gap-3">
           <h1 className="text-[22px] font-extrabold">{title}</h1>
           {onCreate && (
-            <Button size="sm" onClick={onCreate}>
-              <Plus /> Create
+            <Button size="sm" variant="ghost" onClick={onCreate}>
+              <Plus /> New workout
             </Button>
           )}
         </div>
@@ -139,6 +141,7 @@ export const DiscoverScreen = ({ workouts, results = [], savedIds = [], onOpen, 
       </header>
 
       <div className="min-h-0 flex-1 space-y-2 overflow-y-auto px-3 py-3">
+        {tab !== 'search' && top}
         {tab === 'saved' && (
           <>
             {onCreate && (
@@ -147,7 +150,7 @@ export const DiscoverScreen = ({ workouts, results = [], savedIds = [], onOpen, 
                   <Plus className="size-5" />
                 </span>
                 <span className="min-w-0 flex-1">
-                  <span className="block text-[15px] font-bold">Create a workout</span>
+                  <span className="block text-[15px] font-bold">New workout</span>
                   <span className="block text-[12px] text-muted">Build your own from the exercise library, or paste a plan.</span>
                 </span>
               </button>

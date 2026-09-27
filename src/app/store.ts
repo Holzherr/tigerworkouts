@@ -14,6 +14,8 @@ export interface AppState {
   results: SessionResult[];
   trainingMaxes: TrainingMaxes;
   bodyweightKg?: number;
+  /** Bodyweight was asked for once after a workout and skipped; not asked again. */
+  bodyweightAsked?: boolean;
   saved: string[];
   name: string;
   avatar?: Avatar;
@@ -93,7 +95,8 @@ const ACTIONS = {
     return { results: [{ ...res, id }, ...s.results.filter(r => r.id !== id)] };
   }),
   setTrainingMaxes: (tm: TrainingMaxes) => setState({ trainingMaxes: tm }),
-  setBodyweight: (kg: number) => setState({ bodyweightKg: kg }),
+  setBodyweight: (kg: number) => setState({ bodyweightKg: kg, bodyweightAsked: true }),
+  skipBodyweight: () => setState({ bodyweightAsked: true }),
   setSignedIn: (signedIn: boolean) => setState({ signedIn }),
   updateResult: (id: string, patch: Partial<SessionResult>) => setState(s => ({ results: s.results.map(r => (r.id === id ? { ...r, ...patch } : r)) })),
   deleteResult: (id: string) => setState(s => ({ results: s.results.filter(r => r.id !== id) })),

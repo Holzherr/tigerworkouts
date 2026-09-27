@@ -11,6 +11,7 @@ import { cn } from '@/shared/utils/ui-utils';
 import { scoreType, type ExerciseStep, type Runsheet } from '@/features/runsheet/model';
 import { fmtScore, nextLoads, resolveTarget, type NextLoad, type SessionOrigin, type SessionResult, type StepResult, type TrainingMaxes } from '@/features/runsheet/progression';
 import { ScoreEntry } from './score-entry';
+import { BodyweightPrompt } from './bodyweight-prompt';
 
 export interface ResultSheetProps {
   runsheet: Runsheet;
@@ -25,6 +26,8 @@ export interface ResultSheetProps {
   startedFrom?: SessionOrigin;
   onSave: (result: SessionResult, next: NextLoad[]) => void;
   onCancel?: () => void;
+  /** Set while bodyweight has never been given or skipped: asks for it under the stats. */
+  onBodyweight?: (kg: number | undefined) => void;
 }
 
 const exerciseSteps = (r: Runsheet): ExerciseStep[] => r.items.flatMap(it => (it.kind === 'block' ? it.steps : it.kind === 'ref' ? [] : [it])).filter((s): s is ExerciseStep => s.kind === 'exercise');
@@ -35,7 +38,7 @@ const exerciseSteps = (r: Runsheet): ExerciseStep[] => r.items.flatMap(it => (it
  * reps on any 5+ or max set. Bottom: "Next time" lines produced by the progression rules, then
  * Save. Pure: the host stores the result and updates training maxes.
  */
-export const ResultSheet = ({ runsheet, history = [], trainingMaxes = {}, bodyweightKg, startedAt, initial, startedFrom, onSave, onCancel }: ResultSheetProps) => {
+export const ResultSheet = ({ runsheet, history = [], trainingMaxes = {}, bodyweightKg, startedAt, initial, startedFrom, onSave, onCancel, onBodyweight }: ResultSheetProps) => {
   const type = scoreType(runsheet);
   const steps = useMemo(() => exerciseSteps(runsheet), [runsheet]);
   const hasProgression = !!runsheet.progression || runsheet.items.some(i => i.kind === 'block' && i.progression);
@@ -68,6 +71,7 @@ export const ResultSheet = ({ runsheet, history = [], trainingMaxes = {}, bodywe
       </header>
       <div className="min-h-0 flex-1 space-y-2 overflow-y-auto px-3 py-3">
         <SessionStats result={result} worked={workedFrom(result, runsheet, k => ({ name: LIB[k]?.name ?? k, group: LIB[k]?.group }))} history={history} bodyweightKg={bodyweightKg} />
+        {onBodyweight && bodyweightKg === undefined && <BodyweightPrompt onSave={kg => onBodyweight(kg)} onSkip={() => onBodyweight(undefined)} />}
         {steps.map(s => {
           if (seen.has(s.exercise.key) && s.forMode !== 'amrap' && s.forMode !== 'max') return null;
           seen.add(s.exercise.key);

@@ -56,16 +56,7 @@ struct SessionStatsView: View {
                 .cardSurface()
             }
 
-            VStack(alignment: .leading, spacing: 6) {
-                Text("\(streak.weeks) week\(streak.weeks == 1 ? "" : "s") running")
-                    .font(.headline)
-                Text("\(streak.thisWeek) this week, \(streak.lastWeek) last week · \(streak.total) session\(streak.total == 1 ? "" : "s") logged")
-                    .font(.footnote)
-                    .foregroundStyle(Brand.muted)
-            }
-            .padding(16)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .cardSurface()
+            StreakCard(streak: streak)
         }
     }
 
@@ -77,6 +68,24 @@ struct SessionStatsView: View {
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(14)
+        .cardSurface()
+    }
+}
+
+/// Weeks running, then this week, last week and the total: after a session and on Me.
+struct StreakCard: View {
+    let streak: Streak
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Text("\(streak.weeks) week\(streak.weeks == 1 ? "" : "s") running")
+                .font(.headline)
+            Text("\(streak.thisWeek) this week, \(streak.lastWeek) last week · \(streak.total) session\(streak.total == 1 ? "" : "s") logged")
+                .font(.footnote)
+                .foregroundStyle(Brand.muted)
+        }
+        .padding(16)
+        .frame(maxWidth: .infinity, alignment: .leading)
         .cardSurface()
     }
 }

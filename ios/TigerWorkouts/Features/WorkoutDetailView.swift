@@ -19,6 +19,8 @@ struct WorkoutDetailView: View {
 
     private var saved: Bool { store.saved.contains(runsheet.key) }
     private var editable: Bool { isNew || store.isMine(runsheet) }
+    /// Something to run: a new workout has no Start, length or icon until it has an exercise.
+    private var runnable: Bool { !runsheet.exerciseSteps.isEmpty }
 
     var body: some View {
         RunsheetEditor(
@@ -28,16 +30,28 @@ struct WorkoutDetailView: View {
             apply: apply
         ) {
             Section {
-                header
+                if runnable {
+                    header
+                } else if !runsheet.title.isEmpty {
+                    Text(runsheet.title)
+                        .font(.system(size: 26, weight: .heavy))
+                        .foregroundStyle(Brand.ink)
+                }
                 if let description = runsheet.description, !description.isEmpty {
                     Text(description)
                         .font(.callout)
                         .foregroundStyle(Brand.body)
                         .lineSpacing(3)
                 }
-                Text("Hold and drag to move a step or a whole block · swipe to remove · tap to change")
-                    .font(.footnote)
-                    .foregroundStyle(Brand.faint)
+                if !runnable {
+                    Text("Add an exercise to get going. Start shows up once there is something to run.")
+                        .font(.footnote)
+                        .foregroundStyle(Brand.muted)
+                } else {
+                    Text("Hold and drag to move a step or a whole block · swipe to remove · tap to change")
+                        .font(.footnote)
+                        .foregroundStyle(Brand.faint)
+                }
             }
             .listRowBackground(Color.clear)
             .listRowSeparator(.hidden)
@@ -85,7 +99,9 @@ struct WorkoutDetailView: View {
                 }
             }
         }
-        .safeAreaInset(edge: .bottom) { bottomBar }
+        .safeAreaInset(edge: .bottom) {
+            if runnable { bottomBar }
+        }
         .sheet(item: $editing) { step in
             ExerciseSheet(
                 step: step,

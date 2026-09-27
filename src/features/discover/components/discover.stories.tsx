@@ -7,6 +7,7 @@ import { IMPORTED } from '@/features/workouts/imported';
 import { DiscoverScreen } from './discover-screen';
 import { WorkoutCard } from './workout-card';
 import { WorkoutPreviewScreen } from './workout-preview-screen';
+import { NextUpCard } from './next-up-card';
 
 const ALL: Runsheet[] = [priyanka(), ...IMPORTED.map(w => w.runsheet)];
 const HISTORY: SessionResult[] = [
@@ -58,3 +59,8 @@ export const Cards: Story = {
   ),
 };
 export const Preview: Story = { render: () => <WorkoutPreviewScreen runsheet={ALL.find(r => r.title === 'Fran') ?? ALL[1]} onStart={() => {}} onEditAndStart={() => {}} onSave={() => {}} history={[{ runsheetId: 'cf-girls-fran', startedAt: '2026-08-20T18:00:00Z', score: 402, scoreText: '6:42', steps: [] }, { runsheetId: 'cf-girls-fran', startedAt: '2026-07-02T18:00:00Z', score: 455, scoreText: '7:35', steps: [] }]} /> };
+const upNext = ALL.find(r => r.program?.order === 2) ?? ALL[1];
+const top = <NextUpCard runsheet={upNext} reason={`Next in ${upNext.program?.name ?? 'your program'}`} streak={{ weeks: 3, thisWeek: 2, lastWeek: 3, total: 14 }} onStart={() => alert('start')} onOpen={() => alert('open')} />;
+/** With history: the Up next card over Saved. */
+export const WithHistory: Story = { args: { initialTab: 'saved', results: HISTORY, savedIds: SAVED, top } };
+export const UpNextCard: Story = { render: () => <div className="p-3">{top}</div> };
