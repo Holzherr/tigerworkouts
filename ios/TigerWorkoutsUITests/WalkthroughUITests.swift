@@ -379,6 +379,8 @@ final class WalkthroughUITests: XCTestCase {
         snap("16b Settings")
 
         let health = app.switches["Apple Health"]
+        // Below the suggestions section: scroll it into view.
+        for _ in 0..<4 where !(health.exists && health.isHittable) { app.swipeUp() }
         XCTAssertTrue(health.waitForExistence(timeout: 5))
         // A SwiftUI toggle flips on its knob, not on the middle of the row, which is the label.
         let knob = health.coordinate(withNormalizedOffset: CGVector(dx: 0.93, dy: 0.5))
