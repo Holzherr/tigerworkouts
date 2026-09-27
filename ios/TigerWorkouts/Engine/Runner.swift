@@ -387,6 +387,20 @@ enum Runner {
         return s
     }
 
+    /// Lengthen (or, with a negative `by`, shorten) the rest that is running, in seconds. Only a
+    /// counted-down rest moves; a work slot or a user-paced step is left alone. A rest shortened
+    /// past now ends on the next tick. Paused, it moves what is left instead.
+    static func extendRest(_ s: RunState, now: Double, by: Double) -> RunState {
+        guard let c = current(s), c.kind == .rest else { return s }
+        var s = s
+        if s.phase == .running, let end = s.endsAt {
+            s.endsAt = max(now, end + by * 1000)
+        } else if s.phase == .paused, let left = s.remainingMs {
+            s.remainingMs = max(0, left + by * 1000)
+        }
+        return s
+    }
+
     /// Go back one slot, restarting its countdown.
     static func back(_ s: RunState, now: Double) -> RunState {
         s.i > 0 ? enter(s, s.i - 1, now) : s

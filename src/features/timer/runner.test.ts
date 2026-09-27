@@ -52,6 +52,23 @@ describe('run', () => {
     expect(Math.round((s.endsAt! - 60000) / 1000)).toBe(20);
     expect(s.pausedMs).toBe(45000);
   });
+  it('extendRest moves the end of a running rest, and only a rest', () => {
+    let s = tick(start(interval(), 0), 5000);
+    expect(R.extendRest(s, 6000, 15)).toBe(s); // work: untouched
+    s = advance(s, 20000); // on to the 10 s rest, ends at 30 s
+    s = R.extendRest(s, 21000, 15);
+    expect(s.endsAt).toBe(45000);
+    s = R.extendRest(s, 22000, -60); // past now: ends on the next tick
+    expect(s.endsAt).toBe(22000);
+    expect(tick(s, 22000).slots[tick(s, 22000).i].kind).toBe('work');
+  });
+  it('extendRest while paused moves what is left', () => {
+    let s = advance(tick(start(interval(), 0), 5000), 20000);
+    s = pause(s, 25000); // 5 s left
+    s = R.extendRest(s, 26000, 15);
+    s = resume(s, 30000);
+    expect(s.endsAt).toBe(50000);
+  });
   it('adjust logs a change with the time into the step', () => {
     let s = tick(start(interval(), 0), 5000);
     s = adjust(s, 12000, 32);
