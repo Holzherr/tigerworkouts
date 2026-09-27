@@ -87,5 +87,28 @@ extension Store {
         let ids = Set(seed.compactMap(\.id))
         results = (results.filter { !ids.contains($0.rowId) } + seed).sorted { $0.startedAt > $1.startedAt }
     }
+
+    /// `-seedLoads` on launch: a workout of your own, "Loads check", that embeds the NHS 6-minute
+    /// warm-up by reference, runs bench as a warm-up, two working sets and a drop set, and presses
+    /// at 65% of a 61 kg training max — with home plates set in My equipment, so the press shows
+    /// 40 kg on the bar. Fixed id: launching with it again replaces it.
+    func seedLoadsIfAsked(_ arguments: [String] = ProcessInfo.processInfo.arguments) {
+        guard arguments.contains("-seedLoads") else { return }
+        let bench = Library.shared.exercise("bb_bench")?.ref ?? ExerciseRef(key: "bb_bench", name: "Barbell bench press", unit: "kg", step: 2.5)
+        let ohp = Library.shared.exercise("bb_ohp")?.ref ?? ExerciseRef(key: "bb_ohp", name: "Barbell overhead press", unit: "kg", step: 2.5)
+        var b = ExerciseStep(id: "seed-bench", exercise: bench, target: 60, forMode: .reps, forValue: 8)
+        b.sets = [SetPlan(reps: 10, load: 40, type: .warmup), SetPlan(reps: 8, load: 60), SetPlan(reps: 8, load: 60), SetPlan(reps: 8, load: 45, type: .drop)]
+        var p = ExerciseStep(id: "seed-ohp", exercise: ohp, forMode: .reps, forValue: 5)
+        p.targetPct = 65
+        var sheet = Runsheet(id: "seed-loads", title: "Loads check", items: [
+            .ref(RefItem(id: "seed-warm", runsheetId: "nhs-6-min-warm-up", role: .warmup)),
+            .block(Block(id: "seed-b1", name: "Bench", repeatCount: 4, steps: [.exercise(b), .rest(RestStep(id: "seed-r1", seconds: 90))])),
+            .block(Block(id: "seed-b2", name: "Press", repeatCount: 3, steps: [.exercise(p), .rest(RestStep(id: "seed-r2", seconds: 90))])),
+        ])
+        sheet.creator = "You"
+        myWorkouts = [sheet] + myWorkouts.filter { $0.key != "seed-loads" }
+        trainingMaxes["bb_ohp"] = 61
+        equipment = Equipment(barKg: 20, plates: [PlateCount(kg: 20, count: 2), PlateCount(kg: 10, count: 2), PlateCount(kg: 5, count: 2), PlateCount(kg: 2.5, count: 2), PlateCount(kg: 1.25, count: 2)], kettlebells: [12, 16, 24])
+    }
 }
 #endif

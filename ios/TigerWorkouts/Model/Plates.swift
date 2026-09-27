@@ -137,7 +137,8 @@ enum Plates {
         return Load(bar: bar, perSide: combos[best] ?? [], total: total, exact: abs(total - kg) < eps)
     }
 
-    private static func num(_ n: Double) -> String {
+    /// 1.25 not 1.2: plate weights need two places.
+    static func num(_ n: Double) -> String {
         n == n.rounded() ? String(Int(n)) : String((n * 100).rounded() / 100)
     }
 

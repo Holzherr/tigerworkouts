@@ -752,4 +752,62 @@ final class WalkthroughUITests: XCTestCase {
         tap(app.tabBars.buttons["Discover"].exists ? app.tabBars.buttons["Discover"] : app.tabBars.buttons.element(boundBy: 0))
     }
 
+
+    /// Set types, the plate calculator, a % of a training max and a shared warm-up, from a seeded
+    /// workout of your own ("Loads check").
+    func testLoadsAndSetTypes() {
+        app.terminate()
+        app.launchArguments = ["-seedLoads"]
+        app.launch()
+        let discard = app.alerts.buttons["Discard"]
+        if discard.waitForExistence(timeout: 3) { discard.tap() }
+
+        open("Loads check")
+        XCTAssertTrue(app.descendants(matching: .any)["ref-row"].waitForExistence(timeout: 5), "the embedded warm-up should be listed")
+        snap("70 Workout page, shared warm-up and training maxes")
+        let grid = app.descendants(matching: .any)["set-grid"].firstMatch
+        for _ in 0..<6 where !(grid.exists && grid.isHittable) { app.swipeUp(velocity: .slow) }
+        XCTAssertTrue(app.buttons["Set 1: Warm-up"].waitForExistence(timeout: 5), "the plan's warm-up shows as W")
+        snap("71 Set types in the editor")
+
+        tap(app.buttons["Start workout"])
+        XCTAssertTrue(app.buttons["End session"].waitForExistence(timeout: 5))
+        // Through the shared warm-up to the bench block's gate.
+        let startBench = app.buttons["Start Bench"]
+        for _ in 0..<40 where !startBench.exists {
+            let start = app.buttons.matching(NSPredicate(format: "label BEGINSWITH 'Start ' AND label != 'Start workout'")).firstMatch
+            if start.exists, start.isHittable { start.tap() } else if app.buttons["Skip"].exists { app.buttons["Skip"].tap() } else if app.buttons["Done"].exists { app.buttons["Done"].tap() }
+            _ = startBench.waitForExistence(timeout: 1)
+        }
+        tap(startBench)
+        XCTAssertTrue(app.buttons["Tick set 1"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.buttons["Set 4: Drop set"].exists, "the drop set shows as D")
+        snap("72 Set types on the timer")
+
+        tap(app.buttons["Plates for 60 kg"].firstMatch)
+        XCTAssertTrue(app.staticTexts["20 kg bar + 20 per side"].waitForExistence(timeout: 5), "the calculator should load 60 kg as a 20 each side")
+        snap("73 Plate calculator")
+        app.swipeDown(velocity: .fast)
+        XCTAssertTrue(app.buttons["Tick set 1"].waitForExistence(timeout: 5))
+
+        // A tap on a set number changes its type: set 3 becomes a warm-up.
+        tap(app.buttons["Set 3: Normal"].firstMatch)
+        XCTAssertTrue(app.buttons["Set 3: Warm-up"].firstMatch.waitForExistence(timeout: 5), "a tap steps normal to warm-up")
+        snap("74 Set 3 changed to a warm-up on the timer")
+
+        tap(app.buttons["End session"])
+        tap(app.buttons["Finish and save"])
+        tap(app.buttons["Done"])
+
+        tap(app.tabBars.buttons["Me"])
+        for _ in 0..<4 where !(app.buttons["Settings"].exists && app.buttons["Settings"].isHittable) { app.swipeUp() }
+        tap(app.buttons["Settings"])
+        let kit = app.buttons["my-equipment"]
+        for _ in 0..<6 where !(kit.exists && kit.isHittable) { app.swipeUp() }
+        snap("75 Settings, loads")
+        tap(kit)
+        XCTAssertTrue(app.navigationBars["My equipment"].waitForExistence(timeout: 5))
+        snap("76 My equipment")
+    }
+
 }

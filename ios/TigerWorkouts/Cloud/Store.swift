@@ -77,6 +77,7 @@ final class Store {
         seedLogbookIfAsked()
         seedPaceIfAsked()
         seedProgressIfAsked()
+        seedLoadsIfAsked()
         #endif
         loaded = true
         shareUpNext()

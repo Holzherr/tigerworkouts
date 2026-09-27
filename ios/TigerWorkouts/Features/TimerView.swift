@@ -468,7 +468,7 @@ struct TimerView: View {
             .foregroundStyle(Brand.muted)
 
             ForEach(rows) { row in
-                setRow(row, ex, last: last.indices.contains(row.number - 1) ? last[row.number - 1] : nil)
+                setRow(row, ex, last: last.indices.contains(row.number - 1) && (last[row.number - 1].type ?? .normal) == row.type ? last[row.number - 1] : nil)
             }
         }
         .padding(14)

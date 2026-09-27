@@ -51,7 +51,7 @@ struct PlateSheet: View {
                 Capsule().fill(Brand.faint).frame(width: 36, height: 12)
                 RoundedRectangle(cornerRadius: 2).fill(Brand.muted).frame(width: 8, height: 28)
                 ForEach(Array(p.perSide.enumerated()), id: \.offset) { _, kg in
-                    Text(Format.number(kg))
+                    Text(Plates.num(kg))
                         .font(.system(size: 11, weight: .heavy))
                         .foregroundStyle(.white)
                         .frame(width: 28, height: 28 + min(1, kg / 25) * 72)
@@ -76,6 +76,9 @@ struct PlateSheet: View {
             Spacer(minLength: 0)
         }
         .padding(20)
+        // Light, whatever it is opened over: the timer runs dark, and the plates are ink on a pale well.
+        .environment(\.colorScheme, .light)
+        .presentationBackground(Brand.surface)
         .presentationDetents([.height(320)])
         .presentationDragIndicator(.visible)
     }
@@ -130,9 +133,9 @@ struct EquipmentView: View {
                         if n > 0 { plates.append(PlateCount(kg: kg, count: n)) }
                         eq.plates = plates.sorted { $0.kg > $1.kg }
                     } }), in: 0...20, step: 2) {
-                        LabeledContent("\(Format.number(kg)) kg plates", value: "\(count)")
+                        LabeledContent("\(Plates.num(kg)) kg plates", value: "\(count)")
                     }
-                    .accessibilityIdentifier("plates-\(Format.number(kg))")
+                    .accessibilityIdentifier("plates-\(Plates.num(kg))")
                 }
             } header: {
                 Text("Barbell")
@@ -168,7 +171,7 @@ struct EquipmentView: View {
             ForEach(sizes, id: \.self) { kg in
                 let on = owned.contains(kg)
                 Button { tap(kg) } label: {
-                    Text(Format.number(kg))
+                    Text(Plates.num(kg))
                         .font(.subheadline.weight(.semibold))
                         .frame(maxWidth: .infinity, minHeight: 34)
                         .foregroundStyle(on ? .white : Brand.ink)

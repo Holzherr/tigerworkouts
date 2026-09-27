@@ -107,7 +107,10 @@ const TimerSetGrid = ({ state, step, blockId, actions, equipment }: { state: R.R
         const edit = !done && sl.id === editing;
         const live = state.phase === 'running' || state.phase === 'paused';
         const canTick = done || idx < state.i || (live && (idx === state.i || (current && state.slots.slice(state.i, idx).every(x => x.kind === 'rest'))));
-        const last = actions.lastFor?.(step, n);
+        // Last time's set of the same number, only when it was the same kind of set: a warm-up is not
+        // shown last week's working weight.
+        const prior = actions.lastFor?.(step, n);
+        const last = prior && (prior.type ?? 'normal') === types[n] ? prior : undefined;
         const hint = last ? lastSetLabel(last) : actions.hintFor?.(step, n);
         const copy = last && actions.fill && !done ? { ...(hasLoad && last.load !== undefined ? { load: last.load } : {}), ...(count && last.reps !== undefined ? { reps: last.reps } : {}) } : undefined;
         return (
