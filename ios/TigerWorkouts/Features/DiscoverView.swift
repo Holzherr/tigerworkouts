@@ -204,8 +204,35 @@ struct DiscoverView: View {
 
     // MARK: - For you
 
+    /// Ranked from history by the web's rules (Recommend.swift, a port of recommend.ts); six at most.
+    private var picks: [Recommendation] {
+        recommend(all: store.allWorkouts, results: store.results, saved: store.saved)
+    }
+
     @ViewBuilder
     private var forYou: some View {
+        let picks = self.picks
+        section("For you", subtitle: picks.isEmpty ? "Nothing to suggest yet" : "Picked from what you have done") {
+            if picks.isEmpty {
+                // Same way forward as the web: history the rules cannot match sends you to the catalogue.
+                HStack(spacing: 12) {
+                    Text("Log a couple more workouts and this list learns what you like.")
+                        .font(.subheadline)
+                        .foregroundStyle(Brand.muted)
+                    Spacer(minLength: 0)
+                    Button("Browse workouts") { tab = .browse }
+                        .font(.subheadline.weight(.semibold))
+                        .buttonStyle(.borderedProminent)
+                        .accessibilityIdentifier("for-you-browse")
+                }
+                .padding(.horizontal, 16)
+            } else {
+                list(picks.map(\.runsheet), from: .recommended) { sheet in
+                    picks.first { $0.runsheet.key == sheet.key }?.reason
+                }
+                .accessibilityIdentifier("for-you")
+            }
+        }
         if !recent.isEmpty {
             section("Pick up again", subtitle: "What you do most") {
                 carousel(recent.prefix(10).map(\.sheet), large: true, from: .history)
@@ -307,12 +334,13 @@ struct DiscoverView: View {
         .scrollIndicators(.hidden)
     }
 
-    private func list(_ sheets: [Runsheet], from: SessionOrigin) -> some View {
+    /// `reason` gives a row its one-line why (For you); every other list has none.
+    private func list(_ sheets: [Runsheet], from: SessionOrigin, reason: @escaping (Runsheet) -> String? = { _ in nil }) -> some View {
         LazyVStack(spacing: 0) {
             ForEach(Array(sheets.enumerated()), id: \.element.key) { index, sheet in
                 if index > 0 { Divider().padding(.leading, 80) }
                 NavigationLink(value: Opened(key: sheet.key, from: from)) {
-                    WorkoutRow(runsheet: sheet, done: store.doneCount(sheet.key))
+                    WorkoutRow(runsheet: sheet, done: store.doneCount(sheet.key), reason: reason(sheet))
                 }
                 .buttonStyle(.plain)
             }
@@ -375,10 +403,12 @@ struct WorkoutTile: View {
     }
 }
 
-/// A workout in a list: icon, name, and what you need to know before you tap.
+/// A workout in a list: icon, name, and what you need to know before you tap. A For you row
+/// adds its reason ("Next in StrongLifts 5×5") as a caption under the title.
 struct WorkoutRow: View {
     let runsheet: Runsheet
     var done: Int
+    var reason: String? = nil
 
     var body: some View {
         HStack(spacing: 14) {
@@ -389,6 +419,12 @@ struct WorkoutRow: View {
                     .foregroundStyle(Brand.ink)
                     .lineLimit(2)
                     .multilineTextAlignment(.leading)
+                if let reason {
+                    Text(reason)
+                        .font(.footnote.weight(.semibold))
+                        .foregroundStyle(Brand.coralInk)
+                        .lineLimit(1)
+                }
                 HStack(spacing: 6) {
                     Text("\(runsheet.minutes) min")
                     if let creator = runsheet.creator { Text("· \(creator)").lineLimit(1) }

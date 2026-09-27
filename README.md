@@ -72,7 +72,10 @@ left. `src/features/runsheet/model.ts` holds every edit as a pure function; `fro
 v0.9 `legacy/data.js` workouts. The iPhone app runs the same model, ported: the timer engine in
 `ios/TigerWorkouts/Engine/Runner.swift` is `src/features/timer/runner.ts` line for line, and has to
 follow it when it changes. Mid-session, `replan` takes an edited runsheet and rebuilds every slot
-after the running block, keeping what is done (`specs/unified-editing.md`).
+after the running block, keeping what is done (`specs/unified-editing.md`). The same goes for the
+home-screen ranking: `ios/TigerWorkouts/Model/Recommend.swift` is the port of
+`src/features/discover/recommend.ts` and feeds the For you section at the top of the phone's
+Workouts tab, whose rows start a session as `recommended`.
 
 ## Imported workouts
 
