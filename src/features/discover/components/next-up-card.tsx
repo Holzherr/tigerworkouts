@@ -3,6 +3,8 @@ import { Button } from '@/shared/components/ui/button';
 import { WorkoutIcon } from '@/shared/components/ui/workout-icon';
 import { runsheetMinutes, type Runsheet } from '@/features/runsheet/model';
 import type { Streak } from '@/features/results/effort';
+import type { Stall } from '@/features/results/stall';
+import { StallLine, TodayLine } from '@/features/results/components/targets';
 
 export interface NextUpCardProps {
   runsheet: Runsheet;
@@ -13,6 +15,10 @@ export interface NextUpCardProps {
   onStart: () => void;
   /** Opens the workout page, to look or change it first. */
   onOpen: () => void;
+  /** What to aim for, from this workout's history ("Aim for 8+ rounds"). */
+  today?: { text: string; detail?: string };
+  /** One stall among this workout's exercises, or the workout's own; opens where the options are. */
+  stall?: { name?: string; stall: Stall; onOpen: () => void };
 }
 
 /** "3 this week · 2 weeks running", or how last week went when this one has nothing yet. */
@@ -26,10 +32,10 @@ export const weekLine = (s: Streak) =>
 /**
  * Top of home once there is history: a white card with a coral outline. Orange reason line
  * ("Next in StrongLifts 5×5"), then the workout's icon, title and length with a coral Start on
- * the right; tapping the title opens the workout page instead. Under a hairline, the week so far
- * with a trend icon.
+ * the right; tapping the title opens the workout page instead. With history, a "Today" target line
+ * under it and at most one muted stall line. Under a hairline, the week so far with a trend icon.
  */
-export const NextUpCard = ({ runsheet, reason, streak, onStart, onOpen }: NextUpCardProps) => (
+export const NextUpCard = ({ runsheet, reason, streak, onStart, onOpen, today, stall }: NextUpCardProps) => (
   <section aria-label="Up next" className="rounded-card border border-brand-line bg-surface p-3">
     <div className="text-[12px] font-bold text-brand-ink">{reason}</div>
     <div className="mt-2 flex items-center gap-3">
@@ -46,6 +52,8 @@ export const NextUpCard = ({ runsheet, reason, streak, onStart, onOpen }: NextUp
         <Play /> Start
       </Button>
     </div>
+    {today && <TodayLine text={today.text} detail={today.detail} className="mt-2.5" />}
+    {stall && <div className="mt-1.5 pl-6"><StallLine name={stall.name} stall={stall.stall} onOpen={stall.onOpen} /></div>}
     <div className="mt-3 flex items-center gap-2 border-t border-line-soft pt-2 text-[13px]">
       <TrendingUp className="size-4 shrink-0 text-brand" />
       <span className="font-bold">{weekLine(streak)}</span>

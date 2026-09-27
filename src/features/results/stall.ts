@@ -92,10 +92,11 @@ const weeksText = (w: number) => (w === 1 ? 'a week' : `${w} weeks`);
 
 /**
  * An exercise's stall and its two options: build back from lighter (or, for bodyweight, more sets
- * of fewer reps), and swap to `swap` — the first alternative from the alternatives data — for three
- * weeks. With no swap, the second option is the other direction: heavier for fewer reps.
+ * of fewer reps), and swap to the first alternative from the alternatives data (`swapFor`, given
+ * the standing best's load) for three weeks. With no swap, the second option is the other
+ * direction: heavier for fewer reps.
  */
-export const exerciseStall = (results: SessionResult[], exercise: { key: string; name: string; unit: string; step: number }, now: Date, swap?: Swap): Stall | undefined => {
+export const exerciseStall = (results: SessionResult[], exercise: { key: string; name: string; unit: string; step: number }, now: Date, swapFor?: (load: number | undefined) => Swap | undefined): Stall | undefined => {
   const history = exerciseHistory(results, exercise.key).reverse();
   const kind = kindOf(history);
   if (kind === 'rounds') return undefined;
@@ -110,11 +111,16 @@ export const exerciseStall = (results: SessionResult[], exercise: { key: string;
   const bests = history.map(s => ({ at: s.startedAt, best: pick(s.sets) })).filter((p): p is { at: string; best: { value: number; set: SetResult } } => !!p.best);
   const p = plateau(bests.map(b => ({ at: b.at, value: b.best.value })), now);
   if (!p) return undefined;
+  // Bodyweight reps that never vary are a prescribed count in a circuit (Cindy's 10 push-ups a
+  // round), not a max effort that stopped moving.
+  const window = history.filter(h => h.startedAt >= p.since).flatMap(h => h.sets).map(x => x.reps);
+  if (kind === 'reps' && window.every(r => r === window[0])) return undefined;
   const set = bests[p.index].best.set;
   const unit = shortUnit(exercise.unit);
   const u = unit ? ` ${unit}` : '';
   const step = exercise.step || 2.5;
   const best = kind === 'strength' ? `${fmtNum(set.load!)}${u} × ${fmtNum(set.reps!)}` : kind === 'load' ? `${fmtNum(set.load!)}${u}` : `${fmtNum(set.reps!)} reps`;
+  const swap = swapFor?.(set.load);
   const swapOption = (then: string): StallOption | undefined =>
     swap ? { title: `Swap to ${swap.name} for three weeks`, detail: `${swap.target !== undefined ? `Start around ${fmtNum(swap.target)}${swap.unit ? ` ${swap.unit}` : ''}. ` : ''}${then}`, exerciseKey: swap.key } : undefined;
   let options: [StallOption, StallOption];

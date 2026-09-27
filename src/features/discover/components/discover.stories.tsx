@@ -64,3 +64,19 @@ const top = <NextUpCard runsheet={upNext} reason={`Next in ${upNext.program?.nam
 /** With history: the Up next card over Saved. */
 export const WithHistory: Story = { args: { initialTab: 'saved', results: HISTORY, savedIds: SAVED, top } };
 export const UpNextCard: Story = { render: () => <div className="p-3">{top}</div> };
+/** With history to read: the Today target under the title and one quiet stall line. */
+export const UpNextWithTarget: Story = {
+  render: () => (
+    <div className="p-3">
+      <NextUpCard
+        runsheet={upNext}
+        reason="Your last workout"
+        streak={{ weeks: 3, thisWeek: 2, lastWeek: 3, total: 14 }}
+        today={{ text: 'Aim for 8+ rounds', detail: 'Last 3 times: 7, 7, 8 rounds' }}
+        stall={{ name: 'Goblet squat', stall: { id: 'x', best: '24 kg × 8', sessions: 4, weeks: 5, line: 'At 24 kg × 8 for 5 weeks', options: [{ title: 'a', detail: '' }, { title: 'b', detail: '' }] }, onOpen: () => alert('open') }}
+        onStart={() => alert('start')}
+        onOpen={() => alert('open')}
+      />
+    </div>
+  ),
+};

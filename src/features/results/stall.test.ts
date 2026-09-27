@@ -38,7 +38,7 @@ describe('exercise stalls', () => {
   const stuck = [did(35, kb.key, [x(24, 8), x(24, 8)]), did(28, kb.key, [x(24, 8), x(24, 7)]), did(21, kb.key, [x(24, 7)]), did(14, kb.key, [x(24, 8)])];
 
   it('names the best that stands and offers two ways out', () => {
-    const s = exerciseStall(stuck, kb, NOW, { key: 'db_squat', name: 'Dumbbell squat', target: 12, unit: 'kg' })!;
+    const s = exerciseStall(stuck, kb, NOW, load => ({ key: 'db_squat', name: 'Dumbbell squat', target: load! / 2, unit: 'kg' }))!;
     expect(s.line).toBe('At 24 kg × 8 for 5 weeks');
     expect(s.options.map(o => o.title)).toEqual(['Drop to 20 kg and build to 12 reps', 'Swap to Dumbbell squat for three weeks']);
     expect(s.options[1]).toMatchObject({ exerciseKey: 'db_squat', detail: 'Start around 12 kg. Then come back to Goblet squat.' });
@@ -59,6 +59,14 @@ describe('exercise stalls', () => {
     const s = exerciseStall([did(35, pu.key, [x(undefined, 20)]), did(28, pu.key, [x(undefined, 18)]), did(21, pu.key, [x(undefined, 20)]), did(14, pu.key, [x(undefined, 19)])], pu, NOW)!;
     expect(s.line).toBe('At 20 reps for 5 weeks');
     expect(s.options[0].title).toBe('Do 5 sets of 12 for three weeks');
+  });
+});
+
+describe('prescribed counts', () => {
+  it('bodyweight reps that never vary are a circuit’s count, not a stall', () => {
+    const pu = { key: 'bw_pushup', name: 'Push-ups', unit: '', step: 1 };
+    const same = [35, 28, 21, 14].map(d => did(d, pu.key, [x(undefined, 10), x(undefined, 10)]));
+    expect(exerciseStall(same, pu, NOW)).toBeUndefined();
   });
 });
 

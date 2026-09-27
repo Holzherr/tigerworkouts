@@ -5,6 +5,8 @@ import { shortUnit, type ExerciseRef } from '@/features/runsheet/model';
 import type { SessionResult } from '@/features/runsheet/progression';
 import { chartPoints, exerciseHistory, fmtNum, records, setLabel, type LogKind, type Rec, type Records } from '../logbook';
 import { ProgressChart } from './progress-chart';
+import { StallCard } from './targets';
+import type { Stall } from '../stall';
 
 export interface ExerciseHistoryScreenProps {
   exercise: ExerciseRef;
@@ -13,6 +15,11 @@ export interface ExerciseHistoryScreenProps {
   /** Opens a session from its row. */
   onSession?: (id: string) => void;
   backLabel?: string;
+  /** A best that has not moved in weeks, with two ways out; shown under the chart until dismissed. */
+  stall?: Stall;
+  onDismissStall?: () => void;
+  /** Opens another exercise's logbook, from a swap option. */
+  onExercise?: (key: string) => void;
 }
 
 const date = (iso: string) => new Date(iso).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
@@ -41,10 +48,11 @@ const tiles = (r: Records, unit: string, last?: string): Tile[] => {
 
 /**
  * One exercise across every session: the clip and name, a line chart of the best set per session,
- * record tiles with the date each was set, then the sessions newest first with their sets. A set
- * that beat a record standing at the time carries a small PR marker.
+ * a stall card when the best has not moved in weeks, record tiles with the date each was set, then
+ * the sessions newest first with their sets. A set that beat a record standing at the time carries
+ * a small PR marker.
  */
-export const ExerciseHistoryScreen = ({ exercise: ex, results, onBack, onSession, backLabel = 'Back' }: ExerciseHistoryScreenProps) => {
+export const ExerciseHistoryScreen = ({ exercise: ex, results, onBack, onSession, backLabel = 'Back', stall, onDismissStall, onExercise }: ExerciseHistoryScreenProps) => {
   const history = exerciseHistory(results, ex.key);
   const rec = records(results, ex.key);
   const unit = shortUnit(ex.unit);
@@ -63,6 +71,7 @@ export const ExerciseHistoryScreen = ({ exercise: ex, results, onBack, onSession
       <div className="min-h-0 flex-1 space-y-3 overflow-y-auto px-3 py-3">
         {history.length === 0 && <div className="py-10 text-center text-[13px] text-muted">Not logged yet. Finish a workout with it and it shows up here.</div>}
         {points.length > 0 && <ProgressChart points={points} label={chartLabel(rec.kind, unit)} />}
+        {stall && onDismissStall && <StallCard stall={stall} onDismiss={onDismissStall} onExercise={onExercise} />}
         {history.length > 0 && (
           <div className="grid grid-cols-2 gap-2">
             {tiles(rec, unit, history[0]?.startedAt).map(t => (

@@ -37,6 +37,8 @@ export interface TimerScreenProps {
   onFill?: (slotId: string, set: SetResult) => void;
   /** "Round 4 — 12 s ahead" against the last session of this workout. */
   ghost?: string;
+  /** Today's target where the timer is: "Target 24 × 10", "Target 8+ · 1:15 a round". */
+  goal?: string;
   /** Tones off. With `onToggleMute`, a speaker button in the header switches them. */
   muted?: boolean;
   onToggleMute?: () => void;
@@ -161,7 +163,7 @@ const stepLine = (s: ExerciseStep) => [forLabel(s), s.target !== undefined ? `${
  * a ⋯ menu (previous, overview, stop), Pause and Skip/Done at equal size. Tap the Next row to see
  * what the coming block asks for; the overview sheet lists every part with progress.
  */
-export const TimerScreen = ({ runsheet, state, now, onDone, onSkip, onBack, onPause, onResume, onAdjust, onAdjustIncline, onSetReps, onDrop, onStartBlock, onAdjustStep, sets, onAdjustRest, lastFor, onFill, ghost, muted, onToggleMute, onFinish, onExit }: TimerScreenProps) => {
+export const TimerScreen = ({ runsheet, state, now, onDone, onSkip, onBack, onPause, onResume, onAdjust, onAdjustIncline, onSetReps, onDrop, onStartBlock, onAdjustStep, sets, onAdjustRest, lastFor, onFill, ghost, goal, muted, onToggleMute, onFinish, onExit }: TimerScreenProps) => {
   const [confirmExit, setConfirmExit] = useState(false);
   const [menu, setMenu] = useState(false);
   const [overview, setOverview] = useState(false);
@@ -224,9 +226,18 @@ export const TimerScreen = ({ runsheet, state, now, onDone, onSkip, onBack, onPa
             <div className="text-[12px] tabular-nums text-white/60">{fmtClock(total)}</div>
           </button>
         </div>
-        {ghost && !done && (
-          <div className="mt-1.5 w-fit rounded-full bg-white/10 px-2.5 py-0.5 text-[13px] font-bold tabular-nums" aria-label="Against last time">
-            {ghost}
+        {(ghost || goal) && !done && (
+          <div className="mt-1.5 flex flex-wrap gap-1.5">
+            {ghost && (
+              <div className="w-fit rounded-full bg-white/10 px-2.5 py-0.5 text-[13px] font-bold tabular-nums" aria-label="Against last time">
+                {ghost}
+              </div>
+            )}
+            {goal && (
+              <div className="w-fit rounded-full border border-white/15 px-2.5 py-0.5 text-[13px] font-semibold text-white/75 tabular-nums" aria-label="Target">
+                {goal}
+              </div>
+            )}
           </div>
         )}
         <button type="button" onClick={() => setOverview(true)} className="relative mt-2 block h-2 w-full overflow-hidden rounded-full bg-white/15" aria-label="Workout overview">

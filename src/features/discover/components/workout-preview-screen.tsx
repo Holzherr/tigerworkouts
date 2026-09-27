@@ -9,6 +9,9 @@ import { ExerciseSheet } from '@/features/runsheet/components/exercise-sheet';
 import type { SessionResult } from '@/features/runsheet/progression';
 import { fmtScore } from '@/features/runsheet/progression';
 import { KIND_LABEL } from './workout-card';
+import type { Today } from '@/features/runsheet/targets';
+import type { Stall } from '@/features/results/stall';
+import { StallCard, TodayLine } from '@/features/results/components/targets';
 
 export interface WorkoutPreviewScreenProps {
   runsheet: Runsheet;
@@ -35,6 +38,11 @@ export interface WorkoutPreviewScreenProps {
   onExerciseHistory?: (step: ExerciseStep) => void;
   /** Whether an exercise has logged history; the sheet's History row shows only when it does. */
   hasHistory?: (step: ExerciseStep) => boolean;
+  /** What to aim for today, from history; every exercise with a target is listed under the line. */
+  today?: Today;
+  /** The workout's own stall (a score that stopped moving), shown under today's target. */
+  stall?: Stall;
+  onDismissStall?: () => void;
 }
 
 /** A straight-set block read as the gym writes it: set, load, reps — one line each. */
@@ -64,7 +72,7 @@ const SCORE_TEXT: Record<string, string> = { time: 'For time', rounds: 'AMRAP: r
  * Edit & start, Follow along for videos, Save. Tapping any exercise opens it — the clip, the cue,
  * and its numbers as steppers when the host can save them.
  */
-export const WorkoutPreviewScreen = ({ runsheet: r, history = [], lastTime, onBack, onStart, onEditAndStart, onFollowAlong, onLogOnly, onSave, saved, onShare, onStepChange, onCreator, onTogglePublic, appHref, onExerciseHistory, hasHistory }: WorkoutPreviewScreenProps) => {
+export const WorkoutPreviewScreen = ({ runsheet: r, history = [], lastTime, onBack, onStart, onEditAndStart, onFollowAlong, onLogOnly, onSave, saved, onShare, onStepChange, onCreator, onTogglePublic, appHref, onExerciseHistory, hasHistory, today, stall, onDismissStall }: WorkoutPreviewScreenProps) => {
   const [open, setOpen] = useState<ExerciseStep | null>(null);
   const kind = r.source?.kind ?? 'user';
   const score = scoreType(r);
@@ -117,6 +125,18 @@ export const WorkoutPreviewScreen = ({ runsheet: r, history = [], lastTime, onBa
         )}
       </header>
       <div className="min-h-0 flex-1 space-y-3 overflow-y-auto px-3 py-3">
+        {today && (
+          <div className="rounded-card border border-brand-line bg-surface px-3 py-2.5">
+            <TodayLine text={today.text} detail={today.sets.length > 1 ? today.sets[0].reason : today.detail} />
+            {today.sets.slice(1).map(t => (
+              <div key={t.stepId} className="mt-1.5 pl-6 text-[13px]">
+                <span className="font-bold">{t.name} {t.text}</span>
+                <div className="text-[12px] text-muted">{t.reason}</div>
+              </div>
+            ))}
+          </div>
+        )}
+        {stall && onDismissStall && <StallCard stall={stall} onDismiss={onDismissStall} />}
         {r.description && <p className="px-1 text-[14px] leading-relaxed text-body">{r.description}</p>}
         {(best || last) && (
           <div className="flex gap-2">

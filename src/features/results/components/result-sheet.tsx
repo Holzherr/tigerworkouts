@@ -12,6 +12,7 @@ import { scoreType, type ExerciseStep, type Runsheet } from '@/features/runsheet
 import { fmtScore, nextLoads, resolveTarget, type NextLoad, type SessionOrigin, type SessionResult, type StepResult, type TrainingMaxes } from '@/features/runsheet/progression';
 import { ScoreEntry } from './score-entry';
 import { BodyweightPrompt } from './bodyweight-prompt';
+import { nextTime, type Intent } from '@/features/runsheet/targets';
 
 export interface ResultSheetProps {
   runsheet: Runsheet;
@@ -28,6 +29,8 @@ export interface ResultSheetProps {
   onCancel?: () => void;
   /** Set while bodyweight has never been given or skipped: asks for it under the stats. */
   onBodyweight?: (kg: number | undefined) => void;
+  /** How hard the next-time targets push (Settings → Suggestions). */
+  intent?: Intent;
 }
 
 const exerciseSteps = (r: Runsheet): ExerciseStep[] => r.items.flatMap(it => (it.kind === 'block' ? it.steps : it.kind === 'ref' ? [] : [it])).filter((s): s is ExerciseStep => s.kind === 'exercise');
@@ -35,10 +38,10 @@ const exerciseSteps = (r: Runsheet): ExerciseStep[] => r.items.flatMap(it => (it
 /**
  * End-of-session sheet. Top: the score entry for the workout's score type. Middle: one line per
  * exercise with the load used and, for program sessions, a "made it / missed" toggle and the
- * reps on any 5+ or max set. Bottom: "Next time" lines produced by the progression rules, then
- * Save. Pure: the host stores the result and updates training maxes.
+ * reps on any 5+ or max set. Bottom: "Next time" lines produced by the progression rules and,
+ * for everything they do not move, the targets read from history (targets.ts), then Save. Pure: the host stores the result and updates training maxes.
  */
-export const ResultSheet = ({ runsheet, history = [], trainingMaxes = {}, bodyweightKg, startedAt, initial, startedFrom, onSave, onCancel, onBodyweight }: ResultSheetProps) => {
+export const ResultSheet = ({ runsheet, history = [], trainingMaxes = {}, bodyweightKg, startedAt, initial, startedFrom, onSave, onCancel, onBodyweight, intent = 'maintain' }: ResultSheetProps) => {
   const type = scoreType(runsheet);
   const steps = useMemo(() => exerciseSteps(runsheet), [runsheet]);
   const hasProgression = !!runsheet.progression || runsheet.items.some(i => i.kind === 'block' && i.progression);
@@ -58,6 +61,8 @@ export const ResultSheet = ({ runsheet, history = [], trainingMaxes = {}, bodywe
   );
   const result: SessionResult = { ...initial, runsheetId: runsheet.id ?? runsheet.title, title: runsheet.title, startedAt: initial?.startedAt ?? startedAt ?? new Date().toISOString(), endedAt: initial?.endedAt ?? new Date().toISOString(), score, scoreText: score !== undefined ? fmtScore(type, score) : undefined, steps: [...Object.values(rows), ...extra], notes: notes || undefined, startedFrom };
   const next = useMemo(() => nextLoads(runsheet, result, history, trainingMaxes), [runsheet, result, history, trainingMaxes]);
+  // Targets from history for what the programme rules do not move: the score, loads, reps.
+  const targets = useMemo(() => nextTime(runsheet, result, history, intent, next.map(n => n.exerciseKey)), [runsheet, result, history, intent, next]);
   const set = (id: string, patch: Partial<StepResult>) => setRows(r => ({ ...r, [id]: { ...r[id], ...patch } }));
   const seen = new Set<string>();
 
@@ -115,8 +120,8 @@ export const ResultSheet = ({ runsheet, history = [], trainingMaxes = {}, bodywe
             </div>
           );
         })}
-        {next.length > 0 && (
-          <section className="rounded-card border border-brand-line bg-brand-soft px-3 py-2">
+        {(next.length > 0 || targets.length > 0) && (
+          <section aria-label="Next time" className="rounded-card border border-brand-line bg-brand-soft px-3 py-2">
             <div className="text-[11px] font-bold tracking-widest text-brand-ink uppercase">Next time</div>
             {next.map(n => (
               <div key={n.exerciseKey} className="mt-1.5 text-[13px]">
@@ -127,6 +132,15 @@ export const ResultSheet = ({ runsheet, history = [], trainingMaxes = {}, bodywe
                   </span>
                 </div>
                 <div className="text-[11px] text-muted">{n.reason}</div>
+              </div>
+            ))}
+            {targets.map(t => (
+              <div key={t.key} className="mt-1.5 text-[13px]">
+                <div className="flex items-center gap-2">
+                  <span className="min-w-0 flex-1 truncate font-semibold">{t.key === 'score' ? 'Score' : t.name}</span>
+                  <span className="shrink-0 font-bold whitespace-nowrap tabular-nums">{t.text}</span>
+                </div>
+                <div className="text-[11px] text-muted">{t.reason}</div>
               </div>
             ))}
           </section>

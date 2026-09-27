@@ -7,6 +7,7 @@ import { Chip } from '@/shared/components/ui/chip';
 import { Dropdown } from '@/shared/components/ui/dropdown';
 import { Sheet } from '@/shared/components/ui/sheet';
 import type { Avatar } from '@/features/cloud/sync';
+import { INTENTS, type Intent } from '@/features/runsheet/targets';
 
 const EMOJIS = ['', '💪', '🏋️', '🏃', '🚴', '🧘', '🥊', '🎾', '⚽', '🏊', '🔥', '⚡', '🦁', '🐯', '🦊', '🐻'];
 const COLORS = ['#ff4d2e', '#f59e0b', '#a78bfa', '#38bdf8', '#34d399', '#fb7185', '#4ade80', '#e879f9'];
@@ -34,6 +35,9 @@ export interface SettingsSheetProps {
   /** Editor drag-and-drop behaviour under test. */
   dnd?: DndVariant;
   onDnd?: (v: DndVariant) => void;
+  /** How hard today's targets push. Maintain until changed. */
+  intent?: Intent;
+  onIntent?: (v: Intent) => void;
 }
 
 /** 56px avatar: photo, or an emoji / initial on a coloured disc. */
@@ -50,7 +54,7 @@ export const AvatarView = ({ name, avatar, size = 56 }: { name: string; avatar?:
  * Settings sheet: avatar preview with name field, emoji and colour chips, photo upload (resized
  * to 256px and stored as a data URL), units dropdown, Invite someone, Sign out.
  */
-export const SettingsSheet = ({ open, onOpenChange, name, avatar, units, email, onChange, onInvite, onSignOut, volume, onVolume, defaultRest, onDefaultRest, dnd, onDnd }: SettingsSheetProps) => {
+export const SettingsSheet = ({ open, onOpenChange, name, avatar, units, email, onChange, onInvite, onSignOut, volume, onVolume, defaultRest, onDefaultRest, dnd, onDnd, intent = 'maintain', onIntent }: SettingsSheetProps) => {
   const file = useRef<HTMLInputElement>(null);
   const onPhoto = (f: File) => {
     const img = new Image();
@@ -112,6 +116,21 @@ export const SettingsSheet = ({ open, onOpenChange, name, avatar, units, email, 
             Default rest <span className="text-muted">(s)</span>
           </span>
           <Stepper aria-label="Default rest" value={defaultRest ?? 30} min={5} max={600} step={15} onChange={onDefaultRest} />
+        </div>
+      )}
+      {onIntent && (
+        <div>
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <span className="text-[14px]">Suggestions</span>
+            <div className="flex gap-1" role="radiogroup" aria-label="Suggestions">
+              {INTENTS.map(i => (
+                <Chip key={i.id} role="radio" aria-checked={intent === i.id} variant={intent === i.id ? 'on' : 'outline'} onClick={() => onIntent(i.id)}>
+                  {i.label}
+                </Chip>
+              ))}
+            </div>
+          </div>
+          <div className="mt-1 text-[12px] text-muted">{INTENTS.find(i => i.id === intent)?.note} Ignoring a suggestion costs nothing.</div>
         </div>
       )}
       <Button variant="ghost" block onClick={onInvite}>

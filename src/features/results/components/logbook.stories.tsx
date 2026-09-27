@@ -3,6 +3,7 @@ import { EX } from '@/features/runsheet/fixtures';
 import type { SessionResult } from '@/features/runsheet/progression';
 import { ExerciseHistoryScreen } from './exercise-history-screen';
 import { ExerciseListScreen } from './exercise-list-screen';
+import type { Stall } from '../stall';
 
 const day = 864e5;
 const at = (d: number) => new Date(Date.UTC(2026, 7, 16) + d * day).toISOString();
@@ -34,3 +35,18 @@ export const NotLoggedYet: Story = { args: { results: [] } };
 export const ExerciseList: Story = {
   render: () => <ExerciseListScreen results={results} exercise={k => EX[k] ?? { key: k, name: k, unit: '', step: 1 }} onBack={() => {}} onOpen={() => {}} />,
 };
+
+const STALL: Stall = {
+  id: 'x:bb_bench@demo',
+  exerciseKey: 'bb_bench',
+  best: '67.5 kg × 6',
+  sessions: 4,
+  weeks: 5,
+  line: 'At 67.5 kg × 6 for 5 weeks',
+  options: [
+    { title: 'Drop to 60 kg and build to 10 reps', detail: 'A rep a session, then back to 67.5 kg.' },
+    { title: 'Swap to Machine chest press for three weeks', detail: 'Start around 67.5 kg. Then come back to Barbell bench press.', exerciseKey: 'machine_chest_press' },
+  ],
+};
+/** A best that has not moved: the stall card sits under the chart with two ways out and Not now. */
+export const Stalled: Story = { args: { stall: STALL, onDismissStall: () => {}, onExercise: () => {} } };

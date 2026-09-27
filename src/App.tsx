@@ -9,7 +9,7 @@ import { WorkoutPreviewScreen } from '@/features/discover/components/workout-pre
 import { EditorScreen } from '@/features/runsheet/components/editor-screen';
 import type { DndVariant } from '@/features/runsheet/components/runsheet-list';
 import { EX, priyanka } from '@/features/runsheet/fixtures';
-import { makeExercise, resolveRefs, scoreType, type ExerciseStep, type Runsheet } from '@/features/runsheet/model';
+import { makeExercise, resolveRefs, scoreType, shortUnit, type ExerciseStep, type Runsheet } from '@/features/runsheet/model';
 import { lastSet, lastSetLabel, lastSets, lastTimeLabel, withLastUsed } from '@/features/runsheet/last-used';
 import { patchStep } from '@/features/runsheet/patch-step';
 import { applyCommands, parsePlan } from '@/features/runsheet/parse-text';
@@ -55,6 +55,10 @@ import { SessionDetailScreen } from '@/features/results/components/session-detai
 import { ExerciseHistoryScreen } from '@/features/results/components/exercise-history-screen';
 import { ExerciseListScreen } from '@/features/results/components/exercise-list-screen';
 import { FULL_LIBRARY as LIB } from '@/features/workouts/imported';
+import { timerTarget, today as todayFor, type Intent } from '@/features/runsheet/targets';
+import { exerciseStall, workoutStall, type Stall } from '@/features/results/stall';
+import { dismissStall, getDismissed, getIntent, setIntent as storeIntent } from '@/features/results/suggestions';
+import { alternatives } from '@/features/exercises/alternatives';
 
 
 const TABS = [
@@ -153,6 +157,20 @@ export default function App() {
   const [pending, setPending] = useState<Partial<SessionResult> | null>(null); // what the timer recorded, for the result sheet
   const open = (r: Runsheet, origin?: SessionOrigin) => (setFrom(origin), go(`/w/${encodeURIComponent(wid(r))}`));
   const [tmOpen, setTmOpen] = useState(false);
+  const [intent, setIntentState] = useState<Intent>(getIntent);
+  const [dismissed, setDismissed] = useState<string[]>(getDismissed);
+  const dismiss = (s: Stall) => setDismissed(dismissStall(s.id));
+  const live = (s: Stall | undefined) => (s && !dismissed.includes(s.id) ? s : undefined);
+  // A stall for one exercise. The swap is the first alternative the load carries over to, so a
+  // loaded lift is not offered a bodyweight move; failing that, the first alternative.
+  const stallOf = (key: string) => {
+    const ex = library[key] ?? { key, name: key, unit: '', step: 1 };
+    return live(exerciseStall(st.results, ex, new Date(), load => {
+      const all = alternatives(key, load, library, 20);
+      const a = all.find(x => x.target !== undefined) ?? all[0];
+      return a && { key: a.exercise.key, name: a.exercise.name, target: a.target, unit: shortUnit(a.exercise.unit) };
+    }));
+  };
 
   const overlay = (
     <>
@@ -188,9 +206,13 @@ export default function App() {
   if (route.name === 'workout') {
     const r = byId.get(route.id);
     if (!r) return shell('discover', <Missing />);
+    const stall = live(workoutStall(r, st.results, new Date()));
     return full(
         <WorkoutPreviewScreen
           runsheet={r}
+          today={todayFor(resolveRefs(r, lookup), st.results, intent)}
+          stall={stall}
+          onDismissStall={stall ? () => dismiss(stall) : undefined}
           history={st.results.filter(x => x.runsheetId === wid(r))}
           lastTime={lastTime}
           onExerciseHistory={s => go(exerciseLink(s.exercise.key))}
@@ -315,7 +337,7 @@ export default function App() {
   if (route.name === 'do') {
     const r = draft ?? byId.get(route.id);
     if (!r) return shell('discover', <Missing />);
-    return <RunRoute key={route.id} runsheet={withLastUsed(resolveRefs(r, lookup), st.results)} results={st.results} onLog={res => act.addResult({ ...res, runsheetId: wid(r) })} onFinish={res => (setPending({ ...res, runsheetId: wid(r) }), go(`/result/${encodeURIComponent(route.id)}`))} onExit={() => (Runner.clearPersisted(), go(`/w/${encodeURIComponent(route.id)}`))} />;
+    return <RunRoute key={route.id} runsheet={withLastUsed(resolveRefs(r, lookup), st.results)} results={st.results} intent={intent} onLog={res => act.addResult({ ...res, runsheetId: wid(r) })} onFinish={res => (setPending({ ...res, runsheetId: wid(r) }), go(`/result/${encodeURIComponent(route.id)}`))} onExit={() => (Runner.clearPersisted(), go(`/w/${encodeURIComponent(route.id)}`))} />;
   }
   if (route.name === 'session') {
     const res = st.results.find(x => x.id === route.id);
@@ -339,7 +361,8 @@ export default function App() {
   }
   if (route.name === 'exercise') {
     const ex = library[route.id] ?? { key: route.id, name: route.id, unit: '', step: 1 };
-    return full(<ExerciseHistoryScreen key={route.id} exercise={ex} results={st.results} onBack={() => back('/history/exercises')} onSession={id => go(`/s/${encodeURIComponent(id)}`)} />);
+    const stall = stallOf(route.id);
+    return full(<ExerciseHistoryScreen key={route.id} exercise={ex} results={st.results} onBack={() => back('/history/exercises')} onSession={id => go(`/s/${encodeURIComponent(id)}`)} stall={stall} onDismissStall={stall ? () => dismiss(stall) : undefined} onExercise={k => go(exerciseLink(k))} />);
   }
   if (route.name === 'result') {
     const r = draft ?? byId.get(route.id);
@@ -353,6 +376,7 @@ export default function App() {
           bodyweightKg={st.bodyweightKg}
           initial={pending ?? undefined}
           startedFrom={from}
+          intent={intent}
           onBodyweight={st.bodyweightKg === undefined && !st.bodyweightAsked ? kg => (kg === undefined ? act.skipBodyweight() : act.setBodyweight(kg)) : undefined}
           onCancel={() => (setPending(null), go(`/w/${encodeURIComponent(route.id)}`))}
           onSave={(res, next) => {
@@ -471,7 +495,7 @@ export default function App() {
             </Button>
           )}
         </MeScreen>
-        <SettingsSheet open={settingsOpen} onOpenChange={setSettingsOpen} name={st.name} avatar={st.avatar} units={st.units} email={cloud.user?.email ?? undefined} volume={volume} onVolume={v => { setVolume(v); setVol(v); }} defaultRest={defaultRest} onDefaultRest={v => { setDefaultRest(v); setRest(getDefaultRest()); }} dnd={dnd} onDnd={setDnd} onChange={act.setProfile} onInvite={invite} onSignOut={cloud.user ? out : undefined} />
+        <SettingsSheet open={settingsOpen} onOpenChange={setSettingsOpen} name={st.name} avatar={st.avatar} units={st.units} email={cloud.user?.email ?? undefined} volume={volume} onVolume={v => { setVolume(v); setVol(v); }} defaultRest={defaultRest} onDefaultRest={v => { setDefaultRest(v); setRest(getDefaultRest()); }} dnd={dnd} onDnd={setDnd} intent={intent} onIntent={v => { storeIntent(v); setIntentState(v); }} onChange={act.setProfile} onInvite={invite} onSignOut={cloud.user ? out : undefined} />
         {tmSheet()}
         <ImportCsvSheet open={importOpen} onOpenChange={setImportOpen} results={st.results} library={library} onImport={p => (act.importSessions(p.sessions, p.newExercises), say(`${p.sessions.length} ${p.sessions.length === 1 ? 'session' : 'sessions'} added to History`))} />
       </>
@@ -505,11 +529,26 @@ export default function App() {
     </>
   );
   const next = nextUp(all, st.results);
+  const nextSheet = next && resolveRefs(next.runsheet, lookup);
+  const nextToday = nextSheet && todayFor(nextSheet, st.results, intent);
+  // One stall line at most: the workout's own score, else the first of its exercises that is stuck.
+  const nextStall = nextSheet && (() => {
+    const w = live(workoutStall(nextSheet, st.results, new Date()));
+    if (w) return { stall: w, onOpen: () => open(nextSheet, 'home') };
+    const keys = [...new Set(nextSheet.items.flatMap(i => (i.kind === 'block' ? i.steps : i.kind === 'ref' ? [] : [i])).flatMap(x => (x.kind === 'exercise' ? [x.exercise.key] : [])))];
+    for (const k of keys) {
+      const x = stallOf(k);
+      if (x) return { name: library[k]?.name ?? k, stall: x, onOpen: () => go(exerciseLink(k)) };
+    }
+    return undefined;
+  })();
   const top = next && (
     <NextUpCard
       runsheet={next.runsheet}
       reason={next.reason}
       streak={streak(st.results)}
+      today={nextToday}
+      stall={nextStall}
       onOpen={() => open(next.runsheet, 'home')}
       onStart={() => (setDraft(null), setFrom('home'), go(`/do/${encodeURIComponent(wid(next.runsheet))}`))}
     />
@@ -522,12 +561,16 @@ export default function App() {
  * result sheet is saved. Until then it lived only in memory: the persisted run was cleared at done,
  * so a reload or a closed tab on the result sheet lost it. The sheet then edits the logged row.
  */
-const RunRoute = ({ runsheet, results, onLog, onFinish, onExit }: { runsheet: Runsheet; results: SessionResult[]; onLog: (r: SessionResult) => void; onFinish: (r: SessionResult) => void; onExit: () => void }) => {
+const RunRoute = ({ runsheet, results, intent, onLog, onFinish, onExit }: { runsheet: Runsheet; results: SessionResult[]; intent: Intent; onLog: (r: SessionResult) => void; onFinish: (r: SessionResult) => void; onExit: () => void }) => {
   // Open reps (a range, a max) start on what was done last time, set for set.
   const { state, now, act } = useRunner(runsheet, { resume: true, seed: s => Runner.prefillReps(s, (step, round) => lastSets(results, step)?.[round]?.reps) });
   // The last session of this workout with times kept, raced on the header. Fixed for the session.
   const [rival] = useState(() => lastTimed(results, runsheet.id ?? runsheet.title));
   const [muted, setMute] = useState(getMuted);
+  // Today's targets, read once from the history before this session; the pill follows the timer.
+  const [aims] = useState(() => todayFor(runsheet, results, intent));
+  const at = Runner.current(state)?.kind === 'work' ? Runner.current(state) : Runner.next(state);
+  const goal = at ? timerTarget(aims, { blockId: at.blockId, stepId: at.step.id, round: at.round }, runsheet) : undefined;
   const blockOf = useMemo(() => {
     const m = new Map<string, string>();
     for (const it of runsheet.items) if (it.kind === 'block') for (const st of it.steps) m.set(st.id, it.id);
@@ -549,7 +592,7 @@ const RunRoute = ({ runsheet, results, onLog, onFinish, onExit }: { runsheet: Ru
   });
   return (
     <div className="relative h-dvh">
-      <TimerScreen runsheet={runsheet} state={state} now={now} onDone={act.done} onSkip={act.skip} onBack={act.back} onPause={act.pause} onResume={act.resume} onAdjust={act.adjust} onAdjustIncline={act.adjustIncline} onSetReps={act.setReps} onDrop={act.drop} onStartBlock={act.startBlock} onAdjustStep={act.adjustStep} sets={{ adjust: act.adjustAt, setReps: act.setRepsAt, complete: act.completeSet, reopen: act.reopenSet, lastFor: (step, round) => lastSets(results, step)?.[round], fill: act.fillSet }} onAdjustRest={act.extendRest} lastFor={step => lastSet(results, step)} onFill={act.fillSet} ghost={pace?.text} muted={muted} onToggleMute={() => { setMuted(!muted); setMute(!muted); }} onFinish={() => { const res = log(state.phase === 'done' ? state : Runner.finish(state, Date.now())); Runner.clearPersisted(); onFinish(res); }} onExit={onExit} />
+      <TimerScreen runsheet={runsheet} state={state} now={now} onDone={act.done} onSkip={act.skip} onBack={act.back} onPause={act.pause} onResume={act.resume} onAdjust={act.adjust} onAdjustIncline={act.adjustIncline} onSetReps={act.setReps} onDrop={act.drop} onStartBlock={act.startBlock} onAdjustStep={act.adjustStep} sets={{ adjust: act.adjustAt, setReps: act.setRepsAt, complete: act.completeSet, reopen: act.reopenSet, lastFor: (step, round) => lastSets(results, step)?.[round], fill: act.fillSet }} onAdjustRest={act.extendRest} lastFor={step => lastSet(results, step)} onFill={act.fillSet} ghost={pace?.text} goal={goal} muted={muted} onToggleMute={() => { setMuted(!muted); setMute(!muted); }} onFinish={() => { const res = log(state.phase === 'done' ? state : Runner.finish(state, Date.now())); Runner.clearPersisted(); onFinish(res); }} onExit={onExit} />
     </div>
   );
 };
