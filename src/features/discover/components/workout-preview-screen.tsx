@@ -31,6 +31,8 @@ export interface WorkoutPreviewScreenProps {
   onTogglePublic?: () => void;
   /** tigerworkouts:// link that opens this workout in the iOS app. */
   appHref?: string;
+  /** Opens an exercise's logbook from its sheet. */
+  onExerciseHistory?: (step: ExerciseStep) => void;
 }
 
 const SCORE_TEXT: Record<string, string> = { time: 'For time', rounds: 'AMRAP: rounds + reps', reps: 'Total reps', load: 'For load', distance: 'For distance' };
@@ -41,7 +43,7 @@ const SCORE_TEXT: Record<string, string> = { time: 'For time', rounds: 'AMRAP: r
  * Edit & start, Follow along for videos, Save. Tapping any exercise opens it — the clip, the cue,
  * and its numbers as steppers when the host can save them.
  */
-export const WorkoutPreviewScreen = ({ runsheet: r, history = [], lastTime, onBack, onStart, onEditAndStart, onFollowAlong, onLogOnly, onSave, saved, onShare, onStepChange, onCreator, onTogglePublic, appHref }: WorkoutPreviewScreenProps) => {
+export const WorkoutPreviewScreen = ({ runsheet: r, history = [], lastTime, onBack, onStart, onEditAndStart, onFollowAlong, onLogOnly, onSave, saved, onShare, onStepChange, onCreator, onTogglePublic, appHref, onExerciseHistory }: WorkoutPreviewScreenProps) => {
   const [open, setOpen] = useState<ExerciseStep | null>(null);
   const kind = r.source?.kind ?? 'user';
   const score = scoreType(r);
@@ -183,6 +185,7 @@ export const WorkoutPreviewScreen = ({ runsheet: r, history = [], lastTime, onBa
           onTarget={onStepChange && open ? t => (onStepChange(open.id, { target: t }), setOpen({ ...open, target: t })) : undefined}
           onIncline={onStepChange && open ? v => (onStepChange(open.id, { incline: v }), setOpen({ ...open, incline: v })) : undefined}
           note={onStepChange ? 'Saved to this workout.' : undefined}
+          onHistory={onExerciseHistory && open ? () => onExerciseHistory(open) : undefined}
         />
       </div>
       <div className="safe-bottom shrink-0 border-t border-line bg-surface p-3">

@@ -63,6 +63,19 @@ struct ExerciseSheet: View {
                         stepper(title: "Incline", unit: "%", value: incline, by: 0.5)
                     }
 
+                    NavigationLink { ExerciseHistoryView(exerciseKey: step.exercise.key) } label: {
+                        HStack {
+                            Text("History").foregroundStyle(Brand.body)
+                            Spacer()
+                            Text("Chart and records").font(.footnote).foregroundStyle(Brand.muted)
+                            Image(systemName: "chevron.right").font(.footnote.weight(.semibold)).foregroundStyle(Brand.faint)
+                        }
+                        .padding(16)
+                        .contentShape(Rectangle())
+                    }
+                    .buttonStyle(.plain)
+                    .cardSurface()
+
                     if appliesFromHere, target != nil {
                         Label("Applies from here to the end of the session", systemImage: "arrow.right.circle")
                             .font(.footnote)
