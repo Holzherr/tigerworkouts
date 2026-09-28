@@ -39,3 +39,19 @@ describe('totalMinutes', () => {
     expect(fmtMinutes(120)).toBe('2 h');
   });
 });
+
+describe('nextUp with an edited copy of a program day', () => {
+  const a = w('a', { name: 'P', day: 'A', order: 1 });
+  const b = w('b', { name: 'P', day: 'B', order: 2 });
+  const myA = { ...w('u-a', { name: 'P', day: 'A', order: 1 }), copyOf: 'a' };
+  const all = [myA, a, b];
+  it('moves on from the copy to the next day', () => {
+    expect(nextUp(all, [did('u-a', 20)])?.runsheet.id).toBe('b');
+  });
+  it('offers the copy, not the original, when that day comes round', () => {
+    expect(nextUp(all, [did('b', 20)])?.runsheet.id).toBe('u-a');
+  });
+  it('treats a session of the original as the copy', () => {
+    expect(nextUp([myA, a, w('fran')], [did('a', 20)])?.runsheet.id).toBe('u-a');
+  });
+});

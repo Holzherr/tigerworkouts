@@ -89,6 +89,8 @@ export const ResultSheet = ({ runsheet, history = [], allResults = history, trai
   // Targets from history for what the programme rules do not move: the score, loads, reps.
   const targets = useMemo(() => nextTime(runsheet, result, history, intent, next.map(n => n.exerciseKey), equipment), [runsheet, result, history, intent, next, equipment]);
   const blockName = (id: string) => runsheet.items.flatMap(i => (i.kind === 'block' && i.id === id ? [i.name] : []))[0];
+  // The session was logged when the timer ended, so it is already in `history`: last time is the one before it.
+  const previous = useMemo(() => [...history].filter(h => !initial?.id || h.id !== initial.id).sort((a, b) => b.startedAt.localeCompare(a.startedAt))[0], [history, initial?.id]);
   const set = (id: string, patch: Partial<StepResult>) => setRows(r => ({ ...r, [id]: { ...r[id], ...patch } }));
   const seen = new Set<string>();
 
@@ -175,9 +177,9 @@ export const ResultSheet = ({ runsheet, history = [], allResults = history, trai
             ))}
           </section>
         )}
-        {history[0]?.notes && !notes && (
-          <button type="button" onClick={() => setNotes(history[0].notes ?? '')} className="mb-1 block w-full rounded-card bg-canvas px-3 py-2 text-left text-[12px] text-muted">
-            <span className="font-bold text-ink">Last time:</span> {history[0].notes} <span className="text-brand">· tap to reuse</span>
+        {previous?.notes && !notes && (
+          <button type="button" onClick={() => setNotes(previous.notes ?? '')} className="mb-1 block w-full rounded-card bg-canvas px-3 py-2 text-left text-[12px] text-muted">
+            <span className="font-bold text-ink">Last time:</span> {previous.notes} <span className="text-brand">· tap to reuse</span>
           </button>
         )}
         <textarea value={notes} onChange={e => setNotes(e.target.value)} placeholder="Notes (how it felt, what to change)" rows={2} className="w-full rounded-card border border-line bg-surface px-3 py-2 text-[16px] outline-none focus:border-hint" />

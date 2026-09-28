@@ -1,3 +1,4 @@
+import { Button } from '@/shared/components/ui/button';
 import { Chip } from '@/shared/components/ui/chip';
 import { Sheet } from '@/shared/components/ui/sheet';
 import { Stepper } from '@/shared/components/ui/stepper';
@@ -12,7 +13,8 @@ export interface EquipmentSheetProps {
   open: boolean;
   onOpenChange: (o: boolean) => void;
   equipment?: Equipment;
-  onChange: (e: Equipment) => void;
+  /** Undefined clears it: back to a gym's plates and the default steps. */
+  onChange: (e: Equipment | undefined) => void;
 }
 
 const Head = ({ title, note }: { title: string; note: string }) => (
@@ -76,6 +78,11 @@ export const EquipmentSheet = ({ open, onOpenChange, equipment = {}, onChange }:
             ))}
           </div>
         </section>
+        {equipmentSummary(equipment) !== 'Not set' && (
+          <Button variant="quiet" block onClick={() => onChange(undefined)}>
+            Clear my equipment
+          </Button>
+        )}
       </div>
     </Sheet>
   );

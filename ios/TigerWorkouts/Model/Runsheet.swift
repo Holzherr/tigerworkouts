@@ -477,12 +477,22 @@ struct Runsheet: Codable, Hashable, Sendable, Identifiable {
     var items: [Item] = []
     /// On the creator's public page and in everyone's Discover. New and copied workouts are private.
     var isPublic: Bool?
+    /// Set on the copy made when someone else's workout is edited: the id it was copied from. Its
+    /// sessions stay this workout's history, so Up next, pace and stalls keep the thread.
+    var copyOf: String?
 
     /// Stable identity for lists: the id if it has one, else the title.
     var key: String { id ?? title }
 
+    /// The ids this workout's sessions are logged under: its own and the one it was copied from.
+    /// The port of `lineage` in model.ts.
+    var lineage: [String] { [key] + (copyOf.map { [$0] } ?? []) }
+
+    /// A session of this workout, or of the workout it was copied from.
+    func owns(_ r: SessionResult) -> Bool { lineage.contains(r.runsheetId) }
+
     private enum CodingKeys: String, CodingKey {
-        case id, title, creator, description, source, tags, level, program, timeCapSec, score, progression, video, items
+        case id, title, creator, description, source, tags, level, program, timeCapSec, score, progression, video, items, copyOf
         case isPublic = "public"
     }
 
@@ -511,6 +521,7 @@ struct Runsheet: Codable, Hashable, Sendable, Identifiable {
         video = try c.decodeIfPresent(Video.self, forKey: .video)
         items = try c.decodeIfPresent([Item].self, forKey: .items) ?? []
         isPublic = try c.decodeIfPresent(Bool.self, forKey: .isPublic)
+        copyOf = try c.decodeIfPresent(String.self, forKey: .copyOf)
     }
 }
 

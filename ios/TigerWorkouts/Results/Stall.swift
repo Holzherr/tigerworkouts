@@ -169,7 +169,7 @@ enum Stall {
         let type = r.effectiveScore
         guard type == .rounds || type == .time || type == .reps else { return nil }
         let pts = results
-            .filter { $0.runsheetId == r.key && $0.activity == nil && ($0.score ?? 0) > 0 && (type != .time || $0.completed != false) }
+            .filter { r.owns($0) && $0.activity == nil && ($0.score ?? 0) > 0 && (type != .time || $0.completed != false) }
             .sorted { $0.startedAt < $1.startedAt }
             .map { Point(at: $0.startedAt, value: $0.score ?? 0) }
         guard let p = plateau(pts, now: now, lowerIsBetter: type == .time) else { return nil }

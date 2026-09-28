@@ -19,8 +19,9 @@ enum CSVExport {
     }
 
     /// RFC 4180: quote a field holding a comma, a quote or a line break, and double its quotes.
+    /// Read by scalar: Swift takes a Windows "\r\n" as one Character equal to neither "\r" nor "\n".
     static func field(_ s: String) -> String {
-        s.contains(where: { $0 == "," || $0 == "\"" || $0 == "\n" || $0 == "\r" })
+        s.unicodeScalars.contains(where: { $0 == "," || $0 == "\"" || $0 == "\n" || $0 == "\r" })
             ? "\"" + s.replacingOccurrences(of: "\"", with: "\"\"") + "\""
             : s
     }

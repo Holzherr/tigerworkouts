@@ -88,6 +88,15 @@ describe('ResultSheet made it / missed', () => {
   });
 });
 
+describe('ResultSheet last time notes', () => {
+  it('shows the notes of the session before this one, not this one already logged at done', () => {
+    const now: SessionResult = { id: 's-now', runsheetId: 'p', startedAt: '2026-09-27T10:00:00Z', steps: [] };
+    const before: SessionResult = { id: 's-old', runsheetId: 'p', startedAt: '2026-09-20T10:00:00Z', steps: [], notes: 'Bells felt light' };
+    render(<ResultSheet runsheet={priyanka()} initial={now} history={[now, before]} onSave={vi.fn()} />);
+    expect(screen.getByText('Bells felt light')).toBeTruthy();
+  });
+});
+
 describe('ResultSheet logs only what was done', () => {
   const initial: SessionResult = { id: 's-now-run', runsheetId: 'p', startedAt: '2026-09-27T10:00:00Z', steps: [{ stepId: 's1', exerciseKey: 'kb_swing', target: 28, success: true, sets: [{ load: 28 }] }] };
   it('has no row for a step the timer never logged', () => {

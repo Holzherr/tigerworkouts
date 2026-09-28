@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { makeExercise, makeRest, type Block, type ExerciseRef, type Runsheet } from './model';
-import { failStreak, fmtScore, nextLoads, resolveTarget, snapLoad } from './progression';
+import { failStreak, fmtScore, nextLoads, progressed, resolveTarget, snapLoad, workingLoad, type SessionResult } from './progression';
+import { withLastUsed } from './last-used';
 
 const SQ: ExerciseRef = { key: 'bb_back_squat', name: 'Barbell back squat', unit: 'kg', step: 2.5 };
 const OHP: ExerciseRef = { key: 'bb_ohp', name: 'Barbell overhead press', unit: 'kg', step: 2.5 };
@@ -54,5 +55,56 @@ describe('streak and score', () => {
   it('formats scores', () => {
     expect(fmtScore('time', 245)).toBe('4:05');
     expect(fmtScore('rounds', 12.007)).toBe('12 rounds + 7 reps');
+  });
+});
+
+describe('progression across sessions', () => {
+  const fail = (d: string, id = `s-${d}`): SessionResult => ({ id, runsheetId: 'sl-a', startedAt: d, steps: [{ stepId: 'sq', exerciseKey: 'bb_back_squat', target: 60, success: false }] });
+  const squat = (r: Runsheet) => (r.items[0] as Block).steps[0] as { target?: number };
+
+  it('deloads when the latest session is the result sheet copy of a row already in history', () => {
+    // The timer logs the row at done; the result sheet then works on a copy of it.
+    const logged = [fail('2026-09-06'), fail('2026-09-04'), fail('2026-09-02')];
+    const sheetCopy = { ...logged[0] };
+    const out = nextLoads(sl(), sheetCopy, logged);
+    expect(out[0].to).toBe(55);
+    expect(out[0].reason).toBe('3 failed sessions: deload 10%');
+  });
+
+  it('starts the next session on the +2.5 kg the result sheet promised', () => {
+    const done: SessionResult = { id: 's1', runsheetId: 'sl-a', startedAt: '2026-09-06', steps: [{ stepId: 'sq', exerciseKey: 'bb_back_squat', target: 60, success: true }] };
+    const next = progressed(withLastUsed(sl(), [done]), [done]);
+    expect(squat(next).target).toBe(62.5);
+  });
+
+  it('repeats the weight after a miss and deloads after three', () => {
+    expect(squat(progressed(sl(), [fail('2026-09-06')])).target).toBe(60);
+    expect(squat(progressed(sl(), [fail('2026-09-06'), fail('2026-09-04'), fail('2026-09-02')])).target).toBe(55);
+  });
+
+  it('carries the squat over from the other program day', () => {
+    const dayB: SessionResult = { id: 'b', runsheetId: 'sl-b', startedAt: '2026-09-08', steps: [{ stepId: 'other', exerciseKey: 'bb_back_squat', target: 65, success: true }] };
+    expect(squat(progressed(sl(), [fail('2026-09-06'), dayB])).target).toBe(67.5);
+  });
+
+  it('leaves workouts without rules alone', () => {
+    const r = sl();
+    (r.items[0] as Block).progression = undefined;
+    const done: SessionResult = { id: 's1', runsheetId: 'sl-a', startedAt: '2026-09-06', steps: [{ stepId: 'sq', exerciseKey: 'bb_back_squat', target: 60, success: true }] };
+    expect(progressed(r, [done])).toBe(r);
+  });
+});
+
+describe('drop sets', () => {
+  const dropped = { target: 60, sets: [{ load: 100, reps: 5 }, { load: 100, reps: 5 }, { load: 60, reps: 10, type: 'drop' as const }] };
+  it('are not the working load', () => {
+    expect(workingLoad(dropped)).toBe(100);
+    expect(workingLoad({ target: 90, sets: dropped.sets })).toBe(90);
+    expect(workingLoad({ target: 80 })).toBe(80);
+  });
+  it('do not become the next session\'s starting load', () => {
+    const r: Runsheet = { id: 'w', title: 'Bench', items: [{ ...makeExercise(SQ, { forMode: 'reps', forValue: 5, target: 80 }), id: 'e' }] };
+    const out = withLastUsed(r, [{ runsheetId: 'w', startedAt: '2026-09-06', steps: [{ stepId: 'e', exerciseKey: 'bb_back_squat', ...dropped }] }]);
+    expect((out.items[0] as { target?: number }).target).toBe(100);
   });
 });

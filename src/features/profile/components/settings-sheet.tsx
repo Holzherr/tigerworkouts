@@ -4,45 +4,38 @@ import type { Equipment } from '@/features/runsheet/plates';
 import { EquipmentSheet, equipmentSummary } from './equipment-sheet';
 import { Button } from '@/shared/components/ui/button';
 import { Stepper } from '@/shared/components/ui/stepper';
-import { DND_VARIANTS, type DndVariant } from '@/features/runsheet/components/runsheet-list';
 import { Chip } from '@/shared/components/ui/chip';
-import { Dropdown } from '@/shared/components/ui/dropdown';
 import { Sheet } from '@/shared/components/ui/sheet';
 import type { Avatar } from '@/features/cloud/sync';
 import { INTENTS, type Intent } from '@/features/runsheet/targets';
 
 const EMOJIS = ['', '💪', '🏋️', '🏃', '🚴', '🧘', '🥊', '🎾', '⚽', '🏊', '🔥', '⚡', '🦁', '🐯', '🦊', '🐻'];
 const COLORS = ['#ff4d2e', '#f59e0b', '#a78bfa', '#38bdf8', '#34d399', '#fb7185', '#4ade80', '#e879f9'];
-const UNITS = [
-  { value: 'metric', label: 'kg · km' },
-  { value: 'imperial', label: 'lb · miles' },
-] as const;
 
 export interface SettingsSheetProps {
   open: boolean;
   onOpenChange: (o: boolean) => void;
   name: string;
   avatar?: Avatar;
-  units: 'metric' | 'imperial';
   email?: string;
   onChange: (p: { name?: string; avatar?: Avatar; units?: 'metric' | 'imperial' }) => void;
   onInvite: () => void;
   onSignOut?: () => void;
+  /** Delete the account and its data on the server. `clearDevice` also forgets what is on this
+   * device; otherwise it stays here, as if signed out. Resolves with a message to show. */
+  onDeleteAccount?: (clearDevice: boolean) => Promise<string>;
   /** Timer beep volume 0–1. */
   volume?: number;
   onVolume?: (v: number) => void;
   /** Seconds a rest gets when one is added in the editor. */
   defaultRest?: number;
   onDefaultRest?: (sec: number) => void;
-  /** Editor drag-and-drop behaviour under test. */
-  dnd?: DndVariant;
-  onDnd?: (v: DndVariant) => void;
   /** How hard today's targets push. Maintain until changed. */
   intent?: Intent;
   onIntent?: (v: Intent) => void;
   /** My equipment: what suggested loads snap to, and the plate calculator's plates. */
   equipment?: Equipment;
-  onEquipment?: (e: Equipment) => void;
+  onEquipment?: (e: Equipment | undefined) => void;
 }
 
 /** 56px avatar: photo, or an emoji / initial on a coloured disc. */
@@ -57,11 +50,15 @@ export const AvatarView = ({ name, avatar, size = 56 }: { name: string; avatar?:
 
 /**
  * Settings sheet: avatar preview with name field, emoji and colour chips, photo upload (resized
- * to 256px and stored as a data URL), units dropdown, Invite someone, Sign out.
+ * to 256px and stored as a data URL), Invite someone, Sign out. Loads are in kg everywhere; the
+ * Units setting did nothing and went on 27 Sep 2026.
  */
-export const SettingsSheet = ({ open, onOpenChange, name, avatar, units, email, onChange, onInvite, onSignOut, volume, onVolume, defaultRest, onDefaultRest, dnd, onDnd, intent = 'maintain', onIntent, equipment, onEquipment }: SettingsSheetProps) => {
+export const SettingsSheet = ({ open, onOpenChange, name, avatar, email, onChange, onInvite, onSignOut, onDeleteAccount, volume, onVolume, defaultRest, onDefaultRest, intent = 'maintain', onIntent, equipment, onEquipment }: SettingsSheetProps) => {
   const file = useRef<HTMLInputElement>(null);
   const [kit, setKit] = useState(false);
+  const [deleting, setDeleting] = useState<'ask' | 'busy' | null>(null);
+  const [clearDevice, setClearDevice] = useState(false);
+  const [deleted, setDeleted] = useState<string | null>(null);
   const onPhoto = (f: File) => {
     const img = new Image();
     img.onload = () => {
@@ -100,16 +97,6 @@ export const SettingsSheet = ({ open, onOpenChange, name, avatar, units, email, 
             ))}
           </div>
         </div>
-        <div className="flex items-center justify-between gap-3">
-          <span className="text-[14px]">Units</span>
-          <Dropdown aria-label="Units" value={units} options={UNITS} onValueChange={u => onChange({ units: u })} />
-        </div>
-        {onDnd && (
-        <div className="flex items-center justify-between gap-3">
-          <span className="text-[14px]">Editor drag style</span>
-          <Dropdown aria-label="Editor drag style" value={dnd ?? 'classic'} options={DND_VARIANTS} onValueChange={v => onDnd(v as DndVariant)} />
-        </div>
-      )}
       {onVolume && (
         <div className="flex items-center justify-between gap-3">
           <span className="text-[14px]">Timer volume</span>
@@ -158,6 +145,30 @@ export const SettingsSheet = ({ open, onOpenChange, name, avatar, units, email, 
           <Button variant="quiet" block onClick={onSignOut}>
             Sign out
           </Button>
+        )}
+        {deleted && <p className="text-center text-[13px] text-muted">{deleted}</p>}
+        {onDeleteAccount && !deleting && (
+          <Button variant="quiet" block className="text-danger" onClick={() => setDeleting('ask')}>
+            Delete account
+          </Button>
+        )}
+        {onDeleteAccount && deleting && (
+          <div role="alertdialog" aria-label="Delete account" className="space-y-2 rounded-card border border-danger/40 bg-surface p-3">
+            <p className="text-[14px] font-bold">Delete your account?</p>
+            <p className="text-[13px] text-muted">Your sessions, workouts, exercises and settings are deleted from the server, and the account with them. This cannot be undone. Workouts you made public come off your page.</p>
+            <label className="flex items-center gap-2 text-[13px]">
+              <input type="checkbox" checked={clearDevice} onChange={e => setClearDevice(e.target.checked)} />
+              Also clear this device (otherwise your history stays here, not synced)
+            </label>
+            <div className="flex gap-2">
+              <Button variant="danger" block disabled={deleting === 'busy'} onClick={async () => { setDeleting('busy'); const msg = await onDeleteAccount(clearDevice); setDeleting(null); setDeleted(msg); }}>
+                {deleting === 'busy' ? 'Deleting…' : 'Delete account'}
+              </Button>
+              <Button variant="ghost" disabled={deleting === 'busy'} onClick={() => setDeleting(null)}>
+                Cancel
+              </Button>
+            </div>
+          </div>
         )}
       </div>
     </Sheet>

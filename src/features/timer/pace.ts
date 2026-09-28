@@ -43,9 +43,9 @@ export const marks = (r: SessionResult, blockOf: (stepId: string) => string | un
 };
 
 /** The newest session of this workout with times kept, other than `excludeId`. */
-export const lastTimed = (history: SessionResult[], runsheetId: string, excludeId?: string): SessionResult | undefined =>
+export const lastTimed = (history: SessionResult[], runsheetId: string | string[], excludeId?: string): SessionResult | undefined =>
   [...history]
-    .filter(h => h.runsheetId === runsheetId && (excludeId === undefined || h.id !== excludeId) && !h.activity)
+    .filter(h => (typeof runsheetId === 'string' ? h.runsheetId === runsheetId : runsheetId.includes(h.runsheetId)) && (excludeId === undefined || h.id !== excludeId) && !h.activity)
     .sort((a, b) => b.startedAt.localeCompare(a.startedAt))
     .find(h => marks(h).length > 0);
 
