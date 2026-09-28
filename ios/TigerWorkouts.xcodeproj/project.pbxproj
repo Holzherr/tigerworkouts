@@ -13,6 +13,7 @@
 		03A968B825518327A0B07545 /* StripesShapeTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 32C06182F780EF3B0331CF01 /* StripesShapeTests.swift */; };
 		05E59B570AE45E1D3609914C /* HapticsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D87622F139D50161B1F5C9C /* HapticsTests.swift */; };
 		07094F64306A497C432A1B55 /* UpNextWidgetView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4A1D6D2EB27EA6ED85324363 /* UpNextWidgetView.swift */; };
+		0861720588CC64FEA1E56B92 /* Recommend.swift in Sources */ = {isa = PBXBuildFile; fileRef = A3C6322C415608F811DC16C4 /* Recommend.swift */; };
 		08687D6C475DA3AED4904B70 /* Haptics.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3A75761718C352B299FE6FAE /* Haptics.swift */; };
 		0AFD293CAA89525224072F00 /* Plates.swift in Sources */ = {isa = PBXBuildFile; fileRef = B9E9A3E0B3E42C2A5896DA1A /* Plates.swift */; };
 		0BA539247C0D237F46517F88 /* PrefsMerge.swift in Sources */ = {isa = PBXBuildFile; fileRef = 624613AA7392B3ED64513166 /* PrefsMerge.swift */; };
@@ -70,6 +71,7 @@
 		A31A032FB773210351CDA2A5 /* SetRowTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E31C0517BC96A0F3D45A39B5 /* SetRowTests.swift */; };
 		A605B92316A505E8591952CC /* TargetsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = DE66D2C56C04D57BFB270F0F /* TargetsTests.swift */; };
 		A6DFA29A5C8E113653F132FF /* WorkoutIconTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F5CF9DC0EA5841510B9D13F6 /* WorkoutIconTests.swift */; };
+		A8751C5CD711B126ABDBBCE1 /* RecommendTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A91B39264F3D48EC2B176B0 /* RecommendTests.swift */; };
 		A87AA59065D1D1141DD2940E /* WorkoutIcon.swift in Sources */ = {isa = PBXBuildFile; fileRef = AE20C98A55B3D5F64BE65F19 /* WorkoutIcon.swift */; };
 		A9DE82EE435E2AF1435C9F4A /* NextUpTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B468F247F04E6A279F2AD6D2 /* NextUpTests.swift */; };
 		AB3689FD65BD7C1FFA101FEA /* EditSets.swift in Sources */ = {isa = PBXBuildFile; fileRef = 35CB9F49E1C6B8CD622ED57D /* EditSets.swift */; };
@@ -209,6 +211,7 @@
 		75787AFCCADC17A96827F19A /* TargetViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TargetViews.swift; sourceTree = "<group>"; };
 		781B4703341F053F08AE0613 /* Keychain.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Keychain.swift; sourceTree = "<group>"; };
 		87A0379EA6B428BEE7F68638 /* SessionLiveActivity.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionLiveActivity.swift; sourceTree = "<group>"; };
+		8A91B39264F3D48EC2B176B0 /* RecommendTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecommendTests.swift; sourceTree = "<group>"; };
 		8BCB1B34E80BE522AEA8C7A3 /* TigerWorkouts.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = TigerWorkouts.entitlements; sourceTree = "<group>"; };
 		8ECD0D99BECC297562625D45 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		8FA46D7EF60541FEC8764F65 /* Muscles.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Muscles.swift; sourceTree = "<group>"; };
@@ -221,6 +224,7 @@
 		A0D0026D79C5AE9AF356306C /* UpNextShare.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UpNextShare.swift; sourceTree = "<group>"; };
 		A3A09492CA4F6D818301F1C5 /* Supabase.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Supabase.swift; sourceTree = "<group>"; };
 		A3B9FAF9851A557E6EF67A33 /* SessionIntents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionIntents.swift; sourceTree = "<group>"; };
+		A3C6322C415608F811DC16C4 /* Recommend.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Recommend.swift; sourceTree = "<group>"; };
 		A49A094C79F8B5520AF51CD2 /* LastUsed.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LastUsed.swift; sourceTree = "<group>"; };
 		A65AE7B65D7C8828B39D771D /* Pace.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Pace.swift; sourceTree = "<group>"; };
 		AE20C98A55B3D5F64BE65F19 /* WorkoutIcon.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkoutIcon.swift; sourceTree = "<group>"; };
@@ -395,6 +399,7 @@
 				24B7E58E065ED599B1C47620 /* LockScreenControlsTests.swift */,
 				22C7059BA09D0BDACDF216B7 /* LogbookTests.swift */,
 				B468F247F04E6A279F2AD6D2 /* NextUpTests.swift */,
+				8A91B39264F3D48EC2B176B0 /* RecommendTests.swift */,
 				D36AE791E64CAB95929EDB34 /* ResultsTests.swift */,
 				38611D00C12C8D5497FC0713 /* RunnerTests.swift */,
 				E31C0517BC96A0F3D45A39B5 /* SetRowTests.swift */,
@@ -428,6 +433,7 @@
 				1E0B46392F6B56E20A87A7FF /* NextUp.swift */,
 				B9E9A3E0B3E42C2A5896DA1A /* Plates.swift */,
 				999C30448673579D520EBCB0 /* ProgressionRules.swift */,
+				A3C6322C415608F811DC16C4 /* Recommend.swift */,
 				14A15B576C26A9F28134E487 /* Runsheet.swift */,
 				01638E9D3E013E1503E8A675 /* RunsheetMath.swift */,
 				B3B6B0782F16CEA9ECD79A1E /* SessionResult.swift */,
@@ -670,6 +676,7 @@
 				49FDE84F31572A299D3273E2 /* LockScreenControlsTests.swift in Sources */,
 				F7998BA235C2AF9735912F93 /* LogbookTests.swift in Sources */,
 				A9DE82EE435E2AF1435C9F4A /* NextUpTests.swift in Sources */,
+				A8751C5CD711B126ABDBBCE1 /* RecommendTests.swift in Sources */,
 				AE6182B42F75E4CEA7DC6A74 /* ResultsTests.swift in Sources */,
 				2B60AB7BAD0FA3BD84166265 /* RunnerTests.swift in Sources */,
 				A31A032FB773210351CDA2A5 /* SetRowTests.swift in Sources */,
@@ -718,6 +725,7 @@
 				D5BA040410153B5B58D233D4 /* PlatesView.swift in Sources */,
 				0BA539247C0D237F46517F88 /* PrefsMerge.swift in Sources */,
 				B93A33E53D67696378829605 /* ProgressionRules.swift in Sources */,
+				0861720588CC64FEA1E56B92 /* Recommend.swift in Sources */,
 				62145373B9595B72AECF4A68 /* RootView.swift in Sources */,
 				EE8875B0E48F5CC48E920658 /* Rounds.swift in Sources */,
 				4755AEB014AA04998E7A14D2 /* RoundsViews.swift in Sources */,
