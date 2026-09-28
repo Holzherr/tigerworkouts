@@ -46,6 +46,7 @@ import { Button } from '@/shared/components/ui/button';
 import { Sheet } from '@/shared/components/ui/sheet';
 import { TabBar } from '@/shared/components/ui/tab-bar';
 import { WorkoutIcon } from '@/shared/components/ui/workout-icon';
+import { useUndo } from '@/shared/components/ui/undo-toast';
 import { defaultIcon } from '@/features/workouts/icon';
 import { useActions, useAppState } from './app/store';
 import { providers, sendCode, signInGoogle, signOut, verifyCode } from '@/features/cloud/client';
@@ -235,6 +236,7 @@ export default function App() {
           onCreator={r.ownerId || (cloud.user && st.workouts.some(w => w.id === wid(r))) ? () => go(`/c/${r.ownerId ?? cloud.user!.id}`) : undefined}
           onTogglePublic={cloud.user && st.workouts.some(w => w.id === wid(r)) ? () => { act.saveWorkout({ ...r, public: !r.public }); say(r.public ? 'Private now' : 'On your public page'); } : undefined}
           appHref={appLink(`w/${encodeURIComponent(wid(r))}`)}
+          onDelete={st.workouts.some(w => w.id === wid(r)) ? () => { act.deleteWorkout(wid(r)); if (st.saved.includes(wid(r))) act.toggleSaved(wid(r)); say('Workout deleted'); go('/discover/saved'); } : undefined}
         />
     );
   }
@@ -268,6 +270,7 @@ export default function App() {
           equipment={st.equipment}
           refTitle={refTitle}
           autoRest={defaultRest}
+          dirty={!!(r.title.trim() || r.items.length)}
           mode="author"
           onTextChange={t => { const out = applyCommands(r, t, library); draftFor('new')(out.runsheet); say(out.applied.length ? out.applied.join(' · ') : `Didn't understand “${t}”`); }}
           onPastePlan={() => setPasteOpen(true)}
@@ -306,6 +309,8 @@ export default function App() {
           equipment={st.equipment}
           refTitle={refTitle}
           autoRest={defaultRest}
+          dirty={!!draftOf(route.id) && (!base || JSON.stringify(r) !== JSON.stringify(resolveRefs(base, lookup)))}
+          own={!!base?.id && st.workouts.some(w => w.id === base.id)}
           mode="tonight"
           onTextChange={t => { const out = applyCommands(r, t, library); draftFor(route.id)(out.runsheet); say(out.applied.length ? out.applied.join(' · ') : `Didn't understand “${t}”`); }}
           onPastePlan={() => setPasteOpen(true)}
@@ -662,9 +667,25 @@ const RunSession = ({ runsheet, results, intent, equipment, onLog, onFinish, onE
   useEffect(() => {
     if (state.phase === 'done') log(state);
   });
+  // A drop is one swipe and Skip sits beside Pause: both can be taken back for five seconds.
+  const undo = useUndo('bottom-28');
+  const skip = () => {
+    const before = state;
+    act.skip();
+    // A skip that ends the session logs it; that one is not taken back.
+    if (Runner.advance(before, Date.now(), { skipped: true }).phase === 'done') return;
+    undo.offer(Runner.current(before)?.kind === 'rest' ? 'Rest skipped' : 'Skipped', () => act.restore(before));
+  };
+  const drop = (stepId: string) => {
+    const before = state;
+    const step = before.slots.find(sl => sl.step.id === stepId)?.step;
+    act.drop(stepId);
+    undo.offer(`${step?.kind === 'exercise' ? step.exercise.name : 'Step'} dropped`, () => act.restore(before));
+  };
   return (
     <div className="relative h-dvh">
-      <TimerScreen runsheet={runsheet} state={state} now={now} onDone={act.done} onSkip={act.skip} onBack={act.back} onPause={act.pause} onResume={act.resume} onAdjust={act.adjust} onAdjustIncline={act.adjustIncline} onSetReps={act.setReps} onSetAmount={act.setAmount} onDrop={act.drop} onStartBlock={act.startBlock} onAdjustStep={act.adjustStep} sets={{ adjust: act.adjustAt, setReps: act.setRepsAt, setAmount: act.setAmountAt, complete: act.completeSet, reopen: act.reopenSet, lastFor: (step, round) => lastSets(results, step)?.[round], fill: act.fillSet, setType: act.setTypeAt }} onAdjustRest={act.extendRest} lastFor={step => lastSet(results, step)} onFill={act.fillSet} ghost={pace?.text} goal={goal} muted={muted} onToggleMute={() => { setMuted(!muted); setMute(!muted); }} equipment={equipment} onFinish={() => { const res = log(state.phase === 'done' ? state : Runner.finish(state, Date.now())); Runner.clearPersisted(); onFinish(res); }} onExit={onExit} />
+      {undo.toast}
+      <TimerScreen runsheet={runsheet} state={state} now={now} onDone={act.done} onSkip={skip} onBack={act.back} onPause={act.pause} onResume={act.resume} onAdjust={act.adjust} onAdjustIncline={act.adjustIncline} onSetReps={act.setReps} onSetAmount={act.setAmount} onDrop={drop} onStartBlock={act.startBlock} onAdjustStep={act.adjustStep} sets={{ adjust: act.adjustAt, setReps: act.setRepsAt, setAmount: act.setAmountAt, complete: act.completeSet, reopen: act.reopenSet, lastFor: (step, round) => lastSets(results, step)?.[round], fill: act.fillSet, setType: act.setTypeAt }} onAdjustRest={act.extendRest} lastFor={step => lastSet(results, step)} onFill={act.fillSet} ghost={pace?.text} goal={goal} muted={muted} onToggleMute={() => { setMuted(!muted); setMute(!muted); }} equipment={equipment} onFinish={() => { const res = log(state.phase === 'done' ? state : Runner.finish(state, Date.now())); Runner.clearPersisted(); onFinish(res); }} onExit={onExit} />
     </div>
   );
 };

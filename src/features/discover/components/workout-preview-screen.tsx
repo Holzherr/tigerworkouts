@@ -1,4 +1,4 @@
-import { ChevronLeft, ChevronRight, ExternalLink, Globe, Lock, Pencil, Play, Share2, Smartphone, Video } from 'lucide-react';
+import { ChevronLeft, ChevronRight, ExternalLink, Globe, Lock, Pencil, Play, Share2, Smartphone, Trash2, Video } from 'lucide-react';
 import { localDate } from '@/shared/utils/dates';
 import { Fragment, useState } from 'react';
 import { Button } from '@/shared/components/ui/button';
@@ -44,6 +44,8 @@ export interface WorkoutPreviewScreenProps {
   /** The workout's own stall (a score that stopped moving), shown under today's target. */
   stall?: Stall;
   onDismissStall?: () => void;
+  /** Given for your own workouts: deletes it, after asking. */
+  onDelete?: () => void;
 }
 
 /** A straight-set block read as the gym writes it: set, load, reps — one line each. */
@@ -73,7 +75,7 @@ const SCORE_TEXT: Record<string, string> = { time: 'For time', rounds: 'AMRAP: r
  * Edit & start, Follow along for videos, Save. Tapping any exercise opens it — the clip, the cue,
  * and its numbers as steppers when the host can save them.
  */
-export const WorkoutPreviewScreen = ({ runsheet: r, history = [], lastTime, onBack, onStart, onEditAndStart, onFollowAlong, onLogOnly, onSave, saved, onShare, onStepChange, onCreator, onTogglePublic, appHref, onExerciseHistory, hasHistory, today, stall, onDismissStall }: WorkoutPreviewScreenProps) => {
+export const WorkoutPreviewScreen = ({ runsheet: r, history = [], lastTime, onBack, onStart, onEditAndStart, onFollowAlong, onLogOnly, onSave, saved, onShare, onStepChange, onCreator, onTogglePublic, appHref, onExerciseHistory, hasHistory, today, stall, onDismissStall, onDelete }: WorkoutPreviewScreenProps) => {
   const [open, setOpen] = useState<ExerciseStep | null>(null);
   const kind = r.source?.kind ?? 'user';
   const score = scoreType(r);
@@ -225,6 +227,11 @@ export const WorkoutPreviewScreen = ({ runsheet: r, history = [], lastTime, onBa
           );
         })}
         {r.source?.license && <p className="px-1 text-[11px] text-faint">{r.source.license}</p>}
+        {onDelete && (
+          <Button variant="danger" block onClick={() => confirm(`Delete ${r.title || 'this workout'}? Sessions you logged with it stay in History.`) && onDelete()}>
+            <Trash2 /> Delete workout
+          </Button>
+        )}
         <ExerciseSheet
           step={open}
           onOpenChange={o => !o && setOpen(null)}
@@ -260,7 +267,7 @@ export const WorkoutPreviewScreen = ({ runsheet: r, history = [], lastTime, onBa
           )}
         </div>
         {onLogOnly && (
-          <button type="button" onClick={onLogOnly} className="mt-2 w-full text-center text-[13px] font-bold text-brand">
+          <button type="button" onClick={onLogOnly} className="mt-1 min-h-11 w-full text-center text-[13px] font-bold text-brand">
             Did it already? Log a result
           </button>
         )}

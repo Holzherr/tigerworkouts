@@ -207,6 +207,8 @@ export const useRunner = (runsheet: Runsheet, opts: { /** A kept run to carry on
     fillSet: useCallback((slotId: string, set: SetResult) => setState(s => R.fillSet(s, Date.now(), slotId, set)), []),
     drop: useCallback((stepId: string) => setState(s => R.drop(s, Date.now(), stepId)), []),
     finish: useCallback(() => setState(s => R.finish(s, Date.now())), []),
+    /** Put a state from moments ago back: the Undo after a drop or a skip. */
+    restore: useCallback((s: R.RunState) => setState(s), []),
   };
   return { state, now, act };
 };

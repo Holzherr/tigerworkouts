@@ -47,6 +47,8 @@ export interface RunsheetListProps {
   equipment?: Equipment;
   /** Title lookup for ref items (embedded runsheets). */
   refTitle?: (runsheetId: string) => string | undefined;
+  /** After a step or block is removed, with the list as it was, so the host can offer Undo. */
+  onRemoved?: (before: Item[], what: string) => void;
   className?: string;
 }
 
@@ -68,7 +70,7 @@ const LIFT_MS = 350;
  * to make a block or join one. Blocks drag as a chunk by their header. Tap a row to expand it,
  * swipe or ✕ to remove, ＋ on a seam to insert there.
  */
-export const RunsheetList = ({ items, onChange, onPickExercise, onSwapExercise, expandedId: expandedProp, onExpandedChange, autoRest = 30, resolveTarget, hintFor, setHintFor, equipment, refTitle, className }: RunsheetListProps) => {
+export const RunsheetList = ({ items, onChange, onPickExercise, onSwapExercise, expandedId: expandedProp, onExpandedChange, autoRest = 30, resolveTarget, hintFor, setHintFor, equipment, refTitle, onRemoved, className }: RunsheetListProps) => {
   const [expandedLocal, setExpandedLocal] = useState<string | null>(null);
   const expandedId = expandedProp === undefined ? expandedLocal : expandedProp;
   const setExpanded = (id: string | null) => (onExpandedChange ? onExpandedChange(id) : setExpandedLocal(id));
@@ -180,7 +182,14 @@ export const RunsheetList = ({ items, onChange, onPickExercise, onSwapExercise, 
   const change = (step: Step) => onChange(replaceStep(items, step.id, step));
   const remove = (id: string) => {
     if (expandedId === id) setExpanded(null);
+    const row = rows.find(r => r.id === id);
     onChange(removeStep(items, id));
+    onRemoved?.(items, row?.type === 'step' && row.step.kind === 'exercise' ? `${row.step.exercise.name} removed` : 'Step removed');
+  };
+  const removeBlock = (id: string) => {
+    if (expandedId === id) setExpanded(null);
+    onChange(removeItem(items, id));
+    onRemoved?.(items, 'Block removed');
   };
   const add = useCallback(
     async (kind: AddKind, where: { after: string | null } | { block: string }) => {
@@ -267,7 +276,7 @@ export const RunsheetList = ({ items, onChange, onPickExercise, onSwapExercise, 
               <div className="truncate text-[14px] font-semibold">{refTitle?.(r.ref.runsheetId) ?? r.ref.runsheetId}</div>
               <div className="text-[12px] text-muted">included workout</div>
             </div>
-            <Button variant="quiet" size="icon-sm" aria-label="Remove" onClick={() => onChange(removeItem(items, r.id))} className="text-hint">
+            <Button variant="quiet" size="icon-sm" aria-label="Remove" onClick={() => removeBlock(r.id)} className="text-hint">
               <X />
             </Button>
           </div>
@@ -318,7 +327,7 @@ export const RunsheetList = ({ items, onChange, onPickExercise, onSwapExercise, 
               dissolving={dissolvingBlockId === block.id}
               groupTarget={groupTarget === block.id}
               header={
-                <BlockHeader {...p} block={block} expanded={expandedId === block.id} onToggle={() => toggle(block.id)} onChange={patch => onChange(updateBlock(items, block.id, patch))} dissolving={dissolvingBlockId === block.id} lifted={activeId === block.id} />
+                <BlockHeader {...p} block={block} expanded={expandedId === block.id} onToggle={() => toggle(block.id)} onChange={patch => onChange(updateBlock(items, block.id, patch))} onRemove={() => removeBlock(block.id)} dissolving={dissolvingBlockId === block.id} lifted={activeId === block.id} />
               }
               footer={<AddTile onAdd={k => add(k, { block: block.id })} />}
             >

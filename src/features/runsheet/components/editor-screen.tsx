@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { Dropdown } from '@/shared/components/ui/dropdown';
 import { Stepper } from '@/shared/components/ui/stepper';
 import { WorkoutIcon } from '@/shared/components/ui/workout-icon';
+import { useUndo } from '@/shared/components/ui/undo-toast';
 import { fileToSquareDataUrl } from '@/shared/utils/image';
 import { shuffleIcon } from '@/features/workouts/icon';
 import { runsheetMinutes, scoreType, type ExerciseStep, type Item, type Runsheet, type ScoreType } from '../model';
@@ -44,6 +45,10 @@ export interface EditorScreenProps {
   refTitle?: (runsheetId: string) => string | undefined;
   /** Seconds a new rest gets (Settings → Default rest). */
   autoRest?: number;
+  /** Changes not saved yet: Back and Reset ask before throwing them away. */
+  dirty?: boolean;
+  /** The workout is already yours: Save as mine would save it in place, so it reads Save. */
+  own?: boolean;
 }
 
 /**
@@ -52,28 +57,30 @@ export interface EditorScreenProps {
  * body; Start and Save as mine are pinned above the tab bar. In `author` mode (a new workout)
  * the title is an input and the pinned bar is Save workout + Start.
  */
-export const EditorScreen = ({ runsheet, onChange, onPickExercise, onSwapExercise, onBack, onReset, onStart, onSaveAsMine, onPastePlan, onTextChange, mode = 'tonight', resolveTarget, hintFor, setHintFor, equipment, refTitle, autoRest }: EditorScreenProps) => {
+export const EditorScreen = ({ runsheet, onChange, onPickExercise, onSwapExercise, onBack, onReset, onStart, onSaveAsMine, onPastePlan, onTextChange, mode = 'tonight', resolveTarget, hintFor, setHintFor, equipment, refTitle, autoRest, dirty, own }: EditorScreenProps) => {
   const setItems = (items: Item[]) => onChange({ ...runsheet, items });
   const minutes = runsheetMinutes(runsheet);
   const blocks = runsheet.items.filter(i => i.kind === 'block').length;
   const score = scoreType(runsheet);
   const [settings, setSettings] = useState(false);
+  const undo = useUndo();
+  const discarding = (fn?: () => void) => () => (!dirty || confirm('Throw away your changes?')) && fn?.();
   return (
     <div className="flex h-full min-h-0 flex-col bg-canvas">
       <header className="safe-top shrink-0 border-b border-line bg-surface px-4 pb-2.5">
         <div className="flex items-center justify-between pt-2">
-          <Button variant="quiet" size="inline" onClick={onBack} className="-ml-1 text-muted">
+          <Button variant="quiet" size="inline" onClick={discarding(onBack)} className="-ml-1 text-muted">
             <ChevronLeft /> Back
           </Button>
           {onReset && (
-            <Button variant="text" size="inline" onClick={onReset}>
+            <Button variant="text" size="inline" onClick={discarding(onReset)}>
               Reset
             </Button>
           )}
         </div>
         <input value={runsheet.title} onChange={e => onChange({ ...runsheet, title: e.target.value })} placeholder="Workout name" aria-label="Workout name" autoFocus={mode === 'author' && !runsheet.title} className="mt-1 w-full rounded-control bg-transparent text-[19px] leading-tight font-extrabold text-ink outline-none placeholder:text-faint focus:bg-canvas" />
         <button type="button" onClick={() => setSettings(x => !x)} className="mt-0.5 block text-left text-[12px] text-muted">
-          {mode === 'tonight' ? "Tonight's version" : `By ${runsheet.creator ?? 'you'}`}
+          {mode === 'tonight' ? "Tonight's version" : `By ${runsheet.creator || 'you'}`}
           {runsheet.items.length > 0 && (
             <>
               {' '}· <b className="text-ink">{minutes} min</b> · {blocks} {blocks === 1 ? 'block' : 'blocks'}
@@ -134,7 +141,8 @@ export const EditorScreen = ({ runsheet, onChange, onPickExercise, onSwapExercis
         </label>
       </header>
       <div className="min-h-0 flex-1 overflow-y-auto px-3 pt-3 pb-28">
-        <RunsheetList items={runsheet.items} onChange={setItems} onPickExercise={onPickExercise} onSwapExercise={onSwapExercise} resolveTarget={resolveTarget} hintFor={hintFor} setHintFor={setHintFor} equipment={equipment} refTitle={refTitle} autoRest={autoRest} />
+        <RunsheetList items={runsheet.items} onChange={setItems} onPickExercise={onPickExercise} onSwapExercise={onSwapExercise} resolveTarget={resolveTarget} hintFor={hintFor} setHintFor={setHintFor} equipment={equipment} refTitle={refTitle} autoRest={autoRest} onRemoved={(before, what) => undo.offer(what, () => onChange({ ...runsheet, items: before }))} />
+        {undo.toast}
       </div>
       <div className="safe-bottom shrink-0 border-t border-line bg-surface p-3">
         <div className="flex gap-2">
@@ -149,7 +157,7 @@ export const EditorScreen = ({ runsheet, onChange, onPickExercise, onSwapExercis
           )}
           {mode === 'tonight' ? (
             <Button variant="ghost" onClick={onSaveAsMine}>
-              Save as mine
+              {own ? 'Save' : 'Save as mine'}
             </Button>
           ) : (
             onStart && (
