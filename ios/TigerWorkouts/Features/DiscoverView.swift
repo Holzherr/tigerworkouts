@@ -308,11 +308,6 @@ struct DiscoverView: View {
                 carousel(recent.prefix(10).map(\.sheet), large: true, from: .history)
             }
         }
-        if !store.myWorkouts.isEmpty {
-            section("Mine", subtitle: "Workouts you wrote") {
-                carousel(store.myWorkouts, large: false, from: .mine)
-            }
-        }
         ForEach(Kind.allCases) { kind in
             let sheets = store.allWorkouts.filter { self.kind(of: $0) == kind }
             if !sheets.isEmpty {
@@ -331,7 +326,13 @@ struct DiscoverView: View {
     @ViewBuilder
     private var saved: some View {
         let sheets = store.allWorkouts.filter { store.saved.contains($0.key) }
-        if sheets.isEmpty {
+        // Your own sit with what you saved, as on the web's Saved tab: home opens here.
+        if !store.myWorkouts.isEmpty {
+            section("Mine", subtitle: "Workouts you wrote") {
+                carousel(store.myWorkouts, large: false, from: .mine)
+            }
+        }
+        if sheets.isEmpty && store.myWorkouts.isEmpty {
             ContentUnavailableView {
                 Label("Nothing saved yet", systemImage: "bookmark")
             } description: {
@@ -341,7 +342,7 @@ struct DiscoverView: View {
                     .buttonStyle(.borderedProminent)
             }
             .padding(.top, 40)
-        } else {
+        } else if !sheets.isEmpty {
             list(sheets, from: .saved)
         }
     }
