@@ -8,7 +8,7 @@ import { workedFrom } from '../effort';
 import { SessionStats } from './session-stats';
 import { Stepper } from '@/shared/components/ui/stepper';
 import { cn } from '@/shared/utils/ui-utils';
-import { forLabel, scoreType, type ExerciseStep, type Runsheet } from '@/features/runsheet/model';
+import { forLabel, measureOf, scoreType, type ExerciseStep, type Runsheet } from '@/features/runsheet/model';
 import { fmtScore, nextLoads, resolveTarget, type NextLoad, type SessionOrigin, type SessionResult, type StepResult, type TrainingMaxes } from '@/features/runsheet/progression';
 import { ScoreEntry } from './score-entry';
 import { BodyweightPrompt } from './bodyweight-prompt';
@@ -127,7 +127,7 @@ export const ResultSheet = ({ runsheet, history = [], allResults = history, trai
                     {s.targetPct ? ` · ${s.targetPct}% TM` : ''}
                   </div>
                 </div>
-                {s.exercise.unit && s.exercise.unit !== 'reps' && <Stepper size="sm" aria-label="Load used" value={row.target ?? 0} step={s.exercise.step} onChange={t => setRows(r => ({ ...r, [s.id]: withRowLoad(r[s.id], t) }))} />}
+                {s.exercise.unit && s.exercise.unit !== 'reps' && !measureOf(s.exercise.unit) && <Stepper size="sm" aria-label="Load used" value={row.target ?? 0} step={s.exercise.step} onChange={t => setRows(r => ({ ...r, [s.id]: withRowLoad(r[s.id], t) }))} />}
               </div>
               {(hasRule(s) || logsReps) && (
                 <div className="mt-2 flex items-center justify-between gap-2">

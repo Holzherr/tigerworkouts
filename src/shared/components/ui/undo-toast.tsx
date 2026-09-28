@@ -13,7 +13,7 @@ interface Offer {
 /**
  * One undo at a time for a one-gesture destructive action (drop an exercise, remove a step, skip):
  * `offer("Step removed", restore)` shows a dark pill with the message and an Undo button for five
- * seconds; a newer offer replaces it. Render `toast` somewhere fixed over the screen.
+ * seconds; a newer offer replaces it, and `clear()` withdraws it. Render `toast` somewhere fixed over the screen.
  */
 export const useUndo = (className?: string) => {
   const [offer, setOffer] = useState<Offer | null>(null);
@@ -23,6 +23,11 @@ export const useUndo = (className?: string) => {
     clearTimeout(timer.current);
     setOffer({ message, undo, key: Date.now() });
     timer.current = setTimeout(() => setOffer(null), UNDO_MS);
+  }, []);
+  /** Take the offer back without undoing: what it would undo is past. */
+  const clear = useCallback(() => {
+    clearTimeout(timer.current);
+    setOffer(null);
   }, []);
   const toast = offer ? (
     <div key={offer.key} role="status" className={cn('pointer-events-none fixed inset-x-0 bottom-24 z-50 flex justify-center px-4', className)}>
@@ -42,5 +47,5 @@ export const useUndo = (className?: string) => {
       </div>
     </div>
   ) : null;
-  return { offer: show, toast };
+  return { offer: show, clear, toast };
 };

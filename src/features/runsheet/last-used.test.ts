@@ -88,3 +88,12 @@ describe('last time, per set', () => {
     expect(lastSetLabel({})).toBeUndefined();
   });
 });
+
+describe('last time, per set, on an exercise counted in a measure', () => {
+  it('reads a legacy row that logged metres as a load as metres, so nothing offers the metres as a load', () => {
+    const row = { kind: 'exercise', id: 'row', exercise: { key: 'cardio_rower', name: 'Rowing machine', unit: 'm', step: 100 }, forMode: 'meters', forValue: 1000 } as const;
+    const res: SessionResult = { runsheetId: 'x', startedAt: '2026-09-01', steps: [{ stepId: 'row', exerciseKey: 'cardio_rower', sets: [{ load: 500 }] }] };
+    expect(lastSets([res], row)).toEqual([{ meters: 500 }]);
+    expect(lastSetLabel(lastSets([res], row)?.[0])).toBeUndefined();
+  });
+});

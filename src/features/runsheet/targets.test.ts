@@ -23,6 +23,12 @@ describe('density targets for timed work', () => {
     expect(t.pace).toBe(75);
   });
 
+  it('says round, not rounds, for one', () => {
+    const t = scoreTarget(amrap, [scored(1, 1)])!;
+    expect(t.text).toBe('Aim for 1+ round');
+    expect(t.detail).toBe('Last time: 1 round');
+  });
+
   it('scales with intent: restore holds the middle, overreach adds a round', () => {
     expect(scoreTarget(amrap, history, 'restore')!.aim).toBe(7);
     expect(scoreTarget(amrap, history, 'overreach')!.aim).toBe(9);

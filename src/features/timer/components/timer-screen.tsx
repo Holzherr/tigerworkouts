@@ -209,6 +209,7 @@ const stepLine = (s: ExerciseStep) => [forLabel(s), s.target !== undefined ? `${
  */
 export const TimerScreen = ({ runsheet, state, now, onDone, onSkip, onBack, onPause, onResume, onAdjust, onAdjustIncline, onSetReps, onSetAmount, onDrop, onStartBlock, onAdjustStep, sets, onAdjustRest, lastFor, onFill, ghost, goal, muted, onToggleMute, equipment, onFinish, onExit, alternativesFor, onSwap, prs, onEndBlock }: TimerScreenProps) => {
   const [confirmExit, setConfirmExit] = useState(false);
+  const [confirmDiscard, setConfirmDiscard] = useState(false);
   const [menu, setMenu] = useState(false);
   const [overview, setOverview] = useState(false);
   const [peek, setPeek] = useState<number | null>(null);
@@ -344,6 +345,7 @@ export const TimerScreen = ({ runsheet, state, now, onDone, onSkip, onBack, onPa
               </div>
             )}
             {lead && <div className="-mt-2 pb-3 text-center text-[13px] text-white/60">Get ready</div>}
+            {lead && <div className="-mt-1 pb-3 text-center text-[12px] text-white/40">The web timer needs the screen on.</div>}
             {!timed && !lead && !done && slot && <div className="-mt-2 pb-3 text-center text-[13px] text-white/60">{isRest ? 'Rest' : straight ? 'Tick the set when you finish it' : 'Tap Done when finished'}</div>}
             {emomWork && !done && <div className="-mt-2 pb-3 text-center text-[13px] text-white/60">Tap Done when finished</div>}
             {minuteLeft !== undefined && !lead && !done && (
@@ -606,20 +608,33 @@ export const TimerScreen = ({ runsheet, state, now, onDone, onSkip, onBack, onPa
       />
 
       {confirmExit && (
-        <div className="absolute inset-0 z-20 flex items-end bg-ink/70 p-4" onClick={() => setConfirmExit(false)}>
-          <div className="w-full space-y-2 rounded-card bg-surface p-4 text-ink" onClick={e => e.stopPropagation()}>
-            <div className="text-[16px] font-bold">Stop this session?</div>
-            <p className="text-[13px] text-muted">{fmtClock(total)} so far. Save what you did, or discard it.</p>
-            <Button block onClick={onFinish}>
-              Finish and save
-            </Button>
-            <Button block variant="danger" onClick={onExit}>
-              Discard
-            </Button>
-            <Button block variant="quiet" onClick={() => setConfirmExit(false)}>
-              Keep going
-            </Button>
-          </div>
+        <div className="absolute inset-0 z-20 flex items-end bg-ink/70 p-4" onClick={() => (setConfirmExit(false), setConfirmDiscard(false))}>
+          {confirmDiscard ? (
+            <div className="w-full space-y-2 rounded-card bg-surface p-4 text-ink" onClick={e => e.stopPropagation()}>
+              <div className="text-[16px] font-bold">Discard this session?</div>
+              <p className="text-[13px] text-muted">{fmtClock(total)} of work is not saved.</p>
+              <Button block variant="danger" onClick={onExit}>
+                Discard session
+              </Button>
+              <Button block variant="quiet" onClick={() => setConfirmDiscard(false)}>
+                Keep going
+              </Button>
+            </div>
+          ) : (
+            <div className="w-full space-y-2 rounded-card bg-surface p-4 text-ink" onClick={e => e.stopPropagation()}>
+              <div className="text-[16px] font-bold">End this session?</div>
+              <p className="text-[13px] text-muted">{fmtClock(total)} so far. Save what you did, or discard it.</p>
+              <Button block onClick={onFinish}>
+                Finish and save
+              </Button>
+              <Button block variant="danger" onClick={() => setConfirmDiscard(true)}>
+                Discard
+              </Button>
+              <Button block variant="quiet" onClick={() => setConfirmExit(false)}>
+                Keep going
+              </Button>
+            </div>
+          )}
         </div>
       )}
     </div>

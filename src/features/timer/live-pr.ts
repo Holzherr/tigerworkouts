@@ -1,7 +1,7 @@
 /**
  * The PR the moment a set is ticked: which sets done between two run states beat a record. Reads
  * the sets exactly as the session will log them (`toResult`), so what earns the medal mid-set is
- * what History calls a PR afterwards. Pure; the iOS port is `Engine/LivePR.swift`.
+ * what History calls a PR afterwards. Pure. Records are read with the exercise's unit, so a legacy row that logged metres as a load counts as metres.
  */
 import type { Runsheet } from '@/features/runsheet/model';
 import type { SessionResult, SetResult } from '@/features/runsheet/progression';
@@ -28,7 +28,7 @@ export const newRecords = (prev: RunState, next: RunState, runsheet: Runsheet, h
     const set = row?.sets?.[n];
     if (!set) continue;
     const earlier = rows.filter(r => r.exerciseKey === key).flatMap(r => r.sets ?? []).filter(x => x !== set);
-    if (recordOnTick(records(history, key), earlier, set)) out.push({ slotId: sl.id, exerciseKey: key, set });
+    if (recordOnTick(records(history, key, sl.step.exercise.unit), earlier, set)) out.push({ slotId: sl.id, exerciseKey: key, set });
   }
   return out;
 };

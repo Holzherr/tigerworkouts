@@ -82,7 +82,8 @@ export const scoreTarget = (r: Runsheet, results: SessionResult[], intent: Inten
     const best = Math.max(...recent);
     const aim = intent === 'restore' ? Math.floor(median(recent)) : intent === 'overreach' ? Math.floor(best) + 1 : Math.ceil(best);
     const cap = block?.mode === 'amrap' ? block.timeCapSec : undefined;
-    return { kind: 'rounds', aim, recent, text: `Aim for ${aim}+ rounds`, detail: `${when}: ${recent.map(rounds).join(', ')} rounds`, ...(cap && aim > 0 ? { pace: cap / aim } : {}) };
+    const said = recent.map(rounds);
+    return { kind: 'rounds', aim, recent, text: `Aim for ${aim}+ ${aim === 1 ? 'round' : 'rounds'}`, detail: `${when}: ${said.join(', ')} ${said.length === 1 && said[0] === '1' ? 'round' : 'rounds'}`, ...(cap && aim > 0 ? { pace: cap / aim } : {}) };
   }
   const best = Math.max(...recent);
   const aim = intent === 'restore' ? median(recent) : intent === 'overreach' ? best + Math.max(2, Math.round(best * 0.05)) : best + 1;
