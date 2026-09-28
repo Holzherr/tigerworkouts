@@ -46,4 +46,7 @@ describe('applyCommands', () => {
     expect((b1.steps[1] as { seconds: number }).seconds).toBe(15);
     expect(runsheet.items.some(i => i.kind === 'exercise' && i.exercise.key === 'incline_walk')).toBe(false);
   });
+  it('says 1 round, not 1 rounds', () => {
+    expect(applyCommands(priyanka(), '1 round', EX).applied).toEqual(['1 round']);
+  });
 });

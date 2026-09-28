@@ -5,6 +5,7 @@
  * Rule-based and on-device. Anything it cannot read comes back in `unparsed` for the user to fix.
  */
 import type { ExerciseRef } from './model';
+import { plural } from '@/shared/utils/ui-utils';
 import { makeExercise, makeRest, type Block, type ExerciseStep, type Item, type RestStep, type Runsheet, type Step, uid } from './model';
 
 export interface ParseResult {
@@ -146,7 +147,7 @@ export const applyCommands = (r: Runsheet, text: string, lib: Record<string, Exe
     const rounds = c.match(/^(\d+)\s*rounds?$/) ?? c.match(/^(?:x|×)\s*(\d+)$/);
     if (rounds) {
       items = items.map(it => (it.kind === 'block' && (it.mode ?? 'rounds') !== 'amrap' ? { ...it, repeat: parseInt(rounds[1], 10) } : it));
-      applied.push(`${rounds[1]} rounds`);
+      applied.push(plural(parseInt(rounds[1], 10), 'round'));
       continue;
     }
     // "<exercise> <number>" → set the load
