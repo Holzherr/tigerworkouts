@@ -4,6 +4,7 @@ import type { SetResult } from '@/features/runsheet/progression';
 import * as R from './runner';
 
 let actx: AudioContext | null = null;
+type WakeLock = { release: () => Promise<void> };
 const VOL_KEY = 'tiger:volume';
 /** Timer volume 0–1. Loud by default (gym); Settings can turn it down. */
 export const getVolume = () => {
@@ -56,9 +57,23 @@ export const setDefaultRest = (sec: number) => {
     /* ignore */
   }
 };
+const audio = () => (actx = actx ?? new (window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext)());
+/**
+ * Make the tones audible: create the audio context, or wake it. iOS starts it suspended until a tap
+ * and suspends it again when the page is hidden, so Start, Resume, Start block and the page coming
+ * back each call this.
+ */
+export const unlockAudio = () => {
+  try {
+    const c = audio();
+    if (c.state !== 'running') void c.resume();
+  } catch {
+    /* no audio */
+  }
+};
 const beep = (freq = 880, ms = 120) => {
   try {
-    actx = actx ?? new (window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext)();
+    actx = audio();
     const o = actx.createOscillator();
     const g = actx.createGain();
     o.frequency.value = freq;
@@ -85,7 +100,9 @@ const vib = (p: number | number[]) => {
 
 /**
  * Drives the runner: 200 ms ticks, 3-2-1 beeps and an end tone, haptics on transitions, a screen
- * wake lock while running, persistence on every change so an iOS reload resumes where it was.
+ * wake lock while running (taken again when the page comes back: the browser drops it when the
+ * screen goes off), persistence on every change so an iOS reload resumes where it was. The web
+ * timer still stops with the screen off: the page is suspended.
  */
 export const useRunner = (runsheet: Runsheet, opts: { /** A kept run to carry on with (see `R.restore`); the caller asks first. */ from?: R.RunState; silent?: boolean; persist?: boolean; /** Applied to a fresh start only, never to a resumed run. */ seed?: (s: R.RunState) => R.RunState } = {}) => {
   const silent = !!opts.silent;
@@ -97,9 +114,11 @@ export const useRunner = (runsheet: Runsheet, opts: { /** A kept run to carry on
   });
   const [now, setNow] = useState(Date.now());
   const lastBeep = useRef<number>(-1);
-  const wake = useRef<{ release: () => Promise<void> } | null>(null);
+  const wake = useRef<WakeLock | null>(null);
   const prevSlot = useRef<number>(-1);
   const finished = useRef(false);
+  // Set by Discard: nothing is kept after it, even if a rest runs out before the page is left.
+  const discarded = useRef(false);
 
   // tick
   useEffect(() => {
@@ -109,7 +128,9 @@ export const useRunner = (runsheet: Runsheet, opts: { /** A kept run to carry on
       setState(s => R.tick(s, n));
     }, 200);
     const onVis = () => {
-      if (!document.hidden) setState(s => R.tick(s, Date.now()));
+      if (document.hidden) return;
+      setState(s => R.tick(s, Date.now()));
+      if (actx && actx.state !== 'running') unlockAudio();
     };
     document.addEventListener('visibilitychange', onVis);
     return () => {
@@ -120,7 +141,7 @@ export const useRunner = (runsheet: Runsheet, opts: { /** A kept run to carry on
 
   // persistence + haptics on slot change
   useEffect(() => {
-    if (persist) {
+    if (persist && !discarded.current) {
       if (state.phase === 'done') R.clearPersisted();
       else R.persist(state);
     }
@@ -159,33 +180,42 @@ export const useRunner = (runsheet: Runsheet, opts: { /** A kept run to carry on
     if (sec > 3) lastBeep.current = -1;
   }, [now, state, silent]);
 
-  // wake lock
+  // wake lock: held while the clock runs and at a block gate, taken again when the page comes back
+  const awake = !silent && (state.phase === 'running' || state.phase === 'lead' || state.phase === 'ready');
   useEffect(() => {
+    if (!awake) return;
     let alive = true;
     const req = async () => {
+      if (document.hidden) return;
       try {
-        const nav = navigator as Navigator & { wakeLock?: { request: (t: 'screen') => Promise<{ release: () => Promise<void> }> } };
+        const nav = navigator as Navigator & { wakeLock?: { request: (t: 'screen') => Promise<WakeLock> } };
         const w = await nav.wakeLock?.request('screen');
-        if (alive) wake.current = w ?? null;
-        else w?.release();
+        if (!alive) return void w?.release();
+        wake.current?.release();
+        wake.current = w ?? null;
       } catch {
         /* denied */
       }
     };
-    if (!silent && (state.phase === 'running' || state.phase === 'lead')) req();
+    const onVis = () => {
+      if (!document.hidden) req();
+    };
+    req();
+    document.addEventListener('visibilitychange', onVis);
     return () => {
       alive = false;
+      document.removeEventListener('visibilitychange', onVis);
       wake.current?.release();
       wake.current = null;
     };
-  }, [state.phase, silent]);
+  }, [awake]);
 
   const act = {
     done: useCallback(() => setState(s => R.advance(s, Date.now())), []),
     skip: useCallback(() => setState(s => R.advance(s, Date.now(), { skipped: true })), []),
     back: useCallback(() => setState(s => R.back(s, Date.now())), []),
     pause: useCallback(() => setState(s => R.pause(s, Date.now())), []),
-    resume: useCallback(() => setState(s => R.resume(s, Date.now())), []),
+    resume: useCallback(() => (unlockAudio(), setState(s => R.resume(s, Date.now()))), []),
     adjust: useCallback((t: number) => setState(s => R.adjust(s, Date.now(), t)), []),
     adjustIncline: useCallback((n: number) => setState(s => R.adjustIncline(s, n)), []),
     adjustStep: useCallback((stepId: string, patch: { target?: number; incline?: number }) => setState(s => {
@@ -194,7 +224,7 @@ export const useRunner = (runsheet: Runsheet, opts: { /** A kept run to carry on
       if (patch.incline !== undefined) next = R.adjustStepIncline(next, stepId, patch.incline);
       return next;
     }), []),
-    startBlock: useCallback(() => setState(s => R.startBlock(s, Date.now())), []),
+    startBlock: useCallback(() => (unlockAudio(), setState(s => R.startBlock(s, Date.now()))), []),
     setReps: useCallback((n: number) => setState(s => R.setReps(s, n)), []),
     adjustAt: useCallback((slotId: string, t: number) => setState(s => R.adjustAt(s, Date.now(), slotId, t)), []),
     setRepsAt: useCallback((slotId: string, n: number) => setState(s => R.setRepsAt(s, slotId, n)), []),
@@ -208,6 +238,11 @@ export const useRunner = (runsheet: Runsheet, opts: { /** A kept run to carry on
     drop: useCallback((stepId: string) => setState(s => R.drop(s, Date.now(), stepId)), []),
     swap: useCallback((stepId: string, to: ExerciseRef, target?: number) => setState(s => R.swap(s, Date.now(), stepId, to, target)), []),
     finish: useCallback(() => setState(s => R.finish(s, Date.now())), []),
+    /** The session is thrown away: clear the kept run and keep nothing from here on. */
+    discard: useCallback(() => {
+      discarded.current = true;
+      R.clearPersisted();
+    }, []),
     /** Put a state from moments ago back: the Undo after a drop or a skip. */
     restore: useCallback((s: R.RunState) => setState(s), []),
   };

@@ -49,10 +49,12 @@ import { Sheet } from '@/shared/components/ui/sheet';
 import { TabBar } from '@/shared/components/ui/tab-bar';
 import { WorkoutIcon } from '@/shared/components/ui/workout-icon';
 import { useUndo } from '@/shared/components/ui/undo-toast';
+import { loadPending, savePending } from '@/app/pending';
+import { originOf, rememberOrigin, withOrigin } from '@/features/timer/run-origin';
 import { defaultIcon } from '@/features/workouts/icon';
 import { useActions, useAppState } from './app/store';
 import { currentUser, providers, sendCode, signInGoogle, signOut, verifyCode } from '@/features/cloud/client';
-import { getDefaultRest, getMuted, getVolume, setDefaultRest, setMuted, setVolume } from '@/features/timer/use-runner';
+import { getDefaultRest, getMuted, getVolume, setDefaultRest, setMuted, setVolume, unlockAudio } from '@/features/timer/use-runner';
 import { ghost as paceGhost, lastTimed } from '@/features/timer/pace';
 import { deleteAccount, deviceFor, fetchCreator, fetchPublicWorkouts, type CreatorProfile } from '@/features/cloud/sync';
 import { useCloudSync } from '@/features/cloud/use-sync';
@@ -192,7 +194,9 @@ export default function App() {
   const [drafted, setDrafted] = useState<{ for: string; r: Runsheet } | null>(null);
   const draftOf = (id: string) => (drafted?.for === id ? drafted.r : null);
   const draftFor = (id: string) => (r: Runsheet | null) => setDrafted(r && { for: id, r });
-  const [pending, setPending] = useState<Partial<SessionResult> | null>(null);
+  // Kept on the device while the result sheet is open, so a reload there still edits the logged row.
+  const [pending, setPendingState] = useState<Partial<SessionResult> | null>(() => (parse(location.hash).name === 'result' ? loadPending() : (savePending(null), null)));
+  const setPending = (p: Partial<SessionResult> | null) => (savePending(p), setPendingState(p));
   // The workout whose kept run the Discover card asked to resume: that one picks up without asking.
   const [resumeFor, setResumeFor] = useState<string | null>(null);
   const open = (r: Runsheet, origin?: SessionOrigin) => (setFrom(origin), go(`/w/${encodeURIComponent(wid(r))}`));
@@ -258,7 +262,7 @@ export default function App() {
           onExerciseHistory={s => go(exerciseLink(s.exercise.key))}
           hasHistory={s => st.results.some(x => x.steps.some(y => y.exerciseKey === s.exercise.key))}
           onBack={() => go('/discover')}
-          onStart={() => (setDrafted(null), go(`/do/${encodeURIComponent(route.id)}`))}
+          onStart={() => (unlockAudio(), setDrafted(null), go(`/do/${encodeURIComponent(route.id)}`))}
           onEditAndStart={() => (draftFor(route.id)(structuredClone(resolveRefs(r, lookup))), go(`/edit/${encodeURIComponent(route.id)}`))}
           onFollowAlong={r.video ? () => go(`/follow/${encodeURIComponent(route.id)}`) : undefined}
           onLogOnly={() => go(`/result/${encodeURIComponent(route.id)}`)}
@@ -296,7 +300,7 @@ export default function App() {
           onBack={() => (setDrafted(null), go('/discover/saved'))}
           onReset={() => setDrafted(null)}
           onSaveAsMine={() => { const m = saveMine(); say('Saved to My workouts'); go(`/w/${encodeURIComponent(m.id!)}`); }}
-          onStart={() => { const m = saveMine(); go(`/do/${encodeURIComponent(m.id!)}`); }}
+          onStart={() => { unlockAudio(); const m = saveMine(); go(`/do/${encodeURIComponent(m.id!)}`); }}
           resolveTarget={resolve}
           hintFor={lastTime}
           setHintFor={lastSetHint}
@@ -325,7 +329,7 @@ export default function App() {
           onSwapExercise={pick}
           onBack={() => (setDrafted(null), go(`/w/${encodeURIComponent(route.id)}`))}
           onReset={() => draftFor(route.id)(base ? structuredClone(resolveRefs(base, lookup)) : null)}
-          onStart={() => go(`/do/${encodeURIComponent(route.id)}`)}
+          onStart={() => (unlockAudio(), go(`/do/${encodeURIComponent(route.id)}`))}
           onSaveAsMine={() => {
             // Your own workout saves in place; anything else becomes a copy of yours.
             const own = !!base?.id && st.workouts.some(w => w.id === base.id);
@@ -385,7 +389,7 @@ export default function App() {
     // a clean session, the deload after repeated misses), then % of a training max and × bodyweight
     // worked out, so the timer shows and logs a weight for every loaded set.
     const run = resolveLoads(progressed(withLastUsed(resolveRefs(r, lookup), st.results), st.results, st.trainingMaxes, st.equipment), st.trainingMaxes, st.bodyweightKg, st.equipment);
-    return <RunRoute key={route.id} runsheet={run} results={st.results} intent={intent} equipment={st.equipment} library={library} resume={resumeFor === route.id} lookup={lookup} onLogKept={act.addResult} onResumeKept={id => (setDrafted(null), setResumeFor(id), goReplace(`/do/${encodeURIComponent(id)}`))} onLog={res => act.addResult({ ...res, runsheetId: wid(r) })} onFinish={res => (setResumeFor(null), setPending({ ...res, runsheetId: wid(r) }), goReplace(`/result/${encodeURIComponent(route.id)}`))} onExit={() => (setResumeFor(null), Runner.clearPersisted(), go(`/w/${encodeURIComponent(route.id)}`))} />;
+    return <RunRoute key={route.id} runsheet={run} results={st.results} intent={intent} equipment={st.equipment} library={library} resume={resumeFor === route.id} origin={from} lookup={lookup} onLogKept={act.addResult} onResumeKept={id => (setDrafted(null), setResumeFor(id), goReplace(`/do/${encodeURIComponent(id)}`))} onLog={res => act.addResult({ ...res, runsheetId: wid(r) })} onFinish={res => (setResumeFor(null), setPending({ ...res, runsheetId: wid(r) }), goReplace(`/result/${encodeURIComponent(route.id)}`))} onExit={() => (setResumeFor(null), Runner.clearPersisted(), go(`/w/${encodeURIComponent(route.id)}`))} />;
   }
   if (route.name === 'session') {
     const res = st.results.find(x => x.id === route.id);
@@ -426,7 +430,7 @@ export default function App() {
           trainingMaxes={st.trainingMaxes}
           bodyweightKg={st.bodyweightKg}
           initial={logged ?? undefined}
-          startedFrom={from}
+          startedFrom={from ?? logged?.startedFrom}
           intent={intent}
           equipment={st.equipment}
           onBodyweight={st.bodyweightKg === undefined && !st.bodyweightAsked ? kg => (kg === undefined ? act.skipBodyweight() : act.setBodyweight(kg)) : undefined}
@@ -588,7 +592,7 @@ export default function App() {
             <div className="text-[14px] font-bold">{kept.state.title} was left unfinished</div>
             <div className="text-[12px] text-muted">Step {Math.min(kept.state.i + 1, kept.state.slots.length)} of {kept.state.slots.length}, {ago(Date.now() - kept.savedAt)}</div>
           </div>
-          <Button variant="quiet" size="inline" onClick={() => { act.addResult(Runner.keptResult(kept, keptSheet(kept.state, lookup))); Runner.clearPersisted(); say('Saved to History'); }}>
+          <Button variant="quiet" size="inline" onClick={() => { act.addResult(withOrigin(Runner.keptResult(kept, keptSheet(kept.state, lookup)), originOf(Runner.sessionId(kept.state)))); Runner.clearPersisted(); say('Saved to History'); }}>
             Save what I did
           </Button>
           <Button variant="quiet" size="inline" onClick={() => { if (confirm(`Discard the ${kept.state.title} session? What you did in it is not saved.`)) { Runner.clearPersisted(); say('Discarded'); } }}>
@@ -598,7 +602,7 @@ export default function App() {
       )}
       {saved && resumable && (
         <div className="flex w-full items-center gap-1 rounded-card border border-brand-line bg-brand-soft pr-1">
-          <button type="button" onClick={() => (setDrafted(null), setResumeFor(saved.runsheetId), go(`/do/${encodeURIComponent(saved.runsheetId)}`))} className="min-w-0 flex-1 px-3 py-2.5 text-left">
+          <button type="button" onClick={() => (unlockAudio(), setDrafted(null), setResumeFor(saved.runsheetId), go(`/do/${encodeURIComponent(saved.runsheetId)}`))} className="min-w-0 flex-1 px-3 py-2.5 text-left">
             <div className="truncate text-[14px] font-bold">Resume {saved.title}</div>
             <div className="text-[12px] text-muted">Step {Math.min(saved.i + 1, saved.slots.length)} of {saved.slots.length}</div>
           </button>
@@ -631,7 +635,7 @@ export default function App() {
       today={nextToday}
       stall={nextStall}
       onOpen={() => open(next.runsheet, 'home')}
-      onStart={() => (setDrafted(null), setFrom('home'), go(`/do/${encodeURIComponent(wid(next.runsheet))}`))}
+      onStart={() => (unlockAudio(), setDrafted(null), setFrom('home'), go(`/do/${encodeURIComponent(wid(next.runsheet))}`))}
     />
   );
   return shell('discover', <DiscoverScreen key={initialTab} initialTab={initialTab} workouts={all} results={st.results} savedIds={st.saved} above={above} top={top} onCreate={() => (setDrafted(null), go('/new'))} onOpen={open} onOpenProgram={(_, days) => open(days[0], 'search')} />);
@@ -642,7 +646,7 @@ export default function App() {
  * result sheet is saved. Until then it lived only in memory: the persisted run was cleared at done,
  * so a reload or a closed tab on the result sheet lost it. The sheet then edits the logged row.
  */
-type RunRouteProps = { runsheet: Runsheet; results: SessionResult[]; intent: Intent; equipment?: Equipment; library: Record<string, LibraryExercise>; onLog: (r: SessionResult) => void; onFinish: (r: SessionResult) => void; onExit: () => void };
+type RunRouteProps = { runsheet: Runsheet; results: SessionResult[]; intent: Intent; equipment?: Equipment; library: Record<string, LibraryExercise>; /** Where a fresh run was started from; a resumed run reads its own (`run-origin`). */ origin?: SessionOrigin; onLog: (r: SessionResult) => void; onFinish: (r: SessionResult) => void; onExit: () => void };
 
 /**
  * A run kept on the device (a reload, a closed tab) is asked about, not picked up silently: Start
@@ -659,7 +663,7 @@ const RunRoute = ({ resume, lookup, onLogKept, onResumeKept, ...props }: RunRout
   const { kept, own, canResume, canSave } = ask!;
   const other = own ? undefined : lookup(kept.state.runsheetId);
   const saveWhatWasDone = () => {
-    const res = Runner.keptResult(kept, own ? props.runsheet : keptSheet(kept.state, lookup));
+    const res = withOrigin(Runner.keptResult(kept, own ? props.runsheet : keptSheet(kept.state, lookup)), originOf(Runner.sessionId(kept.state)));
     Runner.clearPersisted();
     if (!own) return (onLogKept(res), setFrom('fresh'));
     props.onLog(res);
@@ -672,7 +676,7 @@ const RunRoute = ({ resume, lookup, onLogKept, onResumeKept, ...props }: RunRout
       <div className="text-[14px] text-white/70">{own ? `${props.runsheet.title} was ${where}.` : `It was ${where}. Starting ${props.runsheet.title} would lose it.`}</div>
       <div className="mt-2 flex w-full max-w-xs flex-col gap-2">
         {own && canResume && (
-          <Button block variant="brand" onClick={() => setFrom(Runner.restore(kept.state, kept.savedAt))}>
+          <Button block variant="brand" onClick={() => (unlockAudio(), setFrom(Runner.restore(kept.state, kept.savedAt)))}>
             Resume
           </Button>
         )}
@@ -686,7 +690,7 @@ const RunRoute = ({ resume, lookup, onLogKept, onResumeKept, ...props }: RunRout
             {own ? 'Save what I did' : `Save it, then start ${props.runsheet.title}`}
           </Button>
         )}
-        <Button block variant="dark" className="bg-white/10" onClick={() => (Runner.clearPersisted(), setFrom('fresh'))}>
+        <Button block variant="dark" className="bg-white/10" onClick={() => (unlockAudio(), Runner.clearPersisted(), setFrom('fresh'))}>
           {own ? 'Start over' : `Discard it and start ${props.runsheet.title}`}
         </Button>
       </div>
@@ -694,9 +698,16 @@ const RunRoute = ({ resume, lookup, onLogKept, onResumeKept, ...props }: RunRout
   );
 };
 
-const RunSession = ({ runsheet, results, intent, equipment, library, onLog, onFinish, onExit, from }: RunRouteProps & { from?: Runner.RunState }) => {
+const RunSession = ({ runsheet, results, intent, equipment, library, origin: startedFrom, onLog, onFinish, onExit, from }: RunRouteProps & { from?: Runner.RunState }) => {
   // Open reps (a range, a max) start on what was done last time, set for set.
   const { state, now, act } = useRunner(runsheet, { from, seed: s => Runner.prefillReps(s, (step, round) => lastSets(results, step)?.[round]?.reps) });
+  // A fresh run keeps its origin beside it on the device; a resumed one reads it back. Writing it
+  // again (StrictMode runs this twice) changes nothing.
+  const [origin] = useState(() => {
+    if (from) return originOf(Runner.sessionId(from));
+    rememberOrigin(Runner.sessionId(state), startedFrom);
+    return startedFrom;
+  });
   // The last session of this workout with times kept, raced on the header. Fixed for the session.
   const [rival] = useState(() => lastTimed(results, lineage(runsheet)));
   const [muted, setMute] = useState(getMuted);
@@ -716,7 +727,7 @@ const RunSession = ({ runsheet, results, intent, equipment, library, onLog, onFi
   const logged = useRef<SessionResult | null>(null);
   const log = (s: Runner.RunState) => {
     if (!logged.current) {
-      logged.current = { ...Runner.toResult(s, runsheet, s.endedAt ?? Date.now()), id: Runner.sessionId(s) };
+      logged.current = withOrigin({ ...Runner.toResult(s, runsheet, s.endedAt ?? Date.now()), id: Runner.sessionId(s) }, origin);
       onLog(logged.current);
     }
     return logged.current;
@@ -753,6 +764,14 @@ const RunSession = ({ runsheet, results, intent, equipment, library, onLog, onFi
   }, [prSay]);
   // A drop is one swipe and Skip sits beside Pause: both can be taken back for five seconds.
   const undo = useUndo('bottom-28 z-10');
+  // An undo belongs to the running session: once it is done, or the next block is started, taking
+  // the step back would rewind past that.
+  const over = state.phase === 'done';
+  const clearUndo = undo.clear;
+  useEffect(() => {
+    if (over) clearUndo();
+  }, [over, clearUndo]);
+  const startBlock = () => (undo.clear(), act.startBlock());
   const skip = () => {
     const before = state;
     act.skip();
@@ -768,7 +787,7 @@ const RunSession = ({ runsheet, results, intent, equipment, library, onLog, onFi
   };
   return (
     <div className="relative h-dvh">
-      {undo.toast}
+      {!over && undo.toast}
       {prSay && (
         <div role="status" className="pointer-events-none fixed inset-x-0 top-24 z-50 flex justify-center px-4">
           <div className="flex items-center gap-2 rounded-full bg-brand px-4 py-2 text-[14px] font-extrabold text-white shadow-lift">
@@ -776,7 +795,7 @@ const RunSession = ({ runsheet, results, intent, equipment, library, onLog, onFi
           </div>
         </div>
       )}
-      <TimerScreen runsheet={runsheet} state={state} now={now} onDone={act.done} onSkip={skip} onBack={act.back} onPause={act.pause} onResume={act.resume} onAdjust={act.adjust} onAdjustIncline={act.adjustIncline} onSetReps={act.setReps} onSetAmount={act.setAmount} onDrop={drop} onStartBlock={act.startBlock} onAdjustStep={act.adjustStep} sets={{ adjust: act.adjustAt, setReps: act.setRepsAt, setAmount: act.setAmountAt, complete: act.completeSet, reopen: act.reopenSet, lastFor: (step, round) => lastSets(results, step)?.[round], fill: act.fillSet, setType: act.setTypeAt }} onAdjustRest={act.extendRest} lastFor={step => lastSet(results, step)} onFill={act.fillSet} ghost={pace?.text} goal={goal} muted={muted} onToggleMute={() => { setMuted(!muted); setMute(!muted); }} equipment={equipment} alternativesFor={(step, target) => alternatives(step.exercise.key, target, library, 6, equipment)} onSwap={act.swap} prs={prs} onFinish={() => { const res = log(state.phase === 'done' ? state : Runner.finish(state, Date.now())); Runner.clearPersisted(); onFinish(res); }} onExit={onExit} />
+      <TimerScreen runsheet={runsheet} state={state} now={now} onDone={act.done} onSkip={skip} onBack={act.back} onPause={act.pause} onResume={act.resume} onAdjust={act.adjust} onAdjustIncline={act.adjustIncline} onSetReps={act.setReps} onSetAmount={act.setAmount} onDrop={drop} onStartBlock={startBlock} onAdjustStep={act.adjustStep} sets={{ adjust: act.adjustAt, setReps: act.setRepsAt, setAmount: act.setAmountAt, complete: act.completeSet, reopen: act.reopenSet, lastFor: (step, round) => lastSets(results, step)?.[round], fill: act.fillSet, setType: act.setTypeAt }} onAdjustRest={act.extendRest} lastFor={step => lastSet(results, step)} onFill={act.fillSet} ghost={pace?.text} goal={goal} muted={muted} onToggleMute={() => { setMuted(!muted); setMute(!muted); }} equipment={equipment} alternativesFor={(step, target) => alternatives(step.exercise.key, target, library, 6, equipment)} onSwap={act.swap} prs={prs} onFinish={() => { const res = log(state.phase === 'done' ? state : Runner.finish(state, Date.now())); Runner.clearPersisted(); onFinish(res); }} onExit={() => (act.discard(), onExit())} />
     </div>
   );
 };
