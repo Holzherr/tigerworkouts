@@ -12,6 +12,10 @@ struct SignInView: View {
     @State private var busy = false
     @State private var error: String?
     @State private var webAuth = WebAuth()
+    /// The raw nonce of the Apple request in flight; Apple sees only its hash.
+    @State private var appleNonce: String?
+    /// Seconds until Resend code works again, so a double tap does not trip the email rate limit.
+    @State private var resendIn = 0
 
     @FocusState private var focus: Field?
     private enum Field { case email, code }
@@ -22,7 +26,7 @@ struct SignInView: View {
                 VStack(spacing: 28) {
                     VStack(spacing: 14) {
                         Stripes().frame(width: 52, height: 44)
-                        Text("Sign in to Tiger")
+                        Text("Sign in to TigerWorkouts")
                             .font(.system(size: 30, weight: .heavy))
                             .foregroundStyle(Brand.ink)
                         Text("Your workouts and history, the same as on tigerworkouts.com.")
@@ -31,6 +35,19 @@ struct SignInView: View {
                             .multilineTextAlignment(.center)
                     }
                     .padding(.top, 24)
+
+                    SignInWithAppleButton(.continue) { request in
+                        let nonce = Supabase.randomNonce()
+                        appleNonce = nonce
+                        request.requestedScopes = [.email, .fullName]
+                        request.nonce = Supabase.sha256(nonce)
+                    } onCompletion: { result in
+                        Task { await apple(result) }
+                    }
+                    .signInWithAppleButtonStyle(.black)
+                    .frame(height: Tap.big)
+                    .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+                    .accessibilityIdentifier("sign-in-apple")
 
                     Button {
                         Task { await google() }
@@ -85,13 +102,22 @@ struct SignInView: View {
                         .opacity(busy ? 0.6 : 1)
 
                         if sent {
-                            Button("Use a different email") {
-                                sent = false
-                                code = ""
-                                focus = .email
+                            HStack {
+                                Button("Use a different email") {
+                                    sent = false
+                                    code = ""
+                                    focus = .email
+                                }
+                                Spacer()
+                                Button(resendIn > 0 ? "Resend code in \(resendIn) s" : "Resend code") {
+                                    Task { await send() }
+                                }
+                                .disabled(busy || resendIn > 0)
+                                .accessibilityIdentifier("resend-code")
                             }
                             .font(.subheadline.weight(.semibold))
                             .foregroundStyle(Brand.coralInk)
+                            .frame(minHeight: Tap.regular)
                         }
                     }
 
@@ -134,6 +160,7 @@ struct SignInView: View {
         do {
             try await Supabase.shared.sendEmailCode(to: email.trimmingCharacters(in: .whitespaces))
             sent = true
+            startResendCountdown()
         } catch {
             self.error = error.localizedDescription
         }
@@ -149,6 +176,43 @@ struct SignInView: View {
             dismiss()
         } catch {
             self.error = error.localizedDescription
+        }
+    }
+
+    private func startResendCountdown() {
+        resendIn = 30
+        Task {
+            while resendIn > 0 {
+                try? await Task.sleep(for: .seconds(1))
+                resendIn -= 1
+            }
+        }
+    }
+
+    private func apple(_ result: Result<ASAuthorization, any Error>) async {
+        switch result {
+        case .failure(let e as ASAuthorizationError) where e.code == .canceled:
+            return
+        case .failure(let e):
+            error = e.localizedDescription
+        case .success(let auth):
+            guard let credential = auth.credential as? ASAuthorizationAppleIDCredential,
+                  let tokenData = credential.identityToken, let token = String(data: tokenData, encoding: .utf8),
+                  let nonce = appleNonce else {
+                error = "Apple did not send a sign-in token. Try again."
+                return
+            }
+            busy = true
+            error = nil
+            defer { busy = false }
+            do {
+                store.user = try await Supabase.shared.signInWithApple(idToken: token, nonce: nonce)
+                appleNonce = nil
+                await onSignedIn()
+                dismiss()
+            } catch {
+                self.error = error.localizedDescription
+            }
         }
     }
 

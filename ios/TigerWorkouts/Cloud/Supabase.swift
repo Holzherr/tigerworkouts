@@ -187,6 +187,24 @@ actor Supabase {
         return session!.user
     }
 
+    // MARK: - Apple, id token
+
+    /// Sign in with Apple: the identity token Apple hands the app, exchanged for a session. Supabase
+    /// checks the token's nonce against the raw one sent here (Apple saw only its SHA-256).
+    func signInWithApple(idToken: String, nonce: String) async throws -> AuthUser {
+        let (data, _) = try await request("auth/v1/token?grant_type=id_token", method: "POST", body: ["provider": "apple", "id_token": idToken, "nonce": nonce], authed: false)
+        session = try JSONDecoder().decode(AuthSession.self, from: data)
+        persist()
+        return session!.user
+    }
+
+    /// A random string for Apple's request; its SHA-256 goes to Apple, the raw value to Supabase.
+    static func randomNonce() -> String { randomVerifier() }
+
+    static func sha256(_ s: String) -> String {
+        SHA256.hash(data: Data(s.utf8)).map { String(format: "%02x", $0) }.joined()
+    }
+
     // MARK: - Google, PKCE
 
     /// The verifier lives only as long as the browser sheet is open.
