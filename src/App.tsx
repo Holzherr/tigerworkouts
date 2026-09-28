@@ -1,4 +1,6 @@
-import { Flame, History, ImageUp, User } from 'lucide-react';
+import { Flame, History, ImageUp, Medal, User } from 'lucide-react';
+import { newRecords } from '@/features/timer/live-pr';
+import { setLabel } from '@/features/results/logbook';
 import { useEffect, useMemo, useState } from 'react';
 import { DiscoverScreen, type DiscoverTab } from '@/features/discover/components/discover-screen';
 import { LandingScreen } from '@/features/landing/components/landing-screen';
@@ -8,7 +10,7 @@ import { FULL_LIBRARY } from '@/features/workouts/imported';
 import { WorkoutPreviewScreen } from '@/features/discover/components/workout-preview-screen';
 import { EditorScreen } from '@/features/runsheet/components/editor-screen';
 import { EX, withStarter } from '@/features/runsheet/fixtures';
-import { editedCopy, lineage, makeExercise, ofWorkout, resolveRefs, scoreType, shortUnit, type ExerciseStep, type Runsheet } from '@/features/runsheet/model';
+import { editedCopy, lineage, makeExercise, measureOf, ofWorkout, resolveRefs, scoreType, shortUnit, type ExerciseStep, type Runsheet } from '@/features/runsheet/model';
 import { lastSet, lastSetLabel, lastSets, lastTimeLabel, withLastUsed } from '@/features/runsheet/last-used';
 import { patchStep } from '@/features/runsheet/patch-step';
 import { applyCommands, parsePlan } from '@/features/runsheet/parse-text';
@@ -686,6 +688,31 @@ const RunSession = ({ runsheet, results, intent, equipment, library, onLog, onFi
   useEffect(() => {
     if (state.phase === 'done') log(state);
   });
+  // A set that beats a record gets a medal on its row and a short PR pill the moment it is ticked.
+  const prevRun = useRef(state);
+  const [prs, setPrs] = useState<string[]>([]);
+  const [prSay, setPrSay] = useState<string | null>(null);
+  useEffect(() => {
+    const before = prevRun.current;
+    prevRun.current = state;
+    if (before === state) return;
+    const hit = newRecords(before, state, runsheet, results, Date.now());
+    if (!hit.length) return;
+    setPrs(p => [...p, ...hit.map(h => h.slotId)]);
+    const h = hit[hit.length - 1];
+    const ex = library[h.exerciseKey];
+    setPrSay(`PR · ${ex?.name ?? h.exerciseKey} ${setLabel(h.set, ex && !measureOf(ex.unit) ? shortUnit(ex.unit) : '')}`.trim());
+    try {
+      navigator.vibrate?.([30, 50, 30, 50, 140]);
+    } catch {
+      /* no vibration */
+    }
+  }, [state, runsheet, results, library]);
+  useEffect(() => {
+    if (!prSay) return;
+    const t = setTimeout(() => setPrSay(null), 2500);
+    return () => clearTimeout(t);
+  }, [prSay]);
   // A drop is one swipe and Skip sits beside Pause: both can be taken back for five seconds.
   const undo = useUndo('bottom-28');
   const skip = () => {
@@ -704,7 +731,14 @@ const RunSession = ({ runsheet, results, intent, equipment, library, onLog, onFi
   return (
     <div className="relative h-dvh">
       {undo.toast}
-      <TimerScreen runsheet={runsheet} state={state} now={now} onDone={act.done} onSkip={skip} onBack={act.back} onPause={act.pause} onResume={act.resume} onAdjust={act.adjust} onAdjustIncline={act.adjustIncline} onSetReps={act.setReps} onSetAmount={act.setAmount} onDrop={drop} onStartBlock={act.startBlock} onAdjustStep={act.adjustStep} sets={{ adjust: act.adjustAt, setReps: act.setRepsAt, setAmount: act.setAmountAt, complete: act.completeSet, reopen: act.reopenSet, lastFor: (step, round) => lastSets(results, step)?.[round], fill: act.fillSet, setType: act.setTypeAt }} onAdjustRest={act.extendRest} lastFor={step => lastSet(results, step)} onFill={act.fillSet} ghost={pace?.text} goal={goal} muted={muted} onToggleMute={() => { setMuted(!muted); setMute(!muted); }} equipment={equipment} alternativesFor={(step, target) => alternatives(step.exercise.key, target, library, 6, equipment)} onSwap={act.swap} onFinish={() => { const res = log(state.phase === 'done' ? state : Runner.finish(state, Date.now())); Runner.clearPersisted(); onFinish(res); }} onExit={onExit} />
+      {prSay && (
+        <div role="status" className="pointer-events-none fixed inset-x-0 top-24 z-50 flex justify-center px-4">
+          <div className="flex items-center gap-2 rounded-full bg-brand px-4 py-2 text-[14px] font-extrabold text-white shadow-lift">
+            <Medal className="size-4" /> {prSay}
+          </div>
+        </div>
+      )}
+      <TimerScreen runsheet={runsheet} state={state} now={now} onDone={act.done} onSkip={skip} onBack={act.back} onPause={act.pause} onResume={act.resume} onAdjust={act.adjust} onAdjustIncline={act.adjustIncline} onSetReps={act.setReps} onSetAmount={act.setAmount} onDrop={drop} onStartBlock={act.startBlock} onAdjustStep={act.adjustStep} sets={{ adjust: act.adjustAt, setReps: act.setRepsAt, setAmount: act.setAmountAt, complete: act.completeSet, reopen: act.reopenSet, lastFor: (step, round) => lastSets(results, step)?.[round], fill: act.fillSet, setType: act.setTypeAt }} onAdjustRest={act.extendRest} lastFor={step => lastSet(results, step)} onFill={act.fillSet} ghost={pace?.text} goal={goal} muted={muted} onToggleMute={() => { setMuted(!muted); setMute(!muted); }} equipment={equipment} alternativesFor={(step, target) => alternatives(step.exercise.key, target, library, 6, equipment)} onSwap={act.swap} prs={prs} onFinish={() => { const res = log(state.phase === 'done' ? state : Runner.finish(state, Date.now())); Runner.clearPersisted(); onFinish(res); }} onExit={onExit} />
     </div>
   );
 };

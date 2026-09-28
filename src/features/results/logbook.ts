@@ -242,6 +242,17 @@ export const isRecord = (x: SetResult, before: Records): boolean => {
   return held(x) && !!before.longest && x.seconds! > before.longest.value;
 };
 
+/**
+ * A set ticked mid-session, as a PR: it beats the records standing before the session and every
+ * set of the exercise already done in it, so the second set at a new top load is not a PR again.
+ * A warm-up never is, nor is anything in the first session of an exercise.
+ */
+export const recordOnTick = (before: Records, earlier: SetResult[], x: SetResult): boolean => {
+  if (before.sessions === 0 || !isWorking(x)) return false;
+  const r = earlier.reduce((acc, e) => addSet(acc, e, ''), before);
+  return isRecord(x, r);
+};
+
 export interface LoggedExercise {
   exerciseKey: string;
   lastAt: string;

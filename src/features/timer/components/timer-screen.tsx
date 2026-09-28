@@ -1,4 +1,4 @@
-import { Check, ChevronLeft, ChevronRight, List, MoreHorizontal, Pause, Play, Shuffle, SkipForward, Square, Volume2, VolumeX } from 'lucide-react';
+import { Check, ChevronLeft, ChevronRight, List, Medal, MoreHorizontal, Pause, Play, Shuffle, SkipForward, Square, Volume2, VolumeX } from 'lucide-react';
 import { useState } from 'react';
 import { Button } from '@/shared/components/ui/button';
 import { ClipThumb } from '@/shared/components/ui/clip-thumb';
@@ -56,6 +56,8 @@ export interface TimerScreenProps {
   alternativesFor?: (step: ExerciseStep, target?: number) => Alternative[];
   /** Swap a step's exercise from here to the end of the session (the machine is taken). */
   onSwap?: (stepId: string, to: ExerciseRef, target?: number) => void;
+  /** Slots whose set beat a record when it was ticked: a medal on the row. */
+  prs?: string[];
 }
 
 export interface SetActions {
@@ -80,7 +82,7 @@ export interface SetActions {
  * set you are on highlighted, a tick to finish it. Done rows show what was done and are locked
  * until un-ticked. The rest between sets counts down above the grid.
  */
-const TimerSetGrid = ({ state, step, blockId, actions, equipment }: { state: R.RunState; step: ExerciseStep; blockId: string; actions: SetActions; equipment?: Equipment }) => {
+const TimerSetGrid = ({ state, step, blockId, actions, equipment, prs = [] }: { state: R.RunState; step: ExerciseStep; blockId: string; actions: SetActions; equipment?: Equipment; prs?: string[] }) => {
   const rows = state.slots.map((sl, idx) => ({ sl, idx })).filter(x => x.sl.blockId === blockId && x.sl.kind === 'work');
   const on = rows.find(x => x.idx >= state.i)?.sl.id;
   const [open, setOpen] = useState<string | null>(null);
@@ -146,6 +148,11 @@ const TimerSetGrid = ({ state, step, blockId, actions, equipment }: { state: R.R
                   )}
                 </div>
               )}
+              {done && prs.includes(sl.id) && (
+                <span className="grid size-7 shrink-0 place-items-center rounded-full bg-brand text-white" aria-label="Personal record" title="Personal record">
+                  <Medal className="size-4" />
+                </span>
+              )}
               <button
                 type="button"
                 aria-label={done ? `Un-tick set ${n + 1}` : `Tick set ${n + 1}`}
@@ -198,7 +205,7 @@ const stepLine = (s: ExerciseStep) => [forLabel(s), s.target !== undefined ? `${
  * a ⋯ menu (previous, overview, stop), Pause and Skip/Done at equal size. Tap the Next row to see
  * what the coming block asks for; the overview sheet lists every part with progress.
  */
-export const TimerScreen = ({ runsheet, state, now, onDone, onSkip, onBack, onPause, onResume, onAdjust, onAdjustIncline, onSetReps, onSetAmount, onDrop, onStartBlock, onAdjustStep, sets, onAdjustRest, lastFor, onFill, ghost, goal, muted, onToggleMute, equipment, onFinish, onExit, alternativesFor, onSwap }: TimerScreenProps) => {
+export const TimerScreen = ({ runsheet, state, now, onDone, onSkip, onBack, onPause, onResume, onAdjust, onAdjustIncline, onSetReps, onSetAmount, onDrop, onStartBlock, onAdjustStep, sets, onAdjustRest, lastFor, onFill, ghost, goal, muted, onToggleMute, equipment, onFinish, onExit, alternativesFor, onSwap, prs }: TimerScreenProps) => {
   const [confirmExit, setConfirmExit] = useState(false);
   const [menu, setMenu] = useState(false);
   const [overview, setOverview] = useState(false);
@@ -343,7 +350,7 @@ export const TimerScreen = ({ runsheet, state, now, onDone, onSkip, onBack, onPa
               </div>
             )}
 
-            {straight && slot?.blockId && !done && !lead && <TimerSetGrid key={slot.blockId} state={state} step={straight} blockId={slot.blockId} actions={sets!} equipment={equipment} />}
+            {straight && slot?.blockId && !done && !lead && <TimerSetGrid key={slot.blockId} state={state} step={straight} blockId={slot.blockId} actions={sets!} equipment={equipment} prs={prs} />}
 
             {slot && !done && !(straight && !lead) && (
               <SwipeToRemove onRemove={() => onDrop(slot.step.id)} disabled={isRest || paused} className="rounded-card">
