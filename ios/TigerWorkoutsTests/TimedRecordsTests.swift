@@ -96,6 +96,14 @@ struct TimedRecordsTests {
         #expect(Rounds.prs(past[0], all: past).isEmpty)
     }
 
+    @Test("an edited copy races the rounds of the workout it was copied from")
+    func roundPRsAcrossLineage() {
+        let original = [split("2026-09-01", [100, 190], from: 5, runsheet: "cf-cindy")]
+        let today = split("2026-09-08", [90, 174], from: 5, runsheet: "u-cindy")
+        #expect(Rounds.prs(today, all: original + [today], lineage: ["u-cindy", "cf-cindy"]) == [Rounds.PR(blockId: "b", round: 1, seconds: 84, at: "2026-09-08", was: 90)])
+        #expect(Rounds.prs(today, all: original + [today]).isEmpty)
+    }
+
     private var logged: SessionResult {
         session("2026-09-01T10:00:00Z", [
             StepResult(stepId: "a", exerciseKey: "bench", target: 60, incline: nil, reps: [8, 8], success: true, sets: [set(load: 40, reps: 10, type: .warmup), set(load: 60, reps: 8), set(load: 60, reps: 8)]),

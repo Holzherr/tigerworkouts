@@ -44,7 +44,8 @@ enum Celebrate {
     }
 
     /// `all` is every session logged, with or without this one in it.
-    static func celebrate(_ result: SessionResult, all: [SessionResult], today: Date? = nil) -> Celebration {
+    /// `lineage` (`Runsheet.lineage`) lets an edited copy's rounds race the original's.
+    static func celebrate(_ result: SessionResult, all: [SessionResult], today: Date? = nil, lineage: [String]? = nil) -> Celebration {
         let others = all.filter { !same($0, result) }
         let before = others.filter { $0.startedAt < result.startedAt }
         let last = result.activity != nil ? nil : before
@@ -57,7 +58,7 @@ enum Celebrate {
             ordinal: before.count + 1,
             streak: EffortModel.streak(others.filter { $0.startedAt <= result.startedAt } + [result], today: today ?? result.startedDate),
             prs: Logbook.sessionPRs(result, all: all),
-            rounds: Rounds.prs(result, all: all),
+            rounds: Rounds.prs(result, all: all, lineage: lineage),
             volume: volume,
             last: last,
             deltas: Deltas(score: diff(result.score, last?.score), durationSec: diff(result.durationSec, last?.durationSec), volume: diff(volume, lastVolume))
