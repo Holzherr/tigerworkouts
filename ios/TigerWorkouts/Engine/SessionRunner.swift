@@ -364,7 +364,11 @@ final class SessionRunner {
         release()
     }
 
-    func startBlock() { apply { Runner.startBlock($0, now: $1) } }
+    /// A new block starts clean: a skip from before the gate is no longer worth undoing.
+    func startBlock() {
+        undoable = nil
+        apply { Runner.startBlock($0, now: $1) }
+    }
     func done() {
         let ticked = slot?.kind == .work ? slot?.id : nil
         apply { Runner.advance($0, now: $1) }

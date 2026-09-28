@@ -57,14 +57,9 @@ struct LiveRecordTests {
         #expect(SessionRunner.liveRecord(s, Self.sheet(target: 30), slotId: Self.workIds(s)[0], history: [Self.past(20, day: 1)], now: 6_000) == nil)
     }
 
-    @Test("taps stay one step; a held button's repeats grow to two, then five")
+    @Test("a held button's repeats grow from one step to two, then five")
     func accelerator() {
-        var a = Accelerator()
-        let t0 = Date(timeIntervalSince1970: 0)
-        // A thumb tapping fast: 0.2 s apart.
-        #expect((0..<10).map { a.factor(now: t0.addingTimeInterval(Double($0) * 0.2)) }.allSatisfy { $0 == 1 })
-        var held = Accelerator()
-        let steps = (0..<20).map { held.factor(now: t0.addingTimeInterval(Double($0) * 0.1)) }
+        let steps = (0..<20).map { Accelerator.factor(repeat: $0) }
         #expect(steps.prefix(6).allSatisfy { $0 == 1 })
         #expect(steps[6] == 2)
         #expect(steps[16] == 5)

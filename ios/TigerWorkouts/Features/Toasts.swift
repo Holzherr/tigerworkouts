@@ -1,19 +1,61 @@
 import SwiftUI
 
-/// Hold a stepper button and it repeats (`buttonRepeatBehavior`), and the repeats speed up: one
-/// step at a time for the first half second or so, then two, then five. 20 → 100 kg is a hold,
-/// not 32 taps. Taps as fast as a thumb can go stay one step each: only the system's repeat comes
-/// in under `repeatGap`.
-struct Accelerator {
-    static let repeatGap: TimeInterval = 0.12
-    private var last: Date?
-    private var run = 0
+/// Hold a stepper button and it repeats, and the repeats speed up: one step at a time for about
+/// a second, then two, then five. 20 → 100 kg is a hold, not 32 taps. SwiftUI's own
+/// `buttonRepeatBehavior` repeats at a steady, slow rate, so the timing is done here.
+enum Accelerator {
+    /// First repeat after this long held; a shorter press is a tap.
+    static let delay: Duration = .milliseconds(400)
 
-    /// How many steps this press is worth.
-    mutating func factor(now: Date = Date()) -> Double {
-        if let last, now.timeIntervalSince(last) < Self.repeatGap { run += 1 } else { run = 0 }
-        last = now
-        return run >= 16 ? 5 : run >= 6 ? 2 : 1
+    /// Steps the n-th repeat is worth (n from 0).
+    static func factor(repeat n: Int) -> Double { n >= 16 ? 5 : n >= 6 ? 2 : 1 }
+
+    /// The wait before the next repeat: a little slower while it is one step at a time.
+    static func gap(repeat n: Int) -> Duration { .milliseconds(n < 6 ? 150 : 100) }
+}
+
+/// A button that takes one step when tapped and keeps stepping, faster, while held. `action` gets
+/// how many steps each firing is worth.
+struct RepeatButton<Label: View>: View {
+    var action: (Double) -> Void
+    @ViewBuilder var label: () -> Label
+
+    @State private var task: Task<Void, Never>?
+    @State private var repeated = false
+
+    var body: some View {
+        Button {
+            // The release after a hold is not one more step.
+            if repeated { repeated = false } else { action(1) }
+        } label: { label() }
+        .buttonStyle(PressWatch { pressed in
+            task?.cancel()
+            task = nil
+            guard pressed else { return }
+            repeated = false
+            task = Task { @MainActor in
+                try? await Task.sleep(for: Accelerator.delay)
+                var n = 0
+                while !Task.isCancelled {
+                    repeated = true
+                    action(Accelerator.factor(repeat: n))
+                    try? await Task.sleep(for: Accelerator.gap(repeat: n))
+                    n += 1
+                }
+            }
+        })
+        .onDisappear { task?.cancel() }
+    }
+}
+
+/// Hands the button's pressed state out, so a hold can be timed. A scroll that takes the touch
+/// over releases it.
+private struct PressWatch: ButtonStyle {
+    var onChange: (Bool) -> Void
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .opacity(configuration.isPressed ? 0.7 : 1)
+            .onChange(of: configuration.isPressed) { _, pressed in onChange(pressed) }
     }
 }
 

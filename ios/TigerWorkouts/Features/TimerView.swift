@@ -18,8 +18,6 @@ struct TimerView: View {
     @State private var confirmQuit = false
     /// The set row open for editing on a straight-set block; nil = the set you are on.
     @State private var openSet: String?
-    /// Hold a load or reps button and the steps grow.
-    @State private var accel = Accelerator()
 
     private var isRest: Bool { runner.slot?.kind == .rest }
     private var accent: Color { isRest ? Brand.Night.rest : Brand.coral }
@@ -37,6 +35,8 @@ struct TimerView: View {
             if let flash = runner.recordFlash, !runner.isDone {
                 RecordToast(text: flash.text) { runner.clearRecordFlash() }
                     .padding(.top, 60)
+                    // Over the top bar for a moment; taps go through to End session and the rest.
+                    .allowsHitTesting(false)
             }
         }
         .overlay(alignment: .bottom) {
@@ -77,7 +77,8 @@ struct TimerView: View {
         .confirmationDialog("End this session?", isPresented: $confirmQuit, titleVisibility: .visible) {
             Button("Finish and save") { runner.finish() }
             Button("Discard", role: .destructive) { discard() }
-            Button("Keep going", role: .cancel) {}
+            // Not a cancel role: iOS hides that button in this dialog, and it has to be offered.
+            Button("Keep going") {}
         } message: {
             Text("Finish and save keeps what you have done so far. Discard throws this session away: no history, no streak, nothing in Health.")
         }
@@ -649,14 +650,13 @@ struct TimerView: View {
     /// Minus or plus beside a number. Held, it repeats and speeds up; the action gets how many
     /// steps this press is worth.
     private func nudge(_ symbol: String, label: String, action: @escaping (Double) -> Void) -> some View {
-        Button { action(accel.factor()) } label: {
+        RepeatButton(action: action) {
             Image(systemName: symbol)
                 .font(.system(size: 18, weight: .bold))
                 .frame(width: 56, height: 56)
                 .background(Brand.coralSoft, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
                 .foregroundStyle(Brand.coralInk)
         }
-        .buttonRepeatBehavior(.enabled)
         .accessibilityLabel(label)
     }
 

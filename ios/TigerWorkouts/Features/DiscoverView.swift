@@ -294,6 +294,7 @@ struct DiscoverView: View {
                     }
                 }
             }
+            .accessibilityElement(children: .contain)
             .accessibilityIdentifier("for-you")
         }
     }
