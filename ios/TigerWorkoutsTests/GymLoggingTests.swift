@@ -6,11 +6,11 @@ import Testing
 /// `runner.test.ts`, and from `pace.test.ts`.
 @Suite("rest controls")
 struct RestControlTests {
-    static func sheet() -> Runsheet {
+    static func sheet(between: Double? = nil) -> Runsheet {
         Runsheet(id: "g", title: "Grid", items: [.block(Block(
             id: "b", name: "Bench", repeatCount: 3,
             steps: [Fixtures.work("pr", Fixtures.press, target: 20, forMode: .reps, forValue: 8), Fixtures.rest("r", 60)],
-            restBetweenSec: 90
+            restBetweenSec: between
         ))])
     }
 
@@ -35,7 +35,7 @@ struct RestControlTests {
         var s = Runner.extendRest(Self.onRest(), now: 75_000, by: -15) // 5 s left
         #expect(s.endsAt == 75_000)
         s = Runner.tick(s, now: 75_000)
-        #expect(s.slots[s.i].step.id == "b:between")
+        #expect(s.slots[s.i].step.id == "pr")
     }
 
     @Test("works on a paused rest")
@@ -49,9 +49,9 @@ struct RestControlTests {
 
     @Test("the rest between rounds takes it too")
     func between() {
-        let s = Runner.tick(Self.onRest(), now: 80_000)
+        let s = Runner.advance(Runner.tick(Runner.start(Self.sheet(between: 90), now: 0), now: 5_000), now: 20_000) // set 1 done: the rest between rounds
         #expect(s.slots[s.i].step.id == "b:between")
-        #expect(Runner.extendRest(s, now: 81_000, by: 15).endsAt == s.endsAt! + 15_000)
+        #expect(Runner.extendRest(s, now: 21_000, by: 15).endsAt == s.endsAt! + 15_000)
     }
 
     @Test("leaves work and an EMOM wait alone")

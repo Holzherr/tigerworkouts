@@ -104,6 +104,7 @@
 		D13C662CBC346212040F776E /* SessionRunner.swift in Sources */ = {isa = PBXBuildFile; fileRef = B5764E5C8674AB9AF9B73008 /* SessionRunner.swift */; };
 		D58253526B7751F2479E7770 /* NextUp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1E0B46392F6B56E20A87A7FF /* NextUp.swift */; };
 		D5BA040410153B5B58D233D4 /* PlatesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B6DDB5FD999432C0F322C44C /* PlatesView.swift */; };
+		D7D49CD1EF18F5FB2713F1D1 /* GymFloorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8164E6FD277B34BAB1DE24C7 /* GymFloorTests.swift */; };
 		DB3F588AA2E58E33D6EBA2CE /* Toasts.swift in Sources */ = {isa = PBXBuildFile; fileRef = DE3E5551CC682F5487AAA840 /* Toasts.swift */; };
 		DBEDEBD4281918290549E6A8 /* SessionActivity.swift in Sources */ = {isa = PBXBuildFile; fileRef = DC9366D79FD67D11C4687AC3 /* SessionActivity.swift */; };
 		DD4545EFB40EDD4261D4585E /* HistoryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1063A8544D812A237CA3F659 /* HistoryView.swift */; };
@@ -219,6 +220,7 @@
 		781B4703341F053F08AE0613 /* Keychain.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Keychain.swift; sourceTree = "<group>"; };
 		7D1E28AFABED678775260BB0 /* TigerWorkoutsWidgets-Personal.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = "TigerWorkoutsWidgets-Personal.entitlements"; sourceTree = "<group>"; };
 		7F61B8CF21E007E3998D9D46 /* TigerWorkouts-Personal.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = "TigerWorkouts-Personal.entitlements"; sourceTree = "<group>"; };
+		8164E6FD277B34BAB1DE24C7 /* GymFloorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GymFloorTests.swift; sourceTree = "<group>"; };
 		87A0379EA6B428BEE7F68638 /* SessionLiveActivity.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionLiveActivity.swift; sourceTree = "<group>"; };
 		8A91B39264F3D48EC2B176B0 /* RecommendTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecommendTests.swift; sourceTree = "<group>"; };
 		8B7FE8DABC9C1B41E9896692 /* RestNotice.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RestNotice.swift; sourceTree = "<group>"; };
@@ -407,6 +409,7 @@
 				0F6246280A2E9FD98AB49D6B /* DataFixesTests.swift */,
 				03B24D2D55EFBC42BB378AFE /* EditingTests.swift */,
 				FF1037B86A23BEA3B9FCC0CA /* EngineCorrectnessTests.swift */,
+				8164E6FD277B34BAB1DE24C7 /* GymFloorTests.swift */,
 				BD77652B9CB4664C909E3D23 /* GymLoggingTests.swift */,
 				3D87622F139D50161B1F5C9C /* HapticsTests.swift */,
 				DF2925A193B28392EB5F9746 /* LiveActivityTests.swift */,
@@ -689,6 +692,7 @@
 				5A3085976DDC5CE72584054B /* DataFixesTests.swift in Sources */,
 				4A186DEED593C0BA6739F608 /* EditingTests.swift in Sources */,
 				336F75C7C99366986A2B3EE4 /* EngineCorrectnessTests.swift in Sources */,
+				D7D49CD1EF18F5FB2713F1D1 /* GymFloorTests.swift in Sources */,
 				8CF31441EEAD7E63BB021F59 /* GymLoggingTests.swift in Sources */,
 				05E59B570AE45E1D3609914C /* HapticsTests.swift in Sources */,
 				EB9FAD39D8876DE07D18AB3E /* LiveActivityTests.swift in Sources */,

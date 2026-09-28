@@ -60,7 +60,8 @@ enum Celebrate {
             rounds: Rounds.prs(result, all: all),
             volume: volume,
             last: last,
-            deltas: Deltas(score: diff(result.score, last?.score), durationSec: diff(result.durationSec, last?.durationSec), volume: diff(volume, lastVolume))
+            // A capped for-time scored the cap, not a finish time: nothing to set against a finish.
+            deltas: Deltas(score: result.capped == true || last?.capped == true ? nil : diff(result.score, last?.score), durationSec: diff(result.durationSec, last?.durationSec), volume: diff(volume, lastVolume))
         )
     }
 
@@ -93,6 +94,8 @@ enum Celebrate {
                 out.append(DeltaLine(label: "Score", text: "Same as last time"))
             } else if type == .time {
                 out.append(DeltaLine(label: "Score", text: "\(Format.clock(abs(score))) \(score < 0 ? "faster" : "slower")", better: score < 0))
+            } else if type == .rounds, let was = c.last?.score {
+                out.append(roundsDelta(was + score, was))
             } else {
                 out.append(DeltaLine(label: "Score", text: "\(score > 0 ? "+" : "−")\(formatScore(type, (abs(score) * 1000).rounded() / 1000))", better: score > 0))
             }
@@ -108,6 +111,25 @@ enum Celebrate {
             out.append(DeltaLine(label: "Time", text: "\(amount) \(d > 0 ? "longer" : "shorter")"))
         }
         return out
+    }
+
+    /// An AMRAP score is rounds + reps / 1000, so the two are set against each other apart: 7 + 3
+    /// on 6 + 15 is "+1 round − 12 reps", never a subtraction of the encoded numbers. A partial round
+    /// is always fewer reps than a round, so more rounds is better whatever the reps.
+    static func roundsDelta(_ now: Double, _ was: Double) -> DeltaLine {
+        func split(_ x: Double) -> (Int, Int) {
+            let whole = (x + 1e-9).rounded(.down)
+            return (Int(whole), Int(((x - whole) * 1000).rounded()))
+        }
+        let (r1, p1) = split(now)
+        let (r0, p0) = split(was)
+        let dr = r1 - r0, dp = p1 - p0
+        func part(_ n: Int, _ one: String, _ many: String) -> String { "\(abs(n)) \(abs(n) == 1 ? one : many)" }
+        var parts: [String] = []
+        if dr != 0 { parts.append("\(dr > 0 ? "+" : "−")\(part(dr, "round", "rounds"))") }
+        if dp != 0 { parts.append("\(dr != 0 ? (dp > 0 ? "+ " : "− ") : (dp > 0 ? "+" : "−"))\(part(dp, "rep", "reps"))") }
+        if parts.isEmpty { return DeltaLine(label: "Score", text: "Same as last time") }
+        return DeltaLine(label: "Score", text: parts.joined(separator: " "), better: dr > 0 || (dr == 0 && dp > 0))
     }
 
     /// "Workout 42".

@@ -124,7 +124,7 @@ struct HistoryView: View {
     private func historyLine(_ s: SessionResult) -> String {
         var parts = [s.startedDate.formatted(date: .abbreviated, time: .shortened)]
         if let d = s.durationSec, d > 0 { parts.append(Format.duration(d)) }
-        if s.completed == false { parts.append("stopped early") }
+        if s.completed == false, s.capped != true { parts.append("stopped early") }
         if let rpe = s.rpe { parts.append("effort \(Int(rpe))") }
         return parts.joined(separator: " · ")
     }

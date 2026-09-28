@@ -12,7 +12,8 @@ private let hapticLog = Logger(subsystem: "com.holzherr.tigerworkouts", category
 ///
 /// Core Haptics is foreground-only: with the screen locked it plays nothing. The session keeps the
 /// app alive in the background (Cues' audio), so a locked phone gets the system vibration instead —
-/// two long buzzes for work, one for rest, the only buzz iOS lets a backgrounded app make.
+/// two long buzzes for work, one for rest, three for a block's end, the only buzz iOS lets a
+/// backgrounded app make.
 @MainActor
 @Observable
 final class Haptics {
@@ -145,15 +146,19 @@ final class Haptics {
     /// Screen locked or app in the background. The ticks stay silent: three long buzzes a second
     /// apart would blur into one, and the work/rest buzz that follows is the one that matters.
     private func vibrate(_ cue: Cue) {
+        let times = Self.buzzes(cue)
+        if times > 0 { buzz(times) }
+    }
+
+    /// How many system buzzes a cue is with the phone locked: rest one, work two, a block's end
+    /// three, the session's end four, so the pocket can tell a gate from the next set.
+    nonisolated static func buzzes(_ cue: Cue) -> Int {
         switch cue {
-        case .tick:
-            return
-        case .rest:
-            buzz(1)
-        case .work, .block:
-            buzz(2)
-        case .finish:
-            buzz(3)
+        case .tick: 0
+        case .rest: 1
+        case .work: 2
+        case .block: 3
+        case .finish: 4
         }
     }
 

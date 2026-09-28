@@ -75,6 +75,10 @@ struct TimerView: View {
             .preferredColorScheme(.light)
         }
         .confirmationDialog("End this session?", isPresented: $confirmQuit, titleVisibility: .visible) {
+            // Cutting a circuit short is one tap here, not one Skip per station.
+            if runner.canEndBlock {
+                Button("End this block") { runner.endBlock() }
+            }
             Button("Finish and save") { runner.finish() }
             Button("Discard", role: .destructive) { discard() }
             // Not a cancel role: iOS hides that button in this dialog, and it has to be offered.
@@ -337,6 +341,12 @@ struct TimerView: View {
                         .font(.subheadline)
                         .foregroundStyle(Brand.Night.muted)
                         .monospacedDigit()
+                } else if Runner.minuteOnly(runner.slot) {
+                    // EMOM reps: the minute running out. Done logs the set; left alone, the minute
+                    // logs it and the next one starts.
+                    Text("Tap Done when you finish the set")
+                        .font(.subheadline)
+                        .foregroundStyle(Brand.Night.muted)
                 }
                 if runner.restAdjustable {
                     HStack(spacing: 10) {
@@ -737,8 +747,20 @@ struct TimerView: View {
     private var controls: some View {
         VStack(spacing: 10) {
             if runner.state.phase == .ready {
-                Button("Start \(runner.slot?.blockName ?? "block")") { runner.startBlock() }
-                    .buttonStyle(BigButtonStyle())
+                HStack(spacing: 10) {
+                    // A stray Done on the last station of the block before is taken back from here.
+                    Button {
+                        runner.back()
+                    } label: {
+                        Image(systemName: "backward.end.fill")
+                    }
+                    .buttonStyle(NightButtonStyle())
+                    .frame(maxWidth: 72)
+                    .accessibilityLabel("Previous step")
+
+                    Button("Start \(runner.slot?.blockName ?? "block")") { runner.startBlock() }
+                        .buttonStyle(BigButtonStyle())
+                }
             } else {
                 HStack(spacing: 10) {
                     // Undoes a stray Done — on the Lock Screen too, where there is no way back.

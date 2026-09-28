@@ -16,6 +16,8 @@ final class Cues {
 
     enum Tone {
         case tick, work, rest, block, finish
+        /// A minute, or ten seconds, left on a block's cap.
+        case warning
     }
 
     /// Built on the first `begin`, not at launch: the app (and every unit test that touches a
@@ -138,6 +140,7 @@ final class Cues {
     private func notes(for tone: Tone) -> [Note] {
         switch tone {
         case .tick: [Note(880, at: 0, for: 0.09, level: 0.35)]
+        case .warning: [Note(990, at: 0, for: 0.12, level: 0.55), Note(990, at: 0.18, for: 0.12, level: 0.55)]
         case .work: [Note(1_100, at: 0, for: 0.16, level: 0.6)]
         case .rest: [Note(660, at: 0, for: 0.22, level: 0.45)]
         case .block: [Note(880, at: 0, for: 0.14, level: 0.55), Note(1_100, at: 0.16, for: 0.2, level: 0.55)]

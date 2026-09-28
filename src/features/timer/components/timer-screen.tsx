@@ -345,8 +345,8 @@ export const TimerScreen = ({ runsheet, state, now, onDone, onSkip, onBack, onPa
             )}
             {lead && <div className="-mt-2 pb-3 text-center text-[13px] text-white/60">Get ready</div>}
             {!timed && !lead && !done && slot && <div className="-mt-2 pb-3 text-center text-[13px] text-white/60">{isRest ? 'Rest' : straight ? 'Tick the set when you finish it' : 'Tap Done when finished'}</div>}
-            {emomWork && !done && <div className="-mt-2 pb-3 text-center text-[13px] text-white/60">Left in the {slot?.everySec && slot.everySec !== 60 ? 'interval' : 'minute'} · tap Done when finished</div>}
-            {minuteLeft !== undefined && !lead && !done && !emomWork && (
+            {emomWork && !done && <div className="-mt-2 pb-3 text-center text-[13px] text-white/60">Tap Done when finished</div>}
+            {minuteLeft !== undefined && !lead && !done && (
               <div className={cn('mx-auto mb-3 w-fit rounded-full bg-white/10 px-3 py-1 text-[13px] font-bold tabular-nums', minuteLeft <= 10 && 'text-brand')} aria-label={`Time left in the ${slot?.everySec && slot.everySec !== 60 ? 'interval' : 'minute'}`}>
                 {fmtClock(minuteLeft)} left in the {slot?.everySec && slot.everySec !== 60 ? 'interval' : 'minute'}
               </div>
