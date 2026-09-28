@@ -103,6 +103,9 @@ const setPrefs = (patch: Partial<AppState>) =>
     return { ...patch, prefsUpdatedAt: { ...s.prefsUpdatedAt, ...Object.fromEntries(moved.map(k => [k, t])) } };
   });
 
+/** Everything on this device forgotten: after a sign-out, or an account deleted with "clear this device". */
+export const clearDevice = () => setState({ ...EMPTY, migratedLegacy: true, prefsUpdatedAt: {}, bodyweightKg: undefined, bodyweightAsked: undefined, equipment: undefined, avatar: undefined, lastSync: undefined, syncError: undefined });
+
 const ACTIONS = {
   saveWorkout: (r: Runsheet) => setState(s => ({ workouts: [r, ...s.workouts.filter(w => w.id !== r.id)] })),
   deleteWorkout: (id: string) => setState(s => ({ workouts: s.workouts.filter(w => w.id !== id) })),
@@ -129,8 +132,7 @@ const ACTIONS = {
       exercises: { ...s.exercises, ...Object.fromEntries(exercises.map(e => [e.key, e])) },
       results: [...results.filter(r => !s.results.some(x => x.id === r.id)), ...s.results].sort((a, b) => b.startedAt.localeCompare(a.startedAt)),
     })),
-  /** Everything on this device forgotten: after an account is deleted with "clear this device". */
-  clearDevice: () => setState({ ...EMPTY, migratedLegacy: true, prefsUpdatedAt: {}, bodyweightKg: undefined, bodyweightAsked: undefined, equipment: undefined, avatar: undefined, lastSync: undefined, syncError: undefined }),
+  clearDevice,
   toggleSaved: (id: string) => setPrefs({ saved: state.saved.includes(id) ? state.saved.filter(x => x !== id) : [...state.saved, id] }),
 };
 

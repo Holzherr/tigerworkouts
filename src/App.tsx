@@ -511,7 +511,8 @@ export default function App() {
   if (tab === 'me') {
     const since = Date.now() - 28 * 864e5;
     const load = muscleLoad(st.results.filter(r => Date.parse(r.startedAt) >= since).flatMap(r => workedFrom(r, byId.get(r.runsheetId), k => ({ name: library[k]?.name ?? k, group: library[k]?.group }))));
-    const out = () => signOut().then(() => (act.setSignedIn(false), setSettingsOpen(false), go('/discover')));
+    // Refused (a session not pushed yet): the reason shows and the account stays signed in.
+    const out = () => signOut().then(held => (held ? say(held) : (setSettingsOpen(false), go('/discover'))));
     return shell(
       'me',
       <>

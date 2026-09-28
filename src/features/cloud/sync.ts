@@ -55,6 +55,14 @@ const saveSnap = () => {
 const J = (o: unknown) => JSON.stringify(o);
 
 const resultId = (r: SessionResult) => r.id ?? `${r.runsheetId}@${r.startedAt}`;
+/** Sign-out: forget what the server was last seen holding, in memory and on disk, so the next
+ * account's first sync on this device neither pushes nor deletes anything of the last one's. */
+export const clearSnap = () => {
+  snap = {};
+  localStorage.removeItem(SNAP_KEY);
+};
+/** How many results and workouts the server has not seen in this form: what the next sync would push. */
+export const dirtyCount = (local: Pick<SyncTarget, 'results' | 'workouts'>) => local.results.filter(x => J(x) !== snap[resultId(x)]).length + local.workouts.filter(w => w.id && J(w) !== snap[`w:${w.id}`]).length;
 const ensureId = (r: SessionResult): SessionResult => (r.id ? r : { ...r, id: 's-' + Date.parse(r.startedAt).toString(36) + Math.random().toString(36).slice(2, 6) });
 
 /** Session row payload. Legacy sessions go back in their own shape (plus edits); new ones as v2 with an empty blocks[] so the old app doesn't choke. */
