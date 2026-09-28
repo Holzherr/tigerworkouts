@@ -93,6 +93,7 @@ const go = (path: string) => {
   location.hash = path;
 };
 const wid = (r: Runsheet) => r.id ?? r.title;
+const LANDING_KEY = 'tiger:landing-seen';
 const back = (fallback: string) => (history.length > 1 ? history.back() : go(fallback));
 const exerciseLink = (key: string) => `/x/${encodeURIComponent(key)}`;
 const usesRelativeLoads = (r: Runsheet) => r.items.some(i => (i.kind === 'block' ? i.steps : i.kind === 'ref' ? [] : [i]).some(s => s.kind === 'exercise' && (s.targetPct !== undefined || s.loadFactor !== undefined)));
@@ -150,6 +151,24 @@ export default function App() {
   useEffect(() => {
     if (cloud.user) act.setSignedIn(true);
   }, [cloud.user, act]);
+  // The landing page shows once: after any way off it, a guest's Discover is Discover, not the
+  // landing page again. A new key; nothing older is renamed.
+  const [seenLanding, setSeenLanding] = useState(() => {
+    try {
+      return localStorage.getItem(LANDING_KEY) === '1';
+    } catch {
+      return false;
+    }
+  });
+  const leaveLanding = (path: string) => {
+    try {
+      localStorage.setItem(LANDING_KEY, '1');
+    } catch {
+      /* private mode */
+    }
+    setSeenLanding(true);
+    go(path);
+  };
   const [pasteOpen, setPasteOpen] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
   const say = (m: string) => { setToast(m); setTimeout(() => setToast(null), 2500); };
@@ -244,11 +263,11 @@ export default function App() {
     return full(<CreatorRoute key={route.id} id={route.id} onOpen={r => open(r)} onShare={async () => { const out = await shareLink('TigerWorkouts', location.href); say(out === 'copied' ? 'Link copied' : out === 'shared' ? 'Shared' : 'Could not share'); }} />);
   }
   if (route.name === 'new') {
-    const r: Runsheet = draftOf('new') ?? { title: '', creator: st.name, items: [] };
+    const r: Runsheet = draftOf('new') ?? { title: '', creator: st.name || undefined, items: [] };
     const saveMine = (): Runsheet => {
       const title = r.title.trim() || 'My workout';
       const id = `u-${Date.now().toString(36)}`;
-      const mine: Runsheet = { ...r, id, title, creator: st.name, source: { title, author: st.name, kind: 'user' }, program: undefined, icon: r.icon ?? defaultIcon(id) };
+      const mine: Runsheet = { ...r, id, title, creator: st.name || undefined, source: { title, author: st.name || undefined, kind: 'user' }, program: undefined, icon: r.icon ?? defaultIcon(id) };
       act.saveWorkout(mine);
       setDrafted(null);
       return mine;
@@ -533,12 +552,12 @@ export default function App() {
     );
   }
   // The landing page is the first run only: anyone with sessions on this device goes straight to them, signed in or not.
-  if (!st.signedIn && !cloud.user && st.results.length === 0 && sub !== 'search') {
+  if (!st.signedIn && !cloud.user && st.results.length === 0 && sub !== 'search' && !seenLanding) {
     const clips = ['kb_swing', 'db_incline_press', 'sprint', 'lat_raise', 'db_shoulder_press', 'incline_walk'].map(k => ({ clip: EX[k].clip, poster: EX[k].poster, name: EX[k].name }));
     const stills = Object.values(LIB).filter(e => e.poster).slice(0, 28).map(e => e.poster!);
     return (
       <div className="h-dvh">
-        <LandingScreen onGetStarted={() => go('/me')} onSignIn={() => go('/me')} onBrowse={() => go('/discover/search')} workoutCount={all.length} exerciseCount={Object.keys(FULL_LIBRARY).length} clips={clips} stills={stills} demo={<TimerDemo />} />
+        <LandingScreen onGetStarted={() => leaveLanding('/me')} onSignIn={() => leaveLanding('/me')} onBrowse={() => leaveLanding('/discover/search')} workoutCount={all.length} exerciseCount={Object.keys(FULL_LIBRARY).length} clips={clips} stills={stills} demo={<TimerDemo />} />
       </div>
     );
   }
@@ -547,15 +566,15 @@ export default function App() {
   const above = (
     <>
       {saved && byId.has(saved.runsheetId) && (
-        <button type="button" onClick={() => (setDrafted(null), setResumeFor(saved.runsheetId), go(`/do/${encodeURIComponent(saved.runsheetId)}`))} className="flex w-full items-center gap-3 rounded-card border border-brand-line bg-brand-soft px-3 py-2.5 text-left">
-          <div className="min-w-0 flex-1">
-            <div className="text-[14px] font-bold">Resume {saved.title}</div>
-            <div className="text-[12px] text-muted">Step {saved.i + 1} of {saved.slots.length}</div>
-          </div>
-          <Button variant="quiet" size="inline" onClick={e => { e.stopPropagation(); Runner.clearPersisted(); setToast('Discarded'); }}>
+        <div className="flex w-full items-center gap-1 rounded-card border border-brand-line bg-brand-soft pr-1">
+          <button type="button" onClick={() => (setDrafted(null), setResumeFor(saved.runsheetId), go(`/do/${encodeURIComponent(saved.runsheetId)}`))} className="min-w-0 flex-1 px-3 py-2.5 text-left">
+            <div className="truncate text-[14px] font-bold">Resume {saved.title}</div>
+            <div className="text-[12px] text-muted">Step {Math.min(saved.i + 1, saved.slots.length)} of {saved.slots.length}</div>
+          </button>
+          <Button variant="quiet" size="sm" onClick={() => { if (confirm(`Discard the ${saved.title} session? What you did in it is not saved.`)) { Runner.clearPersisted(); say('Discarded'); } }}>
             Discard
           </Button>
-        </button>
+        </div>
       )}
     </>
   );
