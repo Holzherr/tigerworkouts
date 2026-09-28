@@ -90,6 +90,8 @@ export const subscribe = (cb: () => void) => {
 };
 
 export const useAppState = () => useSyncExternalStore(subscribe, () => state);
+/** The store now, outside React: for work that spans an await, like a sync. */
+export const getState = () => state;
 
 /** A change to synced prefs, stamped so the sync can tell it is newer than the other device's.
  * A write that changes nothing is not stamped. */
