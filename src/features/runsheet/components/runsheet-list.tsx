@@ -184,12 +184,12 @@ export const RunsheetList = ({ items, onChange, onPickExercise, onSwapExercise, 
     if (expandedId === id) setExpanded(null);
     const row = rows.find(r => r.id === id);
     onChange(removeStep(items, id));
-    onRemoved?.(items, row?.type === 'step' && row.step.kind === 'exercise' ? `${row.step.exercise.name} removed` : 'Step removed');
+    onRemoved?.(items, row?.type === 'step' && row.step.kind === 'exercise' ? `Removed ${row.step.exercise.name}` : row?.type === 'step' && row.step.kind === 'rest' ? 'Removed rest' : 'Removed step');
   };
   const removeBlock = (id: string) => {
     if (expandedId === id) setExpanded(null);
     onChange(removeItem(items, id));
-    onRemoved?.(items, 'Block removed');
+    onRemoved?.(items, 'Removed block');
   };
   const add = useCallback(
     async (kind: AddKind, where: { after: string | null } | { block: string }) => {

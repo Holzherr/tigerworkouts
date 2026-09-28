@@ -701,7 +701,7 @@ const RunSession = ({ runsheet, results, intent, equipment, library, onLog, onFi
     setPrs(p => [...p, ...hit.map(h => h.slotId)]);
     const h = hit[hit.length - 1];
     const ex = library[h.exerciseKey];
-    setPrSay(`PR · ${ex?.name ?? h.exerciseKey} ${setLabel(h.set, ex && !measureOf(ex.unit) ? shortUnit(ex.unit) : '')}`.trim());
+    setPrSay(`New record · ${ex?.name ?? h.exerciseKey} ${setLabel(h.set, ex && !measureOf(ex.unit) ? shortUnit(ex.unit) : '')}`.trim());
     try {
       navigator.vibrate?.([30, 50, 30, 50, 140]);
     } catch {
@@ -720,13 +720,13 @@ const RunSession = ({ runsheet, results, intent, equipment, library, onLog, onFi
     act.skip();
     // A skip that ends the session logs it; that one is not taken back.
     if (Runner.advance(before, Date.now(), { skipped: true }).phase === 'done') return;
-    undo.offer(Runner.current(before)?.kind === 'rest' ? 'Rest skipped' : 'Skipped', () => act.restore(before));
+    undo.offer('Skipped', () => act.restore(before));
   };
   const drop = (stepId: string) => {
     const before = state;
     const step = before.slots.find(sl => sl.step.id === stepId)?.step;
     act.drop(stepId);
-    undo.offer(`${step?.kind === 'exercise' ? step.exercise.name : 'Step'} dropped`, () => act.restore(before));
+    undo.offer(step?.kind === 'exercise' ? `Dropped ${step.exercise.name}` : 'Dropped step', () => act.restore(before));
   };
   return (
     <div className="relative h-dvh">
