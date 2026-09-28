@@ -31,6 +31,9 @@ The custom domain is the `CNAME` file. Run it by hand with
 
 - Backend: Supabase project `icpdzjohsvlpyaluxgbt` (anon key in `src/app/config.ts`; row-level
   security protects the data). Schema in `legacy/supabase/migrations/`.
+- The public key reads nothing private: `0007_public_key_reads_nothing_private.sql` runs the
+  exercise views as the caller and takes them from anon, and shows other people only profiles
+  with a handle (a creator page needs no more). Contains `revoke`, so Nick applies it by hand.
 - Nightly report: `legacy/supabase/migrations/0004_agent_snapshot.sql` adds `agent_snapshot(days)`,
   aggregates only (sessions per day, start origins per owner, top workouts, owner ids), and the
   login role `agent_reader` that can run only that function. Nick applies it and sets the password.
