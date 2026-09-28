@@ -268,6 +268,34 @@ final class WalkthroughUITests: XCTestCase {
         tap(app.buttons["Done"])
     }
 
+    /// EMOM work counts down its minute; Previous step undoes a stray Done; a finished session can
+    /// be discarded, which asks first.
+    func testEmomPreviousAndDiscard() {
+        open("EMOM 10: 5 burpees")
+        tap(app.buttons["Start workout"])
+        let minute = app.descendants(matching: .any)["cap-left"].firstMatch
+        XCTAssertTrue(minute.waitForExistence(timeout: 12), "EMOM work should show the time left in the minute")
+        XCTAssertTrue(minute.label.contains("left in the minute"))
+        snap("37 EMOM minute clock")
+        tap(app.buttons["Done"])
+        XCTAssertTrue(app.staticTexts["Rest"].waitForExistence(timeout: 5))
+        tap(app.buttons["Previous step"])
+        XCTAssertTrue(minute.waitForExistence(timeout: 5), "Previous step should go back to the set")
+        snap("38 Previous step, back on the set")
+        tap(app.buttons["End session"])
+        tap(app.buttons["Finish and save"])
+        XCTAssertTrue(app.staticTexts["Workout saved"].waitForExistence(timeout: 10))
+        let discard = app.buttons["discard-workout"]
+        for _ in 0..<6 where !(discard.exists && discard.isHittable) { app.swipeUp() }
+        snap("39 Finish, Discard workout")
+        tap(discard)
+        let confirm = app.buttons.matching(NSPredicate(format: "label == 'Discard workout' AND identifier != 'discard-workout'")).firstMatch
+        XCTAssertTrue(confirm.waitForExistence(timeout: 5), "Discard should ask first")
+        snap("40 Discard, asked first")
+        confirm.tap()
+        XCTAssertFalse(app.staticTexts["Workout saved"].waitForExistence(timeout: 3))
+    }
+
     /// The workout page is the editor: drag, remove and add without finding an edit mode.
     func testEditOnTheWorkoutPage() {
         open("Tabata This")

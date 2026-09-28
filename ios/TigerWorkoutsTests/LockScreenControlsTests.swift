@@ -32,7 +32,7 @@ struct LockScreenControlsTests {
         #expect(SessionRunner.lockScreenState(counted, runsheet: sheet, now: 7_000).setLine == "60 kg × 12")
     }
 
-    @Test("a timed bodyweight step has no set line; a paused session has no buttons")
+    @Test("a timed bodyweight step has no set line; a paused session offers only Resume")
     func timedAndPaused() {
         let sheet = Fixtures.interval()
         let s = Runner.tick(Runner.start(sheet, now: 0), now: 5_000)
@@ -41,7 +41,7 @@ struct LockScreenControlsTests {
         let t = Runner.tick(Runner.start(tabata, now: 0), now: 5_000)
         #expect(SessionRunner.lockScreenState(t, runsheet: tabata, now: 6_000).setLine == nil)
         let paused = Runner.pause(s, now: 10_000)
-        #expect(SessionRunner.lockScreenState(paused, runsheet: sheet, now: 11_000).action == .none)
+        #expect(SessionRunner.lockScreenState(paused, runsheet: sheet, now: 11_000).action == .resume)
     }
 
     @Test("the card still holds still within a slot")

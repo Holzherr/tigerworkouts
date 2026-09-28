@@ -563,7 +563,7 @@ describe('set times and round splits', () => {
     for (let t = 5000; t <= 200000 && s.phase !== 'done'; t += 1000) s = tick(s, t);
     const r = toResult(s, interval(), 200000);
     // swings 30 s, rest 10, press 30, rest 10: round 1's press done at 5 + 70 = 75 s
-    expect(r.splits).toEqual([{ blockId: 'b', at: [75, 155] }]);
+    expect(r.splits).toEqual([{ blockId: 'b', at: [75, 155], from: 5 }]);
   });
   it("an amrap's half round at the cap is not a split", () => {
     let s = tick(start(cindy(), 0), 5000);
@@ -572,7 +572,7 @@ describe('set times and round splits', () => {
     s = advance(s, 35000); // half of round 2
     s = tick(s, 65000); // cap
     const r = toResult(s, cindy(), 65000);
-    expect(r.splits).toEqual([{ blockId: 'b', at: [25] }]);
+    expect(r.splits).toEqual([{ blockId: 'b', at: [25], from: 5 }]);
   });
   it('a round with a skipped exercise still closes when the next begins', () => {
     let s = tick(start(cindy(), 0), 5000);
@@ -580,7 +580,7 @@ describe('set times and round splits', () => {
     s = advance(s, 25000, { skipped: true });
     s = advance(s, 35000);
     s = advance(s, 45000);
-    expect(toResult(s, cindy(), 46000).splits).toEqual([{ blockId: 'b', at: [15, 45] }]);
+    expect(toResult(s, cindy(), 46000).splits).toEqual([{ blockId: 'b', at: [15, 45], from: 5 }]);
   });
   it('un-ticking a set drops its time', () => {
     const sheet: Runsheet = { id: 'p', title: 'Press', items: [{ kind: 'block', id: 'b', name: 'B', repeat: 2, steps: [{ ...makeExercise(EX.db_incline_press, { target: 20, forMode: 'reps', forValue: 8 }), id: 'pr' }] }] };
@@ -590,5 +590,156 @@ describe('set times and round splits', () => {
     expect(s.actuals[first].at).toBeUndefined();
     s = R.completeSet(s, 30000, first);
     expect(s.actuals[first].at).toBe(30);
+  });
+});
+
+describe('only what was done is logged', () => {
+  it('a step with sets left undone is not a success', () => {
+    let s = tick(start(interval(), 0), 5000);
+    s = advance(s, 20000); // swings round 1
+    for (let t = 21000; s.phase !== 'done'; t += 1000) s = advance(s, t, { skipped: true });
+    const r = toResult(s, interval(), 40000);
+    expect(r.steps.map(x => x.stepId)).toEqual(['sw']);
+    expect(r.steps[0].success).toBe(false);
+  });
+  it('every set done is a success', () => {
+    let s = tick(start(interval(), 0), 5000);
+    for (let t = 6000; s.phase !== 'done'; t += 1000) s = advance(s, t);
+    expect(toResult(s, interval(), 20000).steps.every(x => x.success)).toBe(true);
+  });
+});
+
+describe('for time is scored on the scored block', () => {
+  const ft = (): Runsheet => ({
+    id: 'ft',
+    title: 'Warm-up then for time',
+    items: [
+      { ...makeExercise(EX.bw_squat, { forMode: 'seconds', forValue: 30 }), id: 'wu', role: 'warmup' },
+      { kind: 'block', id: 'b', name: 'For time', mode: 'fortime', repeat: 2, steps: [{ ...makeExercise(EX.bw_pullup, { forMode: 'reps', forValue: 5 }), id: 'pu' }, { ...makeExercise(EX.bw_pushup, { forMode: 'reps', forValue: 10 }), id: 'pp' }] },
+    ],
+  });
+  const run = (pauseInBlock = 0) => {
+    let s = tick(start(ft(), 0), 5000); // lead-in over, warm-up running
+    s = tick(s, 35000); // warm-up done, parked at the gate
+    expect(s.phase).toBe('ready');
+    s = R.startBlock(s, 95000); // a minute at the gate
+    s = advance(s, 105000);
+    if (pauseInBlock) s = resume(pause(s, 106000), 106000 + pauseInBlock);
+    const t = 105000 + pauseInBlock;
+    s = advance(s, t + 10000);
+    s = advance(s, t + 20000);
+    s = advance(s, t + 30000);
+    expect(s.phase).toBe('done');
+    return toResult(s, ft(), t + 30000);
+  };
+  it('leaves out the lead-in, the gate and the warm-up', () => {
+    const r = run();
+    expect(r.durationSec).toBe(135);
+    expect(r.score).toBe(40);
+  });
+  it('leaves out a pause inside the block', () => {
+    expect(run(20000).score).toBe(40);
+  });
+  it('splits carry when the block began, for the race against last time', () => {
+    expect(run().splits).toEqual([{ blockId: 'b', at: [115, 135], from: 95 }]);
+  });
+  it('a loose main step counts, as in Murph', () => {
+    const murph: Runsheet = { id: 'm', title: 'Murph', items: [{ ...makeExercise(EX.bw_squat, { forMode: 'reps', forValue: 1 }), id: 'run1' }, { kind: 'block', id: 'b', name: 'B', mode: 'fortime', repeat: 1, steps: [{ ...makeExercise(EX.bw_pullup, { forMode: 'reps', forValue: 5 }), id: 'pu' }] }] };
+    let s = tick(start(murph, 0), 5000);
+    s = advance(s, 65000); // 60 s run
+    s = R.startBlock(s, 125000); // a minute at the gate
+    s = advance(s, 155000); // 30 s block
+    expect(toResult(s, murph, 155000).score).toBe(90);
+  });
+});
+
+describe('pause', () => {
+  it('pausing the lead-in twice still resumes into the lead-in, and logs nothing', () => {
+    let s = start(interval(), 0);
+    s = resume(pause(s, 1000), 2000);
+    s = resume(pause(s, 3000), 13000);
+    expect(s.phase).toBe('lead');
+    s = tick(s, 16000);
+    expect(s.phase).toBe('running');
+    expect(s.i).toBe(0);
+    expect(Object.values(s.actuals).some(a => a.doneAt !== undefined)).toBe(false);
+  });
+  it('Done on a paused lead-in starts the first step without logging it', () => {
+    let s = pause(start(interval(), 0), 1000);
+    s = advance(s, 2000);
+    expect(s.phase).toBe('running');
+    expect(s.i).toBe(0);
+    expect(s.actuals[s.slots[0].id]?.doneAt).toBeUndefined();
+  });
+  it('Done while paused does not count the pause as workout time', () => {
+    let s = tick(start(interval(), 0), 5000);
+    s = pause(s, 10000);
+    s = advance(s, 70000);
+    expect(s.phase).toBe('running');
+    expect(s.i).toBe(1);
+    expect(s.pausedMs).toBe(60000);
+    expect(s.actuals[s.slots[0].id].at).toBe(10);
+    expect(elapsed(s, 70000)).toBe(10);
+  });
+  it('a set ticked on a paused timer does not count the pause either', () => {
+    let s = tick(start(interval(), 0), 5000);
+    s = pause(s, 10000);
+    s = R.completeSet(s, 70000, s.slots[0].id);
+    expect(s.pausedMs).toBe(60000);
+    expect(elapsed(s, 70000)).toBe(10);
+  });
+  it('finishing while paused does not count the pause', () => {
+    let s = tick(start(interval(), 0), 5000);
+    s = R.finish(pause(s, 10000), 70000);
+    expect(toResult(s, interval(), 70000).durationSec).toBe(10);
+  });
+});
+
+describe('emom', () => {
+  const emom = (): Runsheet => ({ id: 'e', title: 'EMOM', items: [{ kind: 'block', id: 'b', name: 'E', mode: 'emom', everySec: 60, repeat: 3, steps: [{ ...makeExercise(EX.bw_burpee, { forMode: 'reps', forValue: 5 }), id: 'x' }] }] });
+  it('shows what is left of the minute on the work', () => {
+    const s = tick(start(emom(), 0), 5000);
+    expect(R.minuteLeft(s, 25000)).toBe(40);
+    expect(R.minuteLeft(tick(start(interval(), 0), 5000), 25000)).toBeUndefined();
+  });
+  it('an overrun minute does not add a minute', () => {
+    let s = tick(start(emom(), 0), 5000);
+    s = advance(s, 75000); // minute 1 took 70 s
+    expect(s.slots[s.i].kind).toBe('work');
+    expect(s.slots[s.i].round).toBe(1);
+    s = advance(s, 80000);
+    expect(s.endsAt).toBe(125000); // minute 2 ends on its boundary
+    s = tick(s, 125000);
+    s = advance(s, 130000);
+    s = tick(s, 185000);
+    expect(s.phase).toBe('done');
+  });
+});
+
+describe('previous step', () => {
+  it('going back un-logs the step, so an amrap round is not counted twice', () => {
+    let s = tick(start(cindy(), 0), 5000);
+    s = advance(s, 10000);
+    expect(s.blockDone.b).toBe(1);
+    s = R.back(s, 11000);
+    expect(s.i).toBe(0);
+    expect(s.blockDone.b).toBe(0);
+    expect(s.actuals[s.slots[0].id]?.doneAt).toBeUndefined();
+    s = advance(s, 12000);
+    expect(s.blockDone.b).toBe(1);
+  });
+});
+
+describe('a run kept on the device', () => {
+  it('comes back only for its own workout, paused where it was left', () => {
+    const s = tick(start(interval(), 0), 5000);
+    R.persist(s);
+    expect(R.loadPersisted('c')).toBeNull();
+    const back = R.loadPersisted('i');
+    expect(back?.state.i).toBe(0);
+    const resumed = R.restore(back!.state, 20000);
+    expect(resumed.phase).toBe('paused');
+    expect(elapsed(resumed, 999999)).toBe(20);
+    R.clearPersisted();
   });
 });

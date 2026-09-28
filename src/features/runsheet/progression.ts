@@ -56,6 +56,8 @@ export const isWorking = (x: { type?: SetType }) => x.type !== 'warmup';
 export interface RoundSplit {
   blockId: string;
   at: number[];
+  /** Session time the block started at, same clock as `at`. Absent on sessions logged before it was kept. */
+  from?: number;
 }
 
 export interface StepResult {

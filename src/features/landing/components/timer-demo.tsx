@@ -11,7 +11,7 @@ const DEMO = priyanka();
  * Restarts when it reaches the end; nothing is persisted.
  */
 export const TimerDemo = () => {
-  const { state, now, act } = useRunner(DEMO, { resume: false, silent: true, persist: false });
+  const { state, now, act } = useRunner(DEMO, { silent: true, persist: false });
   useEffect(() => {
     if (state.phase === 'done') {
       const t = setTimeout(() => location.reload(), 4000);

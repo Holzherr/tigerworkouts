@@ -8,6 +8,8 @@ struct FinishView: View {
     let result: SessionResult
     let runsheet: Runsheet
     var onClose: () -> Void
+    /// Takes the session out again: the phone, the account and Health.
+    var onDiscard: () -> Void = {}
 
     /// Bodyweight is asked for once, on a finish screen, and never again once answered or skipped.
     @AppStorage("bodyweightAsked") private var bodyweightAsked = false
@@ -15,6 +17,7 @@ struct FinishView: View {
     @State private var rpe: Double?
     @State private var notes = ""
     @State private var sharing = false
+    @State private var confirmDiscard = false
     @FocusState private var notesFocused: Bool
 
     /// This session as it now stands, with what was tapped here.
@@ -65,6 +68,14 @@ struct FinishView: View {
                     onClose()
                 }
                 .buttonStyle(BigButtonStyle())
+
+                // Started by mistake, or not worth keeping: the session is already saved, so this
+                // deletes it, and asks first.
+                Button("Discard workout", role: .destructive) { confirmDiscard = true }
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(Brand.muted)
+                    .frame(minHeight: 44)
+                    .accessibilityIdentifier("discard-workout")
             }
             .padding(16)
         }
@@ -74,6 +85,12 @@ struct FinishView: View {
             ShareCardSheet(card: ShareCard(current, celebration, type: runsheet.effectiveScore))
         }
         .onChange(of: notesFocused) { _, focused in if !focused { commitNotes() } }
+        .confirmationDialog("Discard this workout?", isPresented: $confirmDiscard, titleVisibility: .visible) {
+            Button("Discard workout", role: .destructive) { onDiscard() }
+            Button("Keep it", role: .cancel) {}
+        } message: {
+            Text("It comes out of History here and on the web, and out of Apple Health.")
+        }
     }
 
     private var notesField: some View {

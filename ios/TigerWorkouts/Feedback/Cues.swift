@@ -57,6 +57,7 @@ final class Cues {
     /// session is open for the whole workout to hold the background slot, and `.duckOthers` held
     /// music down for all of it, not just under the cues.
     func begin() {
+        generation += 1
         guard !running else { return }
         running = true
         open()
@@ -97,6 +98,23 @@ final class Cues {
         keepAlive.stop()
         tones.stop()
         if open() { audioLog.info("audio back after \(reason, privacy: .public)") }
+    }
+
+    /// Bumped by every `begin`, so a wind-down scheduled for one session never ends the next.
+    private var generation = 0
+
+    /// The session is over: the finish tone plays out, then the audio lets go. Stopping at once cut
+    /// the tone off; not stopping at all kept the app holding the audio after the workout.
+    func endAfterFinish() {
+        guard running else { return }
+        keepAlive.stop()
+        let ending = generation
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) { [weak self] in
+            MainActor.assumeIsolated {
+                guard let self, self.generation == ending else { return }
+                self.end()
+            }
+        }
     }
 
     /// Call when the session ends, so the app stops holding the audio session and the background

@@ -1,7 +1,8 @@
 /**
  * Racing last time: one signed number on the timer, "Round 4 — 12 s ahead". It compares the
  * session time at the latest round (circuits, AMRAPs) or set (straight sets, loose steps) done
- * now with the session time at the same round or set in the last session of this workout.
+ * now with the session time at the same round or set in the last session of this workout — for a
+ * round, the time since its block started, when both sessions kept that.
  * Pure; the timer calls it with the result so far.
  */
 import type { SessionResult } from '@/features/runsheet/progression';
@@ -11,6 +12,8 @@ export interface Mark {
   label: string;
   /** Session time, seconds. */
   at: number;
+  /** Seconds since the block started, for a round: the clock a for-time score is on. */
+  rel?: number;
 }
 
 export interface Ghost {
@@ -28,7 +31,7 @@ export interface Ghost {
 export const marks = (r: SessionResult, blockOf: (stepId: string) => string | undefined = () => undefined): Mark[] => {
   const split = new Set((r.splits ?? []).map(sp => sp.blockId));
   const out: Mark[] = [];
-  for (const sp of r.splits ?? []) sp.at.forEach((at, i) => out.push({ key: `round:${sp.blockId}:${i}`, label: `Round ${i + 1}`, at }));
+  for (const sp of r.splits ?? []) sp.at.forEach((at, i) => out.push({ key: `round:${sp.blockId}:${i}`, label: `Round ${i + 1}`, at, ...(sp.from !== undefined ? { rel: at - sp.from } : {}) }));
   for (const st of r.steps) {
     const block = blockOf(st.stepId);
     if (block && split.has(block)) continue;
@@ -60,7 +63,10 @@ export const ghost = (now: SessionResult, last: SessionResult | undefined, block
     .filter(m => then.has(m.key))
     .sort((a, b) => b.at - a.at)[0];
   if (!hit) return undefined;
-  const delta = Math.round(then.get(hit.key)!.at - hit.at);
+  // Rounds race on the block's own clock when both sessions kept it, so a longer warm-up or a slower
+  // walk to the rack does not read as falling behind.
+  const was = then.get(hit.key)!;
+  const delta = Math.round(was.rel !== undefined && hit.rel !== undefined ? was.rel - hit.rel : was.at - hit.at);
   const short = delta === 0 ? 'on pace' : `${span(Math.abs(delta))} ${delta > 0 ? 'ahead' : 'behind'}`;
   return { label: hit.label, delta, text: `${hit.label} — ${short}`, short };
 };

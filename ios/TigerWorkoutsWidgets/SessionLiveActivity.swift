@@ -77,6 +77,7 @@ struct SessionLiveActivity: Widget {
                             .monospacedDigit()
                             .lineLimit(1)
                     }
+                    capClock(context.state)
                 }
                 Spacer(minLength: 12)
                 clock(context.state)
@@ -98,6 +99,11 @@ struct SessionLiveActivity: Widget {
         switch state.action {
         case .none:
             EmptyView()
+        case .resume:
+            HStack(spacing: 8) {
+                Button(intent: ResumeSessionIntent(token: state.token)) { pill("Resume", "play.fill", filled: true, state) }
+            }
+            .buttonStyle(.plain)
         case .start:
             HStack(spacing: 8) {
                 Button(intent: CompleteStepIntent(token: state.token)) { pill("Start", "play.fill", filled: true, state) }
@@ -123,6 +129,24 @@ struct SessionLiveActivity: Widget {
             .frame(maxWidth: .infinity, minHeight: 36)
             .foregroundStyle(filled ? Color.white : tint(state))
             .background(filled ? tint(state) : Color.white.opacity(0.14), in: Capsule())
+    }
+
+    /// "4:12 left in the block": the cap on an AMRAP or a for-time block, or the minute on EMOM work,
+    /// counted down by the Lock Screen itself to the instant it runs out.
+    @ViewBuilder
+    private func capClock(_ state: SessionActivityAttributes.ContentState) -> some View {
+        if let end = state.capEndsAt, let label = state.capLabel, !state.isPaused, !state.isDone {
+            HStack(spacing: 4) {
+                Image(systemName: "timer")
+                Text(timerInterval: min(Date(), end)...end, countsDown: true, showsHours: false)
+                    .monospacedDigit()
+                    .frame(maxWidth: 44, alignment: .leading)
+                Text(label)
+            }
+            .font(.caption.weight(.semibold))
+            .foregroundStyle(.secondary)
+            .lineLimit(1)
+        }
     }
 
     /// A paused clock has to be a still number: an interval keeps running whatever the app does.

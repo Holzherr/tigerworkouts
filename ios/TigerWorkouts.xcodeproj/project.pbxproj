@@ -25,6 +25,7 @@
 		221B3BEEFB080270A1DD6C50 /* CatalogueTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2333BFB4C8394D4D3D82D69F /* CatalogueTests.swift */; };
 		2A6C2DD0A0F51FEDD7B70319 /* Muscles.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8FA46D7EF60541FEC8764F65 /* Muscles.swift */; };
 		2B60AB7BAD0FA3BD84166265 /* RunnerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 38611D00C12C8D5497FC0713 /* RunnerTests.swift */; };
+		336F75C7C99366986A2B3EE4 /* EngineCorrectnessTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = FF1037B86A23BEA3B9FCC0CA /* EngineCorrectnessTests.swift */; };
 		36C3F06105915FAA4D145D1E /* AppIcon.svg in Resources */ = {isa = PBXBuildFile; fileRef = FCF7BF4830AD9ACF61791DA9 /* AppIcon.svg */; };
 		36DCCDF6A5E45F3B7DA316BA /* TargetViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = 75787AFCCADC17A96827F19A /* TargetViews.swift */; };
 		3D397F79C87164A71BD55C60 /* WorkoutDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BEBB7BC4CAC7E345AFA74D2B /* WorkoutDetailView.swift */; };
@@ -249,6 +250,7 @@
 		F79865CA81FB52883186F5B6 /* FinishView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FinishView.swift; sourceTree = "<group>"; };
 		FCF7BF4830AD9ACF61791DA9 /* AppIcon.svg */ = {isa = PBXFileReference; path = AppIcon.svg; sourceTree = "<group>"; };
 		FDF28E18F9E37CEC3D289A43 /* AppStoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppStoreTests.swift; sourceTree = "<group>"; };
+		FF1037B86A23BEA3B9FCC0CA /* EngineCorrectnessTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EngineCorrectnessTests.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXGroup section */
@@ -373,6 +375,7 @@
 				24872D5F44F6A349D7AD9995 /* CustomExerciseTests.swift */,
 				0F6246280A2E9FD98AB49D6B /* DataFixesTests.swift */,
 				03B24D2D55EFBC42BB378AFE /* EditingTests.swift */,
+				FF1037B86A23BEA3B9FCC0CA /* EngineCorrectnessTests.swift */,
 				BD77652B9CB4664C909E3D23 /* GymLoggingTests.swift */,
 				3D87622F139D50161B1F5C9C /* HapticsTests.swift */,
 				DF2925A193B28392EB5F9746 /* LiveActivityTests.swift */,
@@ -644,6 +647,7 @@
 				F1601363AD9670CECC3A037E /* CustomExerciseTests.swift in Sources */,
 				5A3085976DDC5CE72584054B /* DataFixesTests.swift in Sources */,
 				4A186DEED593C0BA6739F608 /* EditingTests.swift in Sources */,
+				336F75C7C99366986A2B3EE4 /* EngineCorrectnessTests.swift in Sources */,
 				8CF31441EEAD7E63BB021F59 /* GymLoggingTests.swift in Sources */,
 				05E59B570AE45E1D3609914C /* HapticsTests.swift in Sources */,
 				EB9FAD39D8876DE07D18AB3E /* LiveActivityTests.swift in Sources */,
