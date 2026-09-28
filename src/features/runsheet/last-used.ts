@@ -1,4 +1,4 @@
-import type { SessionResult, SetResult, StepResult } from './progression';
+import { workingLoad, type SessionResult, type SetResult, type StepResult } from './progression';
 import { shortUnit, type ExerciseStep, type Item, type Runsheet } from './model';
 
 export interface LastUsed {
@@ -20,7 +20,8 @@ export const lastUsed = (results: SessionResult[]): Map<string, LastUsed> => {
   };
   for (const r of [...results].sort((a, b) => b.startedAt.localeCompare(a.startedAt))) {
     for (const s of r.steps) {
-      const v = { target: s.target, incline: s.incline };
+      // A drop set at the end is not where the next session starts.
+      const v = { target: workingLoad(s), incline: s.incline };
       seen(`step:${s.stepId}`, v);
       seen(`ex:${s.exerciseKey}`, v);
     }

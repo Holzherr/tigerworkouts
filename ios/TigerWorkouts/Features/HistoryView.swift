@@ -137,7 +137,9 @@ struct SessionDetailView: View {
     @Environment(Store.self) private var store
     @Environment(\.dismiss) private var dismiss
     let result: SessionResult
-    var onStart: (Runsheet, SessionOrigin?) -> Void = { _, _ in }
+    /// Set by History; from anywhere else (an exercise's history) the app's own start is used.
+    var onStart: ((Runsheet, SessionOrigin?) -> Void)?
+    @Environment(\.startSession) private var startSession
 
     @State private var notes = ""
     @State private var confirmDelete = false
@@ -196,7 +198,9 @@ struct SessionDetailView: View {
 
                 HStack(spacing: 10) {
                     if let runsheet {
-                        Button("Do it again") { onStart(runsheet, .history) }
+                        // Last time's loads carried over, as the workout page would show them.
+                        Button("Do it again") { (onStart ?? startSession.run)(store.seeded(runsheet), .history) }
+                            .accessibilityIdentifier("do-it-again")
                             .buttonStyle(BigButtonStyle())
                     }
                     Button { sharing = true } label: {

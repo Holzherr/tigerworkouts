@@ -14,6 +14,13 @@ import { celebrate } from '../celebrate';
 import { shareCardData } from '../share-card';
 import { EffortRow } from './effort-row';
 import { ShareCardSheet } from './share-card-sheet';
+import { fromLocalInput, toLocalInput } from '@/shared/utils/dates';
+
+/** A new start time, with the end moved by the same amount so the duration holds. */
+const moved = (r: SessionResult, startedAt: string): Partial<SessionResult> => {
+  const shift = Date.parse(startedAt) - Date.parse(r.startedAt);
+  return { startedAt, ...(r.endedAt ? { endedAt: new Date(Date.parse(r.endedAt) + shift).toISOString() } : {}) };
+};
 
 export interface SessionDetailScreenProps {
   result: SessionResult;
@@ -55,7 +62,7 @@ export const SessionDetailScreen = ({ result: r, runsheet, exercise, loadDevice,
   }, [loadDevice]);
   const type = runsheet ? scoreType(runsheet) : 'none';
   const dur = r.durationSec ?? (r.activity ? r.activity.minutes * 60 : undefined);
-  const text = [`${r.title ?? r.runsheetId} · ${r.startedAt.slice(0, 16).replace('T', ' ')}`, r.scoreText ? `Score: ${r.scoreText}` : '', dur ? `Duration: ${Math.round(dur / 60)} min` : '', ...r.steps.map(s => `- ${exercise(s.exerciseKey).name}: ${s.target !== undefined ? `${s.target} ${exercise(s.exerciseKey).unit}` : ''}${s.incline !== undefined ? `, incline ${s.incline}` : ''}${s.reps?.length ? ` × ${s.reps.join(', ')} reps` : ''}`), r.rpe ? `Effort: ${r.rpe}/10` : '', r.notes ? `Notes: ${r.notes}` : ''].filter(Boolean).join('\n');
+  const text = [`${r.title ?? r.runsheetId} · ${toLocalInput(r.startedAt).replace('T', ' ')}`, r.scoreText ? `Score: ${r.scoreText}` : '', dur ? `Duration: ${Math.round(dur / 60)} min` : '', ...r.steps.map(s => `- ${exercise(s.exerciseKey).name}: ${s.target !== undefined ? `${s.target} ${exercise(s.exerciseKey).unit}` : ''}${s.incline !== undefined ? `, incline ${s.incline}` : ''}${s.reps?.length ? ` × ${s.reps.join(', ')} reps` : ''}`), r.rpe ? `Effort: ${r.rpe}/10` : '', r.notes ? `Notes: ${r.notes}` : ''].filter(Boolean).join('\n');
   return (
     <div className="flex h-full min-h-0 flex-col bg-canvas">
       <header className="safe-top shrink-0 bg-surface px-4 pt-2 pb-3">
@@ -64,7 +71,7 @@ export const SessionDetailScreen = ({ result: r, runsheet, exercise, loadDevice,
         </Button>
         <h1 className="mt-1 text-[20px] leading-tight font-extrabold">{r.title ?? r.activity?.name ?? r.runsheetId}</h1>
         <div className="mt-1 flex flex-wrap items-center gap-1.5 text-[13px] text-muted">
-          <input type="datetime-local" value={r.startedAt.slice(0, 16)} onChange={e => e.target.value && onChange({ startedAt: new Date(e.target.value).toISOString() })} className="rounded-control border border-line bg-surface px-2 py-1 text-[14px] text-ink" aria-label="Date and time" />
+          <input type="datetime-local" value={toLocalInput(r.startedAt)} onChange={e => e.target.value && onChange(moved(r, fromLocalInput(e.target.value)))} className="rounded-control border border-line bg-surface px-2 py-1 text-[14px] text-ink" aria-label="Date and time" />
           {!r.activity && (
             <label className="flex items-center gap-1">
               <input type="number" inputMode="numeric" min={1} max={600} value={dur ? Math.round(dur / 60) : ''} onChange={e => { const m = Number(e.target.value); if (m > 0) onChange({ durationSec: m * 60, ...(r.endedAt ? { endedAt: new Date(Date.parse(r.startedAt) + m * 60_000).toISOString() } : {}) }); }} className="w-16 rounded-control border border-line bg-surface px-2 py-1 text-[14px] text-ink tabular-nums" aria-label="Duration in minutes" />

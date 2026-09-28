@@ -19,6 +19,16 @@ struct NextUpTests {
         [w("a", program: ProgramRef(name: "P", day: "A", order: 1)), w("b", program: ProgramRef(name: "P", day: "B", order: 2)), w("fran")]
     }
 
+    @Test("an edited copy of a program day stands in for the day")
+    func editedCopy() {
+        var mine = w("u-a", program: ProgramRef(name: "P", day: "A", order: 1))
+        mine.copyOf = "a"
+        let list = [mine] + all
+        #expect(NextUp.find(in: list, results: [did("u-a", day: 20)])?.runsheet.id == "b")
+        #expect(NextUp.find(in: list, results: [did("b", day: 20)])?.runsheet.id == "u-a")
+        #expect(NextUp.find(in: [mine, w("a", program: ProgramRef(name: "P", day: "A", order: 1)), w("fran")], results: [did("a", day: 20)])?.runsheet.id == "u-a")
+    }
+
     @Test("is nothing without history")
     func empty() {
         #expect(NextUp.find(in: all, results: []) == nil)

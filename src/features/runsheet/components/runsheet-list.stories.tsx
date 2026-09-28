@@ -2,7 +2,7 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import { useState } from 'react';
 import { EX, loose, priyanka } from '../fixtures';
 import { makeExercise, runsheetMinutes, type ExerciseStep, type Item } from '../model';
-import { RunsheetList, type DndVariant } from './runsheet-list';
+import { RunsheetList } from './runsheet-list';
 
 const meta = {
   title: 'Runsheet/RunsheetList',
@@ -28,12 +28,12 @@ const pick = async (): Promise<ExerciseStep | null> => {
   return makeExercise(EX[k]);
 };
 
-const Live = ({ initial, variant }: { initial: Item[]; variant?: DndVariant }) => {
+const Live = ({ initial }: { initial: Item[] }) => {
   const [items, setItems] = useState(initial);
   return (
     <>
       <div className="mb-2 text-[12px] text-muted">{runsheetMinutes({ items })} min · {items.length} items</div>
-      <RunsheetList items={items} onChange={setItems} onPickExercise={pick} onSwapExercise={pick} variant={variant} />
+      <RunsheetList items={items} onChange={setItems} onPickExercise={pick} onSwapExercise={pick} />
     </>
   );
 };
@@ -42,9 +42,3 @@ export const PriyankasCircuit: Story = { render: () => <Live initial={priyanka()
 export const LooseSteps: Story = { render: () => <Live initial={loose().items} /> };
 export const Empty: Story = { render: () => <Live initial={[]} /> };
 
-/** Variant A: wide "Drop here" targets appear between top-level items while a step is dragged. */
-export const DragVariantASeams: Story = { render: () => <Live initial={priyanka().items} variant="seams" /> };
-/** Variant B: the drop spot follows the finger; a coral line shows where it lands, bottom of a block's last step means out. */
-export const DragVariantBPointer: Story = { render: () => <Live initial={priyanka().items} variant="pointer" /> };
-/** Variant C: no dragging; expand a row for Up / Down / Out of block buttons. */
-export const DragVariantCButtons: Story = { render: () => <Live initial={priyanka().items} variant="buttons" /> };

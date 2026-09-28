@@ -160,6 +160,15 @@ struct EquipmentView: View {
         }
         .navigationTitle("My equipment")
         .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            // Back to a gym's plates and the default steps, on the web too.
+            if store.equipment != nil {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button("Clear", role: .destructive) { Task { await store.setEquipment(nil) } }
+                        .accessibilityIdentifier("clear-equipment")
+                }
+            }
+        }
     }
 
     private func toggle(_ list: [Double], _ kg: Double) -> [Double] {
@@ -197,6 +206,27 @@ struct TrainingMaxesView: View {
 
     static let bigFour = ["bb_back_squat", "bb_bench", "bb_deadlift", "bb_ohp"]
 
+    /// Me → Training maxes: the big four, every lift a workout loads as a % of a training max, and
+    /// any lift that already has one. The port of `maxLifts` in training-maxes.ts.
+    static func lifts(in workouts: [Runsheet], maxes: [String: Double], ref: (String) -> ExerciseRef) -> [ExerciseRef] {
+        var out: [ExerciseRef] = []
+        var seen = Set<String>()
+        func add(_ e: ExerciseRef) { if seen.insert(e.key).inserted { out.append(e) } }
+        bigFour.forEach { add(ref($0)) }
+        for w in workouts {
+            for item in w.items {
+                let steps: [Step] = switch item {
+                case .block(let b): b.steps
+                case .step(let s): [s]
+                case .ref: []
+                }
+                for case .exercise(let e) in steps where e.targetPct != nil { add(e.exercise) }
+            }
+        }
+        maxes.keys.sorted().forEach { add(ref($0)) }
+        return out
+    }
+
     var body: some View {
         Form {
             Section {
@@ -208,7 +238,13 @@ struct TrainingMaxesView: View {
                     .accessibilityIdentifier("tm-\(ex.key)")
                 }
             } footer: {
-                Text("A set written as 65% TM is 65% of the training max here, rounded to a load you can make.")
+                Text("A set written as 65% TM is 65% of the training max here, rounded to a load you can make. Step one down to 0 to take it off.")
+            }
+            if !store.trainingMaxes.isEmpty {
+                Section {
+                    Button("Clear all training maxes", role: .destructive) { Task { await store.clearTrainingMaxes() } }
+                        .accessibilityIdentifier("clear-training-maxes")
+                }
             }
             if needsBodyweight {
                 Section {

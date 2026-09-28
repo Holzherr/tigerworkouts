@@ -16,8 +16,8 @@ import type { Equipment } from '@/features/runsheet/plates';
 const meta = {
   title: 'Profile/Sheets',
   component: SettingsSheet,
-  parameters: { layout: 'fullscreen', docs: { description: { component: 'The sheets and small screens around the profile: Settings (avatar, name, units, invite, sign out), the exercise picker (search, grouped list, add custom), quick log (favourite tiles, confirm sheet, manage favourites) and the shared-link import screen.' } } },
-  args: { open: true, onOpenChange: () => {}, name: 'Nick', units: 'metric', onChange: () => {}, onInvite: () => {} },
+  parameters: { layout: 'fullscreen', docs: { description: { component: 'The sheets and small screens around the profile: Settings (avatar, name, invite, sign out), the exercise picker (search, grouped list, add custom), quick log (favourite tiles, confirm sheet, manage favourites) and the shared-link import screen.' } } },
+  args: { open: true, onOpenChange: () => {}, name: 'Nick', onChange: () => {}, onInvite: () => {} },
   decorators: [S => <div className="relative mx-auto h-[820px] w-[393px] overflow-hidden border-x border-line bg-canvas"><S /></div>],
 } satisfies Meta<typeof SettingsSheet>;
 
@@ -32,7 +32,7 @@ const Settings = () => {
       <Button variant="ghost" onClick={() => setOpen(true)}>
         Open settings
       </Button>
-      <SettingsSheet open={open} onOpenChange={setOpen} name={p.name} avatar={p.avatar} units={p.units} email="nick@example.com" onChange={x => setP({ ...p, ...x })} onInvite={() => alert('invite')} onSignOut={() => alert('sign out')} />
+      <SettingsSheet open={open} onOpenChange={setOpen} name={p.name} avatar={p.avatar} email="nick@example.com" onChange={x => setP({ ...p, ...x })} onInvite={() => alert('invite')} onSignOut={() => alert('sign out')} />
     </div>
   );
 };
@@ -46,7 +46,7 @@ const Kit = () => {
       <Button variant="ghost" onClick={() => setOpen(true)}>
         Open My equipment
       </Button>
-      <EquipmentSheet open={open} onOpenChange={setOpen} equipment={e} onChange={setE} />
+      <EquipmentSheet open={open} onOpenChange={setOpen} equipment={e} onChange={x => setE(x ?? {})} />
     </div>
   );
 };

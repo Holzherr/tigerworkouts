@@ -14,7 +14,8 @@ enum Settings {
         var out: [String: LastUsed] = [:]
         for r in results.sorted(by: { $0.startedAt > $1.startedAt }) {
             for s in r.steps {
-                let v = LastUsed(target: s.target, incline: s.incline)
+                // A drop set at the end is not where the next session starts.
+                let v = LastUsed(target: ProgressionRules.workingLoad(s), incline: s.incline)
                 guard v.target != nil || v.incline != nil else { continue }
                 if out["step:\(s.stepId)"] == nil { out["step:\(s.stepId)"] = v }
                 if out["ex:\(s.exerciseKey)"] == nil { out["ex:\(s.exerciseKey)"] = v }

@@ -13,7 +13,7 @@
  * `ios/TigerWorkouts/Model/Targets.swift`. Programmes with their own progression rules keep
  * `nextLoads` (progression.ts), and these lines stand aside for the exercises it covers.
  */
-import { plannedSet, scoreType, shortUnit, type Block, type ExerciseStep, type Item, type Runsheet, type SetType } from './model';
+import { ofWorkout, plannedSet, scoreType, shortUnit, type Block, type ExerciseStep, type Item, type Runsheet, type SetType } from './model';
 import type { SessionResult, SetResult } from './progression';
 import { nextLoadUp, type Equipment } from './plates';
 import { lastSets } from './last-used';
@@ -65,7 +65,7 @@ export const scoreTarget = (r: Runsheet, results: SessionResult[], intent: Inten
   const type = scoreType(r);
   if (type !== 'rounds' && type !== 'time' && type !== 'reps') return undefined;
   const recent = results
-    .filter(x => x.runsheetId === id(r) && !x.activity && x.score !== undefined && x.score > 0 && (type !== 'time' || x.completed !== false))
+    .filter(x => ofWorkout(r)(x) && !x.activity && x.score !== undefined && x.score > 0 && (type !== 'time' || x.completed !== false))
     .sort((a, b) => a.startedAt.localeCompare(b.startedAt))
     .slice(-3)
     .map(x => x.score!);

@@ -15,16 +15,20 @@ export interface NextUp {
 }
 
 const id = (r: Runsheet) => r.id ?? r.title;
+/** A copy made by editing stands in for the workout it was copied from. */
+const root = (r: Runsheet) => r.copyOf ?? id(r);
 
 export const nextUp = (all: Runsheet[], results: SessionResult[]): NextUp | undefined => {
   const byId = new Map(all.map(r => [id(r), r]));
   const latest = [...results].sort((a, b) => b.startedAt.localeCompare(a.startedAt)).find(x => byId.has(x.runsheetId));
   if (!latest) return undefined;
-  const last = byId.get(latest.runsheetId)!;
+  // Your edited copy of a day replaces the day, whether the last session ran the copy or the original.
+  const copies = new Map(all.filter(r => r.copyOf).map(r => [r.copyOf!, r]));
+  const last = copies.get(latest.runsheetId) ?? byId.get(latest.runsheetId)!;
   const program = last.program?.name;
   if (program) {
-    const days = all.filter(r => r.program?.name === program).sort((a, b) => (a.program?.order ?? 0) - (b.program?.order ?? 0));
-    const i = days.findIndex(d => id(d) === id(last));
+    const days = all.filter(r => r.program?.name === program && !(copies.has(id(r)) && !r.copyOf)).sort((a, b) => (a.program?.order ?? 0) - (b.program?.order ?? 0));
+    const i = days.findIndex(d => root(d) === root(last));
     const next = days[(i + 1) % days.length];
     if (days.length > 1 && next) return { runsheet: next, reason: `Next in ${program}`, lastAt: latest.startedAt };
   }

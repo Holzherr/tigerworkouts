@@ -21,12 +21,20 @@ struct UpNextSnapshot: Codable, Hashable {
         return sessions.filter { $0 >= start && $0 <= now }.count
     }
 
-    /// The workout page, where Start is one tap; the app's front door when there is nothing to open.
+    /// Starts the session, logged as started from home like the Up next card's Start; the app's
+    /// front door when there is nothing to start.
     var url: URL {
-        guard let workoutId, let id = workoutId.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) else {
+        guard let workoutId, let id = workoutId.addingPercentEncoding(withAllowedCharacters: .alphanumerics.union(CharacterSet(charactersIn: "-_.~"))) else {
             return URL(string: "tigerworkouts://")!
         }
-        return URL(string: "tigerworkouts://w/\(id)")!
+        return URL(string: "tigerworkouts://do/\(id)")!
+    }
+
+    /// The workout id in a `tigerworkouts://do/<id>` link.
+    static func workoutId(fromStart url: URL) -> String? {
+        guard url.scheme == "tigerworkouts", url.host == "do" else { return nil }
+        let id = url.path.hasPrefix("/") ? String(url.path.dropFirst()) : url.path
+        return id.isEmpty ? nil : id
     }
 }
 

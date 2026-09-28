@@ -64,8 +64,8 @@ enum EffortModel {
     }
 
     /// Sessions per week and how many weeks in a row you have trained, counting back from today.
-    static func streak(_ results: [SessionResult], today: Date = Date()) -> Streak {
-        let cal = Calendar.iso8601Monday
+    /// Weeks are stepped by the calendar, never by 7 × 24 h, so the week the clocks change in counts.
+    static func streak(_ results: [SessionResult], today: Date = Date(), calendar cal: Calendar = .iso8601Monday) -> Streak {
         let thisWeek = startOfWeek(today, calendar: cal)
         var counts: [Date: Int] = [:]
         for r in results {

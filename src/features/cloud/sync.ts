@@ -13,6 +13,7 @@ import type { SessionResult, TrainingMaxes } from '@/features/runsheet/progressi
 import type { Equipment } from '@/features/runsheet/plates';
 import { currentUser, sb } from './client';
 import { fromLegacySession, isLegacySession, legacyWorkoutToRunsheet, type LegacySession } from './legacy';
+import { mergePrefs, prefsRow, remoteSide, type PrefStamps } from './prefs';
 
 export interface SyncTarget {
   results: SessionResult[];
@@ -26,6 +27,8 @@ export interface SyncTarget {
   bodyweightKg?: number;
   equipment?: Equipment;
   exercises?: Record<string, LibraryExercise>;
+  /** When each shared pref was last changed on this device (prefs.ts). */
+  prefsUpdatedAt?: PrefStamps;
 }
 export interface Favorite {
   name: string;
@@ -232,26 +235,37 @@ export const sync = async (local: SyncTarget): Promise<SyncResult> => {
     changed = true;
   }
 
-  // ── user state: last writer wins, server fills blanks ──
-  const { data: st } = await sb.from('user_state').select('favorites,prefs').eq('owner', uid).maybeSingle();
-  const prefs = (st?.prefs ?? {}) as Partial<{ name: string; saved: string[]; avatar: Avatar; units: 'metric' | 'imperial'; trainingMaxes: TrainingMaxes; bodyweightKg: number; equipment: Equipment }>;
-  const merged = {
-    favorites: local.favorites.length ? local.favorites : ((st?.favorites as Favorite[] | null) ?? []),
-    saved: [...new Set([...(prefs.saved ?? []), ...local.saved])],
-    name: local.name && local.name !== 'Nick' ? local.name : (prefs.name ?? local.name),
-    avatar: local.avatar ?? prefs.avatar,
-    units: local.units ?? prefs.units ?? 'metric',
-    trainingMaxes: { ...(prefs.trainingMaxes ?? {}), ...local.trainingMaxes },
-    bodyweightKg: local.bodyweightKg ?? prefs.bodyweightKg,
-    equipment: local.equipment ?? prefs.equipment,
-  };
-  Object.assign(patch, merged);
-  if (J(merged) !== snap['state']) {
-    const { error } = await sb.from('user_state').upsert({ owner: uid, favorites: merged.favorites, prefs: { ...prefs, name: merged.name, saved: merged.saved, avatar: merged.avatar, units: merged.units, trainingMaxes: merged.trainingMaxes, bodyweightKg: merged.bodyweightKg, equipment: merged.equipment } }, { onConflict: 'owner' });
-    if (error) errors.push(error.message);
-    else snap['state'] = J(merged);
-    await sb.from('profiles').update({ name: merged.name, units: merged.units }).eq('id', uid);
-    changed = true;
+  // ── user state: the newer side wins per field (prefs.ts), favorites as before ──
+  const { data: st, error: e3 } = await sb.from('user_state').select('favorites,prefs').eq('owner', uid).maybeSingle();
+  if (e3) errors.push(e3.message);
+  else {
+    const remotePrefs = (st?.prefs ?? {}) as Record<string, unknown>;
+    const m = mergePrefs(
+      { values: { saved: local.saved, trainingMaxes: local.trainingMaxes, bodyweightKg: local.bodyweightKg, equipment: local.equipment, name: local.name, avatar: local.avatar, units: local.units }, updatedAt: local.prefsUpdatedAt ?? {} },
+      remoteSide(remotePrefs)
+    );
+    const favorites = local.favorites.length ? local.favorites : ((st?.favorites as Favorite[] | null) ?? []);
+    const v = m.values;
+    const merged: Partial<SyncTarget> = {
+      favorites,
+      saved: (v.saved as string[] | undefined) ?? [],
+      trainingMaxes: (v.trainingMaxes as TrainingMaxes | undefined) ?? {},
+      bodyweightKg: v.bodyweightKg as number | undefined,
+      equipment: v.equipment as Equipment | undefined,
+      name: (v.name as string | undefined) ?? local.name,
+      avatar: v.avatar as Avatar | undefined,
+      units: (v.units as SyncTarget['units'] | undefined) ?? 'metric',
+      prefsUpdatedAt: m.updatedAt,
+    };
+    const mine = { favorites: local.favorites, saved: local.saved, trainingMaxes: local.trainingMaxes, bodyweightKg: local.bodyweightKg, equipment: local.equipment, name: local.name, avatar: local.avatar, units: local.units, prefsUpdatedAt: local.prefsUpdatedAt ?? {} };
+    if (J(merged) !== J(mine)) changed = true;
+    Object.assign(patch, merged);
+    if (m.push || J(favorites) !== J(st?.favorites ?? [])) {
+      const { error } = await sb.from('user_state').upsert({ owner: uid, favorites, prefs: prefsRow(remotePrefs, m) }, { onConflict: 'owner' });
+      if (error) errors.push(error.message);
+      await sb.from('profiles').update({ name: merged.name, units: merged.units }).eq('id', uid);
+      changed = true;
+    }
   }
   saveSnap();
   return { patch, changed, error: errors[0] };
@@ -311,4 +325,31 @@ export const deviceFor = async (r: SessionResult): Promise<{ source: string; dat
   if (!currentUser()) return [];
   const { data } = await sb.rpc('session_device', { p_started: r.startedAt, p_ended: r.endedAt ?? null });
   return (data ?? []) as { source: string; data: Record<string, unknown> }[];
+};
+
+/** What an account deletion did: the data on the server, and the sign-in itself. */
+export interface DeleteOutcome {
+  data: boolean;
+  account: boolean;
+  error?: string;
+}
+
+/**
+ * Delete this account's data from the server, then the account itself. The rows go first, under
+ * row-level security, so the data is gone even before migration 0006 (`delete_account()`) is
+ * applied; that function then removes the sign-in and the profile. Signs out either way, and
+ * forgets what was last seen on the server so nothing on this device is taken for deleted there.
+ */
+export const deleteAccount = async (): Promise<DeleteOutcome> => {
+  const user = currentUser();
+  if (!user) return { data: false, account: false, error: 'Not signed in' };
+  for (const table of ['sessions', 'workouts', 'exercises', 'user_state', 'device_metrics'] as const) {
+    const { error } = await sb.from(table).delete().eq('owner', user.id);
+    if (error) return { data: false, account: false, error: error.message };
+  }
+  const { error } = await sb.rpc('delete_account');
+  snap = {};
+  saveSnap();
+  await sb.auth.signOut();
+  return { data: true, account: !error, error: error?.message };
 };

@@ -7,9 +7,8 @@ import { SignInCard } from '@/features/auth/components/sign-in-card';
 import { FULL_LIBRARY } from '@/features/workouts/imported';
 import { WorkoutPreviewScreen } from '@/features/discover/components/workout-preview-screen';
 import { EditorScreen } from '@/features/runsheet/components/editor-screen';
-import type { DndVariant } from '@/features/runsheet/components/runsheet-list';
-import { EX, priyanka } from '@/features/runsheet/fixtures';
-import { makeExercise, resolveRefs, scoreType, shortUnit, type ExerciseStep, type Runsheet } from '@/features/runsheet/model';
+import { EX, withStarter } from '@/features/runsheet/fixtures';
+import { editedCopy, lineage, makeExercise, ofWorkout, resolveRefs, scoreType, shortUnit, type ExerciseStep, type Runsheet } from '@/features/runsheet/model';
 import { lastSet, lastSetLabel, lastSets, lastTimeLabel, withLastUsed } from '@/features/runsheet/last-used';
 import { patchStep } from '@/features/runsheet/patch-step';
 import { applyCommands, parsePlan } from '@/features/runsheet/parse-text';
@@ -17,6 +16,7 @@ import { isImage, readImport } from '@/features/runsheet/import-file';
 import { appLink, CreatorScreen } from '@/features/creators/components/creator-screen';
 import { CreatorPageCard } from '@/features/creators/components/creator-page-card';
 import { cn } from '@/shared/utils/ui-utils';
+import { localDate } from '@/shared/utils/dates';
 import { ExercisePicker } from '@/features/exercises/components/exercise-picker';
 import type { LibraryExercise } from '@/features/exercises/library';
 import { SettingsSheet } from '@/features/profile/components/settings-sheet';
@@ -31,10 +31,11 @@ import { ImportCsvSheet } from '@/features/results/components/import-csv-sheet';
 import { exportFileName, toCsv } from '@/features/results/csv';
 import { decodeLogged, decodeShared, shareLink, shareUrl } from '@/features/share/share';
 import { useCallback, useRef } from 'react';
-import { fmtScore, resolveLoads, resolveTarget } from '@/features/runsheet/progression';
+import { fmtScore, progressed, resolveLoads, resolveTarget } from '@/features/runsheet/progression';
 import type { Equipment } from '@/features/runsheet/plates';
 import { ResultSheet } from '@/features/results/components/result-sheet';
 import { TrainingMaxSheet } from '@/features/results/components/training-max-sheet';
+import { maxLifts } from '@/features/results/training-maxes';
 import { FollowAlongScreen } from '@/features/video/components/follow-along-screen';
 import { TimerScreen } from '@/features/timer/components/timer-screen';
 import { useRunner } from '@/features/timer/use-runner';
@@ -50,7 +51,7 @@ import { useActions, useAppState } from './app/store';
 import { providers, sendCode, signInGoogle, signOut, verifyCode } from '@/features/cloud/client';
 import { getDefaultRest, getMuted, getVolume, setDefaultRest, setMuted, setVolume } from '@/features/timer/use-runner';
 import { ghost as paceGhost, lastTimed } from '@/features/timer/pace';
-import { deviceFor, fetchCreator, fetchPublicWorkouts, type CreatorProfile } from '@/features/cloud/sync';
+import { deleteAccount, deviceFor, fetchCreator, fetchPublicWorkouts, type CreatorProfile } from '@/features/cloud/sync';
 import { useCloudSync } from '@/features/cloud/use-sync';
 import { SessionDetailScreen } from '@/features/results/components/session-detail-screen';
 import { ExerciseHistoryScreen } from '@/features/results/components/exercise-history-screen';
@@ -117,7 +118,7 @@ export default function App() {
     return () => removeEventListener('hashchange', on);
   }, []);
 
-  const all = useMemo(() => [...(st.workouts.length ? st.workouts : [priyanka()]), ...remote.filter(r => !st.workouts.some(w => w.id === r.id)), ...IMPORTED.map(w => w.runsheet)], [st.workouts, remote]);
+  const all = useMemo(() => [...withStarter(st.workouts, st.results), ...remote.filter(r => !st.workouts.some(w => w.id === r.id)), ...IMPORTED.map(w => w.runsheet)], [st.workouts, st.results, remote]);
   const byId = useMemo(() => new Map(all.map(r => [wid(r), r])), [all]);
   const lookup = (id: string) => byId.get(id);
   const refTitle = (id: string) => byId.get(id)?.title;
@@ -140,8 +141,6 @@ export default function App() {
   const [importOpen, setImportOpen] = useState(false);
   const [volume, setVol] = useState(getVolume);
   const [defaultRest, setRest] = useState(getDefaultRest);
-  const [dnd, setDndState] = useState<DndVariant>(() => { try { return (localStorage.getItem('tiger:dnd') as DndVariant) || 'classic'; } catch { return 'classic'; } });
-  const setDnd = (v: DndVariant) => { setDndState(v); try { localStorage.setItem('tiger:dnd', v); } catch { /* ignore */ } };
   // Google shows on the sign-in card only when the Supabase project has the provider enabled.
   const [google, setGoogle] = useState(false);
   useEffect(() => {
@@ -206,7 +205,7 @@ export default function App() {
   );
   const tmSheet = (r?: Runsheet) => (
     <Sheet open={tmOpen} onOpenChange={setTmOpen} title="Training maxes">
-      <TrainingMaxSheet runsheet={r} exercises={r ? undefined : [EX.bb_back_squat, EX.bb_bench, EX.bb_deadlift, EX.bb_ohp]} values={st.trainingMaxes} onChange={act.setTrainingMaxes} bodyweightKg={st.bodyweightKg} onBodyweightChange={act.setBodyweight} />
+      <TrainingMaxSheet runsheet={r} exercises={r ? undefined : maxLifts(all, st.trainingMaxes, k => EX[k] ?? library[k] ?? { key: k, name: k, unit: 'kg', step: 2.5 })} values={st.trainingMaxes} onChange={act.setTrainingMaxes} bodyweightKg={st.bodyweightKg} onBodyweightChange={act.setBodyweight} />
     </Sheet>
   );
 
@@ -220,7 +219,7 @@ export default function App() {
           today={todayFor(resolveRefs(r, lookup), st.results, intent, st.equipment)}
           stall={stall}
           onDismissStall={stall ? () => dismiss(stall) : undefined}
-          history={st.results.filter(x => x.runsheetId === wid(r))}
+          history={st.results.filter(ofWorkout(r))}
           lastTime={lastTime}
           onExerciseHistory={s => go(exerciseLink(s.exercise.key))}
           hasHistory={s => st.results.some(x => x.steps.some(y => y.exerciseKey === s.exercise.key))}
@@ -270,7 +269,6 @@ export default function App() {
           refTitle={refTitle}
           autoRest={defaultRest}
           mode="author"
-          dndVariant={dnd}
           onTextChange={t => { const out = applyCommands(r, t, library); draftFor('new')(out.runsheet); say(out.applied.length ? out.applied.join(' · ') : `Didn't understand “${t}”`); }}
           onPastePlan={() => setPasteOpen(true)}
         />
@@ -296,7 +294,7 @@ export default function App() {
             // Your own workout saves in place; anything else becomes a copy of yours.
             const own = !!base?.id && st.workouts.some(w => w.id === base.id);
             const id = own ? base!.id! : `u-${Date.now().toString(36)}`;
-            const mine: Runsheet = { ...r, id, creator: own ? r.creator : st.name, source: own ? r.source : { title: r.title, url: r.source?.url, author: r.source?.author ?? r.creator, kind: 'user' }, program: own ? r.program : undefined, icon: r.icon ?? defaultIcon(id), public: own ? r.public : false, ownerId: undefined };
+            const mine: Runsheet = own || !base ? { ...r, id, icon: r.icon ?? defaultIcon(id), ownerId: undefined } : { ...editedCopy(r, base, id, st.name), icon: r.icon ?? defaultIcon(id) };
             act.saveWorkout(mine);
             setDrafted(null);
             say(own ? 'Saved' : 'Saved to My workouts');
@@ -309,7 +307,6 @@ export default function App() {
           refTitle={refTitle}
           autoRest={defaultRest}
           mode="tonight"
-          dndVariant={dnd}
           onTextChange={t => { const out = applyCommands(r, t, library); draftFor(route.id)(out.runsheet); say(out.applied.length ? out.applied.join(' · ') : `Didn't understand “${t}”`); }}
           onPastePlan={() => setPasteOpen(true)}
         />
@@ -346,9 +343,10 @@ export default function App() {
   if (route.name === 'do') {
     const r = draftOf(route.id) ?? byId.get(route.id);
     if (!r) return shell('discover', <Missing />);
-    // Refs inlined, last time's loads carried in, then % of a training max and × bodyweight worked
-    // out, so the timer shows and logs a weight for every loaded set.
-    const run = resolveLoads(withLastUsed(resolveRefs(r, lookup), st.results), st.trainingMaxes, st.bodyweightKg, st.equipment);
+    // Refs inlined, last time's loads carried in, a program's rules applied to them (+2.5 kg after
+    // a clean session, the deload after repeated misses), then % of a training max and × bodyweight
+    // worked out, so the timer shows and logs a weight for every loaded set.
+    const run = resolveLoads(progressed(withLastUsed(resolveRefs(r, lookup), st.results), st.results, st.trainingMaxes, st.equipment), st.trainingMaxes, st.bodyweightKg, st.equipment);
     return <RunRoute key={route.id} runsheet={run} results={st.results} intent={intent} equipment={st.equipment} resume={resumeFor === route.id} onLog={res => act.addResult({ ...res, runsheetId: wid(r) })} onFinish={res => (setResumeFor(null), setPending({ ...res, runsheetId: wid(r) }), go(`/result/${encodeURIComponent(route.id)}`))} onExit={() => (setResumeFor(null), Runner.clearPersisted(), go(`/w/${encodeURIComponent(route.id)}`))} />;
   }
   if (route.name === 'session') {
@@ -385,7 +383,7 @@ export default function App() {
       <>
         <ResultSheet
           runsheet={r}
-          history={st.results.filter(x => x.runsheetId === wid(r))}
+          history={st.results.filter(ofWorkout(r))}
           allResults={st.results}
           trainingMaxes={st.trainingMaxes}
           bodyweightKg={st.bodyweightKg}
@@ -458,7 +456,7 @@ export default function App() {
                 {r && <WorkoutIcon runsheet={r} size={36} />}
                 <div className="min-w-0 flex-1">
                   <div className="truncate text-[14px] font-bold">{res.title ?? r?.title ?? res.runsheetId}</div>
-                  <div className="text-[12px] text-muted">{res.startedAt.slice(0, 10)}{res.durationSec ? ` · ${Math.round(res.durationSec / 60)} min` : res.activity ? ` · ${res.activity.minutes} min` : ''}{res.completed === false ? ' · stopped early' : ''}{res.rpe ? ` · effort ${res.rpe}` : ''}</div>
+                  <div className="text-[12px] text-muted">{localDate(res.startedAt)}{res.durationSec ? ` · ${Math.round(res.durationSec / 60)} min` : res.activity ? ` · ${res.activity.minutes} min` : ''}{res.completed === false ? ' · stopped early' : ''}{res.rpe ? ` · effort ${res.rpe}` : ''}</div>
                 </div>
                 <div className="text-[15px] font-extrabold tabular-nums">{r ? fmtScore(scoreType(r), res.score, res.scoreText) : (res.scoreText ?? '')}</div>
               </button>
@@ -517,7 +515,13 @@ export default function App() {
             </Button>
           )}
         </MeScreen>
-        <SettingsSheet open={settingsOpen} onOpenChange={setSettingsOpen} name={st.name} avatar={st.avatar} units={st.units} email={cloud.user?.email ?? undefined} volume={volume} onVolume={v => { setVolume(v); setVol(v); }} defaultRest={defaultRest} onDefaultRest={v => { setDefaultRest(v); setRest(getDefaultRest()); }} dnd={dnd} onDnd={setDnd} intent={intent} onIntent={v => { storeIntent(v); setIntentState(v); }} equipment={st.equipment} onEquipment={act.setEquipment} onChange={act.setProfile} onInvite={invite} onSignOut={cloud.user ? out : undefined} />
+        <SettingsSheet open={settingsOpen} onOpenChange={setSettingsOpen} name={st.name} avatar={st.avatar} email={cloud.user?.email ?? undefined} volume={volume} onVolume={v => { setVolume(v); setVol(v); }} defaultRest={defaultRest} onDefaultRest={v => { setDefaultRest(v); setRest(getDefaultRest()); }} intent={intent} onIntent={v => { storeIntent(v); setIntentState(v); }} equipment={st.equipment} onEquipment={act.setEquipment} onChange={act.setProfile} onInvite={invite} onSignOut={cloud.user ? out : undefined} onDeleteAccount={cloud.user ? async clear => {
+            const done = await deleteAccount();
+            if (!done.data) return `Could not delete: ${done.error ?? 'try again'}`;
+            if (clear) act.clearDevice();
+            act.setSignedIn(false);
+            return done.account ? 'Account deleted.' : 'Your data is deleted from the server and you are signed out. The sign-in itself could not be removed yet.';
+          } : undefined} />
         {tmSheet()}
         <ImportCsvSheet open={importOpen} onOpenChange={setImportOpen} results={st.results} library={library} onImport={p => (act.importSessions(p.sessions, p.newExercises), say(`${p.sessions.length} ${p.sessions.length === 1 ? 'session' : 'sessions'} added to History`))} />
       </>
@@ -630,7 +634,7 @@ const RunSession = ({ runsheet, results, intent, equipment, onLog, onFinish, onE
   // Open reps (a range, a max) start on what was done last time, set for set.
   const { state, now, act } = useRunner(runsheet, { from, seed: s => Runner.prefillReps(s, (step, round) => lastSets(results, step)?.[round]?.reps) });
   // The last session of this workout with times kept, raced on the header. Fixed for the session.
-  const [rival] = useState(() => lastTimed(results, runsheet.id ?? runsheet.title));
+  const [rival] = useState(() => lastTimed(results, lineage(runsheet)));
   const [muted, setMute] = useState(getMuted);
   // Today's targets, read once from the history before this session; the pill follows the timer.
   const [aims] = useState(() => todayFor(runsheet, results, intent, equipment));

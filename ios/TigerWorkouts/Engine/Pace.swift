@@ -44,8 +44,13 @@ enum Pace {
 
     /// The newest session of this workout with times kept, other than `excluding`.
     static func lastTimed(_ history: [SessionResult], runsheetId: String, excluding: String? = nil) -> SessionResult? {
+        lastTimed(history, runsheetIds: [runsheetId], excluding: excluding)
+    }
+
+    /// The same over a workout's lineage: its own sessions and the original's, for an edited copy.
+    static func lastTimed(_ history: [SessionResult], runsheetIds: [String], excluding: String? = nil) -> SessionResult? {
         history
-            .filter { $0.runsheetId == runsheetId && (excluding == nil || $0.id != excluding) && $0.activity == nil }
+            .filter { runsheetIds.contains($0.runsheetId) && (excluding == nil || $0.id != excluding) && $0.activity == nil }
             .sorted { $0.startedAt > $1.startedAt }
             .first { !marks($0).isEmpty }
     }
