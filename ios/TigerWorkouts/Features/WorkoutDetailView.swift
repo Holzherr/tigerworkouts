@@ -215,6 +215,18 @@ struct WorkoutDetailView: View {
         }
     }
 
+    /// Start never runs a workout of yours that is not stored: a session of one that is not would
+    /// have no workout behind it in History, and a crash could not bring it back. A new one saved a
+    /// moment ago, or still without a name, is saved now.
+    private func keepBeforeStart() {
+        guard editable else { return }
+        guard store.workout(id: runsheet.key) == nil else { return flushSave() }
+        pendingSave?.cancel()
+        runsheet = Edit.namedForStart(runsheet)
+        let sheet = runsheet
+        Task { await store.saveWorkout(sheet) }
+    }
+
     private func flushSave() {
         guard let task = pendingSave, !task.isCancelled, Edit.problem(with: runsheet) == nil else { return }
         task.cancel()
@@ -328,6 +340,7 @@ struct WorkoutDetailView: View {
     private var bottomBar: some View {
         HStack(spacing: 10) {
             Button {
+                keepBeforeStart()
                 onStart(runsheet, startedFrom)
             } label: {
                 Label("Start workout", systemImage: "play.fill")

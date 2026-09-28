@@ -16,6 +16,7 @@ struct RootView: View {
         var state: RunState
         var savedAt: Date
         var partial: SessionResult?
+        var canResume: Bool
     }
 
     enum Tab: Hashable { case workouts, history, me }
@@ -42,33 +43,34 @@ struct RootView: View {
         // back into its timer. The lookup waits for the catalogue, or it finds nothing.
         .onChange(of: store.loaded, initial: true) { _, loaded in
             guard loaded, running == nil, interrupted == nil, let saved = SessionRunner.readSaved() else { return }
-            guard let sheet = store.workout(id: saved.state.runsheetId) else {
-                SessionRunner.clearSaved()
-                return
-            }
+            // A workout no longer here (deleted, never saved) still gives its session back.
+            let found = SessionRunner.recovery(of: saved.state, savedAt: saved.savedAt, lookup: { store.workout(id: $0) })
             // Finished, but the app died before the store had it: log it, no question to ask.
             if saved.state.phase == .done {
-                if let result = SessionRunner.partialResult(of: saved.state, savedAt: saved.savedAt, runsheet: sheet) {
+                if let result = found.partial {
                     Task { await store.save(result) { SessionRunner.clearSaved(startedAt: saved.state.startedAt) } }
                 } else {
                     SessionRunner.clearSaved()
                 }
                 return
             }
+            guard found.canResume || found.partial != nil else {
+                SessionRunner.clearSaved()
+                return
+            }
             SessionActivityController.shared.clearStale()
-            interrupted = Interrupted(
-                sheet: sheet, state: saved.state, savedAt: saved.savedAt,
-                partial: SessionRunner.partialResult(of: saved.state, savedAt: saved.savedAt, runsheet: sheet)
-            )
+            interrupted = Interrupted(sheet: found.sheet, state: saved.state, savedAt: saved.savedAt, partial: found.partial, canResume: found.canResume)
         }
         .alert(
             "Pick up where you left off?",
             isPresented: Binding(get: { interrupted != nil }, set: { if !$0 { interrupted = nil } }),
             presenting: interrupted
         ) { pending in
-            Button("Resume") {
-                running = SessionRunner(resuming: store.prepared(pending.sheet), history: store.results).map(logOnFinish)
-                interrupted = nil
+            if pending.canResume {
+                Button("Resume") {
+                    running = SessionRunner(resuming: store.prepared(pending.sheet), history: store.results).map(logOnFinish)
+                    interrupted = nil
+                }
             }
             // The workout happened whether or not the app survived it.
             if let partial = pending.partial {

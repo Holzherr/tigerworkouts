@@ -396,3 +396,55 @@ struct DiscardTests {
         #expect(!store.results.contains { $0.rowId == "s-late" })
     }
 }
+
+@Suite("recovering a session after the app was killed")
+@MainActor
+struct RecoveryTests {
+    static func oneSetDone() -> RunState {
+        Runner.advance(Runner.tick(Runner.start(Fixtures.interval(), now: 0), now: 5_000), now: 20_000)
+    }
+
+    @Test("a session whose workout is not on the phone is kept, under the title it ran with")
+    func missingWorkout() throws {
+        let state = Self.oneSetDone()
+        let r = SessionRunner.recovery(of: state, savedAt: Date(), lookup: { _ in nil })
+        #expect(!r.canResume)
+        #expect(r.sheet.id == "i" && r.sheet.title == "Interval")
+        let partial = try #require(r.partial)
+        #expect(partial.runsheetId == "i" && partial.title == "Interval")
+        #expect(partial.steps.map(\.stepId) == ["sw"])
+    }
+
+    @Test("a session left for more than six hours can still be saved, not resumed")
+    func stale() {
+        let state = Self.oneSetDone()
+        let old = SessionRunner.recovery(of: state, savedAt: Date(timeIntervalSinceNow: -7 * 3600), lookup: { _ in Fixtures.interval() })
+        #expect(!old.canResume && old.partial != nil)
+        let fresh = SessionRunner.recovery(of: state, savedAt: Date(timeIntervalSinceNow: -60), lookup: { _ in Fixtures.interval() })
+        #expect(fresh.canResume && fresh.partial != nil)
+    }
+
+    @Test("only rests done is nothing to save")
+    func onlyRests() {
+        var s = Runner.tick(Runner.start(Fixtures.interval(), now: 0), now: 5_000)
+        s = Runner.advance(s, now: 20_000, skipped: true)
+        s = Runner.advance(s, now: 30_000)
+        #expect(s.actuals.values.contains { $0.doneAt != nil })
+        #expect(SessionRunner.partialResult(of: s, savedAt: Date(), runsheet: Fixtures.interval()) == nil)
+    }
+
+    @Test("a run older than six hours with a set done is still read back")
+    func readsOldWork() throws {
+        try SessionRunner.$savedName.withValue("test-\(UUID().uuidString).json") {
+            let url = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0].appendingPathComponent(SessionRunner.savedName)
+            try FileManager.default.createDirectory(at: url.deletingLastPathComponent(), withIntermediateDirectories: true)
+            try JSONEncoder().encode(Self.oneSetDone()).write(to: url)
+            try FileManager.default.setAttributes([.modificationDate: Date(timeIntervalSinceNow: -7 * 3600)], ofItemAtPath: url.path)
+            #expect(SessionRunner.readSaved() != nil)
+            try JSONEncoder().encode(Runner.tick(Runner.start(Fixtures.interval(), now: 0), now: 5_000)).write(to: url)
+            try FileManager.default.setAttributes([.modificationDate: Date(timeIntervalSinceNow: -7 * 3600)], ofItemAtPath: url.path)
+            #expect(SessionRunner.readSaved() == nil)
+            SessionRunner.clearSaved()
+        }
+    }
+}

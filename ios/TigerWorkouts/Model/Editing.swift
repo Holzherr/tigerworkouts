@@ -335,6 +335,15 @@ enum Edit {
     // MARK: - Validation
 
     /// What is stopping this being saved, in the order a person would fix it.
+    /// A workout of your own as Start keeps it: one still without a name gets the web's default, so
+    /// the session it runs has a workout to go back to.
+    static func namedForStart(_ r: Runsheet) -> Runsheet {
+        guard r.title.trimmingCharacters(in: .whitespaces).isEmpty else { return r }
+        var out = r
+        out.title = "My workout"
+        return out
+    }
+
     static func problem(with r: Runsheet) -> String? {
         if r.title.trimmingCharacters(in: .whitespaces).isEmpty { return "Give it a name." }
         if r.exerciseSteps.isEmpty { return "Add at least one exercise." }

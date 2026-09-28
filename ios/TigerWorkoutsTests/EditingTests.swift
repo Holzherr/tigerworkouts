@@ -194,6 +194,15 @@ struct EditingTests {
         let (r, _, _) = twoBlocks()
         #expect(Edit.moveRow(r, from: 2, to: 0) == r)
     }
+
+    @Test("a workout of yours started without a name is kept as My workout; a named one as it is")
+    func namedForStart() {
+        var r = Edit.newRunsheet(creator: nil)
+        #expect(Edit.namedForStart(r).title == "My workout")
+        #expect(Edit.namedForStart(r).id == r.id)
+        r.title = "Legs"
+        #expect(Edit.namedForStart(r).title == "Legs")
+    }
 }
 
 /// `LibraryExercise` decodes from the export rather than being built by hand, so the tests make

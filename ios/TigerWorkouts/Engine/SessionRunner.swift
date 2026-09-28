@@ -70,10 +70,32 @@ final class SessionRunner {
     /// Timed to the last save rather than to now, which may be hours later.
     static func partialResult(of saved: RunState, savedAt: Date, runsheet: Runsheet) -> SessionResult? {
         let at = savedAt.timeIntervalSince1970 * 1000
-        guard saved.actuals.values.contains(where: { $0.doneAt != nil }) else { return nil }
+        // Rests alone are not a workout.
+        guard didWork(saved) else { return nil }
         var r = Runner.toResult(saved.phase == .done ? saved : Runner.finish(saved, now: at), runsheet, now: at)
         r.id = rowId(saved)
         return r
+    }
+
+    /// A set of work was done: a rest run out says nothing.
+    nonisolated static func didWork(_ s: RunState) -> Bool {
+        s.slots.contains { $0.kind == .work && s.actuals[$0.id]?.doneAt != nil }
+    }
+
+    /// What a crash-safe copy found at launch comes back as. A workout no longer on the phone (deleted,
+    /// never saved, a cache that did not load) still gives its session, under the title it ran
+    /// with; it cannot be resumed, nor can one left for more than six hours, but either can be saved.
+    struct Recovery {
+        var sheet: Runsheet
+        var canResume: Bool
+        var partial: SessionResult?
+    }
+
+    static func recovery(of state: RunState, savedAt: Date, lookup: (String) -> Runsheet?, now: Date = Date()) -> Recovery {
+        let found = lookup(state.runsheetId)
+        let sheet = found ?? Runsheet(id: state.runsheetId, title: state.title, items: [])
+        let fresh = now.timeIntervalSince(savedAt) < 6 * 3600
+        return Recovery(sheet: sheet, canResume: found != nil && fresh, partial: partialResult(of: state, savedAt: savedAt, runsheet: sheet))
     }
 
     /// One id per session, so a result saved twice (finished, then recovered after a kill before the
@@ -561,14 +583,15 @@ final class SessionRunner {
         try? JSONEncoder().encode(state).write(to: SessionRunner.savedURL, options: .atomic)
     }
 
-    /// A session older than six hours is not one you walked away from for a minute. A finished one
-    /// is returned whatever its age: it is a workout the store never confirmed.
+    /// A session older than six hours is not one you walked away from for a minute, and one with no
+    /// set done is forgotten then. A finished one, or one with work done, is returned whatever its
+    /// age: it is a workout the store never confirmed, and it can still be saved.
     static func readSaved() -> (state: RunState, savedAt: Date)? {
         guard let data = try? Data(contentsOf: savedURL),
               let attrs = try? FileManager.default.attributesOfItem(atPath: savedURL.path),
               let modified = attrs[.modificationDate] as? Date,
               let state = try? JSONDecoder().decode(RunState.self, from: data),
-              state.phase == .done || Date().timeIntervalSince(modified) < 6 * 3600 else { return nil }
+              state.phase == .done || didWork(state) || Date().timeIntervalSince(modified) < 6 * 3600 else { return nil }
         return (state, modified)
     }
 
