@@ -4,7 +4,7 @@ import { Fragment, useState } from 'react';
 import { Button } from '@/shared/components/ui/button';
 import { Chip } from '@/shared/components/ui/chip';
 import { ClipThumb } from '@/shared/components/ui/clip-thumb';
-import { fmtClock, fmtNum } from '@/shared/utils/ui-utils';
+import { fmtClock, fmtNum, plural } from '@/shared/utils/ui-utils';
 import { blockSeconds, countLabel, forLabel, loadLabel, modeLabel, plannedSet, ROLE_LABEL, runsheetMinutes, scoreType, shortUnit, straightSetStep, type Block, type ExerciseStep, type Runsheet } from '@/features/runsheet/model';
 import { ExerciseSheet } from '@/features/runsheet/components/exercise-sheet';
 import type { SessionResult } from '@/features/runsheet/progression';
@@ -195,7 +195,7 @@ export const WorkoutPreviewScreen = ({ runsheet: r, history = [], lastTime, onBa
                           <div className="truncate text-[14px]">{s.exercise.name}</div>
                           {lastTime?.(s) && <div className="truncate text-[12px] text-muted">{lastTime(s)}</div>}
                         </div>
-                        <span className="text-[13px] font-semibold tabular-nums">{straight ? `${it.repeat} sets` : [loadLabel(s), forLabel(s)].filter(Boolean).join(' · ')}</span>
+                        <span className="text-[13px] font-semibold tabular-nums">{straight ? plural(it.repeat, 'set') : [loadLabel(s), forLabel(s)].filter(Boolean).join(' · ')}</span>
                         <ChevronRight className="size-4 shrink-0 text-faint" />
                       </button>
                       {straight && <SetList block={it} step={straight} />}

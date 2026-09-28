@@ -73,7 +73,7 @@ export const BlockHeader = forwardRef<HTMLDivElement, BlockHeaderProps>(({ block
           </div>
           {(block.mode ?? 'rounds') !== 'amrap' && block.mode !== 'ladder' && (
             <div className="flex items-center justify-between gap-3">
-              <span className="text-[14px]">{block.mode === 'emom' ? 'Minutes' : 'Rounds'}</span>
+              <span className="text-[14px]">{block.mode === 'emom' ? ((block.everySec ?? 60) === 60 ? 'Minutes' : 'Intervals') : 'Rounds'}</span>
               <Stepper aria-label="Repeat count" value={block.repeat} min={1} max={60} onChange={repeat => onChange({ repeat })} format={v => `${v}×`} />
             </div>
           )}

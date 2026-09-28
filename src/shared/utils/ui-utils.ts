@@ -14,3 +14,6 @@ export const fmtClock = (seconds: number) => {
 
 /** 28 → "28", 7.5 → "7.5", 14.25 → "14.25" */
 export const fmtNum = (n: number) => (Number.isInteger(n) ? String(n) : String(Math.round(n * 100) / 100));
+
+/** 1 → "1 round", 3 → "3 rounds". */
+export const plural = (n: number, word: string, many = `${word}s`) => `${n} ${n === 1 ? word : many}`;
