@@ -59,10 +59,14 @@ struct TimerView: View {
             .preferredColorScheme(.light)
         }
         .confirmationDialog("End this session?", isPresented: $confirmQuit, titleVisibility: .visible) {
-            Button("Finish and save", role: .destructive) { runner.finish() }
+            Button("Finish and save") { runner.finish() }
+            Button("Discard", role: .destructive) {
+                runner.discard()
+                onClose()
+            }
             Button("Keep going", role: .cancel) {}
         } message: {
-            Text("What you have done so far is saved.")
+            Text("Finish saves what you have done so far. Discard keeps nothing of it.")
         }
     }
 

@@ -31,6 +31,7 @@ final class SessionRunner {
     /// session is done or the timer closes, whichever comes first.
     private(set) var holding = false
     private var cuedSlot: String?
+    private var discarded = false
     private var cuedPhase: Phase?
     private var lastTick: Int?
 
@@ -344,6 +345,8 @@ final class SessionRunner {
     // MARK: - Controls
 
     private func apply(_ change: (RunState, Double) -> RunState) {
+        // A discarded session takes no more changes: one would write the crash-safe copy again.
+        guard !discarded else { return }
         now = Date().timeIntervalSince1970 * 1000
         state = change(state, now)
         save()
@@ -359,6 +362,14 @@ final class SessionRunner {
     func skip() { apply { Runner.advance($0, now: $1, skipped: true) } }
     func back() { apply { Runner.back($0, now: $1) } }
     func finish() { apply { Runner.finish($0, now: $1) } }
+    /// Stops the session without logging it, from the timer's X: an accidental start is not saved,
+    /// streaked or written to Health. The crash-safe copy goes too, so nothing offers it back.
+    func discard() {
+        discarded = true
+        onFinished = nil
+        end()
+        SessionRunner.clearSaved(startedAt: state.startedAt)
+    }
     func drop(stepId: String) { apply { Runner.drop($0, now: $1, stepId: stepId) } }
     func swap(stepId: String, to exercise: LibraryExercise, target: Double?) {
         apply { Runner.swap($0, now: $1, stepId: stepId, to: exercise.ref, target: target) }

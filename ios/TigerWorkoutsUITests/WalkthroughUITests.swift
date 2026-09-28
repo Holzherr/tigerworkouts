@@ -38,6 +38,27 @@ final class WalkthroughUITests: XCTestCase {
         tap(app.buttons["Done"])
     }
 
+    /// An accidental start: the timer's X offers Discard, and nothing lands in History.
+    func testDiscardFromTimer() {
+        tap(app.tabBars.buttons["History"])
+        sleep(1)
+        let before = app.cells.count
+        tap(app.tabBars.buttons["Workouts"])
+        open("Tabata This")
+        tap(app.buttons["Start workout"])
+        XCTAssertTrue(app.buttons["End session"].waitForExistence(timeout: 5))
+        sleep(7)
+        tap(app.buttons["End session"])
+        XCTAssertTrue(app.buttons["Discard"].waitForExistence(timeout: 5), "the X should offer Discard, not only Finish and save")
+        snap("97 Timer X offers Discard")
+        tap(app.buttons["Discard"])
+        XCTAssertTrue(app.buttons["Start workout"].waitForExistence(timeout: 5), "Discard should close the timer")
+        tap(app.tabBars.buttons["History"])
+        sleep(1)
+        XCTAssertEqual(app.cells.count, before, "a discarded session should not be in History")
+        snap("98 History after a discard")
+    }
+
     func testBrowseRunAndFinish() {
         XCTAssertTrue(app.navigationBars["Tiger"].waitForExistence(timeout: 10))
         snap("01 Workouts")

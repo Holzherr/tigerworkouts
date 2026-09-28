@@ -496,3 +496,26 @@ struct GateCueTests {
         #expect(SessionRunner.transitionCue(s, cuedSlot: first, cuedPhase: .ready) == .work)
     }
 }
+
+@Suite("discarding from the timer")
+@MainActor
+struct TimerDiscardTests {
+    @Test("Discard stops the session, logs nothing and leaves nothing to resume")
+    func discard() {
+        SessionRunner.$savedName.withValue("test-\(UUID().uuidString).json") {
+            let runner = SessionRunner(runsheet: Fixtures.interval())
+            var delivered: [SessionResult] = []
+            runner.onFinished = { delivered.append($0) }
+            runner.begin()
+            runner.done()
+            runner.done()
+            #expect(SessionRunner.readSaved() != nil)
+            runner.discard()
+            #expect(!runner.holding)
+            #expect(SessionRunner.readSaved() == nil)
+            runner.finish()
+            #expect(delivered.isEmpty)
+            SessionRunner.clearSaved()
+        }
+    }
+}
