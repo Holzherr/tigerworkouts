@@ -41,6 +41,14 @@ struct DataFixesTests {
         #expect(squatLoad(ProgressionRules.progressed(stronglifts(), results: three, kit: nil)) == 55)
     }
 
+    @Test("deloads once, then counts misses again from the deload")
+    func deloadsOnce() {
+        let four = [session(8, ok: false), session(6, ok: false), session(4, ok: false), session(2, ok: false)]
+        #expect(squatLoad(ProgressionRules.progressed(stronglifts(), results: four, kit: nil)) == 60)
+        let six = [session(12, ok: false), session(10, ok: false)] + four
+        #expect(squatLoad(ProgressionRules.progressed(stronglifts(), results: six, kit: nil)) == 55)
+    }
+
     @Test("a drop set is never the next session's starting load")
     func dropSet() {
         let sets = [SetResult(reps: 5, load: 100), SetResult(reps: 5, load: 100), SetResult(reps: 10, load: 60, type: .drop)]

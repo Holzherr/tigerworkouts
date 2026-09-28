@@ -82,6 +82,15 @@ describe('progression across sessions', () => {
     expect(squat(progressed(sl(), [fail('2026-09-06'), fail('2026-09-04'), fail('2026-09-02')])).target).toBe(55);
   });
 
+  it('deloads once, then counts misses again from the deload', () => {
+    const four = [fail('2026-09-08'), fail('2026-09-06'), fail('2026-09-04'), fail('2026-09-02')];
+    expect(squat(progressed(sl(), four)).target).toBe(60);
+    const out = nextLoads(sl(), four[0], four);
+    expect(out[0].reason).toBe('missed reps (1/3): repeat the weight');
+    const six = [fail('2026-09-12'), fail('2026-09-10'), ...four];
+    expect(squat(progressed(sl(), six)).target).toBe(55);
+  });
+
   it('carries the squat over from the other program day', () => {
     const dayB: SessionResult = { id: 'b', runsheetId: 'sl-b', startedAt: '2026-09-08', steps: [{ stepId: 'other', exerciseKey: 'bb_back_squat', target: 65, success: true }] };
     expect(squat(progressed(sl(), [fail('2026-09-06'), dayB])).target).toBe(67.5);

@@ -171,7 +171,7 @@ struct SessionDetailView: View {
                 RoundTimesCard(result: session, last: lastTime, blockName: blockName, records: Rounds.prs(session, all: store.results))
 
                 if !session.steps.isEmpty {
-                    LoggedSetsCard(session: session) { store.update($0) }
+                    LoggedSetsCard(session: session, runsheet: runsheet) { store.update($0) }
                 }
 
                 edits

@@ -594,18 +594,32 @@ describe('set times and round splits', () => {
 });
 
 describe('only what was done is logged', () => {
+  const ruled = (): Runsheet => ({ ...interval(), progression: { onSuccessKg: 2.5, deloadPct: 10, failAfter: 3 } });
   it('a step with sets left undone is not a success', () => {
-    let s = tick(start(interval(), 0), 5000);
+    let s = tick(start(ruled(), 0), 5000);
     s = advance(s, 20000); // swings round 1
     for (let t = 21000; s.phase !== 'done'; t += 1000) s = advance(s, t, { skipped: true });
-    const r = toResult(s, interval(), 40000);
+    const r = toResult(s, ruled(), 40000);
     expect(r.steps.map(x => x.stepId)).toEqual(['sw']);
     expect(r.steps[0].success).toBe(false);
   });
   it('every set done is a success', () => {
+    let s = tick(start(ruled(), 0), 5000);
+    for (let t = 6000; s.phase !== 'done'; t += 1000) s = advance(s, t);
+    expect(toResult(s, ruled(), 20000).steps.every(x => x.success)).toBe(true);
+  });
+  it('a set short of its reps is a miss', () => {
+    const sq = (): Runsheet => ({ id: 'q', title: 'Squat', items: [{ kind: 'block', id: 'b', name: 'B', repeat: 2, progression: { onSuccessKg: 2.5, deloadPct: 10, failAfter: 3 }, steps: [{ ...makeExercise(EX.bw_squat, { forMode: 'reps', forValue: 5, target: 60 }), id: 'q1' }] }] });
+    let s = tick(start(sq(), 0), 5000);
+    s = advance(s, 20000);
+    s = R.setReps(s, 3);
+    s = advance(s, 40000);
+    expect(toResult(s, sq(), 40000).steps[0]).toMatchObject({ reps: [5, 3], success: false });
+  });
+  it('a step with no progression rule says nothing about success', () => {
     let s = tick(start(interval(), 0), 5000);
     for (let t = 6000; s.phase !== 'done'; t += 1000) s = advance(s, t);
-    expect(toResult(s, interval(), 20000).steps.every(x => x.success)).toBe(true);
+    expect(toResult(s, interval(), 20000).steps.map(x => x.success)).toEqual([undefined, undefined]);
   });
 });
 
@@ -717,6 +731,44 @@ describe('emom', () => {
 });
 
 describe('previous step', () => {
+  const two = (cap?: number): Runsheet => ({
+    id: 'two',
+    title: 'Two for time',
+    items: [
+      { kind: 'block', id: 'a', name: 'A', mode: 'fortime', repeat: 1, ...(cap ? { timeCapSec: cap } : {}), steps: [{ ...makeExercise(EX.bw_pullup, { forMode: 'reps', forValue: 5 }), id: 'pa' }] },
+      { kind: 'block', id: 'b', name: 'B', mode: 'fortime', repeat: 1, steps: [{ ...makeExercise(EX.bw_pushup, { forMode: 'reps', forValue: 10 }), id: 'pb' }] },
+    ],
+  });
+  it('back and forth across blocks counts the time once', () => {
+    let s = tick(start(two(), 0), 5000); // A from 5 s
+    s = advance(s, 65000); // A done at 65 s, parked at B's gate
+    s = R.startBlock(s, 65000);
+    s = R.back(s, 95000); // 30 s into B, back to A
+    expect(s.i).toBe(0);
+    s = advance(s, 100000);
+    s = R.startBlock(s, 100000);
+    s = advance(s, 130000);
+    expect(s.phase).toBe('done');
+    expect(toResult(s, two(), 130000).score).toBe(125);
+  });
+  it('back at a gate does not reopen a capped block whose cap has passed', () => {
+    let s = tick(start(two(60), 0), 5000);
+    s = advance(s, 20000); // A done, parked at B's gate
+    expect(s.phase).toBe('ready');
+    const back = R.back(s, 100000); // A's cap ran out at 65 s
+    expect(back.i).toBe(s.i);
+    expect(back.phase).toBe('ready');
+    expect(back.actuals[s.slots[0].id]?.doneAt).toBe(20000);
+    expect(toResult(back, two(60), 100000).steps.map(x => x.stepId)).toEqual(['pa']);
+  });
+  it('back at a gate into a capped block with time left reopens its last set', () => {
+    let s = tick(start(two(60), 0), 5000);
+    s = advance(s, 20000);
+    s = R.back(s, 30000);
+    expect(s.i).toBe(0);
+    expect(s.phase).toBe('running');
+    expect(s.actuals[s.slots[0].id]?.doneAt).toBeUndefined();
+  });
   it('going back un-logs the step, so an amrap round is not counted twice', () => {
     let s = tick(start(cindy(), 0), 5000);
     s = advance(s, 10000);

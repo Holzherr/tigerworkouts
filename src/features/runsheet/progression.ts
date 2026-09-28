@@ -131,7 +131,8 @@ export const workingLoad = (res: Pick<StepResult, 'target' | 'sets'>): number | 
   return sets.filter(x => x.type !== 'drop' && x.type !== 'warmup' && x.load !== undefined).at(-1)?.load ?? res.target;
 };
 
-/** Consecutive failures per exercise key, from the most recent sessions of this runsheet. */
+/** Consecutive failures per exercise key, from the most recent sessions of this runsheet. A deload
+ * falls on every `failAfter`-th miss of the streak, so misses after one count again from it. */
 export const failStreak = (history: SessionResult[], exerciseKey: string): number => {
   let n = 0;
   for (const h of [...history].sort((a, b) => b.startedAt.localeCompare(a.startedAt))) {
@@ -187,8 +188,10 @@ export const nextLoads = (r: Runsheet, last: SessionResult, history: SessionResu
     } else if (!res.success && rule.deloadPct && rule.failAfter) {
       // `last` is the result sheet's copy of a row already in `history`: match it by id, not identity.
       const streak = failStreak([last, ...history.filter(h => !sameSession(h, last))], key);
-      if (streak >= rule.failAfter) out.push({ exerciseKey: key, name: s.exercise.name, from, to: snapToKit(from * (1 - rule.deloadPct / 100), s.exercise, kit), reason: `${streak} failed sessions: deload ${rule.deloadPct}%` });
-      else out.push({ exerciseKey: key, name: s.exercise.name, from, to: from, reason: `missed reps (${streak}/${rule.failAfter}): repeat the weight` });
+      // The session after a deload starts at the lighter weight; its misses count towards the next.
+      const since = streak % rule.failAfter;
+      if (streak > 0 && since === 0) out.push({ exerciseKey: key, name: s.exercise.name, from, to: snapToKit(from * (1 - rule.deloadPct / 100), s.exercise, kit), reason: `${rule.failAfter} failed sessions: deload ${rule.deloadPct}%` });
+      else out.push({ exerciseKey: key, name: s.exercise.name, from, to: from, reason: `missed reps (${since}/${rule.failAfter}): repeat the weight` });
     }
   }
   return out;

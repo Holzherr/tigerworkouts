@@ -355,7 +355,22 @@ export const resume = (s: RunState, now: number): RunState => {
 export const back = (s: RunState, now: number): RunState => {
   if (s.i <= 0 || s.phase === 'lead' || s.phase === 'done') return s;
   const prev = s.slots[s.i - 1];
-  return enter(prev.kind === 'work' ? reopenSet(s, prev.id) : s, s.i - 1, now);
+  // A capped block whose cap has passed is over: its set is not reopened, since the block would be
+  // skipped at once and the next one started without its gate.
+  const began = prev.blockId !== undefined ? s.blockStart[prev.blockId] : undefined;
+  if (prev.capSec && began !== undefined && prev.blockId !== current(s)?.blockId && (now - began) / 1000 >= prev.capSec) return s;
+  const out = enter(prev.kind === 'work' ? reopenSet(s, prev.id) : s, s.i - 1, now);
+  const from = s.slots[s.i]?.part;
+  if (from === undefined || prev.part >= from) return out;
+  // Back into the part before: it is open again and the part left has not begun, so a for-time
+  // score counts the time since once, in the part gone back to.
+  const partAt = { ...out.partAt };
+  const partOut = { ...out.partOut };
+  const blockStart = { ...out.blockStart };
+  for (const k of Object.keys(partOut)) if (Number(k) >= prev.part) delete partOut[Number(k)];
+  for (const k of Object.keys(partAt)) if (Number(k) > prev.part) delete partAt[Number(k)];
+  for (const sl of out.slots) if (sl.part > prev.part && sl.blockId !== undefined) delete blockStart[sl.blockId];
+  return { ...out, partAt, partOut, blockStart };
 };
 
 /**
@@ -689,6 +704,9 @@ export const toResult = (s: RunState, r: Runsheet, now: number): SessionResult =
   const type = scoreType(r);
   const durationSec = Math.round(elapsed(s, now));
   const steps = new Map<string, StepResult>();
+  // Success feeds the progression rules, so only a step under a rule has one: an unrelated workout
+  // doing the same lift must not break its fail streak.
+  const ruled = (slot: Slot) => (r.items.find((i): i is Block => i.kind === 'block' && i.id === slot.blockId)?.progression ?? r.progression) !== undefined;
   for (const [idx, slot] of s.slots.entries()) {
     if (slot.kind !== 'work' || slot.step.kind !== 'exercise') continue;
     const a = s.actuals[slot.id];
@@ -709,14 +727,17 @@ export const toResult = (s: RunState, r: Runsheet, now: number): SessionResult =
     // `target` and `reps` are for readers from before per-set rows: a warm-up is not the load
     // worked at and its reps are not work, so they stay out of both.
     const warm = type === 'warmup';
-    steps.set(key, { stepId: slot.step.id, exerciseKey: slot.step.exercise.key, target: warm ? (prev?.target ?? target) : target, ...(incline !== undefined ? { incline } : {}), reps: [...(prev?.reps ?? []), ...(reps !== undefined && !warm ? [reps] : [])], success: prev?.success ?? true, sets: [...(prev?.sets ?? []), set] });
+    // A working set short of its prescribed reps is a miss.
+    const short = !warm && reps !== undefined && slot.step.forMode === 'reps' && reps < slot.step.forValue;
+    const success = ruled(slot) ? (prev?.success ?? true) && !short : undefined;
+    steps.set(key, { stepId: slot.step.id, exerciseKey: slot.step.exercise.key, target: warm ? (prev?.target ?? target) : target, ...(incline !== undefined ? { incline } : {}), reps: [...(prev?.reps ?? []), ...(reps !== undefined && !warm ? [reps] : [])], ...(success !== undefined ? { success } : {}), sets: [...(prev?.sets ?? []), set] });
   }
   // A set of the step left undone (skipped, never reached) is a missed session for the progression
   // rules, not a success. An AMRAP's rounds are a guess, so its undone ones say nothing.
   for (const [idx, slot] of s.slots.entries()) {
     if (slot.kind !== 'work' || slot.step.kind !== 'exercise' || slot.mode === 'amrap' || s.actuals[slot.id]?.doneAt || typeAt(s, idx) === 'warmup') continue;
     const row = steps.get(`${slot.step.id}|${slot.step.exercise.key}`);
-    if (row) row.success = false;
+    if (row && row.success !== undefined) row.success = false;
   }
   let score: number | undefined;
   if (type === 'time') score = timeScore(s, now) ?? durationSec;

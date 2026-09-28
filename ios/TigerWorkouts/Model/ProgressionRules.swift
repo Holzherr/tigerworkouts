@@ -1,7 +1,8 @@
 import Foundation
 
 /// A program's load rules applied to the next session: +`onSuccessKg` after a clean session, the
-/// same weight after a miss, the deload after `failAfter` misses in a row. The web's result sheet
+/// same weight after a miss, the deload after `failAfter` misses in a row (and again after as many
+/// more). The web's result sheet
 /// shows these as "next time"; this is where they take effect, on both apps. The port of
 /// `workingLoad`, `failStreak`, the load half of `nextLoads` and `progressed` in progression.ts.
 enum ProgressionRules {
@@ -32,8 +33,11 @@ enum ProgressionRules {
             let up = Plates.snap(from + add, step.exercise, kit, .up)
             return up > from ? up : (Plates.nextUp(from, step.exercise, kit) ?? from)
         }
-        if !ok, let pct = rule.deloadPct, let after = rule.failAfter {
-            return failStreak(history, exerciseKey: step.exercise.key) >= after
+        if !ok, let pct = rule.deloadPct, let after = rule.failAfter, after > 0 {
+            // A deload falls on every `failAfter`-th miss of the streak: the session after one
+            // starts at the lighter weight, and its misses count towards the next.
+            let streak = failStreak(history, exerciseKey: step.exercise.key)
+            return streak > 0 && streak % after == 0
                 ? Plates.snap(from * (1 - pct / 100), step.exercise, kit)
                 : from
         }

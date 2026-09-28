@@ -106,8 +106,8 @@ struct TimedRecordsTests {
 
     @Test("editing a set works target and reps out again, and every reader sees it")
     func edit() {
-        let r = EditSets.edit(logged, row: "a|bench", index: 2) { $0.load = 62.5; $0.reps = 6 }
-        #expect(r.steps[0].target == 62.5 && r.steps[0].reps == [8, 6] && r.steps[0].success == true)
+        let r = EditSets.edit(logged, row: "a|bench", index: 2, plan: 8) { $0.load = 62.5; $0.reps = 6 }
+        #expect(r.steps[0].target == 62.5 && r.steps[0].reps == [8, 6] && r.steps[0].success == false)
         #expect(Logbook.records([r], exerciseKey: "bench").heaviest?.value == 62.5)
         let t = EditSets.edit(logged, row: "a|bench", index: 0) { $0.type = .normal }
         #expect(t.steps[0].sets?[0].type == nil && t.steps[0].reps == [10, 8, 8])
@@ -115,5 +115,16 @@ struct TimedRecordsTests {
         #expect(m.steps[1].sets == [set(meters: 480)])
         let o = EditSets.edit(logged, row: "o|squat", index: 1) { $0.reps = 4 }
         #expect(o.steps[2].sets == [set(load: 80, reps: 5), set(load: 80, reps: 4)] && o.steps[2].reps == [5, 4])
+    }
+
+    @Test("reps edited below the plan make the row a miss, and back up to it a success")
+    func editSuccess() {
+        let miss = EditSets.edit(logged, row: "a|bench", index: 1, plan: 8) { $0.reps = 6 }
+        #expect(miss.steps[0].success == false)
+        #expect(EditSets.edit(miss, row: "a|bench", index: 1, plan: 8) { $0.reps = 8 }.steps[0].success == true)
+        #expect(EditSets.edit(logged, row: "a|bench", index: 1, plan: 8) { $0.load = 65 }.steps[0].success == true)
+        #expect(EditSets.edit(logged, row: "a|bench", index: 1) { $0.reps = 7 }.steps[0].success == false)
+        #expect(EditSets.edit(logged, row: "a|bench", index: 1) { $0.reps = 9 }.steps[0].success == true)
+        #expect(EditSets.edit(logged, row: "o|squat", index: 1) { $0.reps = 4 }.steps[2].success == nil)
     }
 }

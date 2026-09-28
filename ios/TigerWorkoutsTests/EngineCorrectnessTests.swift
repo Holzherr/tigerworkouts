@@ -7,29 +7,60 @@ import UIKit
 /// 'emom' and 'previous step' in `runner.test.ts`, and 'ghost on the block clock' in `pace.test.ts`.
 @Suite("only what was done is logged")
 struct LoggedOnlyWhatWasDoneTests {
+    static func ruled() -> Runsheet {
+        var r = Fixtures.interval()
+        r.progression = Progression(onSuccessKg: 2.5, deloadPct: 10, failAfter: 3)
+        return r
+    }
+
     @Test("a step with sets left undone is not a success")
     func undoneIsMissed() {
-        var s = Runner.tick(Runner.start(Fixtures.interval(), now: 0), now: 5_000)
+        var s = Runner.tick(Runner.start(Self.ruled(), now: 0), now: 5_000)
         s = Runner.advance(s, now: 20_000)
         var t: Double = 21_000
         while s.phase != .done {
             s = Runner.advance(s, now: t, skipped: true)
             t += 1_000
         }
-        let r = Runner.toResult(s, Fixtures.interval(), now: 40_000)
+        let r = Runner.toResult(s, Self.ruled(), now: 40_000)
         #expect(r.steps.map(\.stepId) == ["sw"])
         #expect(r.steps.first?.success == false)
     }
 
     @Test("every set done is a success")
     func allDone() {
+        var s = Runner.tick(Runner.start(Self.ruled(), now: 0), now: 5_000)
+        var t: Double = 6_000
+        while s.phase != .done {
+            s = Runner.advance(s, now: t)
+            t += 1_000
+        }
+        #expect(Runner.toResult(s, Self.ruled(), now: 20_000).steps.allSatisfy { $0.success == true })
+    }
+
+    @Test("a set short of its reps is a miss")
+    func shortIsMissed() {
+        var b = Block(id: "b", name: "B", repeatCount: 2, steps: [Fixtures.work("q1", Fixtures.squat, target: 60, forMode: .reps, forValue: 5)])
+        b.progression = Progression(onSuccessKg: 2.5, deloadPct: 10, failAfter: 3)
+        let r = Runsheet(id: "q", title: "Squat", items: [.block(b)])
+        var s = Runner.tick(Runner.start(r, now: 0), now: 5_000)
+        s = Runner.advance(s, now: 20_000)
+        s = Runner.setReps(s, reps: 3)
+        s = Runner.advance(s, now: 40_000)
+        let row = Runner.toResult(s, r, now: 40_000).steps[0]
+        #expect(row.reps == [5, 3])
+        #expect(row.success == false)
+    }
+
+    @Test("a step with no progression rule says nothing about success")
+    func unruledHasNoSuccess() {
         var s = Runner.tick(Runner.start(Fixtures.interval(), now: 0), now: 5_000)
         var t: Double = 6_000
         while s.phase != .done {
             s = Runner.advance(s, now: t)
             t += 1_000
         }
-        #expect(Runner.toResult(s, Fixtures.interval(), now: 20_000).steps.allSatisfy { $0.success == true })
+        #expect(Runner.toResult(s, Fixtures.interval(), now: 20_000).steps.map(\.success) == [nil, nil])
     }
 }
 
@@ -178,6 +209,49 @@ struct EmomTests {
 
 @Suite("previous step")
 struct PreviousStepTests {
+    static func two(cap: Double? = nil) -> Runsheet {
+        Runsheet(id: "two", title: "Two for time", items: [
+            .block(Block(id: "a", name: "A", repeatCount: 1, mode: .fortime, steps: [Fixtures.work("pa", Fixtures.pullup, forMode: .reps, forValue: 5)], timeCapSec: cap)),
+            .block(Block(id: "b", name: "B", repeatCount: 1, mode: .fortime, steps: [Fixtures.work("pb", Fixtures.pushup, forMode: .reps, forValue: 10)])),
+        ])
+    }
+
+    @Test("back and forth across blocks counts the time once")
+    func backAcrossBlocks() {
+        var s = Runner.tick(Runner.start(Self.two(), now: 0), now: 5_000)
+        s = Runner.advance(s, now: 65_000)
+        s = Runner.startBlock(s, now: 65_000)
+        s = Runner.back(s, now: 95_000)
+        #expect(s.i == 0)
+        s = Runner.advance(s, now: 100_000)
+        s = Runner.startBlock(s, now: 100_000)
+        s = Runner.advance(s, now: 130_000)
+        #expect(s.phase == .done)
+        #expect(Runner.toResult(s, Self.two(), now: 130_000).score == 125)
+    }
+
+    @Test("back at a gate does not reopen a capped block whose cap has passed")
+    func backPastCap() {
+        var s = Runner.tick(Runner.start(Self.two(cap: 60), now: 0), now: 5_000)
+        s = Runner.advance(s, now: 20_000)
+        #expect(s.phase == .ready)
+        let back = Runner.back(s, now: 100_000)
+        #expect(back.i == s.i)
+        #expect(back.phase == .ready)
+        #expect(back.actuals[s.slots[0].id]?.doneAt == 20_000)
+        #expect(Runner.toResult(back, Self.two(cap: 60), now: 100_000).steps.map(\.stepId) == ["pa"])
+    }
+
+    @Test("back at a gate into a capped block with time left reopens its last set")
+    func backBeforeCap() {
+        var s = Runner.tick(Runner.start(Self.two(cap: 60), now: 0), now: 5_000)
+        s = Runner.advance(s, now: 20_000)
+        s = Runner.back(s, now: 30_000)
+        #expect(s.i == 0)
+        #expect(s.phase == .running)
+        #expect(s.actuals[s.slots[0].id]?.doneAt == nil)
+    }
+
     @Test("going back un-logs the step, so an amrap round is not counted twice")
     func backUnlogs() {
         var s = Runner.tick(Runner.start(Fixtures.cindy(), now: 0), now: 5_000)

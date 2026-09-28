@@ -75,6 +75,8 @@ struct RoundTimesCard: View {
 /// Each change is saved and synced like any other edit to the session. Follows `logged-sets.tsx`.
 struct LoggedSetsCard: View {
     let session: SessionResult
+    /// The workout the session ran, for the reps each step prescribed: a reps edit below them is a miss.
+    var runsheet: Runsheet? = nil
     var onEdit: (SessionResult) -> Void
 
     @State private var editing = false
@@ -217,7 +219,7 @@ struct LoggedSetsCard: View {
                             "–",
                             value: Binding(
                                 get: { Self.value(x, f) },
-                                set: { v in onEdit(EditSets.edit(session, row: step.id, index: i) { Self.set(&$0, f, v) }) }
+                                set: { v in onEdit(EditSets.edit(session, row: step.id, index: i, plan: EditSets.plannedReps(runsheet, stepId: step.stepId)) { Self.set(&$0, f, v) }) }
                             ),
                             format: .number
                         )

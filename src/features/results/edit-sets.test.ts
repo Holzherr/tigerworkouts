@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { SessionResult } from '@/features/runsheet/progression';
-import { editSet, withRowLoad } from './edit-sets';
+import { editSet, plannedReps, withRowLoad } from './edit-sets';
 import { records } from './logbook';
 import { lastUsed } from '@/features/runsheet/last-used';
 
@@ -17,8 +17,8 @@ const result = (): SessionResult => ({
 
 describe('editing logged sets', () => {
   it('changes one set and works target and reps out again', () => {
-    const r = editSet(result(), 'a|bench', 2, { load: 62.5, reps: 6 });
-    expect(r.steps[0]).toMatchObject({ target: 62.5, reps: [8, 6], success: true });
+    const r = editSet(result(), 'a|bench', 2, { load: 62.5, reps: 6 }, 8);
+    expect(r.steps[0]).toMatchObject({ target: 62.5, reps: [8, 6], success: false });
     expect(r.steps[0].sets?.[2]).toEqual({ load: 62.5, reps: 6 });
     expect(records([r], 'bench').heaviest?.value).toBe(62.5);
   });
@@ -33,6 +33,17 @@ describe('editing logged sets', () => {
     const r = editSet(result(), 'o|squat', 1, { reps: 4 });
     expect(r.steps[2]).toMatchObject({ target: 80, reps: [5, 4], sets: [{ load: 80, reps: 5 }, { load: 80, reps: 4 }] });
   });
+  it('reps edited below the plan make the row a miss, and back up to it a success', () => {
+    const miss = editSet(result(), 'a|bench', 1, { reps: 6 }, 8);
+    expect(miss.steps[0].success).toBe(false);
+    expect(editSet(miss, 'a|bench', 1, { reps: 8 }, 8).steps[0].success).toBe(true);
+    expect(editSet(result(), 'a|bench', 1, { load: 65 }, 8).steps[0].success).toBe(true);
+  });
+  it('without a plan, fewer reps than logged is a miss', () => {
+    expect(editSet(result(), 'a|bench', 1, { reps: 7 }).steps[0].success).toBe(false);
+    expect(editSet(result(), 'a|bench', 1, { reps: 9 }).steps[0].success).toBe(true);
+    expect(editSet(result(), 'o|squat', 1, { reps: 4 }).steps[2].success).toBeUndefined();
+  });
   it('next session starts from the edited load', () => {
     const r = editSet(result(), 'a|bench', 2, { load: 65 });
     expect(lastUsed([r]).get('ex:bench')?.target).toBe(65);
@@ -42,5 +53,17 @@ describe('editing logged sets', () => {
     expect(row.sets?.map(x => x.load)).toEqual([40, 62.5, 62.5]);
     expect(row.target).toBe(62.5);
     expect(withRowLoad({ stepId: 'x', exerciseKey: 'x' }, 20)).toEqual({ stepId: 'x', exerciseKey: 'x', target: 20 });
+  });
+});
+
+describe('plannedReps', () => {
+  it('is the reps every set prescribes, and nothing for a ladder or a per-set plan', () => {
+    const ex = { key: 'bench', name: 'Bench', unit: 'kg' as const };
+    const step = (id: string, extra = {}) => ({ kind: 'exercise' as const, id, exercise: ex, forMode: 'reps' as const, forValue: 5, ...extra });
+    const r = { id: 'w', title: 'W', items: [step('a'), { kind: 'block' as const, id: 'b', name: 'B', repeat: 3, steps: [step('p', { sets: [{ reps: 5 }, { reps: 3 }] })] }, { kind: 'block' as const, id: 'l', name: 'L', repeat: 1, mode: 'ladder' as const, ladder: [5, 3], steps: [step('q')] }] };
+    expect(plannedReps(r, 'a')).toBe(5);
+    expect(plannedReps(r, 'p')).toBeUndefined();
+    expect(plannedReps(r, 'q')).toBeUndefined();
+    expect(plannedReps(undefined, 'a')).toBeUndefined();
   });
 });

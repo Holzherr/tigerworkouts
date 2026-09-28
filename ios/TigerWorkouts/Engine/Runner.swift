@@ -493,7 +493,20 @@ enum Runner {
     static func back(_ s: RunState, now: Double) -> RunState {
         guard s.i > 0, s.phase != .lead, s.phase != .done else { return s }
         let prev = s.slots[s.i - 1]
-        return enter(prev.kind == .work ? reopenSet(s, slotId: prev.id) : s, s.i - 1, now)
+        // A capped block whose cap has passed is over: its set is not reopened, since the block
+        // would be skipped at once and the next one started without its gate.
+        if let cap = prev.capSec, let id = prev.blockId, let began = s.blockStart[id], id != current(s)?.blockId,
+           (now - began) / 1000 >= cap { return s }
+        var out = enter(prev.kind == .work ? reopenSet(s, slotId: prev.id) : s, s.i - 1, now)
+        guard s.slots.indices.contains(s.i), prev.part < s.slots[s.i].part else { return out }
+        // Back into the part before: it is open again and the part left has not begun, so a
+        // for-time score counts the time since once, in the part gone back to.
+        out.partOut = out.partOut?.filter { $0.key < prev.part }
+        out.partAt = out.partAt?.filter { $0.key <= prev.part }
+        for sl in out.slots where sl.part > prev.part {
+            if let id = sl.blockId { out.blockStart[id] = nil }
+        }
+        return out
     }
 
     /// Lengthen (or, with a negative `by`, shorten) the rest that is counting down, running or
@@ -906,6 +919,11 @@ enum Runner {
         let durationSec = elapsed(s, now: now).rounded()
         var steps: [String: StepResult] = [:]
         var order: [String] = []
+        // Success feeds the progression rules, so only a step under a rule has one: an unrelated
+        // workout doing the same lift must not break its fail streak.
+        func ruled(_ slot: Slot) -> Bool {
+            (r.items.compactMap(\.asBlock).first { $0.id == slot.blockId }?.progression ?? r.progression) != nil
+        }
 
         for (idx, slot) in s.slots.enumerated() {
             guard slot.kind == .work, let ex = slot.exercise, let a = s.actuals[slot.id], a.doneAt != nil else { continue }
@@ -928,13 +946,15 @@ enum Runner {
             var set = SetResult(reps: done, load: target, at: doneAtSec(s, a), type: type == .normal ? nil : type)
             set.seconds = a.seconds
             if f == .meters { set.meters = amount } else if f == .calories { set.calories = amount }
+            // A working set short of its prescribed reps is a miss.
+            let short = !warm && ex.forMode == .reps && (done.map { $0 < ex.forValue } ?? false)
             steps[key] = StepResult(
                 stepId: ex.id,
                 exerciseKey: ex.exercise.key,
                 target: warm ? (prev?.target ?? target) : target,
                 incline: effectiveIncline(s, idx),
                 reps: reps.isEmpty ? nil : reps,
-                success: prev?.success ?? true,
+                success: ruled(slot) ? (prev?.success ?? true) && !short : nil,
                 sets: (prev?.sets ?? []) + [set]
             )
         }
@@ -944,7 +964,7 @@ enum Runner {
         for (idx, slot) in s.slots.enumerated() {
             guard slot.kind == .work, let ex = slot.exercise, slot.mode != .amrap, s.actuals[slot.id]?.doneAt == nil,
                   typeAt(s, idx) != .warmup else { continue }
-            steps["\(ex.id)|\(ex.exercise.key)"]?.success = false
+            if steps["\(ex.id)|\(ex.exercise.key)"]?.success != nil { steps["\(ex.id)|\(ex.exercise.key)"]?.success = false }
         }
 
         var score: Double?
