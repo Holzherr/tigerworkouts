@@ -829,14 +829,21 @@ export const clearPersisted = () => {
     /* ignore */
   }
 };
-/** The run kept on this device, if it is under six hours old and not done — and, given a workout
- * id, only if it is that workout's. */
-export const loadPersisted = (runsheetId?: string): { state: RunState; savedAt: number } | null => {
+/** A set of work was done: a rest run out says nothing. */
+export const didWork = (s: RunState) => s.slots.some(sl => sl.kind === 'work' && s.actuals[sl.id]?.doneAt !== undefined);
+
+const KEPT_MS = 6 * 3600 * 1000;
+export type Kept = { state: RunState; savedAt: number };
+
+/** The run kept on this device, if it is not done and under six hours old — or older with work done,
+ * which can still be saved — and, given a workout id, only if it is that workout's. */
+export const loadPersisted = (runsheetId?: string): Kept | null => {
   try {
     const r = JSON.parse(localStorage.getItem(KEY) || 'null');
-    if (!r || !(Date.now() - r.savedAt < 6 * 3600 * 1000) || r.phase === 'done') return null;
-    if (runsheetId !== undefined && r.runsheetId !== runsheetId) return null;
+    if (!r || r.phase === 'done') return null;
     const { savedAt, ...state } = r;
+    if (!(Date.now() - savedAt < KEPT_MS) && !didWork(state as RunState)) return null;
+    if (runsheetId !== undefined && r.runsheetId !== runsheetId) return null;
     return { state: state as RunState, savedAt };
   } catch {
     return null;
@@ -845,3 +852,27 @@ export const loadPersisted = (runsheetId?: string): { state: RunState; savedAt: 
 /** A kept run, picked up again: paused at the moment it was last saved, so the time the tab was
  * closed never counts and nothing counts down before you are ready (as on iOS). */
 export const restore = (s: RunState, savedAt: number): RunState => (s.phase === 'running' || s.phase === 'lead' ? pause(s, savedAt) : s);
+
+/** What Start asks about a kept run. Its own workout's can be resumed while under six hours old;
+ * any with a set done can be saved as it stands. Another workout's run with nothing done is not
+ * worth a question: starting writes over it. */
+export interface KeptAsk {
+  kept: Kept;
+  own: boolean;
+  canResume: boolean;
+  canSave: boolean;
+}
+export const keptAsk = (kept: Kept | null, runsheetId: string, now: number): KeptAsk | null => {
+  if (!kept) return null;
+  const own = kept.state.runsheetId === runsheetId;
+  const canResume = own && now - kept.savedAt < KEPT_MS;
+  const canSave = didWork(kept.state);
+  return canResume || canSave ? { kept, own, canResume, canSave } : null;
+};
+
+/** A kept run logged as it stands, without resuming: timed to its last save, not to now. `r` is
+ * its workout, or a stand-in with its id and title when the workout is gone. */
+export const keptResult = (kept: Kept, r: Runsheet): SessionResult => {
+  const done = finish(restore(kept.state, kept.savedAt), kept.savedAt);
+  return { ...toResult(done, r, kept.savedAt), id: sessionId(done) };
+};

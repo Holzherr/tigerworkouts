@@ -91,6 +91,15 @@ const parse = (hash: string): Route => {
 const go = (path: string) => {
   location.hash = path;
 };
+/** Go without leaving the page behind in the history: Back from the result of a finished run must
+ * not land on its timer, which would start the workout again. */
+const goReplace = (path: string) => location.replace(`${location.pathname}${location.search}#${path}`);
+/** A kept run's workout, or a stand-in with its id and title when the workout is gone. */
+const keptSheet = (s: Runner.RunState, lookup: (id: string) => Runsheet | undefined): Runsheet => lookup(s.runsheetId) ?? { id: s.runsheetId, title: s.title, items: [] };
+const ago = (ms: number) => {
+  const m = Math.max(1, Math.round(ms / 60000));
+  return m < 90 ? `${m} min ago` : `${Math.round(m / 60)} h ago`;
+};
 const wid = (r: Runsheet) => r.id ?? r.title;
 const back = (fallback: string) => (history.length > 1 ? history.back() : go(fallback));
 const exerciseLink = (key: string) => `/x/${encodeURIComponent(key)}`;
@@ -113,6 +122,9 @@ export default function App() {
       const r = parse(location.hash);
       setRoute(r);
       if (r.name === 'tab') setFrom(undefined);
+      // What the timer handed the result sheet belongs to that visit: left, it must not stand in
+      // for a later one (the row itself was logged when the run ended).
+      if (r.name !== 'result') setPending(null);
     };
     addEventListener('hashchange', on);
     return () => removeEventListener('hashchange', on);
@@ -347,7 +359,7 @@ export default function App() {
     // a clean session, the deload after repeated misses), then % of a training max and × bodyweight
     // worked out, so the timer shows and logs a weight for every loaded set.
     const run = resolveLoads(progressed(withLastUsed(resolveRefs(r, lookup), st.results), st.results, st.trainingMaxes, st.equipment), st.trainingMaxes, st.bodyweightKg, st.equipment);
-    return <RunRoute key={route.id} runsheet={run} results={st.results} intent={intent} equipment={st.equipment} resume={resumeFor === route.id} onLog={res => act.addResult({ ...res, runsheetId: wid(r) })} onFinish={res => (setResumeFor(null), setPending({ ...res, runsheetId: wid(r) }), go(`/result/${encodeURIComponent(route.id)}`))} onExit={() => (setResumeFor(null), Runner.clearPersisted(), go(`/w/${encodeURIComponent(route.id)}`))} />;
+    return <RunRoute key={route.id} runsheet={run} results={st.results} intent={intent} equipment={st.equipment} resume={resumeFor === route.id} lookup={lookup} onLogKept={act.addResult} onResumeKept={id => (setDrafted(null), setResumeFor(id), goReplace(`/do/${encodeURIComponent(id)}`))} onLog={res => act.addResult({ ...res, runsheetId: wid(r) })} onFinish={res => (setResumeFor(null), setPending({ ...res, runsheetId: wid(r) }), goReplace(`/result/${encodeURIComponent(route.id)}`))} onExit={() => (setResumeFor(null), Runner.clearPersisted(), go(`/w/${encodeURIComponent(route.id)}`))} />;
   }
   if (route.name === 'session') {
     const res = st.results.find(x => x.id === route.id);
@@ -397,7 +409,7 @@ export default function App() {
             if (logged?.id) act.deleteResult(logged.id);
             setPending(null);
             setDrafted(null);
-            go(`/w/${encodeURIComponent(route.id)}`);
+            goReplace(`/w/${encodeURIComponent(route.id)}`);
           }}
           onSave={(res, next) => {
             act.addResult({ ...res, runsheetId: wid(r) });
@@ -407,7 +419,7 @@ export default function App() {
             setDrafted(null);
             setPending(null);
             say('Workout saved');
-            go('/history');
+            goReplace('/history');
           }}
         />
         {usesRelativeLoads(r) && (
@@ -538,10 +550,27 @@ export default function App() {
     );
   }
   const initialTab: DiscoverTab = sub === 'search' ? 'search' : sub === 'foryou' ? 'recommended' : 'saved';
-  const saved = Runner.loadPersisted()?.state;
+  const kept = Runner.loadPersisted();
+  const saved = kept?.state;
+  // A run that cannot be resumed (its workout gone, or left more than six hours) can still be saved.
+  const resumable = !!kept && byId.has(kept.state.runsheetId) && Date.now() - kept.savedAt < 6 * 3600 * 1000;
   const above = (
     <>
-      {saved && byId.has(saved.runsheetId) && (
+      {kept && !resumable && Runner.didWork(kept.state) && (
+        <div className="flex w-full items-center gap-3 rounded-card border border-brand-line bg-brand-soft px-3 py-2.5 text-left">
+          <div className="min-w-0 flex-1">
+            <div className="text-[14px] font-bold">{kept.state.title} was left unfinished</div>
+            <div className="text-[12px] text-muted">Step {kept.state.i + 1} of {kept.state.slots.length}, {ago(Date.now() - kept.savedAt)}</div>
+          </div>
+          <Button variant="quiet" size="inline" onClick={() => { act.addResult(Runner.keptResult(kept, keptSheet(kept.state, lookup))); Runner.clearPersisted(); say('Saved to History'); }}>
+            Save what I did
+          </Button>
+          <Button variant="quiet" size="inline" onClick={() => { Runner.clearPersisted(); say('Discarded'); }}>
+            Discard
+          </Button>
+        </div>
+      )}
+      {saved && resumable && (
         <button type="button" onClick={() => (setDrafted(null), setResumeFor(saved.runsheetId), go(`/do/${encodeURIComponent(saved.runsheetId)}`))} className="flex w-full items-center gap-3 rounded-card border border-brand-line bg-brand-soft px-3 py-2.5 text-left">
           <div className="min-w-0 flex-1">
             <div className="text-[14px] font-bold">Resume {saved.title}</div>
@@ -590,40 +619,49 @@ export default function App() {
 type RunRouteProps = { runsheet: Runsheet; results: SessionResult[]; intent: Intent; equipment?: Equipment; onLog: (r: SessionResult) => void; onFinish: (r: SessionResult) => void; onExit: () => void };
 
 /**
- * A run of this workout kept on the device (a reload, a closed tab) is asked about, not picked up
- * silently: Start and Edit & start mean a new session, and the kept one may be hours old. Resumed,
- * it comes back paused where it was left, so the time away is not workout time. A run of another
- * workout is never offered here. The Discover card's Resume (`resume`) has asked already.
+ * A run kept on the device (a reload, a closed tab) is asked about, not picked up silently: Start
+ * and Edit & start mean a new session, and the kept one may be hours old. Resumed, it comes back
+ * paused where it was left, so the time away is not workout time. A run of another workout is
+ * never written over unasked either (iOS asks too): it can be resumed, saved as it stands, or
+ * dropped. The Discover card's Resume (`resume`) has asked already.
  */
-const RunRoute = ({ resume, ...props }: RunRouteProps & { resume?: boolean }) => {
-  const [kept] = useState(() => Runner.loadPersisted(props.runsheet.id ?? props.runsheet.title));
-  const [from, setFrom] = useState<Runner.RunState | 'fresh' | null>(() => (!kept ? 'fresh' : resume ? Runner.restore(kept.state, kept.savedAt) : null));
+type KeptProps = { resume?: boolean; lookup: (id: string) => Runsheet | undefined; onLogKept: (r: SessionResult) => void; onResumeKept: (id: string) => void };
+const RunRoute = ({ resume, lookup, onLogKept, onResumeKept, ...props }: RunRouteProps & KeptProps) => {
+  const [ask] = useState(() => Runner.keptAsk(Runner.loadPersisted(), props.runsheet.id ?? props.runsheet.title, Date.now()));
+  const [from, setFrom] = useState<Runner.RunState | 'fresh' | null>(() => (!ask ? 'fresh' : resume && ask.canResume ? Runner.restore(ask.kept.state, ask.kept.savedAt) : null));
   if (from) return <RunSession {...props} from={from === 'fresh' ? undefined : from} />;
-  const partial = kept && Object.values(kept.state.actuals).some(a => a.doneAt !== undefined);
+  const { kept, own, canResume, canSave } = ask!;
+  const other = own ? undefined : lookup(kept.state.runsheetId);
   const saveWhatWasDone = () => {
-    const done = Runner.finish(Runner.restore(kept!.state, kept!.savedAt), kept!.savedAt);
-    const res = { ...Runner.toResult(done, props.runsheet, kept!.savedAt), id: Runner.sessionId(done) };
-    props.onLog(res);
+    const res = Runner.keptResult(kept, own ? props.runsheet : keptSheet(kept.state, lookup));
     Runner.clearPersisted();
+    if (!own) return (onLogKept(res), setFrom('fresh'));
+    props.onLog(res);
     props.onFinish(res);
   };
+  const where = `left at step ${Math.min(kept.state.i + 1, kept.state.slots.length)} of ${kept.state.slots.length}, ${ago(Date.now() - kept.savedAt)}`;
   return (
     <div className="flex h-dvh flex-col items-center justify-center gap-3 bg-ink px-6 text-center text-white">
-      <div className="text-[22px] font-extrabold">Pick up where you left off?</div>
-      <div className="text-[14px] text-white/70">
-        {props.runsheet.title} was left at step {Math.min(kept!.state.i + 1, kept!.state.slots.length)} of {kept!.state.slots.length}, {Math.max(1, Math.round((Date.now() - kept!.savedAt) / 60000))} min ago.
-      </div>
+      <div className="text-[22px] font-extrabold">{own ? 'Pick up where you left off?' : `${kept.state.title} is not finished`}</div>
+      <div className="text-[14px] text-white/70">{own ? `${props.runsheet.title} was ${where}.` : `It was ${where}. Starting ${props.runsheet.title} would lose it.`}</div>
       <div className="mt-2 flex w-full max-w-xs flex-col gap-2">
-        <Button block variant="brand" onClick={() => setFrom(Runner.restore(kept!.state, kept!.savedAt))}>
-          Resume
-        </Button>
-        {partial && (
+        {own && canResume && (
+          <Button block variant="brand" onClick={() => setFrom(Runner.restore(kept.state, kept.savedAt))}>
+            Resume
+          </Button>
+        )}
+        {!own && other && Date.now() - kept.savedAt < 6 * 3600 * 1000 && (
+          <Button block variant="brand" onClick={() => onResumeKept(kept.state.runsheetId)}>
+            Resume {kept.state.title}
+          </Button>
+        )}
+        {canSave && (
           <Button block variant="dark" className="bg-white/10" onClick={saveWhatWasDone}>
-            Save what I did
+            {own ? 'Save what I did' : `Save it, then start ${props.runsheet.title}`}
           </Button>
         )}
         <Button block variant="dark" className="bg-white/10" onClick={() => (Runner.clearPersisted(), setFrom('fresh'))}>
-          Start over
+          {own ? 'Start over' : `Discard it and start ${props.runsheet.title}`}
         </Button>
       </div>
     </div>

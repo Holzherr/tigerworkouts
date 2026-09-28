@@ -794,6 +794,39 @@ describe('a run kept on the device', () => {
     expect(elapsed(resumed, 999999)).toBe(20);
     R.clearPersisted();
   });
+  const oneSetDone = () => advance(tick(start(interval(), 0), 5000), 20000);
+  const keep = (s: R.RunState, savedAt: number) => localStorage.setItem('tiger:run', JSON.stringify({ ...s, savedAt }));
+  it('rests alone are not work done', () => {
+    let s = tick(start(interval(), 0), 5000);
+    s = advance(s, 20000, { skipped: true });
+    s = advance(s, 30000);
+    expect(Object.values(s.actuals).some(a => a.doneAt !== undefined)).toBe(true);
+    expect(R.didWork(s)).toBe(false);
+    expect(R.didWork(oneSetDone())).toBe(true);
+  });
+  it('a run left more than six hours ago comes back only if a set was done, to be saved', () => {
+    keep(oneSetDone(), Date.now() - 7 * 3600 * 1000);
+    expect(R.loadPersisted('i')).not.toBeNull();
+    keep(tick(start(interval(), 0), 5000), Date.now() - 7 * 3600 * 1000);
+    expect(R.loadPersisted('i')).toBeNull();
+    R.clearPersisted();
+  });
+  it('Start asks about a kept run: its own to resume, another workout\'s with work done to save or drop', () => {
+    const now = Date.now();
+    const kept = { state: oneSetDone(), savedAt: now - 60000 };
+    expect(R.keptAsk(kept, 'i', now)).toMatchObject({ own: true, canResume: true, canSave: true });
+    expect(R.keptAsk(kept, 'other', now)).toMatchObject({ own: false, canResume: false, canSave: true });
+    expect(R.keptAsk({ ...kept, savedAt: now - 7 * 3600 * 1000 }, 'i', now)).toMatchObject({ own: true, canResume: false, canSave: true });
+    // Another workout's run with nothing done is not worth a question.
+    expect(R.keptAsk({ state: tick(start(interval(), 0), 5000), savedAt: now }, 'other', now)).toBeNull();
+    expect(R.keptAsk(null, 'i', now)).toBeNull();
+  });
+  it('a kept run saved without resuming logs what was done, under its own workout', () => {
+    const kept = { state: oneSetDone(), savedAt: 30000 };
+    const res = R.keptResult(kept, { id: 'i', title: 'Interval', items: [] });
+    expect(res).toMatchObject({ runsheetId: 'i', title: 'Interval', id: R.sessionId(kept.state), durationSec: 30 });
+    expect(res.steps.map(x => x.stepId)).toEqual(['sw']);
+  });
 });
 
 describe('timed and distance work', () => {
