@@ -37,6 +37,21 @@ struct RecommendTests {
         #expect(r.contains { $0.runsheet.title == "Cindy" })
     }
 
+    @Test("an edited copy of a program day stands in for the day, which is never offered twice")
+    func editedCopyDay() {
+        var mine = w("u-a1", program: ProgramRef(name: "P", day: "1", order: 1), source: src("user", "Me"))
+        mine.copyOf = "a1"
+        let list = [mine] + all
+        // Ran the copy: next is day 2, not the original of the day just done.
+        let r = Recommend.recommend(list, results: [did("u-a1")])
+        #expect(r[0].runsheet.key == "a2" && r[0].reason == "Next in P")
+        #expect(!ids(r).contains("a1"))
+        // Ran day 2: back round to day 1, as the copy.
+        let back = Recommend.recommend(list, results: [did("a2"), did("a1", day: 4)])
+        #expect(back[0].runsheet.key == "u-a1")
+        #expect(!ids(back).contains("a1"))
+    }
+
     @Test("puts the next program day first")
     func programNext() {
         let r = Recommend.recommend(all, results: [did("a1")])
