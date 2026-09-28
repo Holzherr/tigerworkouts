@@ -49,7 +49,7 @@ export const toCsv = (results: SessionResult[], exercise: (key: string) => { nam
     }
     for (const s of r.steps) {
       const ex = exercise(s.exerciseKey);
-      const sets = setsOf(s) as TimedSet[];
+      const sets = setsOf(s, ex.unit) as TimedSet[];
       if (!sets.length) rows.push(line([...head, ex.name, s.exerciseKey, '', '', '', ex.unit ?? '', '', '', '', '', ...tail()]));
       sets.forEach((x, i) => rows.push(line([...head, ex.name, s.exerciseKey, String(i + 1), setTypeWord(x.type), num(x.load), ex.unit ?? '', num(x.reps), num(x.seconds), num(x.meters), num(x.calories), ...tail(x)])));
     }

@@ -68,7 +68,7 @@ export const SessionDetailScreen = ({ result: r, runsheet, exercise, loadDevice,
   }, [loadDevice]);
   const type = runsheet ? scoreType(runsheet) : 'none';
   const dur = r.durationSec ?? (r.activity ? r.activity.minutes * 60 : undefined);
-  const text = [`${r.title ?? r.runsheetId} · ${toLocalInput(r.startedAt).replace('T', ' ')}`, r.scoreText ? `Score: ${r.scoreText}` : '', dur ? `Duration: ${Math.round(dur / 60)} min` : '', ...r.steps.map(s => `- ${exercise(s.exerciseKey).name}: ${setsOf(s).map(x => setLabel(x, exercise(s.exerciseKey).unit)).filter(Boolean).join(', ')}${s.incline !== undefined ? `, incline ${s.incline}` : ''}`), r.rpe ? `Effort: ${r.rpe}/10` : '', r.notes ? `Notes: ${r.notes}` : ''].filter(Boolean).join('\n');
+  const text = [`${r.title ?? r.runsheetId} · ${toLocalInput(r.startedAt).replace('T', ' ')}`, r.scoreText ? `Score: ${r.scoreText}` : '', dur ? `Duration: ${Math.round(dur / 60)} min` : '', ...r.steps.map(s => `- ${exercise(s.exerciseKey).name}: ${setsOf(s, exercise(s.exerciseKey).unit).map(x => setLabel(x, exercise(s.exerciseKey).unit)).filter(Boolean).join(', ')}${s.incline !== undefined ? `, incline ${s.incline}` : ''}`), r.rpe ? `Effort: ${r.rpe}/10` : '', r.notes ? `Notes: ${r.notes}` : ''].filter(Boolean).join('\n');
   // The last time this workout was done, for the round times; and the block names they are under.
   const last = r.activity ? undefined : history.filter(x => x.runsheetId === r.runsheetId && !x.activity && x.startedAt < r.startedAt && x.id !== r.id).sort((a, b) => b.startedAt.localeCompare(a.startedAt))[0];
   const blockName = (id: string) => runsheet?.items.flatMap(i => (i.kind === 'block' && i.id === id ? [i.name] : []))[0];
@@ -126,7 +126,7 @@ export const SessionDetailScreen = ({ result: r, runsheet, exercise, loadDevice,
                       {s.success === false && <Chip size="sm" variant="danger">missed</Chip>}
                       {onExercise && !editing && <ChevronRight className="size-4 shrink-0 text-faint" />}
                     </Head>
-                    <LoggedSets row={s} exercise={ex} editing={editing} onEdit={(i, patch) => onChange({ steps: editSet(r, rowKey(s), i, patch, plannedReps(runsheet, s.stepId)).steps })} />
+                    <LoggedSets row={s} exercise={ex} editing={editing} onEdit={(i, patch) => onChange({ steps: editSet(r, rowKey(s), i, patch, plannedReps(runsheet, s.stepId), ex.unit).steps })} />
                   </div>
                 );
               })}
@@ -148,7 +148,7 @@ export const SessionDetailScreen = ({ result: r, runsheet, exercise, loadDevice,
             <Copy /> Copy
           </Button>
         </div>
-        {sharing && <ShareCardSheet open={sharing} onOpenChange={setSharing} data={shareCardData(r, celebrate(r, history), type, k => exercise(k))} />}
+        {sharing && <ShareCardSheet open={sharing} onOpenChange={setSharing} data={shareCardData(r, celebrate(r, history, undefined, k => exercise(k).unit), type, k => exercise(k))} />}
         <Button variant="danger" block onClick={() => confirm('Delete this session?') && onDelete()}>
           <Trash2 /> Delete session
         </Button>

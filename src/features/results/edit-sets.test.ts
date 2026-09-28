@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { SessionResult } from '@/features/runsheet/progression';
+import type { Runsheet } from '@/features/runsheet/model';
 import { editSet, plannedReps, withRowLoad } from './edit-sets';
 import { records } from './logbook';
 import { lastUsed } from '@/features/runsheet/last-used';
@@ -44,6 +45,10 @@ describe('editing logged sets', () => {
     expect(editSet(result(), 'a|bench', 1, { reps: 9 }).steps[0].success).toBe(true);
     expect(editSet(result(), 'o|squat', 1, { reps: 4 }).steps[2].success).toBeUndefined();
   });
+  it('an old rower row edited with its unit is saved with metres, not a load', () => {
+    const old: SessionResult = { runsheetId: 'w', startedAt: '2026-09-01T10:00:00Z', steps: [{ stepId: 'r', exerciseKey: 'row', target: 500, sets: [{ load: 500 }] }] };
+    expect(editSet(old, 'r|row', 0, { meters: 480 }, undefined, 'm').steps[0]).toEqual({ stepId: 'r', exerciseKey: 'row', sets: [{ meters: 480 }], reps: [] });
+  });
   it('next session starts from the edited load', () => {
     const r = editSet(result(), 'a|bench', 2, { load: 65 });
     expect(lastUsed([r]).get('ex:bench')?.target).toBe(65);
@@ -58,9 +63,9 @@ describe('editing logged sets', () => {
 
 describe('plannedReps', () => {
   it('is the reps every set prescribes, and nothing for a ladder or a per-set plan', () => {
-    const ex = { key: 'bench', name: 'Bench', unit: 'kg' as const };
+    const ex = { key: 'bench', name: 'Bench', unit: 'kg', step: 2.5 };
     const step = (id: string, extra = {}) => ({ kind: 'exercise' as const, id, exercise: ex, forMode: 'reps' as const, forValue: 5, ...extra });
-    const r = { id: 'w', title: 'W', items: [step('a'), { kind: 'block' as const, id: 'b', name: 'B', repeat: 3, steps: [step('p', { sets: [{ reps: 5 }, { reps: 3 }] })] }, { kind: 'block' as const, id: 'l', name: 'L', repeat: 1, mode: 'ladder' as const, ladder: [5, 3], steps: [step('q')] }] };
+    const r: Runsheet = { id: 'w', title: 'W', items: [step('a'), { kind: 'block' as const, id: 'b', name: 'B', repeat: 3, steps: [step('p', { sets: [{ reps: 5 }, { reps: 3 }] })] }, { kind: 'block' as const, id: 'l', name: 'L', repeat: 1, mode: 'ladder' as const, ladder: [5, 3], steps: [step('q')] }] };
     expect(plannedReps(r, 'a')).toBe(5);
     expect(plannedReps(r, 'p')).toBeUndefined();
     expect(plannedReps(r, 'q')).toBeUndefined();

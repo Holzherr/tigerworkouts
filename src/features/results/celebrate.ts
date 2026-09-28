@@ -28,18 +28,19 @@ export interface Celebration {
 const same = (a: SessionResult, b: SessionResult) => (a.id && b.id ? a.id === b.id : a.runsheetId === b.runsheetId && a.startedAt === b.startedAt);
 
 /** Load × reps across every exercise in the session. */
-export const totalVolume = (r: SessionResult): number | undefined => {
-  const vs = r.steps.map(s => sessionVolume({ sets: setsOf(s) })).filter((n): n is number => n !== undefined);
+export const totalVolume = (r: SessionResult, unitOf: (key: string) => string | undefined = () => undefined): number | undefined => {
+  const vs = r.steps.map(s => sessionVolume({ sets: setsOf(s, unitOf(s.exerciseKey)) })).filter((n): n is number => n !== undefined);
   return vs.length ? vs.reduce((a, b) => a + b, 0) : undefined;
 };
 
-/** `all` is every session logged, with or without this one in it. */
-export const celebrate = (result: SessionResult, all: SessionResult[], today = new Date(result.startedAt)): Celebration => {
+/** `all` is every session logged, with or without this one in it. `unitOf` gives an exercise's
+ * unit, for rows that logged metres, seconds or calories as a load. */
+export const celebrate = (result: SessionResult, all: SessionResult[], today = new Date(result.startedAt), unitOf: (key: string) => string | undefined = () => undefined): Celebration => {
   const others = all.filter(r => !same(r, result));
   const before = others.filter(r => r.startedAt < result.startedAt);
   const last = result.activity ? undefined : before.filter(r => r.runsheetId === result.runsheetId && !r.activity).sort((a, b) => b.startedAt.localeCompare(a.startedAt))[0];
-  const volume = totalVolume(result);
-  const lastVolume = last && totalVolume(last);
+  const volume = totalVolume(result, unitOf);
+  const lastVolume = last && totalVolume(last, unitOf);
   const diff = (a?: number, b?: number) => (a !== undefined && b !== undefined ? a - b : undefined);
   const deltas: Celebration['deltas'] = {};
   const score = diff(result.score, last?.score);
@@ -51,7 +52,7 @@ export const celebrate = (result: SessionResult, all: SessionResult[], today = n
   return {
     ordinal: before.length + 1,
     streak: streak([...others.filter(r => r.startedAt <= result.startedAt), result], today),
-    prs: sessionPRs(result, all),
+    prs: sessionPRs(result, all, unitOf),
     rounds: roundPRs(result, all),
     ...(volume !== undefined ? { volume } : {}),
     ...(last ? { last } : {}),

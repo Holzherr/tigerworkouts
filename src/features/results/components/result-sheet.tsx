@@ -83,8 +83,8 @@ export const ResultSheet = ({ runsheet, history = [], allResults = history, trai
     )
   );
   const result: SessionResult = { ...initial, runsheetId: runsheet.id ?? runsheet.title, title: runsheet.title, startedAt: initial?.startedAt ?? startedAt ?? new Date().toISOString(), endedAt: initial?.endedAt ?? new Date().toISOString(), score, scoreText: score !== undefined ? fmtScore(type, score) : undefined, steps: [...Object.values(rows), ...extra], notes: notes || undefined, rpe, startedFrom };
-  const celebration = celebrate(result, allResults);
   const exerciseName = (k: string) => ({ name: LIB[k]?.name ?? k, unit: LIB[k]?.unit });
+  const celebration = celebrate(result, allResults, undefined, k => exerciseSteps(runsheet).find(s => s.exercise.key === k)?.exercise.unit ?? LIB[k]?.unit);
   const next = useMemo(() => nextLoads(runsheet, result, history, trainingMaxes, equipment), [runsheet, result, history, trainingMaxes, equipment]);
   // Targets from history for what the programme rules do not move: the score, loads, reps.
   const targets = useMemo(() => nextTime(runsheet, result, history, intent, next.map(n => n.exerciseKey), equipment), [runsheet, result, history, intent, next, equipment]);

@@ -4,6 +4,7 @@
  * swapped mid-session logs a row per exercise, so the key is what the history follows, not the
  * step. Ported one for one to `ios/TigerWorkouts/Results/Logbook.swift`.
  */
+import { measureOf } from '@/features/runsheet/model';
 import { isWorking, type SessionResult, type SetResult, type StepResult } from '@/features/runsheet/progression';
 
 /** One session of one exercise: every set of it in that session, in order. */
@@ -54,11 +55,28 @@ export interface Records {
   fastest?: Record<string, Rec>;
 }
 
-/** A row's sets. Older results have no per-set rows: their one load and each rep count stand in. */
-export const setsOf = (s: StepResult): SetResult[] => {
-  if (s.sets?.length) return s.sets;
-  if (s.reps?.length) return s.reps.map(reps => ({ reps, ...(s.target !== undefined ? { load: s.target } : {}) }));
-  return s.target !== undefined ? [{ load: s.target }] : [];
+/**
+ * Before 28 Sep 2026 the timer (and the CSV import, for seconds) logged the metres, seconds or
+ * calories of an exercise counted in them as the set's load. Read with the exercise's unit, such a
+ * load is its measure. A set that has the measure already is left as it is, so reading twice is
+ * the same as once. The stored row is not changed.
+ */
+export const measured = (sets: SetResult[], unit: string | undefined): SetResult[] => {
+  const f = measureOf(unit);
+  if (!f) return sets;
+  return sets.map(x => {
+    if (x.load === undefined || x[f] !== undefined) return x;
+    const { load, ...rest } = x;
+    return { ...rest, [f]: load };
+  });
+};
+
+/** A row's sets. Older results have no per-set rows: their one load and each rep count stand in.
+ * With the exercise's unit, a legacy measure logged as a load reads as the measure (`measured`). */
+export const setsOf = (s: StepResult, unit?: string): SetResult[] => {
+  if (s.sets?.length) return measured(s.sets, unit);
+  if (s.reps?.length) return measured(s.reps.map(reps => ({ reps, ...(s.target !== undefined ? { load: s.target } : {}) })), unit);
+  return measured(s.target !== undefined ? [{ load: s.target }] : [], unit);
 };
 
 // A warm-up is logged and shown, but it is never a record, never volume and never a session's best.
@@ -84,13 +102,14 @@ export const e1rm = (x: SetResult): number | undefined => {
   return x.reps === 1 ? x.load! : x.load! * (1 + x.reps! / 30);
 };
 
-/** Every session the exercise was done in, newest first, with each set's PR flag. */
-export const exerciseHistory = (results: SessionResult[], exerciseKey: string): LogSession[] => {
+/** Every session the exercise was done in, newest first, with each set's PR flag. `unit` is the
+ * exercise's, for rows that logged a measure as a load. */
+export const exerciseHistory = (results: SessionResult[], exerciseKey: string, unit?: string): LogSession[] => {
   const out: LogSession[] = [];
   for (const r of [...results].sort((a, b) => a.startedAt.localeCompare(b.startedAt))) {
     const rows = r.steps.filter(s => s.exerciseKey === exerciseKey);
     if (!rows.length) continue;
-    const sets = rows.flatMap(setsOf);
+    const sets = rows.flatMap(x => setsOf(x, unit));
     const inclines = rows.map(s => s.incline).filter((n): n is number => n !== undefined);
     out.push({ id: r.id, runsheetId: r.runsheetId, title: r.title ?? r.activity?.name ?? r.runsheetId, startedAt: r.startedAt, sets, ...(inclines.length ? { incline: Math.max(...inclines) } : {}), prs: [] });
   }
@@ -211,8 +230,8 @@ const addSet = (r: Records, x: SetResult, at: string): Records => {
 const addSession = (r: Records, s: LogSession): Records => ({ ...r, sessions: r.sessions + 1, volume: better(r.volume, sessionVolume(s), s.startedAt) });
 
 /** Heaviest load, best estimated 1RM, most reps in a set and best session volume, each with its date. */
-export const records = (results: SessionResult[], exerciseKey: string): Records => {
-  const history = exerciseHistory(results, exerciseKey).reverse();
+export const records = (results: SessionResult[], exerciseKey: string, unit?: string): Records => {
+  const history = exerciseHistory(results, exerciseKey, unit).reverse();
   let r = empty(kindOf(history));
   for (const s of history) {
     for (const x of s.sets) r = addSet(r, x, s.startedAt);
@@ -297,11 +316,11 @@ const sameSession = (a: SessionResult, b: SessionResult) => (a.id && b.id ? a.id
  * (against everything logged before it), the best one. Sessions after this one are ignored, so an
  * old session keeps the PRs it set at the time. `all` may or may not already hold `result`.
  */
-export const sessionPRs = (result: SessionResult, all: SessionResult[]): SessionPR[] => {
+export const sessionPRs = (result: SessionResult, all: SessionResult[], unitOf: (key: string) => string | undefined = () => undefined): SessionPR[] => {
   const upTo = [...all.filter(r => !sameSession(r, result) && r.startedAt <= result.startedAt), result];
   const out: SessionPR[] = [];
   for (const key of new Set(result.steps.map(s => s.exerciseKey))) {
-    const mine = exerciseHistory(upTo, key).find(s => s.startedAt === result.startedAt && s.runsheetId === result.runsheetId);
+    const mine = exerciseHistory(upTo, key, unitOf(key)).find(s => s.startedAt === result.startedAt && s.runsheetId === result.runsheetId);
     const prs = mine ? mine.sets.filter((_, i) => mine.prs[i]) : [];
     if (!prs.length) continue;
     const score = (x: SetResult) => e1rm(x) ?? x.load ?? x.reps ?? x.meters ?? x.calories ?? x.seconds ?? 0;

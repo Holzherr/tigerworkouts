@@ -85,8 +85,8 @@ const tiles = (r: Records, unit: string, last?: string, done = new Map<string, n
  * a small PR marker.
  */
 export const ExerciseHistoryScreen = ({ exercise: ex, group, results, onBack, onSession, backLabel = 'Back', stall, onDismissStall, onExercise }: ExerciseHistoryScreenProps) => {
-  const history = exerciseHistory(results, ex.key);
-  const rec = records(results, ex.key);
+  const history = exerciseHistory(results, ex.key, ex.unit);
+  const rec = records(results, ex.key, ex.unit);
   const unit = shortUnit(ex.unit);
   const per = paceOver(group);
   const points = chartPoints(history, rec.kind, per);

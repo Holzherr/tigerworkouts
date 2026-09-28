@@ -181,3 +181,28 @@ describe('timed and distance work in the logbook', () => {
     expect(setLabel({ load: 24, seconds: 40 }, 'kg')).toBe('24 kg · 40 s');
   });
 });
+
+describe('rows logged before measures had their own fields', () => {
+  // Before 28 Sep a rower, a plank or a bike logged its metres, seconds or calories as the load.
+  const old = [
+    session('2026-09-01T10:00:00Z', [{ stepId: 'r', exerciseKey: 'row', target: 500, sets: [{ load: 500, at: 120 }] }]),
+    session('2026-09-03T10:00:00Z', [{ stepId: 'p', exerciseKey: 'plank', target: 60 }]),
+    session('2026-09-29T10:00:00Z', [{ stepId: 'r', exerciseKey: 'row', sets: [{ meters: 1000, seconds: 230 }] }]),
+  ];
+  it('read the load as the measure of an exercise counted in m, s or cal', () => {
+    expect(setsOf(old[0].steps[0], 'm')).toEqual([{ meters: 500, at: 120 }]);
+    expect(setsOf(old[1].steps[0], 's')).toEqual([{ seconds: 60 }]);
+    expect(setsOf({ stepId: 'b', exerciseKey: 'bike', reps: [1], target: 20 }, 'cal')).toEqual([{ reps: 1, calories: 20 }]);
+    expect(setsOf(old[0].steps[0], 'kg')).toEqual([{ load: 500, at: 120 }]);
+    // A set that has its measure keeps both as they are.
+    expect(setsOf({ stepId: 'r', exerciseKey: 'row', sets: [{ load: 3, meters: 500 }] }, 'm')).toEqual([{ load: 3, meters: 500 }]);
+  });
+  it('the logbook charts and ranks them by distance, not as a load', () => {
+    const h = exerciseHistory(old, 'row', 'm');
+    expect(kindOf(h)).toBe('pace');
+    expect(h.map(s => s.sets)).toEqual([[{ meters: 1000, seconds: 230 }], [{ meters: 500, at: 120 }]]);
+    expect(records(old, 'row', 'm')).toMatchObject({ kind: 'pace', distance: { value: 1000 } });
+    expect(records(old, 'row', 'm').heaviest).toBeUndefined();
+    expect(records(old, 'plank', 's')).toMatchObject({ kind: 'time', longest: { value: 60 } });
+  });
+});

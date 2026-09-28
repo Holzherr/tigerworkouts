@@ -38,7 +38,7 @@ export interface LoggedSetsProps {
  * measure the row has — load, reps, metres, calories, seconds — under a heading row.
  */
 export const LoggedSets = ({ row, exercise, editing, onEdit }: LoggedSetsProps) => {
-  const sets = setsOf(row);
+  const sets = setsOf(row, exercise.unit);
   if (!sets.length) return null;
   const marks = setMarks(sets.map(x => x.type));
   const unit = shortUnit(exercise.unit);

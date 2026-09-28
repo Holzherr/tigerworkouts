@@ -57,11 +57,11 @@ enum EditSets {
     /// Change one set of one row (keyed as `StepResult.id`). A row from before per-set results gets
     /// its sets written out first. `plan` is the step's prescribed reps, when it prescribes one
     /// number for every set.
-    static func edit(_ result: SessionResult, row key: String, index: Int, plan: Double? = nil, _ change: (inout SetResult) -> Void) -> SessionResult {
+    static func edit(_ result: SessionResult, row key: String, index: Int, plan: Double? = nil, unit: String? = nil, _ change: (inout SetResult) -> Void) -> SessionResult {
         var r = result
         r.steps = r.steps.map { s in
             guard s.id == key else { return s }
-            let before = Logbook.sets(of: s)
+            let before = Logbook.sets(of: s, unit: unit)
             var sets = before
             guard sets.indices.contains(index) else { return s }
             change(&sets[index])

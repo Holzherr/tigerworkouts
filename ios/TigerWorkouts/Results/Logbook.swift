@@ -72,11 +72,34 @@ enum Logbook {
         var id: String { exerciseKey }
     }
 
+    /// Before 28 Sep 2026 the timer (and the CSV import, for seconds) logged the metres, seconds or
+    /// calories of an exercise counted in them as the set's load. Read with the exercise's unit,
+    /// such a load is its measure. A set that has the measure already is left as it is, so reading
+    /// twice is the same as once. The stored row is not changed.
+    static func measured(_ sets: [SetResult], unit: String?) -> [SetResult] {
+        guard let f = Measure.of(unit) else { return sets }
+        return sets.map { x in
+            guard let load = x.load else { return x }
+            var y = x
+            switch f {
+            case .meters: guard x.meters == nil else { return x }; y.meters = load
+            case .seconds: guard x.seconds == nil else { return x }; y.seconds = load
+            case .calories: guard x.calories == nil else { return x }; y.calories = load
+            }
+            y.load = nil
+            return y
+        }
+    }
+
     /// A row's sets. Older results have no per-set rows: their one load and each rep count stand in.
-    static func sets(of s: StepResult) -> [SetResult] {
-        if let sets = s.sets, !sets.isEmpty { return sets }
-        if let reps = s.reps, !reps.isEmpty { return reps.map { SetResult(reps: $0, load: s.target) } }
-        return s.target.map { [SetResult(reps: nil, load: $0)] } ?? []
+    /// A legacy measure logged as a load reads as the measure (`measured`), with the exercise's unit
+    /// from the library unless given.
+    static func sets(of s: StepResult, unit: String? = nil) -> [SetResult] {
+        let raw: [SetResult]
+        if let sets = s.sets, !sets.isEmpty { raw = sets }
+        else if let reps = s.reps, !reps.isEmpty { raw = reps.map { SetResult(reps: $0, load: s.target) } }
+        else { raw = s.target.map { [SetResult(reps: nil, load: $0)] } ?? [] }
+        return measured(raw, unit: unit ?? Library.shared.exercise(s.exerciseKey)?.unit)
     }
 
     // A warm-up is logged and shown, but it is never a record, never volume and never a session's best.
@@ -107,14 +130,14 @@ enum Logbook {
     }
 
     /// Every session the exercise was done in, newest first, with each set's PR flag.
-    static func history(_ results: [SessionResult], exerciseKey: String) -> [Session] {
+    static func history(_ results: [SessionResult], exerciseKey: String, unit: String? = nil) -> [Session] {
         var out: [Session] = []
         for r in results.sorted(by: { $0.startedAt < $1.startedAt }) {
             let rows = r.steps.filter { $0.exerciseKey == exerciseKey }
             guard !rows.isEmpty else { continue }
             out.append(Session(
                 resultId: r.id, runsheetId: r.runsheetId, title: r.displayTitle, startedAt: r.startedAt,
-                sets: rows.flatMap(sets(of:)), incline: rows.compactMap(\.incline).max()
+                sets: rows.flatMap { sets(of: $0, unit: unit) }, incline: rows.compactMap(\.incline).max()
             ))
         }
         // Records as they stood before each set, so a PR marks the set that set it, not today's best.
@@ -208,8 +231,8 @@ enum Logbook {
     }
 
     /// Heaviest load, best estimated 1RM, most reps in a set and best session volume, each with its date.
-    static func records(_ results: [SessionResult], exerciseKey: String) -> Records {
-        let history = history(results, exerciseKey: exerciseKey).reversed()
+    static func records(_ results: [SessionResult], exerciseKey: String, unit: String? = nil) -> Records {
+        let history = history(results, exerciseKey: exerciseKey, unit: unit).reversed()
         var r = Records(kind: kind(Array(history)))
         for s in history {
             for x in s.sets { r = adding(x, at: s.startedAt, to: r) }

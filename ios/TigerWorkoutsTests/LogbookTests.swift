@@ -173,4 +173,39 @@ struct LogbookTests {
         #expect(Logbook.label(set(nil, 12)) == "12 reps")
         #expect(Logbook.label(SetResult()) == "")
     }
+
+    /// Before 28 Sep a rower, a plank or a bike logged its metres, seconds or calories as the load.
+    @Test("rows logged before measures had their own fields read the load as the measure")
+    func legacyMeasures() {
+        var metres = SetResult(reps: nil, load: nil); metres.meters = 500; metres.at = 120
+        #expect(Logbook.sets(of: row("row", target: 500, sets: [SetResult(reps: nil, load: 500, at: 120)]), unit: "m") == [metres])
+        var held = SetResult(); held.seconds = 60
+        #expect(Logbook.sets(of: row("plank", target: 60), unit: "s") == [held])
+        var cal = SetResult(reps: 1, load: nil); cal.calories = 20
+        #expect(Logbook.sets(of: row("bike", target: 20, reps: [1]), unit: "cal") == [cal])
+        #expect(Logbook.sets(of: row("row", sets: [set(500, nil)]), unit: "kg") == [set(500, nil)])
+        var both = set(3, nil); both.meters = 500
+        #expect(Logbook.sets(of: row("row", sets: [both]), unit: "m") == [both])
+
+        var fresh = SetResult(); fresh.meters = 1000; fresh.seconds = 230
+        let old = [
+            session("2026-09-01T10:00:00Z", [row("row", step: "r", target: 500, sets: [SetResult(reps: nil, load: 500, at: 120)])]),
+            session("2026-09-03T10:00:00Z", [row("plank", step: "p", target: 60)]),
+            session("2026-09-29T10:00:00Z", [row("row", step: "r", sets: [fresh])]),
+        ]
+        let h = Logbook.history(old, exerciseKey: "row", unit: "m")
+        #expect(Logbook.kind(h) == .pace)
+        let rec = Logbook.records(old, exerciseKey: "row", unit: "m")
+        #expect(rec.kind == .pace && rec.distance?.value == 1000 && rec.heaviest == nil)
+        let plank = Logbook.records(old, exerciseKey: "plank", unit: "s")
+        #expect(plank.kind == .time && plank.longest?.value == 60)
+    }
+
+    @Test("an old rower row edited with its unit is saved with metres, not a load")
+    func legacyEdit() {
+        let old = session("2026-09-01T10:00:00Z", [row("row", step: "r", target: 500, sets: [set(500, nil)])])
+        let e = EditSets.edit(old, row: "r|row", index: 0, unit: "m") { $0.meters = 480 }
+        var m = SetResult(); m.meters = 480
+        #expect(e.steps[0].sets == [m] && e.steps[0].target == nil)
+    }
 }

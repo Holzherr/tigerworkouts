@@ -61,12 +61,13 @@ export const plannedReps = (r: Runsheet | undefined, stepId: string): number | u
 };
 
 /** Change one set of one row. A row from before per-set results gets its sets written out first.
- * `plan` is the step's prescribed reps, when it prescribes one number for every set. */
-export const editSet = (result: SessionResult, key: string, index: number, patch: SetPatch, plan?: number): SessionResult => ({
+ * `plan` is the step's prescribed reps, when it prescribes one number for every set; `unit` the
+ * exercise's, so a legacy measure logged as a load is saved back as the measure. */
+export const editSet = (result: SessionResult, key: string, index: number, patch: SetPatch, plan?: number, unit?: string): SessionResult => ({
   ...result,
   steps: result.steps.map(s => {
     if (rowKey(s) !== key) return s;
-    const before = setsOf(s);
+    const before = setsOf(s, unit);
     const sets = before.map((x, i) => (i === index ? apply(x, patch) : x));
     if (index >= sets.length) return s;
     const out = withSets(s, sets);

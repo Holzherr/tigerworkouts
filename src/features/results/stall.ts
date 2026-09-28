@@ -97,7 +97,7 @@ const weeksText = (w: number) => (w === 1 ? 'a week' : `${w} weeks`);
  * direction: heavier for fewer reps.
  */
 export const exerciseStall = (results: SessionResult[], exercise: { key: string; name: string; unit: string; step: number }, now: Date, swapFor?: (load: number | undefined) => Swap | undefined): Stall | undefined => {
-  const history = exerciseHistory(results, exercise.key).reverse();
+  const history = exerciseHistory(results, exercise.key, exercise.unit).reverse();
   const kind = kindOf(history);
   // Timed and distance work is not stalled on: a 40 s interval never grows.
   if (!liftKind(kind)) return undefined;
