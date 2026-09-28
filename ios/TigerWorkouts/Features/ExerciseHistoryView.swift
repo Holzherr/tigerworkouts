@@ -8,6 +8,9 @@ struct ExerciseHistoryView: View {
     @Environment(Store.self) private var store
     let exerciseKey: String
     @State private var dismissedStalls = StallDismissals.all()
+    /// The chart's line, where the exercise has more than one; nil = the kind's own.
+    @State private var metric: Logbook.Metric?
+    @State private var range: Logbook.ChartRange = .all
 
     private var ref: ExerciseRef { Library.shared.exercise(exerciseKey)?.ref ?? .placeholder(key: exerciseKey) }
     private var unit: String {
@@ -17,7 +20,10 @@ struct ExerciseHistoryView: View {
     var body: some View {
         let history = Logbook.history(store.results, exerciseKey: exerciseKey)
         let records = Logbook.records(store.results, exerciseKey: exerciseKey)
-        let points = Logbook.points(history, kind: records.kind, per: paceOver)
+        let metrics = Logbook.chartMetrics(records.kind)
+        let shown = metric.flatMap { metrics.contains($0) ? $0 : nil }
+        let all = shown.map { Logbook.pointsFor(history, metric: $0, per: paceOver) } ?? Logbook.points(history, kind: records.kind, per: paceOver)
+        let points = Logbook.inRange(all, range)
         ScrollView {
             VStack(alignment: .leading, spacing: 16) {
                 HStack(spacing: 12) {
@@ -30,7 +36,7 @@ struct ExerciseHistoryView: View {
                         .foregroundStyle(Brand.muted)
                         .padding(.top, 24)
                 } else {
-                    chart(points, kind: records.kind)
+                    chart(points, kind: records.kind, metric: shown, metrics: metrics)
                     if let stall = Stall.exercise(store.results, key: exerciseKey), !dismissedStalls.contains(stall.id) {
                         StallCard(stall: stall) {
                             StallDismissals.dismiss(stall.id)
@@ -59,7 +65,7 @@ struct ExerciseHistoryView: View {
             .padding(16)
         }
         .background(Brand.canvas)
-        .navigationTitle("History")
+        .navigationTitle(ref.name)
         .navigationBarTitleDisplayMode(.inline)
     }
 
@@ -82,12 +88,74 @@ struct ExerciseHistoryView: View {
         }
     }
 
-    private func chart(_ points: [Logbook.Point], kind: Logbook.Kind) -> some View {
+    private func metricLabel(_ m: Logbook.Metric) -> String {
+        let u = unit.isEmpty ? "" : " · \(unit)"
+        switch m {
+        case .e1rm: return "Estimated 1RM\(u)"
+        case .topLoad: return "Top load\(u)"
+        case .volume: return "Volume · load × reps\(u)"
+        case .mostReps: return "Most reps in a set"
+        case .totalReps: return "Total reps per session"
+        case .pace: return chartLabel(.pace)
+        case .distance: return "Furthest in a set · m"
+        }
+    }
+
+    private func chart(_ points: [Logbook.Point], kind: Logbook.Kind, metric: Logbook.Metric?, metrics: [Logbook.Metric]) -> some View {
         // A pace is better lower: plotted negated so better is still up, labelled as the time.
-        let flip = Logbook.lowerIsBetter(kind)
-        let timeAxis = kind == .pace || kind == .time
-        return VStack(alignment: .leading, spacing: 8) {
-            Text(chartLabel(kind)).font(.footnote.weight(.semibold)).foregroundStyle(Brand.muted)
+        let flip = metric.map { $0 == .pace } ?? Logbook.lowerIsBetter(kind)
+        let timeAxis = metric.map { $0 == .pace } ?? (kind == .pace || kind == .time)
+        return VStack(alignment: .leading, spacing: 10) {
+            if metrics.count > 1 {
+                ScrollView(.horizontal) {
+                    HStack(spacing: 6) {
+                        ForEach(metrics) { m in
+                            chip(m.rawValue, on: (metric ?? metrics[0]) == m) { self.metric = m }
+                        }
+                    }
+                }
+                .scrollIndicators(.hidden)
+                .accessibilityIdentifier("chart-metric")
+            }
+            HStack {
+                Text(metric.map(metricLabel) ?? chartLabel(kind)).font(.footnote.weight(.semibold)).foregroundStyle(Brand.muted)
+                Spacer()
+                Picker("Range", selection: $range) {
+                    ForEach(Logbook.ChartRange.allCases) { Text($0.rawValue).tag($0) }
+                }
+                .pickerStyle(.segmented)
+                .frame(width: 150)
+                .accessibilityIdentifier("chart-range")
+            }
+            if points.isEmpty {
+                Text("Nothing logged in this range.")
+                    .font(.footnote)
+                    .foregroundStyle(Brand.muted)
+                    .frame(maxWidth: .infinity, minHeight: 150)
+            } else {
+                chartBody(points, flip: flip, timeAxis: timeAxis, label: metric.map(metricLabel) ?? chartLabel(kind))
+            }
+        }
+        .padding(14)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .cardSurface()
+    }
+
+    private func chip(_ label: String, on: Bool, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            Text(label)
+                .font(.footnote.weight(.semibold))
+                .padding(.horizontal, 12)
+                .frame(minHeight: 44)
+                .background(on ? Brand.ink : Brand.surface, in: Capsule().inset(by: 5))
+                .overlay(Capsule().inset(by: 5).strokeBorder(on ? .clear : Brand.line))
+                .foregroundStyle(on ? .white : Brand.ink)
+        }
+        .buttonStyle(.plain)
+    }
+
+    private func chartBody(_ points: [Logbook.Point], flip: Bool, timeAxis: Bool, label: String) -> some View {
+        VStack(alignment: .leading, spacing: 8) {
             Chart {
                 ForEach(points, id: \.self) { p in
                     LineMark(x: .value("Date", p.date), y: .value("Best", flip ? -p.value : p.value))
@@ -109,11 +177,8 @@ struct ExerciseHistoryView: View {
             }
             .chartXAxis { AxisMarks(values: .automatic(desiredCount: 3)) { AxisValueLabel(format: .dateTime.day().month(.abbreviated)) } }
             .frame(height: 150)
-            .accessibilityLabel("\(chartLabel(kind)), \(points.count) sessions")
+            .accessibilityLabel("\(label), \(points.count) sessions")
         }
-        .padding(14)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .cardSurface()
     }
 
     // MARK: - Records
@@ -205,7 +270,7 @@ struct ExerciseHistoryView: View {
                     .background(Brand.lineSoft, in: Capsule())
                 }
                 if kind == .load, counted.count > 1 {
-                    Text("\(counted.count) rounds").font(.caption).foregroundStyle(Brand.muted)
+                    Text("\(counted.count) round\(counted.count == 1 ? "" : "s")").font(.caption).foregroundStyle(Brand.muted)
                 }
                 if let incline = s.incline {
                     Text("incline \(Format.number(incline))%").font(.caption).foregroundStyle(Brand.muted)

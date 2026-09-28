@@ -71,7 +71,8 @@ struct RoundTimesCard: View {
 /// Every logged set of a session, by exercise, and the way to put them right afterwards. Read: an
 /// exercise per row (tap for its logbook) with its sets as pills — the mark (1, W, D, F), what was
 /// done ("60 × 8", "500 m in 1:41", "45 s") and, small, when in the session it was ticked. Edit sets:
-/// a line per set, the mark (tap to change the type) then a number box per measure the row has.
+/// a line per set, the mark (tap to change the type), a number box per measure the row has and a
+/// remove button, then Add set under each exercise.
 /// Each change is saved and synced like any other edit to the session. Follows `logged-sets.tsx`.
 struct LoggedSetsCard: View {
     let session: SessionResult
@@ -202,6 +203,7 @@ struct LoggedSetsCard: View {
             HStack(spacing: 6) {
                 Text("Set").frame(width: 34, alignment: .leading)
                 ForEach(fields, id: \.self) { Text(Self.head($0, unit: u)).frame(maxWidth: .infinity, alignment: .leading) }
+                Color.clear.frame(width: 36, height: 1)
             }
             .font(.caption2.weight(.bold))
             .textCase(.uppercase)
@@ -231,8 +233,30 @@ struct LoggedSetsCard: View {
                         .accessibilityLabel("Set \(i + 1) \(Self.head(f, unit: u))")
                         .accessibilityIdentifier("set-\(step.exerciseKey)-\(i)-\(f.rawValue)")
                     }
+                    Button {
+                        onEdit(EditSets.removeSet(session, row: step.id, index: i))
+                    } label: {
+                        Image(systemName: "minus.circle")
+                            .font(.system(size: 18, weight: .semibold))
+                            .foregroundStyle(Brand.faint)
+                            .frame(width: 36, height: 44)
+                            .contentShape(Rectangle())
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityLabel("Remove set \(i + 1)")
+                    .accessibilityIdentifier("remove-set-\(step.exerciseKey)-\(i)")
                 }
             }
+            Button {
+                onEdit(EditSets.addSet(session, row: step.id))
+            } label: {
+                Label("Add set", systemImage: "plus")
+                    .font(.subheadline.weight(.semibold))
+                    .frame(minHeight: 44)
+            }
+            .buttonStyle(.plain)
+            .foregroundStyle(Brand.coralInk)
+            .accessibilityIdentifier("add-set-\(step.exerciseKey)")
         }
     }
 }

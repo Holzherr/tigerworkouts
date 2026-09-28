@@ -16,6 +16,8 @@ struct FinishView: View {
     @State private var bodyweightDraft = EffortModel.defaultBodyweightKg
     @State private var rpe: Double?
     @State private var notes = ""
+    /// The score as corrected here; nil until it is touched.
+    @State private var score: Double??
     @State private var sharing = false
     @State private var confirmDiscard = false
     @FocusState private var notesFocused: Bool
@@ -25,6 +27,7 @@ struct FinishView: View {
         var r = result
         r.rpe = rpe
         r.notes = notes.isEmpty ? nil : notes
+        if let score { r = ScoreEntryView.scored(r, score, type: runsheet.effectiveScore) }
         return r
     }
 
@@ -49,6 +52,17 @@ struct FinishView: View {
                 .padding(.top, 24)
 
                 CelebrationCard(celebration: celebration, scoreType: runsheet.effectiveScore, blockName: blockName) { sharing = true }
+
+                if runsheet.effectiveScore != .none {
+                    ScoreEntryView(type: runsheet.effectiveScore, value: current.score) { value in
+                        score = .some(value)
+                        let type = runsheet.effectiveScore
+                        store.amend(result.rowId) { $0 = ScoreEntryView.scored($0, value, type: type) }
+                    }
+                    .padding(14)
+                    .cardSurface()
+                    .accessibilityIdentifier("score-entry")
+                }
 
                 RoundTimesCard(result: current, last: celebration.last, blockName: blockName, records: celebration.rounds)
 
