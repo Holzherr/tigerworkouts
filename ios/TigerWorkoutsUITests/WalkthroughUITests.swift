@@ -9,6 +9,8 @@ final class WalkthroughUITests: XCTestCase {
     override func setUp() {
         continueAfterFailure = false
         app = XCUIApplication()
+        // The rest-end notification prompt would sit over every walkthrough; one test asks for it.
+        app.launchEnvironment["UITEST_NO_PROMPTS"] = "1"
         app.launch()
         // A test that ended mid-session leaves one to resume; start each test from a clean slate.
         let discard = app.alerts.buttons["Discard"]
@@ -39,7 +41,7 @@ final class WalkthroughUITests: XCTestCase {
     }
 
     func testBrowseRunAndFinish() {
-        XCTAssertTrue(app.navigationBars["Tiger"].waitForExistence(timeout: 10))
+        XCTAssertTrue(app.navigationBars["TigerWorkouts"].waitForExistence(timeout: 10))
         snap("01 Workouts")
         // The last carousel has to clear the tab bar.
         for _ in 0..<6 { app.swipeUp() }
@@ -133,7 +135,7 @@ final class WalkthroughUITests: XCTestCase {
         }
         card.tap()
 
-        let heading = app.staticTexts.matching(NSPredicate(format: "label CONTAINS[c] 'if it is busy'")).firstMatch
+        let heading = app.staticTexts.matching(NSPredicate(format: "label CONTAINS[c] 'swap exercise'")).firstMatch
         XCTAssertTrue(heading.waitForExistence(timeout: 5), "an exercise should offer alternatives")
         snap("24 Alternatives")
         let alternative = app.buttons.matching(NSPredicate(format: "label BEGINSWITH[c] 'Assault bike'")).firstMatch
@@ -353,11 +355,11 @@ final class WalkthroughUITests: XCTestCase {
         tap(app.navigationBars["Tabata This (mine)"].buttons["Edit"])
         tap(app.buttons["Delete workout"])
         tap(app.buttons["Delete"].firstMatch)
-        XCTAssertTrue(app.navigationBars["Tiger"].waitForExistence(timeout: 5), "deleting the copy should go back")
+        XCTAssertTrue(app.navigationBars["TigerWorkouts"].waitForExistence(timeout: 5), "deleting the copy should go back")
     }
 
     func testWriteAWorkout() {
-        XCTAssertTrue(app.navigationBars["Tiger"].waitForExistence(timeout: 10))
+        XCTAssertTrue(app.navigationBars["TigerWorkouts"].waitForExistence(timeout: 10))
         tap(app.buttons["New workout"])
         // New workout opens the workout screen itself, asking for a name first.
         let name = app.textFields["Name"]
@@ -708,7 +710,7 @@ final class WalkthroughUITests: XCTestCase {
         if discard.waitForExistence(timeout: 3) { discard.tap() }
 
         // A machine the catalogue does not have, made from the picker and used straight away.
-        XCTAssertTrue(app.navigationBars["Tiger"].waitForExistence(timeout: 10))
+        XCTAssertTrue(app.navigationBars["TigerWorkouts"].waitForExistence(timeout: 10))
         tap(app.buttons["New workout"])
         let name = app.textFields["Name"]
         tap(name)
@@ -753,7 +755,7 @@ final class WalkthroughUITests: XCTestCase {
     // MARK: - Helpers
 
     private func open(_ title: String) {
-        XCTAssertTrue(app.navigationBars["Tiger"].waitForExistence(timeout: 10))
+        XCTAssertTrue(app.navigationBars["TigerWorkouts"].waitForExistence(timeout: 10))
         let search = app.searchFields.firstMatch
         if !search.exists { app.swipeDown() }
         tap(search)
@@ -776,16 +778,16 @@ final class WalkthroughUITests: XCTestCase {
     /// Back to the top of the Workouts tab with the search cleared, where the Up next card lives.
     private func home() {
         tap(app.tabBars.buttons["Workouts"])
-        for _ in 0..<3 where !app.navigationBars["Tiger"].exists {
+        for _ in 0..<3 where !app.navigationBars["TigerWorkouts"].exists {
             app.navigationBars.buttons.element(boundBy: 0).tap()
         }
         // The search that found the workout is still filled in; the card only shows without one.
-        let clear = app.navigationBars["Tiger"].buttons["Clear text"]
+        let clear = app.navigationBars["TigerWorkouts"].buttons["Clear text"]
         if clear.exists { clear.tap() }
-        for label in ["Close", "Cancel"] where app.navigationBars["Tiger"].buttons[label].exists {
-            app.navigationBars["Tiger"].buttons[label].tap()
+        for label in ["Close", "Cancel"] where app.navigationBars["TigerWorkouts"].buttons[label].exists {
+            app.navigationBars["TigerWorkouts"].buttons[label].tap()
         }
-        XCTAssertTrue(app.navigationBars["Tiger"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.navigationBars["TigerWorkouts"].waitForExistence(timeout: 5))
     }
 
     private func tap(_ element: XCUIElement, file: StaticString = #filePath, line: UInt = #line) {
