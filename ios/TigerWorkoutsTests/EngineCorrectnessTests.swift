@@ -433,6 +433,25 @@ struct RecoveryTests {
         #expect(SessionRunner.partialResult(of: s, savedAt: Date(), runsheet: Fixtures.interval()) == nil)
     }
 
+    @Test("where a session was started from survives the app being killed: resumed, recovered or saved as it stood")
+    func keepsOrigin() throws {
+        try SessionRunner.$savedName.withValue("test-\(UUID().uuidString).json") {
+            let runner = SessionRunner(runsheet: Fixtures.interval(), startedFrom: .recommended)
+            runner.done()
+            runner.done()
+            let saved = try #require(SessionRunner.readSaved())
+            #expect(saved.startedFrom == .recommended)
+            #expect(SessionRunner.recovery(of: saved.state, savedAt: saved.savedAt, startedFrom: saved.startedFrom, lookup: { _ in Fixtures.interval() }).partial?.startedFrom == "recommended")
+            let resumed = try #require(SessionRunner(resuming: Fixtures.interval()))
+            #expect(resumed.result().startedFrom == "recommended")
+            // A copy written before the origin was kept reads back with none.
+            let url = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0].appendingPathComponent(SessionRunner.savedName)
+            try JSONEncoder().encode(saved.state).write(to: url)
+            #expect(try #require(SessionRunner.readSaved()).startedFrom == nil)
+            SessionRunner.clearSaved()
+        }
+    }
+
     @Test("a run older than six hours with a set done is still read back")
     func readsOldWork() throws {
         try SessionRunner.$savedName.withValue("test-\(UUID().uuidString).json") {

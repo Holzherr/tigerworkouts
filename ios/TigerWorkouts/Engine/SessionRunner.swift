@@ -11,7 +11,8 @@ final class SessionRunner {
     private(set) var now: Double = Date().timeIntervalSince1970 * 1000
     private(set) var runsheet: Runsheet
     /// The list the workout was tapped in, written on the result so the web's origins breakdown
-    /// counts gym sessions too. Only a path that knows it sets it; a resumed session has none.
+    /// counts gym sessions too. Only a path that knows it sets it; it rides in the crash-safe copy,
+    /// so a resumed or recovered session keeps it.
     let startedFrom: SessionOrigin?
 
     private var timer: Timer?
@@ -81,7 +82,7 @@ final class SessionRunner {
     init?(resuming runsheet: Runsheet, history: [SessionResult] = []) {
         guard let saved = SessionRunner.readSaved(), saved.state.runsheetId == (runsheet.id ?? runsheet.title) else { return nil }
         self.runsheet = runsheet
-        self.startedFrom = nil
+        self.startedFrom = saved.startedFrom
         self.history = history.filter { $0.id != SessionRunner.rowId(saved.state) }
         self.rival = Pace.lastTimed(history, runsheetIds: runsheet.lineage, excluding: SessionRunner.rowId(saved.state))
         self.today = Targets.today(runsheet, results: history.filter { $0.id != SessionRunner.rowId(saved.state) }, intent: Intent.current(), kit: Equipment.current())
@@ -93,12 +94,13 @@ final class SessionRunner {
 
     /// What an interrupted session had got to, as a result that can be logged without resuming.
     /// Timed to the last save rather than to now, which may be hours later.
-    static func partialResult(of saved: RunState, savedAt: Date, runsheet: Runsheet) -> SessionResult? {
+    static func partialResult(of saved: RunState, savedAt: Date, runsheet: Runsheet, startedFrom: SessionOrigin? = nil) -> SessionResult? {
         let at = savedAt.timeIntervalSince1970 * 1000
         // Rests alone are not a workout.
         guard didWork(saved) else { return nil }
         var r = Runner.toResult(saved.phase == .done ? saved : Runner.finish(saved, now: at), runsheet, now: at)
         r.id = rowId(saved)
+        r.startedFrom = startedFrom?.rawValue
         return r
     }
 
@@ -116,11 +118,11 @@ final class SessionRunner {
         var partial: SessionResult?
     }
 
-    static func recovery(of state: RunState, savedAt: Date, lookup: (String) -> Runsheet?, now: Date = Date()) -> Recovery {
+    static func recovery(of state: RunState, savedAt: Date, startedFrom: SessionOrigin? = nil, lookup: (String) -> Runsheet?, now: Date = Date()) -> Recovery {
         let found = lookup(state.runsheetId)
         let sheet = found ?? Runsheet(id: state.runsheetId, title: state.title, items: [])
         let fresh = now.timeIntervalSince(savedAt) < 6 * 3600
-        return Recovery(sheet: sheet, canResume: found != nil && fresh, partial: partialResult(of: state, savedAt: savedAt, runsheet: sheet))
+        return Recovery(sheet: sheet, canResume: found != nil && fresh, partial: partialResult(of: state, savedAt: savedAt, runsheet: sheet, startedFrom: startedFrom))
     }
 
     /// One id per session, so a result saved twice (finished, then recovered after a kill before the
@@ -724,19 +726,35 @@ final class SessionRunner {
 
     /// A finished session is written too: until the store has it, this file is the only copy.
     private func save() {
-        try? JSONEncoder().encode(state).write(to: SessionRunner.savedURL, options: .atomic)
+        try? JSONEncoder().encode(SavedRun(state: state, startedFrom: startedFrom)).write(to: SessionRunner.savedURL, options: .atomic)
+    }
+
+    /// The run state with the session's origin beside its fields; a file written before the
+    /// origin was kept reads back with none.
+    private struct SavedRun: Encodable {
+        var state: RunState
+        var startedFrom: SessionOrigin?
+        struct Origin: Decodable { var startedFrom: SessionOrigin? }
+        enum Key: String, CodingKey { case startedFrom }
+
+        func encode(to encoder: any Encoder) throws {
+            try state.encode(to: encoder)
+            var c = encoder.container(keyedBy: Key.self)
+            try c.encodeIfPresent(startedFrom, forKey: .startedFrom)
+        }
     }
 
     /// A session older than six hours is not one you walked away from for a minute, and one with no
     /// set done is forgotten then. A finished one, or one with work done, is returned whatever its
     /// age: it is a workout the store never confirmed, and it can still be saved.
-    static func readSaved() -> (state: RunState, savedAt: Date)? {
+    static func readSaved() -> (state: RunState, savedAt: Date, startedFrom: SessionOrigin?)? {
         guard let data = try? Data(contentsOf: savedURL),
               let attrs = try? FileManager.default.attributesOfItem(atPath: savedURL.path),
               let modified = attrs[.modificationDate] as? Date,
               let state = try? JSONDecoder().decode(RunState.self, from: data),
               state.phase == .done || didWork(state) || Date().timeIntervalSince(modified) < 6 * 3600 else { return nil }
-        return (state, modified)
+        let origin = (try? JSONDecoder().decode(SavedRun.Origin.self, from: data))?.startedFrom
+        return (state, modified, origin)
     }
 
     static func clearSaved() {
