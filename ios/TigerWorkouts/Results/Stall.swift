@@ -191,7 +191,7 @@ enum Stall {
                 : Option(title: "Scale the load and chase the time", detail: "A step lighter for three weeks, then back to it.")
         case .rounds:
             let whole = value.rounded(.down)
-            best = "\(Int(whole)) rounds"
+            best = "\(Int(whole)) round\(Int(whole) == 1 ? "" : "s")"
             if block?.runMode == .amrap, let cap = block?.timeCapSec, cap > 0 {
                 pace = Option(title: "Even pace: \(clock(cap / (whole + 1))) a round", detail: "Hold it from the first round, no faster, for \(Int(whole) + 1).")
             } else {

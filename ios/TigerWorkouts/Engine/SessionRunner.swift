@@ -33,6 +33,28 @@ final class SessionRunner {
     private var cuedSlot: String?
     private var cuedPhase: Phase?
     private var lastTick: Int?
+    private var appObservers: [NSObjectProtocol] = []
+    /// Every session before this one: what a set just ticked is measured against for a record.
+    private let history: [SessionResult]
+    /// Sets done this session that beat a record when they were ticked; a medal shows on each.
+    private(set) var records: Set<String> = []
+    /// The latest record, for a moment on screen: "New record · Bench press 100 × 5".
+    private(set) var recordFlash: RecordFlash?
+    /// The last drop or skip, for five seconds: Undo puts the session back as it was.
+    private(set) var undoable: Undoable?
+
+    struct RecordFlash: Equatable {
+        var slotId: String
+        var text: String
+    }
+
+    struct Undoable: Equatable {
+        /// "Skipped" or "Dropped Bench press".
+        var label: String
+        var state: RunState
+        var runsheet: Runsheet
+        var at: Double
+    }
 
     /// Runs the runsheet exactly as handed over. The workout screen seeds the last-used numbers
     /// once, before they are seen, and whatever is set on it after that is what starts here —
@@ -43,6 +65,7 @@ final class SessionRunner {
     init(runsheet: Runsheet, startedFrom: SessionOrigin? = nil, history: [SessionResult] = []) {
         self.runsheet = runsheet
         self.startedFrom = startedFrom
+        self.history = history
         let fresh = Runner.start(runsheet, now: Date().timeIntervalSince1970 * 1000)
         self.state = history.isEmpty ? fresh : Runner.prefillReps(fresh) { step, round in
             LastTime.sets(history, for: step).flatMap { $0.indices.contains(round) ? $0[round].reps : nil }
@@ -58,6 +81,7 @@ final class SessionRunner {
         guard let saved = SessionRunner.readSaved(), saved.state.runsheetId == (runsheet.id ?? runsheet.title) else { return nil }
         self.runsheet = runsheet
         self.startedFrom = nil
+        self.history = history.filter { $0.id != SessionRunner.rowId(saved.state) }
         self.rival = Pace.lastTimed(history, runsheetIds: runsheet.lineage, excluding: SessionRunner.rowId(saved.state))
         self.today = Targets.today(runsheet, results: history.filter { $0.id != SessionRunner.rowId(saved.state) }, intent: Intent.current(), kit: Equipment.current())
         let at = saved.savedAt.timeIntervalSince1970 * 1000
@@ -129,6 +153,23 @@ final class SessionRunner {
             MainActor.assumeIsolated { self?.tick() }
         }
         RunLoop.main.add(timer!, forMode: .common)
+        RestNotice.askOnce()
+        let center = NotificationCenter.default
+        appObservers.forEach(center.removeObserver)
+        appObservers = [
+            center.addObserver(forName: UIApplication.didEnterBackgroundNotification, object: nil, queue: .main) { [weak self] _ in
+                MainActor.assumeIsolated { self?.syncRestNotice() }
+            },
+            center.addObserver(forName: UIApplication.willEnterForegroundNotification, object: nil, queue: .main) { _ in
+                MainActor.assumeIsolated { RestNotice.cancel() }
+            },
+        ]
+    }
+
+    /// The rest-end notification follows the run while the app is in the background.
+    private func syncRestNotice() {
+        guard holding else { return RestNotice.cancel() }
+        RestNotice.sync(state, now: Date().timeIntervalSince1970 * 1000)
     }
 
     /// The copy on disk is not cleared here: a finished session's copy goes when the store has the
@@ -139,6 +180,9 @@ final class SessionRunner {
         holding = false
         UIApplication.shared.isIdleTimerDisabled = false
         Cues.shared.end()
+        RestNotice.cancel()
+        appObservers.forEach(NotificationCenter.default.removeObserver)
+        appObservers = []
         SessionActivityController.shared.end(activityState)
         if SessionControls.active === self { SessionControls.active = nil }
     }
@@ -150,6 +194,7 @@ final class SessionRunner {
         if state != before {
             save()
             refreshGhost()
+            syncRestNotice()
         }
         deliver()
         fireCues()
@@ -167,6 +212,7 @@ final class SessionRunner {
         timer = nil
         UIApplication.shared.isIdleTimerDisabled = false
         Cues.shared.endAfterFinish()
+        RestNotice.cancel()
         if SessionControls.active === self { SessionControls.active = nil }
     }
 
@@ -311,6 +357,7 @@ final class SessionRunner {
         state = change(state, now)
         save()
         refreshGhost()
+        syncRestNotice()
         deliver()
         fireCues()
         pushActivity()
@@ -318,11 +365,76 @@ final class SessionRunner {
     }
 
     func startBlock() { apply { Runner.startBlock($0, now: $1) } }
-    func done() { apply { Runner.advance($0, now: $1) } }
-    func skip() { apply { Runner.advance($0, now: $1, skipped: true) } }
+    func done() {
+        let ticked = slot?.kind == .work ? slot?.id : nil
+        apply { Runner.advance($0, now: $1) }
+        if let ticked { checkRecord(ticked) }
+    }
+    func skip() {
+        keepForUndo("Skipped")
+        apply { Runner.advance($0, now: $1, skipped: true) }
+    }
     func back() { apply { Runner.back($0, now: $1) } }
     func finish() { apply { Runner.finish($0, now: $1) } }
-    func drop(stepId: String) { apply { Runner.drop($0, now: $1, stepId: stepId) } }
+    func drop(stepId: String) {
+        let name = runsheet.exerciseSteps.first { $0.id == stepId }?.exercise.name
+        keepForUndo(name.map { "Dropped \($0)" } ?? "Dropped")
+        apply { Runner.drop($0, now: $1, stepId: stepId) }
+    }
+
+    // MARK: - Undo
+
+    private func keepForUndo(_ label: String) {
+        undoable = Undoable(label: label, state: state, runsheet: runsheet, at: Date().timeIntervalSince1970 * 1000)
+    }
+
+    /// Put the session back as it was before the last drop or skip. A rest skipped by mistake comes
+    /// back with the time it had left then.
+    func undo() {
+        guard let u = undoable else { return }
+        undoable = nil
+        runsheet = u.runsheet
+        apply { _, _ in u.state }
+        Haptics.shared.play(.tick)
+    }
+
+    func clearUndo() { undoable = nil }
+
+    // MARK: - Records
+
+    /// A set just ticked that beats a record: a medal on its row, a line on screen, a buzz.
+    private func checkRecord(_ slotId: String) {
+        guard let x = Self.liveRecord(state, runsheet, slotId: slotId, history: history, now: now),
+              let ex = state.slots.first(where: { $0.id == slotId })?.exercise else { return }
+        records.insert(slotId)
+        let label = Logbook.label(x, unit: ex.shortUnit)
+        recordFlash = RecordFlash(slotId: slotId, text: label.isEmpty ? ex.exercise.name : "\(ex.exercise.name) \(label)")
+        UINotificationFeedbackGenerator().notificationOccurred(.success)
+    }
+
+    func clearRecordFlash() { recordFlash = nil }
+
+    /// The set a done slot logged, when it beats a record: measured against every earlier session
+    /// and this session's other sets of the same exercise. Pure, for the tests.
+    nonisolated static func liveRecord(_ state: RunState, _ runsheet: Runsheet, slotId: String, history: [SessionResult], now: Double) -> SetResult? {
+        guard let idx = state.slots.firstIndex(where: { $0.id == slotId }), let ex = state.slots[idx].exercise,
+              state.actuals[slotId]?.doneAt != nil else { return nil }
+        let result = Runner.toResult(state, runsheet, now: now)
+        // Where this slot's set sits in its step's row: the done sets of the same step before it.
+        let n = state.slots[..<idx].indices.filter { j in
+            let e = state.slots[j].exercise
+            return state.slots[j].kind == .work && e?.id == ex.id && e?.exercise.key == ex.exercise.key && state.actuals[state.slots[j].id]?.doneAt != nil
+        }.count
+        var mine: SetResult?
+        var others: [SetResult] = []
+        for step in result.steps where step.exerciseKey == ex.exercise.key {
+            for (i, x) in (step.sets ?? []).enumerated() {
+                if step.stepId == ex.id, i == n { mine = x } else { others.append(x) }
+            }
+        }
+        guard let mine, Logbook.isLiveRecord(mine, others: others, history: history, exerciseKey: ex.exercise.key) else { return nil }
+        return mine
+    }
     func swap(stepId: String, to exercise: LibraryExercise, target: Double?) {
         apply { Runner.swap($0, now: $1, stepId: stepId, to: exercise.ref, target: target) }
     }
@@ -456,8 +568,10 @@ final class SessionRunner {
     func tickSet(_ slotId: String) {
         if state.actuals[slotId]?.doneAt != nil {
             apply { s, _ in Runner.reopenSet(s, slotId: slotId) }
+            records.remove(slotId)
         } else {
             apply { Runner.completeSet($0, now: $1, slotId: slotId) }
+            checkRecord(slotId)
         }
         Haptics.shared.play(.tick)
     }
@@ -630,7 +744,7 @@ extension SessionRunner: SessionControllable {
                 content.capLabel = "left in the block"
             } else if slot.mode == .emom, slot.kind == .work, let every = slot.everySec {
                 content.capEndsAt = Date(timeIntervalSince1970: (began + Double(slot.round + 1) * every * 1000) / 1000)
-                content.capLabel = "left in the minute"
+                content.capLabel = every == 60 ? "left in the minute" : "left in the interval"
             }
         }
         // During a rest, and before a block, the set to get ready for is the next piece of work.

@@ -114,7 +114,7 @@ struct DiscoverView: View {
             .onAppear { dismissedStalls = StallDismissals.all() }
             .scrollDismissesKeyboard(.immediately)
             .searchable(text: $query, prompt: "Workout, exercise or tag")
-            .navigationTitle("Tiger")
+            .navigationTitle("TigerWorkouts")
             .navigationDestination(for: Opened.self) { opened in
                 if let sheet = store.workout(id: opened.key) {
                     WorkoutDetailView(runsheet: sheet, startedFrom: opened.from, onStart: onStart)

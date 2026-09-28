@@ -16,6 +16,9 @@ struct RunsheetEditor<Header: View>: View {
     var summary: (ExerciseStep) -> String
     var onExercise: (ExerciseStep) -> Void
     var apply: (Runsheet) -> Void
+    /// Told after a step, rest or block is removed, with a label and the workout as it was, so the
+    /// screen can offer Undo.
+    var onRemoved: ((String, Runsheet) -> Void)? = nil
     @ViewBuilder var header: () -> Header
 
     /// Settings → Default rest: what an added rest starts at.
@@ -27,6 +30,12 @@ struct RunsheetEditor<Header: View>: View {
     private struct PickTarget: Identifiable {
         var id: String { blockId ?? "loose" }
         var blockId: String?
+    }
+
+    /// "Removed Bench press", "Removed rest", "Removed 2 steps".
+    static func removedLabel(_ sheet: Runsheet, _ ids: [String]) -> String {
+        guard ids.count == 1 else { return "Removed \(ids.count) steps" }
+        return sheet.exerciseSteps.first { $0.id == ids[0] }.map { "Removed \($0.exercise.name)" } ?? "Removed rest"
     }
 
     private var lockedSteps: Set<String> {
@@ -60,7 +69,9 @@ struct RunsheetEditor<Header: View>: View {
                         if case .step(let id, _) = rows[i], !frozen.contains(id) { return id }
                         return nil
                     }
+                    let before = runsheet
                     apply(ids.reduce(runsheet) { Edit.removeStep($0, stepId: $1) })
+                    onRemoved?(Self.removedLabel(before, ids), before)
                 }
             }
 
@@ -82,14 +93,18 @@ struct RunsheetEditor<Header: View>: View {
             RestEditorView(seconds: rest.seconds) { seconds in
                 apply(Edit.updateRest(runsheet, id: rest.id, seconds: seconds))
             } onRemove: {
+                let before = runsheet
                 apply(Edit.removeStep(runsheet, stepId: rest.id))
+                onRemoved?("Removed rest", before)
             }
         }
         .sheet(item: $editingBlock) { block in
             BlockSheet(block: block) { changed in
                 apply(Edit.updateBlock(runsheet, id: block.id) { $0 = changed })
             } onRemove: {
+                let before = runsheet
                 apply(Edit.remove(runsheet, itemId: block.id))
+                onRemoved?("Removed \(block.name.isEmpty ? "block" : block.name)", before)
             }
         }
         .sheet(item: $picking) { target in
@@ -263,7 +278,7 @@ struct BlockSheet: View {
                             LabeledContent("Every", value: Format.clock(block.everySec ?? 60))
                         }
                         Stepper(value: $block.repeatCount, in: 1...60) {
-                            LabeledContent("Minutes", value: "\(block.repeatCount)")
+                            LabeledContent((block.everySec ?? 60) == 60 ? "Minutes" : "Intervals", value: "\(block.repeatCount)")
                         }
                     } else {
                         Stepper(value: $block.repeatCount, in: 1...60) {

@@ -90,6 +90,8 @@ struct MiniStepper: View {
     /// On a coral-tinted row the buttons go white, or they vanish into it.
     var onTint = false
     var nudge: (Double) -> Void
+    /// Held, a button repeats and the steps grow; `nudge` gets ±1, ±2 or ±5.
+    @State private var accel = Accelerator()
 
     var body: some View {
         ViewThatFits(in: .horizontal) {
@@ -102,7 +104,7 @@ struct MiniStepper: View {
 
     private func stepper(hit: CGFloat) -> some View {
         HStack(spacing: 0) {
-            button("minus", "\(label), less", hit: hit) { nudge(-1) }
+            button("minus", "\(label), less", hit: hit) { nudge(-accel.factor()) }
             Text(Format.number(value))
                 .font(.system(size: 18, weight: .bold, design: .rounded))
                 .monospacedDigit()
@@ -114,7 +116,7 @@ struct MiniStepper: View {
                 .frame(minWidth: 28, idealWidth: 28, maxWidth: 56)
                 .accessibilityLabel(label)
                 .accessibilityValue(Format.number(value))
-            button("plus", "\(label), more", hit: hit) { nudge(1) }
+            button("plus", "\(label), more", hit: hit) { nudge(accel.factor()) }
         }
     }
 
@@ -130,6 +132,7 @@ struct MiniStepper: View {
                 .contentShape(Rectangle())
         }
         .buttonStyle(.borderless)
+        .buttonRepeatBehavior(.enabled)
         .accessibilityLabel(label)
     }
 }

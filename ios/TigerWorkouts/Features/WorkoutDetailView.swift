@@ -20,6 +20,8 @@ struct WorkoutDetailView: View {
     @State private var pendingSave: Task<Void, Never>?
     @AppStorage(Intent.storageKey) private var intent = Intent.maintain.rawValue
     @State private var dismissedStalls = StallDismissals.all()
+    /// The last removal, for five seconds: Undo puts the workout back as it was.
+    @State private var undo: (label: String, before: Runsheet)?
 
     private var saved: Bool { store.saved.contains(runsheet.key) }
     private var editable: Bool { isNew || store.isMine(runsheet) }
@@ -49,7 +51,8 @@ struct WorkoutDetailView: View {
             },
             summary: settingSummary,
             onExercise: { editing = $0 },
-            apply: apply
+            apply: apply,
+            onRemoved: { label, before in undo = (label, before) }
         ) {
             Section {
                 if runnable {
@@ -125,14 +128,27 @@ struct WorkoutDetailView: View {
             }
         }
         .safeAreaInset(edge: .bottom) {
-            if runnable { bottomBar }
+            VStack(spacing: 8) {
+                if let u = undo {
+                    UndoToast(label: u.label) {
+                        // The steps come back; the identity stays, since a catalogue workout's
+                        // first edit made it a copy of your own.
+                        var restored = runsheet
+                        restored.items = u.before.items
+                        apply(restored)
+                        undo = nil
+                    } onExpire: { undo = nil }
+                }
+                if runnable { bottomBar }
+            }
+            .animation(.easeOut(duration: 0.2), value: undo?.label)
         }
         .sheet(item: $editing) { step in
             ExerciseSheet(
                 step: step,
                 target: bind(step.id, \.target),
                 incline: bind(step.id, \.incline),
-                onDrop: { apply(Edit.removeStep(runsheet, stepId: step.id)) },
+                onDrop: { remove(step) },
                 dropLabel: "Remove from this workout",
                 onAmount: { changingAmount = find(step.id) ?? step }
             )
@@ -141,7 +157,7 @@ struct WorkoutDetailView: View {
                 StepEditorView(step: step) { updated in
                     apply(Edit.updateStep(runsheet, id: step.id) { $0 = updated })
                 } onRemove: {
-                    apply(Edit.removeStep(runsheet, stepId: step.id))
+                    remove(step)
                 }
             }
         }
@@ -168,6 +184,12 @@ struct WorkoutDetailView: View {
     }
 
     // MARK: - Editing in place
+
+    private func remove(_ step: ExerciseStep) {
+        let before = runsheet
+        apply(Edit.removeStep(runsheet, stepId: step.id))
+        undo = ("Removed \(step.exercise.name)", before)
+    }
 
     /// Every change goes through here, and saves itself a moment after the last one. A catalogue
     /// workout is never written over: its first edit silently makes it yours, as a copy, and this
