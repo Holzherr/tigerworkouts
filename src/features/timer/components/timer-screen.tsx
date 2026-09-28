@@ -258,9 +258,16 @@ export const TimerScreen = ({ runsheet, state, now, onDone, onSkip, onBack, onPa
   const last = slot && stepOf?.kind === 'exercise' && !done && !lead ? lastFor?.(stepOf) : undefined;
   const lastLabel = last && stepOf?.kind === 'exercise' ? lastTimeLabel(last, stepOf) : undefined;
   const partLabel = slot ? `${slot.parts > 1 ? `Block ${slot.part + 1} of ${slot.parts}` : ''}${slot.mode !== 'loose' ? `${slot.parts > 1 ? ' · ' : ''}${modeLabelOf(slot)} ${slot.round + 1}${slot.mode === 'amrap' ? '' : ` of ${slot.rounds}`}` : ''}` : runsheet.title;
+  // What a screen reader hears when the session moves on: the phase, the step and the set, never
+  // the countdown. It reads the plan (the lead-in and rest lengths), not the clock, so a tick
+  // leaves it as it was and the live region only speaks on a change.
+  const announcement = done ? 'Workout finished' : paused ? 'Paused' : ready && slot ? `Next block: ${partTitle(partOf(slot.part))}, set up then start` : lead ? `Get ready, ${state.leadSec} seconds` : !slot ? '' : isRest ? `Rest, ${Math.round(slot.seconds ?? 0)} seconds` : stepOf?.kind !== 'exercise' ? '' : straight ? `${stepOf.exercise.name}, set ${slot.round + 1} of ${slot.rounds}` : `${stepOf.exercise.name}, ${forLabel(stepOf)}${slot.rounds > 1 ? `, round ${slot.round + 1}${slot.mode === 'amrap' ? '' : ` of ${slot.rounds}`}` : ''}`;
 
   return (
     <div className={cn('flex h-full min-h-0 flex-col text-white transition-colors duration-300', isRest && !ready ? 'bg-rest' : 'bg-ink')}>
+      <div aria-live="polite" role="status" className="sr-only">
+        {announcement}
+      </div>
       <header className="safe-top shrink-0 px-4 pt-2 pb-2">
         <div className="flex items-center justify-between gap-2">
           <div className="min-w-0">
