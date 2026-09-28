@@ -864,18 +864,13 @@ final class WalkthroughUITests: XCTestCase {
         if discard.waitForExistence(timeout: 3) { discard.tap() }
 
         tap(app.tabBars.buttons["History"])
-        let cindy = app.buttons.matching(NSPredicate(format: "label BEGINSWITH 'Cindy'")).firstMatch
+        // The seeded 20-minute Cindy, not a short one another walkthrough logged.
+        let cindy = app.buttons.matching(NSPredicate(format: "label BEGINSWITH 'Cindy' AND label CONTAINS '20 min'")).firstMatch
         for _ in 0..<8 where !(cindy.exists && cindy.isHittable) { app.swipeUp(velocity: .slow) }
         tap(cindy)
-        let rounds = app.buttons["score-rounds-Increment"]
-        for _ in 0..<6 where !(rounds.exists && rounds.isHittable) { app.swipeUp(velocity: .slow) }
-        XCTAssertTrue(rounds.waitForExistence(timeout: 5), "an AMRAP's score should be editable")
-        rounds.tap()
-        snap("106 Score corrected")
-
+        // Sets first: Edit sets sits near the top of the session.
         let edit = app.buttons["edit-sets"]
-        // Back to the top, clear of the navigation bar that floats over the card's header.
-        for _ in 0..<4 { app.swipeDown(velocity: .slow) }
+        for _ in 0..<6 where !(edit.exists && edit.isHittable) { app.swipeUp(velocity: .slow) }
         tap(edit)
         let add = app.buttons["add-set-bw_pullup"]
         XCTAssertTrue(add.waitForExistence(timeout: 5), "Edit sets should offer Add set")
@@ -885,6 +880,13 @@ final class WalkthroughUITests: XCTestCase {
         snap("107 Set added")
         app.buttons["remove-set-bw_pullup-8"].tap()
         XCTAssertFalse(app.buttons["remove-set-bw_pullup-8"].waitForExistence(timeout: 2), "the added set should go again")
+
+        // Then the score, further down.
+        let rounds = app.buttons["score-rounds-Increment"]
+        for _ in 0..<10 where !(rounds.exists && rounds.isHittable) { app.swipeUp(velocity: .slow) }
+        XCTAssertTrue(rounds.waitForExistence(timeout: 5), "an AMRAP's score should be editable")
+        rounds.tap()
+        snap("106 Score corrected")
     }
 
     /// The logbook chart: another line for a lift, and a shorter range.
