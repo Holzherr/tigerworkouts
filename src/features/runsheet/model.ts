@@ -379,6 +379,20 @@ export const modeLabel = (b: Block) => {
   if (mode === 'ladder') return (b.ladder ?? []).join('-');
   return `×${b.repeat}`;
 };
+/** "1 round", "3 sets": a count and its word, singular for one. */
+export const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? '' : 's'}`;
+/** What a block runs, in words, for the timer's gate and overview: "3 rounds", "1 round for time",
+ * "AMRAP · 12 min", "EMOM · 10 minutes", "21-15-9". */
+export const roundsLabel = (b: Block): string => {
+  const mode = b.mode ?? 'rounds';
+  if (mode === 'amrap') return `AMRAP${b.timeCapSec ? ` · ${Math.round(b.timeCapSec / 60)} min` : ''}`;
+  if (mode === 'emom') {
+    const every = b.everySec ?? 60;
+    return `EMOM · ${every === 60 ? plural(b.repeat, 'minute') : `${b.repeat} × ${every % 60 === 0 ? `${every / 60} min` : `${every} s`}`}`;
+  }
+  if (mode === 'ladder') return (b.ladder ?? [b.repeat]).join('-');
+  return `${plural(b.repeat, 'round')}${mode === 'fortime' ? ' for time' : ''}`;
+};
 export const ROLE_LABEL: Record<ItemRole, string> = { warmup: 'Warm-up', main: 'Workout', cooldown: 'Cool-down' };
 /** Default block name: exercise names joined with " + ". */
 export const autoBlockName = (steps: Step[]) => {

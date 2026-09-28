@@ -290,29 +290,44 @@ final class SessionRunner {
         return (idx + 1, steps.count)
     }
 
+    /// The cue for a change of step or phase; nil when nothing changed that deserves one. Reaching a
+    /// block's gate is the end of the block: its cue plays then, with the phone locked in a pocket,
+    /// not on the next Start (which then gets the work cue).
+    nonisolated static func transitionCue(_ s: RunState, cuedSlot: String?, cuedPhase: Phase?) -> Haptics.Cue? {
+        if s.phase == .done { return cuedPhase == .done ? nil : .finish }
+        if s.phase == .ready { return cuedPhase != .ready && cuedSlot != nil ? .block : nil }
+        guard s.phase == .running, let slot = Runner.current(s), slot.id != cuedSlot else { return nil }
+        let startingBlock = cuedSlot != nil && cuedPhase != .ready && slot.round == 0 && slot.blockId != nil
+            && s.slots.first(where: { $0.id == cuedSlot })?.blockId != slot.blockId
+        return startingBlock ? .block : slot.kind == .work ? .work : .rest
+    }
+
+    nonisolated static func tone(_ cue: Haptics.Cue) -> Cues.Tone {
+        switch cue {
+        case .tick: .tick
+        case .work: .work
+        case .rest: .rest
+        case .block: .block
+        case .finish: .finish
+        }
+    }
+
     /// Every transition gets both a buzz and a tone: the buzz is what you feel with the phone in a
     /// pocket, the tone is what still reaches you when the screen has locked and haptics cannot.
     private func fireCues() {
-        if state.phase == .done, cuedPhase != .done {
+        let cue = Self.transitionCue(state, cuedSlot: cuedSlot, cuedPhase: cuedPhase)
+        if state.phase == .done {
             cuedPhase = .done
-            Haptics.shared.play(.finish)
-            Cues.shared.play(.finish)
-            return
-        }
-        cuedPhase = state.phase
-
-        if let slot, slot.id != cuedSlot, state.phase == .running {
-            let startingBlock = cuedSlot != nil && slot.round == 0 && slot.blockId != nil
-                && state.slots.first(where: { $0.id == cuedSlot })?.blockId != slot.blockId
-            cuedSlot = slot.id
-            lastTick = nil
-            if startingBlock {
-                Haptics.shared.play(.block)
-                Cues.shared.play(.block)
-            } else {
-                Haptics.shared.play(slot.kind == .work ? .work : .rest)
-                Cues.shared.play(slot.kind == .work ? .work : .rest)
+        } else {
+            cuedPhase = state.phase
+            if state.phase == .running, let slot, slot.id != cuedSlot {
+                cuedSlot = slot.id
+                lastTick = nil
             }
+        }
+        if let cue {
+            Haptics.shared.play(cue)
+            Cues.shared.play(Self.tone(cue))
             return
         }
 

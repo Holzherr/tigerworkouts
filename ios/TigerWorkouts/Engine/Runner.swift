@@ -279,8 +279,8 @@ enum Runner {
         return max(0, Double(c.round + 1) * every - blockElapsed(s, now: now))
     }
 
-    /// Move to slot i. Entering a new part going forward parks the timer in `ready` until the user
-    /// taps Start block, so equipment changes do not eat the countdown.
+    /// Move to slot i. Entering a new block going forward parks the timer in `ready` until the user
+    /// taps Start block, so equipment changes do not eat the countdown. A loose step runs straight on.
     private static func enter(_ given: RunState, _ i: Int, _ now: Double) -> RunState {
         // Moving on from a paused timer takes the pause out first, so it never counts as work.
         var s = given.phase == .paused ? resume(given, now: now) : given
@@ -293,7 +293,8 @@ enum Runner {
         }
         if i > s.i, let drop = restBeforeDrop(s, i) { return enter(s, drop, now) }
         let slot = s.slots[i]
-        if i > 0, i > s.i, slot.part != s.slots[i - 1].part {
+        // Only a block waits at a gate: a gate before each loose step was a tap for nothing.
+        if i > 0, i > s.i, slot.part != s.slots[i - 1].part, slot.blockId != nil {
             s.i = i; s.phase = .ready; s.slotStartedAt = now; s.endsAt = nil; s.remainingMs = nil
             return s
         }

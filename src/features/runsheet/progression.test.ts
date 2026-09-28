@@ -55,6 +55,8 @@ describe('streak and score', () => {
   it('formats scores', () => {
     expect(fmtScore('time', 245)).toBe('4:05');
     expect(fmtScore('rounds', 12.007)).toBe('12 rounds + 7 reps');
+    expect(fmtScore('rounds', 1.002)).toBe('1 round + 2 reps');
+    expect(fmtScore('rounds', 1)).toBe('1 round');
   });
 });
 

@@ -5,7 +5,7 @@ import { ClipThumb } from '@/shared/components/ui/clip-thumb';
 import { Sheet } from '@/shared/components/ui/sheet';
 import { Stepper } from '@/shared/components/ui/stepper';
 import { cn, fmtClock, fmtNum } from '@/shared/utils/ui-utils';
-import { countLabel, forLabel, measureOf, nextSetType, setMarks, shortUnit, showsLoad, straightSetStep, type Block, type ExerciseStep, type Item, type Runsheet, type SetType } from '@/features/runsheet/model';
+import { countLabel, forLabel, measureOf, roundsLabel, nextSetType, setMarks, shortUnit, showsLoad, straightSetStep, type Block, type ExerciseStep, type Item, type Runsheet, type SetType } from '@/features/runsheet/model';
 import { kitOf, type Equipment } from '@/features/runsheet/plates';
 import { PlatesButton } from '@/features/runsheet/components/plate-sheet';
 import { SetMark } from '@/features/runsheet/components/set-grid';
@@ -284,7 +284,7 @@ export const TimerScreen = ({ runsheet, state, now, onDone, onSkip, onBack, onPa
           <div className="py-4">
             <div className="text-[11px] font-bold tracking-widest text-brand uppercase">Next block · {slot.parts > 1 ? `${slot.part + 1} of ${slot.parts}` : ''}</div>
             <div className="mt-1 text-[28px] leading-tight font-black">{partTitle(partOf(slot.part))}</div>
-            <div className="mt-1 text-[13px] text-white/60">{slot.mode === 'amrap' ? `AMRAP${slot.capSec ? ` · ${Math.round(slot.capSec / 60)} min` : ''}` : slot.mode !== 'loose' ? `${slot.rounds} rounds` : forLabel(stepOf as ExerciseStep)}</div>
+            <div className="mt-1 text-[13px] text-white/60">{slot.mode !== 'loose' && partOf(slot.part).kind === 'block' ? roundsLabel(partOf(slot.part) as Block) : forLabel(stepOf as ExerciseStep)}</div>
             <div className="mt-3 space-y-1.5">
               {stepsOf(partOf(slot.part)).map(s => (
                 <div key={s.id} className="flex items-center gap-2.5 rounded-card bg-white/10 px-3 py-2">
@@ -499,7 +499,7 @@ export const TimerScreen = ({ runsheet, state, now, onDone, onSkip, onBack, onPa
                     <div className="truncate text-[14px] font-bold">
                       {p + 1}. {partTitle(it)}
                     </div>
-                    <div className="text-[12px] text-muted">{it.kind === 'block' ? `${(it as Block).repeat} rounds` : ''}</div>
+                    <div className="text-[12px] text-muted">{it.kind === 'block' ? roundsLabel(it as Block) : ''}</div>
                   </div>
                   <span className={cn('shrink-0 text-[11px] font-bold tracking-widest uppercase', status === 'now' ? 'text-brand' : status === 'done' ? 'text-muted' : 'text-faint')}>{status === 'now' ? 'Now' : status === 'done' ? 'Done' : ''}</span>
                 </div>
@@ -522,7 +522,7 @@ export const TimerScreen = ({ runsheet, state, now, onDone, onSkip, onBack, onPa
       <Sheet open={peek !== null} onOpenChange={o => !o && setPeek(null)} title={peek !== null && partOf(peek) ? partTitle(partOf(peek)) : 'Next'}>
         {peek !== null && partOf(peek) && (
           <div className="space-y-1.5">
-            {partOf(peek).kind === 'block' && <div className="text-[12px] text-muted">{(partOf(peek) as Block).repeat} rounds</div>}
+            {partOf(peek).kind === 'block' && <div className="text-[12px] text-muted">{roundsLabel(partOf(peek) as Block)}</div>}
             {stepsOf(partOf(peek)).map(s => (
               <div key={s.id} className="flex items-center gap-2.5 rounded-card border border-line bg-surface px-3 py-2">
                 <ClipThumb size="sm" clip={s.exercise.clip} poster={s.exercise.poster} icon={s.exercise.icon} />

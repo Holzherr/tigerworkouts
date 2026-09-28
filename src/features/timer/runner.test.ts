@@ -730,6 +730,19 @@ describe('emom', () => {
   });
 });
 
+describe('block gates', () => {
+  it('a loose step runs straight on with no gate; a block still waits for Start block', () => {
+    const r: Runsheet = { id: 'g', title: 'Gates', items: [{ ...makeExercise(EX.bw_squat, { forMode: 'reps', forValue: 10 }), id: 'l1' }, { ...makeExercise(EX.bw_pushup, { forMode: 'reps', forValue: 10 }), id: 'l2' }, { kind: 'block', id: 'b', name: 'B', repeat: 1, steps: [{ ...makeExercise(EX.bw_pullup, { forMode: 'reps', forValue: 5 }), id: 'pb' }] }] };
+    let s = tick(start(r, 0), 5000);
+    s = advance(s, 20000);
+    expect(s.phase).toBe('running');
+    expect(s.slots[s.i].step.id).toBe('l2');
+    s = advance(s, 30000);
+    expect(s.phase).toBe('ready');
+    expect(s.slots[s.i].step.id).toBe('pb');
+  });
+});
+
 describe('previous step', () => {
   const two = (cap?: number): Runsheet => ({
     id: 'two',

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { addSet, editSet, plannedSet, removeSet, straightSetStep, flatten, fromLegacy, groupOnto, insertAfter, makeExercise, makeRest, moveRow, moveRowTo, moveToTopLevel, rebuild, removeStep, isEmptyMain, repeatAsRounds, startBlock, runsheetSeconds, editedCopy, ofWorkout, type Block, type ExerciseRef, type Item, type Runsheet } from './model';
+import { addSet, roundsLabel, editSet, plannedSet, removeSet, straightSetStep, flatten, fromLegacy, groupOnto, insertAfter, makeExercise, makeRest, moveRow, moveRowTo, moveToTopLevel, rebuild, removeStep, isEmptyMain, repeatAsRounds, startBlock, runsheetSeconds, editedCopy, ofWorkout, type Block, type ExerciseRef, type Item, type Runsheet } from './model';
 import { EX, priyanka, withStarter } from './fixtures';
 
 const KB: ExerciseRef = { key: 'kb_swing', name: 'Kettlebell swings', unit: 'kg', step: 4 };
@@ -246,5 +246,20 @@ describe('withStarter', () => {
   });
   it('keeps it once it has sessions, whatever else is saved', () => {
     expect(withStarter([mine], [{ runsheetId: priyanka().id! }]).map(w => w.id)).toEqual(['u-1', priyanka().id]);
+  });
+});
+
+describe('how many rounds a block runs, in words', () => {
+  const b = (extra: Partial<Block>): Block => ({ kind: 'block', id: 'b', name: 'B', repeat: 3, steps: [], ...extra });
+  it('counts a round or rounds, and says what an AMRAP, EMOM or ladder runs instead', () => {
+    expect(roundsLabel(b({ repeat: 1 }))).toBe('1 round');
+    expect(roundsLabel(b({}))).toBe('3 rounds');
+    expect(roundsLabel(b({ mode: 'fortime', repeat: 1 }))).toBe('1 round for time');
+    expect(roundsLabel(b({ mode: 'amrap', timeCapSec: 720 }))).toBe('AMRAP · 12 min');
+    expect(roundsLabel(b({ mode: 'amrap' }))).toBe('AMRAP');
+    expect(roundsLabel(b({ mode: 'emom', repeat: 10 }))).toBe('EMOM · 10 minutes');
+    expect(roundsLabel(b({ mode: 'emom', repeat: 1 }))).toBe('EMOM · 1 minute');
+    expect(roundsLabel(b({ mode: 'emom', repeat: 8, everySec: 30 }))).toBe('EMOM · 8 × 30 s');
+    expect(roundsLabel(b({ mode: 'ladder', ladder: [21, 15, 9] }))).toBe('21-15-9');
   });
 });

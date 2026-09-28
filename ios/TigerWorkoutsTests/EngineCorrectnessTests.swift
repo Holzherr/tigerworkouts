@@ -448,3 +448,51 @@ struct RecoveryTests {
         }
     }
 }
+
+@Suite("block gates")
+struct BlockGateTests {
+    @Test("a loose step runs straight on with no gate; a block still waits for Start block")
+    func looseNoGate() {
+        let r = Runsheet(id: "g", title: "Gates", items: [
+            .step(Fixtures.work("l1", Fixtures.squat, forMode: .reps, forValue: 10)),
+            .step(Fixtures.work("l2", Fixtures.pushup, forMode: .reps, forValue: 10)),
+            .block(Block(id: "b", name: "B", repeatCount: 1, steps: [Fixtures.work("pb", Fixtures.pullup, forMode: .reps, forValue: 5)])),
+        ])
+        var s = Runner.tick(Runner.start(r, now: 0), now: 5_000)
+        s = Runner.advance(s, now: 20_000)
+        #expect(s.phase == .running)
+        #expect(s.slots[s.i].step.id == "l2")
+        s = Runner.advance(s, now: 30_000)
+        #expect(s.phase == .ready)
+        #expect(s.slots[s.i].step.id == "pb")
+    }
+
+    @Test("one round reads as one round")
+    func oneRound() {
+        #expect(Celebrate.formatScore(.rounds, 1.002) == "1 round + 2 reps")
+        #expect(Celebrate.formatScore(.rounds, 12.007) == "12 rounds + 7 reps")
+    }
+}
+
+@Suite("cues at a block gate")
+struct GateCueTests {
+    static func twoBlocks() -> Runsheet {
+        Runsheet(id: "two", title: "Two", items: [
+            .block(Block(id: "a", name: "A", repeatCount: 1, steps: [Fixtures.work("pa", Fixtures.swing, forMode: .seconds, forValue: 30)])),
+            .block(Block(id: "b", name: "B", repeatCount: 1, steps: [Fixtures.work("pb", Fixtures.pushup, forMode: .reps, forValue: 10)])),
+        ])
+    }
+
+    @Test("a block that ends at a gate cues then, and Start gets the work cue")
+    func cueAtGate() {
+        var s = Runner.tick(Runner.start(Self.twoBlocks(), now: 0), now: 5_000)
+        let first = s.slots[0].id
+        #expect(SessionRunner.transitionCue(s, cuedSlot: nil, cuedPhase: .lead) == .work)
+        s = Runner.tick(s, now: 35_000) // the countdown runs out with the phone in a pocket
+        #expect(s.phase == .ready)
+        #expect(SessionRunner.transitionCue(s, cuedSlot: first, cuedPhase: .running) == .block)
+        #expect(SessionRunner.transitionCue(s, cuedSlot: first, cuedPhase: .ready) == nil)
+        s = Runner.startBlock(s, now: 60_000)
+        #expect(SessionRunner.transitionCue(s, cuedSlot: first, cuedPhase: .ready) == .work)
+    }
+}

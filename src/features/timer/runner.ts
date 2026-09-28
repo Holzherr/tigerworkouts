@@ -212,8 +212,9 @@ export const minuteLeft = (s: RunState, now: number): number | undefined => {
   return Math.max(0, (c.round + 1) * c.everySec - blockElapsed(s, now));
 };
 
-/** Move to slot i. Entering a new part (block or loose step) going forward parks the timer in
- * `ready` until the user taps Start block, so equipment changes don't eat the countdown. */
+/** Move to slot i. Entering a new block going forward parks the timer in `ready` until the user
+ * taps Start block, so equipment changes don't eat the countdown. A loose step runs straight on:
+ * a gate before each one was a tap for nothing. */
 const enter = (st: RunState, i: number, now: number): RunState => {
   // Moving on from a paused timer takes the pause out first, so it never counts as work.
   let s = st.phase === 'paused' ? resume(st, now) : st;
@@ -225,7 +226,7 @@ const enter = (st: RunState, i: number, now: number): RunState => {
     if (drop !== undefined) return enter(s, drop, now);
   }
   const slot = s.slots[i];
-  if (i > 0 && i > s.i && slot.part !== s.slots[i - 1].part) return { ...s, i, phase: 'ready', slotStartedAt: now, endsAt: undefined, remainingMs: undefined };
+  if (i > 0 && i > s.i && slot.part !== s.slots[i - 1].part && slot.blockId !== undefined) return { ...s, i, phase: 'ready', slotStartedAt: now, endsAt: undefined, remainingMs: undefined };
   return activate(s, i, now);
 };
 /** The type of the set at slot idx: changed on the grid, else the plan's, else normal. */
