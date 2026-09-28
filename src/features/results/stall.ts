@@ -178,7 +178,7 @@ export const workoutStall = (r: Runsheet, results: SessionResult[], now: Date): 
       : { title: 'Scale the load and chase the time', detail: `A step lighter for three weeks, then back to it.` };
   } else if (type === 'rounds') {
     const whole = Math.floor(value);
-    best = `${whole} round${whole === 1 ? '' : 's'}`;
+    best = `${whole} ${whole === 1 ? 'round' : 'rounds'}`;
     const cap = block?.mode === 'amrap' ? block.timeCapSec : undefined;
     pace = cap
       ? { title: `Even pace: ${clock(cap / (whole + 1))} a round`, detail: `Hold it from the first round, no faster, for ${whole + 1}.` }

@@ -261,6 +261,16 @@ enum Logbook {
         return held(x) && (before.longest.map { x.seconds! > $0.value } ?? false)
     }
 
+    /// Whether a set just done beats a record, while the session is still running: the records from
+    /// every earlier session, then this session's other sets of the exercise, then this set. As in
+    /// `history`, the first session of an exercise sets no record.
+    static func isLiveRecord(_ x: SetResult, others: [SetResult], history: [SessionResult], exerciseKey: String) -> Bool {
+        var before = records(history, exerciseKey: exerciseKey)
+        guard before.sessions > 0 else { return false }
+        for o in others { before = adding(o, at: "", to: before) }
+        return isRecord(x, before: before)
+    }
+
     /// Everything ever logged, most recently done first.
     static func logged(_ results: [SessionResult]) -> [Logged] {
         var m: [String: Logged] = [:]
@@ -325,5 +335,62 @@ extension Logbook {
             out.append(SessionPR(exerciseKey: key, set: best))
         }
         return out
+    }
+}
+
+extension Logbook {
+    /// A line the chart can draw when the exercise has more than one worth seeing.
+    enum Metric: String, CaseIterable, Hashable, Identifiable {
+        case e1rm = "Est. 1RM", topLoad = "Top load", volume = "Volume", mostReps = "Most reps", totalReps = "Total reps", pace = "Pace", distance = "Distance"
+        var id: String { rawValue }
+    }
+
+    /// How far back the chart looks.
+    enum ChartRange: String, CaseIterable, Hashable, Identifiable {
+        case threeMonths = "3 m", year = "1 y", all = "All"
+        var id: String { rawValue }
+        var days: Double? {
+            switch self {
+            case .threeMonths: 90
+            case .year: 365
+            case .all: nil
+            }
+        }
+    }
+
+    /// The metrics offered for a kind, the kind's own first. One or none means no picker.
+    static func chartMetrics(_ kind: Kind) -> [Metric] {
+        switch kind {
+        case .strength: [.e1rm, .topLoad, .volume, .mostReps]
+        case .reps: [.mostReps, .totalReps]
+        case .pace: [.pace, .distance]
+        default: []
+        }
+    }
+
+    /// One point per session for a metric, oldest first.
+    static func pointsFor(_ history: [Session], metric: Metric, per: Double = 1000) -> [Point] {
+        history.sorted { $0.startedAt < $1.startedAt }.compactMap { s in
+            let v: Double?
+            switch metric {
+            case .e1rm: v = best(s.sets, kind: .strength)
+            case .topLoad: v = best(s.sets, kind: .load)
+            case .volume: v = volume(s.sets)
+            case .mostReps: v = best(s.sets, kind: .reps)
+            case .totalReps:
+                let reps = s.sets.filter(counted).compactMap(\.reps)
+                v = reps.isEmpty ? nil : reps.reduce(0, +)
+            case .pace: v = best(s.sets, kind: .pace, per: per)
+            case .distance: v = best(s.sets, kind: .distance)
+            }
+            return v.map { Point(at: s.startedAt, value: $0) }
+        }
+    }
+
+    /// The points inside the range, counted back from `now`.
+    static func inRange(_ points: [Point], _ range: ChartRange, now: Date = Date()) -> [Point] {
+        guard let days = range.days else { return points }
+        let from = now.addingTimeInterval(-days * 86_400)
+        return points.filter { $0.date >= from }
     }
 }

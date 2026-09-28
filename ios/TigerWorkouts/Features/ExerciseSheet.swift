@@ -166,7 +166,7 @@ private struct SwapList: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
-            Text("If it is busy")
+            Text("Swap exercise")
                 .font(.caption.weight(.semibold))
                 .textCase(.uppercase)
                 .tracking(0.6)

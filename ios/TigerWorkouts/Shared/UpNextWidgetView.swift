@@ -73,7 +73,7 @@ struct UpNextWidgetView: View {
     /// No history yet: say so, and open the catalogue rather than invent a pick.
     private var empty: some View {
         VStack(alignment: .leading, spacing: 4) {
-            Label("Tiger", systemImage: "figure.strengthtraining.functional")
+            Label("TigerWorkouts", systemImage: "figure.strengthtraining.functional")
                 .font(.caption.weight(.bold))
                 .foregroundStyle(Self.coral)
             Text("Pick a workout")

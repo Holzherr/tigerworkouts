@@ -114,7 +114,7 @@ struct DiscoverView: View {
             .onAppear { dismissedStalls = StallDismissals.all() }
             .scrollDismissesKeyboard(.immediately)
             .searchable(text: $query, prompt: "Workout, exercise or tag")
-            .navigationTitle("Tiger")
+            .navigationTitle("TigerWorkouts")
             .navigationDestination(for: Opened.self) { opened in
                 if let sheet = store.workout(id: opened.key) {
                     WorkoutDetailView(runsheet: sheet, startedFrom: opened.from, onStart: onStart)
@@ -256,8 +256,52 @@ struct DiscoverView: View {
 
     // MARK: - For you
 
+    /// Ranked picks from history, the web's For you rules (`Recommend`). A session started from one
+    /// records `recommended`, the origin G-06 counts.
+    @ViewBuilder
+    private var recommendations: some View {
+        let recs = Recommend.recommend(store.allWorkouts, results: store.results, saved: Array(store.saved))
+        if store.results.isEmpty {
+            Text("Log a workout and this list learns what you like. Until then, some good first ones.")
+                .font(.footnote)
+                .foregroundStyle(Brand.muted)
+                .padding(.horizontal, 16)
+        }
+        if recs.isEmpty {
+            if !store.results.isEmpty {
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("Nothing to suggest yet").font(.headline).foregroundStyle(Brand.ink)
+                    Text("Log a couple more workouts and this list learns what you like.")
+                        .font(.footnote)
+                        .foregroundStyle(Brand.muted)
+                    Button("Browse workouts") { tab = .browse }
+                        .font(.subheadline.weight(.semibold))
+                }
+                .padding(.horizontal, 16)
+            }
+        } else {
+            VStack(alignment: .leading, spacing: 14) {
+                ForEach(Array(Recommend.grouped(recs).enumerated()), id: \.offset) { _, group in
+                    VStack(alignment: .leading, spacing: 8) {
+                        HStack(spacing: 6) {
+                            Image(systemName: "sparkles")
+                            Text(group.reason)
+                        }
+                        .font(.footnote.weight(.bold))
+                        .foregroundStyle(Brand.coralInk)
+                        .padding(.horizontal, 16)
+                        list(group.picks.map(\.runsheet), from: .recommended)
+                    }
+                }
+            }
+            .accessibilityElement(children: .contain)
+            .accessibilityIdentifier("for-you")
+        }
+    }
+
     @ViewBuilder
     private var forYou: some View {
+        recommendations
         if !recent.isEmpty {
             section("Pick up again", subtitle: "What you do most") {
                 carousel(recent.prefix(10).map(\.sheet), large: true, from: .history)

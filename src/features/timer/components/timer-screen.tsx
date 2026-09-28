@@ -1,11 +1,11 @@
-import { Check, ChevronLeft, ChevronRight, List, MoreHorizontal, Pause, Play, SkipForward, Square, Volume2, VolumeX } from 'lucide-react';
+import { Check, ChevronLeft, ChevronRight, List, Medal, MoreHorizontal, Pause, Play, Shuffle, SkipForward, Square, Volume2, VolumeX } from 'lucide-react';
 import { useState } from 'react';
 import { Button } from '@/shared/components/ui/button';
 import { ClipThumb } from '@/shared/components/ui/clip-thumb';
 import { Sheet } from '@/shared/components/ui/sheet';
 import { Stepper } from '@/shared/components/ui/stepper';
 import { cn, fmtClock, fmtNum } from '@/shared/utils/ui-utils';
-import { countLabel, forLabel, measureOf, roundsLabel, nextSetType, setMarks, shortUnit, showsLoad, straightSetStep, type Block, type ExerciseStep, type Item, type Runsheet, type SetType } from '@/features/runsheet/model';
+import { countLabel, forLabel, measureOf, roundsLabel, nextSetType, setMarks, shortUnit, showsLoad, straightSetStep, type Block, type ExerciseRef, type ExerciseStep, type Item, type Runsheet, type SetType } from '@/features/runsheet/model';
 import { kitOf, type Equipment } from '@/features/runsheet/plates';
 import { PlatesButton } from '@/features/runsheet/components/plate-sheet';
 import { SetMark } from '@/features/runsheet/components/set-grid';
@@ -14,6 +14,7 @@ import type { SetResult } from '@/features/runsheet/progression';
 import { SwipeToRemove } from '@/features/runsheet/components/swipe-to-remove';
 import { ExerciseSheet } from '@/features/runsheet/components/exercise-sheet';
 import * as R from '../runner';
+import type { Alternative } from '@/features/exercises/alternatives';
 
 export interface TimerScreenProps {
   runsheet: Runsheet;
@@ -51,6 +52,12 @@ export interface TimerScreenProps {
   equipment?: Equipment;
   onFinish: () => void;
   onExit: () => void;
+  /** What else trains the same movement, for Swap exercise; its load converted to the new kit. */
+  alternativesFor?: (step: ExerciseStep, target?: number) => Alternative[];
+  /** Swap a step's exercise from here to the end of the session (the machine is taken). */
+  onSwap?: (stepId: string, to: ExerciseRef, target?: number) => void;
+  /** Slots whose set beat a record when it was ticked: a medal on the row. */
+  prs?: string[];
 }
 
 export interface SetActions {
@@ -75,7 +82,7 @@ export interface SetActions {
  * set you are on highlighted, a tick to finish it. Done rows show what was done and are locked
  * until un-ticked. The rest between sets counts down above the grid.
  */
-const TimerSetGrid = ({ state, step, blockId, actions, equipment }: { state: R.RunState; step: ExerciseStep; blockId: string; actions: SetActions; equipment?: Equipment }) => {
+const TimerSetGrid = ({ state, step, blockId, actions, equipment, prs = [] }: { state: R.RunState; step: ExerciseStep; blockId: string; actions: SetActions; equipment?: Equipment; prs?: string[] }) => {
   const rows = state.slots.map((sl, idx) => ({ sl, idx })).filter(x => x.sl.blockId === blockId && x.sl.kind === 'work');
   const on = rows.find(x => x.idx >= state.i)?.sl.id;
   const [open, setOpen] = useState<string | null>(null);
@@ -141,6 +148,11 @@ const TimerSetGrid = ({ state, step, blockId, actions, equipment }: { state: R.R
                   )}
                 </div>
               )}
+              {done && prs.includes(sl.id) && (
+                <span className="grid size-7 shrink-0 place-items-center rounded-full bg-brand text-white" aria-label="Personal record" title="Personal record">
+                  <Medal className="size-4" />
+                </span>
+              )}
               <button
                 type="button"
                 aria-label={done ? `Un-tick set ${n + 1}` : `Tick set ${n + 1}`}
@@ -176,6 +188,8 @@ const TimerSetGrid = ({ state, step, blockId, actions, equipment }: { state: R.R
 };
 
 const MODE_LABEL: Record<string, string> = { loose: '', rounds: 'Round', fortime: 'For time · round', amrap: 'AMRAP · round', emom: 'EMOM · minute', ladder: 'Rung' };
+/** An EMOM every 60 s counts minutes; any other interval counts intervals. */
+const modeLabelOf = (sl: R.Slot) => (sl.mode === 'emom' && sl.everySec !== undefined && sl.everySec !== 60 ? 'EMOM · interval' : MODE_LABEL[sl.mode]);
 const isTreadmill = (s: ExerciseStep) => s.exercise.unit === 'kph' || s.incline !== undefined;
 
 const partItems = (r: Runsheet): Item[] => r.items.filter(i => i.kind !== 'ref');
@@ -191,12 +205,13 @@ const stepLine = (s: ExerciseStep) => [forLabel(s), s.target !== undefined ? `${
  * a ⋯ menu (previous, overview, stop), Pause and Skip/Done at equal size. Tap the Next row to see
  * what the coming block asks for; the overview sheet lists every part with progress.
  */
-export const TimerScreen = ({ runsheet, state, now, onDone, onSkip, onBack, onPause, onResume, onAdjust, onAdjustIncline, onSetReps, onSetAmount, onDrop, onStartBlock, onAdjustStep, sets, onAdjustRest, lastFor, onFill, ghost, goal, muted, onToggleMute, equipment, onFinish, onExit }: TimerScreenProps) => {
+export const TimerScreen = ({ runsheet, state, now, onDone, onSkip, onBack, onPause, onResume, onAdjust, onAdjustIncline, onSetReps, onSetAmount, onDrop, onStartBlock, onAdjustStep, sets, onAdjustRest, lastFor, onFill, ghost, goal, muted, onToggleMute, equipment, onFinish, onExit, alternativesFor, onSwap, prs }: TimerScreenProps) => {
   const [confirmExit, setConfirmExit] = useState(false);
   const [menu, setMenu] = useState(false);
   const [overview, setOverview] = useState(false);
   const [peek, setPeek] = useState<number | null>(null);
   const [look, setLook] = useState<ExerciseStep | null>(null);
+  const [swapping, setSwapping] = useState(false);
   const slot = R.current(state);
   const nxt = R.next(state);
   const clock = R.clock(state, now);
@@ -230,12 +245,18 @@ export const TimerScreen = ({ runsheet, state, now, onDone, onSkip, onBack, onPa
   const stepPos = slot && stepOf?.kind === 'exercise' ? blockSteps.findIndex(s => s.id === stepOf.id) : -1;
   const showPos = blockSteps.length > 1 && stepPos >= 0;
   const part = slot ? partOf(slot.part) : undefined;
-  const straight = sets && part?.kind === 'block' && slot?.blockId ? straightSetStep(part) : undefined;
+  // The straight-set block as it runs now: a swap mid-block changes the exercise from the set on.
+  const planned = sets && part?.kind === 'block' && slot?.blockId ? straightSetStep(part) : undefined;
+  const straight = planned && ((state.slots.slice(idx).find(sl => sl.blockId === slot?.blockId && sl.kind === 'work')?.step as ExerciseStep | undefined) ?? planned);
 
+  // The exercise Swap acts on: the one on the card, else the straight-set block's during its rest.
+  const swapStep = stepOf?.kind === 'exercise' ? stepOf : straight;
+  const swapTarget = swapStep ? (stepOf?.kind === 'exercise' ? target : R.plannedTarget(state, swapStep.id)) : undefined;
+  const options = swapStep && onSwap && alternativesFor && !done ? alternativesFor(swapStep, swapTarget) : [];
   const restAdjustable = !!onAdjustRest && isRest && timed && !slot?.untilBoundary && (state.phase === 'running' || paused);
   const last = slot && stepOf?.kind === 'exercise' && !done && !lead ? lastFor?.(stepOf) : undefined;
   const lastLabel = last && stepOf?.kind === 'exercise' ? lastTimeLabel(last, stepOf) : undefined;
-  const partLabel = slot ? `${slot.parts > 1 ? `Block ${slot.part + 1} of ${slot.parts}` : ''}${slot.mode !== 'loose' ? `${slot.parts > 1 ? ' · ' : ''}${MODE_LABEL[slot.mode]} ${slot.round + 1}${slot.mode === 'amrap' ? '' : ` of ${slot.rounds}`}` : ''}` : runsheet.title;
+  const partLabel = slot ? `${slot.parts > 1 ? `Block ${slot.part + 1} of ${slot.parts}` : ''}${slot.mode !== 'loose' ? `${slot.parts > 1 ? ' · ' : ''}${modeLabelOf(slot)} ${slot.round + 1}${slot.mode === 'amrap' ? '' : ` of ${slot.rounds}`}` : ''}` : runsheet.title;
 
   return (
     <div className={cn('flex h-full min-h-0 flex-col text-white transition-colors duration-300', isRest && !ready ? 'bg-rest' : 'bg-ink')}>
@@ -282,7 +303,7 @@ export const TimerScreen = ({ runsheet, state, now, onDone, onSkip, onBack, onPa
       <div className="min-h-0 flex-1 overflow-y-auto px-4">
         {ready && slot ? (
           <div className="py-4">
-            <div className="text-[11px] font-bold tracking-widest text-brand uppercase">Next block · {slot.parts > 1 ? `${slot.part + 1} of ${slot.parts}` : ''}</div>
+            <div className="text-[11px] font-bold tracking-widest text-brand uppercase">Next block{slot.parts > 1 ? ` · ${slot.part + 1} of ${slot.parts}` : ''}</div>
             <div className="mt-1 text-[28px] leading-tight font-black">{partTitle(partOf(slot.part))}</div>
             <div className="mt-1 text-[13px] text-white/60">{slot.mode !== 'loose' && partOf(slot.part).kind === 'block' ? roundsLabel(partOf(slot.part) as Block) : forLabel(stepOf as ExerciseStep)}</div>
             <div className="mt-3 space-y-1.5">
@@ -321,8 +342,8 @@ export const TimerScreen = ({ runsheet, state, now, onDone, onSkip, onBack, onPa
             {lead && <div className="-mt-2 pb-3 text-center text-[13px] text-white/60">Get ready</div>}
             {!timed && !lead && !done && slot && <div className="-mt-2 pb-3 text-center text-[13px] text-white/60">{isRest ? 'Rest' : straight ? 'Tick the set when you finish it' : 'Tap Done when finished'}</div>}
             {minuteLeft !== undefined && !lead && !done && (
-              <div className={cn('mx-auto mb-3 w-fit rounded-full bg-white/10 px-3 py-1 text-[13px] font-bold tabular-nums', minuteLeft <= 10 && 'text-brand')} aria-label="Time left in the minute">
-                {fmtClock(minuteLeft)} left in the minute
+              <div className={cn('mx-auto mb-3 w-fit rounded-full bg-white/10 px-3 py-1 text-[13px] font-bold tabular-nums', minuteLeft <= 10 && 'text-brand')} aria-label={`Time left in the ${slot?.everySec && slot.everySec !== 60 ? 'interval' : 'minute'}`}>
+                {fmtClock(minuteLeft)} left in the {slot?.everySec && slot.everySec !== 60 ? 'interval' : 'minute'}
               </div>
             )}
             {capLeft !== undefined && !lead && !done && (
@@ -331,7 +352,7 @@ export const TimerScreen = ({ runsheet, state, now, onDone, onSkip, onBack, onPa
               </div>
             )}
 
-            {straight && slot?.blockId && !done && !lead && <TimerSetGrid key={slot.blockId} state={state} step={straight} blockId={slot.blockId} actions={sets!} equipment={equipment} />}
+            {straight && slot?.blockId && !done && !lead && <TimerSetGrid key={slot.blockId} state={state} step={straight} blockId={slot.blockId} actions={sets!} equipment={equipment} prs={prs} />}
 
             {slot && !done && !(straight && !lead) && (
               <SwipeToRemove onRemove={() => onDrop(slot.step.id)} disabled={isRest || paused} className="rounded-card">
@@ -390,7 +411,6 @@ export const TimerScreen = ({ runsheet, state, now, onDone, onSkip, onBack, onPa
                           <Stepper aria-label={amountField === 'meters' ? 'Metres' : 'Calories'} value={amount ?? 0} min={0} max={99999} step={amountField === 'meters' ? (stepOf.forMode === 'meters' ? 10 : Math.max(10, stepOf.exercise.step)) : 1} onChange={onSetAmount} />
                         </div>
                       )}
-                      {state.actuals[slot.id]?.changes.length ? <div className="text-[11px] text-muted">Changed: {state.actuals[slot.id].changes.map(c => `${fmtNum(c.target)} at ${c.atSec}s`).join(', ')}</div> : null}
                     </div>
                   )}
                 </div>
@@ -420,8 +440,8 @@ export const TimerScreen = ({ runsheet, state, now, onDone, onSkip, onBack, onPa
             )}
             {done && (
               <div className="rounded-card bg-white/10 p-4 text-center">
-                <div className="text-[18px] font-extrabold">Done</div>
-                <div className="mt-1 text-[13px] text-white/70">{fmtClock(total)} · saved to History</div>
+                <div className="text-[18px] font-extrabold">Workout saved</div>
+                <div className="mt-1 text-[13px] text-white/70">{fmtClock(total)}</div>
               </div>
             )}
             {!isRest && !done && !lead && !straight && <div className="pt-2 text-center text-[11px] text-white/40">Swipe the card left to drop this exercise for tonight</div>}
@@ -432,7 +452,7 @@ export const TimerScreen = ({ runsheet, state, now, onDone, onSkip, onBack, onPa
       <div className="safe-bottom shrink-0 px-4 pt-2 pb-3">
         {done ? (
           <Button block size="xl" variant="brand" onClick={onFinish}>
-            <Check /> Log result
+            <Check /> Review result
           </Button>
         ) : ready ? (
           <div className="flex gap-2">
@@ -479,12 +499,41 @@ export const TimerScreen = ({ runsheet, state, now, onDone, onSkip, onBack, onPa
               <SkipForward /> Skip this step
             </Button>
           )}
+          {options.length > 0 && (
+            <Button block variant="ghost" onClick={() => (setMenu(false), setSwapping(true))}>
+              <Shuffle /> Swap exercise
+            </Button>
+          )}
           <Button block variant="ghost" onClick={() => (setMenu(false), setOverview(true))}>
             <List /> Workout overview
           </Button>
           <Button block variant="danger" onClick={() => (setMenu(false), setConfirmExit(true))}>
-            <Square /> Stop workout
+            <Square /> End workout
           </Button>
+        </div>
+      </Sheet>
+
+      <Sheet open={swapping} onOpenChange={setSwapping} title={swapStep ? `Instead of ${swapStep.exercise.name}` : 'Swap exercise'}>
+        <div className="space-y-1.5">
+          {options.map(o => (
+            <button
+              key={o.exercise.key}
+              type="button"
+              onClick={() => {
+                setSwapping(false);
+                if (swapStep) onSwap?.(swapStep.id, o.exercise, o.target);
+              }}
+              className="flex min-h-14 w-full items-center gap-2.5 rounded-card border border-line bg-surface px-3 py-2 text-left active:bg-line-soft"
+            >
+              <ClipThumb size="sm" clip={o.exercise.clip} poster={o.exercise.poster} icon={o.exercise.icon} />
+              <div className="min-w-0 flex-1">
+                <div className="truncate text-[14px] font-semibold">{o.exercise.name}</div>
+                <div className="text-[12px] text-muted">{[o.why, o.target !== undefined ? `${fmtNum(o.target)} ${shortUnit(o.exercise.unit)}`.trim() : ''].filter(Boolean).join(' · ')}</div>
+              </div>
+              <ChevronRight className="size-4 shrink-0 text-faint" />
+            </button>
+          ))}
+          <p className="px-1 pt-1 text-[12px] text-muted">Swapping keeps the rounds you have already done.</p>
         </div>
       </Sheet>
 
@@ -550,12 +599,12 @@ export const TimerScreen = ({ runsheet, state, now, onDone, onSkip, onBack, onPa
         <div className="absolute inset-0 z-20 flex items-end bg-ink/70 p-4" onClick={() => setConfirmExit(false)}>
           <div className="w-full space-y-2 rounded-card bg-surface p-4 text-ink" onClick={e => e.stopPropagation()}>
             <div className="text-[16px] font-bold">Stop this session?</div>
-            <p className="text-[13px] text-muted">{fmtClock(total)} so far. You can log what you did, or discard it.</p>
+            <p className="text-[13px] text-muted">{fmtClock(total)} so far. Save what you did, or discard it.</p>
             <Button block onClick={onFinish}>
-              Log what I did
+              Finish and save
             </Button>
             <Button block variant="danger" onClick={onExit}>
-              Discard session
+              Discard
             </Button>
             <Button block variant="quiet" onClick={() => setConfirmExit(false)}>
               Keep going

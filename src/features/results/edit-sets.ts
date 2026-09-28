@@ -1,5 +1,6 @@
 /**
- * Putting a logged session right afterwards: one set's load, reps, time, distance, calories or type.
+ * Putting a logged session right afterwards: one set's load, reps, time, distance, calories or type,
+ * a set added or taken off.
  * The row's `target` and `reps`, which older readers (next session's loads, the progression rules)
  * still read, are worked out again from the sets exactly as the timer writes them, so every reader
  * sees the edit. Pure; ported to `ios/TigerWorkouts/Results/EditSets.swift`.
@@ -85,3 +86,27 @@ export const withRowLoad = (row: StepResult, load: number): StepResult => {
   const was = row.target;
   return withSets(row, sets.map(x => (x.load === was || (x.load === undefined && x.type !== 'warmup') ? { ...x, load } : x)));
 };
+
+/** One more set on a row after the session (`unit` as for `editSet`): a copy of its last set's numbers, as a normal set with
+ * no session time (it was not ticked in the timer). A row with no sets yet gets them written out. */
+export const addSet = (result: SessionResult, key: string, unit?: string): SessionResult => ({
+  ...result,
+  steps: result.steps.map(s => {
+    if (rowKey(s) !== key) return s;
+    const sets = setsOf(s, unit);
+    const last = sets.at(-1);
+    const copy: SetResult = {};
+    for (const f of ['load', 'reps', 'meters', 'calories', 'seconds'] as const) if (last?.[f] !== undefined) copy[f] = last[f];
+    return withSets(s, [...sets, copy]);
+  }),
+});
+
+/** Take one set off a row. The last set gone takes the row with it. */
+export const removeSet = (result: SessionResult, key: string, index: number, unit?: string): SessionResult => ({
+  ...result,
+  steps: result.steps.flatMap(s => {
+    if (rowKey(s) !== key) return [s];
+    const sets = setsOf(s, unit).filter((_, i) => i !== index);
+    return sets.length ? [withSets(s, sets)] : [];
+  }),
+});

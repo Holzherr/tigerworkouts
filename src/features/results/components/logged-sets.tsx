@@ -1,3 +1,4 @@
+import { Plus, X } from 'lucide-react';
 import { useState } from 'react';
 import { measureOf, nextSetType, setMarks, shortUnit, type ExerciseRef } from '@/features/runsheet/model';
 import type { SetResult, StepResult } from '@/features/runsheet/progression';
@@ -29,6 +30,10 @@ export interface LoggedSetsProps {
   /** Editing: each set's numbers are inputs and its mark cycles the type. */
   editing?: boolean;
   onEdit?: (index: number, patch: SetPatch) => void;
+  /** Editing: one more set, a copy of the last. */
+  onAdd?: () => void;
+  /** Editing: take a set off; the last one takes the row with it. */
+  onRemove?: (index: number) => void;
 }
 
 /**
@@ -37,7 +42,7 @@ export interface LoggedSetsProps {
  * it was ticked. Editing: one line per set, the mark (tap to change the type) then a number box per
  * measure the row has — load, reps, metres, calories, seconds — under a heading row.
  */
-export const LoggedSets = ({ row, exercise, editing, onEdit }: LoggedSetsProps) => {
+export const LoggedSets = ({ row, exercise, editing, onEdit, onAdd, onRemove }: LoggedSetsProps) => {
   const sets = setsOf(row, exercise.unit);
   if (!sets.length) return null;
   const marks = setMarks(sets.map(x => x.type));
@@ -54,11 +59,11 @@ export const LoggedSets = ({ row, exercise, editing, onEdit }: LoggedSetsProps) 
         ))}
       </div>
     );
-  return <SetsEditor sets={sets} marks={marks} exercise={exercise} onEdit={onEdit} />;
+  return <SetsEditor sets={sets} marks={marks} exercise={exercise} onEdit={onEdit} onAdd={onAdd} onRemove={onRemove} />;
 };
 
 /** The editing lines. The columns are fixed when editing starts, so clearing a box keeps it. */
-const SetsEditor = ({ sets, marks, exercise, onEdit }: { sets: SetResult[]; marks: string[]; exercise: ExerciseRef; onEdit?: LoggedSetsProps['onEdit'] }) => {
+const SetsEditor = ({ sets, marks, exercise, onEdit, onAdd, onRemove }: { sets: SetResult[]; marks: string[]; exercise: ExerciseRef; onEdit?: LoggedSetsProps['onEdit']; onAdd?: () => void; onRemove?: (index: number) => void }) => {
   const [fields] = useState(() => fieldsFor(sets, exercise.unit));
   const num = (v: string) => {
     const n = Number(v.replace(',', '.'));
@@ -73,6 +78,7 @@ const SetsEditor = ({ sets, marks, exercise, onEdit }: { sets: SetResult[]; mark
             {HEAD[f](exercise.unit)}
           </span>
         ))}
+        {onRemove && <span className="w-9" />}
       </div>
       {sets.map((x, i) => (
         <div key={i} className="flex items-center gap-1.5 py-0.5">
@@ -87,11 +93,21 @@ const SetsEditor = ({ sets, marks, exercise, onEdit }: { sets: SetResult[]; mark
               aria-label={`Set ${i + 1} ${HEAD[f](exercise.unit)}`}
               value={x[f] ?? ''}
               onChange={e => onEdit?.(i, { [f]: num(e.target.value) })}
-              className="h-9 w-0 min-w-0 flex-1 rounded-control border border-line bg-surface px-2 text-[15px] font-semibold tabular-nums outline-none focus:border-hint"
+              className="h-11 w-0 min-w-0 flex-1 rounded-control border border-line bg-surface px-2 text-[15px] font-semibold tabular-nums outline-none focus:border-hint"
             />
           ))}
+          {onRemove && (
+            <button type="button" aria-label={`Remove set ${i + 1}`} onClick={() => onRemove(i)} className="grid h-11 w-9 shrink-0 place-items-center rounded-control text-faint active:bg-line-soft">
+              <X className="size-4" />
+            </button>
+          )}
         </div>
       ))}
+      {onAdd && (
+        <button type="button" onClick={onAdd} className="mt-0.5 inline-flex h-11 items-center gap-1 rounded-control px-1 text-[13px] font-bold text-brand active:bg-brand-soft">
+          <Plus className="size-4" /> Add set
+        </button>
+      )}
     </div>
   );
 };

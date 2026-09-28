@@ -124,7 +124,7 @@ struct HistoryView: View {
     private func historyLine(_ s: SessionResult) -> String {
         var parts = [s.startedDate.formatted(date: .abbreviated, time: .shortened)]
         if let d = s.durationSec, d > 0 { parts.append(Format.duration(d)) }
-        if s.completed == false { parts.append("part done") }
+        if s.completed == false { parts.append("stopped early") }
         if let rpe = s.rpe { parts.append("effort \(Int(rpe))") }
         return parts.joined(separator: " · ")
     }
@@ -276,6 +276,15 @@ struct SessionDetailView: View {
                 .padding(.horizontal, 14)
                 .padding(.vertical, 8)
                 .accessibilityIdentifier("session-duration")
+            }
+            if session.activity == nil, scoreType != .none {
+                Divider().padding(.leading, 14)
+                // Put the score right: a round missed off the count, a time read off the wrong clock.
+                ScoreEntryView(type: scoreType, value: session.score) { score in
+                    store.update(ScoreEntryView.scored(session, score, type: scoreType))
+                }
+                .padding(.horizontal, 14)
+                .padding(.vertical, 8)
             }
         }
         .cardSurface()

@@ -233,7 +233,10 @@ export const fmtScore = (type: string, score?: number, text?: string) => {
   if (text) return text;
   if (score === undefined) return '';
   if (type === 'time') return `${Math.floor(score / 60)}:${String(Math.round(score % 60)).padStart(2, '0')}`;
-  if (type === 'rounds') return `${Math.floor(score)} round${Math.floor(score) === 1 ? '' : 's'}${score % 1 ? ` + ${Math.round((score % 1) * 1000)} reps` : ''}`;
+  if (type === 'rounds') {
+    const [whole, reps] = [Math.floor(score), Math.round((score % 1) * 1000)];
+    return `${whole} ${whole === 1 ? 'round' : 'rounds'}${reps ? ` + ${reps} ${reps === 1 ? 'rep' : 'reps'}` : ''}`;
+  }
   if (type === 'reps') return `${score} reps`;
   if (type === 'load') return `${score} kg`;
   if (type === 'distance') return `${score} m`;

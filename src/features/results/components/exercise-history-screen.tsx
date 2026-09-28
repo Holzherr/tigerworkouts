@@ -3,7 +3,9 @@ import { ClipThumb } from '@/shared/components/ui/clip-thumb';
 import { Button } from '@/shared/components/ui/button';
 import { shortUnit, type ExerciseRef } from '@/features/runsheet/model';
 import type { SessionResult } from '@/features/runsheet/progression';
-import { chartPoints, exerciseHistory, fmtDur, fmtNum, lowerIsBetter, records, setLabel, type LogKind, type Rec, type Records } from '../logbook';
+import { chartMetrics, exerciseHistory, fmtDur, fmtNum, inRange, lowerIsBetter, METRIC_LABEL, pointsFor, RANGE_LABEL, records, setLabel, type ChartMetric, type ChartRange, type LogKind, type Rec, type Records } from '../logbook';
+import { useState } from 'react';
+import { cn } from '@/shared/utils/ui-utils';
 import { ProgressChart } from './progress-chart';
 import { StallCard } from './targets';
 import type { Stall } from '../stall';
@@ -48,6 +50,19 @@ const chartLabel = (kind: LogKind, unit: string, per: number) =>
                 ? 'Longest set'
                 : 'Rounds per session';
 
+const metricLabel = (m: ChartMetric, unit: string, per: number) => (m === 'volume' ? `Volume per session${unit ? ` · ${unit}` : ''}` : m === 'totalReps' ? 'Total reps per session' : chartLabel(m, unit, per));
+
+/** A row of small toggle pills, each a 44px-tall tap. */
+const Pills = <T extends string>({ label, options, value, onChange }: { label: string; options: [T, string][]; value: T; onChange: (v: T) => void }) => (
+  <div role="radiogroup" aria-label={label} className="flex flex-wrap gap-1">
+    {options.map(([v, text]) => (
+      <button key={v} type="button" role="radio" aria-checked={v === value} onClick={() => onChange(v)} className="flex min-h-11 items-center">
+        <span className={cn('rounded-pill px-2.5 py-1 text-[12px] font-bold', v === value ? 'bg-ink text-white' : 'bg-line-soft text-body')}>{text}</span>
+      </button>
+    ))}
+  </div>
+);
+
 interface Tile {
   label: string;
   value: string;
@@ -89,11 +104,16 @@ export const ExerciseHistoryScreen = ({ exercise: ex, group, results, onBack, on
   const rec = records(results, ex.key, ex.unit);
   const unit = shortUnit(ex.unit);
   const per = paceOver(group);
-  const points = chartPoints(history, rec.kind, per);
+  const metrics = chartMetrics(rec.kind);
+  const [picked, setMetric] = useState<ChartMetric>(metrics[0]);
+  const metric = metrics.includes(picked) ? picked : metrics[0];
+  const [range, setRange] = useState<ChartRange>('all');
+  const all = pointsFor(history, metric, per);
+  const points = inRange(all, range, Date.now());
   // How often each distance was done, so the fastest-time tiles show the ones that matter.
   const done = new Map<string, number>();
   for (const x of history.flatMap(s => s.sets)) if (x.meters !== undefined && x.seconds !== undefined) done.set(String(Math.round(x.meters)), (done.get(String(Math.round(x.meters))) ?? 0) + 1);
-  const timeAxis = rec.kind === 'pace' || rec.kind === 'time';
+  const timeAxis = metric === 'pace' || metric === 'time';
   return (
     <div className="flex h-full min-h-0 flex-col bg-canvas">
       <header className="safe-top shrink-0 bg-surface px-4 pt-2 pb-3">
@@ -107,7 +127,14 @@ export const ExerciseHistoryScreen = ({ exercise: ex, group, results, onBack, on
       </header>
       <div className="min-h-0 flex-1 space-y-3 overflow-y-auto px-3 py-3">
         {history.length === 0 && <div className="py-10 text-center text-[13px] text-muted">Not logged yet. Finish a workout with it and it shows up here.</div>}
-        {points.length > 0 && <ProgressChart points={points} label={chartLabel(rec.kind, unit, per)} format={timeAxis ? fmtDur : undefined} invert={lowerIsBetter(rec.kind)} />}
+        {all.length > 0 && (
+          <div className="flex flex-wrap items-center justify-between gap-x-2">
+            {metrics.length > 1 ? <Pills label="Chart shows" options={metrics.map(m => [m, METRIC_LABEL[m] ?? m])} value={metric} onChange={setMetric} /> : <span />}
+            <Pills label="Range" options={(Object.keys(RANGE_LABEL) as ChartRange[]).map(r => [r, RANGE_LABEL[r]])} value={range} onChange={setRange} />
+          </div>
+        )}
+        {points.length > 0 && <ProgressChart points={points} label={metricLabel(metric, unit, per)} format={timeAxis ? fmtDur : undefined} invert={metric !== 'volume' && metric !== 'totalReps' && lowerIsBetter(metric)} />}
+        {all.length > 0 && points.length === 0 && <div className="rounded-card border border-line bg-surface px-3 py-4 text-center text-[13px] text-muted">No sessions in the last {range === '3m' ? '3 months' : 'year'}.</div>}
         {stall && onDismissStall && <StallCard stall={stall} onDismiss={onDismissStall} onExercise={onExercise} />}
         {history.length > 0 && (
           <div className="grid grid-cols-2 gap-2">

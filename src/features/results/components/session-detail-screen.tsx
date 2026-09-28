@@ -14,7 +14,7 @@ import { celebrate } from '../celebrate';
 import { shareCardData } from '../share-card';
 import { EffortRow } from './effort-row';
 import { ShareCardSheet } from './share-card-sheet';
-import { editSet, plannedReps, rowKey } from '../edit-sets';
+import { addSet, editSet, plannedReps, removeSet, rowKey } from '../edit-sets';
 import { setLabel, setsOf } from '../logbook';
 import { roundPRs } from '../rounds';
 import { LoggedSets } from './logged-sets';
@@ -126,7 +126,7 @@ export const SessionDetailScreen = ({ result: r, runsheet, exercise, loadDevice,
                       {s.success === false && <Chip size="sm" variant="danger">missed</Chip>}
                       {onExercise && !editing && <ChevronRight className="size-4 shrink-0 text-faint" />}
                     </Head>
-                    <LoggedSets row={s} exercise={ex} editing={editing} onEdit={(i, patch) => onChange({ steps: editSet(r, rowKey(s), i, patch, plannedReps(runsheet, s.stepId), ex.unit).steps })} />
+                    <LoggedSets row={s} exercise={ex} editing={editing} onEdit={(i, patch) => onChange({ steps: editSet(r, rowKey(s), i, patch, plannedReps(runsheet, s.stepId), ex.unit).steps })} onAdd={() => onChange({ steps: addSet(r, rowKey(s), ex.unit).steps })} onRemove={i => (setsOf(s, ex.unit).length > 1 || confirm(`Remove ${ex.name} from this session?`)) && onChange({ steps: removeSet(r, rowKey(s), i, ex.unit).steps })} />
                   </div>
                 );
               })}

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import type { Runsheet, SetType } from '@/features/runsheet/model';
+import type { ExerciseRef, Runsheet, SetType } from '@/features/runsheet/model';
 import type { SetResult } from '@/features/runsheet/progression';
 import * as R from './runner';
 
@@ -206,7 +206,10 @@ export const useRunner = (runsheet: Runsheet, opts: { /** A kept run to carry on
     extendRest: useCallback((deltaSec: number) => setState(s => R.extendRest(s, Date.now(), deltaSec)), []),
     fillSet: useCallback((slotId: string, set: SetResult) => setState(s => R.fillSet(s, Date.now(), slotId, set)), []),
     drop: useCallback((stepId: string) => setState(s => R.drop(s, Date.now(), stepId)), []),
+    swap: useCallback((stepId: string, to: ExerciseRef, target?: number) => setState(s => R.swap(s, Date.now(), stepId, to, target)), []),
     finish: useCallback(() => setState(s => R.finish(s, Date.now())), []),
+    /** Put a state from moments ago back: the Undo after a drop or a skip. */
+    restore: useCallback((s: R.RunState) => setState(s), []),
   };
   return { state, now, act };
 };

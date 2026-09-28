@@ -1,8 +1,9 @@
-import { ChevronDown, ChevronUp } from 'lucide-react';
+import { ChevronDown, ChevronUp, Trash2 } from 'lucide-react';
+import { Button } from '@/shared/components/ui/button';
 import { forwardRef } from 'react';
 import { Chip } from '@/shared/components/ui/chip';
 import { Stepper } from '@/shared/components/ui/stepper';
-import { cn, fmtClock } from '@/shared/utils/ui-utils';
+import { cn, fmtClock, plural } from '@/shared/utils/ui-utils';
 import { Dropdown } from '@/shared/components/ui/dropdown';
 import { blockSeconds, modeLabel, roundSeconds, ROLE_LABEL, type Block, type BlockMode, type ItemRole, type ScoreType } from '../model';
 
@@ -30,6 +31,8 @@ export interface BlockHeaderProps extends Omit<React.HTMLAttributes<HTMLDivEleme
   expanded: boolean;
   onToggle: () => void;
   onChange: (patch: Partial<Pick<Block, 'name' | 'repeat' | 'mode' | 'timeCapSec' | 'everySec' | 'ladder' | 'restBetweenSec' | 'role' | 'score'>>) => void;
+  /** Takes the whole block out, its steps with it. Offered at the bottom of the expanded header. */
+  onRemove?: () => void;
   /** Shown instead of the stats line while a step is being dragged out and one would remain. */
   dissolving?: boolean;
   lifted?: boolean;
@@ -43,7 +46,7 @@ const stop = (e: React.SyntheticEvent) => e.stopPropagation();
  * dropdown, rounds / time cap / interval steppers as the mode needs, and the name field.
  * Press and drag the header to move the whole block.
  */
-export const BlockHeader = forwardRef<HTMLDivElement, BlockHeaderProps>(({ block, expanded, onToggle, onChange, dissolving, lifted, className, ...rest }, ref) => {
+export const BlockHeader = forwardRef<HTMLDivElement, BlockHeaderProps>(({ block, expanded, onToggle, onChange, onRemove, dissolving, lifted, className, ...rest }, ref) => {
   const round = roundSeconds(block);
   return (
     <div ref={ref} className={cn('select-none', lifted && 'rounded-card bg-surface shadow-lift', className)} {...rest}>
@@ -54,7 +57,7 @@ export const BlockHeader = forwardRef<HTMLDivElement, BlockHeaderProps>(({ block
             <div className="text-[12px] font-bold text-brand-ink">1 step left · bracket will dissolve</div>
           ) : (
             <div className="text-[12px] text-muted">
-              {block.steps.length} steps · {fmtClock(round)} per round · {Math.round(blockSeconds(block) / 60)} min{block.restBetweenSec ? ` · rest ${block.restBetweenSec}s between` : ''}{block.note ? ` · ${block.note}` : ''}
+              {plural(block.steps.length, 'step')} · {fmtClock(round)} per round · {Math.round(blockSeconds(block) / 60)} min{block.restBetweenSec ? ` · rest ${block.restBetweenSec}s between` : ''}{block.note ? ` · ${block.note}` : ''}
             </div>
           )}
         </div>
@@ -70,7 +73,7 @@ export const BlockHeader = forwardRef<HTMLDivElement, BlockHeaderProps>(({ block
           </div>
           {(block.mode ?? 'rounds') !== 'amrap' && block.mode !== 'ladder' && (
             <div className="flex items-center justify-between gap-3">
-              <span className="text-[14px]">{block.mode === 'emom' ? 'Minutes' : 'Rounds'}</span>
+              <span className="text-[14px]">{block.mode === 'emom' ? ((block.everySec ?? 60) === 60 ? 'Minutes' : 'Intervals') : 'Rounds'}</span>
               <Stepper aria-label="Repeat count" value={block.repeat} min={1} max={60} onChange={repeat => onChange({ repeat })} format={v => `${v}×`} />
             </div>
           )}
@@ -110,6 +113,11 @@ export const BlockHeader = forwardRef<HTMLDivElement, BlockHeaderProps>(({ block
             <span className="text-[12px] text-muted">Block name</span>
             <input type="text" value={block.name} onChange={e => onChange({ name: e.target.value })} className="mt-1 h-11 w-full rounded-control border border-line bg-surface px-3 text-[16px] font-semibold text-ink outline-none focus:border-hint" />
           </label>
+          {onRemove && (
+            <Button variant="danger" block onClick={onRemove}>
+              <Trash2 /> Remove block
+            </Button>
+          )}
         </div>
       )}
     </div>

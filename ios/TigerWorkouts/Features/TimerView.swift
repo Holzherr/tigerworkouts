@@ -31,6 +31,22 @@ struct TimerView: View {
                 running
             }
         }
+        .overlay(alignment: .top) {
+            if let flash = runner.recordFlash, !runner.isDone {
+                RecordToast(text: flash.text) { runner.clearRecordFlash() }
+                    .padding(.top, 60)
+                    // Over the top bar for a moment; taps go through to End session and the rest.
+                    .allowsHitTesting(false)
+            }
+        }
+        .overlay(alignment: .bottom) {
+            if let undo = runner.undoable, !runner.isDone {
+                UndoToast(label: undo.label, dark: true) { runner.undo() } onExpire: { runner.clearUndo() }
+                    .padding(.bottom, 150)
+            }
+        }
+        .animation(.easeOut(duration: 0.2), value: runner.recordFlash)
+        .animation(.easeOut(duration: 0.2), value: runner.undoable?.at)
         // Dark while it runs, as on the web: a white clock on slate reads across a bright gym.
         // Finished, it goes back to the rest of the app's look.
         .preferredColorScheme(runner.isDone ? appearance : .dark)
@@ -60,14 +76,19 @@ struct TimerView: View {
         }
         .confirmationDialog("End this session?", isPresented: $confirmQuit, titleVisibility: .visible) {
             Button("Finish and save") { runner.finish() }
-            Button("Discard", role: .destructive) {
-                runner.discard()
-                onClose()
-            }
-            Button("Keep going", role: .cancel) {}
+            Button("Discard", role: .destructive) { discard() }
+            // Not a cancel role: iOS hides that button in this dialog, and it has to be offered.
+            Button("Keep going") {}
         } message: {
-            Text("Finish saves what you have done so far. Discard keeps nothing of it.")
+            Text("Finish and save keeps what you have done so far. Discard throws this session away: no history, no streak, nothing in Health.")
         }
+    }
+
+    /// Out of the session with nothing kept: the crash-safe copy goes, and nothing reached the
+    /// store or Health, which only hear about a session once it finishes.
+    private func discard() {
+        runner.discard()
+        onClose()
     }
 
     // MARK: - Running
@@ -228,7 +249,7 @@ struct TimerView: View {
     /// minute; this is what is left of it.
     @ViewBuilder
     private var capClock: some View {
-        if let clock = runner.capLeft.map({ (left: $0, of: "block") }) ?? runner.minuteLeft.map({ (left: $0, of: "minute") }),
+        if let clock = runner.capLeft.map({ (left: $0, of: "block") }) ?? runner.minuteLeft.map({ (left: $0, of: (runner.slot?.everySec ?? 60) == 60 ? "minute" : "interval") }),
            runner.state.phase == .running || runner.state.phase == .paused {
             let left = clock.left
             HStack(spacing: 6) {
@@ -408,7 +429,7 @@ struct TimerView: View {
                     if Plates.kit(ex.exercise) == .barbell {
                         PlatesButton(load: runner.slot?.exercise?.id == ex.id ? runner.target : runner.plannedTarget(ex.id) ?? ex.target)
                     }
-                    nudge("minus", label: "Less") { runner.nudgeTarget(-1) }
+                    nudge("minus", label: "Less") { runner.nudgeTarget(-$0) }
                     VStack(spacing: 0) {
                         Text((runner.slot?.exercise?.id == ex.id ? runner.target : runner.plannedTarget(ex.id) ?? ex.target).map(Format.number) ?? "—")
                             .font(.system(size: 26, weight: .bold, design: .rounded))
@@ -417,7 +438,7 @@ struct TimerView: View {
                         Text(ex.shortUnit).font(.caption2).foregroundStyle(Brand.muted)
                     }
                     .frame(minWidth: 64)
-                    nudge("plus", label: "More") { runner.nudgeTarget(1) }
+                    nudge("plus", label: "More") { runner.nudgeTarget($0) }
                 }
                 .disabled(runner.slot?.exercise?.id != ex.id)
             }
@@ -428,14 +449,14 @@ struct TimerView: View {
                 HStack(spacing: 10) {
                     Text(field == .meters ? "Metres done" : "Calories done").font(.subheadline.weight(.semibold)).foregroundStyle(Brand.body)
                     Spacer()
-                    nudge("minus", label: field == .meters ? "Fewer metres" : "Fewer calories") { runner.nudgeAmount(-1) }
+                    nudge("minus", label: field == .meters ? "Fewer metres" : "Fewer calories") { runner.nudgeAmount(-$0) }
                     Text(runner.amount.map(Format.number) ?? "—")
                         .font(.system(size: 26, weight: .bold, design: .rounded))
                         .monospacedDigit()
                         .foregroundStyle(Brand.ink)
                         .frame(minWidth: 64)
                         .accessibilityIdentifier("amount-done")
-                    nudge("plus", label: field == .meters ? "More metres" : "More calories") { runner.nudgeAmount(1) }
+                    nudge("plus", label: field == .meters ? "More metres" : "More calories") { runner.nudgeAmount($0) }
                 }
             }
 
@@ -446,14 +467,14 @@ struct TimerView: View {
                 HStack(spacing: 10) {
                     Text("Reps done").font(.subheadline.weight(.semibold)).foregroundStyle(Brand.body)
                     Spacer()
-                    nudge("minus", label: "Fewer reps") { runner.nudgeReps(-1) }
+                    nudge("minus", label: "Fewer reps") { runner.nudgeReps(-$0) }
                     Text(runner.reps.map(Format.number) ?? "—")
                         .font(.system(size: 26, weight: .bold, design: .rounded))
                         .monospacedDigit()
                         .foregroundStyle(Brand.ink)
                         .frame(minWidth: 64)
                         .accessibilityIdentifier("reps-done")
-                    nudge("plus", label: "More reps") { runner.nudgeReps(1) }
+                    nudge("plus", label: "More reps") { runner.nudgeReps($0) }
                 }
             }
         }
@@ -554,6 +575,13 @@ struct TimerView: View {
                     }
                     .frame(maxWidth: .infinity)
                 }
+                if runner.records.contains(row.slotId), row.done {
+                    Image(systemName: "medal.fill")
+                        .font(.system(size: 15, weight: .bold))
+                        .foregroundStyle(Brand.coral)
+                        .accessibilityLabel("New record")
+                        .accessibilityIdentifier("set-record")
+                }
                 Button {
                     if row.done { openSet = row.slotId } else if row.current { openSet = nil }
                     runner.tickSet(row.slotId)
@@ -617,8 +645,10 @@ struct TimerView: View {
         .accessibilityLabel(label)
     }
 
-    private func nudge(_ symbol: String, label: String, action: @escaping () -> Void) -> some View {
-        Button(action: action) {
+    /// Minus or plus beside a number. Held, it repeats and speeds up; the action gets how many
+    /// steps this press is worth.
+    private func nudge(_ symbol: String, label: String, action: @escaping (Double) -> Void) -> some View {
+        RepeatButton(action: action) {
             Image(systemName: symbol)
                 .font(.system(size: 18, weight: .bold))
                 .frame(width: 56, height: 56)

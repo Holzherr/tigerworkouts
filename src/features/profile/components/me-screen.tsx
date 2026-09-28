@@ -49,7 +49,13 @@ export const MeScreen = ({ name, avatar, status, results, load, bodyweightKg, on
         <div className="flex items-center gap-3">
           <AvatarView name={name} avatar={avatar} size={56} />
           <div className="min-w-0 flex-1">
-            <h1 className="truncate text-[22px] font-extrabold">{name}</h1>
+            {name ? (
+              <h1 className="truncate text-[22px] font-extrabold">{name}</h1>
+            ) : (
+              <button type="button" onClick={onSettings} className="min-h-11 text-left text-[18px] font-extrabold text-brand">
+                Add your name
+              </button>
+            )}
             <div className="text-[12px] text-muted">{status}</div>
           </div>
           <Button variant="quiet" size="icon" aria-label="Settings" onClick={onSettings}>

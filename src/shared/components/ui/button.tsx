@@ -17,12 +17,14 @@ export const buttonVariants = cva(
       },
       size: {
         default: 'h-11 px-4 text-[15px] [&_svg]:size-5',
-        sm: 'h-9 px-3 text-[13px] [&_svg]:size-4',
+        // sm, icon-sm and inline draw small but take a 44px-tall tap: an invisible ::after reaches
+        // past the edges (DESIGN.md: every tap target is at least 44px tall).
+        sm: "relative h-9 px-3 text-[13px] after:absolute after:inset-x-0 after:-inset-y-1 after:content-[''] [&_svg]:size-4",
         lg: 'h-13 px-5 text-[17px] [&_svg]:size-5',
         xl: 'h-16 px-5 text-[18px] [&_svg]:size-6',
         icon: 'size-11 [&_svg]:size-5',
-        'icon-sm': 'size-8 [&_svg]:size-4',
-        inline: 'h-auto px-1 py-0.5 text-[13px] [&_svg]:size-4',
+        'icon-sm': "relative size-8 after:absolute after:-inset-1.5 after:content-[''] [&_svg]:size-4",
+        inline: "relative h-auto px-1 py-0.5 text-[13px] after:absolute after:inset-x-0 after:-inset-y-3 after:content-[''] [&_svg]:size-4",
       },
       block: { true: 'w-full' },
     },

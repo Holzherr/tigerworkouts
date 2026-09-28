@@ -23,6 +23,9 @@
   <!-- HTTPS through URLSession only, which is exempt: no export compliance question per upload. -->
   <key>ITSAppUsesNonExemptEncryption</key>
   <false/>
+  <!-- Personal or Paid (project.yml): whether this build may offer Sign in with Apple. -->
+  <key>TigerEntitlements</key>
+  <string>$(ENTITLEMENTS_KIND)</string>
   <key>UILaunchScreen</key>
   <dict/>
   <key>UISupportedInterfaceOrientations</key>
@@ -40,9 +43,9 @@
   <key>NSSupportsLiveActivitiesFrequentUpdates</key>
   <true/>
   <key>NSHealthShareUsageDescription</key>
-  <string>Tiger reads your bodyweight so the calories after a workout are yours rather than an assumption, and your heart rate over the session so the figure is measured rather than estimated.</string>
+  <string>TigerWorkouts reads your bodyweight so the calories after a workout are yours rather than an assumption, and your heart rate over the session so the figure is measured rather than estimated.</string>
   <key>NSHealthUpdateUsageDescription</key>
-  <string>Tiger saves each finished workout to Health, so it counts towards your rings and sits alongside everything else you do.</string>
+  <string>TigerWorkouts saves each finished workout to Health, so it counts towards your rings and sits alongside everything else you do.</string>
   <key>CFBundleURLTypes</key>
   <array>
     <dict>

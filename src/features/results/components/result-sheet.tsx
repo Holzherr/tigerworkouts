@@ -8,7 +8,7 @@ import { workedFrom } from '../effort';
 import { SessionStats } from './session-stats';
 import { Stepper } from '@/shared/components/ui/stepper';
 import { cn } from '@/shared/utils/ui-utils';
-import { scoreType, type ExerciseStep, type Runsheet } from '@/features/runsheet/model';
+import { forLabel, scoreType, type ExerciseStep, type Runsheet } from '@/features/runsheet/model';
 import { fmtScore, nextLoads, resolveTarget, type NextLoad, type SessionOrigin, type SessionResult, type StepResult, type TrainingMaxes } from '@/features/runsheet/progression';
 import { ScoreEntry } from './score-entry';
 import { BodyweightPrompt } from './bodyweight-prompt';
@@ -121,7 +121,7 @@ export const ResultSheet = ({ runsheet, history = [], allResults = history, trai
                 <div className="min-w-0 flex-1">
                   <div className="truncate text-[14px] font-semibold">{s.exercise.name}</div>
                   <div className="text-[12px] text-muted">
-                    {s.forMode === 'amrap' ? `${s.forValue}+ reps` : s.forMode === 'max' ? 'max' : `${s.forValue} ${s.forMode}`}
+                    {forLabel(s)}
                     {s.targetPct ? ` · ${s.targetPct}% TM` : ''}
                   </div>
                 </div>

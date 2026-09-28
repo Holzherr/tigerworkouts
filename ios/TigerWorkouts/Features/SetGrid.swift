@@ -39,15 +39,22 @@ struct SetPlanGrid: View {
                         if step.hasSetLoad {
                             if Plates.kit(step.exercise) == .barbell { PlatesButton(load: planned.load) }
                             MiniStepper(value: planned.load ?? 0, label: "Set \(round + 1) load", disabled: locked) { direction in
-                                let next = max(0, (planned.load ?? 0) + direction * (step.exercise.step == 0 ? 1 : step.exercise.step))
-                                apply { Edit.editSet($0, block: block.id, round: round, load: next) }
+                                // Read from the sheet as it is now: a held button fires many times
+                                // before this view is drawn again.
+                                apply { r in
+                                    let now = r.exerciseSteps.first { $0.id == step.id }?.plannedSet(round) ?? planned
+                                    let next = max(0, (now.load ?? 0) + direction * (step.exercise.step == 0 ? 1 : step.exercise.step))
+                                    return Edit.editSet(r, block: block.id, round: round, load: next)
+                                }
                             }
                             .frame(maxWidth: .infinity)
                         }
                         if let count = step.countLabel {
                             MiniStepper(value: planned.reps, label: "Set \(round + 1) \(count.lowercased())", disabled: locked) { direction in
-                                let next = max(1, planned.reps + direction)
-                                apply { Edit.editSet($0, block: block.id, round: round, reps: next) }
+                                apply { r in
+                                    let now = r.exerciseSteps.first { $0.id == step.id }?.plannedSet(round) ?? planned
+                                    return Edit.editSet(r, block: block.id, round: round, reps: max(1, now.reps + direction))
+                                }
                             }
                             .frame(maxWidth: .infinity)
                         }
@@ -102,7 +109,7 @@ struct MiniStepper: View {
 
     private func stepper(hit: CGFloat) -> some View {
         HStack(spacing: 0) {
-            button("minus", "\(label), less", hit: hit) { nudge(-1) }
+            button("minus", "\(label), less", hit: hit) { nudge(-$0) }
             Text(Format.number(value))
                 .font(.system(size: 18, weight: .bold, design: .rounded))
                 .monospacedDigit()
@@ -114,12 +121,13 @@ struct MiniStepper: View {
                 .frame(minWidth: 28, idealWidth: 28, maxWidth: 56)
                 .accessibilityLabel(label)
                 .accessibilityValue(Format.number(value))
-            button("plus", "\(label), more", hit: hit) { nudge(1) }
+            button("plus", "\(label), more", hit: hit) { nudge($0) }
         }
     }
 
-    private func button(_ symbol: String, _ label: String, hit: CGFloat, action: @escaping () -> Void) -> some View {
-        Button(action: action) {
+    /// Held, it repeats and the steps grow; `action` gets 1, 2 or 5.
+    private func button(_ symbol: String, _ label: String, hit: CGFloat, action: @escaping (Double) -> Void) -> some View {
+        RepeatButton(action: action) {
             Image(systemName: symbol)
                 .font(.system(size: 14, weight: .bold))
                 .frame(width: 36, height: 38)
@@ -129,7 +137,6 @@ struct MiniStepper: View {
                 .frame(width: hit, height: 44)
                 .contentShape(Rectangle())
         }
-        .buttonStyle(.borderless)
         .accessibilityLabel(label)
     }
 }

@@ -70,7 +70,8 @@ enum Celebrate {
         case .time: return Format.clock(score)
         case .rounds:
             let extra = Int(((score.truncatingRemainder(dividingBy: 1)) * 1000).rounded())
-            return "\(Int(score)) round\(Int(score) == 1 ? "" : "s")" + (extra > 0 ? " + \(extra) reps" : "")
+            let rounds = Int(score)
+            return "\(rounds) round\(rounds == 1 ? "" : "s")" + (extra > 0 ? " + \(extra) rep\(extra == 1 ? "" : "s")" : "")
         case .reps: return "\(Format.number(score)) reps"
         case .load: return "\(Format.number(score)) kg"
         case .distance: return "\(Format.number(score)) m"
