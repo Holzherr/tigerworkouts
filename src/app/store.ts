@@ -37,7 +37,7 @@ export interface AppState {
 }
 
 const KEY = 'workout-hub-next:v1';
-const EMPTY: AppState = { workouts: [], results: [], trainingMaxes: {}, saved: [], name: 'Nick', units: 'metric', favorites: [], exercises: {}, signedIn: false };
+const EMPTY: AppState = { workouts: [], results: [], trainingMaxes: {}, saved: [], name: '', units: 'metric', favorites: [], exercises: {}, signedIn: false };
 
 let state: AppState = (() => {
   try {

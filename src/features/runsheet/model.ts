@@ -373,7 +373,11 @@ export const loadLabel = (s: ExerciseStep) => (s.loadFactor ? `${s.loadFactor}×
 /** "×8", "AMRAP 20:00", "EMOM 10", "5 rounds for time" */
 export const modeLabel = (b: Block) => {
   const mode = b.mode ?? 'rounds';
-  if (mode === 'amrap') return `AMRAP ${Math.round((b.timeCapSec ?? 0) / 60)}:00`;
+  if (mode === 'amrap') {
+    // A block with no time set reads AMRAP, not AMRAP 0:00; 90 s reads 1:30.
+    const t = b.timeCapSec ?? 0;
+    return t > 0 ? `AMRAP ${Math.floor(t / 60)}:${String(Math.round(t % 60)).padStart(2, '0')}` : 'AMRAP';
+  }
   if (mode === 'emom') return `EMOM ${b.repeat}`;
   if (mode === 'fortime') return `${b.repeat} round${b.repeat === 1 ? '' : 's'} for time`;
   if (mode === 'ladder') return (b.ladder ?? []).join('-');

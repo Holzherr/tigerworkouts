@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { SessionResult } from '@/features/runsheet/progression';
-import { chartPoints, e1rm, exerciseHistory, isRecord, kindOf, loggedExercises, records, sessionVolume, setLabel, setsOf } from './logbook';
+import { chartMetrics, chartPoints, e1rm, exerciseHistory, inRange, isRecord, kindOf, loggedExercises, METRIC_LABEL, pointsFor, RANGE_LABEL, records, sessionVolume, setLabel, setsOf } from './logbook';
 
 const session = (startedAt: string, steps: SessionResult['steps'], title = 'Push'): SessionResult => ({ id: 's-' + startedAt, runsheetId: 'w', title, startedAt, steps });
 
@@ -179,5 +179,30 @@ describe('timed and distance work in the logbook', () => {
     expect(setLabel({ calories: 20 })).toBe('20 cal');
     expect(setLabel({ seconds: 45 })).toBe('45 s');
     expect(setLabel({ load: 24, seconds: 40 }, 'kg')).toBe('24 kg · 40 s');
+  });
+});
+
+describe('chart metrics and ranges', () => {
+  const s = (startedAt: string, sets: { load?: number; reps?: number; type?: 'warmup' }[]) => ({ runsheetId: 'w', title: 'W', startedAt, sets, prs: [] });
+  it('offers more than one metric only where they differ', () => {
+    expect(chartMetrics('strength')).toEqual(['strength', 'load', 'volume', 'reps']);
+    expect(chartMetrics('reps')).toEqual(['reps', 'totalReps']);
+    expect(chartMetrics('pace')).toEqual(['pace', 'distance']);
+    expect(chartMetrics('time')).toEqual(['time']);
+    expect(METRIC_LABEL.strength).toBe('Est. 1RM');
+  });
+  it('volume and total reps leave warm-ups out', () => {
+    const h = [s('2026-09-01T10:00:00Z', [{ load: 40, reps: 10, type: 'warmup' }, { load: 60, reps: 8 }, { load: 60, reps: 6 }])];
+    expect(pointsFor(h, 'volume')).toEqual([{ at: '2026-09-01T10:00:00Z', value: 840 }]);
+    expect(pointsFor(h, 'totalReps')).toEqual([{ at: '2026-09-01T10:00:00Z', value: 14 }]);
+    expect(pointsFor(h, 'load')[0].value).toBe(60);
+  });
+  it('a range keeps the points from the last 90 or 365 days', () => {
+    const now = Date.parse('2026-09-28T12:00:00Z');
+    const pts = ['2025-01-01', '2026-01-01', '2026-08-01', '2026-09-27'].map(d => ({ at: `${d}T10:00:00Z`, value: 1 }));
+    expect(inRange(pts, '3m', now).map(p => p.at.slice(0, 10))).toEqual(['2026-08-01', '2026-09-27']);
+    expect(inRange(pts, '1y', now)).toHaveLength(3);
+    expect(inRange(pts, 'all', now)).toHaveLength(4);
+    expect(RANGE_LABEL).toEqual({ '3m': '3 m', '1y': '1 y', all: 'All' });
   });
 });

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { SessionResult } from '@/features/runsheet/progression';
-import { editSet, withRowLoad } from './edit-sets';
+import { addSet, editSet, removeSet, withRowLoad } from './edit-sets';
 import { records } from './logbook';
 import { lastUsed } from '@/features/runsheet/last-used';
 
@@ -42,5 +42,31 @@ describe('editing logged sets', () => {
     expect(row.sets?.map(x => x.load)).toEqual([40, 62.5, 62.5]);
     expect(row.target).toBe(62.5);
     expect(withRowLoad({ stepId: 'x', exerciseKey: 'x' }, 20)).toEqual({ stepId: 'x', exerciseKey: 'x', target: 20 });
+  });
+});
+
+describe('adding and removing sets after the session', () => {
+  it('a new set copies the last one, without its time or type', () => {
+    const base = result();
+    base.steps[0].sets![2] = { load: 60, reps: 8, at: 300, type: 'failure' };
+    const r = addSet(base, 'a|bench');
+    expect(r.steps[0].sets).toHaveLength(4);
+    expect(r.steps[0].sets![3]).toEqual({ load: 60, reps: 8 });
+    expect(r.steps[0].reps).toEqual([8, 8, 8]);
+  });
+  it('a row from before per-set results gets its sets written out, then one more', () => {
+    const r = addSet(result(), 'o|squat');
+    expect(r.steps[2]).toMatchObject({ target: 80, reps: [5, 5, 5], sets: [{ load: 80, reps: 5 }, { load: 80, reps: 5 }, { load: 80, reps: 5 }] });
+  });
+  it('removing a set works target and reps out again', () => {
+    const r = removeSet(result(), 'a|bench', 2);
+    expect(r.steps[0]).toMatchObject({ target: 60, reps: [8] });
+    expect(r.steps[0].sets).toHaveLength(2);
+    const w = removeSet(result(), 'a|bench', 0);
+    expect(w.steps[0].reps).toEqual([8, 8]);
+  });
+  it('removing the only set drops the row', () => {
+    const r = removeSet(result(), 'r|row', 0);
+    expect(r.steps.map(s => s.exerciseKey)).toEqual(['bench', 'squat']);
   });
 });

@@ -41,7 +41,7 @@ export interface DiscoverScreenProps {
   initialTab?: DiscoverTab;
   initialFilter?: DiscoverFilter;
   title?: string;
-  /** Rendered at the top of For you (Resume banner, quick log). */
+  /** Rendered at the top of every tab: the Resume banner for a session left running. */
   above?: React.ReactNode;
   /** Rendered at the top of Saved and For you: what to do next and the week so far, once there is history. */
   top?: React.ReactNode;
@@ -141,6 +141,7 @@ export const DiscoverScreen = ({ workouts, results = [], savedIds = [], onOpen, 
       </header>
 
       <div className="min-h-0 flex-1 space-y-2 overflow-y-auto px-3 py-3">
+        {above}
         {tab !== 'search' && top}
         {tab === 'saved' && (
           <>
@@ -164,7 +165,6 @@ export const DiscoverScreen = ({ workouts, results = [], savedIds = [], onOpen, 
 
         {tab === 'recommended' && (
           <>
-            {above}
             {results.length === 0 && <div className="px-1 pb-1 text-[12px] text-muted">Log a workout and this list learns what you like. Until then, some good first ones.</div>}
             {results.length > 0 && recs.length === 0 && <EmptyState icon={<Sparkles />} title="Nothing to suggest yet" body="Log a couple more workouts and this list learns what you like." action={{ label: 'Browse workouts', onClick: () => setTab('search') }} />}
             {groupRecs(recs).map(([reason, list]) => (

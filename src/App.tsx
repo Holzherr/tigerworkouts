@@ -1,4 +1,6 @@
-import { Flame, History, ImageUp, User } from 'lucide-react';
+import { Flame, History, ImageUp, Medal, User } from 'lucide-react';
+import { newRecords } from '@/features/timer/live-pr';
+import { setLabel } from '@/features/results/logbook';
 import { useEffect, useMemo, useState } from 'react';
 import { DiscoverScreen, type DiscoverTab } from '@/features/discover/components/discover-screen';
 import { LandingScreen } from '@/features/landing/components/landing-screen';
@@ -8,14 +10,14 @@ import { FULL_LIBRARY } from '@/features/workouts/imported';
 import { WorkoutPreviewScreen } from '@/features/discover/components/workout-preview-screen';
 import { EditorScreen } from '@/features/runsheet/components/editor-screen';
 import { EX, withStarter } from '@/features/runsheet/fixtures';
-import { editedCopy, lineage, makeExercise, ofWorkout, resolveRefs, scoreType, shortUnit, type ExerciseStep, type Runsheet } from '@/features/runsheet/model';
+import { editedCopy, forLabel, lineage, makeExercise, measureOf, ofWorkout, resolveRefs, scoreType, shortUnit, type ExerciseStep, type Runsheet } from '@/features/runsheet/model';
 import { lastSet, lastSetLabel, lastSets, lastTimeLabel, withLastUsed } from '@/features/runsheet/last-used';
 import { patchStep } from '@/features/runsheet/patch-step';
 import { applyCommands, parsePlan } from '@/features/runsheet/parse-text';
 import { isImage, readImport } from '@/features/runsheet/import-file';
 import { appLink, CreatorScreen } from '@/features/creators/components/creator-screen';
 import { CreatorPageCard } from '@/features/creators/components/creator-page-card';
-import { cn } from '@/shared/utils/ui-utils';
+import { cn, plural } from '@/shared/utils/ui-utils';
 import { localDate } from '@/shared/utils/dates';
 import { ExercisePicker } from '@/features/exercises/components/exercise-picker';
 import type { LibraryExercise } from '@/features/exercises/library';
@@ -46,6 +48,7 @@ import { Button } from '@/shared/components/ui/button';
 import { Sheet } from '@/shared/components/ui/sheet';
 import { TabBar } from '@/shared/components/ui/tab-bar';
 import { WorkoutIcon } from '@/shared/components/ui/workout-icon';
+import { useUndo } from '@/shared/components/ui/undo-toast';
 import { defaultIcon } from '@/features/workouts/icon';
 import { useActions, useAppState } from './app/store';
 import { providers, sendCode, signInGoogle, signOut, verifyCode } from '@/features/cloud/client';
@@ -92,6 +95,7 @@ const go = (path: string) => {
   location.hash = path;
 };
 const wid = (r: Runsheet) => r.id ?? r.title;
+const LANDING_KEY = 'tiger:landing-seen';
 const back = (fallback: string) => (history.length > 1 ? history.back() : go(fallback));
 const exerciseLink = (key: string) => `/x/${encodeURIComponent(key)}`;
 const usesRelativeLoads = (r: Runsheet) => r.items.some(i => (i.kind === 'block' ? i.steps : i.kind === 'ref' ? [] : [i]).some(s => s.kind === 'exercise' && (s.targetPct !== undefined || s.loadFactor !== undefined)));
@@ -149,6 +153,24 @@ export default function App() {
   useEffect(() => {
     if (cloud.user) act.setSignedIn(true);
   }, [cloud.user, act]);
+  // The landing page shows once: after any way off it, a guest's Discover is Discover, not the
+  // landing page again. A new key; nothing older is renamed.
+  const [seenLanding, setSeenLanding] = useState(() => {
+    try {
+      return localStorage.getItem(LANDING_KEY) === '1';
+    } catch {
+      return false;
+    }
+  });
+  const leaveLanding = (path: string) => {
+    try {
+      localStorage.setItem(LANDING_KEY, '1');
+    } catch {
+      /* private mode */
+    }
+    setSeenLanding(true);
+    go(path);
+  };
   const [pasteOpen, setPasteOpen] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
   const say = (m: string) => { setToast(m); setTimeout(() => setToast(null), 2500); };
@@ -235,6 +257,7 @@ export default function App() {
           onCreator={r.ownerId || (cloud.user && st.workouts.some(w => w.id === wid(r))) ? () => go(`/c/${r.ownerId ?? cloud.user!.id}`) : undefined}
           onTogglePublic={cloud.user && st.workouts.some(w => w.id === wid(r)) ? () => { act.saveWorkout({ ...r, public: !r.public }); say(r.public ? 'Private now' : 'On your public page'); } : undefined}
           appHref={appLink(`w/${encodeURIComponent(wid(r))}`)}
+          onDelete={st.workouts.some(w => w.id === wid(r)) ? () => { act.deleteWorkout(wid(r)); if (st.saved.includes(wid(r))) act.toggleSaved(wid(r)); say('Workout deleted'); go('/discover/saved'); } : undefined}
         />
     );
   }
@@ -242,11 +265,11 @@ export default function App() {
     return full(<CreatorRoute key={route.id} id={route.id} onOpen={r => open(r)} onShare={async () => { const out = await shareLink('TigerWorkouts', location.href); say(out === 'copied' ? 'Link copied' : out === 'shared' ? 'Shared' : 'Could not share'); }} />);
   }
   if (route.name === 'new') {
-    const r: Runsheet = draftOf('new') ?? { title: '', creator: st.name, items: [] };
+    const r: Runsheet = draftOf('new') ?? { title: '', creator: st.name || undefined, items: [] };
     const saveMine = (): Runsheet => {
       const title = r.title.trim() || 'My workout';
       const id = `u-${Date.now().toString(36)}`;
-      const mine: Runsheet = { ...r, id, title, creator: st.name, source: { title, author: st.name, kind: 'user' }, program: undefined, icon: r.icon ?? defaultIcon(id) };
+      const mine: Runsheet = { ...r, id, title, creator: st.name || undefined, source: { title, author: st.name || undefined, kind: 'user' }, program: undefined, icon: r.icon ?? defaultIcon(id) };
       act.saveWorkout(mine);
       setDrafted(null);
       return mine;
@@ -268,6 +291,7 @@ export default function App() {
           equipment={st.equipment}
           refTitle={refTitle}
           autoRest={defaultRest}
+          dirty={!!(r.title.trim() || r.items.length)}
           mode="author"
           onTextChange={t => { const out = applyCommands(r, t, library); draftFor('new')(out.runsheet); say(out.applied.length ? out.applied.join(' · ') : `Didn't understand “${t}”`); }}
           onPastePlan={() => setPasteOpen(true)}
@@ -306,6 +330,8 @@ export default function App() {
           equipment={st.equipment}
           refTitle={refTitle}
           autoRest={defaultRest}
+          dirty={!!draftOf(route.id) && (!base || JSON.stringify(r) !== JSON.stringify(resolveRefs(base, lookup)))}
+          own={!!base?.id && st.workouts.some(w => w.id === base.id)}
           mode="tonight"
           onTextChange={t => { const out = applyCommands(r, t, library); draftFor(route.id)(out.runsheet); say(out.applied.length ? out.applied.join(' · ') : `Didn't understand “${t}”`); }}
           onPastePlan={() => setPasteOpen(true)}
@@ -347,7 +373,7 @@ export default function App() {
     // a clean session, the deload after repeated misses), then % of a training max and × bodyweight
     // worked out, so the timer shows and logs a weight for every loaded set.
     const run = resolveLoads(progressed(withLastUsed(resolveRefs(r, lookup), st.results), st.results, st.trainingMaxes, st.equipment), st.trainingMaxes, st.bodyweightKg, st.equipment);
-    return <RunRoute key={route.id} runsheet={run} results={st.results} intent={intent} equipment={st.equipment} resume={resumeFor === route.id} onLog={res => act.addResult({ ...res, runsheetId: wid(r) })} onFinish={res => (setResumeFor(null), setPending({ ...res, runsheetId: wid(r) }), go(`/result/${encodeURIComponent(route.id)}`))} onExit={() => (setResumeFor(null), Runner.clearPersisted(), go(`/w/${encodeURIComponent(route.id)}`))} />;
+    return <RunRoute key={route.id} runsheet={run} results={st.results} intent={intent} equipment={st.equipment} library={library} resume={resumeFor === route.id} onLog={res => act.addResult({ ...res, runsheetId: wid(r) })} onFinish={res => (setResumeFor(null), setPending({ ...res, runsheetId: wid(r) }), go(`/result/${encodeURIComponent(route.id)}`))} onExit={() => (setResumeFor(null), Runner.clearPersisted(), go(`/w/${encodeURIComponent(route.id)}`))} />;
   }
   if (route.name === 'session') {
     const res = st.results.find(x => x.id === route.id);
@@ -528,12 +554,12 @@ export default function App() {
     );
   }
   // The landing page is the first run only: anyone with sessions on this device goes straight to them, signed in or not.
-  if (!st.signedIn && !cloud.user && st.results.length === 0 && sub !== 'search') {
+  if (!st.signedIn && !cloud.user && st.results.length === 0 && sub !== 'search' && !seenLanding) {
     const clips = ['kb_swing', 'db_incline_press', 'sprint', 'lat_raise', 'db_shoulder_press', 'incline_walk'].map(k => ({ clip: EX[k].clip, poster: EX[k].poster, name: EX[k].name }));
     const stills = Object.values(LIB).filter(e => e.poster).slice(0, 28).map(e => e.poster!);
     return (
       <div className="h-dvh">
-        <LandingScreen onGetStarted={() => go('/me')} onSignIn={() => go('/me')} onBrowse={() => go('/discover/search')} workoutCount={all.length} exerciseCount={Object.keys(FULL_LIBRARY).length} clips={clips} stills={stills} demo={<TimerDemo />} />
+        <LandingScreen onGetStarted={() => leaveLanding('/me')} onSignIn={() => leaveLanding('/me')} onBrowse={() => leaveLanding('/discover/search')} workoutCount={all.length} exerciseCount={Object.keys(FULL_LIBRARY).length} clips={clips} stills={stills} demo={<TimerDemo />} />
       </div>
     );
   }
@@ -542,15 +568,15 @@ export default function App() {
   const above = (
     <>
       {saved && byId.has(saved.runsheetId) && (
-        <button type="button" onClick={() => (setDrafted(null), setResumeFor(saved.runsheetId), go(`/do/${encodeURIComponent(saved.runsheetId)}`))} className="flex w-full items-center gap-3 rounded-card border border-brand-line bg-brand-soft px-3 py-2.5 text-left">
-          <div className="min-w-0 flex-1">
-            <div className="text-[14px] font-bold">Resume {saved.title}</div>
-            <div className="text-[12px] text-muted">Step {saved.i + 1} of {saved.slots.length}</div>
-          </div>
-          <Button variant="quiet" size="inline" onClick={e => { e.stopPropagation(); Runner.clearPersisted(); setToast('Discarded'); }}>
+        <div className="flex w-full items-center gap-1 rounded-card border border-brand-line bg-brand-soft pr-1">
+          <button type="button" onClick={() => (setDrafted(null), setResumeFor(saved.runsheetId), go(`/do/${encodeURIComponent(saved.runsheetId)}`))} className="min-w-0 flex-1 px-3 py-2.5 text-left">
+            <div className="truncate text-[14px] font-bold">Resume {saved.title}</div>
+            <div className="text-[12px] text-muted">Step {Math.min(saved.i + 1, saved.slots.length)} of {saved.slots.length}</div>
+          </button>
+          <Button variant="quiet" size="sm" onClick={() => { if (confirm(`Discard the ${saved.title} session? What you did in it is not saved.`)) { Runner.clearPersisted(); say('Discarded'); } }}>
             Discard
           </Button>
-        </button>
+        </div>
       )}
     </>
   );
@@ -587,7 +613,7 @@ export default function App() {
  * result sheet is saved. Until then it lived only in memory: the persisted run was cleared at done,
  * so a reload or a closed tab on the result sheet lost it. The sheet then edits the logged row.
  */
-type RunRouteProps = { runsheet: Runsheet; results: SessionResult[]; intent: Intent; equipment?: Equipment; onLog: (r: SessionResult) => void; onFinish: (r: SessionResult) => void; onExit: () => void };
+type RunRouteProps = { runsheet: Runsheet; results: SessionResult[]; intent: Intent; equipment?: Equipment; library: Record<string, LibraryExercise>; onLog: (r: SessionResult) => void; onFinish: (r: SessionResult) => void; onExit: () => void };
 
 /**
  * A run of this workout kept on the device (a reload, a closed tab) is asked about, not picked up
@@ -630,7 +656,7 @@ const RunRoute = ({ resume, ...props }: RunRouteProps & { resume?: boolean }) =>
   );
 };
 
-const RunSession = ({ runsheet, results, intent, equipment, onLog, onFinish, onExit, from }: RunRouteProps & { from?: Runner.RunState }) => {
+const RunSession = ({ runsheet, results, intent, equipment, library, onLog, onFinish, onExit, from }: RunRouteProps & { from?: Runner.RunState }) => {
   // Open reps (a range, a max) start on what was done last time, set for set.
   const { state, now, act } = useRunner(runsheet, { from, seed: s => Runner.prefillReps(s, (step, round) => lastSets(results, step)?.[round]?.reps) });
   // The last session of this workout with times kept, raced on the header. Fixed for the session.
@@ -662,9 +688,57 @@ const RunSession = ({ runsheet, results, intent, equipment, onLog, onFinish, onE
   useEffect(() => {
     if (state.phase === 'done') log(state);
   });
+  // A set that beats a record gets a medal on its row and a short PR pill the moment it is ticked.
+  const prevRun = useRef(state);
+  const [prs, setPrs] = useState<string[]>([]);
+  const [prSay, setPrSay] = useState<string | null>(null);
+  useEffect(() => {
+    const before = prevRun.current;
+    prevRun.current = state;
+    if (before === state) return;
+    const hit = newRecords(before, state, runsheet, results, Date.now());
+    if (!hit.length) return;
+    setPrs(p => [...p, ...hit.map(h => h.slotId)]);
+    const h = hit[hit.length - 1];
+    const ex = library[h.exerciseKey];
+    setPrSay(`New record · ${ex?.name ?? h.exerciseKey} ${setLabel(h.set, ex && !measureOf(ex.unit) ? shortUnit(ex.unit) : '')}`.trim());
+    try {
+      navigator.vibrate?.([30, 50, 30, 50, 140]);
+    } catch {
+      /* no vibration */
+    }
+  }, [state, runsheet, results, library]);
+  useEffect(() => {
+    if (!prSay) return;
+    const t = setTimeout(() => setPrSay(null), 2500);
+    return () => clearTimeout(t);
+  }, [prSay]);
+  // A drop is one swipe and Skip sits beside Pause: both can be taken back for five seconds.
+  const undo = useUndo('bottom-28 z-10');
+  const skip = () => {
+    const before = state;
+    act.skip();
+    // A skip that ends the session logs it; that one is not taken back.
+    if (Runner.advance(before, Date.now(), { skipped: true }).phase === 'done') return;
+    undo.offer('Skipped', () => act.restore(before));
+  };
+  const drop = (stepId: string) => {
+    const before = state;
+    const step = before.slots.find(sl => sl.step.id === stepId)?.step;
+    act.drop(stepId);
+    undo.offer(step?.kind === 'exercise' ? `Dropped ${step.exercise.name}` : 'Dropped step', () => act.restore(before));
+  };
   return (
     <div className="relative h-dvh">
-      <TimerScreen runsheet={runsheet} state={state} now={now} onDone={act.done} onSkip={act.skip} onBack={act.back} onPause={act.pause} onResume={act.resume} onAdjust={act.adjust} onAdjustIncline={act.adjustIncline} onSetReps={act.setReps} onSetAmount={act.setAmount} onDrop={act.drop} onStartBlock={act.startBlock} onAdjustStep={act.adjustStep} sets={{ adjust: act.adjustAt, setReps: act.setRepsAt, setAmount: act.setAmountAt, complete: act.completeSet, reopen: act.reopenSet, lastFor: (step, round) => lastSets(results, step)?.[round], fill: act.fillSet, setType: act.setTypeAt }} onAdjustRest={act.extendRest} lastFor={step => lastSet(results, step)} onFill={act.fillSet} ghost={pace?.text} goal={goal} muted={muted} onToggleMute={() => { setMuted(!muted); setMute(!muted); }} equipment={equipment} onFinish={() => { const res = log(state.phase === 'done' ? state : Runner.finish(state, Date.now())); Runner.clearPersisted(); onFinish(res); }} onExit={onExit} />
+      {undo.toast}
+      {prSay && (
+        <div role="status" className="pointer-events-none fixed inset-x-0 top-24 z-50 flex justify-center px-4">
+          <div className="flex items-center gap-2 rounded-full bg-brand px-4 py-2 text-[14px] font-extrabold text-white shadow-lift">
+            <Medal className="size-4" /> {prSay}
+          </div>
+        </div>
+      )}
+      <TimerScreen runsheet={runsheet} state={state} now={now} onDone={act.done} onSkip={skip} onBack={act.back} onPause={act.pause} onResume={act.resume} onAdjust={act.adjust} onAdjustIncline={act.adjustIncline} onSetReps={act.setReps} onSetAmount={act.setAmount} onDrop={drop} onStartBlock={act.startBlock} onAdjustStep={act.adjustStep} sets={{ adjust: act.adjustAt, setReps: act.setRepsAt, setAmount: act.setAmountAt, complete: act.completeSet, reopen: act.reopenSet, lastFor: (step, round) => lastSets(results, step)?.[round], fill: act.fillSet, setType: act.setTypeAt }} onAdjustRest={act.extendRest} lastFor={step => lastSet(results, step)} onFill={act.fillSet} ghost={pace?.text} goal={goal} muted={muted} onToggleMute={() => { setMuted(!muted); setMute(!muted); }} equipment={equipment} alternativesFor={(step, target) => alternatives(step.exercise.key, target, library, 6, equipment)} onSwap={act.swap} prs={prs} onFinish={() => { const res = log(state.phase === 'done' ? state : Runner.finish(state, Date.now())); Runner.clearPersisted(); onFinish(res); }} onExit={onExit} />
     </div>
   );
 };
@@ -702,7 +776,7 @@ const PasteSheet = ({ open, onOpenChange, library, onUse }: { open: boolean; onO
         <div className="mt-2 space-y-1 text-[13px]">
           <div className="text-[11px] font-bold tracking-widest text-muted uppercase">Reads as · {parsed.items.length} {parsed.items.length === 1 ? 'item' : 'items'}</div>
           {parsed.items.map((it, i) => (
-            <div key={i} className="rounded-control bg-surface px-2 py-1">{it.kind === 'block' ? `${it.name} · ×${it.repeat}${it.mode === 'amrap' ? ' AMRAP' : ''} · ${it.steps.length} steps` : it.kind === 'exercise' ? `${it.exercise.name} · ${it.forValue} ${it.forMode}` : 'rest'}</div>
+            <div key={i} className="rounded-control bg-surface px-2 py-1">{it.kind === 'block' ? `${it.name} · ×${it.repeat}${it.mode === 'amrap' ? ' AMRAP' : ''} · ${plural(it.steps.length, 'step')}` : it.kind === 'exercise' ? `${it.exercise.name} · ${forLabel(it)}` : 'rest'}</div>
           ))}
           {parsed.assumptions.map(a => (
             <div key={a} className="text-warn">? {a}</div>

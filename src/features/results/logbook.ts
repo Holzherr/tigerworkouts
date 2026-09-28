@@ -176,6 +176,38 @@ export const chartPoints = (history: LogSession[], kind: LogKind = kindOf(histor
       return value === undefined ? [] : [{ at: s.startedAt, value }];
     });
 
+/** What the chart can draw for an exercise: its kind's own best, plus session volume and total
+ * reps where they mean something. */
+export type ChartMetric = LogKind | 'volume' | 'totalReps';
+
+export const METRIC_LABEL: Partial<Record<ChartMetric, string>> = { strength: 'Est. 1RM', load: 'Top load', volume: 'Volume', reps: 'Most reps', totalReps: 'Total reps', pace: 'Pace', distance: 'Distance' };
+
+/** The metrics offered for a kind, the default first. One means no picker. */
+export const chartMetrics = (kind: LogKind): ChartMetric[] =>
+  kind === 'strength' ? ['strength', 'load', 'volume', 'reps'] : kind === 'reps' ? ['reps', 'totalReps'] : kind === 'pace' ? ['pace', 'distance'] : [kind];
+
+/** One point per session for a metric, oldest first. Volume is load × reps over the working sets;
+ * total reps is every working set's reps added up. */
+export const pointsFor = (history: LogSession[], metric: ChartMetric, per = 1000): ChartPoint[] => {
+  if (metric !== 'volume' && metric !== 'totalReps') return chartPoints(history, metric, per);
+  return [...history]
+    .sort((a, b) => a.startedAt.localeCompare(b.startedAt))
+    .flatMap(s => {
+      const value = metric === 'volume' ? sessionVolume(s) : s.sets.filter(counted).reduce((n, x) => n + x.reps!, 0) || undefined;
+      return value === undefined ? [] : [{ at: s.startedAt, value }];
+    });
+};
+
+export type ChartRange = '3m' | '1y' | 'all';
+export const RANGE_LABEL: Record<ChartRange, string> = { '3m': '3 m', '1y': '1 y', all: 'All' };
+const RANGE_DAYS: Record<ChartRange, number | undefined> = { '3m': 90, '1y': 365, all: undefined };
+
+/** The points inside a range ending now: the last 90 days, 365 days, or all of them. */
+export const inRange = (points: ChartPoint[], range: ChartRange, now: number): ChartPoint[] => {
+  const days = RANGE_DAYS[range];
+  return days === undefined ? points : points.filter(p => Date.parse(p.at) >= now - days * 864e5);
+};
+
 const empty = (kind: LogKind): Records => ({ kind, sessions: 0 });
 
 /** Records only move on a strictly better number, so each keeps the date it was first set. */
@@ -240,6 +272,17 @@ export const isRecord = (x: SetResult, before: Records): boolean => {
   }
   if (burned(x)) return !!before.calories && x.calories! > before.calories.value;
   return held(x) && !!before.longest && x.seconds! > before.longest.value;
+};
+
+/**
+ * A set ticked mid-session, as a PR: it beats the records standing before the session and every
+ * set of the exercise already done in it, so the second set at a new top load is not a PR again.
+ * A warm-up never is, nor is anything in the first session of an exercise.
+ */
+export const recordOnTick = (before: Records, earlier: SetResult[], x: SetResult): boolean => {
+  if (before.sessions === 0 || !isWorking(x)) return false;
+  const r = earlier.reduce((acc, e) => addSet(acc, e, ''), before);
+  return isRecord(x, r);
 };
 
 export interface LoggedExercise {
