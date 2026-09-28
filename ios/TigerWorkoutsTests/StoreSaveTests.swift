@@ -105,3 +105,137 @@ struct StoreSaveTests {
         #expect(deleted == ["s-h", "s-h"])
     }
 }
+
+/// Your own workouts and prefs going up while other changes are made on the phone.
+@Suite("own workouts sync")
+@MainActor
+struct WorkoutQueueTests {
+    private func store() -> Store {
+        let store = Store()
+        store.cacheName = "test-cache-\(UUID().uuidString).json"
+        store.healthOverride = false
+        store.cloudSignedIn = { true }
+        return store
+    }
+
+    /// Holds the first call back until the test lets it go.
+    private final class Gate {
+        var waiting: CheckedContinuation<Void, Never>?
+        var calls = 0
+    }
+    private struct Offline: Error {}
+
+    @Test("an edit made while the workout uploads stays queued when its own upload fails")
+    func editDuringUpload() async throws {
+        let store = store()
+        let gate = Gate()
+        store.uploadWorkout = { r, _ in
+            gate.calls += 1
+            if gate.calls == 1 { return await withCheckedContinuation { gate.waiting = $0 } }
+            throw Offline()
+        }
+        let first = Runsheet(id: "u-1", title: "Legs")
+        let uploading = Task { await store.saveWorkout(first) }
+        for _ in 0..<200 where gate.waiting == nil { try await Task.sleep(for: .milliseconds(10)) }
+        var renamed = first
+        renamed.title = "Legs day"
+        await store.saveWorkout(renamed)
+        gate.waiting?.resume()
+        await uploading.value
+        #expect(store.pendingWorkouts.map(\.title) == ["Legs day"], "the rename still has to go up")
+    }
+
+    @Test("a delete made while another goes up stays queued when its own call fails")
+    func deleteDuringUpload() async throws {
+        let store = store()
+        store.myWorkouts = [Runsheet(id: "u-1", title: "A"), Runsheet(id: "u-2", title: "B")]
+        let gate = Gate()
+        store.uploadWorkout = { _, _ in }
+        store.removeWorkout = { _ in
+            gate.calls += 1
+            if gate.calls == 1 { return await withCheckedContinuation { gate.waiting = $0 } }
+            throw Offline()
+        }
+        let first = Task { await store.deleteWorkout(Runsheet(id: "u-1", title: "A")) }
+        for _ in 0..<200 where gate.waiting == nil { try await Task.sleep(for: .milliseconds(10)) }
+        await store.deleteWorkout(Runsheet(id: "u-2", title: "B"))
+        gate.waiting?.resume()
+        await first.value
+        #expect(store.pendingWorkoutDeletes == ["u-2"])
+    }
+
+    @Test("a workout deleted while its upload was out is deleted again after it lands")
+    func deleteDuringItsUpload() async throws {
+        let store = store()
+        let gate = Gate()
+        var removed: [String] = []
+        store.uploadWorkout = { _, _ in
+            gate.calls += 1
+            if gate.calls == 1 { await withCheckedContinuation { gate.waiting = $0 } }
+        }
+        store.removeWorkout = { removed.append($0) }
+        let sheet = Runsheet(id: "u-1", title: "Legs")
+        let uploading = Task { await store.saveWorkout(sheet) }
+        for _ in 0..<200 where gate.waiting == nil { try await Task.sleep(for: .milliseconds(10)) }
+        await store.deleteWorkout(sheet)
+        #expect(removed == ["u-1"])
+        gate.waiting?.resume()
+        await uploading.value
+        #expect(store.pendingWorkoutDeletes == ["u-1"], "the upload may have landed after the delete")
+    }
+
+    @Test("only Make public / Make private sends the column; other edits keep what the store knows")
+    func visibility() async {
+        let store = store()
+        var sent: [(String, Bool?, Bool)] = []
+        store.uploadWorkout = { r, sendPublic in sent.append((r.title, r.isPublic, sendPublic)) }
+        var mine = Runsheet(id: "u-1", title: "Legs")
+        mine.isPublic = true
+        store.myWorkouts = [mine]
+        // The screen's copy is from before the web published it.
+        var stale = mine
+        stale.isPublic = false
+        stale.title = "Legs day"
+        await store.saveWorkout(stale)
+        #expect(sent.last?.2 == false)
+        #expect(store.myWorkouts.first?.isPublic == true)
+        var off = stale
+        off.isPublic = false
+        await store.saveWorkout(off, visibility: true)
+        #expect(sent.last?.1 == false && sent.last?.2 == true)
+        await store.saveWorkout(off)
+        #expect(sent.last?.2 == false, "sent once, the column is left alone again")
+    }
+
+    @Test("deleting a saved workout stamps the saved list, so the server's older copy cannot bring it back")
+    func deleteStampsSaved() async {
+        let store = store()
+        store.uploadWorkout = { _, _ in }
+        store.removeWorkout = { _ in }
+        let sheet = Runsheet(id: "u-1", title: "Legs")
+        store.myWorkouts = [sheet]
+        store.saved = ["u-1", "cf-girls-fran"]
+        await store.deleteWorkout(sheet)
+        #expect(store.prefsUpdatedAt["saved"] != nil)
+        let older = PrefsMerge.stamp(Date(timeIntervalSinceNow: -3600))
+        store.applyPrefs(PrefsMerge.merge(local: store.localPrefs, remote: PrefsMerge.remote(["saved": ["u-1", "cf-girls-fran"], "updatedAt": ["saved": older]])))
+        #expect(store.saved == ["cf-girls-fran"])
+    }
+
+    @Test("a Health weighing older than one typed on the web does not win the sync, nor come back")
+    func healthBodyweight() {
+        let store = store()
+        let weighed = Date(timeIntervalSinceNow: -86_400)
+        store.takeHealthBodyweight(80, measuredAt: weighed)
+        #expect(store.bodyweightKg == 80)
+        let typed = PrefsMerge.stamp(Date(timeIntervalSinceNow: -3600))
+        store.applyPrefs(PrefsMerge.merge(local: store.localPrefs, remote: PrefsMerge.remote(["bodyweightKg": 78, "updatedAt": ["bodyweightKg": typed]])))
+        #expect(store.bodyweightKg == 78)
+        // The next launch reads the same sample again.
+        store.takeHealthBodyweight(80, measuredAt: weighed)
+        #expect(store.bodyweightKg == 78)
+        // A newer weighing does win.
+        store.takeHealthBodyweight(79, measuredAt: Date())
+        #expect(store.bodyweightKg == 79)
+    }
+}

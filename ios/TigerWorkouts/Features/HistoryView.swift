@@ -168,7 +168,7 @@ struct SessionDetailView: View {
                     bodyweightKg: store.bodyweightKg
                 )
 
-                RoundTimesCard(result: session, last: lastTime, blockName: blockName, records: Rounds.prs(session, all: store.results))
+                RoundTimesCard(result: session, last: lastTime, blockName: blockName, records: Rounds.prs(session, all: store.results, lineage: runsheet?.lineage))
 
                 if !session.steps.isEmpty {
                     LoggedSetsCard(session: session, runsheet: runsheet) { store.update($0) }
@@ -228,7 +228,7 @@ struct SessionDetailView: View {
             Text("It goes from History here and on tigerworkouts.com, and out of Apple Health.")
         }
         .sheet(isPresented: $sharing) {
-            let c = Celebrate.celebrate(session, all: store.results)
+            let c = Celebrate.celebrate(session, all: store.results, lineage: runsheet?.lineage)
             ShareCardSheet(card: ShareCard(session, c, type: scoreType))
         }
     }

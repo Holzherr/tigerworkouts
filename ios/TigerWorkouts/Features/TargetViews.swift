@@ -83,17 +83,37 @@ struct NextTimeView: View {
     var runsheet: Runsheet
     var result: SessionResult
     var history: [SessionResult]
+    /// A program's own lines (`ProgressionRules.nextLoads`), first: "60 → 62.5 kg".
+    var loads: [ProgressionRules.NextLoad] = []
     @AppStorage(Intent.storageKey) private var intent = Intent.maintain.rawValue
 
     var body: some View {
-        let lines = Targets.nextTime(runsheet, done: result, history: history, intent: Intent(rawValue: intent) ?? .maintain, kit: Equipment.current())
-        if !lines.isEmpty {
+        let lines = Targets.nextTime(runsheet, done: result, history: history, intent: Intent(rawValue: intent) ?? .maintain, covered: loads.map(\.exerciseKey), kit: Equipment.current())
+        if !lines.isEmpty || !loads.isEmpty {
             VStack(alignment: .leading, spacing: 8) {
                 Text("Next time")
                     .font(.caption.weight(.heavy))
                     .textCase(.uppercase)
                     .tracking(0.6)
                     .foregroundStyle(Brand.coralInk)
+                ForEach(loads) { n in
+                    VStack(alignment: .leading, spacing: 1) {
+                        HStack(alignment: .firstTextBaseline) {
+                            Text(n.name).font(.subheadline.weight(.semibold)).foregroundStyle(Brand.ink).lineLimit(1)
+                            Spacer(minLength: 8)
+                            HStack(spacing: 4) {
+                                Text(n.from.map(Format.number) ?? "?")
+                                Image(systemName: "arrow.right").font(.caption2.weight(.bold)).foregroundStyle(Brand.faint)
+                                Text("\(n.to.map(Format.number) ?? "?") kg")
+                            }
+                            .font(.subheadline.weight(n.to != n.from ? .bold : .regular))
+                            .foregroundStyle(Brand.ink)
+                            .monospacedDigit()
+                        }
+                        Text(n.reason).font(.caption).foregroundStyle(Brand.muted)
+                    }
+                    .accessibilityElement(children: .combine)
+                }
                 ForEach(lines) { line in
                     VStack(alignment: .leading, spacing: 1) {
                         HStack(alignment: .firstTextBaseline) {
@@ -113,6 +133,88 @@ struct NextTimeView: View {
             .overlay(RoundedRectangle(cornerRadius: 16, style: .continuous).strokeBorder(Brand.brandLine))
             .accessibilityIdentifier("next-time")
         }
+    }
+}
+
+/// Made it / Missed on each exercise a program's rule reads, and the reps on its AMRAP sets: what
+/// the rule makes of the session, set right before the finish screen closes (the web result
+/// sheet's rows). Only exercises the session logged get a row.
+struct MadeItCard: View {
+    var runsheet: Runsheet
+    var result: SessionResult
+    var onSuccess: (_ stepId: String, Bool) -> Void
+    var onReps: (_ stepId: String, _ reps: Double, _ planned: Double) -> Void
+
+    /// The first ruled step of each exercise with a logged row; AMRAP and max steps each get one.
+    static func rows(_ r: Runsheet, result: SessionResult) -> [(step: ExerciseStep, row: StepResult)] {
+        var seen = Set<String>()
+        return r.exerciseSteps.compactMap { s in
+            guard Targets.ruled(r, s),
+                  let row = result.steps.first(where: { $0.stepId == s.id && $0.exerciseKey == s.exercise.key }) ?? result.steps.first(where: { $0.stepId == s.id }) else { return nil }
+            let open = s.forMode == .amrap || s.forMode == .max
+            guard open || seen.insert(s.exercise.key).inserted else { return nil }
+            return (s, row)
+        }
+    }
+
+    var body: some View {
+        let rows = Self.rows(runsheet, result: result)
+        if !rows.isEmpty {
+            VStack(alignment: .leading, spacing: 0) {
+                ForEach(Array(rows.enumerated()), id: \.element.step.id) { i, item in
+                    if i > 0 { Divider() }
+                    row(item.step, item.row)
+                        .padding(.vertical, 8)
+                }
+            }
+            .padding(.horizontal, 14)
+            .padding(.vertical, 6)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .cardSurface()
+        }
+    }
+
+    @ViewBuilder
+    private func row(_ s: ExerciseStep, _ r: StepResult) -> some View {
+        let open = s.forMode == .amrap || s.forMode == .max
+        VStack(alignment: .leading, spacing: 6) {
+            HStack(alignment: .firstTextBaseline) {
+                Text(s.exercise.name).font(.subheadline.weight(.semibold)).foregroundStyle(Brand.ink).lineLimit(1)
+                Spacer(minLength: 8)
+                if let load = r.target, s.exercise.unit != "reps", Measure.of(s.exercise.unit) == nil {
+                    Text("\(Format.number(load)) \(s.exercise.unit)").font(.footnote).foregroundStyle(Brand.muted).monospacedDigit()
+                }
+            }
+            HStack {
+                if open {
+                    Text("Reps done").font(.footnote).foregroundStyle(Brand.muted)
+                    Spacer()
+                    MiniStepper(value: r.reps?.last ?? s.forValue, label: "Reps done") { d in
+                        onReps(s.id, max(0, min(200, (r.reps?.last ?? s.forValue) + d)), s.forValue)
+                    }
+                } else {
+                    Text("All sets done?").font(.footnote).foregroundStyle(Brand.muted)
+                    Spacer()
+                    chip("Made it", systemImage: "checkmark", on: r.success == true, tint: Brand.ink) { onSuccess(s.id, true) }
+                    chip("Missed", systemImage: "xmark", on: r.success == false, tint: Color(light: 0xB91C1C, dark: 0xF87171)) { onSuccess(s.id, false) }
+                }
+            }
+        }
+    }
+
+    private func chip(_ title: String, systemImage: String, on: Bool, tint: Color, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            Label(title, systemImage: systemImage)
+                .font(.footnote.weight(.semibold))
+                .padding(.horizontal, 12)
+                .frame(minHeight: 36)
+                .foregroundStyle(on ? Color.white : Brand.ink)
+                .background(on ? tint : Brand.lineSoft, in: Capsule())
+        }
+        .buttonStyle(.plain)
+        .frame(minHeight: 44)
+        .accessibilityAddTraits(on ? .isSelected : [])
+        .accessibilityIdentifier(title == "Made it" ? "made-it-yes" : "made-it-no")
     }
 }
 

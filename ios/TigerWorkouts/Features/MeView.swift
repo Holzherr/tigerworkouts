@@ -253,7 +253,7 @@ struct SettingsView: View {
             } header: {
                 Text("In the gym")
             } footer: {
-                Text("Every change of exercise, rest or block. Tones still play with the phone locked; the buzz works while Tiger is open. Default rest is what a rest added in the editor starts at.")
+                Text("Every change of exercise, rest or block. Tones still play with the phone locked; the buzz works while TigerWorkouts is open. Default rest is what a rest added in the editor starts at.")
             }
 
             Section {

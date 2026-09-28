@@ -83,9 +83,12 @@ enum Rounds {
         var was: Double
     }
 
-    static func prs(_ result: SessionResult, all: [SessionResult]) -> [PR] {
+    /// `lineage` is the ids the workout's sessions are logged under (`Runsheet.lineage`): an edited
+    /// copy races the rounds of the workout it was copied from, whose block ids it keeps.
+    static func prs(_ result: SessionResult, all: [SessionResult], lineage: [String]? = nil) -> [PR] {
         guard !(result.splits ?? []).isEmpty else { return [] }
-        let before = fastest(all.filter { !Celebrate.same($0, result) && $0.runsheetId == result.runsheetId && $0.startedAt < result.startedAt })
+        let ids = Set(lineage ?? [result.runsheetId]).union([result.runsheetId])
+        let before = fastest(all.filter { !Celebrate.same($0, result) && ids.contains($0.runsheetId) && $0.startedAt < result.startedAt })
         return fastest([result]).compactMap { mine in
             guard let rec = before.first(where: { $0.blockId == mine.blockId }), mine.seconds < rec.seconds else { return nil }
             return PR(blockId: mine.blockId, round: mine.round, seconds: mine.seconds, at: mine.at, was: rec.seconds)

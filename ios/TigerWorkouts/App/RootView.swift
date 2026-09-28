@@ -44,7 +44,7 @@ struct RootView: View {
         .onChange(of: store.loaded, initial: true) { _, loaded in
             guard loaded, running == nil, interrupted == nil, let saved = SessionRunner.readSaved() else { return }
             // A workout no longer here (deleted, never saved) still gives its session back.
-            let found = SessionRunner.recovery(of: saved.state, savedAt: saved.savedAt, lookup: { store.workout(id: $0) })
+            let found = SessionRunner.recovery(of: saved.state, savedAt: saved.savedAt, startedFrom: saved.startedFrom, lookup: { store.workout(id: $0) })
             // Finished, but the app died before the store had it: log it, no question to ask.
             if saved.state.phase == .done {
                 if let result = found.partial {

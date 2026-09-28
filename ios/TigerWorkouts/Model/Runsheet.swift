@@ -480,6 +480,9 @@ struct Runsheet: Codable, Hashable, Sendable, Identifiable {
     /// Set on the copy made when someone else's workout is edited: the id it was copied from. Its
     /// sessions stay this workout's history, so Up next, pace and stalls keep the thread.
     var copyOf: String?
+    /// The card icon the web app picked or uploaded (`WorkoutIcon` in icon.ts). Not drawn here yet,
+    /// but kept as it came, so a workout edited on the phone does not lose it.
+    var icon: JSONValue?
 
     /// Stable identity for lists: the id if it has one, else the title.
     var key: String { id ?? title }
@@ -492,7 +495,7 @@ struct Runsheet: Codable, Hashable, Sendable, Identifiable {
     func owns(_ r: SessionResult) -> Bool { lineage.contains(r.runsheetId) }
 
     private enum CodingKeys: String, CodingKey {
-        case id, title, creator, description, source, tags, level, program, timeCapSec, score, progression, video, items, copyOf
+        case id, title, creator, description, source, tags, level, program, timeCapSec, score, progression, video, items, copyOf, icon
         case isPublic = "public"
     }
 
@@ -522,6 +525,39 @@ struct Runsheet: Codable, Hashable, Sendable, Identifiable {
         items = try c.decodeIfPresent([Item].self, forKey: .items) ?? []
         isPublic = try c.decodeIfPresent(Bool.self, forKey: .isPublic)
         copyOf = try c.decodeIfPresent(String.self, forKey: .copyOf)
+        icon = try? c.decodeIfPresent(JSONValue.self, forKey: .icon)
+    }
+}
+
+/// Any JSON, held as it came: for a field the web app owns and this app only passes through.
+enum JSONValue: Codable, Hashable, Sendable {
+    case null
+    case bool(Bool)
+    case number(Double)
+    case string(String)
+    case array([JSONValue])
+    case object([String: JSONValue])
+
+    init(from decoder: any Decoder) throws {
+        let c = try decoder.singleValueContainer()
+        if c.decodeNil() { self = .null }
+        else if let b = try? c.decode(Bool.self) { self = .bool(b) }
+        else if let n = try? c.decode(Double.self) { self = .number(n) }
+        else if let s = try? c.decode(String.self) { self = .string(s) }
+        else if let a = try? c.decode([JSONValue].self) { self = .array(a) }
+        else { self = .object(try c.decode([String: JSONValue].self)) }
+    }
+
+    func encode(to encoder: any Encoder) throws {
+        var c = encoder.singleValueContainer()
+        switch self {
+        case .null: try c.encodeNil()
+        case .bool(let b): try c.encode(b)
+        case .number(let n): try c.encode(n)
+        case .string(let s): try c.encode(s)
+        case .array(let a): try c.encode(a)
+        case .object(let o): try c.encode(o)
+        }
     }
 }
 

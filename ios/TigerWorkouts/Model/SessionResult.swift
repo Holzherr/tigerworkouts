@@ -69,7 +69,7 @@ struct ActivityLog: Codable, Hashable, Sendable {
 
 /// The list the user tapped to reach the workout, in the web app's words (`SessionOrigin` in
 /// progression.ts): a Discover feed, their own list, a past session, or a share link.
-enum SessionOrigin: String, CaseIterable, Sendable {
+enum SessionOrigin: String, CaseIterable, Codable, Sendable {
     case recommended, saved, search, mine, history, link, home
 }
 

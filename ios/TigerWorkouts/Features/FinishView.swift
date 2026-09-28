@@ -18,6 +18,9 @@ struct FinishView: View {
     @State private var notes = ""
     /// The score as corrected here; nil until it is touched.
     @State private var score: Double??
+    /// Made it / Missed and AMRAP reps as set here, by step id.
+    @State private var success: [String: Bool] = [:]
+    @State private var repsDone: [String: Double] = [:]
     @State private var sharing = false
     @State private var confirmDiscard = false
     @FocusState private var notesFocused: Bool
@@ -28,10 +31,24 @@ struct FinishView: View {
         r.rpe = rpe
         r.notes = notes.isEmpty ? nil : notes
         if let score { r = ScoreEntryView.scored(r, score, type: runsheet.effectiveScore) }
+        r.steps = r.steps.map { Self.marked($0, success: success[$0.stepId], reps: repsDone[$0.stepId]) }
         return r
     }
 
-    private var celebration: Celebrate.Celebration { Celebrate.celebrate(current, all: store.results) }
+    /// A row with what was set on the finish screen.
+    static func marked(_ row: StepResult, success: Bool?, reps: Double?) -> StepResult {
+        var row = row
+        if let success { row.success = success }
+        if let reps { row.reps = [reps] }
+        return row
+    }
+
+    /// What the program's rules make of this session, as it now stands.
+    private var nextLoads: [ProgressionRules.NextLoad] {
+        ProgressionRules.nextLoads(runsheet, last: current, history: store.results, maxes: store.trainingMaxes, kit: Equipment.current())
+    }
+
+    private var celebration: Celebrate.Celebration { Celebrate.celebrate(current, all: store.results, lineage: runsheet.lineage) }
     /// Notes from the last time of this workout, offered back as a starting point.
     private var lastNotes: String? {
         store.results
@@ -75,7 +92,19 @@ struct FinishView: View {
 
                 SessionStatsView(result: current, runsheet: runsheet, history: store.results, bodyweightKg: store.bodyweightKg)
 
-                NextTimeView(runsheet: runsheet, result: current, history: store.results)
+                MadeItCard(runsheet: runsheet, result: current) { id, ok in
+                    success[id] = ok
+                    store.amend(result.rowId) { r in r.steps = r.steps.map { $0.stepId == id ? Self.marked($0, success: ok, reps: nil) : $0 } }
+                } onReps: { id, reps, planned in
+                    repsDone[id] = reps
+                    // An AMRAP set is made when it reaches the reps it asks for, as on the web.
+                    let amrap = runsheet.exerciseSteps.first { $0.id == id }?.forMode == .amrap
+                    if amrap { success[id] = reps >= planned }
+                    let ok: Bool? = amrap ? reps >= planned : nil
+                    store.amend(result.rowId) { r in r.steps = r.steps.map { $0.stepId == id ? Self.marked($0, success: ok, reps: reps) : $0 } }
+                }
+
+                NextTimeView(runsheet: runsheet, result: current, history: store.results, loads: nextLoads)
 
                 if store.bodyweightKg == nil && !bodyweightAsked {
                     bodyweightAsk
@@ -83,6 +112,7 @@ struct FinishView: View {
 
                 Button("Done") {
                     commitNotes()
+                    bumpTrainingMaxes()
                     onClose()
                 }
                 .buttonStyle(BigButtonStyle())
@@ -127,6 +157,16 @@ struct FinishView: View {
                 .accessibilityIdentifier("finish-notes")
                 .padding(14)
                 .cardSurface()
+        }
+    }
+
+    /// An AMRAP set that reached the program's mark moves its training max, as Save does on the
+    /// web; the next session's loads are worked out from the new one.
+    private func bumpTrainingMaxes() {
+        for n in nextLoads where n.tmBump {
+            guard let to = n.to else { continue }
+            let key = n.exerciseKey
+            Task { await store.setTrainingMax(key, to) }
         }
     }
 

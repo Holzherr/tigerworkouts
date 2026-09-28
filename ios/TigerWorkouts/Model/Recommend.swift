@@ -74,23 +74,30 @@ enum Recommend {
         var programNext: [Recommendation] = []
         var started = Set<String>()
         var programOrder: [String] = []
-        var programs: [String: [Runsheet]] = [:]
+        // Your edited copy of a day stands in for the day, as on Up next: a program never offers
+        // the same day twice, nor the day you just did under its other id.
+        let copies = NextUp.copies(all)
         for r in all {
-            guard let name = r.program?.name else { continue }
-            if programs[name] == nil { programOrder.append(name) }
-            programs[name, default: []].append(r)
+            guard let name = r.program?.name, !programOrder.contains(name) else { continue }
+            programOrder.append(name)
         }
         for name in programOrder {
-            let sorted = stableSorted(programs[name] ?? []) { ($0.program?.order ?? 0) < ($1.program?.order ?? 0) }
-            guard let lastDone = results.first(where: { x in sorted.contains { $0.key == x.runsheetId } }) else { continue }
+            let sorted = NextUp.programDays(all, program: name, copies: copies)
+            // A session of the original or of any copy of a day is that day.
+            func day(_ x: SessionResult) -> Int? {
+                let root = byId[x.runsheetId].map(NextUp.root) ?? x.runsheetId
+                return sorted.firstIndex { NextUp.root($0) == root }
+            }
+            guard let i = results.lazy.compactMap(day).first else { continue }
             started.insert(name)
-            let i = sorted.firstIndex { $0.key == lastDone.runsheetId } ?? 0
             programNext.append(Recommendation(runsheet: sorted[(i + 1) % sorted.count], reason: "Next in \(name)", score: 100))
         }
 
         var scored: [Recommendation] = []
         for r in all {
             let rid = r.key
+            // An original you have a copy of is offered as the copy, or not at all.
+            if r.copyOf == nil, copies[rid] != nil { continue }
             if recent.contains(rid) || programNext.contains(where: { $0.runsheet.key == rid }) { continue }
             if let p = r.program, !started.contains(p.name), p.order != 1 { continue }
             let a = author(r)

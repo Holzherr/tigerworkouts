@@ -111,12 +111,8 @@ struct WorkoutDetailView: View {
                         }
                     }
                     if store.isMine(runsheet) {
-                        Button {
-                            var next = runsheet
-                            next.isPublic = !(runsheet.isPublic ?? false)
-                            apply(next)
-                        } label: {
-                            (runsheet.isPublic ?? false)
+                        Button { setPublic(!isPublic) } label: {
+                            isPublic
                                 ? Label("Make private", systemImage: "lock")
                                 : Label("Make public on my page", systemImage: "globe")
                         }
@@ -223,6 +219,18 @@ struct WorkoutDetailView: View {
         copy.program = nil
         runsheet = copy
         Task { await store.saveWorkout(copy) }
+    }
+
+    /// Who can see it, as the store last heard from the server: this screen's copy can be older.
+    private var isPublic: Bool { (store.workout(id: runsheet.key) ?? runsheet).isPublic ?? false }
+
+    /// The one edit that sends `public`; saved at once with whatever else is waiting.
+    private func setPublic(_ on: Bool) {
+        pendingSave?.cancel()
+        var next = runsheet
+        next.isPublic = on
+        runsheet = next
+        Task { await store.saveWorkout(next, visibility: true) }
     }
 
     private func scheduleSave() {

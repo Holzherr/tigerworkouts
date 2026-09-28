@@ -6,7 +6,8 @@ struct DiscoverView: View {
     @Environment(Store.self) private var store
     var onStart: (Runsheet, SessionOrigin?) -> Void
 
-    @State private var tab: Tab = .forYou
+    /// Saved first, as on the web (Nick, 10 Sep 2026: "Saved first on the home screen").
+    @State private var tab: Tab = .saved
     @State private var query = ""
     @State private var filter: Kind?
     @State private var writing: Runsheet?
@@ -51,7 +52,7 @@ struct DiscoverView: View {
             case .program: "StrongLifts, 5/3/1 and friends, day by day"
             case .protocolKind: "Tabata, EMOMs and the 7-minute workout"
             case .article: "Short routines from the NHS"
-            case .video: "Run with the video as the clock"
+            case .video: "Timed to the video; the video plays on the web"
             }
         }
     }
@@ -307,11 +308,6 @@ struct DiscoverView: View {
                 carousel(recent.prefix(10).map(\.sheet), large: true, from: .history)
             }
         }
-        if !store.myWorkouts.isEmpty {
-            section("Mine", subtitle: "Workouts you wrote") {
-                carousel(store.myWorkouts, large: false, from: .mine)
-            }
-        }
         ForEach(Kind.allCases) { kind in
             let sheets = store.allWorkouts.filter { self.kind(of: $0) == kind }
             if !sheets.isEmpty {
@@ -330,7 +326,13 @@ struct DiscoverView: View {
     @ViewBuilder
     private var saved: some View {
         let sheets = store.allWorkouts.filter { store.saved.contains($0.key) }
-        if sheets.isEmpty {
+        // Your own sit with what you saved, as on the web's Saved tab: home opens here.
+        if !store.myWorkouts.isEmpty {
+            section("Mine", subtitle: "Workouts you wrote") {
+                carousel(store.myWorkouts, large: false, from: .mine)
+            }
+        }
+        if sheets.isEmpty && store.myWorkouts.isEmpty {
             ContentUnavailableView {
                 Label("Nothing saved yet", systemImage: "bookmark")
             } description: {
@@ -340,7 +342,7 @@ struct DiscoverView: View {
                     .buttonStyle(.borderedProminent)
             }
             .padding(.top, 40)
-        } else {
+        } else if !sheets.isEmpty {
             list(sheets, from: .saved)
         }
     }
