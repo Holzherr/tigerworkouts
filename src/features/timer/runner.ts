@@ -83,6 +83,10 @@ export interface RunState {
    * was left. A for-time score is the time spent in the main parts: no lead-in, no gate, no warm-up. */
   partAt?: Record<number, number>;
   partOut?: Record<number, number>;
+  /** Blocks whose time cap ran out before they were finished, and blocks ended early from the
+   * menu: a for-time block in either did not finish, so its time is not a finish time. */
+  capped?: string[];
+  endedEarly?: string[];
 }
 
 const LEAD_SEC = 5;
@@ -126,7 +130,12 @@ export const expand = (r: Runsheet, dropped: string[] = []): Slot[] => {
     if (mode === 'ladder') {
       const rungs = b.ladder ?? [b.repeat];
       rungs.forEach((rung, ri) => {
-        for (const s of rungSteps(b, rung)) push(s, { ...base, round: ri, rounds: rungs.length, rung, capSec: b.timeCapSec });
+        const steps = rungSteps(b, rung);
+        const lastWork = steps.reduce((k, s, j) => (s.kind === 'exercise' ? j : k), -1);
+        steps.forEach((s, j) => {
+          if (j > lastWork && lastWork >= 0 && (ri === rungs.length - 1 || !!b.restBetweenSec)) return;
+          push(s, { ...base, round: ri, rounds: rungs.length, rung, capSec: b.timeCapSec || undefined });
+        });
         between(ri, rungs.length);
       });
       continue;
@@ -142,10 +151,18 @@ export const expand = (r: Runsheet, dropped: string[] = []): Slot[] => {
     const roundLen = b.steps.reduce((t, s) => t + estimate(s), 0);
     // An amrap's rounds are a guess to start from: a capped one grows a round at a time (see
     // extendAmrap) and ends on the cap, however fast the rounds go.
-    const rounds = mode === 'amrap' ? Math.max(2, Math.ceil((b.timeCapSec ?? 600) / Math.max(15, roundLen))) : Math.max(1, b.repeat);
+    const rounds = mode === 'amrap' ? Math.max(2, Math.ceil((b.timeCapSec || 600) / Math.max(15, roundLen))) : Math.max(1, b.repeat);
+    const cap = (mode === 'amrap' || mode === 'fortime') && b.timeCapSec ? b.timeCapSec : undefined;
+    // A rest after the round's last exercise is a rest before the next round: the last round has
+    // none (the gate or the end follows), and a rest between rounds stands in for it rather than
+    // running after it. An amrap keeps it, since its rounds run on until the cap.
+    const lastWork = b.steps.reduce((k, s, j) => (s.kind === 'exercise' ? j : k), -1);
+    const trailing = (j: number, ri: number) => mode !== 'amrap' && j > lastWork && lastWork >= 0 && (ri === rounds - 1 || !!b.restBetweenSec);
+    const amrapTrailing = (j: number) => mode === 'amrap' && j > lastWork && lastWork >= 0 && !!b.restBetweenSec;
     for (let ri = 0; ri < rounds; ri++) {
-      for (const s of b.steps) {
-        const extra = { ...base, round: ri, rounds, capSec: mode === 'amrap' || mode === 'fortime' ? b.timeCapSec : undefined };
+      for (const [j, s] of b.steps.entries()) {
+        if (trailing(j, ri) || amrapTrailing(j)) continue;
+        const extra = { ...base, round: ri, rounds, capSec: cap };
         if (mode !== 'rounds' || s.kind !== 'exercise' || !s.sets?.length) {
           push(s, extra);
           continue;
@@ -250,8 +267,15 @@ export const setTypeAt = (s: RunState, slotId: string, type: SetType): RunState 
   return { ...s, actuals: { ...s.actuals, [slotId]: { ...(s.actuals[slotId] ?? { changes: [] }), type } } };
 };
 
-/** Start the block the timer is parked on. */
-export const startBlock = (s: RunState, now: number): RunState => (s.phase === 'ready' ? activate(s, s.i, now) : s);
+/** A block whose first slot runs on a clock — an EMOM, an AMRAP or a capped for-time, a timed
+ * interval — gets the 5 s Get ready before it, as the session does: Start is tapped with the phone
+ * in hand, not in position. */
+export const needsLead = (sl: Slot | undefined) => !!sl && (sl.capSec !== undefined || sl.mode === 'emom' || sl.seconds !== undefined);
+/** Start the block the timer is parked on: straight away, or after a Get ready when it runs on a clock. */
+export const startBlock = (s: RunState, now: number): RunState => {
+  if (s.phase !== 'ready') return s;
+  return needsLead(current(s)) ? { ...s, phase: 'lead', slotStartedAt: now, endsAt: now + LEAD_SEC * 1000, remainingMs: undefined } : activate(s, s.i, now);
+};
 const activate = (st: RunState, i: number, now: number): RunState => {
   const s = st.partAt?.[st.slots[i].part] === undefined ? { ...st, partAt: { ...st.partAt, [st.slots[i].part]: elapsed(st, now) } } : st;
   const slot = s.slots[i];
@@ -268,13 +292,42 @@ const activate = (st: RunState, i: number, now: number): RunState => {
   // a capped block that has run out: skip its remaining slots
   if (slot.capSec && slot.blockId && blockStart[slot.blockId] !== undefined) {
     const into = (now - blockStart[slot.blockId]) / 1000;
-    if (into >= slot.capSec) {
-      let j = i;
-      while (j < s.slots.length && s.slots[j].blockId === slot.blockId) j++;
-      return enter({ ...s, blockStart }, j, now);
-    }
+    if (into >= slot.capSec) return capOut({ ...s, blockStart }, slot.blockId, now, i);
   }
-  return { ...s, i, phase: 'running', slotStartedAt: now, endsAt: seconds !== undefined ? now + seconds * 1000 : undefined, remainingMs: undefined, blockStart };
+  let endsAt = seconds !== undefined ? now + seconds * 1000 : undefined;
+  // EMOM work ends on its minute's boundary at the latest: the next minute starts on the clock
+  // whether or not Done was tapped (see nextMinute).
+  const boundary = emomBoundary({ ...s, blockStart }, slot);
+  if (boundary !== undefined && boundary > now) endsAt = endsAt === undefined ? boundary : Math.min(endsAt, boundary);
+  return { ...s, i, phase: 'running', slotStartedAt: now, endsAt, remainingMs: undefined, blockStart };
+};
+/** When an EMOM work slot's minute (or interval) ends, ms; undefined for other slots and before its block starts. */
+const emomBoundary = (s: RunState, sl: Slot): number | undefined => {
+  if (sl.mode !== 'emom' || sl.kind !== 'work' || !sl.everySec || !sl.blockId || s.blockStart[sl.blockId] === undefined) return undefined;
+  return s.blockStart[sl.blockId] + (sl.round + 1) * sl.everySec * 1000;
+};
+/** The work slot's EMOM minute ends on its own clock, not a countdown of the set's: shown as the
+ * minute running down, with Done to log the set, rather than as timed work. */
+export const minuteOnly = (sl: Slot | undefined) => !!sl && sl.mode === 'emom' && sl.kind === 'work' && sl.seconds === undefined;
+/**
+ * An EMOM minute ran out on its work: the set in hand and the rest of the minute's sets are logged
+ * as planned (they were done; nobody taps Done 24 times in an EMOM 12), and the next minute's work
+ * starts at once — its wait is already over.
+ */
+const nextMinute = (s: RunState, now: number): RunState => {
+  const c = current(s)!;
+  const actuals = { ...s.actuals };
+  const blockDone = { ...s.blockDone };
+  let j = s.i;
+  for (; j < s.slots.length && s.slots[j].blockId === c.blockId && s.slots[j].round === c.round && !s.slots[j].untilBoundary; j++) {
+    const sl = s.slots[j];
+    if (sl.kind !== 'work' || actuals[sl.id]?.doneAt !== undefined) continue;
+    const worked = j === s.i ? workedSeconds(s, sl, now) : undefined;
+    actuals[sl.id] = { ...(actuals[sl.id] ?? { changes: [] }), doneAt: now, at: Math.round(elapsed(s, now)), ...(worked !== undefined ? { seconds: worked } : {}) };
+    blockDone[c.blockId!] = (blockDone[c.blockId!] ?? 0) + 1;
+  }
+  if (s.slots[j]?.untilBoundary && s.slots[j].blockId === c.blockId && s.slots[j].round === c.round) j++;
+  return enter({ ...s, actuals, blockDone }, j, now);
 };
 
 /** Advance past the current slot (Done / countdown finished / skip). */
@@ -282,7 +335,7 @@ export const advance = (given: RunState, now: number, opts: { skipped?: boolean 
   if (given.phase === 'done') return given;
   // Done on a paused timer: the pause comes out first, and a paused lead-in is still a lead-in.
   const s = given.phase === 'paused' ? resume(given, now) : given;
-  if (s.phase === 'lead') return enter(s, 0, now);
+  if (s.phase === 'lead') return enter(s, s.i, now);
   if (s.phase === 'ready') return activate(s, s.i + 1 < s.slots.length && s.slots[s.i + 1].part === s.slots[s.i].part ? s.i + 1 : s.i, now);
   const c = current(s);
   const actuals = { ...s.actuals };
@@ -328,16 +381,32 @@ const extendAmrap = (s: RunState, c: Slot): RunState => {
 
 /** Countdown expiry check; call from the tick. */
 export const tick = (s: RunState, now: number): RunState => {
-  if (s.phase === 'lead' && s.endsAt !== undefined && now >= s.endsAt) return enter(s, 0, now);
-  if (s.phase === 'running' && s.endsAt !== undefined && now >= s.endsAt) return advance(s, now);
-  // amrap / fortime cap reached mid-slot
+  // The session's lead-in, or the Get ready before a block started on a clock.
+  if (s.phase === 'lead' && s.endsAt !== undefined && now >= s.endsAt) return enter(s, s.i, now);
   const c = current(s);
-  if (s.phase === 'running' && c?.capSec && c.blockId && s.blockStart[c.blockId] !== undefined && (now - s.blockStart[c.blockId]) / 1000 >= c.capSec) {
-    let j = s.i;
-    while (j < s.slots.length && s.slots[j].blockId === c.blockId) j++;
-    return enter(s, j, now);
+  if (s.phase === 'running' && s.endsAt !== undefined && now >= s.endsAt) {
+    const boundary = c ? emomBoundary(s, c) : undefined;
+    return boundary !== undefined && now >= boundary ? nextMinute(s, now) : advance(s, now);
   }
+  // amrap / fortime cap reached mid-slot
+  if (s.phase === 'running' && c?.capSec && c.blockId && s.blockStart[c.blockId] !== undefined && (now - s.blockStart[c.blockId]) / 1000 >= c.capSec) return capOut(s, c.blockId, now);
   return s;
+};
+/** The block's cap has run out: what is left of it is skipped, and it is marked as capped. */
+const capOut = (s: RunState, blockId: string, now: number, from = s.i): RunState => {
+  let j = from;
+  while (j < s.slots.length && s.slots[j].blockId === blockId) j++;
+  return enter({ ...s, capped: s.capped?.includes(blockId) ? s.capped : [...(s.capped ?? []), blockId] }, j, now);
+};
+
+/** End the running block here, in one tap: what is left of it is skipped and the next block's gate
+ * (or the end of the session) comes up. Cutting a circuit short is one tap, not one per station. */
+export const endBlock = (s: RunState, now: number): RunState => {
+  const c = current(s);
+  if (!c?.blockId || (s.phase !== 'running' && s.phase !== 'paused')) return s;
+  let j = s.i;
+  while (j < s.slots.length && s.slots[j].blockId === c.blockId) j++;
+  return enter({ ...s, endedEarly: [...(s.endedEarly ?? []), c.blockId] }, j, now);
 };
 
 export const pause = (s: RunState, now: number): RunState => (s.phase === 'running' || s.phase === 'lead' ? { ...s, phase: 'paused', pausedFrom: s.phase, pausedAt: now, remainingMs: s.endsAt !== undefined ? Math.max(0, s.endsAt - now) : undefined } : s);
@@ -554,8 +623,20 @@ export const prefillReps = (s: RunState, last: (step: ExerciseStep, round: numbe
 export const drop = (s: RunState, now: number, stepId: string): RunState => {
   const c = current(s);
   const slots = s.slots.filter((sl, idx) => idx < s.i || sl.step.id !== stepId);
+  // Nothing of it left to run (every set done): nothing is dropped, and nothing counts as missed.
+  if (slots.length === s.slots.length) return s;
   const st = { ...s, slots, dropped: [...s.dropped, stepId] };
-  return c?.step.id === stepId ? enter(st, s.i, now) : st;
+  return c?.step.id === stepId ? stayPut(s, st, now) : st;
+};
+/**
+ * The slot in hand changed under the cursor (dropped or swapped). Parked at a block's gate, the
+ * gate stays: the block has not started, and a machine found taken is found at the gate. Paused, it
+ * stays paused. Running, the slot starts again.
+ */
+const stayPut = (was: RunState, st: RunState, now: number): RunState => {
+  if (was.phase === 'ready' || was.phase === 'lead') return st.i >= st.slots.length ? { ...st, phase: 'done', endsAt: undefined, endedAt: now } : st;
+  const out = enter(st, st.i, now);
+  return was.phase === 'paused' && out.phase === 'running' ? pause(out, now) : out;
 };
 
 /** A swap drops the plan's loads (they were for the planned exercise) but keeps its reps and the set's type. */
@@ -575,7 +656,7 @@ export const swap = (s: RunState, now: number, stepId: string, to: ExerciseRef, 
     return { ...sl, step: { ...sl.step, exercise: to, target }, plan: keptOnSwap(sl.plan) };
   });
   const st = { ...s, slots };
-  return c?.step.id === stepId ? enter(st, s.i, now) : st;
+  return c?.step.id === stepId ? stayPut(s, st, now) : st;
 };
 
 /**
@@ -590,7 +671,7 @@ export const replan = (s: RunState, r: Runsheet, now: number): RunState => {
   if (s.phase === 'done') return s;
   const cur = current(s);
   let keptCount = 0;
-  if (s.phase === 'ready') keptCount = s.i;
+  if (s.phase === 'ready' || (s.phase === 'lead' && s.i > 0)) keptCount = s.i;
   else if (s.phase !== 'lead' && cur) {
     const end = s.slots.findIndex(sl => sl.part > cur.part);
     keptCount = end < 0 ? s.slots.length : end;
@@ -631,7 +712,7 @@ export const replan = (s: RunState, r: Runsheet, now: number): RunState => {
   }
   const parts = base + partOf.size;
   const st = { ...s, slots: [...kept, ...tail].map(sl => ({ ...sl, parts })), actuals };
-  return s.phase === 'ready' && tail.length === 0 ? enter(st, s.i, now) : st;
+  return (s.phase === 'ready' || s.phase === 'lead') && s.i > 0 && tail.length === 0 ? enter({ ...st, phase: 'ready' }, s.i, now) : st;
 };
 
 /** One id per session, so logging it at the end and saving its result sheet is one row, not two. */
@@ -653,9 +734,13 @@ const sameWork = (a: Slot, b: Slot) => a.step.id === b.step.id && (a.step.kind !
 export const effectiveTarget = (s: RunState, idx: number): number | undefined => {
   const slot = s.slots[idx];
   if (!slot) return undefined;
+  const type = typeAt(s, idx);
   for (let j = idx; j >= 0; j--) {
     const sl = s.slots[j];
     if (!sameWork(sl, slot)) continue;
+    // A warm-up's or a drop set's load is its own: the working sets after it keep theirs.
+    const kind = j === idx ? type : typeAt(s, j);
+    if (j !== idx && (kind === 'warmup' || kind === 'drop') && kind !== type) continue;
     const t = s.actuals[sl.id]?.target ?? sl.plan?.load;
     if (t !== undefined) return t;
   }
@@ -728,18 +813,22 @@ export const toResult = (s: RunState, r: Runsheet, now: number): SessionResult =
     // `target` and `reps` are for readers from before per-set rows: a warm-up is not the load
     // worked at and its reps are not work, so they stay out of both.
     const warm = type === 'warmup';
-    // A working set short of its prescribed reps is a miss.
-    const short = !warm && reps !== undefined && slot.step.forMode === 'reps' && reps < slot.step.forValue;
+    // A working set short of its prescribed reps is a miss. A drop set is not: it inherits the
+    // step's reps, and fewer at the lighter load is the point of it.
+    const short = !warm && type !== 'drop' && reps !== undefined && slot.step.forMode === 'reps' && reps < slot.step.forValue;
     const success = ruled(slot) ? (prev?.success ?? true) && !short : undefined;
     steps.set(key, { stepId: slot.step.id, exerciseKey: slot.step.exercise.key, target: warm ? (prev?.target ?? target) : target, ...(incline !== undefined ? { incline } : {}), reps: [...(prev?.reps ?? []), ...(reps !== undefined && !warm ? [reps] : [])], ...(success !== undefined ? { success } : {}), sets: [...(prev?.sets ?? []), set] });
   }
   // A set of the step left undone (skipped, never reached) is a missed session for the progression
-  // rules, not a success. An AMRAP's rounds are a guess, so its undone ones say nothing.
+  // rules, not a success. An AMRAP's rounds are a guess, so its undone ones say nothing, and a
+  // planned drop set left out is not a working set missed.
   for (const [idx, slot] of s.slots.entries()) {
-    if (slot.kind !== 'work' || slot.step.kind !== 'exercise' || slot.mode === 'amrap' || s.actuals[slot.id]?.doneAt || typeAt(s, idx) === 'warmup') continue;
+    if (slot.kind !== 'work' || slot.step.kind !== 'exercise' || slot.mode === 'amrap' || s.actuals[slot.id]?.doneAt || typeAt(s, idx) === 'warmup' || typeAt(s, idx) === 'drop') continue;
     const row = steps.get(`${slot.step.id}|${slot.step.exercise.key}`);
     if (row && row.success !== undefined) row.success = false;
   }
+  // A lift dropped part-way: its slots left the session with the drop, but its sets were not done.
+  for (const row of steps.values()) if (row.success !== undefined && s.dropped.includes(row.stepId)) row.success = false;
   let score: number | undefined;
   if (type === 'time') score = timeScore(s, now) ?? durationSec;
   else if (type === 'rounds') {
@@ -754,8 +843,25 @@ export const toResult = (s: RunState, r: Runsheet, now: number): SessionResult =
     }
   } else if (type === 'reps') score = [...steps.values()].reduce((t, x) => t + (x.reps?.reduce((a, b) => a + b, 0) ?? 0), 0);
   const split = splits(s);
-  return { runsheetId: s.runsheetId, startedAt: new Date(s.startedAt).toISOString(), endedAt: new Date(s.endedAt ?? now).toISOString(), score, steps: [...steps.values()], ...(split.length ? { splits: split } : {}), notes: undefined, durationSec, completed: s.phase === 'done' && s.i >= s.slots.length, title: r.title };
+  // A main block for time whose cap ran out, or any main block ended early, did not finish: the
+  // session is not a completed one, and a capped for-time scores the reps it reached at the cap.
+  const blockOf = (id: string) => r.items.find((i): i is Block => i.kind === 'block' && i.id === id);
+  const main = (id: string) => (blockOf(id)?.role ?? 'main') === 'main';
+  const capped = (s.capped ?? []).filter(id => main(id) && (blockOf(id)?.mode === 'fortime' || blockOf(id)?.mode === 'ladder'));
+  const cut = capped.length > 0 || (s.endedEarly ?? []).some(main);
+  const cap = type === 'time' && capped.length ? { capped: true, capReps: capReps(s, capped), scoreText: '' } : undefined;
+  if (cap) cap.scoreText = `Capped · ${cap.capReps} ${cap.capReps === 1 ? 'rep' : 'reps'}`;
+  return { runsheetId: s.runsheetId, startedAt: new Date(s.startedAt).toISOString(), endedAt: new Date(s.endedAt ?? now).toISOString(), score, ...(cap ?? {}), steps: [...steps.values()], ...(split.length ? { splits: split } : {}), notes: undefined, durationSec, completed: s.phase === 'done' && s.i >= s.slots.length && !cut, title: r.title };
 };
+
+/** Reps done in the given blocks: what a capped for-time scores. A set of reps counts what was
+ * counted, else the plan; other work (metres, a hold) has no reps to add. */
+const capReps = (s: RunState, blocks: string[]): number =>
+  s.slots.reduce((t, sl) => {
+    const a = s.actuals[sl.id];
+    if (sl.kind !== 'work' || sl.step.kind !== 'exercise' || !sl.blockId || !blocks.includes(sl.blockId) || a?.doneAt === undefined || typeAt(s, s.slots.indexOf(sl)) === 'warmup') return t;
+    return t + (a.reps ?? (sl.step.forMode === 'reps' ? sl.step.forValue : 0));
+  }, 0);
 
 /** Seconds spent in the main parts — blocks and loose steps that are not a warm-up or cool-down —
  * each from its start to when it was left: the lead-in and the time parked at a Start block gate

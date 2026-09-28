@@ -78,7 +78,7 @@ describe('run', () => {
     let s = tick(start(interval(), 0), 5000);
     s = drop(s, 6000, 'pr');
     expect(s.slots.some(x => x.step.id === 'pr')).toBe(false);
-    expect(s.slots.length).toBe(6);
+    expect(s.slots.length).toBe(5); // the last round's closing rest is not run
   });
   it('swap changes what is left of a step, not what is done', () => {
     let s = tick(start(interval(), 0), 5000);
@@ -131,6 +131,8 @@ describe('load changes carry forward and blocks gate', () => {
     s = R.advance(s, 80000); // → block 2 gate
     expect(s.phase).toBe('ready');
     s = R.startBlock(s, 90000);
+    expect(s.phase).toBe('lead'); // a timed block gets its Get ready
+    s = R.tick(s, 95000);
     expect(s.phase).toBe('running');
     s = R.adjustIncline(s, 5);
     s = R.advance(s, 150000);
@@ -250,9 +252,9 @@ describe('session safety', () => {
     s = resume(s, 110000); // 100 s paused in part 1
     s = tick(s, 135000); // warm-up done, parked at the Cindy gate
     expect(s.phase).toBe('ready');
-    s = R.startBlock(s, 140000);
-    expect(R.blockElapsed(s, 150000)).toBe(10);
-    s = tick(s, 140000 + 61000);
+    s = tick(R.startBlock(s, 140000), 145000); // Get ready, then the block
+    expect(R.blockElapsed(s, 155000)).toBe(10);
+    s = tick(s, 145000 + 61000);
     expect(s.phase).toBe('done');
   });
 
@@ -471,7 +473,7 @@ describe('cap clock', () => {
 });
 
 describe('rest controls', () => {
-  const sheet = (): Runsheet => ({ id: 'g', title: 'Grid', items: [{ kind: 'block', id: 'b', name: 'Bench', repeat: 3, restBetweenSec: 90, steps: [{ ...makeExercise(EX.db_incline_press, { target: 20, forMode: 'reps', forValue: 8 }), id: 'pr' }, { ...makeRest(60), id: 'r' }] }] });
+  const sheet = (between?: number): Runsheet => ({ id: 'g', title: 'Grid', items: [{ kind: 'block', id: 'b', name: 'Bench', repeat: 3, ...(between ? { restBetweenSec: between } : {}), steps: [{ ...makeExercise(EX.db_incline_press, { target: 20, forMode: 'reps', forValue: 8 }), id: 'pr' }, { ...makeRest(60), id: 'r' }] }] });
   const onRest = () => advance(tick(start(sheet(), 0), 5000), 20000); // set 1 done at 20 s, 60 s rest from there
 
   it('+15 s and −15 s move the running rest and its length', () => {
@@ -489,7 +491,7 @@ describe('rest controls', () => {
     let s = R.extendRest(onRest(), 75000, -15); // 5 s left
     expect(s.endsAt).toBe(75000);
     s = tick(s, 75000);
-    expect(s.slots[s.i].step.id).toBe('b:between');
+    expect(s.slots[s.i].step.id).toBe('pr');
   });
   it('works on a paused rest', () => {
     let s = pause(onRest(), 30000); // 50 s left
@@ -499,10 +501,10 @@ describe('rest controls', () => {
     expect(s.endsAt).toBe(115000);
   });
   it('the rest between rounds takes it too', () => {
-    const s = tick(onRest(), 80000); // the step rest ends: the rest between rounds
+    const s = advance(tick(start(sheet(90), 0), 5000), 20000); // set 1 done: the rest between rounds
     expect(s.slots[s.i].step.id).toBe('b:between');
     const before = s.endsAt!;
-    expect(R.extendRest(s, 151000, 15).endsAt).toBe(before + 15000);
+    expect(R.extendRest(s, 21000, 15).endsAt).toBe(before + 15000);
   });
   it('leaves work and an EMOM wait alone', () => {
     const work = tick(start(sheet(), 0), 5000);

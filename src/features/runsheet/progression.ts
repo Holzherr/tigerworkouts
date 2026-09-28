@@ -106,6 +106,10 @@ export interface SessionResult {
   /** Score in the workout's score type: seconds, rounds (+ reps/1000), total reps, kg, metres. */
   score?: number;
   scoreText?: string;
+  /** A for-time block's cap ran out before it was finished: `score` is the cap, not a finish time,
+   * and `capReps` the reps reached by then. Unset on a finish and on rows from before it was kept. */
+  capped?: boolean;
+  capReps?: number;
   steps: StepResult[];
   /** Round times per circuit or AMRAP block; unset on rows from before times were kept. */
   splits?: RoundSplit[];

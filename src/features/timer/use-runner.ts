@@ -159,6 +159,21 @@ export const useRunner = (runsheet: Runsheet, opts: { /** A kept run to carry on
     if (sec > 3) lastBeep.current = -1;
   }, [now, state, silent]);
 
+  // An AMRAP's or a capped block's clock: a warning a minute out and ten seconds out, so the last
+  // push is not a surprise. Only on crossing, so a block started with less left says nothing.
+  const lastCap = useRef<number | undefined>(undefined);
+  useEffect(() => {
+    const left = state.phase === 'running' ? R.capLeft(state, now) : undefined;
+    const was = lastCap.current;
+    lastCap.current = left;
+    if (silent || left === undefined || was === undefined) return;
+    if ((was > 60 && left <= 60) || (was > 10 && left <= 10)) {
+      vib([60, 60, 60]);
+      beep(990, 120);
+      setTimeout(() => beep(990, 120), 180);
+    }
+  }, [now, state, silent]);
+
   // wake lock
   useEffect(() => {
     let alive = true;
@@ -195,6 +210,7 @@ export const useRunner = (runsheet: Runsheet, opts: { /** A kept run to carry on
       return next;
     }), []),
     startBlock: useCallback(() => setState(s => R.startBlock(s, Date.now())), []),
+    endBlock: useCallback(() => setState(s => R.endBlock(s, Date.now())), []),
     setReps: useCallback((n: number) => setState(s => R.setReps(s, n)), []),
     adjustAt: useCallback((slotId: string, t: number) => setState(s => R.adjustAt(s, Date.now(), slotId, t)), []),
     setRepsAt: useCallback((slotId: string, n: number) => setState(s => R.setRepsAt(s, slotId, n)), []),

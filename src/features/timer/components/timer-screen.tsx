@@ -1,4 +1,4 @@
-import { Check, ChevronLeft, ChevronRight, List, Medal, MoreHorizontal, Pause, Play, Shuffle, SkipForward, Square, Volume2, VolumeX } from 'lucide-react';
+import { Check, ChevronLeft, ChevronRight, ChevronsRight, List, Medal, MoreHorizontal, Pause, Play, Shuffle, SkipForward, Square, Volume2, VolumeX } from 'lucide-react';
 import { useState } from 'react';
 import { Button } from '@/shared/components/ui/button';
 import { ClipThumb } from '@/shared/components/ui/clip-thumb';
@@ -58,6 +58,8 @@ export interface TimerScreenProps {
   onSwap?: (stepId: string, to: ExerciseRef, target?: number) => void;
   /** Slots whose set beat a record when it was ticked: a medal on the row. */
   prs?: string[];
+  /** End the running block here and go on to the next one, from the ⋯ menu. */
+  onEndBlock?: () => void;
 }
 
 export interface SetActions {
@@ -205,7 +207,7 @@ const stepLine = (s: ExerciseStep) => [forLabel(s), s.target !== undefined ? `${
  * a ⋯ menu (previous, overview, stop), Pause and Skip/Done at equal size. Tap the Next row to see
  * what the coming block asks for; the overview sheet lists every part with progress.
  */
-export const TimerScreen = ({ runsheet, state, now, onDone, onSkip, onBack, onPause, onResume, onAdjust, onAdjustIncline, onSetReps, onSetAmount, onDrop, onStartBlock, onAdjustStep, sets, onAdjustRest, lastFor, onFill, ghost, goal, muted, onToggleMute, equipment, onFinish, onExit, alternativesFor, onSwap, prs }: TimerScreenProps) => {
+export const TimerScreen = ({ runsheet, state, now, onDone, onSkip, onBack, onPause, onResume, onAdjust, onAdjustIncline, onSetReps, onSetAmount, onDrop, onStartBlock, onAdjustStep, sets, onAdjustRest, lastFor, onFill, ghost, goal, muted, onToggleMute, equipment, onFinish, onExit, alternativesFor, onSwap, prs, onEndBlock }: TimerScreenProps) => {
   const [confirmExit, setConfirmExit] = useState(false);
   const [menu, setMenu] = useState(false);
   const [overview, setOverview] = useState(false);
@@ -230,6 +232,8 @@ export const TimerScreen = ({ runsheet, state, now, onDone, onSkip, onBack, onPa
   const timed = clock.left !== undefined;
   // Timed work ends with Done early, which logs the time it ran; a rest or the lead-in is skipped.
   const timedWork = timed && !isRest && !lead && slot?.kind === 'work' && R.timesWork(slot);
+  // EMOM reps: the big clock is the minute running out, and Done logs the set as for any reps.
+  const emomWork = !lead && R.minuteOnly(slot);
   const amountField = slot ? R.amountField(slot) : undefined;
   const amount = slot && amountField ? R.amountAt(state, slot) : undefined;
   const bigNumber = done ? fmtClock(total) : lead ? String(Math.ceil(clock.left ?? 0)) : timed ? fmtClock(clock.left ?? 0) : fmtClock(clock.spent);
@@ -341,7 +345,8 @@ export const TimerScreen = ({ runsheet, state, now, onDone, onSkip, onBack, onPa
             )}
             {lead && <div className="-mt-2 pb-3 text-center text-[13px] text-white/60">Get ready</div>}
             {!timed && !lead && !done && slot && <div className="-mt-2 pb-3 text-center text-[13px] text-white/60">{isRest ? 'Rest' : straight ? 'Tick the set when you finish it' : 'Tap Done when finished'}</div>}
-            {minuteLeft !== undefined && !lead && !done && (
+            {emomWork && !done && <div className="-mt-2 pb-3 text-center text-[13px] text-white/60">Left in the {slot?.everySec && slot.everySec !== 60 ? 'interval' : 'minute'} · tap Done when finished</div>}
+            {minuteLeft !== undefined && !lead && !done && !emomWork && (
               <div className={cn('mx-auto mb-3 w-fit rounded-full bg-white/10 px-3 py-1 text-[13px] font-bold tabular-nums', minuteLeft <= 10 && 'text-brand')} aria-label={`Time left in the ${slot?.everySec && slot.everySec !== 60 ? 'interval' : 'minute'}`}>
                 {fmtClock(minuteLeft)} left in the {slot?.everySec && slot.everySec !== 60 ? 'interval' : 'minute'}
               </div>
@@ -475,7 +480,7 @@ export const TimerScreen = ({ runsheet, state, now, onDone, onSkip, onBack, onPa
               <Button block size="xl" variant="ghost" onClick={onDone} className="border-white/20 bg-white/10 text-white">
                 <Check /> Done early
               </Button>
-            ) : timed || lead ? (
+            ) : (timed && !emomWork) || lead ? (
               <Button block size="xl" variant="ghost" onClick={onSkip} className="border-white/20 bg-white/10 text-white">
                 <SkipForward /> Skip{isRest ? ' rest' : ''}
               </Button>
@@ -494,9 +499,14 @@ export const TimerScreen = ({ runsheet, state, now, onDone, onSkip, onBack, onPa
           <Button block variant="ghost" onClick={() => (setMenu(false), onBack())}>
             <ChevronLeft /> Previous step
           </Button>
-          {(!timed || timedWork) && !lead && !ready && (
+          {(!timed || timedWork || emomWork) && !lead && !ready && (
             <Button block variant="ghost" onClick={() => (setMenu(false), onSkip())}>
               <SkipForward /> Skip this step
+            </Button>
+          )}
+          {onEndBlock && slot?.blockId && !lead && (state.phase === 'running' || paused) && (
+            <Button block variant="ghost" onClick={() => (setMenu(false), onEndBlock())}>
+              <ChevronsRight /> End this block
             </Button>
           )}
           {options.length > 0 && (
