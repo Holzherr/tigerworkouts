@@ -100,6 +100,9 @@ share link) so the share started from a home recommendation can be measured. The
 same field from its Workouts tab (Pick up again → history, Mine → mine, a catalogue section or a
 search result → search, Saved → saved) and from a `tigerworkouts://w/` link (link). The origin
 rides in the crash-safe copy on both, so a resumed or recovered session keeps it.
+Sign out pushes first, then empties the device for the next account (sessions, workouts, favourites,
+saved, exercises, training maxes and the `tiger:synced` snapshot); while the push fails or a session
+is still unsaved to the account it refuses with a message instead, so no unsynced session is lost.
 
 Not yet: imperial units in the UI (stored only), Fitbit heart rate is read on the session page but
 not charted, Storybook stories for every screen state.
