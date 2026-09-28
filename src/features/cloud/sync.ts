@@ -295,9 +295,13 @@ export interface CreatorProfile {
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
-/** A creator's public page: their profile by handle (or id) and the workouts they made public. */
+/**
+ * A creator's public page: their profile by handle (or id) and the workouts they made public.
+ * Only the four public columns are asked for; from 0007 other people's rows come through only
+ * when they have a handle.
+ */
 export const fetchCreator = async (key: string): Promise<{ profile: CreatorProfile; workouts: Runsheet[] } | null> => {
-  const q = sb.from('profiles').select('*');
+  const q = sb.from('profiles').select('id,name,handle,bio');
   const { data: p } = await (UUID.test(key) ? q.eq('id', key) : q.eq('handle', key.toLowerCase())).maybeSingle();
   if (!p) return null;
   const { data: rows } = await sb.from('workouts').select('id,data,creator,title,public,owner').eq('owner', p.id).eq('public', true).order('updated_at', { ascending: false });
