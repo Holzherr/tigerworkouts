@@ -129,8 +129,24 @@ export const eachRow = async <T>(items: T[], send: (x: T) => PromiseLike<{ error
   return errors;
 };
 
+let turn: Promise<unknown> = Promise.resolve();
+/**
+ * Syncs and sign-out share `snap`, so they run one at a time: `fn` starts once every earlier turn
+ * has settled. A sync queued behind a sign-out reads `currentUser()` when its turn comes and finds
+ * nobody; one already out when sign-out starts finishes, and its patch is applied, before the
+ * device is cleared. Sign-out holds the turn from its own sync through `clearSnap()`.
+ */
+export const inTurn = <T>(fn: () => Promise<T>): Promise<T> => {
+  const mine = turn.then(fn, fn);
+  turn = mine.catch(() => {});
+  return mine;
+};
+
 /** Pull then push. Returns what changed locally so the store can apply it. */
-export const sync = async (local: SyncTarget): Promise<SyncResult> => {
+export const sync = (local: SyncTarget): Promise<SyncResult> => inTurn(() => pullPush(local));
+
+/** The sync itself, for whoever already holds the turn (sign-out). */
+export const pullPush = async (local: SyncTarget): Promise<SyncResult> => {
   const user = currentUser();
   if (!user) return { patch: {}, changed: false };
   const uid = user.id;
