@@ -28,6 +28,9 @@ struct RoundSplit: Codable, Hashable, Sendable {
     var at: [Double]
     /// Session time the block started at, same clock as `at`. Nil on sessions logged before it was kept.
     var from: Double? = nil
+    /// Session time each round's work began, same clock: a round's time runs from here, so the rest
+    /// before it is not in it. Nil on sessions logged before it was kept.
+    var starts: [Double]? = nil
 }
 
 /// What was logged for one exercise step in a session.

@@ -148,7 +148,7 @@ struct SplitTests {
             s = Runner.tick(s, now: t)
             t += 1_000
         }
-        #expect(Runner.toResult(s, Fixtures.interval(), now: 200_000).splits == [RoundSplit(blockId: "b", at: [75, 155], from: 5)])
+        #expect(Runner.toResult(s, Fixtures.interval(), now: 200_000).splits == [RoundSplit(blockId: "b", at: [75, 155], from: 5, starts: [5, 85])])
     }
 
     @Test("an amrap's half round at the cap is not a split")
@@ -158,7 +158,7 @@ struct SplitTests {
         s = Runner.advance(s, now: 25_000)
         s = Runner.advance(s, now: 35_000)
         s = Runner.tick(s, now: 65_000)
-        #expect(Runner.toResult(s, Fixtures.cindy(), now: 65_000).splits == [RoundSplit(blockId: "b", at: [25], from: 5)])
+        #expect(Runner.toResult(s, Fixtures.cindy(), now: 65_000).splits == [RoundSplit(blockId: "b", at: [25], from: 5, starts: [5])])
     }
 
     @Test("a round with a skipped exercise still closes when the next begins")
@@ -168,7 +168,7 @@ struct SplitTests {
         s = Runner.advance(s, now: 25_000, skipped: true)
         s = Runner.advance(s, now: 35_000)
         s = Runner.advance(s, now: 45_000)
-        #expect(Runner.toResult(s, Fixtures.cindy(), now: 46_000).splits == [RoundSplit(blockId: "b", at: [15, 45], from: 5)])
+        #expect(Runner.toResult(s, Fixtures.cindy(), now: 46_000).splits == [RoundSplit(blockId: "b", at: [15, 45], from: 5, starts: [5, 25])])
     }
 
     @Test("un-ticking a set drops its time")

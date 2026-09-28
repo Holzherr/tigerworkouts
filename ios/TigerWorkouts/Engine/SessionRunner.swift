@@ -92,9 +92,7 @@ final class SessionRunner {
         self.rival = Pace.lastTimed(history, runsheetIds: runsheet.lineage, excluding: SessionRunner.rowId(saved.state))
         self.today = Targets.today(runsheet, results: history.filter { $0.id != SessionRunner.rowId(saved.state) }, intent: Intent.current(), kit: Equipment.current())
         let at = saved.savedAt.timeIntervalSince1970 * 1000
-        self.state = saved.state.phase == .running || saved.state.phase == .lead
-            ? Runner.pause(saved.state, now: at)
-            : saved.state
+        self.state = Runner.restore(saved.state, savedAt: at, now: Date().timeIntervalSince1970 * 1000)
     }
 
     /// What an interrupted session had got to, as a result that can be logged without resuming.

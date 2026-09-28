@@ -472,3 +472,35 @@ struct PhoneCueTests {
         #expect(SessionRunner.newlyDone(after, after).isEmpty)
     }
 }
+
+@Suite("a kept run and round times")
+struct KeptRunTests {
+    @Test("a run kept at a gate does not count the time away")
+    func gateTimeAway() {
+        let r = Runsheet(id: "k", title: "K", items: [
+            .block(Block(id: "b1", name: "One", repeatCount: 1, steps: [Floor.ex("w", Fixtures.squat, forMode: .reps, forValue: 10)])),
+            .block(Block(id: "b2", name: "Two", repeatCount: 1, steps: [Floor.ex("p", Fixtures.pushup, forMode: .reps, forValue: 10)])),
+        ])
+        let gate = Runner.advance(Runner.tick(Runner.start(r, now: 0), now: 5_000), now: 10_000)
+        #expect(gate.phase == .ready)
+        let back = Runner.restore(gate, savedAt: 20_000, now: 3_620_000)
+        #expect(Runner.elapsed(back, now: 3_620_000) == Runner.elapsed(gate, now: 20_000))
+    }
+
+    @Test("a round is timed from when its work began, not from the round before it")
+    func roundStarts() {
+        let r = Runsheet(id: "c", title: "C", items: [.block(Block(
+            id: "b", name: "B", repeatCount: 2,
+            steps: [Floor.ex("a", Fixtures.swing, forValue: 10), Floor.ex("c", Fixtures.burpee, forValue: 10)], restBetweenSec: 60
+        ))])
+        var s = Runner.tick(Runner.start(r, now: 0), now: 5_000)
+        var t: Double = 5_000
+        while t <= 120_000, s.phase != .done {
+            s = Runner.tick(s, now: t)
+            t += 1_000
+        }
+        let sp = Runner.toResult(s, r, now: 120_000).splits![0]
+        #expect(sp.starts == [5, 85]) // session time, lead-in included, as `at` is
+        #expect(Rounds.times(sp) == [20, 20])
+    }
+}

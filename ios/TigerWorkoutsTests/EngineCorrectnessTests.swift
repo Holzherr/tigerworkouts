@@ -107,7 +107,7 @@ struct ForTimeScoreTests {
 
     @Test("splits carry when the block began, for the race against last time")
     func splitsFrom() {
-        #expect(Self.run().splits == [RoundSplit(blockId: "b", at: [115, 135], from: 95)])
+        #expect(Self.run().splits == [RoundSplit(blockId: "b", at: [115, 135], from: 95, starts: [95, 115])])
     }
 
     @Test("a loose main step counts, as in Murph")

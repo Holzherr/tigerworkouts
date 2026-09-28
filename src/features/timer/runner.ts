@@ -87,6 +87,9 @@ export interface RunState {
    * menu: a for-time block in either did not finish, so its time is not a finish time. */
   capped?: string[];
   endedEarly?: string[];
+  /** Session time, seconds, each round of a block began its work, by block id and round: a round's
+   * time runs from here, so the rest before it is not counted in it. */
+  roundAt?: Record<string, Record<number, number>>;
 }
 
 const LEAD_SEC = 5;
@@ -295,11 +298,13 @@ const activate = (st: RunState, i: number, now: number): RunState => {
     if (into >= slot.capSec) return capOut({ ...s, blockStart }, slot.blockId, now, i);
   }
   let endsAt = seconds !== undefined ? now + seconds * 1000 : undefined;
+  let roundAt = s.roundAt;
+  if (slot.kind === 'work' && slot.blockId && roundAt?.[slot.blockId]?.[slot.round] === undefined) roundAt = { ...roundAt, [slot.blockId]: { ...roundAt?.[slot.blockId], [slot.round]: elapsed(s, now) } };
   // EMOM work ends on its minute's boundary at the latest: the next minute starts on the clock
   // whether or not Done was tapped (see nextMinute).
   const boundary = emomBoundary({ ...s, blockStart }, slot);
   if (boundary !== undefined && boundary > now) endsAt = endsAt === undefined ? boundary : Math.min(endsAt, boundary);
-  return { ...s, i, phase: 'running', slotStartedAt: now, endsAt, remainingMs: undefined, blockStart };
+  return { ...s, i, phase: 'running', slotStartedAt: now, endsAt, remainingMs: undefined, blockStart, ...(roundAt ? { roundAt } : {}) };
 };
 /** When an EMOM work slot's minute (or interval) ends, ms; undefined for other slots and before its block starts. */
 const emomBoundary = (s: RunState, sl: Slot): number | undefined => {
@@ -905,6 +910,7 @@ export const splits = (s: RunState): RoundSplit[] => {
     const circuit = all.some(sl => sl.mode === 'amrap' || sl.mode === 'fortime') || [...rounds.values()].some(r => r.length > 1);
     if (!circuit) continue;
     const at: number[] = [];
+    const starts: number[] = [];
     const order = [...rounds.keys()].sort((a, b) => a - b);
     for (const [k, r] of order.entries()) {
       const round = rounds.get(r)!;
@@ -913,9 +919,11 @@ export const splits = (s: RunState): RoundSplit[] => {
       const closed = s.actuals[round[round.length - 1].id]?.doneAt !== undefined || later;
       if (!times.length || !closed) break;
       at.push(Math.max(...times));
+      const began = s.roundAt?.[blockId]?.[r];
+      if (began !== undefined) starts.push(Math.round(began));
     }
     const from = s.partAt?.[[...rounds.values()][0][0].part];
-    if (at.length) out.push({ blockId, at, ...(from !== undefined ? { from: Math.round(from) } : {}) });
+    if (at.length) out.push({ blockId, at, ...(from !== undefined ? { from: Math.round(from) } : {}), ...(starts.length === at.length ? { starts } : {}) });
   }
   return out;
 };
@@ -958,7 +966,12 @@ export const loadPersisted = (runsheetId?: string): Kept | null => {
 };
 /** A kept run, picked up again: paused at the moment it was last saved, so the time the tab was
  * closed never counts and nothing counts down before you are ready (as on iOS). */
-export const restore = (s: RunState, savedAt: number): RunState => (s.phase === 'running' || s.phase === 'lead' ? pause(s, savedAt) : s);
+export const restore = (s: RunState, savedAt: number, now = Date.now()): RunState => {
+  if (s.phase === 'running' || s.phase === 'lead') return pause(s, savedAt);
+  // Parked at a gate: the clock runs there, so the time the tab was closed comes out as a pause.
+  if (s.phase === 'ready' && now > savedAt) return { ...s, pausedMs: s.pausedMs + (now - savedAt), slotStartedAt: s.slotStartedAt + (now - savedAt) };
+  return s;
+};
 
 /** What Start asks about a kept run. Its own workout's can be resumed while under six hours old;
  * any with a set done can be saved as it stands. Another workout's run with nothing done is not
@@ -980,6 +993,6 @@ export const keptAsk = (kept: Kept | null, runsheetId: string, now: number): Kep
 /** A kept run logged as it stands, without resuming: timed to its last save, not to now. `r` is
  * its workout, or a stand-in with its id and title when the workout is gone. */
 export const keptResult = (kept: Kept, r: Runsheet): SessionResult => {
-  const done = finish(restore(kept.state, kept.savedAt), kept.savedAt);
+  const done = finish(restore(kept.state, kept.savedAt, kept.savedAt), kept.savedAt);
   return { ...toResult(done, r, kept.savedAt), id: sessionId(done) };
 };

@@ -110,6 +110,9 @@ struct RunState: Hashable, Sendable, Codable {
     /// menu: a for-time block in either did not finish, so its time is not a finish time.
     var capped: [String]?
     var endedEarly: [String]?
+    /// Session time, seconds, each round of a block began its work, by block id and round: a
+    /// round's time runs from here, so the rest before it is not counted in it.
+    var roundAt: [String: [Int: Double]]?
 }
 
 enum Runner {
@@ -453,6 +456,10 @@ enum Runner {
         if let cap = slot.capSec, let id = slot.blockId, let began = s.blockStart[id] {
             let into = (now - began) / 1000
             if into >= cap { return capOut(s, id, now, from: i) }
+        }
+        if slot.kind == .work, let id = slot.blockId, s.roundAt?[id]?[slot.round] == nil {
+            s.roundAt = s.roundAt ?? [:]
+            s.roundAt![id, default: [:]][slot.round] = elapsed(s, now: now)
         }
         s.i = i
         s.phase = .running
@@ -941,6 +948,18 @@ enum Runner {
         return s
     }
 
+    /// A kept run, picked up again: paused at the moment it was last saved, so the time the app was
+    /// closed never counts and nothing counts down before you are ready. Parked at a gate the clock
+    /// runs, so the time away comes out as a pause. Ported from `restore` in runner.ts.
+    static func restore(_ s: RunState, savedAt: Double, now: Double) -> RunState {
+        if s.phase == .running || s.phase == .lead { return pause(s, now: savedAt) }
+        guard s.phase == .ready, now > savedAt else { return s }
+        var s = s
+        s.pausedMs += now - savedAt
+        s.slotStartedAt += now - savedAt
+        return s
+    }
+
     static func finish(_ given: RunState, now: Double) -> RunState {
         // Finished while paused: the pause is not workout time.
         var s = given.phase == .paused ? resume(given, now: now) : given
@@ -1189,6 +1208,7 @@ enum Runner {
             guard circuit else { continue }
             let order = byRound.keys.sorted()
             var at: [Double] = []
+            var starts: [Double] = []
             for (k, r) in order.enumerated() {
                 let round = byRound[r] ?? []
                 let times = round.compactMap { doneAtSec(s, s.actuals[$0.id]) }
@@ -1196,9 +1216,10 @@ enum Runner {
                 let closed = round.last.map { s.actuals[$0.id]?.doneAt != nil } == true || later
                 guard let latest = times.max(), closed else { break }
                 at.append(latest)
+                if let began = s.roundAt?[block]?[r] { starts.append(began.rounded()) }
             }
             let from = all.first.flatMap { s.partAt?[$0.part] }?.rounded()
-            if !at.isEmpty { out.append(RoundSplit(blockId: block, at: at, from: from)) }
+            if !at.isEmpty { out.append(RoundSplit(blockId: block, at: at, from: from, starts: starts.count == at.count ? starts : nil)) }
         }
         return out
     }

@@ -8,6 +8,7 @@ import { describe, expect, it } from 'vitest';
 import { EX } from '@/features/runsheet/fixtures';
 import { makeExercise, makeRest, type Block, type Runsheet, type SetPlan } from '@/features/runsheet/model';
 import { scoreTarget } from '@/features/runsheet/targets';
+import { roundTimes } from '@/features/results/rounds';
 import * as R from './runner';
 
 const ex = (id: string, key: keyof typeof EX, init: Parameters<typeof makeExercise>[1] = {}) => ({ ...makeExercise(EX[key], init), id });
@@ -228,5 +229,24 @@ describe('Get ready before a block on a clock', () => {
   it('straight sets start on the tap', () => {
     const r = sheet({ kind: 'block', id: 'b2', name: 'Bench', repeat: 3, steps: [ex('pr', 'db_incline_press', { forMode: 'reps', forValue: 8 })] });
     expect(R.startBlock(gate(r), 20000).phase).toBe('running');
+  });
+});
+
+describe('a kept run and round times', () => {
+  it('a run kept at a gate does not count the time away', () => {
+    const r: Runsheet = { id: 'k', title: 'K', items: [{ kind: 'block', id: 'b1', name: 'One', repeat: 1, steps: [ex('w', 'bw_squat', { forMode: 'reps', forValue: 10 })] }, { kind: 'block', id: 'b2', name: 'Two', repeat: 1, steps: [ex('p', 'bw_pushup', { forMode: 'reps', forValue: 10 })] }] };
+    const gate = R.advance(R.tick(R.start(r, 0), 5000), 10000);
+    expect(gate.phase).toBe('ready');
+    const back = R.restore(gate, 20000, 3620000); // an hour closed
+    expect(R.elapsed(back, 3620000)).toBe(R.elapsed(gate, 20000));
+  });
+  it('a round is timed from when its work began, not from the round before it', () => {
+    // Two rounds of 20 s work and a 60 s rest between: both rounds took 20 s.
+    const r: Runsheet = { id: 'c', title: 'C', items: [{ kind: 'block', id: 'b', name: 'B', repeat: 2, restBetweenSec: 60, steps: [ex('a', 'kb_swing', { forValue: 10 }), ex('c', 'bw_burpee', { forValue: 10 })] }] };
+    let s = R.tick(R.start(r, 0), 5000);
+    for (let t = 5000; t <= 120000 && s.phase !== 'done'; t += 1000) s = R.tick(s, t);
+    const sp = R.toResult(s, r, 120000).splits![0];
+    expect(sp.starts).toEqual([5, 85]); // session time, lead-in included, as `at` is
+    expect(roundTimes(sp)).toEqual([20, 20]);
   });
 });

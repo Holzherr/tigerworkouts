@@ -65,6 +65,9 @@ export interface RoundSplit {
   at: number[];
   /** Session time the block started at, same clock as `at`. Absent on sessions logged before it was kept. */
   from?: number;
+  /** Session time each round's work began, same clock: a round's time runs from here, so the rest
+   * before it is not in it. Absent on sessions logged before it was kept. */
+  starts?: number[];
 }
 
 export interface StepResult {

@@ -565,7 +565,7 @@ describe('set times and round splits', () => {
     for (let t = 5000; t <= 200000 && s.phase !== 'done'; t += 1000) s = tick(s, t);
     const r = toResult(s, interval(), 200000);
     // swings 30 s, rest 10, press 30, rest 10: round 1's press done at 5 + 70 = 75 s
-    expect(r.splits).toEqual([{ blockId: 'b', at: [75, 155], from: 5 }]);
+    expect(r.splits).toEqual([{ blockId: 'b', at: [75, 155], from: 5, starts: [5, 85] }]);
   });
   it("an amrap's half round at the cap is not a split", () => {
     let s = tick(start(cindy(), 0), 5000);
@@ -574,7 +574,7 @@ describe('set times and round splits', () => {
     s = advance(s, 35000); // half of round 2
     s = tick(s, 65000); // cap
     const r = toResult(s, cindy(), 65000);
-    expect(r.splits).toEqual([{ blockId: 'b', at: [25], from: 5 }]);
+    expect(r.splits).toEqual([{ blockId: 'b', at: [25], from: 5, starts: [5] }]);
   });
   it('a round with a skipped exercise still closes when the next begins', () => {
     let s = tick(start(cindy(), 0), 5000);
@@ -582,7 +582,7 @@ describe('set times and round splits', () => {
     s = advance(s, 25000, { skipped: true });
     s = advance(s, 35000);
     s = advance(s, 45000);
-    expect(toResult(s, cindy(), 46000).splits).toEqual([{ blockId: 'b', at: [15, 45], from: 5 }]);
+    expect(toResult(s, cindy(), 46000).splits).toEqual([{ blockId: 'b', at: [15, 45], from: 5, starts: [5, 25] }]);
   });
   it('un-ticking a set drops its time', () => {
     const sheet: Runsheet = { id: 'p', title: 'Press', items: [{ kind: 'block', id: 'b', name: 'B', repeat: 2, steps: [{ ...makeExercise(EX.db_incline_press, { target: 20, forMode: 'reps', forValue: 8 }), id: 'pr' }] }] };
@@ -657,7 +657,7 @@ describe('for time is scored on the scored block', () => {
     expect(run(20000).score).toBe(40);
   });
   it('splits carry when the block began, for the race against last time', () => {
-    expect(run().splits).toEqual([{ blockId: 'b', at: [115, 135], from: 95 }]);
+    expect(run().splits).toEqual([{ blockId: 'b', at: [115, 135], from: 95, starts: [95, 115] }]);
   });
   it('a loose main step counts, as in Murph', () => {
     const murph: Runsheet = { id: 'm', title: 'Murph', items: [{ ...makeExercise(EX.bw_squat, { forMode: 'reps', forValue: 1 }), id: 'run1' }, { kind: 'block', id: 'b', name: 'B', mode: 'fortime', repeat: 1, steps: [{ ...makeExercise(EX.bw_pullup, { forMode: 'reps', forValue: 5 }), id: 'pu' }] }] };
@@ -912,6 +912,6 @@ describe('timed and distance work', () => {
     const sheet: Runsheet = { id: 'f', title: 'F', items: [{ kind: 'block', id: 'b', name: 'F', mode: 'fortime', repeat: 3, steps: [{ ...makeExercise(EX.bw_pullup, { forMode: 'reps', forValue: 5 }), id: 'a' }, { ...makeExercise(EX.bw_pushup, { forMode: 'reps', forValue: 10 }), id: 'c' }] }] };
     let s = tick(start(sheet, 0), 5000);
     for (const t of [20, 40, 70, 95, 130, 150]) s = advance(s, t * 1000);
-    expect(toResult(s, sheet, 150000).splits).toEqual([{ blockId: 'b', at: [40, 95, 150], from: 5 }]);
+    expect(toResult(s, sheet, 150000).splits).toEqual([{ blockId: 'b', at: [40, 95, 150], from: 5, starts: [5, 40, 95] }]);
   });
 });
