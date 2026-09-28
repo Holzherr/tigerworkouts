@@ -49,6 +49,43 @@ struct DataFixesTests {
         #expect(squatLoad(ProgressionRules.progressed(stronglifts(), results: six, kit: nil)) == 55)
     }
 
+    @Test("the finish screen's Next time: Made it adds the step, Missed repeats, every third miss deloads")
+    func nextLoads() {
+        let sheet = stronglifts()
+        let ok = session(8, ok: true)
+        #expect(ProgressionRules.nextLoads(sheet, last: ok, history: [ok]) == [.init(exerciseKey: "bb_back_squat", name: "Barbell back squat", from: 60, to: 62.5, reason: "all sets done: +2.5 kg")])
+        let miss = session(8, ok: false)
+        #expect(ProgressionRules.nextLoads(sheet, last: miss, history: [miss]).map(\.reason) == ["missed reps (1/3): repeat the weight"])
+        let three = [session(8, ok: false), session(6, ok: false), session(4, ok: false)]
+        let deload = ProgressionRules.nextLoads(sheet, last: three[0], history: three)
+        #expect(deload.map(\.to) == [55] && deload.map(\.reason) == ["3 failed sessions: deload 10%"])
+        // Only exercises the session logged, and only the ones a rule reads, get a Made it row.
+        #expect(MadeItCard.rows(sheet, result: ok).map(\.step.id) == ["sq"])
+        #expect(MadeItCard.rows(Runsheet(id: "x", title: "X", items: sheet.items.map { item in
+            guard case .block(var b) = item else { return item }
+            b.progression = nil
+            return .block(b)
+        }), result: ok).isEmpty)
+    }
+
+    @Test("an AMRAP set that reaches the program's mark bumps the training max")
+    func trainingMaxBump() {
+        let bench = ExerciseRef(key: "bb_bench", name: "Bench press", unit: "kg", step: 2.5)
+        var top = ExerciseStep(id: "bp", exercise: bench, forMode: .amrap, forValue: 5)
+        top.targetPct = 85
+        var b = Block(id: "b", name: "Bench", repeatCount: 1, steps: [.exercise(top)])
+        b.progression = Progression(amrapBumpAt: 8, tmBumpKg: 2.5)
+        let sheet = Runsheet(id: "531", title: "5/3/1", items: [.block(b)])
+        var step = StepResult(stepId: "bp", exerciseKey: "bb_bench")
+        step.reps = [9]
+        let done = SessionResult(runsheetId: "531", title: nil, startedAt: "2026-09-08T10:00:00Z", steps: [step], id: "s-531")
+        let line = ProgressionRules.nextLoads(sheet, last: done, history: [done], maxes: ["bb_bench": 100])
+        #expect(line == [.init(exerciseKey: "bb_bench", name: "Bench press", from: 100, to: 102.5, reason: "9 reps on the 5+ set: training max +2.5 kg", tmBump: true)])
+        step.reps = [7]
+        let short = SessionResult(runsheetId: "531", title: nil, startedAt: "2026-09-08T10:00:00Z", steps: [step], id: "s-531")
+        #expect(ProgressionRules.nextLoads(sheet, last: short, history: [short], maxes: ["bb_bench": 100]).isEmpty)
+    }
+
     @Test("a drop set is never the next session's starting load")
     func dropSet() {
         let sets = [SetResult(reps: 5, load: 100), SetResult(reps: 5, load: 100), SetResult(reps: 10, load: 60, type: .drop)]

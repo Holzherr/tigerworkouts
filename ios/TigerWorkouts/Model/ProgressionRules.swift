@@ -44,6 +44,61 @@ enum ProgressionRules {
         return nil
     }
 
+    /// One "Next time" line from a program's rules: the load now and what the rule makes of it.
+    /// A training-max bump moves the TM, not a load (`tmBump`).
+    struct NextLoad: Hashable, Identifiable {
+        var exerciseKey: String
+        var name: String
+        var from: Double?
+        var to: Double?
+        var reason: String
+        var tmBump = false
+        var id: String { exerciseKey }
+    }
+
+    /// The finish screen's lines for ruled exercises, the port of `nextLoads` in progression.ts:
+    /// +`onSuccessKg` after Made it, the same weight after Missed, the deload on every
+    /// `failAfter`-th miss, and a training max bumped by an AMRAP set that reached `amrapBumpAt`.
+    /// `history` may hold `last` already; it is matched by id, not counted twice.
+    static func nextLoads(_ r: Runsheet, last: SessionResult, history: [SessionResult], maxes: [String: Double] = [:], kit: Equipment? = nil) -> [NextLoad] {
+        var out: [NextLoad] = []
+        var seen = Set<String>()
+        let blocks = r.items.compactMap(\.asBlock)
+        for s in r.exerciseSteps {
+            let key = s.exercise.key
+            guard seen.insert(key).inserted else { continue }
+            guard let rule = blocks.first(where: { $0.steps.contains { $0.id == s.id } })?.progression ?? r.progression else { continue }
+            guard let res = last.steps.first(where: { $0.stepId == s.id || $0.exerciseKey == key }) else { continue }
+            let from = workingLoad(res) ?? Relative.target(s, maxes: maxes, bodyweightKg: nil, kit: kit)
+            if s.forMode == .amrap, let at = rule.amrapBumpAt, let bump = rule.tmBumpKg, bump != 0,
+               let reps = res.reps?.last, reps >= Double(at) {
+                let tm = maxes[key]
+                out.append(NextLoad(exerciseKey: key, name: s.exercise.name, from: tm, to: tm.map { $0 + bump },
+                                    reason: "\(Format.number(reps)) reps on the \(Format.number(s.forValue))+ set: training max +\(Format.number(bump)) kg", tmBump: true))
+                continue
+            }
+            guard let ok = res.success, let from else { continue }
+            if ok, let add = rule.onSuccessKg, add != 0 {
+                let up = Plates.snap(from + add, s.exercise, kit, .up)
+                let to = up > from ? up : (Plates.nextUp(from, s.exercise, kit) ?? from)
+                let reason = to == from
+                    ? "all sets done: already the heaviest you own"
+                    : "all sets done: +\(Format.number(add)) kg" + (abs(to - from - add) > 1e-6 ? ", \(Format.number(to)) kg is the next you can load" : "")
+                out.append(NextLoad(exerciseKey: key, name: s.exercise.name, from: from, to: to, reason: reason))
+            } else if !ok, let pct = rule.deloadPct, pct != 0, let after = rule.failAfter, after > 0 {
+                let streak = failStreak([last] + history.filter { !Celebrate.same($0, last) }, exerciseKey: key)
+                let since = streak % after
+                if streak > 0 && since == 0 {
+                    out.append(NextLoad(exerciseKey: key, name: s.exercise.name, from: from, to: Plates.snap(from * (1 - pct / 100), s.exercise, kit),
+                                        reason: "\(after) failed sessions: deload \(Format.number(pct))%"))
+                } else {
+                    out.append(NextLoad(exerciseKey: key, name: s.exercise.name, from: from, to: from, reason: "missed reps (\(since)/\(after)): repeat the weight"))
+                }
+            }
+        }
+        return out
+    }
+
     /// The workout loaded as its rules say, from the latest session that did each ruled exercise
     /// (in any workout, so day A's squat carries into day B). Loads from a training max or
     /// bodyweight are left to those.

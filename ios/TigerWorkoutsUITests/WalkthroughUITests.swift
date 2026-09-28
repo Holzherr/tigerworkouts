@@ -218,6 +218,36 @@ final class WalkthroughUITests: XCTestCase {
         tap(app.buttons["Done"])
     }
 
+    /// A program's rule on the finish screen, as on the web's result sheet: Made it / Missed on
+    /// each lift it reads, and "Next time" with the load it makes of the session.
+    func testMadeItOnTheFinishScreen() {
+        open("Iron Base · Whole Body A")
+        tap(app.buttons["Start workout"])
+        XCTAssertTrue(app.buttons["End session"].waitForExistence(timeout: 5))
+        let startBlock = app.buttons["Start Squat and press"]
+        for _ in 0..<60 where !startBlock.exists {
+            if app.buttons["Skip"].exists { app.buttons["Skip"].tap() } else { sleep(1) }
+        }
+        tap(startBlock)
+        // The goblet squats of round 1, logged.
+        tap(app.buttons["Done"])
+        tap(app.buttons["End session"])
+        tap(app.buttons["Finish and save"])
+        XCTAssertTrue(app.staticTexts["Workout saved"].waitForExistence(timeout: 10))
+        let missed = app.buttons["made-it-no"].firstMatch
+        for _ in 0..<6 where !(missed.exists && missed.isHittable) { app.swipeUp(velocity: .slow) }
+        XCTAssertTrue(missed.waitForExistence(timeout: 5), "a lift the program's rule reads gets Made it / Missed")
+        let next = app.descendants(matching: .any).matching(NSPredicate(format: "label CONTAINS 'Goblet squat' AND label CONTAINS 'kg'")).firstMatch
+        XCTAssertTrue(next.waitForExistence(timeout: 5), "Next time shows the load the rule makes of it")
+        snap("57 Finish, Made it and Next time")
+        missed.tap()
+        XCTAssertTrue(app.descendants(matching: .any).matching(NSPredicate(format: "label CONTAINS 'repeat the weight'")).firstMatch.waitForExistence(timeout: 5), "Missed repeats the weight")
+        snap("58 Finish, Missed repeats the weight")
+        let done = app.buttons["Done"]
+        for _ in 0..<4 where !(done.exists && done.isHittable) { app.swipeUp() }
+        tap(done)
+    }
+
     /// Logging in the gym: last time's set in one tap, ±15 s on the rest, and the header racing the
     /// last session of the same workout.
     func testGymLogging() {
