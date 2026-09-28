@@ -6,7 +6,8 @@ struct DiscoverView: View {
     @Environment(Store.self) private var store
     var onStart: (Runsheet, SessionOrigin?) -> Void
 
-    @State private var tab: Tab = .forYou
+    /// Saved first, as on the web (Nick, 10 Sep 2026: "Saved first on the home screen").
+    @State private var tab: Tab = .saved
     @State private var query = ""
     @State private var filter: Kind?
     @State private var writing: Runsheet?
@@ -51,7 +52,7 @@ struct DiscoverView: View {
             case .program: "StrongLifts, 5/3/1 and friends, day by day"
             case .protocolKind: "Tabata, EMOMs and the 7-minute workout"
             case .article: "Short routines from the NHS"
-            case .video: "Run with the video as the clock"
+            case .video: "Timed to the video; the video plays on the web"
             }
         }
     }
