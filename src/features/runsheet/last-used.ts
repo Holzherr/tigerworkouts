@@ -1,5 +1,6 @@
 import { workingLoad, type SessionResult, type SetResult, type StepResult } from './progression';
 import { shortUnit, type ExerciseStep, type Item, type Runsheet } from './model';
+import { measured } from '@/features/results/logbook';
 
 export interface LastUsed {
   target?: number;
@@ -96,7 +97,9 @@ export const lastSets = (results: SessionResult[], step: ExerciseStep): SetResul
   const find = (match: (x: StepResult) => boolean) => {
     for (const r of newest) {
       const hit = r.steps.find(x => match(x) && x.sets?.length);
-      if (hit) return hit.sets;
+      // A legacy row that logged metres, seconds or calories as the load reads as that measure, so
+      // "Use last time" never writes it onto the set as a load.
+      if (hit) return measured(hit.sets!, step.exercise.unit);
     }
     return undefined;
   };
