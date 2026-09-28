@@ -137,6 +137,7 @@ final class Store {
             user = await Supabase.shared.user
             writeCache()
             syncError = failure?.localizedDescription
+            Task { await backfillHeartRate() }
         } catch {
             syncError = error.localizedDescription
         }
@@ -252,6 +253,43 @@ final class Store {
         return await Health.shared.summary(from: start, to: end)
     }
 
+    /// Takes a session's workout out of Health; true when there was one. A property so a test can
+    /// watch it.
+    var healthDelete: @MainActor (String) async -> Bool = { await Health.shared.deleteWorkout(for: $0) }
+
+    /// The start, and the end (or start plus duration), of a logged session.
+    nonisolated static func window(_ r: SessionResult) -> (start: Date, end: Date)? {
+        guard let start = ISO8601.date(r.startedAt),
+              let end = r.endedAt.flatMap(ISO8601.date) ?? r.durationSec.map({ start.addingTimeInterval($0) }),
+              end > start else { return nil }
+        return (start, end)
+    }
+
+    /// Sessions of the last two days with no heart rate yet: read at the finish with the phone
+    /// locked, Health hands back nothing, and a watch can sync to the phone minutes later.
+    nonisolated static func needsHeartRate(_ results: [SessionResult], now: Date) -> [SessionResult] {
+        results.filter { r in
+            guard r.device == nil, r.activity == nil, let w = window(r) else { return false }
+            return w.end <= now && now.timeIntervalSince(w.end) < 48 * 3600
+        }
+    }
+
+    private var backfilling = false
+
+    /// Asks Health again for the heart rate of recent sessions that have none, when the app comes
+    /// to the foreground and after a sync. What it finds goes on the row and up to the account.
+    func backfillHeartRate(now: Date = Date()) async {
+        guard !backfilling else { return }
+        backfilling = true
+        defer { backfilling = false }
+        for r in Self.needsHeartRate(results, now: now) {
+            guard let w = Self.window(r), let device = await deviceSummary(w.start, w.end),
+                  var current = results.first(where: { $0.rowId == r.rowId }), current.device == nil else { continue }
+            current.device = device
+            await update(current)?.value
+        }
+    }
+
     /// The session also belongs in Health, typed by what it mostly was, counting towards the rings.
     /// An effort tapped while the workout was being written is attached once it is there.
     private func writeToHealth(_ r: SessionResult) async {
@@ -262,7 +300,7 @@ final class Store {
         let kcal = r.device?.calories.map { Int($0) }
             ?? EffortModel.effort(r, worked: worked, bodyweightKg: bodyweightKg).kcal
         guard await Health.shared.save(r, runsheet: runsheet, worked: worked, kcal: kcal) else { return }
-        if discarded.contains(r.rowId) { return await Health.shared.deleteWorkout(for: r.rowId) }
+        if discarded.contains(r.rowId) { _ = await healthDelete(r.rowId); return }
         if let current = results.first(where: { $0.rowId == r.rowId }), let rpe = current.rpe {
             await Health.shared.setEffort(rpe, for: current)
         }
@@ -298,6 +336,9 @@ final class Store {
         pending.append(result)
         writeCache()
         let effortChanged = before?.rpe != result.rpe
+        // A date or length edited here moves the Health workout too: the old one comes out and the
+        // session is written again, but only when Health had one for it.
+        let moved = before.map { Self.window($0).map { [$0.start, $0.end] } != Self.window(result).map { [$0.start, $0.end] } } ?? false
         return Task {
             do {
                 try await flushPending()
@@ -305,14 +346,17 @@ final class Store {
                 syncError = error.localizedDescription
             }
             writeCache()
-            if healthEnabled, effortChanged {
+            if healthEnabled, moved, await healthDelete(result.rowId) {
+                await writeToHealth(result)
+            } else if healthEnabled, effortChanged {
                 await Health.shared.setEffort(result.rpe, for: result)
             }
         }
     }
 
     /// Gone from the phone at once and from the account as soon as it can be reached; the web app
-    /// drops it from its own list on its next sync. The Health workout, if any, stays: Health owns it.
+    /// drops it from its own list on its next sync. The Health workout this app wrote for it goes
+    /// too: a session deleted here did not happen, and Health should not count it.
     func delete(_ result: SessionResult) async {
         let id = result.rowId
         results.removeAll { $0.rowId == id }
@@ -326,15 +370,15 @@ final class Store {
             syncError = error.localizedDescription
         }
         writeCache()
+        if healthEnabled { _ = await healthDelete(id) }
     }
 
     /// Discard, from the finish screen. The session was logged the moment it ended, so it goes the
-    /// way a delete does — off the phone, out of the queue, off the server — and out of Health as
-    /// well, where a delete from History leaves it: nobody did this workout.
+    /// way a delete does — off the phone, out of the queue, off the server, out of Health — and a
+    /// save still in flight for it is stopped from bringing it back.
     func discard(_ result: SessionResult) async {
         discarded.insert(result.rowId)
         await delete(result)
-        if healthEnabled { await Health.shared.deleteWorkout(for: result.rowId) }
     }
 
     private func redelete(_ id: String) async {

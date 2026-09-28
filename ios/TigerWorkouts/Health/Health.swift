@@ -86,18 +86,24 @@ final class Health {
         }
     }
 
-    /// Takes the workout written for a session back out of Health, with its effort: a discarded
-    /// session is not a workout. Found by the session id on it when it was not written this run.
-    func deleteWorkout(for rowId: String) async {
-        guard isAvailable else { return }
+    /// Takes the workout written for a session back out of Health, with its effort: a discarded or
+    /// deleted session is not a workout. Found by the session id on it when it was not written this
+    /// run. True when there was one.
+    @discardableResult
+    func deleteWorkout(for rowId: String) async -> Bool {
+        guard isAvailable else { return false }
         if let effort = efforts.removeValue(forKey: rowId) { try? await store.delete(effort) }
         if let workout = written.removeValue(forKey: rowId) {
-            try? await store.delete(workout)
-            return
+            do {
+                try await store.delete(workout)
+                return true
+            } catch {
+                return false
+            }
         }
         let predicate = HKQuery.predicateForObjects(withMetadataKey: HKMetadataKeyExternalUUID, allowedValues: [rowId])
-        await withCheckedContinuation { (done: CheckedContinuation<Void, Never>) in
-            store.deleteObjects(of: HKObjectType.workoutType(), predicate: predicate) { _, _, _ in done.resume() }
+        return await withCheckedContinuation { (done: CheckedContinuation<Bool, Never>) in
+            store.deleteObjects(of: HKObjectType.workoutType(), predicate: predicate) { ok, count, _ in done.resume(returning: ok && count > 0) }
         }
     }
 
@@ -247,7 +253,9 @@ final class Health {
         let window = HKQuery.predicateForSamples(withStart: start, end: end, options: [.strictStartDate])
 
         async let heart = statistics(.heartRate, predicate: window, options: [.discreteAverage, .discreteMax])
-        async let burned = statistics(.activeEnergyBurned, predicate: window, options: [.cumulativeSum])
+        // Not the estimate this app wrote with its own workout: asked again later, it would count itself.
+        let others = NSCompoundPredicate(notPredicateWithSubpredicate: HKQuery.predicateForObjects(from: .default()))
+        async let burned = statistics(.activeEnergyBurned, predicate: NSCompoundPredicate(andPredicateWithSubpredicates: [window, others]), options: [.cumulativeSum])
 
         let beats = HKUnit.count().unitDivided(by: .minute())
         let hr = await heart

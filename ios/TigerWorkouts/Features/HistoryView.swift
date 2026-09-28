@@ -225,7 +225,7 @@ struct SessionDetailView: View {
             }
             Button("Cancel", role: .cancel) {}
         } message: {
-            Text("It goes from History here and on tigerworkouts.com. A workout already in Apple Health stays there.")
+            Text("It goes from History here and on tigerworkouts.com, and out of Apple Health.")
         }
         .sheet(isPresented: $sharing) {
             let c = Celebrate.celebrate(session, all: store.results)
