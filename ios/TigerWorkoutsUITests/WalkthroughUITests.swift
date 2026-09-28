@@ -63,8 +63,8 @@ final class WalkthroughUITests: XCTestCase {
         XCTAssertTrue(app.staticTexts["Get ready"].waitForExistence(timeout: 5))
         snap("04 Lead-in")
 
-        // The five-second lead-in runs out on its own.
-        XCTAssertTrue(app.buttons["Done"].waitForExistence(timeout: 10))
+        // The five-second lead-in runs out on its own. Tabata's work is on the clock, so Done reads Done early.
+        XCTAssertTrue(app.buttons["Done early"].waitForExistence(timeout: 10))
         sleep(2)
         snap("05 Timer")
 
@@ -979,23 +979,23 @@ final class WalkthroughUITests: XCTestCase {
         let rounds = app.descendants(matching: .any)["round-times"]
         XCTAssertTrue(rounds.waitForExistence(timeout: 5), "a circuit's session should show its round times")
         for _ in 0..<3 where !app.buttons["edit-sets"].isHittable { app.swipeUp(velocity: .slow) }
-        snap("80 Session, round times and sets")
+        snap("90 Session, round times and sets")
 
         tap(app.buttons["edit-sets"])
         let seconds = app.textFields["set-cardio_rower-0-seconds"]
         XCTAssertTrue(seconds.waitForExistence(timeout: 5), "editing should offer the row's time")
-        snap("81 Editing logged sets")
+        snap("91 Editing logged sets")
         seconds.tap()
         seconds.press(forDuration: 1.0)
         if app.menuItems["Select All"].waitForExistence(timeout: 2) { app.menuItems["Select All"].tap() }
         seconds.typeText("52")
         tap(app.buttons["edit-sets"]) // Done: the edit is saved
         XCTAssertTrue(app.staticTexts.matching(NSPredicate(format: "label CONTAINS '250 m in 52 s'")).firstMatch.waitForExistence(timeout: 5), "the edited time should show on the set")
-        snap("82 Set edited")
+        snap("92 Set edited")
 
         tap(app.buttons.matching(NSPredicate(format: "label CONTAINS 'Rowing machine'")).firstMatch)
         XCTAssertTrue(app.staticTexts["Fastest pace · per 500 m"].waitForExistence(timeout: 5), "a timed distance should chart its pace")
-        snap("83 Rower logbook, pace and fastest times")
+        snap("93 Rower logbook, pace and fastest times")
 
         tap(app.tabBars.buttons["Discover"].exists ? app.tabBars.buttons["Discover"] : app.tabBars.buttons.element(boundBy: 0))
         open("Row intervals")
@@ -1003,17 +1003,17 @@ final class WalkthroughUITests: XCTestCase {
         // The first block starts after the lead-in, with no gate.
         XCTAssertTrue(app.staticTexts["amount-done"].waitForExistence(timeout: 12), "a distance should have its metres to change")
         tap(app.buttons["More metres"])
-        snap("84 Timer, metres done")
+        snap("94 Timer, metres done")
         tap(app.buttons["Done"])
         let early = app.buttons["Done early"]
         XCTAssertTrue(early.waitForExistence(timeout: 5), "a hold should end with Done early")
         sleep(3)
-        snap("85 Hold, Done early")
+        snap("95 Hold, Done early")
         tap(early)
         tap(app.buttons["End session"])
         tap(app.buttons["Finish and save"])
         XCTAssertTrue(app.staticTexts["Workout saved"].waitForExistence(timeout: 10))
-        snap("86 Finished")
+        snap("96 Finished, round times")
         tap(app.buttons["Done"])
     }
 
