@@ -110,5 +110,53 @@ extension Store {
         trainingMaxes["bb_ohp"] = 61
         equipment = Equipment(barKg: 20, plates: [PlateCount(kg: 20, count: 2), PlateCount(kg: 10, count: 2), PlateCount(kg: 5, count: 2), PlateCount(kg: 2.5, count: 2), PlateCount(kg: 1.25, count: 2)], kettlebells: [12, 16, 24])
     }
+    /// `-seedTimed` on launch: a workout of your own, "Row intervals" — three rounds of a 250 m row
+    /// and a 30 s plank — done twice before (a week back and two minutes back, so it tops History), with round times, rows timed and a plank
+    /// cut short once; so session detail has round splits against last time, the rower's logbook a
+    /// pace chart, and the timer metres to count and a hold to end early. Fixed ids: launching with
+    /// it again replaces them.
+    func seedTimedIfAsked(_ arguments: [String] = ProcessInfo.processInfo.arguments) {
+        guard arguments.contains("-seedTimed") else { return }
+        let rower = Library.shared.exercise("cardio_rower")?.ref ?? ExerciseRef(key: "cardio_rower", name: "Rowing machine", unit: "m", step: 100)
+        let plank = Library.shared.exercise("bw_plank")?.ref ?? ExerciseRef(key: "bw_plank", name: "Plank", unit: "s", step: 5)
+        var sheet = Runsheet(id: "seed-timed", title: "Row intervals", items: [
+            .block(Block(id: "seed-t1", name: "Row and hold", repeatCount: 3, steps: [
+                .exercise(ExerciseStep(id: "seed-row", exercise: rower, forMode: .meters, forValue: 250)),
+                .exercise(ExerciseStep(id: "seed-plank", exercise: plank, forMode: .seconds, forValue: 30)),
+                .rest(RestStep(id: "seed-tr", seconds: 20)),
+            ])),
+        ])
+        sheet.creator = "You"
+        myWorkouts = [sheet] + myWorkouts.filter { $0.key != "seed-timed" }
+        let day: TimeInterval = 86_400
+        func session(_ id: String, ago: Double, rows: [Double], holds: [Double]) -> SessionResult {
+            // Each round: the row, the hold, 20 s of rest; round times from the block's start at 10 s.
+            var t = 10.0
+            var at: [Double] = []
+            var rowSets: [SetResult] = []
+            var holdSets: [SetResult] = []
+            for (r, h) in zip(rows, holds) {
+                t += r
+                rowSets.append(SetResult(reps: nil, load: nil, at: t, seconds: r, meters: 250))
+                t += h
+                holdSets.append(SetResult(reps: nil, load: nil, at: t, seconds: h))
+                at.append(t)
+                t += 20
+            }
+            var r = SessionResult(runsheetId: "seed-timed", title: "Row intervals", startedAt: ISO8601.string(Date().addingTimeInterval(-ago * day)),
+                                  durationSec: t, completed: true,
+                                  steps: [StepResult(stepId: "seed-row", exerciseKey: "cardio_rower", sets: rowSets),
+                                          StepResult(stepId: "seed-plank", exerciseKey: "bw_plank", sets: holdSets)],
+                                  id: id)
+            r.splits = [RoundSplit(blockId: "seed-t1", at: at, from: 10)]
+            return r
+        }
+        let seed = [
+            session("seed-timed-1", ago: 8, rows: [56, 58, 61], holds: [30, 30, 22]),
+            session("seed-timed-2", ago: 2.0 / 1440, rows: [54, 55, 57], holds: [30, 30, 30]),
+        ]
+        let ids = Set(seed.compactMap(\.id))
+        results = (results.filter { !ids.contains($0.rowId) } + seed).sorted { $0.startedAt > $1.startedAt }
+    }
 }
 #endif

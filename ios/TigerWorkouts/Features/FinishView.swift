@@ -36,6 +36,8 @@ struct FinishView: View {
             .max { $0.startedAt < $1.startedAt }?.notes
     }
 
+    private func blockName(_ id: String) -> String? { runsheet.items.compactMap(\.asBlock).first { $0.id == id }?.name }
+
     var body: some View {
         ScrollView {
             VStack(spacing: 16) {
@@ -46,7 +48,9 @@ struct FinishView: View {
                 }
                 .padding(.top, 24)
 
-                CelebrationCard(celebration: celebration, scoreType: runsheet.effectiveScore) { sharing = true }
+                CelebrationCard(celebration: celebration, scoreType: runsheet.effectiveScore, blockName: blockName) { sharing = true }
+
+                RoundTimesCard(result: current, last: celebration.last, blockName: blockName, records: celebration.rounds)
 
                 EffortRow(value: rpe) { value in
                     rpe = value

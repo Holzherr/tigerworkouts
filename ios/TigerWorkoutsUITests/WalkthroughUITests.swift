@@ -838,4 +838,61 @@ final class WalkthroughUITests: XCTestCase {
         snap("76 My equipment")
     }
 
+    /// Timed and distance work, from a seeded workout of your own ("Row intervals") done twice: the
+    /// round times against last time and the logged sets on the session, a set edited afterwards,
+    /// the rower's pace chart, then metres counted on the timer and a hold ended early.
+    func testTimedAndDistance() {
+        app.terminate()
+        app.launchArguments = ["-seedTimed"]
+        app.launch()
+        let discard = app.alerts.buttons["Discard"]
+        if discard.waitForExistence(timeout: 3) { discard.tap() }
+
+        tap(app.tabBars.buttons["History"])
+        XCTAssertTrue(app.navigationBars["History"].waitForExistence(timeout: 5))
+        // Newest first: the seeded session a day back is near the top, under anything this run logged.
+        let session = app.staticTexts["Row intervals"].firstMatch
+        for _ in 0..<8 where !(session.exists && session.isHittable) { app.swipeUp(velocity: .slow) }
+        tap(session)
+        let rounds = app.descendants(matching: .any)["round-times"]
+        XCTAssertTrue(rounds.waitForExistence(timeout: 5), "a circuit's session should show its round times")
+        for _ in 0..<3 where !app.buttons["edit-sets"].isHittable { app.swipeUp(velocity: .slow) }
+        snap("80 Session, round times and sets")
+
+        tap(app.buttons["edit-sets"])
+        let seconds = app.textFields["set-cardio_rower-0-seconds"]
+        XCTAssertTrue(seconds.waitForExistence(timeout: 5), "editing should offer the row's time")
+        snap("81 Editing logged sets")
+        seconds.tap()
+        seconds.press(forDuration: 1.0)
+        if app.menuItems["Select All"].waitForExistence(timeout: 2) { app.menuItems["Select All"].tap() }
+        seconds.typeText("52")
+        tap(app.buttons["edit-sets"]) // Done: the edit is saved
+        XCTAssertTrue(app.staticTexts.matching(NSPredicate(format: "label CONTAINS '250 m in 52 s'")).firstMatch.waitForExistence(timeout: 5), "the edited time should show on the set")
+        snap("82 Set edited")
+
+        tap(app.buttons.matching(NSPredicate(format: "label CONTAINS 'Rowing machine'")).firstMatch)
+        XCTAssertTrue(app.staticTexts["Fastest pace · per 500 m"].waitForExistence(timeout: 5), "a timed distance should chart its pace")
+        snap("83 Rower logbook, pace and fastest times")
+
+        tap(app.tabBars.buttons["Discover"].exists ? app.tabBars.buttons["Discover"] : app.tabBars.buttons.element(boundBy: 0))
+        open("Row intervals")
+        tap(app.buttons["Start workout"])
+        // The first block starts after the lead-in, with no gate.
+        XCTAssertTrue(app.staticTexts["amount-done"].waitForExistence(timeout: 12), "a distance should have its metres to change")
+        tap(app.buttons["More metres"])
+        snap("84 Timer, metres done")
+        tap(app.buttons["Done"])
+        let early = app.buttons["Done early"]
+        XCTAssertTrue(early.waitForExistence(timeout: 5), "a hold should end with Done early")
+        sleep(3)
+        snap("85 Hold, Done early")
+        tap(early)
+        tap(app.buttons["End session"])
+        tap(app.buttons["Finish and save"])
+        XCTAssertTrue(app.staticTexts["Workout saved"].waitForExistence(timeout: 10))
+        snap("86 Finished")
+        tap(app.buttons["Done"])
+    }
+
 }

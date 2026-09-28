@@ -144,6 +144,12 @@ struct SessionDetailView: View {
     private var session: SessionResult { store.results.first { $0.rowId == result.rowId } ?? result }
     private var runsheet: Runsheet? { store.workout(id: session.runsheetId) }
     private var scoreType: ScoreType { runsheet?.effectiveScore ?? .none }
+    /// The last time this workout was done before, for the round times.
+    private var lastTime: SessionResult? {
+        guard session.activity == nil else { return nil }
+        return store.results.filter { $0.runsheetId == session.runsheetId && $0.activity == nil && $0.startedAt < session.startedAt && $0.rowId != session.rowId }.max { $0.startedAt < $1.startedAt }
+    }
+    private func blockName(_ id: String) -> String? { runsheet?.items.compactMap(\.asBlock).first { $0.id == id }?.name }
 
     var body: some View {
         ScrollView {
@@ -155,26 +161,10 @@ struct SessionDetailView: View {
                     bodyweightKg: store.bodyweightKg
                 )
 
+                RoundTimesCard(result: session, last: lastTime, blockName: blockName, records: Rounds.prs(session, all: store.results))
+
                 if !session.steps.isEmpty {
-                    VStack(alignment: .leading, spacing: 0) {
-                        Text("Logged").font(.headline).padding(14)
-                        ForEach(session.steps) { step in
-                            Divider().padding(.leading, 14)
-                            NavigationLink { ExerciseHistoryView(exerciseKey: step.exerciseKey) } label: {
-                                HStack {
-                                    Text(Library.shared.name(step.exerciseKey)).foregroundStyle(Brand.ink)
-                                    Spacer()
-                                    Text(detail(step)).font(.footnote).foregroundStyle(Brand.muted)
-                                    Image(systemName: "chevron.right").font(.footnote.weight(.semibold)).foregroundStyle(Brand.faint)
-                                }
-                                .padding(14)
-                                .contentShape(Rectangle())
-                            }
-                            .buttonStyle(.plain)
-                        }
-                    }
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .cardSurface()
+                    LoggedSetsCard(session: session) { store.update($0) }
                 }
 
                 edits
@@ -292,18 +282,5 @@ struct SessionDetailView: View {
         let value = notes.trimmingCharacters(in: .whitespacesAndNewlines)
         guard store.results.contains(where: { $0.rowId == result.rowId }), (session.notes ?? "") != value else { return }
         change { $0.notes = value.isEmpty ? nil : value }
-    }
-
-    private func detail(_ s: StepResult) -> String {
-        var parts: [String] = []
-        if let t = s.target {
-            let unit = Library.shared.exercise(s.exerciseKey)?.unit ?? ""
-            parts.append(unit.isEmpty ? Format.number(t) : "\(Format.number(t)) \(unit.replacingOccurrences(of: " per arm", with: ""))")
-        }
-        if let i = s.incline { parts.append("\(Format.number(i))% incline") }
-        if let reps = s.reps, !reps.isEmpty {
-            parts.append(reps.count > 1 ? "\(reps.count) sets" : "\(Format.number(reps[0])) reps")
-        }
-        return parts.joined(separator: " · ")
     }
 }

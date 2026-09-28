@@ -413,6 +413,10 @@ final class SessionRunner {
         var type: SetType = .normal
         var load: Double?
         var reps: Double
+        /// Metres or calories on a distance or calorie set; nil for other work.
+        var amount: Double? = nil
+        /// Seconds the set ran, once done; nil before and for work whose time says nothing.
+        var seconds: Double? = nil
         var done: Bool
         /// The set being done now, or the next one while the rest between sets runs.
         var current: Bool
@@ -440,6 +444,8 @@ final class SessionRunner {
                 type: types[n],
                 load: Runner.effectiveTarget(state, idx),
                 reps: a?.reps ?? sl.exercise?.forValue ?? 0,
+                amount: Runner.amountAt(state, sl),
+                seconds: done ? a?.seconds : nil,
                 done: done,
                 current: idx == on,
                 tickable: done || idx < state.i || running
@@ -474,6 +480,31 @@ final class SessionRunner {
     func nudgeSetReps(_ slotId: String, _ direction: Double) {
         guard let row = setRows.first(where: { $0.slotId == slotId }) else { return }
         apply { s, _ in Runner.setRepsAt(s, slotId: slotId, reps: max(0, row.reps + direction)) }
+        Haptics.shared.play(.tick)
+    }
+
+    func nudgeSetAmount(_ slotId: String, _ direction: Double) {
+        guard let row = setRows.first(where: { $0.slotId == slotId }), let sl = state.slots.first(where: { $0.id == slotId }) else { return }
+        apply { s, _ in Runner.setAmountAt(s, slotId: slotId, value: max(0, (row.amount ?? 0) + direction * Self.amountStep(sl))) }
+        Haptics.shared.play(.tick)
+    }
+
+    /// Timed work on the running slot: Done ends it early and logs the time it ran.
+    var timedWork: Bool { slot.map(Runner.timesWork) == true && slot?.seconds != nil }
+
+    /// Metres or calories on the running slot: which, and how many so far.
+    var amountField: Runner.Amount? { Runner.amountField(slot) }
+    var amount: Double? { slot.flatMap { Runner.amountAt(state, $0) } }
+
+    /// 10 m on a distance, the machine's own step (100 m on a rower) on a timed piece, 1 calorie.
+    nonisolated static func amountStep(_ sl: Slot) -> Double {
+        guard Runner.amountField(sl) == .meters, let e = sl.exercise else { return 1 }
+        return e.forMode == .meters ? 10 : max(10, e.exercise.step)
+    }
+
+    func nudgeAmount(_ direction: Double) {
+        guard let slot, amountField != nil else { return }
+        apply { s, _ in Runner.setAmount(s, value: max(0, (Runner.amountAt(s, slot) ?? 0) + direction * Self.amountStep(slot))) }
         Haptics.shared.play(.tick)
     }
 

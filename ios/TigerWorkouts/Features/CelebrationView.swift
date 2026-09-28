@@ -6,6 +6,8 @@ import SwiftUI
 struct CelebrationCard: View {
     let celebration: Celebrate.Celebration
     let scoreType: ScoreType
+    /// A block's name, for a fastest-round record.
+    var blockName: (String) -> String? = { _ in nil }
     var onShare: (() -> Void)?
 
     var body: some View {
@@ -35,15 +37,27 @@ struct CelebrationCard: View {
                 }
             }
 
-            if !celebration.prs.isEmpty {
+            let records = celebration.prs.count + celebration.rounds.count
+            if records > 0 {
                 VStack(alignment: .leading, spacing: 8) {
-                    heading(celebration.prs.count == 1 ? "New record" : "\(celebration.prs.count) new records")
+                    heading(records == 1 ? "New record" : "\(records) new records")
                     ForEach(celebration.prs, id: \.exerciseKey) { pr in
                         HStack(spacing: 8) {
                             Image(systemName: "medal.fill").foregroundStyle(Brand.coral)
                             Text(Library.shared.name(pr.exerciseKey)).fontWeight(.semibold).lineLimit(1)
                             Spacer()
                             Text(Logbook.label(pr.set, unit: ShareCard.unit(pr.exerciseKey))).fontWeight(.heavy).monospacedDigit()
+                        }
+                        .font(.subheadline)
+                        .foregroundStyle(Brand.ink)
+                    }
+                    ForEach(celebration.rounds, id: \.blockId) { r in
+                        HStack(spacing: 8) {
+                            Image(systemName: "medal.fill").foregroundStyle(Brand.coral)
+                            Text("Fastest round" + (blockName(r.blockId).map { " · \($0)" } ?? "")).fontWeight(.semibold).lineLimit(1)
+                            Spacer()
+                            Text(Logbook.duration(r.seconds)).fontWeight(.heavy).monospacedDigit()
+                            Text("was \(Logbook.duration(r.was))").font(.caption.weight(.semibold)).foregroundStyle(Brand.muted).monospacedDigit()
                         }
                         .font(.subheadline)
                         .foregroundStyle(Brand.ink)

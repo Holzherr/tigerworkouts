@@ -387,7 +387,7 @@ export const TimerScreen = ({ runsheet, state, now, onDone, onSkip, onBack, onPa
                       {amountField && onSetAmount && (
                         <div className="flex items-center justify-between gap-3">
                           <span className="text-[14px]">{amountField === 'meters' ? 'Metres done' : 'Calories done'}</span>
-                          <Stepper aria-label={amountField === 'meters' ? 'Metres' : 'Calories'} value={amount ?? 0} min={0} max={99999} step={amountField === 'meters' ? 10 : 1} onChange={onSetAmount} />
+                          <Stepper aria-label={amountField === 'meters' ? 'Metres' : 'Calories'} value={amount ?? 0} min={0} max={99999} step={amountField === 'meters' ? (stepOf.forMode === 'meters' ? 10 : Math.max(10, stepOf.exercise.step)) : 1} onChange={onSetAmount} />
                         </div>
                       )}
                       {state.actuals[slot.id]?.changes.length ? <div className="text-[11px] text-muted">Changed: {state.actuals[slot.id].changes.map(c => `${fmtNum(c.target)} at ${c.atSec}s`).join(', ')}</div> : null}

@@ -32,6 +32,7 @@
 		40BF83C08F66E566C53B4D29 /* Celebrate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5AB9A9747889F2ECFD2B33EF /* Celebrate.swift */; };
 		46FA540A333C9B330185E064 /* SignInView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5ED4A3BC17499CADDE7EF681 /* SignInView.swift */; };
 		47002CAAEF9F51CFC1209BE5 /* ShareCardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5119F04B55C23A34A8AD9AC5 /* ShareCardView.swift */; };
+		4755AEB014AA04998E7A14D2 /* RoundsViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD7FDA4D739693E3EB3F2EB7 /* RoundsViews.swift */; };
 		481FF8F0A58CF7ADF422A7DF /* TigerWorkoutsWidgetsBundle.swift in Sources */ = {isa = PBXBuildFile; fileRef = EB44DFADFF676E278E9CE784 /* TigerWorkoutsWidgetsBundle.swift */; };
 		48AFBCEA8CAB27B84E410E67 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 4F1D59738246E472AB5AD52D /* Assets.xcassets */; };
 		49FDE84F31572A299D3273E2 /* LockScreenControlsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 24B7E58E065ED599B1C47620 /* LockScreenControlsTests.swift */; };
@@ -230,6 +231,7 @@
 		BEBB7BC4CAC7E345AFA74D2B /* WorkoutDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkoutDetailView.swift; sourceTree = "<group>"; };
 		C1CA40FB23F26CFD0D7CB467 /* WalkthroughUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WalkthroughUITests.swift; sourceTree = "<group>"; };
 		CA6F9BD8E2DD41D78F5CFF71 /* CelebrationView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CelebrationView.swift; sourceTree = "<group>"; };
+		CD7FDA4D739693E3EB3F2EB7 /* RoundsViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RoundsViews.swift; sourceTree = "<group>"; };
 		D003D2F2D1E93454087D5B01 /* TigerWorkoutsUITests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = TigerWorkoutsUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		D36AE791E64CAB95929EDB34 /* ResultsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ResultsTests.swift; sourceTree = "<group>"; };
 		D91D1FE772E16CBEC2B027B2 /* UpNextWidget.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UpNextWidget.swift; sourceTree = "<group>"; };
@@ -459,6 +461,7 @@
 				02F2F8BAA6A884612CCFB81F /* Media.swift */,
 				39DFAF6D4A3365D7D78C8D6C /* MeView.swift */,
 				B6DDB5FD999432C0F322C44C /* PlatesView.swift */,
+				CD7FDA4D739693E3EB3F2EB7 /* RoundsViews.swift */,
 				59021F0253F067958A657DD2 /* RunsheetEditor.swift */,
 				0AEA755E81BBCA7F928A9CE4 /* SessionStatsView.swift */,
 				1E38F7FA144B053254278A46 /* SetGrid.swift */,
@@ -705,6 +708,7 @@
 				D5BA040410153B5B58D233D4 /* PlatesView.swift in Sources */,
 				62145373B9595B72AECF4A68 /* RootView.swift in Sources */,
 				EE8875B0E48F5CC48E920658 /* Rounds.swift in Sources */,
+				4755AEB014AA04998E7A14D2 /* RoundsViews.swift in Sources */,
 				B01FA0C771DEBBD6B2393CF8 /* Runner.swift in Sources */,
 				50E8634E2A5C17D76A16EFE7 /* Runsheet.swift in Sources */,
 				F534AA1708D8ACB0E6708889 /* RunsheetEditor.swift in Sources */,

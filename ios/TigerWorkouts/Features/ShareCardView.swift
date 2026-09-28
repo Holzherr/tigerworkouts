@@ -43,6 +43,7 @@ struct ShareCard: Hashable {
         ordinal = Celebrate.ordinalLabel(c.ordinal)
         stats = Self.stats(r, c, type: type)
         prs = c.prs.map { Line(label: Library.shared.name($0.exerciseKey), text: Logbook.label($0.set, unit: Self.unit($0.exerciseKey))) }
+            + c.rounds.map { Line(label: "Fastest round", text: Logbook.duration($0.seconds)) }
         deltas = Celebrate.deltaLines(c, type: type).map { Line(label: $0.label, text: $0.text) }
         streak = Celebrate.streakLabel(c.streak)
     }

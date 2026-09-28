@@ -380,7 +380,7 @@ struct TimerView: View {
                 }
             }
 
-            if adjustable, ex.hasSetting {
+            if adjustable, ex.hasSetting, Measure.of(ex.exercise.unit) == nil {
                 Divider()
                 HStack(spacing: 10) {
                     VStack(alignment: .leading, spacing: 1) {
@@ -405,6 +405,23 @@ struct TimerView: View {
                     nudge("plus", label: "More") { runner.nudgeTarget(1) }
                 }
                 .disabled(runner.slot?.exercise?.id != ex.id)
+            }
+
+            // Metres rowed or calories on the counter, when not what the plan said.
+            if adjustable, runner.slot?.exercise?.id == ex.id, let field = runner.amountField {
+                Divider()
+                HStack(spacing: 10) {
+                    Text(field == .meters ? "Metres done" : "Calories done").font(.subheadline.weight(.semibold)).foregroundStyle(Brand.body)
+                    Spacer()
+                    nudge("minus", label: field == .meters ? "Fewer metres" : "Fewer calories") { runner.nudgeAmount(-1) }
+                    Text(runner.amount.map(Format.number) ?? "—")
+                        .font(.system(size: 26, weight: .bold, design: .rounded))
+                        .monospacedDigit()
+                        .foregroundStyle(Brand.ink)
+                        .frame(minWidth: 64)
+                        .accessibilityIdentifier("amount-done")
+                    nudge("plus", label: field == .meters ? "More metres" : "More calories") { runner.nudgeAmount(1) }
+                }
             }
 
             // What you did, not what the plan said: without this every rep in History was the
@@ -490,7 +507,7 @@ struct TimerView: View {
                     runner.cycleSetType(row.slotId)
                 }
                 .frame(width: 30, alignment: .leading)
-                if ex.hasSetLoad {
+                if ex.hasSetLoad, Measure.of(ex.exercise.unit) == nil {
                     Group {
                         if editable {
                             MiniStepper(value: row.load ?? 0, label: "Set \(row.number) load", onTint: row.current) { runner.nudgeSetLoad(row.slotId, $0) }
@@ -504,11 +521,17 @@ struct TimerView: View {
                     .frame(maxWidth: .infinity)
                 }
                 if let count = ex.countLabel {
+                    // A distance or calorie set counts its metres or calories; a timed one shows the
+                    // time it ran once done, and its plan before.
+                    let clocked = ex.forMode == .seconds || ex.forMode == .minutes
+                    let shown = row.amount ?? (clocked ? row.seconds.map { ex.forMode == .minutes ? $0 / 60 : $0 } ?? row.reps : row.reps)
                     Group {
-                        if editable {
-                            MiniStepper(value: row.reps, label: "Set \(row.number) \(count.lowercased())", onTint: row.current) { runner.nudgeSetReps(row.slotId, $0) }
+                        if editable, !clocked {
+                            MiniStepper(value: shown, label: "Set \(row.number) \(count.lowercased())", onTint: row.current) {
+                                if row.amount != nil { runner.nudgeSetAmount(row.slotId, $0) } else { runner.nudgeSetReps(row.slotId, $0) }
+                            }
                         } else {
-                            Text(Format.number(row.reps)).font(.system(size: 18, weight: .bold, design: .rounded))
+                            Text(Format.number((shown * 10).rounded() / 10)).font(.system(size: 18, weight: .bold, design: .rounded))
                         }
                     }
                     .frame(maxWidth: .infinity)
@@ -695,7 +718,8 @@ struct TimerView: View {
                     }
                     .buttonStyle(NightButtonStyle())
                 }
-                Button("Done") { runner.done() }
+                // On a countdown, Done ends it early and logs the time it ran.
+                Button(runner.timedWork ? "Done early" : "Done") { runner.done() }
                     .buttonStyle(BigButtonStyle(tint: accent))
             }
         }
