@@ -371,7 +371,7 @@ export default function App() {
     // a clean session, the deload after repeated misses), then % of a training max and × bodyweight
     // worked out, so the timer shows and logs a weight for every loaded set.
     const run = resolveLoads(progressed(withLastUsed(resolveRefs(r, lookup), st.results), st.results, st.trainingMaxes, st.equipment), st.trainingMaxes, st.bodyweightKg, st.equipment);
-    return <RunRoute key={route.id} runsheet={run} results={st.results} intent={intent} equipment={st.equipment} resume={resumeFor === route.id} onLog={res => act.addResult({ ...res, runsheetId: wid(r) })} onFinish={res => (setResumeFor(null), setPending({ ...res, runsheetId: wid(r) }), go(`/result/${encodeURIComponent(route.id)}`))} onExit={() => (setResumeFor(null), Runner.clearPersisted(), go(`/w/${encodeURIComponent(route.id)}`))} />;
+    return <RunRoute key={route.id} runsheet={run} results={st.results} intent={intent} equipment={st.equipment} library={library} resume={resumeFor === route.id} onLog={res => act.addResult({ ...res, runsheetId: wid(r) })} onFinish={res => (setResumeFor(null), setPending({ ...res, runsheetId: wid(r) }), go(`/result/${encodeURIComponent(route.id)}`))} onExit={() => (setResumeFor(null), Runner.clearPersisted(), go(`/w/${encodeURIComponent(route.id)}`))} />;
   }
   if (route.name === 'session') {
     const res = st.results.find(x => x.id === route.id);
@@ -611,7 +611,7 @@ export default function App() {
  * result sheet is saved. Until then it lived only in memory: the persisted run was cleared at done,
  * so a reload or a closed tab on the result sheet lost it. The sheet then edits the logged row.
  */
-type RunRouteProps = { runsheet: Runsheet; results: SessionResult[]; intent: Intent; equipment?: Equipment; onLog: (r: SessionResult) => void; onFinish: (r: SessionResult) => void; onExit: () => void };
+type RunRouteProps = { runsheet: Runsheet; results: SessionResult[]; intent: Intent; equipment?: Equipment; library: Record<string, LibraryExercise>; onLog: (r: SessionResult) => void; onFinish: (r: SessionResult) => void; onExit: () => void };
 
 /**
  * A run of this workout kept on the device (a reload, a closed tab) is asked about, not picked up
@@ -654,7 +654,7 @@ const RunRoute = ({ resume, ...props }: RunRouteProps & { resume?: boolean }) =>
   );
 };
 
-const RunSession = ({ runsheet, results, intent, equipment, onLog, onFinish, onExit, from }: RunRouteProps & { from?: Runner.RunState }) => {
+const RunSession = ({ runsheet, results, intent, equipment, library, onLog, onFinish, onExit, from }: RunRouteProps & { from?: Runner.RunState }) => {
   // Open reps (a range, a max) start on what was done last time, set for set.
   const { state, now, act } = useRunner(runsheet, { from, seed: s => Runner.prefillReps(s, (step, round) => lastSets(results, step)?.[round]?.reps) });
   // The last session of this workout with times kept, raced on the header. Fixed for the session.
@@ -704,7 +704,7 @@ const RunSession = ({ runsheet, results, intent, equipment, onLog, onFinish, onE
   return (
     <div className="relative h-dvh">
       {undo.toast}
-      <TimerScreen runsheet={runsheet} state={state} now={now} onDone={act.done} onSkip={skip} onBack={act.back} onPause={act.pause} onResume={act.resume} onAdjust={act.adjust} onAdjustIncline={act.adjustIncline} onSetReps={act.setReps} onSetAmount={act.setAmount} onDrop={drop} onStartBlock={act.startBlock} onAdjustStep={act.adjustStep} sets={{ adjust: act.adjustAt, setReps: act.setRepsAt, setAmount: act.setAmountAt, complete: act.completeSet, reopen: act.reopenSet, lastFor: (step, round) => lastSets(results, step)?.[round], fill: act.fillSet, setType: act.setTypeAt }} onAdjustRest={act.extendRest} lastFor={step => lastSet(results, step)} onFill={act.fillSet} ghost={pace?.text} goal={goal} muted={muted} onToggleMute={() => { setMuted(!muted); setMute(!muted); }} equipment={equipment} onFinish={() => { const res = log(state.phase === 'done' ? state : Runner.finish(state, Date.now())); Runner.clearPersisted(); onFinish(res); }} onExit={onExit} />
+      <TimerScreen runsheet={runsheet} state={state} now={now} onDone={act.done} onSkip={skip} onBack={act.back} onPause={act.pause} onResume={act.resume} onAdjust={act.adjust} onAdjustIncline={act.adjustIncline} onSetReps={act.setReps} onSetAmount={act.setAmount} onDrop={drop} onStartBlock={act.startBlock} onAdjustStep={act.adjustStep} sets={{ adjust: act.adjustAt, setReps: act.setRepsAt, setAmount: act.setAmountAt, complete: act.completeSet, reopen: act.reopenSet, lastFor: (step, round) => lastSets(results, step)?.[round], fill: act.fillSet, setType: act.setTypeAt }} onAdjustRest={act.extendRest} lastFor={step => lastSet(results, step)} onFill={act.fillSet} ghost={pace?.text} goal={goal} muted={muted} onToggleMute={() => { setMuted(!muted); setMute(!muted); }} equipment={equipment} alternativesFor={(step, target) => alternatives(step.exercise.key, target, library, 6, equipment)} onSwap={act.swap} onFinish={() => { const res = log(state.phase === 'done' ? state : Runner.finish(state, Date.now())); Runner.clearPersisted(); onFinish(res); }} onExit={onExit} />
     </div>
   );
 };

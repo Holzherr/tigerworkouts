@@ -1,11 +1,11 @@
-import { Check, ChevronLeft, ChevronRight, List, MoreHorizontal, Pause, Play, SkipForward, Square, Volume2, VolumeX } from 'lucide-react';
+import { Check, ChevronLeft, ChevronRight, List, MoreHorizontal, Pause, Play, Shuffle, SkipForward, Square, Volume2, VolumeX } from 'lucide-react';
 import { useState } from 'react';
 import { Button } from '@/shared/components/ui/button';
 import { ClipThumb } from '@/shared/components/ui/clip-thumb';
 import { Sheet } from '@/shared/components/ui/sheet';
 import { Stepper } from '@/shared/components/ui/stepper';
 import { cn, fmtClock, fmtNum, plural } from '@/shared/utils/ui-utils';
-import { countLabel, forLabel, measureOf, nextSetType, setMarks, shortUnit, showsLoad, straightSetStep, type Block, type ExerciseStep, type Item, type Runsheet, type SetType } from '@/features/runsheet/model';
+import { countLabel, forLabel, measureOf, nextSetType, setMarks, shortUnit, showsLoad, straightSetStep, type Block, type ExerciseRef, type ExerciseStep, type Item, type Runsheet, type SetType } from '@/features/runsheet/model';
 import { kitOf, type Equipment } from '@/features/runsheet/plates';
 import { PlatesButton } from '@/features/runsheet/components/plate-sheet';
 import { SetMark } from '@/features/runsheet/components/set-grid';
@@ -14,6 +14,7 @@ import type { SetResult } from '@/features/runsheet/progression';
 import { SwipeToRemove } from '@/features/runsheet/components/swipe-to-remove';
 import { ExerciseSheet } from '@/features/runsheet/components/exercise-sheet';
 import * as R from '../runner';
+import type { Alternative } from '@/features/exercises/alternatives';
 
 export interface TimerScreenProps {
   runsheet: Runsheet;
@@ -51,6 +52,10 @@ export interface TimerScreenProps {
   equipment?: Equipment;
   onFinish: () => void;
   onExit: () => void;
+  /** What else trains the same movement, for Swap exercise; its load converted to the new kit. */
+  alternativesFor?: (step: ExerciseStep, target?: number) => Alternative[];
+  /** Swap a step's exercise from here to the end of the session (the machine is taken). */
+  onSwap?: (stepId: string, to: ExerciseRef, target?: number) => void;
 }
 
 export interface SetActions {
@@ -193,12 +198,13 @@ const stepLine = (s: ExerciseStep) => [forLabel(s), s.target !== undefined ? `${
  * a ⋯ menu (previous, overview, stop), Pause and Skip/Done at equal size. Tap the Next row to see
  * what the coming block asks for; the overview sheet lists every part with progress.
  */
-export const TimerScreen = ({ runsheet, state, now, onDone, onSkip, onBack, onPause, onResume, onAdjust, onAdjustIncline, onSetReps, onSetAmount, onDrop, onStartBlock, onAdjustStep, sets, onAdjustRest, lastFor, onFill, ghost, goal, muted, onToggleMute, equipment, onFinish, onExit }: TimerScreenProps) => {
+export const TimerScreen = ({ runsheet, state, now, onDone, onSkip, onBack, onPause, onResume, onAdjust, onAdjustIncline, onSetReps, onSetAmount, onDrop, onStartBlock, onAdjustStep, sets, onAdjustRest, lastFor, onFill, ghost, goal, muted, onToggleMute, equipment, onFinish, onExit, alternativesFor, onSwap }: TimerScreenProps) => {
   const [confirmExit, setConfirmExit] = useState(false);
   const [menu, setMenu] = useState(false);
   const [overview, setOverview] = useState(false);
   const [peek, setPeek] = useState<number | null>(null);
   const [look, setLook] = useState<ExerciseStep | null>(null);
+  const [swapping, setSwapping] = useState(false);
   const slot = R.current(state);
   const nxt = R.next(state);
   const clock = R.clock(state, now);
@@ -234,6 +240,10 @@ export const TimerScreen = ({ runsheet, state, now, onDone, onSkip, onBack, onPa
   const part = slot ? partOf(slot.part) : undefined;
   const straight = sets && part?.kind === 'block' && slot?.blockId ? straightSetStep(part) : undefined;
 
+  // The exercise Swap acts on: the one on the card, else the straight-set block's during its rest.
+  const swapStep = stepOf?.kind === 'exercise' ? stepOf : straight;
+  const swapTarget = swapStep ? (stepOf?.kind === 'exercise' ? target : R.plannedTarget(state, swapStep.id)) : undefined;
+  const options = swapStep && onSwap && alternativesFor && !done ? alternativesFor(swapStep, swapTarget) : [];
   const restAdjustable = !!onAdjustRest && isRest && timed && !slot?.untilBoundary && (state.phase === 'running' || paused);
   const last = slot && stepOf?.kind === 'exercise' && !done && !lead ? lastFor?.(stepOf) : undefined;
   const lastLabel = last && stepOf?.kind === 'exercise' ? lastTimeLabel(last, stepOf) : undefined;
@@ -480,12 +490,41 @@ export const TimerScreen = ({ runsheet, state, now, onDone, onSkip, onBack, onPa
               <SkipForward /> Skip this step
             </Button>
           )}
+          {options.length > 0 && (
+            <Button block variant="ghost" onClick={() => (setMenu(false), setSwapping(true))}>
+              <Shuffle /> Swap exercise
+            </Button>
+          )}
           <Button block variant="ghost" onClick={() => (setMenu(false), setOverview(true))}>
             <List /> Workout overview
           </Button>
           <Button block variant="danger" onClick={() => (setMenu(false), setConfirmExit(true))}>
             <Square /> End workout
           </Button>
+        </div>
+      </Sheet>
+
+      <Sheet open={swapping} onOpenChange={setSwapping} title={swapStep ? `Instead of ${swapStep.exercise.name}` : 'Swap exercise'}>
+        <div className="space-y-1.5">
+          {options.map(o => (
+            <button
+              key={o.exercise.key}
+              type="button"
+              onClick={() => {
+                setSwapping(false);
+                if (swapStep) onSwap?.(swapStep.id, o.exercise, o.target);
+              }}
+              className="flex min-h-14 w-full items-center gap-2.5 rounded-card border border-line bg-surface px-3 py-2 text-left active:bg-line-soft"
+            >
+              <ClipThumb size="sm" clip={o.exercise.clip} poster={o.exercise.poster} icon={o.exercise.icon} />
+              <div className="min-w-0 flex-1">
+                <div className="truncate text-[14px] font-semibold">{o.exercise.name}</div>
+                <div className="text-[12px] text-muted">{[o.why, o.target !== undefined ? `${fmtNum(o.target)} ${shortUnit(o.exercise.unit)}`.trim() : ''].filter(Boolean).join(' · ')}</div>
+              </div>
+              <ChevronRight className="size-4 shrink-0 text-faint" />
+            </button>
+          ))}
+          <p className="px-1 pt-1 text-[12px] text-muted">Swapping keeps the rounds you have already done.</p>
         </div>
       </Sheet>
 
