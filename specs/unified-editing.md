@@ -111,8 +111,10 @@ Two M items, in this order:
   name and creator, duplicate, open the original, delete. A catalogue workout's first edit makes a
   silent copy. Mid-session, done and running blocks are greyed and fixed; the rest edit and drag
   through `SessionRunner.edit`.
-- Not yet: the web editor (variant B only, blocks and rounds on the workout page), one copy per
-  original, keeping copies out of Discover.
+- Web: variant B is the only drag style (`runsheet-list.tsx`, 2026-09-27): the coral insertion
+  line follows the finger; Classic, A, C and the `tiger:dnd` setting are gone.
+- Not yet: the web editor (blocks and rounds on the workout page), one copy per original, keeping
+  copies out of Discover.
 
 ## Out
 
