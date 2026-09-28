@@ -28,14 +28,19 @@ struct LibraryExercise: Codable, Hashable, Sendable, Identifiable {
         self.cue = cue
     }
 
-    /// One you made, the way the web picker makes it: a `u_` key from the name, and a step that
-    /// suits the unit (half a kph, 2.5 kg, one rep).
-    static func custom(name: String, unit: String, group: ExerciseGroup) -> LibraryExercise {
+    /// One you made, the way the web picker makes it (`customKey` in csv.ts): a `u_<name>_<tag>`
+    /// key, the tag the start of your account id so two people adding "Sled push" never write to
+    /// one row (exercise keys are global in Supabase), a random tag before sign-in; and a step that
+    /// suits the unit (half a kph, 2.5 kg, one rep). Keys made before 28 Sep 2026 have no tag and
+    /// still read.
+    static func custom(name: String, unit: String, group: ExerciseGroup, owner: String? = nil) -> LibraryExercise {
         let trimmed = name.trimmingCharacters(in: .whitespacesAndNewlines)
         let slug = trimmed.lowercased()
             .replacingOccurrences(of: "[^a-z0-9]+", with: "_", options: .regularExpression)
             .trimmingCharacters(in: CharacterSet(charactersIn: "_"))
-        return LibraryExercise(key: "u_\(slug)", name: trimmed, unit: unit, step: defaultStep(unit: unit), group: group)
+        let source = owner ?? UUID().uuidString
+        let tag = String(source.lowercased().filter { $0.isLetter || $0.isNumber }.prefix(8))
+        return LibraryExercise(key: "u_\(slug)_\(tag)", name: trimmed, unit: unit, step: defaultStep(unit: unit), group: group)
     }
 
     static func defaultStep(unit: String) -> Double { unit == "kph" ? 0.5 : unit.isEmpty ? 1 : 2.5 }

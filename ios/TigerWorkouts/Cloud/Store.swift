@@ -108,11 +108,15 @@ final class Store {
         syncing = true
         syncError = nil
         defer { syncing = false }
+        // Each queue goes up on its own, and a failure in one never stops the pull: what did not go
+        // up stays queued and is laid over the server's copy below. An exercise key another account
+        // holds once stopped this phone pulling for good.
+        var failure: Error?
+        do { try await flushPending() } catch { failure = failure ?? error }
+        do { try await flushDeletes() } catch { failure = failure ?? error }
+        do { try await flushWorkouts() } catch { failure = failure ?? error }
+        do { try await flushExercises() } catch { failure = failure ?? error }
         do {
-            try await flushPending()
-            try await flushDeletes()
-            try await flushWorkouts()
-            try await flushExercises()
             // Union, as the web does: an exercise made on either side appears on both.
             mergeCustom(try await Supabase.shared.exercises())
             async let sessions = Supabase.shared.sessions()
@@ -132,6 +136,7 @@ final class Store {
             await effortsLearned(before: before)
             user = await Supabase.shared.user
             writeCache()
+            syncError = failure?.localizedDescription
         } catch {
             syncError = error.localizedDescription
         }
@@ -465,10 +470,26 @@ final class Store {
         Library.shared.addCustom(list)
     }
 
+    /// One row at a time, so an exercise the server refuses stays queued without holding up the rest.
     private func flushExercises() async throws {
         guard await Supabase.shared.isSignedIn, !pendingExercises.isEmpty else { return }
-        try await Supabase.shared.saveExercises(pendingExercises)
-        pendingExercises = []
+        let sending = pendingExercises
+        let out = await Self.eachRow(sending) { try await Supabase.shared.saveExercises([$0]) }
+        pendingExercises.removeAll { e in sending.contains(e) && !out.failed.contains(e) }
+        if let error = out.error { throw error }
+    }
+
+    /// Send each item on its own; the ones that failed and the first error.
+    nonisolated static func eachRow<T>(_ items: [T], send: (T) async throws -> Void) async -> (failed: [T], error: Error?) {
+        var failed: [T] = []
+        var first: Error?
+        for x in items {
+            do { try await send(x) } catch {
+                failed.append(x)
+                first = first ?? error
+            }
+        }
+        return (failed, first)
     }
 
     // MARK: - Your own workouts

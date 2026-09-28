@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { SessionResult } from '@/features/runsheet/progression';
-import { fromRow, toRow } from './sync';
+import { eachRow, fromRow, toRow } from './sync';
 
 describe('session rows', () => {
   it('round-trips startedFrom through the v2 jsonb payload', () => {
@@ -20,5 +20,18 @@ describe('session rows', () => {
   it('reads a row written before the field existed', () => {
     const row = toRow({ id: 's-z', runsheetId: 'cf-girls-fran', startedAt: '2026-09-01T10:00:00.000Z', steps: [] }, 'u');
     expect(fromRow({ id: row.id, data: row.data }).startedFrom).toBeUndefined();
+  });
+});
+
+describe('pushing your own exercises', () => {
+  it('sends each on its own, so one the server refuses does not stop the rest', async () => {
+    const sent: string[] = [];
+    const errors = await eachRow(['u_a', 'u_sled_push', 'u_c'], async key => {
+      if (key === 'u_sled_push') return { error: { message: 'new row violates row-level security policy' } };
+      sent.push(key);
+      return { error: null };
+    });
+    expect(sent).toEqual(['u_a', 'u_c']);
+    expect(errors).toEqual(['new row violates row-level security policy']);
   });
 });

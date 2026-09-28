@@ -318,11 +318,18 @@ export const guessGroup = (name: string): ExerciseGroup => GROUP_WORDS.find(([re
 
 const slug = (name: string) => name.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, '');
 
+/**
+ * The key of an exercise you made: `u_<name>_<tag>`, the tag the start of your account id, so two
+ * people adding "Sled push" never write to one row (exercise keys are global in Supabase). Before
+ * sign-in a random tag stands in. Keys made before 28 Sep 2026 have no tag and still read.
+ */
+export const customKey = (name: string, owner?: string) => `u_${slug(name)}_${owner ? owner.replace(/[^0-9a-z]/gi, '').slice(0, 8).toLowerCase() : Math.random().toString(36).slice(2, 10).padEnd(8, '0')}`;
+
 /** A new exercise as the picker makes one: `u_` key, unit and step, group from the name. */
-export const customExercise = (name: string, opts: { unit?: string; loaded?: boolean; timed?: boolean; distance?: boolean; key?: string } = {}): LibraryExercise => {
+export const customExercise = (name: string, opts: { unit?: string; loaded?: boolean; timed?: boolean; distance?: boolean; key?: string; owner?: string } = {}): LibraryExercise => {
   const g = guessGroup(name);
   const unit = opts.unit ?? (opts.loaded ? (g === 'dumbbell' ? 'kg per arm' : 'kg') : opts.distance ? 'm' : opts.timed ? 's' : '');
-  return { key: opts.key ?? `u_${slug(name)}`, name: name.trim(), unit, step: unit === 'kph' ? 0.5 : unit ? 2.5 : 1, group: g, cue: '' };
+  return { key: opts.key ?? customKey(name, opts.owner), name: name.trim(), unit, step: unit === 'kph' ? 0.5 : unit ? 2.5 : 1, group: g, cue: '' };
 };
 
 const dayKey = (iso: string) => {
@@ -353,7 +360,7 @@ export interface ImportPlan {
 
 
 /** What importing the file would add, before anything is written. */
-export const planImport = (parsed: ParsedCsv, existing: SessionResult[], library: Record<string, LibraryExercise>): ImportPlan => {
+export const planImport = (parsed: ParsedCsv, existing: SessionResult[], library: Record<string, LibraryExercise>, owner?: string): ImportPlan => {
   const match = matcher(library);
   const seen = new Set(existing.map(r => sameSessionKey(r.startedAt, r.title ?? r.activity?.name ?? r.runsheetId)));
   const created = new Map<string, LibraryExercise>();
@@ -366,8 +373,9 @@ export const planImport = (parsed: ParsedCsv, existing: SessionResult[], library
       return hit;
     }
     const bare = (x: ImportedSet) => x.load === undefined && x.reps === undefined;
-    let ex = customExercise(e.name, { unit: e.unit, loaded: e.sets.some(x => (x.load ?? 0) > 0), distance: e.sets.some(x => x.meters !== undefined && bare(x)), timed: e.sets.some(x => x.seconds !== undefined && x.meters === undefined && bare(x)), key: e.key });
-    for (let n = 2; library[ex.key] || [...created.values()].some(c => c.key === ex.key); n++) ex = { ...ex, key: `${customExercise(e.name).key}_${n}` };
+    let ex = customExercise(e.name, { unit: e.unit, loaded: e.sets.some(x => (x.load ?? 0) > 0), distance: e.sets.some(x => x.meters !== undefined && bare(x)), timed: e.sets.some(x => x.seconds !== undefined && x.meters === undefined && bare(x)), key: e.key, owner });
+    const base = ex.key;
+    for (let n = 2; library[ex.key] || [...created.values()].some(c => c.key === ex.key); n++) ex = { ...ex, key: `${base}_${n}` };
     created.set(e.name.trim().toLowerCase(), ex);
     return ex.key;
   };

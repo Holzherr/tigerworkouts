@@ -80,7 +80,7 @@ struct ExercisePickerView: View {
                 }
             }
             .navigationDestination(isPresented: $creating) {
-                NewExerciseView(name: query.trimmingCharacters(in: .whitespaces)) { exercise in
+                NewExerciseView(name: query.trimmingCharacters(in: .whitespaces), owner: store.user?.id) { exercise in
                     Task { await store.addExercise(exercise) }
                     pick(exercise)
                 }
@@ -92,6 +92,8 @@ struct ExercisePickerView: View {
 /// Name, equipment group, unit and load step: what the timer, the logbook and Health need to
 /// treat it like any bundled exercise. Saved on the phone and synced like the web's.
 struct NewExerciseView: View {
+    /// The signed-in account's id, which tags the new exercise's key.
+    var owner: String?
     var onSave: (LibraryExercise) -> Void
 
     @State private var name: String
@@ -99,7 +101,8 @@ struct NewExerciseView: View {
     @State private var unit = "kg"
     @State private var step = LibraryExercise.defaultStep(unit: "kg")
 
-    init(name: String = "", onSave: @escaping (LibraryExercise) -> Void) {
+    init(name: String = "", owner: String? = nil, onSave: @escaping (LibraryExercise) -> Void) {
+        self.owner = owner
         self.onSave = onSave
         _name = State(initialValue: name)
     }
@@ -138,7 +141,7 @@ struct NewExerciseView: View {
             }
             Section {
                 Button("Add and use") {
-                    var e = LibraryExercise.custom(name: trimmed, unit: unit, group: group)
+                    var e = LibraryExercise.custom(name: trimmed, unit: unit, group: group, owner: owner)
                     e.step = unit.isEmpty ? 1 : step
                     onSave(e)
                 }

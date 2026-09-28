@@ -4,7 +4,7 @@ import { describe, expect, it } from 'vitest';
 import { FULL_LIBRARY } from '@/features/workouts/imported';
 import type { SessionResult } from '@/features/runsheet/progression';
 import type { LibraryExercise } from '@/features/exercises/library';
-import { customExercise, matcher, parseCsv, parseDate, parseDuration, parseWorkoutCsv, planImport, toCsv, type ParsedCsv } from './csv';
+import { customExercise, customKey, matcher, parseCsv, parseDate, parseDuration, parseWorkoutCsv, planImport, toCsv, type ParsedCsv } from './csv';
 
 const fixture = (name: string) => readFileSync(path.join(import.meta.dirname, 'fixtures', name), 'utf8');
 const parsed = (name: string) => {
@@ -32,6 +32,7 @@ const results: SessionResult[] = [
   },
   { id: 's-0', runsheetId: 'activity:Padel', title: 'Padel', startedAt: '2026-09-25T18:00:00.000Z', activity: { name: 'Padel', minutes: 60 }, steps: [] },
 ];
+const OWNER = '1a2b3c4d-5e6f-7a8b-9c0d-112233445566';
 const lib: Record<string, LibraryExercise> = { ...FULL_LIBRARY, u_pec_deck: customExercise('Pec deck', { loaded: true }) };
 const name = (k: string) => lib[k] ?? { name: k, unit: '' };
 
@@ -106,13 +107,13 @@ describe('Hevy import', () => {
   });
 
   it('maps names onto the catalogue and makes the rest your own', () => {
-    const plan = planImport(hevy, [], FULL_LIBRARY);
+    const plan = planImport(hevy, [], FULL_LIBRARY, OWNER);
     const [push, legs] = [plan.sessions.find(s => s.title === 'Push Day')!, plan.sessions.find(s => s.title === 'Legs')!];
-    expect(push.steps.map(s => s.exerciseKey)).toEqual(['bb_bench', 'u_pec_deck_machine', 'bw_plank']);
+    expect(push.steps.map(s => s.exerciseKey)).toEqual(['bb_bench', 'u_pec_deck_machine_1a2b3c4d', 'bw_plank']);
     expect(legs.steps[0].exerciseKey).toBe('bb_back_squat');
     // a plank's time is its time worked
     expect(push.steps[2].sets).toEqual([{ seconds: 60 }]);
-    expect(plan.newExercises).toEqual([{ key: 'u_pec_deck_machine', name: 'Pec Deck (Machine)', unit: 'kg', step: 2.5, group: 'barbell', cue: '' }]);
+    expect(plan.newExercises).toEqual([{ key: 'u_pec_deck_machine_1a2b3c4d', name: 'Pec Deck (Machine)', unit: 'kg', step: 2.5, group: 'barbell', cue: '' }]);
     expect(plan.matched).toContainEqual({ name: 'Bench Press (Barbell)', key: 'bb_bench' });
     expect(push.runsheetId).toBe('import:hevy');
     expect(push.id).toMatch(/^s-imp-/);
@@ -146,6 +147,19 @@ describe('Hevy import', () => {
   });
 });
 
+describe('your own exercise keys', () => {
+  it('carry your account, so two people adding the same name never share a row', () => {
+    expect(customKey('Sled push', OWNER)).toBe('u_sled_push_1a2b3c4d');
+    expect(customKey('Sled push', '9f8e7d6c-0000-0000-0000-000000000000')).toBe('u_sled_push_9f8e7d6c');
+    expect(customExercise('Sled push', { owner: OWNER }).key).toBe('u_sled_push_1a2b3c4d');
+  });
+  it('before sign-in, a random tag stands in', () => {
+    const a = customKey('Sled push');
+    expect(a).toMatch(/^u_sled_push_[0-9a-z]{8}$/);
+    expect(customKey('Sled push')).not.toBe(a);
+  });
+});
+
 describe('Strong import', () => {
   it('reads the current format and skips rest-timer rows', () => {
     const strong = parsed('strong.csv');
@@ -160,9 +174,9 @@ describe('Strong import', () => {
     // weight 0 is bodyweight, not a load of nothing
     expect(s.exercises[1].sets).toEqual([{ reps: 10 }]);
 
-    const plan = planImport(strong, [], FULL_LIBRARY);
-    expect(plan.sessions[0].steps.map(x => x.exerciseKey)).toEqual(['bb_bench', 'bw_pullup', 'u_landmine_press']);
-    expect(plan.newExercises[0]).toMatchObject({ key: 'u_landmine_press', unit: 'kg', group: 'body' });
+    const plan = planImport(strong, [], FULL_LIBRARY, OWNER);
+    expect(plan.sessions[0].steps.map(x => x.exerciseKey)).toEqual(['bb_bench', 'bw_pullup', 'u_landmine_press_1a2b3c4d']);
+    expect(plan.newExercises[0]).toMatchObject({ key: 'u_landmine_press_1a2b3c4d', unit: 'kg', group: 'body' });
   });
 
   it('reads a distance in the unit the file gives, km when it gives none', () => {

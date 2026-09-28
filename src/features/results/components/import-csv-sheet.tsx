@@ -59,6 +59,8 @@ export interface ImportCsvSheetProps {
   /** What is in History now, to skip what is already there. */
   results: SessionResult[];
   library: Record<string, LibraryExercise>;
+  /** The signed-in account's id, which tags the keys of exercises the import makes. */
+  owner?: string;
   onImport: (plan: ImportPlan) => void;
   /** Shows a preview straight away; for stories. */
   initialPlan?: ImportPlan;
@@ -68,7 +70,7 @@ export interface ImportCsvSheetProps {
  * Pick a Hevy or Strong CSV, see what it would add, then add it. Nothing is written until the
  * button at the bottom; sessions already in History (same day, same name) are skipped.
  */
-export const ImportCsvSheet = ({ open, onOpenChange, results, library, onImport, initialPlan }: ImportCsvSheetProps) => {
+export const ImportCsvSheet = ({ open, onOpenChange, results, library, owner, onImport, initialPlan }: ImportCsvSheetProps) => {
   const file = useRef<HTMLInputElement>(null);
   const [plan, setPlan] = useState<ImportPlan | null>(initialPlan ?? null);
   const [error, setError] = useState<string | null>(null);
@@ -77,7 +79,7 @@ export const ImportCsvSheet = ({ open, onOpenChange, results, library, onImport,
     const parsed = parseWorkoutCsv(await f.text());
     if ('error' in parsed) return (setPlan(null), setError(parsed.error));
     setError(null);
-    setPlan(planImport(parsed, results, library));
+    setPlan(planImport(parsed, results, library, owner));
   };
   return (
     <Sheet open={open} onOpenChange={o => (onOpenChange(o), o || reset())} title="Import history" height="88dvh">

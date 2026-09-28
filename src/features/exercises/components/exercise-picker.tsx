@@ -4,6 +4,7 @@ import { Button } from '@/shared/components/ui/button';
 import { ClipThumb } from '@/shared/components/ui/clip-thumb';
 import { Dropdown } from '@/shared/components/ui/dropdown';
 import { Sheet } from '@/shared/components/ui/sheet';
+import { customKey } from '@/features/results/csv';
 import { GROUP_LABEL, type ExerciseGroup, type LibraryExercise } from '../library';
 
 export interface ExercisePickerProps {
@@ -16,6 +17,8 @@ export interface ExercisePickerProps {
   /** Keys with usage counts, shown as "used in N workouts" and used for ordering. */
   usage?: Record<string, number>;
   title?: string;
+  /** The signed-in account's id, which tags the key of an exercise made here (`customKey`). */
+  owner?: string;
 }
 
 const UNITS = [
@@ -31,7 +34,7 @@ const GROUPS = (Object.keys(GROUP_LABEL) as ExerciseGroup[]).map(g => ({ value: 
  * a 36px thumb, name and unit. Typing filters; a name with no match offers "Add “X” as a new
  * exercise", which opens a small inline form (unit, group) and creates it.
  */
-export const ExercisePicker = ({ open, onOpenChange, library, onPick, onCreate, usage = {}, title = 'Pick an exercise' }: ExercisePickerProps) => {
+export const ExercisePicker = ({ open, onOpenChange, library, onPick, onCreate, owner, usage = {}, title = 'Pick an exercise' }: ExercisePickerProps) => {
   const [q, setQ] = useState('');
   const [creating, setCreating] = useState<{ name: string; unit: string; group: ExerciseGroup } | null>(null);
   const groups = useMemo(() => {
@@ -59,7 +62,7 @@ export const ExercisePicker = ({ open, onOpenChange, library, onPick, onCreate, 
           className="mt-3 space-y-2 rounded-card border border-line bg-canvas p-3"
           onSubmit={e => {
             e.preventDefault();
-            const key = `u_${creating.name.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, '')}`;
+            const key = customKey(creating.name, owner);
             const ex: LibraryExercise = { key, name: creating.name.trim(), unit: creating.unit, step: creating.unit === 'kph' ? 0.5 : creating.unit ? 2.5 : 1, group: creating.group, cue: '' };
             onCreate?.(ex);
             setCreating(null);

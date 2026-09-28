@@ -48,7 +48,7 @@ import { TabBar } from '@/shared/components/ui/tab-bar';
 import { WorkoutIcon } from '@/shared/components/ui/workout-icon';
 import { defaultIcon } from '@/features/workouts/icon';
 import { useActions, useAppState } from './app/store';
-import { providers, sendCode, signInGoogle, signOut, verifyCode } from '@/features/cloud/client';
+import { currentUser, providers, sendCode, signInGoogle, signOut, verifyCode } from '@/features/cloud/client';
 import { getDefaultRest, getMuted, getVolume, setDefaultRest, setMuted, setVolume } from '@/features/timer/use-runner';
 import { ghost as paceGhost, lastTimed } from '@/features/timer/pace';
 import { deleteAccount, deviceFor, fetchCreator, fetchPublicWorkouts, type CreatorProfile } from '@/features/cloud/sync';
@@ -136,7 +136,7 @@ export default function App() {
     return u;
   }, [all]);
   const pick = useCallback((): Promise<ExerciseStep | null> => new Promise(res => { pickResolve.current = e => res(e ? makeExercise(e) : null); setPickerOpen(true); }), []);
-  const picker = <ExercisePicker open={pickerOpen} onOpenChange={o => { setPickerOpen(o); if (!o) { pickResolve.current?.(null); pickResolve.current = null; } }} library={library} usage={usage} onPick={e => { pickResolve.current?.(e); pickResolve.current = null; }} onCreate={act.addExercise} />;
+  const picker = <ExercisePicker open={pickerOpen} onOpenChange={o => { setPickerOpen(o); if (!o) { pickResolve.current?.(null); pickResolve.current = null; } }} library={library} usage={usage} onPick={e => { pickResolve.current?.(e); pickResolve.current = null; }} onCreate={act.addExercise} owner={currentUser()?.id} />;
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [importOpen, setImportOpen] = useState(false);
   const [volume, setVol] = useState(getVolume);
@@ -523,7 +523,7 @@ export default function App() {
             return done.account ? 'Account deleted.' : 'Your data is deleted from the server and you are signed out. The sign-in itself could not be removed yet.';
           } : undefined} />
         {tmSheet()}
-        <ImportCsvSheet open={importOpen} onOpenChange={setImportOpen} results={st.results} library={library} onImport={p => (act.importSessions(p.sessions, p.newExercises), say(`${p.sessions.length} ${p.sessions.length === 1 ? 'session' : 'sessions'} added to History`))} />
+        <ImportCsvSheet open={importOpen} onOpenChange={setImportOpen} results={st.results} library={library} owner={currentUser()?.id} onImport={p => (act.importSessions(p.sessions, p.newExercises), say(`${p.sessions.length} ${p.sessions.length === 1 ? 'session' : 'sessions'} added to History`))} />
       </>
     );
   }

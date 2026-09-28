@@ -110,6 +110,17 @@ export interface SyncResult {
   changed: boolean;
 }
 
+/** Send rows one at a time and collect what failed, so a row the server refuses (an exercise key
+ * another account holds) does not stop the rest. */
+export const eachRow = async <T>(items: T[], send: (x: T) => PromiseLike<{ error: { message: string } | null }>): Promise<string[]> => {
+  const errors: string[] = [];
+  for (const x of items) {
+    const { error } = await send(x);
+    if (error) errors.push(error.message);
+  }
+  return errors;
+};
+
 /** Pull then push. Returns what changed locally so the store can apply it. */
 export const sync = async (local: SyncTarget): Promise<SyncResult> => {
   const user = currentUser();
@@ -226,10 +237,7 @@ export const sync = async (local: SyncTarget): Promise<SyncResult> => {
   const exercises: Record<string, LibraryExercise> = { ...(local.exercises ?? {}) };
   for (const row of exRows ?? []) if (!exercises[row.key as string]) exercises[row.key as string] = { key: row.key as string, ...(row.data as Omit<LibraryExercise, 'key'>) };
   const missing = Object.values(exercises).filter(e => !(exRows ?? []).some(r => r.key === e.key));
-  if (missing.length) {
-    const { error } = await sb.from('exercises').upsert(missing.map(e => ({ key: e.key, owner: uid, public: true, data: e })), { onConflict: 'key' });
-    if (error) errors.push(error.message);
-  }
+  errors.push(...(await eachRow(missing, e => sb.from('exercises').upsert({ key: e.key, owner: uid, public: true, data: e }, { onConflict: 'key' }))));
   if (J(exercises) !== J(local.exercises ?? {})) {
     patch.exercises = exercises;
     changed = true;
