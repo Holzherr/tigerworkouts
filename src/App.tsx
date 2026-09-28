@@ -10,14 +10,14 @@ import { FULL_LIBRARY } from '@/features/workouts/imported';
 import { WorkoutPreviewScreen } from '@/features/discover/components/workout-preview-screen';
 import { EditorScreen } from '@/features/runsheet/components/editor-screen';
 import { EX, withStarter } from '@/features/runsheet/fixtures';
-import { editedCopy, lineage, makeExercise, measureOf, ofWorkout, resolveRefs, scoreType, shortUnit, type ExerciseStep, type Runsheet } from '@/features/runsheet/model';
+import { editedCopy, forLabel, lineage, makeExercise, measureOf, ofWorkout, resolveRefs, scoreType, shortUnit, type ExerciseStep, type Runsheet } from '@/features/runsheet/model';
 import { lastSet, lastSetLabel, lastSets, lastTimeLabel, withLastUsed } from '@/features/runsheet/last-used';
 import { patchStep } from '@/features/runsheet/patch-step';
 import { applyCommands, parsePlan } from '@/features/runsheet/parse-text';
 import { isImage, readImport } from '@/features/runsheet/import-file';
 import { appLink, CreatorScreen } from '@/features/creators/components/creator-screen';
 import { CreatorPageCard } from '@/features/creators/components/creator-page-card';
-import { cn } from '@/shared/utils/ui-utils';
+import { cn, plural } from '@/shared/utils/ui-utils';
 import { localDate } from '@/shared/utils/dates';
 import { ExercisePicker } from '@/features/exercises/components/exercise-picker';
 import type { LibraryExercise } from '@/features/exercises/library';
@@ -714,7 +714,7 @@ const RunSession = ({ runsheet, results, intent, equipment, library, onLog, onFi
     return () => clearTimeout(t);
   }, [prSay]);
   // A drop is one swipe and Skip sits beside Pause: both can be taken back for five seconds.
-  const undo = useUndo('bottom-28');
+  const undo = useUndo('bottom-28 z-10');
   const skip = () => {
     const before = state;
     act.skip();
@@ -776,7 +776,7 @@ const PasteSheet = ({ open, onOpenChange, library, onUse }: { open: boolean; onO
         <div className="mt-2 space-y-1 text-[13px]">
           <div className="text-[11px] font-bold tracking-widest text-muted uppercase">Reads as · {parsed.items.length} {parsed.items.length === 1 ? 'item' : 'items'}</div>
           {parsed.items.map((it, i) => (
-            <div key={i} className="rounded-control bg-surface px-2 py-1">{it.kind === 'block' ? `${it.name} · ×${it.repeat}${it.mode === 'amrap' ? ' AMRAP' : ''} · ${it.steps.length} steps` : it.kind === 'exercise' ? `${it.exercise.name} · ${it.forValue} ${it.forMode}` : 'rest'}</div>
+            <div key={i} className="rounded-control bg-surface px-2 py-1">{it.kind === 'block' ? `${it.name} · ×${it.repeat}${it.mode === 'amrap' ? ' AMRAP' : ''} · ${plural(it.steps.length, 'step')}` : it.kind === 'exercise' ? `${it.exercise.name} · ${forLabel(it)}` : 'rest'}</div>
           ))}
           {parsed.assumptions.map(a => (
             <div key={a} className="text-warn">? {a}</div>

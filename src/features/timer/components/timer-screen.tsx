@@ -245,7 +245,9 @@ export const TimerScreen = ({ runsheet, state, now, onDone, onSkip, onBack, onPa
   const stepPos = slot && stepOf?.kind === 'exercise' ? blockSteps.findIndex(s => s.id === stepOf.id) : -1;
   const showPos = blockSteps.length > 1 && stepPos >= 0;
   const part = slot ? partOf(slot.part) : undefined;
-  const straight = sets && part?.kind === 'block' && slot?.blockId ? straightSetStep(part) : undefined;
+  // The straight-set block as it runs now: a swap mid-block changes the exercise from the set on.
+  const planned = sets && part?.kind === 'block' && slot?.blockId ? straightSetStep(part) : undefined;
+  const straight = planned && ((state.slots.slice(idx).find(sl => sl.blockId === slot?.blockId && sl.kind === 'work')?.step as ExerciseStep | undefined) ?? planned);
 
   // The exercise Swap acts on: the one on the card, else the straight-set block's during its rest.
   const swapStep = stepOf?.kind === 'exercise' ? stepOf : straight;

@@ -3,7 +3,7 @@ import { Button } from '@/shared/components/ui/button';
 import { forwardRef } from 'react';
 import { Chip } from '@/shared/components/ui/chip';
 import { Stepper } from '@/shared/components/ui/stepper';
-import { cn, fmtClock } from '@/shared/utils/ui-utils';
+import { cn, fmtClock, plural } from '@/shared/utils/ui-utils';
 import { Dropdown } from '@/shared/components/ui/dropdown';
 import { blockSeconds, modeLabel, roundSeconds, ROLE_LABEL, type Block, type BlockMode, type ItemRole, type ScoreType } from '../model';
 
@@ -57,7 +57,7 @@ export const BlockHeader = forwardRef<HTMLDivElement, BlockHeaderProps>(({ block
             <div className="text-[12px] font-bold text-brand-ink">1 step left · bracket will dissolve</div>
           ) : (
             <div className="text-[12px] text-muted">
-              {block.steps.length} steps · {fmtClock(round)} per round · {Math.round(blockSeconds(block) / 60)} min{block.restBetweenSec ? ` · rest ${block.restBetweenSec}s between` : ''}{block.note ? ` · ${block.note}` : ''}
+              {plural(block.steps.length, 'step')} · {fmtClock(round)} per round · {Math.round(blockSeconds(block) / 60)} min{block.restBetweenSec ? ` · rest ${block.restBetweenSec}s between` : ''}{block.note ? ` · ${block.note}` : ''}
             </div>
           )}
         </div>
