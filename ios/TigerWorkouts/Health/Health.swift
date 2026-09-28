@@ -233,8 +233,8 @@ final class Health {
 
     // MARK: - Reading
 
-    /// The most recent bodyweight Health holds, in kg.
-    func bodyweightKg() async -> Double? {
+    /// The most recent bodyweight Health holds, in kg, with when it was measured.
+    func bodyweightSample() async -> (kg: Double, date: Date)? {
         guard isAvailable, let type = HKQuantityType.quantityType(forIdentifier: .bodyMass) else { return nil }
         let sample: HKQuantitySample? = await withCheckedContinuation { continuation in
             let sort = NSSortDescriptor(key: HKSampleSortIdentifierEndDate, ascending: false)
@@ -243,7 +243,7 @@ final class Health {
             }
             store.execute(query)
         }
-        return sample?.quantity.doubleValue(for: .gramUnit(with: .kilo))
+        return sample.map { ($0.quantity.doubleValue(for: .gramUnit(with: .kilo)), $0.endDate) }
     }
 
     /// Average and peak heart rate across the session, plus what Health itself thinks the session

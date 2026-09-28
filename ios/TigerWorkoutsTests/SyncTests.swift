@@ -164,6 +164,25 @@ struct SyncTests {
         #expect(SessionRow.decode(id: "s-e", data: json(data))?.rpe == 7)
     }
 
+    @Test("a workout keeps the web's icon through a phone edit, and sends public only when set here")
+    func workoutRow() throws {
+        let web: [String: Any] = [
+            "id": "u-1", "title": "Legs", "public": true, "items": [] as [Any],
+            "icon": ["kind": "monogram", "letters": "LG", "palette": 3, "style": "glow", "treatment": "white"],
+        ]
+        var sheet = try JSONDecoder().decode(Runsheet.self, from: json(web))
+        sheet.title = "Legs day"
+        let row = try Supabase.workoutRow(sheet, owner: "u", sendPublic: false)
+        let data = row["data"] as! [String: Any]
+        let icon = try #require(data["icon"] as? [String: Any])
+        #expect(icon["letters"] as? String == "LG" && icon["palette"] as? Double == 3 && icon["style"] as? String == "glow")
+        #expect(data["title"] as? String == "Legs day")
+        // Left out, the upsert keeps the server's column: an edit on a stale copy cannot unpublish it.
+        #expect(row["public"] == nil && data["public"] == nil)
+        sheet.isPublic = false
+        #expect(try Supabase.workoutRow(sheet, owner: "u", sendPublic: true)["public"] as? Bool == false)
+    }
+
     @Test("a sync keeps the phone's unpushed edits and deletes over the server's copy")
     func mergeAfterFetch() {
         func r(_ id: String, _ at: String, notes: String? = nil) -> SessionResult {

@@ -136,8 +136,8 @@ keys its loads by step id and two workouts must not share them.
 Blocks hold steps and run as rounds, for time, AMRAP or EMOM. Steps are measured in seconds, reps,
 minutes, metres, calories or max reps, with load, incline and each-side where they apply. Nothing
 is sent anywhere until Save; the screen holds one runsheet value and every edit returns a new one.
-Workouts go up with `public: true`, the same as the web app writes them, so one written on the
-phone shows up there too.
+Workouts go up private, as the web app writes them, and show up there too. Only Make public / Make
+private sends the `public` column; any other edit leaves it as the server has it.
 
 ## What is not in it yet
 

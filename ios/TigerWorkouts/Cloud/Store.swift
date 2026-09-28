@@ -31,8 +31,10 @@ final class Store {
     var syncError: String?
     /// Sessions logged while offline or signed out, waiting for a window to push.
     private(set) var pending: [SessionResult] = []
-    private var pendingWorkouts: [Runsheet] = []
-    private var pendingWorkoutDeletes: [String] = []
+    private(set) var pendingWorkouts: [Runsheet] = []
+    private(set) var pendingWorkoutDeletes: [String] = []
+    /// Workouts made public or private on this phone whose upload has not landed yet.
+    private var publicSetHere: Set<String> = []
     /// Sessions deleted on the phone that the server still has.
     private var pendingDeletes: [String] = []
     /// Changes made on the finish screen before `save` had put the result in the list.
@@ -95,12 +97,19 @@ final class Store {
 
     /// Health holds a bodyweight already; asking for it again would be the wrong answer.
     func readBodyweightFromHealth() async {
-        guard healthEnabled, let kg = await Health.shared.bodyweightKg() else { return }
-        guard kg != bodyweightKg else { return }
-        // Newer than whatever the server holds, so a sync sends it up rather than taking the old one.
-        bodyweightKg = kg
-        touched("bodyweightKg")
+        guard healthEnabled, let sample = await Health.shared.bodyweightSample() else { return }
+        takeHealthBodyweight(sample.kg, measuredAt: sample.date)
         writeCache()
+    }
+
+    /// A weighing from Health, stamped with when it was measured rather than when it was read: a
+    /// weight typed on the web after it wins the sync, and reading the same sample again at the
+    /// next launch changes nothing.
+    func takeHealthBodyweight(_ kg: Double, measuredAt: Date) {
+        let stamp = PrefsMerge.stamp(measuredAt)
+        guard stamp > (prefsUpdatedAt["bodyweightKg"] ?? ""), kg != bodyweightKg else { return }
+        bodyweightKg = kg
+        prefsUpdatedAt["bodyweightKg"] = stamp
     }
 
     func sync() async {
@@ -186,6 +195,7 @@ final class Store {
         pending = []
         pendingWorkouts = []
         pendingWorkoutDeletes = []
+        publicSetHere = []
         pendingDeletes = []
         pendingExercises = []
         if clearPhone {
@@ -540,10 +550,19 @@ final class Store {
 
     /// Local first: the workout is in the list before the network is asked, and a failed push is
     /// queued rather than lost.
-    func saveWorkout(_ r: Runsheet) async {
+    ///
+    /// Who can see it is the server's `public` column, and only `visibility` (Make public, Make
+    /// private) sends it. Any other edit leaves the column alone: the screen's copy may be older
+    /// than a change made on the web, and sending it unpublished the workout.
+    func saveWorkout(_ r: Runsheet, visibility: Bool = false) async {
         var sheet = r
         if sheet.id == nil { sheet.id = Edit.id("w") }
         if sheet.creator == nil { sheet.creator = user?.email }
+        if visibility {
+            publicSetHere.insert(sheet.key)
+        } else if let known = myWorkouts.first(where: { $0.key == sheet.key }) {
+            sheet.isPublic = known.isPublic
+        }
         myWorkouts.removeAll { $0.key == sheet.key }
         myWorkouts.insert(sheet, at: 0)
         pendingWorkoutDeletes.removeAll { $0 == sheet.key }
@@ -557,10 +576,13 @@ final class Store {
         let key = r.key
         myWorkouts.removeAll { $0.key == key }
         pendingWorkouts.removeAll { $0.key == key }
-        saved.remove(key)
-        pendingWorkoutDeletes.append(key)
+        // Stamped, or the server's older saved list puts the deleted id back on the next sync.
+        let unsaved = saved.remove(key) != nil
+        if unsaved { touched("saved") }
+        if !pendingWorkoutDeletes.contains(key) { pendingWorkoutDeletes.append(key) }
         writeCache()
         await pushWorkouts()
+        if unsaved { await writePrefs() }
     }
 
     /// True when this workout belongs to the account and can be edited in place; a catalogue
@@ -579,25 +601,43 @@ final class Store {
         writeCache()
     }
 
+    /// The workouts table, as a flush reaches it. Properties so a test can hold an upload back.
+    var cloudSignedIn: @MainActor () async -> Bool = { await Supabase.shared.isSignedIn }
+    var uploadWorkout: @MainActor (Runsheet, _ sendPublic: Bool) async throws -> Void = { try await Supabase.shared.saveWorkout($0, sendPublic: $1) }
+    var removeWorkout: @MainActor (String) async throws -> Void = { try await Supabase.shared.deleteWorkout(id: $0) }
+
+    /// Only what went up comes off the queue: an edit or a delete queued while the batch was in
+    /// flight is a different value and stays for the next push, as `flushPending` does for sessions.
     private func flushWorkouts() async throws {
-        guard await Supabase.shared.isSignedIn else { return }
-        var stillPending: [Runsheet] = []
-        var stillDeleting: [String] = []
+        guard await cloudSignedIn() else { return }
+        let sending = pendingWorkouts
+        let deleting = pendingWorkoutDeletes
+        var sent: [Runsheet] = []
+        var removed: [String] = []
         var failure: Error?
-        for r in pendingWorkouts {
-            do { try await Supabase.shared.saveWorkout(r) } catch {
-                stillPending.append(r)
+        for r in sending {
+            do {
+                try await uploadWorkout(r, publicSetHere.contains(r.key))
+                sent.append(r)
+            } catch {
                 failure = error
             }
         }
-        for id in pendingWorkoutDeletes {
-            do { try await Supabase.shared.deleteWorkout(id: id) } catch {
-                stillDeleting.append(id)
+        for id in deleting {
+            do {
+                try await removeWorkout(id)
+                removed.append(id)
+            } catch {
                 failure = error
             }
         }
-        pendingWorkouts = stillPending
-        pendingWorkoutDeletes = stillDeleting
+        pendingWorkouts.removeAll { sent.contains($0) }
+        pendingWorkoutDeletes.removeAll { removed.contains($0) }
+        for r in sent where !pendingWorkouts.contains(where: { $0.key == r.key }) { publicSetHere.remove(r.key) }
+        // Deleted while its upload was out: the upload may have landed after the delete.
+        for r in sent where !myWorkouts.contains(where: { $0.key == r.key }) && !pendingWorkoutDeletes.contains(r.key) {
+            pendingWorkoutDeletes.append(r.key)
+        }
         if let failure { throw failure }
     }
 
@@ -654,6 +694,7 @@ final class Store {
         var trainingMaxes: [String: Double]?
         var equipment: Equipment?
         var prefsUpdatedAt: [String: String]?
+        var publicSetHere: [String]?
     }
 
     /// The file the cache lives in. Tests point it elsewhere so they never touch the app's own.
@@ -683,6 +724,7 @@ final class Store {
         trainingMaxes = c.trainingMaxes ?? [:]
         equipment = c.equipment
         prefsUpdatedAt = c.prefsUpdatedAt ?? [:]
+        publicSetHere = Set(c.publicSetHere ?? [])
     }
 
     private func writeCache() {
@@ -692,7 +734,8 @@ final class Store {
             pendingWorkouts: pendingWorkouts, pendingWorkoutDeletes: pendingWorkoutDeletes,
             pendingDeletes: pendingDeletes,
             customExercises: Array(customExercises.values), pendingExercises: pendingExercises,
-            trainingMaxes: trainingMaxes, equipment: equipment, prefsUpdatedAt: prefsUpdatedAt
+            trainingMaxes: trainingMaxes, equipment: equipment, prefsUpdatedAt: prefsUpdatedAt,
+            publicSetHere: publicSetHere.sorted()
         )
         try? JSONEncoder().encode(c).write(to: cacheURL, options: .atomic)
         shareUpNext()

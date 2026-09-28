@@ -340,24 +340,35 @@ actor Supabase {
     }
 
     /// Writes a workout this account owns. Private unless its creator made it public.
-    func saveWorkout(_ r: Runsheet) async throws {
+    func saveWorkout(_ r: Runsheet, sendPublic: Bool) async throws {
         guard let uid = session?.user.id else { throw SupabaseError(message: "Not signed in") }
-        guard let id = r.id else { throw SupabaseError(message: "Workout has no id") }
-        let body = try JSONEncoder().encode(r)
-        let data = try JSONSerialization.jsonObject(with: body)
+        guard r.id != nil else { throw SupabaseError(message: "Workout has no id") }
         _ = try await request(
             "rest/v1/workouts?on_conflict=id",
             method: "POST",
-            body: [[
-                "id": id,
-                "owner": uid,
-                "creator": r.creator.map { $0 as Any } ?? NSNull(),
-                "title": r.title,
-                "public": r.isPublic ?? false,
-                "data": data,
-            ]],
+            body: [try Self.workoutRow(r, owner: uid, sendPublic: sendPublic)],
             headers: ["Prefer": "resolution=merge-duplicates,return=minimal"]
         )
+    }
+
+    /// The `workouts` row for an upsert. `public` goes only when this phone set it: an upsert
+    /// updates the columns it is sent, so leaving it out keeps what the server has (a new row
+    /// starts private). The copy inside `data` goes with it, since both apps read the column first.
+    static func workoutRow(_ r: Runsheet, owner: String, sendPublic: Bool) throws -> [String: Any] {
+        var data = try JSONSerialization.jsonObject(with: JSONEncoder().encode(r)) as? [String: Any] ?? [:]
+        var row: [String: Any] = [
+            "id": r.id ?? r.key,
+            "owner": owner,
+            "creator": r.creator.map { $0 as Any } ?? NSNull(),
+            "title": r.title,
+        ]
+        if sendPublic {
+            row["public"] = r.isPublic ?? false
+        } else {
+            data["public"] = nil
+        }
+        row["data"] = data
+        return row
     }
 
     func deleteWorkout(id: String) async throws {
