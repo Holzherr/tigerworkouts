@@ -389,7 +389,7 @@ struct TimerView: View {
             }
             .buttonStyle(.plain)
 
-            if let set = LastTime.set(store.results, for: ex), let last = LastTime.label(set, for: ex) {
+            if let set = LastTime.set(store.results, for: ex, in: runner.runsheet), let last = LastTime.label(set, for: ex) {
                 let text = last.prefix(1).uppercased() + last.dropFirst()
                 // On the running set, a tap puts last time's weight and reps in.
                 if adjustable, let slot = runner.slot, slot.exercise?.id == ex.id, runner.state.phase == .running || runner.state.phase == .paused {
@@ -490,7 +490,7 @@ struct TimerView: View {
     /// tap on a set already logged.
     private func setGrid(_ ex: ExerciseStep) -> some View {
         let rows = runner.setRows
-        let last = LastTime.sets(store.results, for: ex) ?? []
+        let last = LastTime.sets(store.results, for: ex, in: runner.runsheet) ?? []
         return VStack(alignment: .leading, spacing: 10) {
             Button { editing = ex } label: {
                 HStack(spacing: 12) {
