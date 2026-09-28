@@ -14,6 +14,10 @@ settings:
     # Nick's Personal Team. Team IDs are public (they are in every signed binary).
     DEVELOPMENT_TEAM: 7N89U73RAU
     CODE_SIGN_STYLE: Automatic
+    # Personal (free team): HealthKit only. Paid: adds the App Group the Up next widget reads and
+    # Sign in with Apple — a free team cannot sign either, so a device build would fail. Switch to
+    # Paid once the Apple Developer Program is active and both are enabled for the App IDs.
+    ENTITLEMENTS_KIND: Personal
 targets:
   TigerWorkouts:
     type: application
@@ -28,7 +32,7 @@ targets:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.holzherr.tigerworkouts
         INFOPLIST_FILE: TigerWorkouts/Info.plist
-        CODE_SIGN_ENTITLEMENTS: TigerWorkouts/TigerWorkouts.entitlements
+        CODE_SIGN_ENTITLEMENTS: TigerWorkouts/TigerWorkouts-$(ENTITLEMENTS_KIND).entitlements
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
         ENABLE_PREVIEWS: YES
         TARGETED_DEVICE_FAMILY: "1"
@@ -49,7 +53,7 @@ targets:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.holzherr.tigerworkouts.widgets
         INFOPLIST_FILE: TigerWorkoutsWidgets/Info.plist
-        CODE_SIGN_ENTITLEMENTS: TigerWorkoutsWidgets/TigerWorkoutsWidgets.entitlements
+        CODE_SIGN_ENTITLEMENTS: TigerWorkoutsWidgets/TigerWorkoutsWidgets-$(ENTITLEMENTS_KIND).entitlements
         SKIP_INSTALL: YES
         TARGETED_DEVICE_FAMILY: "1"
 

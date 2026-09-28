@@ -23,6 +23,9 @@
   <!-- HTTPS through URLSession only, which is exempt: no export compliance question per upload. -->
   <key>ITSAppUsesNonExemptEncryption</key>
   <false/>
+  <!-- Personal or Paid (project.yml): whether this build may offer Sign in with Apple. -->
+  <key>TigerEntitlements</key>
+  <string>$(ENTITLEMENTS_KIND)</string>
   <key>UILaunchScreen</key>
   <dict/>
   <key>UISupportedInterfaceOrientations</key>

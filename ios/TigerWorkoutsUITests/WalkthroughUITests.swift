@@ -908,6 +908,9 @@ final class WalkthroughUITests: XCTestCase {
 
     /// Sign in: Apple first, then Google, then an email code.
     func testSignInOptions() {
+        app.terminate()
+        app.launchEnvironment["UITEST_APPLE_SIGN_IN"] = "1"
+        app.launch()
         tap(app.tabBars.buttons["Me"])
         let signIn = app.buttons.matching(NSPredicate(format: "label BEGINSWITH 'Sign in'")).firstMatch
         guard signIn.waitForExistence(timeout: 5) else { return } // already signed in on this simulator

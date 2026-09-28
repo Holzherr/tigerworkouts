@@ -179,7 +179,6 @@
 		24B7E58E065ED599B1C47620 /* LockScreenControlsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LockScreenControlsTests.swift; sourceTree = "<group>"; };
 		26303167406F3C821FAFE7E2 /* RootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RootView.swift; sourceTree = "<group>"; };
 		27367887652A0380A66B6363 /* Theme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Theme.swift; sourceTree = "<group>"; };
-		2C04D40DA67137C968EDBD28 /* TigerWorkoutsWidgets.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = TigerWorkoutsWidgets.entitlements; sourceTree = "<group>"; };
 		2CFD343754E38E4130A23DAC /* LiveRecordTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LiveRecordTests.swift; sourceTree = "<group>"; };
 		32C06182F780EF3B0331CF01 /* StripesShapeTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StripesShapeTests.swift; sourceTree = "<group>"; };
 		35CB9F49E1C6B8CD622ED57D /* EditSets.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EditSets.swift; sourceTree = "<group>"; };
@@ -212,15 +211,17 @@
 		624618DA7F3194F1EB9B1818 /* Effort.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Effort.swift; sourceTree = "<group>"; };
 		62CA4732B4B2A3F75FD14AF1 /* ExercisePickerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExercisePickerView.swift; sourceTree = "<group>"; };
 		699AC7356AFB42E1FBDBB705 /* ExerciseHistoryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExerciseHistoryView.swift; sourceTree = "<group>"; };
+		6EF54A23D92B76DE75FD5AE2 /* TigerWorkouts-Paid.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = "TigerWorkouts-Paid.entitlements"; sourceTree = "<group>"; };
 		6F781B1689DE90644353CB87 /* StoreSaveTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StoreSaveTests.swift; sourceTree = "<group>"; };
 		70A2BD32BBFA62B93E613882 /* DiscoverView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DiscoverView.swift; sourceTree = "<group>"; };
 		73E60ED8258A936B9C69FB41 /* LoadsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoadsTests.swift; sourceTree = "<group>"; };
 		75787AFCCADC17A96827F19A /* TargetViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TargetViews.swift; sourceTree = "<group>"; };
 		781B4703341F053F08AE0613 /* Keychain.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Keychain.swift; sourceTree = "<group>"; };
+		7D1E28AFABED678775260BB0 /* TigerWorkoutsWidgets-Personal.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = "TigerWorkoutsWidgets-Personal.entitlements"; sourceTree = "<group>"; };
+		7F61B8CF21E007E3998D9D46 /* TigerWorkouts-Personal.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = "TigerWorkouts-Personal.entitlements"; sourceTree = "<group>"; };
 		87A0379EA6B428BEE7F68638 /* SessionLiveActivity.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionLiveActivity.swift; sourceTree = "<group>"; };
 		8A91B39264F3D48EC2B176B0 /* RecommendTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecommendTests.swift; sourceTree = "<group>"; };
 		8B7FE8DABC9C1B41E9896692 /* RestNotice.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RestNotice.swift; sourceTree = "<group>"; };
-		8BCB1B34E80BE522AEA8C7A3 /* TigerWorkouts.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = TigerWorkouts.entitlements; sourceTree = "<group>"; };
 		8ECD0D99BECC297562625D45 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		8FA46D7EF60541FEC8764F65 /* Muscles.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Muscles.swift; sourceTree = "<group>"; };
 		92412812FEBAA08CD322ABA0 /* Stall.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Stall.swift; sourceTree = "<group>"; };
@@ -248,6 +249,7 @@
 		BD77652B9CB4664C909E3D23 /* GymLoggingTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GymLoggingTests.swift; sourceTree = "<group>"; };
 		BEBB7BC4CAC7E345AFA74D2B /* WorkoutDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkoutDetailView.swift; sourceTree = "<group>"; };
 		C1CA40FB23F26CFD0D7CB467 /* WalkthroughUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WalkthroughUITests.swift; sourceTree = "<group>"; };
+		C322AE0162817671C5EF928C /* TigerWorkoutsWidgets-Paid.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = "TigerWorkoutsWidgets-Paid.entitlements"; sourceTree = "<group>"; };
 		CA6F9BD8E2DD41D78F5CFF71 /* CelebrationView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CelebrationView.swift; sourceTree = "<group>"; };
 		CD7FDA4D739693E3EB3F2EB7 /* RoundsViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RoundsViews.swift; sourceTree = "<group>"; };
 		D003D2F2D1E93454087D5B01 /* TigerWorkoutsUITests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = TigerWorkoutsUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -304,7 +306,8 @@
 			children = (
 				E6A0D42B49643D82D2C08235 /* Info.plist */,
 				87A0379EA6B428BEE7F68638 /* SessionLiveActivity.swift */,
-				2C04D40DA67137C968EDBD28 /* TigerWorkoutsWidgets.entitlements */,
+				C322AE0162817671C5EF928C /* TigerWorkoutsWidgets-Paid.entitlements */,
+				7D1E28AFABED678775260BB0 /* TigerWorkoutsWidgets-Personal.entitlements */,
 				EB44DFADFF676E278E9CE784 /* TigerWorkoutsWidgetsBundle.swift */,
 				D91D1FE772E16CBEC2B027B2 /* UpNextWidget.swift */,
 			);
@@ -470,7 +473,8 @@
 				F91396491F84AF298F6F99B1 /* Resources */,
 				8188EBB1F02F9AF9283803EA /* Results */,
 				6CF66239D8BD7CE984BE3427 /* Shared */,
-				8BCB1B34E80BE522AEA8C7A3 /* TigerWorkouts.entitlements */,
+				6EF54A23D92B76DE75FD5AE2 /* TigerWorkouts-Paid.entitlements */,
+				7F61B8CF21E007E3998D9D46 /* TigerWorkouts-Personal.entitlements */,
 			);
 			path = TigerWorkouts;
 			sourceTree = "<group>";
@@ -827,7 +831,7 @@
 		0E527E415C4E5A6D43A44821 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				CODE_SIGN_ENTITLEMENTS = TigerWorkoutsWidgets/TigerWorkoutsWidgets.entitlements;
+				CODE_SIGN_ENTITLEMENTS = "TigerWorkoutsWidgets/TigerWorkoutsWidgets-$(ENTITLEMENTS_KIND).entitlements";
 				INFOPLIST_FILE = TigerWorkoutsWidgets/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -879,7 +883,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
-				CODE_SIGN_ENTITLEMENTS = TigerWorkouts/TigerWorkouts.entitlements;
+				CODE_SIGN_ENTITLEMENTS = "TigerWorkouts/TigerWorkouts-$(ENTITLEMENTS_KIND).entitlements";
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				ENABLE_PREVIEWS = YES;
 				INFOPLIST_FILE = TigerWorkouts/Info.plist;
@@ -934,6 +938,7 @@
 				DEVELOPMENT_TEAM = 7N89U73RAU;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_TESTABILITY = YES;
+				ENTITLEMENTS_KIND = Personal;
 				GCC_C_LANGUAGE_STANDARD = gnu11;
 				GCC_DYNAMIC_NO_PIC = NO;
 				GCC_NO_COMMON_BLOCKS = YES;
@@ -966,7 +971,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
-				CODE_SIGN_ENTITLEMENTS = TigerWorkouts/TigerWorkouts.entitlements;
+				CODE_SIGN_ENTITLEMENTS = "TigerWorkouts/TigerWorkouts-$(ENTITLEMENTS_KIND).entitlements";
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				ENABLE_PREVIEWS = YES;
 				INFOPLIST_FILE = TigerWorkouts/Info.plist;
@@ -1001,7 +1006,7 @@
 		CB20FF07F0248896B2BD6004 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				CODE_SIGN_ENTITLEMENTS = TigerWorkoutsWidgets/TigerWorkoutsWidgets.entitlements;
+				CODE_SIGN_ENTITLEMENTS = "TigerWorkoutsWidgets/TigerWorkoutsWidgets-$(ENTITLEMENTS_KIND).entitlements";
 				INFOPLIST_FILE = TigerWorkoutsWidgets/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -1055,6 +1060,7 @@
 				DEVELOPMENT_TEAM = 7N89U73RAU;
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENTITLEMENTS_KIND = Personal;
 				GCC_C_LANGUAGE_STANDARD = gnu11;
 				GCC_NO_COMMON_BLOCKS = YES;
 				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;

@@ -2,6 +2,14 @@ import AuthenticationServices
 import SwiftUI
 
 struct SignInView: View {
+    /// Sign in with Apple needs the Paid entitlement set (project.yml ENTITLEMENTS_KIND); a
+    /// Personal Team build cannot sign it, so the button stays hidden there. The walkthrough
+    /// shows it on the simulator with UITEST_APPLE_SIGN_IN.
+    static var offersApple: Bool {
+        Bundle.main.object(forInfoDictionaryKey: "TigerEntitlements") as? String == "Paid"
+            || ProcessInfo.processInfo.environment["UITEST_APPLE_SIGN_IN"] == "1"
+    }
+
     var onSignedIn: () async -> Void
 
     @Environment(Store.self) private var store
@@ -36,18 +44,20 @@ struct SignInView: View {
                     }
                     .padding(.top, 24)
 
-                    SignInWithAppleButton(.continue) { request in
-                        let nonce = Supabase.randomNonce()
-                        appleNonce = nonce
-                        request.requestedScopes = [.email, .fullName]
-                        request.nonce = Supabase.sha256(nonce)
-                    } onCompletion: { result in
-                        Task { await apple(result) }
+                    if Self.offersApple {
+                        SignInWithAppleButton(.continue) { request in
+                            let nonce = Supabase.randomNonce()
+                            appleNonce = nonce
+                            request.requestedScopes = [.email, .fullName]
+                            request.nonce = Supabase.sha256(nonce)
+                        } onCompletion: { result in
+                            Task { await apple(result) }
+                        }
+                        .signInWithAppleButtonStyle(.black)
+                        .frame(height: Tap.big)
+                        .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+                        .accessibilityIdentifier("sign-in-apple")
                     }
-                    .signInWithAppleButtonStyle(.black)
-                    .frame(height: Tap.big)
-                    .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
-                    .accessibilityIdentifier("sign-in-apple")
 
                     Button {
                         Task { await google() }
