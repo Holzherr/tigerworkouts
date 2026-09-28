@@ -106,7 +106,11 @@ enum LastTime {
         let newest = results.sorted { $0.startedAt > $1.startedAt }
         func find(_ match: (StepResult) -> Bool) -> [SetResult]? {
             for r in newest {
-                if let hit = r.steps.first(where: { match($0) && $0.sets?.isEmpty == false }) { return hit.sets }
+                // A legacy row that logged metres, seconds or calories as the load reads as that
+                // measure, so "Use last time" never writes it onto the set as a load (last-used.ts).
+                if let hit = r.steps.first(where: { match($0) && $0.sets?.isEmpty == false }) {
+                    return Logbook.measured(hit.sets ?? [], unit: step.exercise.unit)
+                }
             }
             return nil
         }

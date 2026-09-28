@@ -95,6 +95,17 @@ struct LastTimeFillTests {
         #expect(Runner.fillSet(s, now: 21_000, slotId: Self.ids(s)[0], with: SetResult(reps: 12, load: 30)) == s)
     }
 
+    @Test("a legacy rower row that logged metres as a load reads as metres, so nothing offers it as a load")
+    func legacyMeasure() {
+        let rower = ExerciseStep(id: "row", exercise: ExerciseRef(key: "cardio_rower", name: "Rowing machine", unit: "m", step: 100), forMode: .meters, forValue: 1000)
+        var step = StepResult(stepId: "row", exerciseKey: "cardio_rower")
+        step.sets = [SetResult(load: 500)]
+        let res = SessionResult(runsheetId: "x", title: nil, startedAt: "2026-09-01", steps: [step])
+        let sets = LastTime.sets([res], for: rower)
+        #expect(sets?.first?.meters == 500 && sets?.first?.load == nil)
+        #expect(LastTime.setLabel(sets?.first) == nil)
+    }
+
     @Test("prefillReps fills a range from last time, set by set")
     func prefill() {
         let last: [Double] = [11, 10, 9]
