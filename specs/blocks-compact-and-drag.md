@@ -1,4 +1,4 @@
-Status: queued — build on Nick's go (morning of 2026-09-30), not by the nightly team
+Status: TW-024, priority 1 — mockup approved by Nick 2026-09-29
 
 # Blocks: compact sets and an obvious drag
 
@@ -37,8 +37,8 @@ Mockup: https://claude.ai/artifact/K2JvQ2mxAhFrpeNhTsnMNC (now, then 1–3 below
 
 ### 2. Block headers show they move
 
-- Proposed (Nick to confirm, since it reverses the DESIGN.md "no drag handles" rule): a grip
-  (three lines) at the right of each block header, 44 pt target; press-and-drag on the whole header
+- A grip
+  (three lines) at the right of each block header, 44 pt target (Nick approved the mockup 2026-09-29, which reverses DESIGN.md "no drag handles" for blocks); press-and-drag on the whole header
   still works.
 - A one-time tip on the workout screen: "Hold a block's header to move it". Dismissed with OK, and
   not shown again.
