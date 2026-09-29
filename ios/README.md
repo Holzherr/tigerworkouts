@@ -28,7 +28,7 @@ What you get that the PWA cannot do:
   that run in the app's process and reach the running session through `SessionControls.active`.
 - **Up next on the home screen.** A small and a medium widget with the same pick as the Up next
   card and this week's count; a tap opens that workout's page. The app writes what it shows into
-  the App Group `group.com.holzherr.tigerworkouts` (`Shared/UpNextShare.swift`), which has to be
+  the App Group `group.dev.brambruesch.tigerworkouts` (`Shared/UpNextShare.swift`), which has to be
   enabled for both bundle ids in the developer portal before it works on a device.
 - **Apple Health, both ways.** A finished session becomes an `HKWorkout` typed by what the session
   mostly was, so it counts towards the rings. Coming back the other way: your bodyweight, so the
@@ -112,10 +112,10 @@ a second leg that may fail on the runner without blocking the PR, and a failed l
 `out.xcresult` as an artifact.
 
 The app logs its Live Activity updates and audio session under the subsystem
-`com.holzherr.tigerworkouts`, which is how the update flood below was found:
+`dev.brambruesch.tigerworkouts`, which is how the update flood below was found:
 
 ```sh
-xcrun simctl spawn booted log stream --predicate 'subsystem == "com.holzherr.tigerworkouts"'
+xcrun simctl spawn booted log stream --predicate 'subsystem == "dev.brambruesch.tigerworkouts"'
 ```
 
 ## Things the simulator taught
