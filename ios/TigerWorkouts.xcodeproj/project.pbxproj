@@ -838,7 +838,7 @@
 					"@executable_path/Frameworks",
 					"@executable_path/../../Frameworks",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = com.holzherr.tigerworkouts.widgets;
+				PRODUCT_BUNDLE_IDENTIFIER = dev.brambruesch.tigerworkouts.widgets;
 				SDKROOT = iphoneos;
 				SKIP_INSTALL = YES;
 				TARGETED_DEVICE_FAMILY = 1;
@@ -855,7 +855,7 @@
 					"@executable_path/Frameworks",
 					"@loader_path/Frameworks",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = com.holzherr.tigerworkouts.uitests;
+				PRODUCT_BUNDLE_IDENTIFIER = dev.brambruesch.tigerworkouts.uitests;
 				SDKROOT = iphoneos;
 				TARGETED_DEVICE_FAMILY = "1,2";
 				TEST_TARGET_NAME = TigerWorkouts;
@@ -872,7 +872,7 @@
 					"@executable_path/Frameworks",
 					"@loader_path/Frameworks",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = com.holzherr.tigerworkouts.tests;
+				PRODUCT_BUNDLE_IDENTIFIER = dev.brambruesch.tigerworkouts.tests;
 				SDKROOT = iphoneos;
 				TARGETED_DEVICE_FAMILY = "1,2";
 				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/TigerWorkouts.app/TigerWorkouts";
@@ -891,7 +891,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = com.holzherr.tigerworkouts;
+				PRODUCT_BUNDLE_IDENTIFIER = dev.brambruesch.tigerworkouts;
 				SDKROOT = iphoneos;
 				SUPPORTS_MACCATALYST = NO;
 				TARGETED_DEVICE_FAMILY = 1;
@@ -979,7 +979,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = com.holzherr.tigerworkouts;
+				PRODUCT_BUNDLE_IDENTIFIER = dev.brambruesch.tigerworkouts;
 				SDKROOT = iphoneos;
 				SUPPORTS_MACCATALYST = NO;
 				TARGETED_DEVICE_FAMILY = 1;
@@ -996,7 +996,7 @@
 					"@executable_path/Frameworks",
 					"@loader_path/Frameworks",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = com.holzherr.tigerworkouts.uitests;
+				PRODUCT_BUNDLE_IDENTIFIER = dev.brambruesch.tigerworkouts.uitests;
 				SDKROOT = iphoneos;
 				TARGETED_DEVICE_FAMILY = "1,2";
 				TEST_TARGET_NAME = TigerWorkouts;
@@ -1013,7 +1013,7 @@
 					"@executable_path/Frameworks",
 					"@executable_path/../../Frameworks",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = com.holzherr.tigerworkouts.widgets;
+				PRODUCT_BUNDLE_IDENTIFIER = dev.brambruesch.tigerworkouts.widgets;
 				SDKROOT = iphoneos;
 				SKIP_INSTALL = YES;
 				TARGETED_DEVICE_FAMILY = 1;
@@ -1092,7 +1092,7 @@
 					"@executable_path/Frameworks",
 					"@loader_path/Frameworks",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = com.holzherr.tigerworkouts.tests;
+				PRODUCT_BUNDLE_IDENTIFIER = dev.brambruesch.tigerworkouts.tests;
 				SDKROOT = iphoneos;
 				TARGETED_DEVICE_FAMILY = "1,2";
 				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/TigerWorkouts.app/TigerWorkouts";

@@ -4,7 +4,7 @@ import Observation
 import UIKit
 import os
 
-private let hapticLog = Logger(subsystem: "com.holzherr.tigerworkouts", category: "haptics")
+private let hapticLog = Logger(subsystem: "dev.brambruesch.tigerworkouts", category: "haptics")
 
 /// The thing the web app cannot do. iOS Safari has no Vibration API, so on the phone the PWA's
 /// end-of-workout buzz is a silent no-op; here every transition has a shape you can feel through a
