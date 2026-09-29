@@ -8,7 +8,8 @@ const DEMO = priyanka();
 
 /**
  * The real TimerScreen running Priyanka's circuit on a loop, muted, for the landing page hero.
- * Restarts when it reaches the end; nothing is persisted.
+ * Restarts when it reaches the end; nothing is persisted. It does not announce to a screen reader:
+ * looping beside the landing copy, it would read the whole workout aloud.
  */
 export const TimerDemo = () => {
   const { state, now, act } = useRunner(DEMO, { silent: true, persist: false });
@@ -23,5 +24,5 @@ export const TimerDemo = () => {
     const c = R.current(state);
     if (c?.step.kind === 'exercise' && c.step.forMode === 'minutes') act.skip();
   }, [state, act]);
-  return <TimerScreen runsheet={DEMO} state={state} now={now} onDone={act.done} onSkip={act.skip} onBack={act.back} onPause={act.pause} onResume={act.resume} onAdjust={act.adjust} onSetReps={act.setReps} onDrop={act.drop} onFinish={() => {}} onExit={() => {}} />;
+  return <TimerScreen runsheet={DEMO} state={state} now={now} onDone={act.done} onSkip={act.skip} onBack={act.back} onPause={act.pause} onResume={act.resume} onAdjust={act.adjust} onSetReps={act.setReps} onDrop={act.drop} onFinish={() => {}} onExit={() => {}} announce={false} />;
 };

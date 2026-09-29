@@ -58,6 +58,8 @@ export interface TimerScreenProps {
   onSwap?: (stepId: string, to: ExerciseRef, target?: number) => void;
   /** Slots whose set beat a record when it was ticked: a medal on the row. */
   prs?: string[];
+  /** The live region a screen reader hears. Off only for a demo that loops: on a page of copy it would read the whole workout aloud. */
+  announce?: boolean;
 }
 
 export interface SetActions {
@@ -205,7 +207,7 @@ const stepLine = (s: ExerciseStep) => [forLabel(s), s.target !== undefined ? `${
  * a ⋯ menu (previous, overview, stop), Pause and Skip/Done at equal size. Tap the Next row to see
  * what the coming block asks for; the overview sheet lists every part with progress.
  */
-export const TimerScreen = ({ runsheet, state, now, onDone, onSkip, onBack, onPause, onResume, onAdjust, onAdjustIncline, onSetReps, onSetAmount, onDrop, onStartBlock, onAdjustStep, sets, onAdjustRest, lastFor, onFill, ghost, goal, muted, onToggleMute, equipment, onFinish, onExit, alternativesFor, onSwap, prs }: TimerScreenProps) => {
+export const TimerScreen = ({ runsheet, state, now, onDone, onSkip, onBack, onPause, onResume, onAdjust, onAdjustIncline, onSetReps, onSetAmount, onDrop, onStartBlock, onAdjustStep, sets, onAdjustRest, lastFor, onFill, ghost, goal, muted, onToggleMute, equipment, onFinish, onExit, alternativesFor, onSwap, prs, announce = true }: TimerScreenProps) => {
   const [confirmExit, setConfirmExit] = useState(false);
   const [confirmDiscard, setConfirmDiscard] = useState(false);
   const [menu, setMenu] = useState(false);
@@ -265,9 +267,11 @@ export const TimerScreen = ({ runsheet, state, now, onDone, onSkip, onBack, onPa
 
   return (
     <div className={cn('flex h-full min-h-0 flex-col text-white transition-colors duration-300', isRest && !ready ? 'bg-rest' : 'bg-ink')}>
-      <div aria-live="polite" role="status" className="sr-only">
-        {announcement}
-      </div>
+      {announce && (
+        <div aria-live="polite" role="status" className="sr-only">
+          {announcement}
+        </div>
+      )}
       <header className="safe-top shrink-0 px-4 pt-2 pb-2">
         <div className="flex items-center justify-between gap-2">
           <div className="min-w-0">

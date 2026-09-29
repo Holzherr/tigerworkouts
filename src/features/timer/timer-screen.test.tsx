@@ -1,5 +1,6 @@
 import { render } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
+import { TimerDemo } from '@/features/landing/components/timer-demo';
 import { EX } from '@/features/runsheet/fixtures';
 import { makeExercise, type Runsheet } from '@/features/runsheet/model';
 import { TimerScreen } from './components/timer-screen';
@@ -68,5 +69,16 @@ describe('the timer announces where the session is', () => {
     expect(v.text()).toBe(before);
     v.again(R.tick(rest, t0 + 50_000), t0 + 50_000);
     expect(v.text()).toBe('Bodyweight squat, 15 reps');
+  });
+
+  it('says nothing when told not to announce', () => {
+    const view = render(<TimerScreen runsheet={circuit()} state={running()} now={t0 + 5000} onDone={noop} onSkip={noop} onBack={noop} onPause={noop} onResume={noop} onAdjust={noop} onSetReps={noop} onDrop={noop} onFinish={noop} onExit={noop} sets={sets} announce={false} />);
+    expect(view.container.querySelectorAll('[aria-live]')).toHaveLength(0);
+  });
+
+  it('the landing page hero demo, which loops, has no live region', () => {
+    const view = render(<TimerDemo />);
+    expect(view.container.querySelectorAll('[aria-live]')).toHaveLength(0);
+    expect(view.container.textContent).toContain('Get ready');
   });
 });
