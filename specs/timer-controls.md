@@ -1,4 +1,4 @@
-Status: TW-025 — the big button's job, awaiting Nick's OK on the proposal below
+Status: building
 
 # Timer controls: the big button follows the step
 
