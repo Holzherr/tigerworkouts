@@ -2,8 +2,9 @@ import SwiftUI
 
 /// The one way to edit a workout (specs/unified-editing.md). The workout screen uses it before a
 /// session and the timer's Session sheet during one. One flat list: hold and drag a step within a
-/// block, into another block or out on its own; hold and drag a block's header to move the whole
-/// block. Tap a header for its rounds and rest, a step for its sheet; swipe a step to remove it.
+/// block, into another block or out on its own; hold and drag a block's header (it has a grip) to
+/// move the whole block. Tap a header for its rounds and rest, a step for its sheet; swipe a step
+/// to remove it.
 struct RunsheetEditor<Header: View>: View {
     var runsheet: Runsheet
     /// Items done or running in a live session: shown, never moved or changed.
@@ -23,6 +24,8 @@ struct RunsheetEditor<Header: View>: View {
 
     /// Settings → Default rest: what an added rest starts at.
     @AppStorage(Switches.defaultRest) private var defaultRest = 30.0
+    /// "Hold a block's header to move it", shown until OK is tapped.
+    @AppStorage("tip.blockDrag") private var blockTipSeen = false
     @State private var editingRest: RestStep?
     @State private var editingBlock: Block?
     @State private var picking: PickTarget?
@@ -53,6 +56,17 @@ struct RunsheetEditor<Header: View>: View {
         let frozen = lockedSteps
         List {
             header()
+
+            if !blockTipSeen, runsheet.items.contains(where: { $0.asBlock != nil }) {
+                HStack(spacing: 12) {
+                    Image(systemName: "line.3.horizontal").foregroundStyle(Brand.coralInk)
+                    Text("Hold a block's header to move it").font(.subheadline).foregroundStyle(Brand.ink)
+                    Spacer()
+                    Button("OK") { blockTipSeen = true }.font(.subheadline.weight(.bold)).foregroundStyle(Brand.coralInk)
+                }
+                .buttonStyle(.borderless)
+                .listRowBackground(Brand.coralSoft)
+            }
 
             Section {
                 ForEach(rows) { row in
@@ -178,10 +192,11 @@ struct RunsheetEditor<Header: View>: View {
         }
     }
 
-    /// The header is a row of its own, so it can be dragged: the whole block follows it.
+    /// The header is a row of its own, so it can be dragged: the whole block follows it. The grip at
+    /// its right says so; press-and-drag works anywhere on the header.
     private func blockHeader(_ b: Block, done: Bool) -> some View {
         Button { if !done { editingBlock = b } } label: {
-            HStack(alignment: .firstTextBaseline) {
+            HStack(spacing: 8) {
                 Text(b.name.isEmpty ? "Block" : b.name).font(.headline).foregroundStyle(done ? Brand.muted : Brand.ink)
                 Text(Format.duration(b.estimatedSeconds)).font(.footnote).foregroundStyle(Brand.muted)
                 Spacer()
@@ -190,16 +205,29 @@ struct RunsheetEditor<Header: View>: View {
                     .padding(.horizontal, 10).frame(height: 24)
                     .background(Brand.coralSoft, in: Capsule())
                     .foregroundStyle(Brand.coralInk)
+                if !done {
+                    Image(systemName: "line.3.horizontal")
+                        .font(.body.weight(.semibold))
+                        .foregroundStyle(Brand.faint)
+                        .frame(width: 44, height: 44)
+                }
             }
-            .padding(.top, 14)
+            .padding(.top, 4)
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
         .accessibilityLabel("\(b.name), \(b.modeLabel)")
         .accessibilityHint(done ? "" : "Tap for rounds and rest. Hold and drag to move the block.")
+        .accessibilityAction(named: "Move up") { nudge(b.id, by: -1) }
+        .accessibilityAction(named: "Move down") { nudge(b.id, by: 2) }
         .listRowBackground(Color.clear)
         .listRowSeparator(.hidden)
         .listRowInsets(EdgeInsets(top: 0, leading: 4, bottom: 6, trailing: 4))
+    }
+
+    private func nudge(_ id: String, by offset: Int) {
+        guard let at = runsheet.items.firstIndex(where: { $0.id == id }) else { return }
+        apply(Edit.moveBlock(runsheet, id: id, to: at + offset, locked: locked))
     }
 
     @ViewBuilder

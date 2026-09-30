@@ -1,4 +1,4 @@
-Status: TW-024, priority 1 — mockup approved by Nick 2026-09-29
+Status: building
 
 # Blocks: compact sets and an obvious drag
 

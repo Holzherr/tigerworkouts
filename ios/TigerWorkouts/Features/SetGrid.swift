@@ -1,9 +1,11 @@
 import SwiftUI
 
-/// A straight-set block (one exercise, rounds) in the editor: one row per set with its own load and
-/// reps, so a pyramid or ramping sets are written as they are done. The set number is a button
-/// that steps the set through warm-up (W), normal, drop set (D) and to failure (F). Add set copies the last row;
-/// Remove set drops it. Both change how many times the block repeats.
+/// A straight-set block (one exercise, rounds) in the editor. Sets alike in a row fold into one
+/// (`8×  − 20 +  − 0:30 +`) and a stepper there changes every set in it; Vary sets gives each set
+/// its own row, so a pyramid or ramping sets are written as they are done, and the rows fold again
+/// once an edit leaves the sets alike. The set number is a button that steps the set through
+/// warm-up (W), normal, drop set (D) and to failure (F). Add set copies the last row; Remove set
+/// drops it. Both change how many times the block repeats.
 struct SetPlanGrid: View {
     var block: Block
     var step: ExerciseStep
@@ -12,7 +14,18 @@ struct SetPlanGrid: View {
     var hint: (Int) -> String? = { _ in nil }
     var apply: (_ change: (Runsheet) -> Runsheet) -> Void
 
+    @State private var varying = false
+
     private var marks: [String] { SetType.marks((0..<block.repeatCount).map { step.plannedType($0) }) }
+
+    /// One row per run of alike sets, or one per set while varying.
+    private var runs: [Edit.SetRun] {
+        guard varying else { return Edit.setRuns(block) }
+        return (0..<block.repeatCount).map { round in
+            let p = step.plannedSet(round)
+            return Edit.SetRun(from: round, count: 1, type: step.plannedType(round), reps: p.reps, load: p.load)
+        }
+    }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
@@ -27,33 +40,34 @@ struct SetPlanGrid: View {
             .foregroundStyle(Brand.muted)
             .padding(.bottom, 4)
 
-            ForEach(0..<block.repeatCount, id: \.self) { round in
-                let planned = step.plannedSet(round)
+            ForEach(runs, id: \.from) { run in
+                let round = run.from
+                let label = run.count > 1 ? "Sets \(round + 1) to \(round + run.count)" : "Set \(round + 1)"
                 Divider()
                 VStack(alignment: .leading, spacing: 2) {
                     HStack(spacing: 8) {
-                        SetMarkButton(mark: marks[round], type: step.plannedType(round), label: "Set \(round + 1)", cycle: locked ? nil : {
-                            apply { Edit.editSet($0, block: block.id, round: round, type: step.plannedType(round).next) }
+                        SetMarkButton(mark: run.count > 1 ? "\(run.count)×" : marks[round], type: run.type, label: label, cycle: locked ? nil : {
+                            apply { Edit.editRun($0, block: block.id, run: run, type: run.type.next) }
                         })
                         .frame(width: 36, alignment: .leading)
                         if step.hasSetLoad {
-                            if Plates.kit(step.exercise) == .barbell { PlatesButton(load: planned.load) }
-                            MiniStepper(value: planned.load ?? 0, label: "Set \(round + 1) load", disabled: locked) { direction in
+                            if Plates.kit(step.exercise) == .barbell { PlatesButton(load: run.load) }
+                            MiniStepper(value: run.load ?? 0, label: "\(label) load", disabled: locked) { direction in
                                 // Read from the sheet as it is now: a held button fires many times
                                 // before this view is drawn again.
                                 apply { r in
-                                    let now = r.exerciseSteps.first { $0.id == step.id }?.plannedSet(round) ?? planned
-                                    let next = max(0, (now.load ?? 0) + direction * (step.exercise.step == 0 ? 1 : step.exercise.step))
-                                    return Edit.editSet(r, block: block.id, round: round, load: next)
+                                    let now = r.exerciseSteps.first { $0.id == step.id }?.plannedSet(round).load ?? run.load
+                                    let next = max(0, (now ?? 0) + direction * (step.exercise.step == 0 ? 1 : step.exercise.step))
+                                    return Edit.editRun(r, block: block.id, run: run, load: next)
                                 }
                             }
                             .frame(maxWidth: .infinity)
                         }
                         if let count = step.countLabel {
-                            MiniStepper(value: planned.reps, label: "Set \(round + 1) \(count.lowercased())", disabled: locked) { direction in
+                            MiniStepper(value: run.reps, label: "\(label) \(count.lowercased())", disabled: locked) { direction in
                                 apply { r in
-                                    let now = r.exerciseSteps.first { $0.id == step.id }?.plannedSet(round) ?? planned
-                                    return Edit.editSet(r, block: block.id, round: round, reps: max(1, now.reps + direction))
+                                    let now = r.exerciseSteps.first { $0.id == step.id }?.plannedSet(round).reps ?? run.reps
+                                    return Edit.editRun(r, block: block.id, run: run, reps: max(1, now + direction))
                                 }
                             }
                             .frame(maxWidth: .infinity)
@@ -77,10 +91,15 @@ struct SetPlanGrid: View {
                     }
                     .disabled(block.repeatCount <= 1)
                     Spacer()
+                    if !varying, block.repeatCount > 1 {
+                        Button("Vary sets") { varying = true }
+                    }
                 }
                 .padding(.top, 10)
             }
         }
+        // Back to folded rows once an edit leaves every set alike.
+        .onChange(of: Edit.setRuns(block).count) { _, count in if count == 1 { varying = false } }
         .accessibilityElement(children: .contain)
         .accessibilityIdentifier("set-grid")
     }

@@ -95,6 +95,9 @@ imported workouts, scores and progression, follow-along videos, Discover with re
 with your history, saved-not-done, and the next day of a program in progress; a creator done twice
 outranks any exercise overlap; For you sends the user to Search when history yields no picks),
 settings, share links, quick log, post-workout stats with a body map, a finish screen that leads with the workout count, streak, records set and deltas vs last time plus a share card (PNG), a 1–10 session effort on every result (written to Apple Health as the workout effort score on iOS 18+), offline via a service worker.
+In the editor, on web and iOS, sets alike in a row fold into one row (`8×`; its stepper changes every set, Vary sets
+gives each its own; `setRuns` in model.ts, `Edit.setRuns` on iOS), and block headers carry a grip and a one-time
+"Hold a block's header to move it" tip. Not yet: blocks folding to one line while one is dragged.
 Each session records where it was started (`startedFrom`: a Discover tab, the Up next card on home, the Me tab, Repeat, a
 share link) so the share started from a home recommendation can be measured. The iOS app writes the
 same field from its Workouts tab (Pick up again → history, Mine → mine, a catalogue section or a
