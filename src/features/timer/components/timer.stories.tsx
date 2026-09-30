@@ -18,7 +18,7 @@ const Live = ({ runsheet, ghost }: { runsheet: Runsheet; ghost?: string }) => {
 const meta = {
   title: 'Timer/TimerScreen',
   component: TimerScreen,
-  parameters: { layout: 'fullscreen', docs: { description: { component: 'The gym screen on a dark ground: block name, round counter and total time in the header with a progress bar; a huge clock (countdown or count-up); the current step as a white card with a 72px clip, name, weight or speed stepper and reps stepper; a Next row; back / pause / Done or Skip controls. A rest gets −15 s / +15 s under its clock. The coral-ink “Last time” line (card and set rows) copies the numbers from last time into the set. With a timed last session, a pill under the header reads “Round 4 — 12 s ahead”. Swipe the card to drop the exercise. Stories run the real runner with live time.' } } },
+  parameters: { layout: 'fullscreen', docs: { description: { component: 'The gym screen on a dark ground: block name, round counter and total time in the header with a progress bar; a huge clock (countdown or count-up); the current step as a white card with a 72px clip, name, weight or speed stepper and reps stepper; a Next row; a small row of Back, Pause or Done early, and Skip, over the big button: Pause on a countdown, “Set 2 of 3 done” on a set. End workout sits in the ⋯ menu top right. A rest gets −15 s / +15 s under its clock. The coral-ink “Last time” line (card and set rows) copies the numbers from last time into the set. With a timed last session, a pill under the header reads “Round 4 — 12 s ahead”. Swipe the card to drop the exercise. Stories run the real runner with live time.' } } },
   args: { runsheet: priyanka(), state: R.start(priyanka(), Date.now()), now: Date.now(), onDone: () => {}, onSkip: () => {}, onBack: () => {}, onPause: () => {}, onResume: () => {}, onAdjust: () => {}, onSetReps: () => {}, onDrop: () => {}, onFinish: () => {}, onExit: () => {} },
   decorators: [S => <div className="relative mx-auto h-[820px] w-[393px] overflow-hidden border-x border-line"><S /></div>],
 } satisfies Meta<typeof TimerScreen>;
@@ -30,3 +30,5 @@ export const PriyankasCircuit: Story = { render: () => <Live runsheet={priyanka(
 export const CindyAmrap: Story = { render: () => <Live runsheet={cindy()} /> };
 export const StraightSets: Story = { render: () => <Live runsheet={pyramid()} /> };
 export const RacingLastTime: Story = { render: () => <Live runsheet={priyanka()} ghost="Round 4 — 12 s ahead" /> };
+/** Past the lead-in on set 1 of the pyramid: no clock runs, so the big button logs the set. */
+export const OnASet: Story = { args: { runsheet: pyramid(), state: R.advance(R.start(pyramid(), 0), 0, { skipped: true }), now: 0 } };
