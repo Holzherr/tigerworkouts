@@ -159,6 +159,16 @@ struct TimerView: View {
                         .background(Brand.Night.raised, in: Circle())
                 }
                 .accessibilityLabel("Session overview")
+                Menu {
+                    Button("Finish and save") { runner.finish() }
+                    Button("Discard", role: .destructive) { discard() }
+                } label: {
+                    Image(systemName: "ellipsis")
+                        .font(.system(size: 16, weight: .bold))
+                        .frame(width: 44, height: 44)
+                        .background(Brand.Night.raised, in: Circle())
+                }
+                .accessibilityLabel("Session menu")
             }
             if let ghost = runner.ghost {
                 // Racing the last session of this workout: one signed number, at the latest round or set.
@@ -734,12 +744,14 @@ struct TimerView: View {
         }
     }
 
+    /// A countdown ends by itself: its big button is Pause. A set's says which set it logs.
     private var controls: some View {
         VStack(spacing: 10) {
             if runner.state.phase == .ready {
                 Button("Start \(runner.slot?.blockName ?? "block")") { runner.startBlock() }
                     .buttonStyle(BigButtonStyle())
             } else {
+                let countdown = runner.clock.left != nil || runner.state.phase == .lead
                 HStack(spacing: 10) {
                     // Undoes a stray Done — on the Lock Screen too, where there is no way back.
                     Button {
@@ -752,12 +764,13 @@ struct TimerView: View {
                     .disabled(runner.state.i == 0 || runner.state.phase == .lead)
                     .accessibilityLabel("Previous step")
 
-                    Button {
-                        runner.pauseOrResume()
-                    } label: {
-                        Label(runner.state.phase == .paused ? "Resume" : "Pause", systemImage: runner.state.phase == .paused ? "play.fill" : "pause.fill")
+                    if !countdown {
+                        pauseButton.buttonStyle(NightButtonStyle())
+                    } else if runner.timedWork {
+                        // Ends the countdown early and logs the time it ran.
+                        Button("Done early") { runner.done() }
+                            .buttonStyle(NightButtonStyle())
                     }
-                    .buttonStyle(NightButtonStyle())
 
                     Button {
                         runner.skip()
@@ -765,14 +778,30 @@ struct TimerView: View {
                         Label("Skip", systemImage: "forward.end.fill")
                     }
                     .buttonStyle(NightButtonStyle())
+                    .accessibilityLabel(runner.state.phase == .lead ? "Skip" : isRest ? "Skip rest" : "Skip this step")
+                    .accessibilityIdentifier("Skip")
                 }
-                // On a countdown, Done ends it early and logs the time it ran.
-                Button(runner.timedWork ? "Done early" : "Done") { runner.done() }
-                    .buttonStyle(BigButtonStyle(tint: accent))
+                if countdown {
+                    pauseButton.buttonStyle(BigButtonStyle(tint: accent))
+                } else {
+                    Button(setDone) { runner.done() }
+                        .buttonStyle(BigButtonStyle(tint: accent))
+                        .accessibilityIdentifier("Done")
+                }
             }
         }
         .padding(.horizontal, 16)
         .padding(.bottom, 8)
+    }
+
+    private var pauseButton: some View {
+        Button(runner.state.phase == .paused ? "Resume" : "Pause", systemImage: runner.state.phase == .paused ? "play.fill" : "pause.fill") { runner.pauseOrResume() }
+    }
+
+    /// "Set 2 of 4 done". An amrap has no last round to count towards; a one-off step is just Done.
+    private var setDone: String {
+        guard let s = runner.slot, s.kind == .work, s.mode == .amrap || s.rounds > 1 else { return "Done" }
+        return s.mode == .amrap ? "Set \(s.round + 1) done" : "Set \(s.round + 1) of \(s.rounds) done"
     }
 
     // MARK: - Overview
