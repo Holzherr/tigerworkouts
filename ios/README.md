@@ -93,7 +93,9 @@ Two things are yours to do once, because they need credentials or admin rights:
 
 `./testflight.sh` archives and uploads to App Store Connect (bundle `dev.brambruesch.tigerworkouts`).
 App Store Connect numbers the builds, so nothing needs bumping between uploads. Testers join through
-the public TestFlight link on brambruesch.dev/tigerworkouts.
+the public TestFlight link (https://testflight.apple.com/join/r8uFaWKY) on brambruesch.dev/tiger.
+That page's source is `site/`; it deploys into the `brambruesch-dev` Pages project alongside Sloth's
+`/sloth/` (a Pages deploy replaces every file, so assemble both before `wrangler pages deploy`).
 
 ## Tests
 
