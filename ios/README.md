@@ -83,11 +83,17 @@ After changing `project.yml`, re-run `xcodegen generate` in `ios/`.
 
 Two things are yours to do once, because they need credentials or admin rights:
 
-1. **Signing.** `DEVELOPMENT_TEAM` is empty. Set your team on the TigerWorkouts target in Xcode
-   (Signing & Capabilities) before running on a device.
+1. **Signing.** Signed by the paid team `2JDH6Z4WZ8` with automatic signing; Xcode registers the
+   App IDs and capabilities itself (`-allowProvisioningUpdates`).
 2. **Google sign-in.** Add `tigerworkouts://auth` to Supabase → Authentication → URL Configuration →
    Redirect URLs. Until then use the email-code route, which needs no project configuration and is
    the default on the sign-in screen.
+
+## TestFlight
+
+`./testflight.sh` archives and uploads to App Store Connect (bundle `dev.brambruesch.tigerworkouts`).
+App Store Connect numbers the builds, so nothing needs bumping between uploads. Testers join through
+the public TestFlight link on brambruesch.dev/tigerworkouts.
 
 ## Tests
 
