@@ -1293,4 +1293,18 @@ final class WalkthroughUITests: XCTestCase {
         tap(app.buttons["Done"])
     }
 
+    /// Pause is big on the lead-in, "Set 1 of 10 done" on the burpees; Finish is in the ⋯ menu.
+    func testTimerControls() {
+        open("EMOM 10: 5 burpees")
+        tap(app.buttons["Start workout"])
+        XCTAssertTrue(app.buttons["Pause"].waitForExistence(timeout: 5), "a countdown's big button is Pause")
+        XCTAssertTrue(app.buttons["Set 1 of 10 done"].waitForExistence(timeout: 12), "a set's big button says which set it logs")
+        XCTAssertEqual(app.buttons["Skip"].label, "Skip this step")
+        snap("110 Set 1 of 10 done")
+        tap(app.buttons["Session menu"])
+        XCTAssertTrue(app.buttons["Discard"].waitForExistence(timeout: 5), "the ⋯ menu should offer Discard")
+        tap(app.buttons["Finish and save"])
+        tap(app.buttons["Done"])
+    }
+
 }
