@@ -1,11 +1,10 @@
 import SwiftUI
 
-/// A straight-set block (one exercise, rounds) in the editor. Sets alike in a row fold into one
-/// (`8×  − 20 +  − 0:30 +`) and a stepper there changes every set in it; Vary sets gives each set
-/// its own row, so a pyramid or ramping sets are written as they are done, and the rows fold again
-/// once an edit leaves the sets alike. The set number is a button that steps the set through
-/// warm-up (W), normal, drop set (D) and to failure (F). Add set copies the last row; Remove set
-/// drops it. Both change how many times the block repeats.
+/// A straight-set block (one exercise, rounds) in the editor: sets alike in a row fold into one row
+/// (`8×`) whose steppers change them all; Vary sets gives each set its own load and
+/// reps, so a pyramid or ramping sets are written as they are done. The set number is a button
+/// that steps the set through warm-up (W), normal, drop set (D) and to failure (F). Add set copies the last row;
+/// Remove set drops it. Both change how many times the block repeats.
 struct SetPlanGrid: View {
     var block: Block
     var step: ExerciseStep

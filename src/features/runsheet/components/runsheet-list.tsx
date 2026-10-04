@@ -130,8 +130,7 @@ export const SetRuns = ({ block, onChange, onVary, hintFor, equipment }: SetGrid
  * block steps and an invisible end marker per block. Drag a row and a coral line shows where it
  * lands, following the finger (the one drag style since 22 Sep); hold a lifted
  * row over the middle of another for 250ms and it becomes a group target (orange ring): release
- * to make a block or join one. Blocks drag as a chunk by their header, which carries a grip; a
- * one-time tip says so. Tap a row to expand it,
+ * to make a block or join one. Blocks drag as a chunk by their header. Tap a row to expand it,
  * swipe or ✕ to remove, ＋ on a seam to insert there.
  */
 export const RunsheetList = ({ items, onChange, onPickExercise, onSwapExercise, expandedId: expandedProp, onExpandedChange, autoRest = 30, resolveTarget, hintFor, setHintFor, equipment, refTitle, onRemoved, className }: RunsheetListProps) => {
@@ -146,7 +145,6 @@ export const RunsheetList = ({ items, onChange, onPickExercise, onSwapExercise, 
   const [activeId, setActiveId] = useState<string | null>(null);
   const [varying, setVarying] = useState<string | null>(null);
   const [tipSeen, setTipSeen] = useState(() => localStorage.getItem(TIP_KEY) === '1');
-
   const [groupTarget, setGroupTarget] = useState<string | null>(null);
   const [insertion, setInsertion] = useState<{ id: string; where: 'before' | 'after' } | null>(null);
   const dwell = useRef<{ id: string; since: number } | null>(null);
@@ -437,14 +435,7 @@ export const RunsheetList = ({ items, onChange, onPickExercise, onSwapExercise, 
             <div className="flex items-center gap-2.5 rounded-card bg-brand-soft py-1 pr-1 pl-3 text-[14px] font-semibold text-ink">
               <Menu className="size-4 shrink-0 text-brand-ink" />
               <span className="flex-1">Hold a block's header to move it</span>
-              <Button
-                variant="quiet"
-                className="text-brand-ink"
-                onClick={() => {
-                  localStorage.setItem(TIP_KEY, '1');
-                  setTipSeen(true);
-                }}
-              >
+              <Button variant="quiet" className="text-brand-ink" onClick={() => (localStorage.setItem(TIP_KEY, '1'), setTipSeen(true))}>
                 OK
               </Button>
             </div>

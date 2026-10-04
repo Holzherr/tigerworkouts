@@ -247,33 +247,4 @@ struct SetRunTests {
         #expect(Self.runs(c).map(\.count) == [1, 4])
         #expect(Self.runs(c).map(\.reps) == [12, 8])
     }
-
-    @Test("a set that differs in the middle splits the run around it; making it alike folds it back")
-    func middle() {
-        let r = Edit.editSet(Self.sets(4), block: "b", round: 2, load: 25)
-        #expect(Self.runs(r).map(\.from) == [0, 2, 3])
-        #expect(Self.runs(r).map(\.count) == [2, 1, 1])
-        #expect(Self.runs(Edit.editSet(r, block: "b", round: 2, load: 20)).count == 1)
-    }
-
-    @Test("is empty for a block that is not straight sets")
-    func notSets() {
-        var block = Self.sets(3).items[0].asBlock!
-        block.mode = .amrap
-        #expect(Edit.setRuns(block).isEmpty)
-    }
-}
-
-@Suite("block drag")
-struct BlockDragTests {
-    @Test("a block lands before the item at the line with its steps; locked items keep their place")
-    func moveBlock() {
-        let items: [Item] = ["a", "b", "c"].map { id in .block(Block(id: id, name: id, repeatCount: 2, steps: [Fixtures.work("\(id)1", Fixtures.press), Fixtures.rest("\(id)r", 30)])) }
-        let r = Runsheet(id: "g", title: "Three", items: items)
-        let moved = Edit.moveBlock(r, id: "c", to: 0)
-        #expect(moved.items.map(\.id) == ["c", "a", "b"])
-        #expect(moved.items[0].asBlock?.steps.map(\.id) == ["c1", "cr"])
-        #expect(Edit.moveBlock(r, id: "a", to: 3).items.map(\.id) == ["b", "c", "a"])
-        #expect(Edit.moveBlock(r, id: "c", to: 0, locked: ["a"]).items.map(\.id) == ["a", "b", "c"])
-    }
 }

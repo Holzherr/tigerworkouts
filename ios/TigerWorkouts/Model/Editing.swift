@@ -208,15 +208,6 @@ enum Edit {
         return Array(next.items.prefix(fixed.count)) == Array(fixed) ? next : r
     }
 
-    /// A block dropped before item `destination`, an index in the list as it was (`items.count` is
-    /// the end): the editor's block drag and Move up / Move down. Locked items keep their place.
-    static func moveBlock(_ r: Runsheet, id: String, to destination: Int, locked: Set<String> = []) -> Runsheet {
-        guard let at = r.items.firstIndex(where: { $0.id == id }) else { return r }
-        let next = moveItems(r, from: [at], to: max(0, min(r.items.count, destination)))
-        let fixed = r.items.prefix { locked.contains($0.id) }
-        return Array(next.items.prefix(fixed.count)) == Array(fixed) ? next : r
-    }
-
     static func findStep(_ r: Runsheet, _ stepId: String) -> Step? {
         for item in r.items {
             switch item {

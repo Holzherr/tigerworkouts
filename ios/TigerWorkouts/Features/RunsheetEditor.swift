@@ -2,9 +2,8 @@ import SwiftUI
 
 /// The one way to edit a workout (specs/unified-editing.md). The workout screen uses it before a
 /// session and the timer's Session sheet during one. One flat list: hold and drag a step within a
-/// block, into another block or out on its own; hold and drag a block's header (it has a grip) to
-/// move the whole block. Tap a header for its rounds and rest, a step for its sheet; swipe a step
-/// to remove it.
+/// block, into another block or out on its own; hold and drag a block's header to move the whole
+/// block. Tap a header for its rounds and rest, a step for its sheet; swipe a step to remove it.
 struct RunsheetEditor<Header: View>: View {
     var runsheet: Runsheet
     /// Items done or running in a live session: shown, never moved or changed.
@@ -192,8 +191,7 @@ struct RunsheetEditor<Header: View>: View {
         }
     }
 
-    /// The header is a row of its own, so it can be dragged: the whole block follows it. The grip at
-    /// its right says so; press-and-drag works anywhere on the header.
+    /// The header is a row of its own, so it can be dragged: the whole block follows it.
     private func blockHeader(_ b: Block, done: Bool) -> some View {
         Button { if !done { editingBlock = b } } label: {
             HStack(spacing: 8) {
@@ -218,16 +216,9 @@ struct RunsheetEditor<Header: View>: View {
         .buttonStyle(.plain)
         .accessibilityLabel("\(b.name), \(b.modeLabel)")
         .accessibilityHint(done ? "" : "Tap for rounds and rest. Hold and drag to move the block.")
-        .accessibilityAction(named: "Move up") { nudge(b.id, by: -1) }
-        .accessibilityAction(named: "Move down") { nudge(b.id, by: 2) }
         .listRowBackground(Color.clear)
         .listRowSeparator(.hidden)
         .listRowInsets(EdgeInsets(top: 0, leading: 4, bottom: 6, trailing: 4))
-    }
-
-    private func nudge(_ id: String, by offset: Int) {
-        guard let at = runsheet.items.firstIndex(where: { $0.id == id }) else { return }
-        apply(Edit.moveBlock(runsheet, id: id, to: at + offset, locked: locked))
     }
 
     @ViewBuilder

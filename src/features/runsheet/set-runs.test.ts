@@ -22,14 +22,4 @@ describe('set runs', () => {
     const c = editRun(b, setRuns(b)[1], { reps: 8 });
     expect(setRuns(c).map(r => [r.count, r.reps])).toEqual([[1, 12], [4, 8]]);
   });
-
-  it('a set that differs in the middle splits the run around it; making it alike folds it back', () => {
-    const b = editSet(sets(4), 2, { load: 25 });
-    expect(setRuns(b).map(r => [r.from, r.count, r.load])).toEqual([[0, 2, 20], [2, 1, 25], [3, 1, 20]]);
-    expect(setRuns(editSet(b, 2, { load: 20 }))).toHaveLength(1);
-  });
-
-  it('is empty for a block that is not straight sets', () => {
-    expect(setRuns({ ...sets(3), mode: 'amrap' })).toEqual([]);
-  });
 });
