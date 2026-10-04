@@ -107,7 +107,8 @@ line in `.github/workflows/deploy.yml`'s test step; `ios/TigerWorkouts/Resources
 - `node tools/validate-exercises.mjs` → exit 0, "399 exercises with details", "all valid".
 - `node tools/validate-imports.mjs` → exit 0; `npm run build`, `npm test` exit 0; iOS tests pass.
 - `npm run export:ios`: `git diff --stat ios/` lists only `exercises.json`, and
-  `grep -c '"key"' ios/TigerWorkouts/Resources/exercises.json` is 50 higher than on `main`.
+  `grep -o '"key"' ios/TigerWorkouts/Resources/exercises.json | wc -l` goes from 349 to 399 (the
+  file is one minified line, so `grep -c` stays at 1).
 - `deploy.yml`'s test step runs `node tools/validate-exercises.mjs`.
 
 ### 2 · M — Exercise pages and index at build time
