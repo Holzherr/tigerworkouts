@@ -7,10 +7,12 @@ export interface CreatorPageCardProps {
   /** Workouts you have made public; the page lists these. */
   publicCount: number;
   onOpenPage: (key: string) => void;
+  /** Opens the coach dashboard: coaching is the private side of the same workouts. */
+  onCoach?: () => void;
 }
 
 /** Me tab: your public page's name in the link, a short bio, and how many workouts it shows. */
-export const CreatorPageCard = ({ publicCount, onOpenPage }: CreatorPageCardProps) => {
+export const CreatorPageCard = ({ publicCount, onOpenPage, onCoach }: CreatorPageCardProps) => {
   const [id, setId] = useState<string | null>(null);
   const [handle, setHandle] = useState('');
   const [bio, setBio] = useState('');
@@ -55,6 +57,11 @@ export const CreatorPageCard = ({ publicCount, onOpenPage }: CreatorPageCardProp
           Save
         </Button>
       </div>
+      {onCoach && (
+        <button type="button" onClick={onCoach} className="block min-h-11 w-full border-t border-line-soft pt-2 text-left text-[13px] text-muted">
+          Train people one to one? <span className="font-bold text-brand">Coach clients</span>: send a workout to one person and see what they did.
+        </button>
+      )}
     </div>
   );
 };
