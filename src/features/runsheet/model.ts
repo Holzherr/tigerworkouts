@@ -212,12 +212,17 @@ export const editedCopy = (edited: Runsheet, original: Runsheet, id: string, cre
   ownerId: undefined,
 });
 
-/** The first edit of a workout you do not own: your copy, "(mine)" as on the phone. One copy per
- * original: when `mine` holds one already, that copy takes this edit under its own id. */
-export const copyOnEdit = (edited: Runsheet, original: Runsheet, mine: Runsheet[], newId: string, creator: string): Runsheet => {
-  const had = mine.find(w => w.copyOf === (original.copyOf ?? original.id ?? original.title));
+/** The first edit of a workout you do not own: your copy, "(mine)" as on the phone. */
+export const copyOnEdit = (edited: Runsheet, original: Runsheet, newId: string, creator: string): Runsheet => {
   const title = edited.title.endsWith(' (mine)') ? edited.title : `${edited.title} (mine)`;
-  return { ...editedCopy({ ...edited, title }, original, had?.id ?? newId, creator), icon: had?.icon ?? edited.icon };
+  return editedCopy({ ...edited, title }, original, newId, creator);
+};
+
+/** One copy per original: your copy of a workout you do not own, if you made one. Its page is the
+ * original's page from then on, so a later edit lands on the copy with its earlier edits intact. */
+export const copyIn = (mine: Runsheet[], original: Runsheet): Runsheet | undefined => {
+  const root = original.copyOf ?? original.id ?? original.title;
+  return mine.find(w => w.copyOf === root);
 };
 
 /** The ids a workout's sessions are logged under: its own, and the one it was copied from. */

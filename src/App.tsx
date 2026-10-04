@@ -10,7 +10,7 @@ import { FULL_LIBRARY } from '@/features/workouts/imported';
 import { WorkoutPreviewScreen } from '@/features/discover/components/workout-preview-screen';
 import { EditorScreen } from '@/features/runsheet/components/editor-screen';
 import { EX, withStarter } from '@/features/runsheet/fixtures';
-import { copyOnEdit, forLabel, lineage, makeExercise, measureOf, ofWorkout, resolveRefs, scoreType, shortUnit, type ExerciseStep, type Runsheet } from '@/features/runsheet/model';
+import { copyIn, copyOnEdit, forLabel, lineage, makeExercise, measureOf, ofWorkout, resolveRefs, scoreType, shortUnit, type ExerciseStep, type Runsheet } from '@/features/runsheet/model';
 import { lastSet, lastSetLabel, lastSets, lastTimeLabel, withLastUsed } from '@/features/runsheet/last-used';
 import { applyCommands, parsePlan } from '@/features/runsheet/parse-text';
 import { isImage, readImport } from '@/features/runsheet/import-file';
@@ -246,14 +246,18 @@ export default function App() {
   );
 
   if (route.name === 'workout') {
-    const r = byId.get(route.id);
-    if (!r) return shell('discover', <Missing />);
+    const found = byId.get(route.id);
+    if (!found) return shell('discover', <Missing />);
+    const foundOwn = st.workouts.some(w => w.id === wid(found));
+    // One copy per original: once you have a copy, the original's page is your copy's page.
+    const r = (!foundOwn && copyIn(st.workouts, found)) || found;
+    const id = wid(r);
     const stall = live(workoutStall(r, st.results, new Date()));
-    const own = st.workouts.some(w => w.id === wid(r));
-    // The page is the one editor: yours saves in place, anyone else's goes to your one copy of it.
+    const own = st.workouts.some(w => w.id === id);
+    // The page is the one editor: yours saves in place, anyone else's first edit makes your copy.
     const edit = (next: Runsheet) => {
       if (own) return act.saveWorkout(next);
-      const copy = copyOnEdit(next, r, st.workouts, `u-${Date.now().toString(36)}`, st.name);
+      const copy = copyOnEdit(next, r, `u-${Date.now().toString(36)}`, st.name);
       act.saveWorkout({ ...copy, icon: copy.icon ?? defaultIcon(copy.id!) });
       goReplace(`/w/${encodeURIComponent(copy.id!)}`);
     };
@@ -265,13 +269,13 @@ export default function App() {
           onDismissStall={stall ? () => dismiss(stall) : undefined}
           history={st.results.filter(ofWorkout(r))}
           lastTime={lastTime}
-          editor={{ onChange: edit, onPickExercise: pick, onSwapExercise: pick, resolveTarget: resolve, hintFor: lastTime, setHintFor: lastSetHint, equipment: st.equipment, refTitle, autoRest: defaultRest }}
+          editor={{ onChange: edit, onPickExercise: pick, onSwapExercise: pick, resolveTarget: resolve, hintFor: lastTime, setHintFor: lastSetHint, equipment: st.equipment, refTitle, autoRest: defaultRest, historyFor: s => (st.results.some(x => x.steps.some(y => y.exerciseKey === s.exercise.key)) ? () => go(exerciseLink(s.exercise.key)) : undefined) }}
           onBack={() => go('/discover')}
-          onStart={() => (unlockAudio(), setDrafted(null), go(`/do/${encodeURIComponent(route.id)}`))}
-          onFollowAlong={r.video ? () => go(`/follow/${encodeURIComponent(route.id)}`) : undefined}
-          onLogOnly={() => go(`/result/${encodeURIComponent(route.id)}`)}
-          onSave={() => act.toggleSaved(route.id)}
-          saved={st.saved.includes(route.id)}
+          onStart={() => (unlockAudio(), setDrafted(null), go(`/do/${encodeURIComponent(id)}`))}
+          onFollowAlong={r.video ? () => go(`/follow/${encodeURIComponent(id)}`) : undefined}
+          onLogOnly={() => go(`/result/${encodeURIComponent(id)}`)}
+          onSave={() => act.toggleSaved(id)}
+          saved={st.saved.includes(id)}
           onShare={async () => { const out = await shareLink(r.title, shareUrl(r)); say(out === 'copied' ? 'Link copied' : out === 'shared' ? 'Shared' : 'Could not share'); }}
           onCreator={r.ownerId || (cloud.user && st.workouts.some(w => w.id === wid(r))) ? () => go(`/c/${r.ownerId ?? cloud.user!.id}`) : undefined}
           onTogglePublic={cloud.user && st.workouts.some(w => w.id === wid(r)) ? () => { act.saveWorkout({ ...r, public: !r.public }); say(r.public ? 'Private now' : 'On your public page'); } : undefined}

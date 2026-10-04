@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { EX } from './fixtures';
-import { addBlock, copyOnEdit, makeExercise, moveRowTo, type Block, type Runsheet } from './model';
+import { addBlock, copyIn, copyOnEdit, makeExercise, moveRowTo, type Block, type Runsheet } from './model';
 
 const sets = (id: string, repeat = 5): Block => ({ kind: 'block', id, name: id, repeat, steps: [{ ...makeExercise(EX.bb_back_squat, { forMode: 'reps', forValue: 5 }), id: `e-${id}` }] });
 
@@ -21,12 +21,14 @@ describe('copyOnEdit', () => {
   const original: Runsheet = { id: 'sl-a', title: 'StrongLifts A', source: { title: 'StrongLifts A', author: 'Fixture Coach', kind: 'program' }, public: true, items: [sets('sq')] };
   const edited = (repeat: number): Runsheet => ({ ...original, items: [sets('sq', repeat)] });
   it('makes a private copy of yours under a new id, pointing back at the original', () => {
-    const copy = copyOnEdit(edited(6), original, [], 'u-1', 'Sam');
+    const copy = copyOnEdit(edited(6), original, 'u-1', 'Sam');
     expect(copy).toMatchObject({ id: 'u-1', title: 'StrongLifts A (mine)', copyOf: 'sl-a', public: false, source: { kind: 'user' }, items: [{ repeat: 6 }] });
-    expect(copyOnEdit(edited(7), copy, [copy], 'u-2', 'Sam').title).toBe('StrongLifts A (mine)');
+    expect(copyOnEdit(edited(7), copy, 'u-2', 'Sam')).toMatchObject({ title: 'StrongLifts A (mine)', copyOf: 'sl-a' });
   });
-  it('a second edit of the original updates that copy instead of making another', () => {
-    const first = { ...copyOnEdit(edited(6), original, [], 'u-1', 'Sam'), icon: { kind: 'image' as const, url: 'data:x' } };
-    expect(copyOnEdit(edited(4), original, [first], 'u-2', 'Sam')).toMatchObject({ id: 'u-1', icon: first.icon, items: [{ repeat: 4 }] });
+  it('the original finds your one copy, with every edit made to it since', () => {
+    const first = copyOnEdit(edited(6), original, 'u-1', 'Sam');
+    const renamed: Runsheet = { ...first, title: 'Squat day', public: true, icon: { kind: 'image', url: 'data:x' } };
+    expect(copyIn([renamed], original)).toBe(renamed);
+    expect(copyIn([renamed], { ...original, id: 'sl-b' })).toBeUndefined();
   });
 });

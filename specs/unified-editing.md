@@ -116,7 +116,8 @@ Two M items, in this order:
 - Web (2026-10-04): the workout page is the one editor; the Edit route and Save as mine are gone.
   A block header opens its sheet and drags the block; Add block, Add a one-off exercise under the
   list. A first edit of a workout not yours saves a "(mine)" copy (step ids kept, as on iOS) and
-  the page switches to it; an edit on the original updates that copy. Search lists no copies, Saved
+  the page switches to it; from then on the original's page is the copy's page, so later edits land
+  on the copy with its earlier edits, name and public flag intact. Search lists no copies, Saved
   shows the copy for its original, `recommend()` counts a copy's session as the original's.
 - Not yet: one copy per original on iOS (a second edit of the original makes a second copy).
 
