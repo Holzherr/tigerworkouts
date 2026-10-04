@@ -10,9 +10,8 @@ import { FULL_LIBRARY } from '@/features/workouts/imported';
 import { WorkoutPreviewScreen } from '@/features/discover/components/workout-preview-screen';
 import { EditorScreen } from '@/features/runsheet/components/editor-screen';
 import { EX, withStarter } from '@/features/runsheet/fixtures';
-import { editedCopy, forLabel, lineage, makeExercise, measureOf, ofWorkout, resolveRefs, scoreType, shortUnit, type ExerciseStep, type Runsheet } from '@/features/runsheet/model';
+import { copyOnEdit, forLabel, lineage, makeExercise, measureOf, ofWorkout, resolveRefs, scoreType, shortUnit, type ExerciseStep, type Runsheet } from '@/features/runsheet/model';
 import { lastSet, lastSetLabel, lastSets, lastTimeLabel, withLastUsed } from '@/features/runsheet/last-used';
-import { patchStep } from '@/features/runsheet/patch-step';
 import { applyCommands, parsePlan } from '@/features/runsheet/parse-text';
 import { isImage, readImport } from '@/features/runsheet/import-file';
 import { appLink, CreatorScreen } from '@/features/creators/components/creator-screen';
@@ -75,14 +74,13 @@ const TABS = [
 ] as const;
 type Tab = (typeof TABS)[number]['id'];
 
-type Route = { name: 'tab'; tab: Tab; sub?: string } | { name: 'new' } | { name: 'workout' | 'edit' | 'follow' | 'result' | 'do' | 'session' | 'import' | 'log' | 'creator' | 'exercise'; id: string };
+type Route = { name: 'tab'; tab: Tab; sub?: string } | { name: 'new' } | { name: 'workout' | 'follow' | 'result' | 'do' | 'session' | 'import' | 'log' | 'creator' | 'exercise'; id: string };
 
 const parse = (hash: string): Route => {
   const seg = hash.replace(/^#\/?/, '').split('/');
   const id = seg[1] ? decodeURIComponent(seg[1]) : '';
   if (seg[0] === 'new') return { name: 'new' };
-  if (seg[0] === 'w' && id) return { name: 'workout', id };
-  if (seg[0] === 'edit' && id) return { name: 'edit', id };
+  if ((seg[0] === 'w' || seg[0] === 'edit') && id) return { name: 'workout', id };
   if (seg[0] === 'follow' && id) return { name: 'follow', id };
   if (seg[0] === 'result' && id) return { name: 'result', id };
   if (seg[0] === 'do' && id) return { name: 'do', id };
@@ -189,7 +187,7 @@ export default function App() {
   const [toast, setToast] = useState<string | null>(null);
   const say = (m: string) => { setToast(m); setTimeout(() => setToast(null), 2500); };
   const invite = async () => { const out = await shareLink('TigerWorkouts', location.origin + location.pathname); say(out === 'copied' ? 'Link copied' : out === 'shared' ? 'Shared' : 'Could not share'); };
-  // A one-off edited copy for "Edit & start", and what the timer recorded for the result sheet. Each
+  // A new workout not saved yet, and what the timer recorded for the result sheet. Each
   // belongs to one workout: left over from another, it must not stand in for this one.
   const [drafted, setDrafted] = useState<{ for: string; r: Runsheet } | null>(null);
   const draftOf = (id: string) => (drafted?.for === id ? drafted.r : null);
@@ -251,6 +249,14 @@ export default function App() {
     const r = byId.get(route.id);
     if (!r) return shell('discover', <Missing />);
     const stall = live(workoutStall(r, st.results, new Date()));
+    const own = st.workouts.some(w => w.id === wid(r));
+    // The page is the one editor: yours saves in place, anyone else's goes to your one copy of it.
+    const edit = (next: Runsheet) => {
+      if (own) return act.saveWorkout(next);
+      const copy = copyOnEdit(next, r, st.workouts, `u-${Date.now().toString(36)}`, st.name);
+      act.saveWorkout({ ...copy, icon: copy.icon ?? defaultIcon(copy.id!) });
+      goReplace(`/w/${encodeURIComponent(copy.id!)}`);
+    };
     return full(
         <WorkoutPreviewScreen
           runsheet={r}
@@ -259,17 +265,14 @@ export default function App() {
           onDismissStall={stall ? () => dismiss(stall) : undefined}
           history={st.results.filter(ofWorkout(r))}
           lastTime={lastTime}
-          onExerciseHistory={s => go(exerciseLink(s.exercise.key))}
-          hasHistory={s => st.results.some(x => x.steps.some(y => y.exerciseKey === s.exercise.key))}
+          editor={{ onChange: edit, onPickExercise: pick, onSwapExercise: pick, resolveTarget: resolve, hintFor: lastTime, setHintFor: lastSetHint, equipment: st.equipment, refTitle, autoRest: defaultRest }}
           onBack={() => go('/discover')}
           onStart={() => (unlockAudio(), setDrafted(null), go(`/do/${encodeURIComponent(route.id)}`))}
-          onEditAndStart={() => (draftFor(route.id)(structuredClone(resolveRefs(r, lookup))), go(`/edit/${encodeURIComponent(route.id)}`))}
           onFollowAlong={r.video ? () => go(`/follow/${encodeURIComponent(route.id)}`) : undefined}
           onLogOnly={() => go(`/result/${encodeURIComponent(route.id)}`)}
           onSave={() => act.toggleSaved(route.id)}
           saved={st.saved.includes(route.id)}
           onShare={async () => { const out = await shareLink(r.title, shareUrl(r)); say(out === 'copied' ? 'Link copied' : out === 'shared' ? 'Shared' : 'Could not share'); }}
-          onStepChange={st.workouts.some(w => w.id === wid(r)) ? (stepId, patch) => act.saveWorkout(patchStep(r, stepId, patch)) : undefined}
           onCreator={r.ownerId || (cloud.user && st.workouts.some(w => w.id === wid(r))) ? () => go(`/c/${r.ownerId ?? cloud.user!.id}`) : undefined}
           onTogglePublic={cloud.user && st.workouts.some(w => w.id === wid(r)) ? () => { act.saveWorkout({ ...r, public: !r.public }); say(r.public ? 'Private now' : 'On your public page'); } : undefined}
           appHref={appLink(`w/${encodeURIComponent(wid(r))}`)}
@@ -313,46 +316,6 @@ export default function App() {
           onPastePlan={() => setPasteOpen(true)}
         />
         <PasteSheet open={pasteOpen} onOpenChange={setPasteOpen} library={library} onUse={items => { draftFor('new')({ ...r, items }); setPasteOpen(false); }} />
-      </>
-    );
-  }
-  if (route.name === 'edit') {
-    const base = byId.get(route.id);
-    const r = draftOf(route.id) ?? (base ? structuredClone(resolveRefs(base, lookup)) : null);
-    if (!r) return shell('discover', <Missing />);
-    return full(
-      <>
-        <EditorScreen
-          runsheet={r}
-          onChange={draftFor(route.id)}
-          onPickExercise={pick}
-          onSwapExercise={pick}
-          onBack={() => (setDrafted(null), go(`/w/${encodeURIComponent(route.id)}`))}
-          onReset={() => draftFor(route.id)(base ? structuredClone(resolveRefs(base, lookup)) : null)}
-          onStart={() => (unlockAudio(), go(`/do/${encodeURIComponent(route.id)}`))}
-          onSaveAsMine={() => {
-            // Your own workout saves in place; anything else becomes a copy of yours.
-            const own = !!base?.id && st.workouts.some(w => w.id === base.id);
-            const id = own ? base!.id! : `u-${Date.now().toString(36)}`;
-            const mine: Runsheet = own || !base ? { ...r, id, icon: r.icon ?? defaultIcon(id), ownerId: undefined } : { ...editedCopy(r, base, id, st.name), icon: r.icon ?? defaultIcon(id) };
-            act.saveWorkout(mine);
-            setDrafted(null);
-            say(own ? 'Saved' : 'Saved to My workouts');
-            go(`/w/${encodeURIComponent(id)}`);
-          }}
-          resolveTarget={resolve}
-          hintFor={lastTime}
-          setHintFor={lastSetHint}
-          equipment={st.equipment}
-          refTitle={refTitle}
-          autoRest={defaultRest}
-          dirty={!!draftOf(route.id) && (!base || JSON.stringify(r) !== JSON.stringify(resolveRefs(base, lookup)))}
-          own={!!base?.id && st.workouts.some(w => w.id === base.id)}
-          mode="tonight"
-          onTextChange={t => { const out = applyCommands(r, t, library); draftFor(route.id)(out.runsheet); say(out.applied.length ? out.applied.join(' · ') : `Didn't understand “${t}”`); }}
-          onPastePlan={() => setPasteOpen(true)}
-        />
-        <PasteSheet open={pasteOpen} onOpenChange={setPasteOpen} library={library} onUse={items => { draftFor(route.id)({ ...r, items }); setPasteOpen(false); }} />
       </>
     );
   }

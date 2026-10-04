@@ -98,3 +98,16 @@ describe('recommend', () => {
     expect(r[0].reason).toBe('More from Coach A');
   });
 });
+
+describe('recommend and your copies', () => {
+  const all = [w('fran', { keys: ['bw_pullup'], source: { title: '', kind: 'benchmark', author: 'CrossFit' } }), w('cindy', { keys: ['bw_pullup', 'bw_pushup'], source: { title: '', kind: 'benchmark', author: 'CrossFit' } })];
+  const copy = { ...w('u-fran', { keys: ['bw_pullup', 'bw_pushup'], source: { title: '', kind: 'user', author: 'CrossFit' } }), copyOf: 'fran' };
+  it('counts a session of the original as a session of your copy: done, so not "saved and not done"', () => {
+    expect(ids(recommend([copy, ...all], [did('fran')], ['u-fran']))).not.toContain('u-fran');
+  });
+  it('counts a session of your copy as a session of the original', () => {
+    const r = recommend([copy, ...all], [did('u-fran', 8), did('cindy', 7)], ['u-fran']);
+    expect(ids(r)).not.toContain('fran');
+    expect(ids(r)).not.toContain('u-fran');
+  });
+});

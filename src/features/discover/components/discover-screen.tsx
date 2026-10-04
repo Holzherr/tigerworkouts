@@ -86,7 +86,8 @@ export const DiscoverScreen = ({ workouts, results = [], savedIds = [], onOpen, 
     const set = new Set(savedIds);
     const lastDone = new Map<string, string>();
     for (const res of results) if (!lastDone.has(res.runsheetId)) lastDone.set(res.runsheetId, res.startedAt);
-    return workouts.filter(r => set.has(wid(r)) || (r.source?.kind ?? 'user') === 'user').sort((a, b) => (lastDone.get(wid(b)) ?? '').localeCompare(lastDone.get(wid(a)) ?? ''));
+    const copied = new Set(workouts.flatMap(r => (r.copyOf ? [r.copyOf] : [])));
+    return workouts.filter(r => !copied.has(wid(r)) && (set.has(wid(r)) || (r.source?.kind ?? 'user') === 'user')).sort((a, b) => (lastDone.get(wid(b)) ?? '').localeCompare(lastDone.get(wid(a)) ?? ''));
   }, [workouts, savedIds, results]);
 
   const { programs, singles } = useMemo(() => {
@@ -100,7 +101,8 @@ export const DiscoverScreen = ({ workouts, results = [], savedIds = [], onOpen, 
     const programs = new Map<string, Runsheet[]>();
     const singles: Runsheet[] = [];
     for (const r of workouts) {
-      if (!match(r)) continue;
+      // A copy is a version of something in the catalogue, not new content: Search lists the original.
+      if (r.copyOf || !match(r)) continue;
       if (r.program && !ql) (programs.get(r.program.name) ?? programs.set(r.program.name, []).get(r.program.name)!).push(r);
       else singles.push(r);
     }

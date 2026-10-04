@@ -113,8 +113,12 @@ Two M items, in this order:
   through `SessionRunner.edit`.
 - Web: variant B is the only drag style (`runsheet-list.tsx`, 2026-09-27): the coral insertion
   line follows the finger; Classic, A, C and the `tiger:dnd` setting are gone.
-- Not yet: the web editor (blocks and rounds on the workout page), one copy per original, keeping
-  copies out of Discover.
+- Web (2026-10-04): the workout page is the one editor; the Edit route and Save as mine are gone.
+  A block header opens its sheet and drags the block; Add block, Add a one-off exercise under the
+  list. A first edit of a workout not yours saves a "(mine)" copy (step ids kept, as on iOS) and
+  the page switches to it; an edit on the original updates that copy. Search lists no copies, Saved
+  shows the copy for its original, `recommend()` counts a copy's session as the original's.
+- Not yet: one copy per original on iOS (a second edit of the original makes a second copy).
 
 ## Out
 

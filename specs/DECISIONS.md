@@ -11,3 +11,4 @@ Append-only. One line per decision: `- <date> <who>: <decision>`. Builders appen
 - 2026-09-26 Nick: creator pages — anyone gets a public page (tigerworkouts.com/#/c/<handle>) listing the workouts they made public; new workouts are private by default; visitors can do a public workout in the browser without an account, and sign up only to keep history; pages link to the app.
 - 2026-09-26 Nick: new app icon — the tiger head (black and white) on full coral, iOS and web; replaces the two-band mark on the icon.
 - 2026-09-30 Nick: Yes, build as specced: Pause is the big button on every countdown; on a rep set the big button is "Set n of m done". Done moves to a top-right menu.
+- 2026-10-04 Nick: Just match what's on the iOS app — mirror the iOS editing experience on the web.
