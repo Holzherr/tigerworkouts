@@ -104,6 +104,9 @@ rides in the crash-safe copy on both, so a resumed or recovered session keeps it
 Sign out pushes first, then empties the device for the next account (sessions, workouts, favourites,
 saved, exercises, training maxes and the `tiger:synced` snapshot); while the push fails or a session
 is still unsaved to the account it refuses with a message instead, so no unsynced session is lost.
+Coaching (`#/coach`, `#/coaches`, migration 0008): a PT invites clients by link, sends them workouts
+with a note, sees their sessions against what was prescribed and trades notes; the comparison with
+Hevy Coach and the next three items are in `specs/pt-publishing.md` (draft).
 
 Not yet: imperial units in the UI (stored only), Fitbit heart rate is read on the session page but
 not charted, Storybook stories for every screen state.
