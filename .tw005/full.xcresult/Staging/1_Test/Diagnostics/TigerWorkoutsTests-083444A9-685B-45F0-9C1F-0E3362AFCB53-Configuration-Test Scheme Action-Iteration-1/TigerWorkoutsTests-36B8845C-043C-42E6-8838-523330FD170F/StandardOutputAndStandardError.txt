@@ -1,0 +1,879 @@
+2026-10-06 00:43:55.621727+0100 TigerWorkouts[11667:47793295] [AudioConverter]     AudioConverterOOP.cpp:1084  Failed to prepare AudioConverterService: -302
+Test Suite 'All tests' started at 2026-10-06 00:43:56.639.
+Test Suite 'All tests' passed at 2026-10-06 00:43:56.640.
+	 Executed 0 tests, with 0 failures (0 unexpected) in 0.000 (0.001) seconds
+◇ Test run started.
+↳ Testing Library Version: 1902
+↳ Target Platform: x86_64-apple-ios13.0-simulator
+◇ Suite "after the session" started.
+◇ Test "Add set copies the last set as a normal set with no time" started.
+✔ Test "Add set copies the last set as a normal set with no time" passed after 0.002 seconds.
+◇ Test "removing a set works the row's load and reps out again; the last set takes the row" started.
+✔ Test "removing a set works the row's load and reps out again; the last set takes the row" passed after 0.001 seconds.
+◇ Test "a corrected score writes the text the web shows" started.
+✔ Test "a corrected score writes the text the web shows" passed after 0.001 seconds.
+◇ Test "times typed as mm:ss, m.ss or whole minutes" started.
+✔ Test "times typed as mm:ss, m.ss or whole minutes" passed after 0.001 seconds.
+◇ Test "a lift offers four lines; a bodyweight move two; timed work none" started.
+✔ Test "a lift offers four lines; a bodyweight move two; timed work none" passed after 0.002 seconds.
+◇ Test "3 m and 1 y count back from now; All keeps everything" started.
+✔ Test "3 m and 1 y count back from now; All keeps everything" passed after 0.006 seconds.
+◇ Test "the rest-end notice follows a running rest only" started.
+✔ Test "the rest-end notice follows a running rest only" passed after 0.003 seconds.
+✔ Suite "after the session" passed after 0.035 seconds.
+◇ Suite "alternatives" started.
+◇ Test "a busy bench offers machines and bodyweight that press the same way" started.
+✔ Test "a busy bench offers machines and bodyweight that press the same way" passed after 0.044 seconds.
+◇ Test "the load comes over in the new exercise's own terms" started.
+✔ Test "the load comes over in the new exercise's own terms" passed after 0.001 seconds.
+◇ Test "a rower is cardio, not a row" started.
+✔ Test "a rower is cardio, not a row" passed after 0.001 seconds.
+◇ Test "a swap changes what is left, not what is done" started.
+✔ Test "a swap changes what is left, not what is done" passed after 0.001 seconds.
+✔ Suite "alternatives" passed after 0.047 seconds.
+◇ Suite "app store" started.
+◇ Test "the privacy manifest ships in the app and declares both required-reason APIs" started.
+✔ Test "the privacy manifest ships in the app and declares both required-reason APIs" passed after 0.001 seconds.
+◇ Test "uploads skip the export compliance question" started.
+✔ Test "uploads skip the export compliance question" passed after 0.001 seconds.
+✔ Suite "app store" passed after 0.002 seconds.
+◇ Suite "health workout type" started.
+◇ Test "a Tabata of burpees is interval training, not strength" started.
+✔ Test "a Tabata of burpees is interval training, not strength" passed after 0.004 seconds.
+◇ Test "an amrap of swings is interval training" started.
+✔ Test "an amrap of swings is interval training" passed after 0.001 seconds.
+◇ Test "sets of reps with a dumbbell stay strength training" started.
+✔ Test "sets of reps with a dumbbell stay strength training" passed after 0.001 seconds.
+◇ Test "treadmill sprints on a countdown are still a run" started.
+✔ Test "treadmill sprints on a countdown are still a run" passed after 0.001 seconds.
+✔ Suite "health workout type" passed after 0.007 seconds.
+◇ Suite "CSV export" started.
+◇ Test "one row per set, oldest session first, quoted where it has to be" started.
+✔ Test "one row per set, oldest session first, quoted where it has to be" passed after 0.001 seconds.
+◇ Test "a Windows line break in notes is quoted like any other" started.
+✔ Test "a Windows line break in notes is quoted like any other" passed after 0.001 seconds.
+◇ Test "numbers read like the web's" started.
+✔ Test "numbers read like the web's" passed after 0.001 seconds.
+✔ Suite "CSV export" passed after 0.014 seconds.
+◇ Suite "catalogue" started.
+◇ Test "every exported workout decodes" started.
+✔ Test "every exported workout decodes" passed after 0.123 seconds.
+◇ Test "exercise keys resolve to real names, not placeholders" started.
+✔ Test "exercise keys resolve to real names, not placeholders" passed after 0.145 seconds.
+◇ Test "a known benchmark comes through with its ladder intact" started.
+✔ Test "a known benchmark comes through with its ladder intact" passed after 0.118 seconds.
+◇ Test "a runsheet round-trips through Codable" started.
+✔ Test "a runsheet round-trips through Codable" passed after 0.166 seconds.
+◇ Test "a coach session's pill shows the length its programme promises" started.
+✔ Test "a coach session's pill shows the length its programme promises" passed after 0.152 seconds.
+✔ Suite "catalogue" passed after 0.707 seconds.
+◇ Suite "celebration" started.
+◇ Test "one record per exercise, the best set that beat what stood before" started.
+✔ Test "one record per exercise, the best set that beat what stood before" passed after 0.003 seconds.
+◇ Test "counts every session before it, this one included" started.
+✔ Test "counts every session before it, this one included" passed after 0.006 seconds.
+◇ Test "compares with the last time of the same workout only" started.
+✔ Test "compares with the last time of the same workout only" passed after 0.003 seconds.
+◇ Test "streak as of the session, and volume over loaded work" started.
+✔ Test "streak as of the session, and volume over loaded work" passed after 0.002 seconds.
+◇ Test "delta lines word each number the way the web does" started.
+✔ Test "delta lines word each number the way the web does" passed after 0.008 seconds.
+◇ Test "short sessions say seconds under a minute" started.
+✔ Test "short sessions say seconds under a minute" passed after 0.001 seconds.
+◇ Test "labels" started.
+✔ Test "labels" passed after 0.001 seconds.
+✔ Suite "celebration" passed after 0.027 seconds.
+◇ Suite "coaching" started.
+◇ Test "assignment rows decode from PostgREST's snake_case, nulls and all" started.
+✔ Test "assignment rows decode from PostgREST's snake_case, nulls and all" passed after 0.010 seconds.
+◇ Test "note, link and invite rows decode" started.
+✔ Test "note, link and invite rows decode" passed after 0.015 seconds.
+◇ Test "an assigned workout in the coach's workouts row decodes and keeps its row id" started.
+✔ Test "an assigned workout in the coach's workouts row decodes and keeps its row id" passed after 0.002 seconds.
+◇ Test "the home section lists active links' unarchived assignments, newest first" started.
+✔ Test "the home section lists active links' unarchived assignments, newest first" passed after 0.001 seconds.
+◇ Test "done once a session of that workout started after the assignment was made" started.
+✔ Test "done once a session of that workout started after the assignment was made" passed after 0.001 seconds.
+◇ Test "an unedited assigned workout uploads its session under the coach's workout id" started.
+✔ Test "an unedited assigned workout uploads its session under the coach's workout id" passed after 0.009 seconds.
+◇ Test "invite links from the web and the app scheme" started.
+◇ Test case passing 2 arguments link → "https://tigerworkouts.com/#/join/AbC-12_xyz", code → "AbC-12_xyz" to "invite links from the web and the app scheme" started.
+​◇ Test case passing 2 arguments link → "https://www.tigerworkouts.com/#/join/AbC-12_xyz/", code → "AbC-12_xyz" to "invite links from the web and the app scheme" started.
+​◇ Test case passing 2 arguments link → "https://tigerworkouts.com/#/join/AbC?utm_source=wa", code → "AbC" to "invite links from the web and the app scheme" started.
+​◇ Test case passing 2 arguments link → "tigerworkouts://join/AbC-12_xyz", code → "AbC-12_xyz" to "invite links from the web and the app scheme" started.
+​✔ Test "invite links from the web and the app scheme" with 4 test cases passed after 0.005 seconds.
+◇ Test "other links are not invites" started.
+◇ Test case passing 1 argument link → "https://tigerworkouts.com/#/w/fran" to "other links are not invites" started.
+​◇ Test case passing 1 argument link → "https://tigerworkouts.com/#/join/" to "other links are not invites" started.
+​◇ Test case passing 1 argument link → "https://example.com/#/join/abc" to "other links are not invites" started.
+​◇ Test case passing 1 argument link → "tigerworkouts://w/fran" to "other links are not invites" started.
+​◇ Test case passing 1 argument link → "tigerworkouts://auth?code=1" to "other links are not invites" started.
+​◇ Test case passing 1 argument link → "tigerworkouts://join" to "other links are not invites" started.
+​✔ Test "other links are not invites" with 6 test cases passed after 0.002 seconds.
+✔ Suite "coaching" passed after 0.052 seconds.
+◇ Suite "your own exercises" started.
+◇ Test "the key and step follow the web picker" started.
+✔ Test "the key and step follow the web picker" passed after 0.001 seconds.
+◇ Test "it encodes the fields the web reads, and reads a web row back" started.
+✔ Test "it encodes the fields the web reads, and reads a web row back" passed after 0.005 seconds.
+◇ Test "added to the library it is found by name, group and alternatives, and never replaces a bundled one" started.
+✔ Test "added to the library it is found by name, group and alternatives, and never replaces a bundled one" passed after 0.049 seconds.
+◇ Test "two accounts adding the same name get different keys; before sign-in a random tag stands in" started.
+✔ Test "two accounts adding the same name get different keys; before sign-in a random tag stands in" passed after 0.001 seconds.
+◇ Test "one upload the server refuses does not stop the others, and is kept to try again" started.
+✔ Test "one upload the server refuses does not stop the others, and is kept to try again" passed after 0.001 seconds.
+✔ Suite "your own exercises" passed after 0.065 seconds.
+◇ Suite "data fixes" started.
+◇ Test "the next session starts on +2.5 kg after a clean one" started.
+✔ Test "the next session starts on +2.5 kg after a clean one" passed after 0.001 seconds.
+◇ Test "a miss repeats the weight; three in a row deload" started.
+✔ Test "a miss repeats the weight; three in a row deload" passed after 0.001 seconds.
+◇ Test "deloads once, then counts misses again from the deload" started.
+✔ Test "deloads once, then counts misses again from the deload" passed after 0.001 seconds.
+◇ Test "the finish screen's Next time: Made it adds the step, Missed repeats, every third miss deloads" started.
+✔ Test "the finish screen's Next time: Made it adds the step, Missed repeats, every third miss deloads" passed after 0.001 seconds.
+◇ Test "an AMRAP set that reaches the program's mark bumps the training max" started.
+✔ Test "an AMRAP set that reaches the program's mark bumps the training max" passed after 0.001 seconds.
+◇ Test "a drop set is never the next session's starting load" started.
+✔ Test "a drop set is never the next session's starting load" passed after 0.001 seconds.
+◇ Test "an unsave, a cleared kit and removed maxes stick through a sync" started.
+✔ Test "an unsave, a cleared kit and removed maxes stick through a sync" passed after 0.040 seconds.
+◇ Test "the newer side wins per field, and agreeing sides write nothing" started.
+✔ Test "the newer side wins per field, and agreeing sides write nothing" passed after 0.003 seconds.
+◇ Test "the weekly streak holds across the clock change on 25 Oct 2026 in London" started.
+✔ Test "the weekly streak holds across the clock change on 25 Oct 2026 in London" passed after 0.001 seconds.
+◇ Test "a sync that brings a new effort for a known session sends it to Health" started.
+✔ Test "a sync that brings a new effort for a known session sends it to Health" passed after 0.001 seconds.
+◇ Test "training maxes cover any lift loaded as % TM" started.
+✔ Test "training maxes cover any lift loaded as % TM" passed after 0.001 seconds.
+✔ Suite "data fixes" passed after 0.053 seconds.
+◇ Suite "editing" started.
+◇ Test "a new workout starts with one empty block and says what is missing" started.
+✔ Test "a new workout starts with one empty block and says what is missing" passed after 0.001 seconds.
+◇ Test "an empty block blocks saving even when there are exercises elsewhere" started.
+✔ Test "an empty block blocks saving even when there are exercises elsewhere" passed after 0.001 seconds.
+◇ Test "adding lands in the right place, with a sensible default" started.
+✔ Test "adding lands in the right place, with a sensible default" passed after 0.001 seconds.
+◇ Test "an edited copy keeps the program day and step ids, and points back at the original" started.
+✔ Test "an edited copy keeps the program day and step ids, and points back at the original" passed after 0.001 seconds.
+◇ Test "removing and reordering" started.
+✔ Test "removing and reordering" passed after 0.001 seconds.
+◇ Test "blocks reorder without losing their steps" started.
+✔ Test "blocks reorder without losing their steps" passed after 0.001 seconds.
+◇ Test "an update touches one step and leaves its neighbours alone" started.
+✔ Test "an update touches one step and leaves its neighbours alone" passed after 0.001 seconds.
+◇ Test "an edited workout survives the round trip to the server and back" started.
+✔ Test "an edited workout survives the round trip to the server and back" passed after 0.006 seconds.
+◇ Test "dragging a block header to the top moves the whole block, steps and all" started.
+✔ Test "dragging a block header to the top moves the whole block, steps and all" passed after 0.001 seconds.
+◇ Test "dragging a block header below the last row moves it to the end" started.
+✔ Test "dragging a block header below the last row moves it to the end" passed after 0.001 seconds.
+◇ Test "a step dragged under another block's header joins that block" started.
+✔ Test "a step dragged under another block's header joins that block" passed after 0.001 seconds.
+◇ Test "a step dragged above every block stands on its own at the top" started.
+✔ Test "a step dragged above every block stands on its own at the top" passed after 0.001 seconds.
+◇ Test "mid-session, nothing moves above what is done or running" started.
+✔ Test "mid-session, nothing moves above what is done or running" passed after 0.001 seconds.
+◇ Test "the add row never moves" started.
+✔ Test "the add row never moves" passed after 0.001 seconds.
+◇ Test "a workout of yours started without a name is kept as My workout; a named one as it is" started.
+✔ Test "a workout of yours started without a name is kept as My workout; a named one as it is" passed after 0.001 seconds.
+✔ Suite "editing" passed after 0.210 seconds.
+◇ Suite "only what was done is logged" started.
+◇ Test "a step with sets left undone is not a success" started.
+✔ Test "a step with sets left undone is not a success" passed after 0.001 seconds.
+◇ Test "every set done is a success" started.
+✔ Test "every set done is a success" passed after 0.001 seconds.
+◇ Test "a set short of its reps is a miss" started.
+✔ Test "a set short of its reps is a miss" passed after 0.001 seconds.
+◇ Test "a step with no progression rule says nothing about success" started.
+✔ Test "a step with no progression rule says nothing about success" passed after 0.001 seconds.
+✔ Suite "only what was done is logged" passed after 0.048 seconds.
+◇ Suite "for time is scored on the scored block" started.
+◇ Test "leaves out the lead-in, the gate and the warm-up" started.
+✔ Test "leaves out the lead-in, the gate and the warm-up" passed after 0.001 seconds.
+◇ Test "leaves out a pause inside the block" started.
+✔ Test "leaves out a pause inside the block" passed after 0.001 seconds.
+◇ Test "splits carry when the block began, for the race against last time" started.
+✔ Test "splits carry when the block began, for the race against last time" passed after 0.001 seconds.
+◇ Test "a loose main step counts, as in Murph" started.
+✔ Test "a loose main step counts, as in Murph" passed after 0.001 seconds.
+✔ Suite "for time is scored on the scored block" passed after 0.004 seconds.
+◇ Suite "pause" started.
+◇ Test "pausing the lead-in twice still resumes into the lead-in, and logs nothing" started.
+✔ Test "pausing the lead-in twice still resumes into the lead-in, and logs nothing" passed after 0.001 seconds.
+◇ Test "Done on a paused lead-in starts the first step without logging it" started.
+✔ Test "Done on a paused lead-in starts the first step without logging it" passed after 0.001 seconds.
+◇ Test "Done while paused does not count the pause as workout time" started.
+✔ Test "Done while paused does not count the pause as workout time" passed after 0.001 seconds.
+◇ Test "a set ticked on a paused timer does not count the pause either" started.
+✔ Test "a set ticked on a paused timer does not count the pause either" passed after 0.001 seconds.
+◇ Test "finishing while paused does not count the pause" started.
+✔ Test "finishing while paused does not count the pause" passed after 0.001 seconds.
+✔ Suite "pause" passed after 0.090 seconds.
+◇ Suite "emom" started.
+◇ Test "shows what is left of the minute on the work" started.
+✔ Test "shows what is left of the minute on the work" passed after 0.001 seconds.
+◇ Test "an overrun minute does not add a minute" started.
+✔ Test "an overrun minute does not add a minute" passed after 0.001 seconds.
+✔ Suite "emom" passed after 0.001 seconds.
+◇ Suite "previous step" started.
+◇ Test "back and forth across blocks counts the time once" started.
+✔ Test "back and forth across blocks counts the time once" passed after 0.001 seconds.
+◇ Test "back at a gate does not reopen a capped block whose cap has passed" started.
+✔ Test "back at a gate does not reopen a capped block whose cap has passed" passed after 0.001 seconds.
+◇ Test "back at a gate into a capped block with time left reopens its last set" started.
+✔ Test "back at a gate into a capped block with time left reopens its last set" passed after 0.001 seconds.
+◇ Test "going back un-logs the step, so an amrap round is not counted twice" started.
+✔ Test "going back un-logs the step, so an amrap round is not counted twice" passed after 0.001 seconds.
+◇ Test "a run saved before these fields existed still decodes" started.
+✔ Test "a run saved before these fields existed still decodes" passed after 0.007 seconds.
+✔ Suite "previous step" passed after 0.079 seconds.
+◇ Suite "ghost on the block clock" started.
+◇ Test "compares rounds from the start of the block when both sessions have it" started.
+✔ Test "compares rounds from the start of the block when both sessions have it" passed after 0.001 seconds.
+◇ Test "falls back to session time against a session logged before" started.
+✔ Test "falls back to session time against a session logged before" passed after 0.001 seconds.
+✔ Suite "ghost on the block clock" passed after 0.001 seconds.
+◇ Suite "finished session lets go" started.
+◇ Test "done releases the screen, the tick and the audio without waiting for the screen to close" started.
+2026-10-06 00:43:58.297048+0100 TigerWorkouts[11667:47792787] [plugin] AddInstanceForFactory: No factory registered for id <CFUUID 0x6000006c8aa0> F8BB1C28-BAE8-11D6-9C31-00039315CD46
+2026-10-06 00:43:58.471544+0100 TigerWorkouts[11667:47792787] [audio] audio session held open for the background
+2026-10-06 00:43:58.908469+0100 TigerWorkouts[11667:47792787] [activity] started: Get ready
+✔ Test "done releases the screen, the tick and the audio without waiting for the screen to close" passed after 0.806 seconds.
+✔ Suite "finished session lets go" passed after 0.807 seconds.
+◇ Suite "lock screen clocks and resume" started.
+◇ Test "an amrap's card carries its cap; EMOM work carries its minute" started.
+✔ Test "an amrap's card carries its cap; EMOM work carries its minute" passed after 0.001 seconds.
+◇ Test "a paused card offers Resume, and Resume resumes" started.
+2026-10-06 00:43:58.982055+0100 TigerWorkouts[11667:47792787] [activity] control done from lead:sw#0 at lead:sw#0
+2026-10-06 00:43:58.986028+0100 TigerWorkouts[11667:47792787] [activity] control resume from paused:sw#0 at paused:sw#0
+✔ Test "a paused card offers Resume, and Resume resumes" passed after 0.007 seconds.
+✔ Suite "lock screen clocks and resume" passed after 0.008 seconds.
+◇ Suite "discarding a finished session" started.
+◇ Test "Discard takes it off the phone and out of the queue" started.
+✔ Test "Discard takes it off the phone and out of the queue" passed after 0.010 seconds.
+◇ Test "a save still asking Health for the heart rate does not bring a discarded session back" started.
+✔ Test "a save still asking Health for the heart rate does not bring a discarded session back" passed after 0.015 seconds.
+✔ Suite "discarding a finished session" passed after 0.025 seconds.
+◇ Suite "recovering a session after the app was killed" started.
+◇ Test "a session whose workout is not on the phone is kept, under the title it ran with" started.
+✔ Test "a session whose workout is not on the phone is kept, under the title it ran with" passed after 0.001 seconds.
+◇ Test "a session left for more than six hours can still be saved, not resumed" started.
+✔ Test "a session left for more than six hours can still be saved, not resumed" passed after 0.001 seconds.
+◇ Test "only rests done is nothing to save" started.
+✔ Test "only rests done is nothing to save" passed after 0.001 seconds.
+◇ Test "where a session was started from survives the app being killed: resumed, recovered or saved as it stood" started.
+✔ Test "where a session was started from survives the app being killed: resumed, recovered or saved as it stood" passed after 0.016 seconds.
+◇ Test "a run older than six hours with a set done is still read back" started.
+✔ Test "a run older than six hours with a set done is still read back" passed after 0.006 seconds.
+✔ Suite "recovering a session after the app was killed" passed after 0.026 seconds.
+◇ Suite "block gates" started.
+◇ Test "a loose step runs straight on with no gate; a block still waits for Start block" started.
+✔ Test "a loose step runs straight on with no gate; a block still waits for Start block" passed after 0.001 seconds.
+◇ Test "one round reads as one round" started.
+✔ Test "one round reads as one round" passed after 0.001 seconds.
+✔ Suite "block gates" passed after 0.001 seconds.
+◇ Suite "cues at a block gate" started.
+◇ Test "a block that ends at a gate cues then, and Start gets the work cue" started.
+✔ Test "a block that ends at a gate cues then, and Start gets the work cue" passed after 0.001 seconds.
+✔ Suite "cues at a block gate" passed after 0.001 seconds.
+◇ Suite "discarding from the timer" started.
+◇ Test "Discard stops the session, logs nothing and leaves nothing to resume" started.
+2026-10-06 00:43:59.079616+0100 TigerWorkouts[11667:47792787] [audio] audio session held open for the background
+2026-10-06 00:43:59.099772+0100 TigerWorkouts[11667:47792787] [activity] started: Get ready
+2026-10-06 00:43:59.111597+0100 TigerWorkouts[11667:47792787] [activity] update: Kettlebell swings — Exercise 1 of 2
+2026-10-06 00:43:59.122908+0100 TigerWorkouts[11667:47792787] [activity] update: Rest — Next: Incline chest press
+✔ Test "Discard stops the session, logs nothing and leaves nothing to resume" passed after 0.098 seconds.
+✔ Suite "discarding from the timer" passed after 0.099 seconds.
+◇ Suite "rest controls" started.
+◇ Test "+15 s and −15 s move the running rest and its length" started.
+✔ Test "+15 s and −15 s move the running rest and its length" passed after 0.001 seconds.
+◇ Test "taking more than is left ends the rest at the next tick" started.
+✔ Test "taking more than is left ends the rest at the next tick" passed after 0.001 seconds.
+◇ Test "works on a paused rest" started.
+✔ Test "works on a paused rest" passed after 0.001 seconds.
+◇ Test "the rest between rounds takes it too" started.
+✔ Test "the rest between rounds takes it too" passed after 0.001 seconds.
+◇ Test "leaves work and an EMOM wait alone" started.
+✔ Test "leaves work and an EMOM wait alone" passed after 0.001 seconds.
+✔ Suite "rest controls" passed after 0.002 seconds.
+◇ Suite "last time into the set" started.
+◇ Test "fillSet puts load and reps on a set to come" started.
+✔ Test "fillSet puts load and reps on a set to come" passed after 0.001 seconds.
+◇ Test "fillSet leaves a done set alone" started.
+✔ Test "fillSet leaves a done set alone" passed after 0.001 seconds.
+◇ Test "a legacy rower row that logged metres as a load reads as metres, so nothing offers it as a load" started.
+✔ Test "a legacy rower row that logged metres as a load reads as metres, so nothing offers it as a load" passed after 0.001 seconds.
+◇ Test "prefillReps fills a range from last time, set by set" started.
+✔ Test "prefillReps fills a range from last time, set by set" passed after 0.001 seconds.
+◇ Test "prefillReps leaves fixed reps, prescribed sets and circuits alone" started.
+✔ Test "prefillReps leaves fixed reps, prescribed sets and circuits alone" passed after 0.001 seconds.
+✔ Suite "last time into the set" passed after 0.003 seconds.
+◇ Suite "set times and round splits" started.
+◇ Test "each set keeps its session time, pauses excluded" started.
+✔ Test "each set keeps its session time, pauses excluded" passed after 0.001 seconds.
+◇ Test "a circuit logs when each round finished" started.
+✔ Test "a circuit logs when each round finished" passed after 0.001 seconds.
+◇ Test "an amrap's half round at the cap is not a split" started.
+✔ Test "an amrap's half round at the cap is not a split" passed after 0.001 seconds.
+◇ Test "a round with a skipped exercise still closes when the next begins" started.
+✔ Test "a round with a skipped exercise still closes when the next begins" passed after 0.001 seconds.
+2026-10-06 00:43:59.153955+0100 TigerWorkouts[11667:47793633] [api] Updating content for activity 4F921191-CC08-40A8-AB02-1B09261B92CC
+◇ Test "un-ticking a set drops its time" started.
+✔ Test "un-ticking a set drops its time" passed after 0.001 seconds.
+◇ Test "times and splits round-trip through JSON, and old rows still read" started.
+✔ Test "times and splits round-trip through JSON, and old rows still read" passed after 0.010 seconds.
+2026-10-06 00:43:59.167494+0100 TigerWorkouts[11667:47793633] [api] Updating content for activity 4F921191-CC08-40A8-AB02-1B09261B92CC
+✔ Suite "set times and round splits" passed after 0.041 seconds.
+◇ Suite "pace against last time" started.
+◇ Test "is ahead when the same round comes sooner" started.
+✔ Test "is ahead when the same round comes sooner" passed after 0.001 seconds.
+◇ Test "is behind when it comes later" started.
+✔ Test "is behind when it comes later" passed after 0.001 seconds.
+◇ Test "reads minutes past a minute, and level as on pace" started.
+✔ Test "reads minutes past a minute, and level as on pace" passed after 0.001 seconds.
+◇ Test "uses the latest round both sessions reached" started.
+✔ Test "uses the latest round both sessions reached" passed after 0.001 seconds.
+◇ Test "is nothing without a last time or before the first mark" started.
+✔ Test "is nothing without a last time or before the first mark" passed after 0.001 seconds.
+◇ Test "compares straight sets set by set" started.
+✔ Test "compares straight sets set by set" passed after 0.001 seconds.
+◇ Test "leaves the sets of a block with round splits to the rounds" started.
+✔ Test "leaves the sets of a block with round splits to the rounds" passed after 0.001 seconds.
+◇ Test "lastTimed is the newest session of this workout with times" started.
+✔ Test "lastTimed is the newest session of this workout with times" passed after 0.001 seconds.
+◇ Test "the Lock Screen gets the short form, and none once done" started.
+✔ Test "the Lock Screen gets the short form, and none once done" passed after 0.001 seconds.
+✔ Suite "pace against last time" passed after 0.004 seconds.
+◇ Suite "haptics" started.
+◇ Test "the simulator has no engine, and playing there is harmless" started.
+✔ Test "the simulator has no engine, and playing there is harmless" passed after 0.033 seconds.
+◇ Test "the status reads in words" started.
+✔ Test "the status reads in words" passed after 0.001 seconds.
+◇ Test "Test buzz plays work, then the finish" started.
+✔ Test "Test buzz plays work, then the finish" passed after 0.502 seconds.
+◇ Test "coming to the foreground restarts the engine, and nothing else does" started.
+✔ Test "coming to the foreground restarts the engine, and nothing else does" passed after 0.001 seconds.
+✔ Suite "haptics" passed after 0.537 seconds.
+◇ Suite "buzz with the phone locked" started.
+◇ Test "locked, each automatic change to work, rest and finish calls the vibrator once" started.
+✔ Test "locked, each automatic change to work, rest and finish calls the vibrator once" passed after 0.040 seconds.
+◇ Test "on screen, an automatic change never calls the vibrator and plays its cue as before" started.
+✔ Test "on screen, an automatic change never calls the vibrator and plays its cue as before" passed after 0.018 seconds.
+◇ Test "haptics off, a locked phone is never buzzed" started.
+✔ Test "haptics off, a locked phone is never buzzed" passed after 0.018 seconds.
+◇ Test "the sound switch does not change what a locked phone feels" started.
+✔ Test "the sound switch does not change what a locked phone feels" passed after 0.036 seconds.
+✔ Suite "buzz with the phone locked" passed after 0.115 seconds.
+◇ Suite "live activity" started.
+◇ Test "the Lock Screen state holds still within a slot" started.
+✔ Test "the Lock Screen state holds still within a slot" passed after 0.001 seconds.
+◇ Test "it changes on a transition, and says what comes next" started.
+✔ Test "it changes on a transition, and says what comes next" passed after 0.001 seconds.
+◇ Test "the countdown goes over as the instant it ends" started.
+✔ Test "the countdown goes over as the instant it ends" passed after 0.001 seconds.
+◇ Test "a paused session shows as paused, and the lead-in as getting ready" started.
+✔ Test "a paused session shows as paused, and the lead-in as getting ready" passed after 0.001 seconds.
+◇ Test "a finished session stops the clock instead of counting up" started.
+✔ Test "a finished session stops the clock instead of counting up" passed after 0.001 seconds.
+✔ Suite "live activity" passed after 0.003 seconds.
+◇ Suite "live records" started.
+◇ Test "a heavier set than any before is a record; the same load is not" started.
+✔ Test "a heavier set than any before is a record; the same load is not" passed after 0.001 seconds.
+◇ Test "the second set at a record load is not a second record" started.
+✔ Test "the second set at a record load is not a second record" passed after 0.001 seconds.
+◇ Test "the first time an exercise is done sets no record" started.
+✔ Test "the first time an exercise is done sets no record" passed after 0.001 seconds.
+◇ Test "a set not done is never a record" started.
+✔ Test "a set not done is never a record" passed after 0.001 seconds.
+◇ Test "a held button's repeats grow from one step to two, then five" started.
+✔ Test "a held button's repeats grow from one step to two, then five" passed after 0.001 seconds.
+✔ Suite "live records" passed after 0.005 seconds.
+◇ Suite "the weights you own" started.
+◇ Test "which kit: the key, then the group" started.
+✔ Test "which kit: the key, then the group" passed after 0.001 seconds.
+◇ Test "a bar is the bar plus a pair of each plate; bells default to 4 kg steps" started.
+✔ Test "a bar is the bar plus a pair of each plate; bells default to 4 kg steps" passed after 0.001 seconds.
+◇ Test "snaps nearest, up and down" started.
+✔ Test "snaps nearest, up and down" passed after 0.001 seconds.
+◇ Test "the plate calculator: per side, heaviest first, closest when it cannot" started.
+✔ Test "the plate calculator: per side, heaviest first, closest when it cannot" passed after 0.004 seconds.
+◇ Test "the target load jump is the next load owned" started.
+✔ Test "the target load jump is the next load owned" passed after 0.001 seconds.
+◇ Test "a converted swap lands on a dumbbell you have" started.
+✔ Test "a converted swap lands on a dumbbell you have" passed after 0.001 seconds.
+◇ Test "equipment reads back from the web's prefs JSON" started.
+✔ Test "equipment reads back from the web's prefs JSON" passed after 0.011 seconds.
+✔ Suite "the weights you own" passed after 0.044 seconds.
+◇ Suite "relative loads and refs" started.
+◇ Test "a % of a training max resolves to a load the plates make, and × bodyweight to one near it" started.
+✔ Test "a % of a training max resolves to a load the plates make, and × bodyweight to one near it" passed after 0.001 seconds.
+◇ Test "resolved into target, so the grid shows a load column, labels kept" started.
+✔ Test "resolved into target, so the grid shows a load column, labels kept" passed after 0.011 seconds.
+◇ Test "refs are inlined with the ref's role, unknown ones dropped, as resolveRefs does" started.
+✔ Test "refs are inlined with the ref's role, unknown ones dropped, as resolveRefs does" passed after 0.001 seconds.
+✔ Suite "relative loads and refs" passed after 0.012 seconds.
+◇ Suite "set types" started.
+◇ Test "numbers the work; W, D and F stand in for the rest" started.
+✔ Test "numbers the work; W, D and F stand in for the rest" passed after 0.001 seconds.
+◇ Test "each set carries its planned type" started.
+✔ Test "each set carries its planned type" passed after 0.001 seconds.
+◇ Test "no rest before a drop set" started.
+✔ Test "no rest before a drop set" passed after 0.001 seconds.
+◇ Test "a type changed on the grid counts, rest rule included" started.
+✔ Test "a type changed on the grid counts, rest rule included" passed after 0.001 seconds.
+◇ Test "logs the type on each set; a warm-up stays out of the old target and reps fields" started.
+✔ Test "logs the type on each set; a warm-up stays out of the old target and reps fields" passed after 0.001 seconds.
+◇ Test "the editor keeps each set's type through an edit, and normal is left unset" started.
+✔ Test "the editor keeps each set's type through an edit, and normal is left unset" passed after 0.001 seconds.
+◇ Test "a warm-up is never a record, a best or volume" started.
+✔ Test "a warm-up is never a record, a best or volume" passed after 0.001 seconds.
+◇ Test "a stall reads the working sets only" started.
+✔ Test "a stall reads the working sets only" passed after 0.003 seconds.
+◇ Test "targets skip warm-ups and drop sets, and so does the timer pill" started.
+✔ Test "targets skip warm-ups and drop sets, and so does the timer pill" passed after 0.001 seconds.
+◇ Test "effort counts neither warm-ups nor drop sets as sets, and leaves warm-ups out of the tonnage" started.
+✔ Test "effort counts neither warm-ups nor drop sets as sets, and leaves warm-ups out of the tonnage" passed after 0.001 seconds.
+◇ Test "a result written by the web with set types decodes and encodes back" started.
+✔ Test "a result written by the web with set types decodes and encodes back" passed after 0.003 seconds.
+✔ Suite "set types" passed after 0.031 seconds.
+◇ Suite "lock screen controls" started.
+◇ Test "the card shows load × reps for the set, and the next set's during a rest" started.
+✔ Test "the card shows load × reps for the set, and the next set's during a rest" passed after 0.001 seconds.
+◇ Test "a timed bodyweight step has no set line; a paused session offers only Resume" started.
+✔ Test "a timed bodyweight step has no set line; a paused session offers only Resume" passed after 0.001 seconds.
+◇ Test "the card still holds still within a slot" started.
+✔ Test "the card still holds still within a slot" passed after 0.001 seconds.
+◇ Test "Done, +15 s and Skip rest drive the running session" started.
+2026-10-06 00:43:59.976013+0100 TigerWorkouts[11667:47792787] [activity] control done from lead:pr#0 at lead:pr#0
+2026-10-06 00:43:59.977677+0100 TigerWorkouts[11667:47792787] [activity] control done from running:pr#0 at running:pr#0
+2026-10-06 00:43:59.979547+0100 TigerWorkouts[11667:47792787] [activity] control extendRest from running:r#1 at running:r#1
+2026-10-06 00:43:59.981240+0100 TigerWorkouts[11667:47792787] [activity] control skipRest from running:r#1 at running:r#1
+✔ Test "Done, +15 s and Skip rest drive the running session" passed after 0.008 seconds.
+◇ Test "a tap from a card that is behind the session does nothing" started.
+2026-10-06 00:43:59.984580+0100 TigerWorkouts[11667:47792787] [activity] control done from lead:pr#0 at lead:pr#0
+2026-10-06 00:43:59.986314+0100 TigerWorkouts[11667:47792787] [activity] control done from lead:pr#0 at running:pr#0
+2026-10-06 00:43:59.986644+0100 TigerWorkouts[11667:47792787] [activity] control skipRest from running:pr#0 at running:pr#0
+2026-10-06 00:43:59.999061+0100 TigerWorkouts[11667:47792787] [activity] control extendRest from - at running:pr#0
+✔ Test "a tap from a card that is behind the session does nothing" passed after 0.015 seconds.
+◇ Test "a running session is what the intents reach, and only while it runs" started.
+2026-10-06 00:44:00.039275+0100 TigerWorkouts[11667:47792787] [audio] audio session held open for the background
+2026-10-06 00:44:00.059074+0100 TigerWorkouts[11667:47792787] [activity] started: Get ready
+✔ Test "a running session is what the intents reach, and only while it runs" passed after 0.074 seconds.
+✔ Suite "lock screen controls" passed after 0.126 seconds.
+◇ Suite "up next widget" started.
+◇ Test "carries the Up next pick and a link that starts it" started.
+✔ Test "carries the Up next pick and a link that starts it" passed after 0.002 seconds.
+◇ Test "counts this week at draw time, so Monday starts from nothing" started.
+✔ Test "counts this week at draw time, so Monday starts from nothing" passed after 0.003 seconds.
+◇ Test "with no history it picks nothing, and opens the app" started.
+✔ Test "with no history it picks nothing, and opens the app" passed after 0.001 seconds.
+◇ Test "draws small and medium, with and without history" started.
+IOSurfaceClientSetSurfaceNotify failed e00002c7
+2026-10-06 00:44:00.164776+0100 TigerWorkouts[11667:47793631] fopen failed for data file: errno = 2 (No such file or directory)
+2026-10-06 00:44:00.649935+0100 TigerWorkouts[11667:47793631] fopen failed for data file: errno = 2 (No such file or directory)
+2026-10-06 00:44:00.675959+0100 TigerWorkouts[11667:47793631] [error] building pipeline plane_color-ca16feba4 took 0.511786 seconds
+⎙ Attached 'Widget small.png' to "draws small and medium, with and without history".
+⎙ Attached 'Widget medium.png' to "draws small and medium, with and without history".
+⎙ Attached 'Widget small, no history.png' to "draws small and medium, with and without history".
+⎙ Attached 'Widget medium, no history.png' to "draws small and medium, with and without history".
+✔ Test "draws small and medium, with and without history" passed after 1.211 seconds.
+✔ Suite "up next widget" passed after 1.218 seconds.
+◇ Suite "logbook" started.
+◇ Test "reads older results from target and reps" started.
+✔ Test "reads older results from target and reps" passed after 0.001 seconds.
+◇ Test "estimates a 1RM by Epley, and a single is itself" started.
+✔ Test "estimates a 1RM by Epley, and a single is itself" passed after 0.001 seconds.
+◇ Test "a set above 10 reps counts for most reps and volume, not the 1RM" started.
+✔ Test "a set above 10 reps counts for most reps and volume, not the 1RM" passed after 0.001 seconds.
+◇ Test "charts top load for a session with only sets above 10 reps" started.
+✔ Test "charts top load for a session with only sets above 10 reps" passed after 0.001 seconds.
+◇ Test "lists sessions newest first, with title and sets" started.
+✔ Test "lists sessions newest first, with title and sets" passed after 0.001 seconds.
+◇ Test "joins every row of the exercise in a session, and follows a swap by exercise key" started.
+✔ Test "joins every row of the exercise in a session, and follows a swap by exercise key" passed after 0.001 seconds.
+◇ Test "picks what to chart from what was logged" started.
+✔ Test "picks what to chart from what was logged" passed after 0.001 seconds.
+◇ Test "charts the best set per session, oldest first" started.
+✔ Test "charts the best set per session, oldest first" passed after 0.001 seconds.
+◇ Test "keeps each record with the date it was set" started.
+✔ Test "keeps each record with the date it was set" passed after 0.001 seconds.
+◇ Test "a tie does not move a record to the later date" started.
+✔ Test "a tie does not move a record to the later date" passed after 0.018 seconds.
+◇ Test "shows what exists for timed work: top speed and sessions" started.
+✔ Test "shows what exists for timed work: top speed and sessions" passed after 0.001 seconds.
+◇ Test "marks a set that beat a record standing before it, never in the first session" started.
+✔ Test "marks a set that beat a record standing before it, never in the first session" passed after 0.001 seconds.
+◇ Test "isRecord needs a record to beat" started.
+✔ Test "isRecord needs a record to beat" passed after 0.001 seconds.
+◇ Test "more reps is a PR only without a load" started.
+✔ Test "more reps is a PR only without a load" passed after 0.001 seconds.
+◇ Test "volume sums load × reps" started.
+✔ Test "volume sums load × reps" passed after 0.001 seconds.
+◇ Test "lists every logged exercise, most recently done first" started.
+✔ Test "lists every logged exercise, most recently done first" passed after 0.001 seconds.
+◇ Test "labels a set" started.
+✔ Test "labels a set" passed after 0.001 seconds.
+◇ Test "rows logged before measures had their own fields read the load as the measure" started.
+✔ Test "rows logged before measures had their own fields read the load as the measure" passed after 0.001 seconds.
+◇ Test "an old rower row edited with its unit is saved with metres, not a load" started.
+✔ Test "an old rower row edited with its unit is saved with metres, not a load" passed after 0.001 seconds.
+✔ Suite "logbook" passed after 0.052 seconds.
+◇ Suite "next up" started.
+◇ Test "an edited copy of a program day stands in for the day" started.
+✔ Test "an edited copy of a program day stands in for the day" passed after 0.001 seconds.
+◇ Test "two copies of one day are one day, the later copy standing in, as on the web" started.
+✔ Test "two copies of one day are one day, the later copy standing in, as on the web" passed after 0.001 seconds.
+◇ Test "is nothing without history" started.
+✔ Test "is nothing without history" passed after 0.001 seconds.
+◇ Test "offers the next day of the program the last session was in" started.
+✔ Test "offers the next day of the program the last session was in" passed after 0.001 seconds.
+◇ Test "wraps round to day one after the last day" started.
+✔ Test "wraps round to day one after the last day" passed after 0.001 seconds.
+◇ Test "offers the last workout again when it is not in a program" started.
+✔ Test "offers the last workout again when it is not in a program" passed after 0.001 seconds.
+◇ Test "goes by date, not list order, and skips sessions whose workout is gone" started.
+✔ Test "goes by date, not list order, and skips sessions whose workout is gone" passed after 0.001 seconds.
+◇ Test "adds up time trained and formats hours" started.
+✔ Test "adds up time trained and formats hours" passed after 0.001 seconds.
+✔ Suite "next up" passed after 0.035 seconds.
+◇ Suite "recommend" started.
+◇ Test "cold start gives a curated list" started.
+✔ Test "cold start gives a curated list" passed after 0.001 seconds.
+◇ Test "an edited copy of a program day stands in for the day, which is never offered twice" started.
+✔ Test "an edited copy of a program day stands in for the day, which is never offered twice" passed after 0.001 seconds.
+◇ Test "puts the next program day first" started.
+✔ Test "puts the next program day first" passed after 0.001 seconds.
+◇ Test "one Fran does not bring in Cindy: one shared exercise and one session by the author is not enough" started.
+✔ Test "one Fran does not bring in Cindy: one shared exercise and one session by the author is not enough" passed after 0.001 seconds.
+◇ Test "drops a catalogue workout that shares exactly one exercise and has no creator match" started.
+✔ Test "drops a catalogue workout that shares exactly one exercise and has no creator match" passed after 0.001 seconds.
+◇ Test "ranks a third workout by a creator done twice above every benchmark, and one sampled benchmark does not reopen its source" started.
+✔ Test "ranks a third workout by a creator done twice above every benchmark, and one sampled benchmark does not reopen its source" passed after 0.001 seconds.
+◇ Test "never offers a mid-program day of a program with no session, even while another program is in progress" started.
+✔ Test "never offers a mid-program day of a program with no session, even while another program is in progress" passed after 0.001 seconds.
+◇ Test "returns at most 6 by default and honours an explicit limit" started.
+✔ Test "returns at most 6 by default and honours an explicit limit" passed after 0.004 seconds.
+◇ Test "lets in a coach workout when that coach has been done twice" started.
+✔ Test "lets in a coach workout when that coach has been done twice" passed after 0.001 seconds.
+◇ Test "consecutive picks with one reason share a header" started.
+✔ Test "consecutive picks with one reason share a header" passed after 0.001 seconds.
+✔ Suite "recommend" passed after 0.044 seconds.
+◇ Suite "muscles" started.
+◇ Test "matches names written plural as well as singular" started.
+✔ Test "matches names written plural as well as singular" passed after 0.003 seconds.
+◇ Test "the more specific rule wins" started.
+✔ Test "the more specific rule wins" passed after 0.001 seconds.
+◇ Test "falls back to the equipment group, and is empty when it cannot tell" started.
+✔ Test "falls back to the equipment group, and is empty when it cannot tell" passed after 0.030 seconds.
+◇ Test "load normalises so the hardest-worked muscle is 1" started.
+✔ Test "load normalises so the hardest-worked muscle is 1" passed after 0.001 seconds.
+✔ Suite "muscles" passed after 0.035 seconds.
+◇ Suite "effort" started.
+◇ Test "a top-level exercise is matched to its real length, not a guess" started.
+✔ Test "a top-level exercise is matched to its real length, not a guess" passed after 0.001 seconds.
+◇ Test "calories scale with bodyweight and say when the weight is a guess" started.
+✔ Test "calories scale with bodyweight and say when the weight is a guess" passed after 0.001 seconds.
+◇ Test "streak counts back in Monday weeks and stops at the first gap" started.
+✔ Test "streak counts back in Monday weeks and stops at the first gap" passed after 0.001 seconds.
+✔ Suite "effort" passed after 0.002 seconds.
+◇ Suite "last used" started.
+◇ Test "a workout starts on the numbers you finished on" started.
+✔ Test "a workout starts on the numbers you finished on" passed after 0.001 seconds.
+◇ Test "the newest session wins, and the exercise key carries between workouts" started.
+✔ Test "the newest session wins, and the exercise key carries between workouts" passed after 0.001 seconds.
+✔ Suite "last used" passed after 0.001 seconds.
+◇ Suite "expand" started.
+◇ Test "unrolls rounds and adds rest between them" started.
+✔ Test "unrolls rounds and adds rest between them" passed after 0.001 seconds.
+◇ Test "ladders scale reps per rung" started.
+✔ Test "ladders scale reps per rung" passed after 0.034 seconds.
+◇ Test "emom adds a wait-for-boundary rest each minute" started.
+✔ Test "emom adds a wait-for-boundary rest each minute" passed after 0.001 seconds.
+✔ Suite "expand" passed after 0.036 seconds.
+◇ Suite "run" started.
+◇ Test "leads in, counts down, advances, and finishes" started.
+✔ Test "leads in, counts down, advances, and finishes" passed after 0.001 seconds.
+◇ Test "pause freezes the countdown and resume restores it" started.
+✔ Test "pause freezes the countdown and resume restores it" passed after 0.001 seconds.
+◇ Test "extendRest moves the end of a running rest, and only a rest" started.
+✔ Test "extendRest moves the end of a running rest, and only a rest" passed after 0.001 seconds.
+◇ Test "extendRest while paused moves what is left" started.
+✔ Test "extendRest while paused moves what is left" passed after 0.001 seconds.
+◇ Test "adjust logs a change with the time into the step" started.
+✔ Test "adjust logs a change with the time into the step" passed after 0.001 seconds.
+◇ Test "drop removes every later slot of that step" started.
+✔ Test "drop removes every later slot of that step" passed after 0.001 seconds.
+◇ Test "amrap stops at the cap and scores rounds + reps" started.
+✔ Test "amrap stops at the cap and scores rounds + reps" passed after 0.001 seconds.
+◇ Test "a load set on a later round carries back to the rest of that step" started.
+✔ Test "a load set on a later round carries back to the rest of that step" passed after 0.001 seconds.
+◇ Test "a step changed from the overview applies from there to the end" started.
+✔ Test "a step changed from the overview applies from there to the end" passed after 0.001 seconds.
+◇ Test "a new part parks the timer until Start block" started.
+✔ Test "a new part parks the timer until Start block" passed after 0.001 seconds.
+◇ Test "toResult carries the adjusted target and the reps that were done" started.
+✔ Test "toResult carries the adjusted target and the reps that were done" passed after 0.001 seconds.
+✔ Suite "run" passed after 0.036 seconds.
+◇ Suite "replan: editing what is still to come" started.
+◇ Test "changing the next block's rounds from 3 to 4 adds one round after the cursor and leaves done slots and their actuals unchanged" started.
+✔ Test "changing the next block's rounds from 3 to 4 adds one round after the cursor and leaves done slots and their actuals unchanged" passed after 0.001 seconds.
+◇ Test "a block moved up runs next, and a block already done never runs again" started.
+✔ Test "a block moved up runs next, and a block already done never runs again" passed after 0.001 seconds.
+◇ Test "a swap and a load set ahead survive the replan" started.
+✔ Test "a swap and a load set ahead survive the replan" passed after 0.001 seconds.
+◇ Test "during the count-in the whole session is rebuilt" started.
+✔ Test "during the count-in the whole session is rebuilt" passed after 0.001 seconds.
+◇ Test "removing everything still to come ends the session at the gate" started.
+✔ Test "removing everything still to come ends the session at the gate" passed after 0.001 seconds.
+✔ Suite "replan: editing what is still to come" passed after 0.035 seconds.
+◇ Suite "session runner" started.
+◇ Test "what is set on the workout screen is what the session starts with" started.
+✔ Test "what is set on the workout screen is what the session starts with" passed after 0.001 seconds.
+◇ Test "the runner leaves every target and incline exactly as passed" started.
+✔ Test "the runner leaves every target and incline exactly as passed" passed after 0.001 seconds.
+◇ Test "the timer's incline line reads the incline and follows a change from the sheet" started.
+✔ Test "the timer's incline line reads the incline and follows a change from the sheet" passed after 0.003 seconds.
+◇ Test "the result carries the list the workout was started from" started.
+◇ Test case passing 1 argument origin → .recommended to "the result carries the list the workout was started from" started.
+​◇ Test case passing 1 argument origin → .saved to "the result carries the list the workout was started from" started.
+​◇ Test case passing 1 argument origin → .search to "the result carries the list the workout was started from" started.
+​◇ Test case passing 1 argument origin → .mine to "the result carries the list the workout was started from" started.
+​◇ Test case passing 1 argument origin → .history to "the result carries the list the workout was started from" started.
+​◇ Test case passing 1 argument origin → .link to "the result carries the list the workout was started from" started.
+​◇ Test case passing 1 argument origin → .home to "the result carries the list the workout was started from" started.
+​◇ Test case passing 1 argument origin → .coach to "the result carries the list the workout was started from" started.
+​✔ Test "the result carries the list the workout was started from" with 8 test cases passed after 0.024 seconds.
+◇ Test "a session started without a known origin writes none" started.
+✔ Test "a session started without a known origin writes none" passed after 0.001 seconds.
+◇ Test "a step with no incline that is not on a treadmill has no incline line" started.
+✔ Test "a step with no incline that is not on a treadmill has no incline line" passed after 0.001 seconds.
+◇ Test "an incline changed on the set table is what later sets and the log read" started.
+✔ Test "an incline changed on the set table is what later sets and the log read" passed after 0.044 seconds.
+✔ Suite "session runner" passed after 0.076 seconds.
+◇ Suite "session safety" started.
+◇ Test "a pause before a capped block does not stretch its cap" started.
+✔ Test "a pause before a capped block does not stretch its cap" passed after 0.001 seconds.
+◇ Test "a pause inside a capped block still extends that block" started.
+✔ Test "a pause inside a capped block still extends that block" passed after 0.001 seconds.
+◇ Test "an amrap runs to its cap however many rounds are done" started.
+✔ Test "an amrap runs to its cap however many rounds are done" passed after 0.003 seconds.
+◇ Test "a swap keeps the exercise and load of the rounds already done" started.
+✔ Test "a swap keeps the exercise and load of the rounds already done" passed after 0.001 seconds.
+◇ Test "the workout is handed to the store when it finishes, once, and the copy on disk stays" started.
+✔ Test "the workout is handed to the store when it finishes, once, and the copy on disk stays" passed after 0.014 seconds.
+✔ Suite "session safety" passed after 0.020 seconds.
+◇ Suite "honest logging" started.
+◇ Test "logs each set with the reps counted and the load in hand" started.
+✔ Test "logs each set with the reps counted and the load in hand" passed after 0.001 seconds.
+◇ Test "the stepper counts from the plan and logs what it shows" started.
+✔ Test "the stepper counts from the plan and logs what it shows" passed after 0.009 seconds.
+◇ Test "shows the heaviest set of the newest session" started.
+✔ Test "shows the heaviest set of the newest session" passed after 0.001 seconds.
+◇ Test "falls back to the same exercise elsewhere, and to results logged before sets" started.
+✔ Test "falls back to the same exercise elsewhere, and to results logged before sets" passed after 0.001 seconds.
+✔ Suite "honest logging" passed after 0.011 seconds.
+◇ Suite "per-set prescription" started.
+◇ Test "each round runs its own reps and load" started.
+✔ Test "each round runs its own reps and load" passed after 0.001 seconds.
+◇ Test "without sets, every round is the step as before" started.
+✔ Test "without sets, every round is the step as before" passed after 0.001 seconds.
+◇ Test "a set with no values of its own carries the one before it" started.
+✔ Test "a set with no values of its own carries the one before it" passed after 0.001 seconds.
+◇ Test "an adjustment carries forward until a round that prescribes its own load" started.
+✔ Test "an adjustment carries forward until a round that prescribes its own load" passed after 0.001 seconds.
+◇ Test "an adjustment never overrides a later prescribed set" started.
+✔ Test "an adjustment never overrides a later prescribed set" passed after 0.001 seconds.
+◇ Test "logs each set at its prescribed load and reps" started.
+✔ Test "logs each set at its prescribed load and reps" passed after 0.001 seconds.
+◇ Test "a swap drops the planned loads for the swap target, keeping the reps" started.
+✔ Test "a swap drops the planned loads for the swap target, keeping the reps" passed after 0.001 seconds.
+◇ Test "sets round-trip through JSON, and a step without them writes none" started.
+✔ Test "sets round-trip through JSON, and a step without them writes none" passed after 0.001 seconds.
+✔ Suite "per-set prescription" passed after 0.022 seconds.
+◇ Suite "the set grid" started.
+◇ Test "the tick on the running set is Done" started.
+✔ Test "the tick on the running set is Done" passed after 0.001 seconds.
+◇ Test "a set still to come takes its load ahead, and a later set inherits it" started.
+✔ Test "a set still to come takes its load ahead, and a later set inherits it" passed after 0.001 seconds.
+◇ Test "a done set is locked until it is un-ticked, then logs the corrected weight" started.
+✔ Test "a done set is locked until it is un-ticked, then logs the corrected weight" passed after 0.001 seconds.
+◇ Test "a skipped set can be ticked afterwards" started.
+✔ Test "a skipped set can be ticked afterwards" passed after 0.001 seconds.
+◇ Test "ticking the next set during the rest ends the rest and logs the set in one tap" started.
+✔ Test "ticking the next set during the rest ends the rest and logs the set in one tap" passed after 0.001 seconds.
+◇ Test "a set not reached yet cannot be ticked" started.
+✔ Test "a set not reached yet cannot be ticked" passed after 0.001 seconds.
+✔ Suite "the set grid" passed after 0.018 seconds.
+◇ Suite "cap clock" started.
+◇ Test "counts down the block cap and ignores uncapped blocks" started.
+✔ Test "counts down the block cap and ignores uncapped blocks" passed after 0.001 seconds.
+✔ Suite "cap clock" passed after 0.001 seconds.
+◇ Suite "straight sets" started.
+◇ Test "is one exercise in a rounds block; circuits and timed modes are not" started.
+✔ Test "is one exercise in a rounds block; circuits and timed modes are not" passed after 0.020 seconds.
+◇ Test "editing one set changes that row and no other" started.
+✔ Test "editing one set changes that row and no other" passed after 0.001 seconds.
+◇ Test "add set copies the last set and repeats once more; remove set drops it" started.
+✔ Test "add set copies the last set and repeats once more; remove set drops it" passed after 0.001 seconds.
+✔ Suite "straight sets" passed after 0.021 seconds.
+◇ Suite "stalls" started.
+◇ Test "is the record session and three or more after it, three weeks apart" started.
+✔ Test "is the record session and three or more after it, three weeks apart" passed after 0.001 seconds.
+◇ Test "a tie is not progress, a new best resets it" started.
+✔ Test "a tie is not progress, a new best resets it" passed after 0.001 seconds.
+◇ Test "needs the sessions, the weeks and a recent session" started.
+✔ Test "needs the sessions, the weeks and a recent session" passed after 0.001 seconds.
+◇ Test "reads lower as better for a time" started.
+✔ Test "reads lower as better for a time" passed after 0.001 seconds.
+◇ Test "names the best that stands and offers two ways out" started.
+✔ Test "names the best that stands and offers two ways out" passed after 0.001 seconds.
+◇ Test "without an alternative the second way out is heavier for fewer reps" started.
+✔ Test "without an alternative the second way out is heavier for fewer reps" passed after 0.001 seconds.
+◇ Test "banking reps past 10 is progress, not a stall" started.
+✔ Test "banking reps past 10 is progress, not a stall" passed after 0.001 seconds.
+◇ Test "bodyweight stalls on reps" started.
+✔ Test "bodyweight stalls on reps" passed after 0.001 seconds.
+◇ Test "bodyweight reps that never vary are a circuit's count, not a stall" started.
+✔ Test "bodyweight reps that never vary are a circuit's count, not a stall" passed after 0.001 seconds.
+◇ Test "rounds that stopped going up get an even pace and a break" started.
+✔ Test "rounds that stopped going up get an even pace and a break" passed after 0.001 seconds.
+◇ Test "the swap comes from the alternatives data" started.
+✔ Test "the swap comes from the alternatives data" passed after 0.049 seconds.
+✔ Suite "stalls" passed after 0.072 seconds.
+◇ Suite "saving a session" started.
+◇ Test "the result is listed and stored before the heart-rate summary resolves, which is added after" started.
+✔ Test "the result is listed and stored before the heart-rate summary resolves, which is added after" passed after 0.018 seconds.
+◇ Test "an edit made while the summary was out is kept when it lands" started.
+✔ Test "an edit made while the summary was out is kept when it lands" passed after 0.018 seconds.
+◇ Test "heart rate missing at the finish is asked for again, for the last two days only" started.
+✔ Test "heart rate missing at the finish is asked for again, for the last two days only" passed after 0.004 seconds.
+◇ Test "a delete takes the Health workout out; a date edit writes it again only when Health had one" started.
+✔ Test "a delete takes the Health workout out; a date edit writes it again only when Health had one" passed after 0.010 seconds.
+✔ Suite "saving a session" passed after 0.054 seconds.
+◇ Suite "own workouts sync" started.
+◇ Test "an edit made while the workout uploads stays queued when its own upload fails" started.
+✔ Test "an edit made while the workout uploads stays queued when its own upload fails" passed after 0.033 seconds.
+◇ Test "a delete made while another goes up stays queued when its own call fails" started.
+✔ Test "a delete made while another goes up stays queued when its own call fails" passed after 0.015 seconds.
+◇ Test "a workout deleted while its upload was out is deleted again after it lands" started.
+✔ Test "a workout deleted while its upload was out is deleted again after it lands" passed after 0.016 seconds.
+◇ Test "only Make public / Make private sends the column; other edits keep what the store knows" started.
+✔ Test "only Make public / Make private sends the column; other edits keep what the store knows" passed after 0.008 seconds.
+◇ Test "deleting a saved workout stamps the saved list, so the server's older copy cannot bring it back" started.
+✔ Test "deleting a saved workout stamps the saved list, so the server's older copy cannot bring it back" passed after 0.009 seconds.
+◇ Test "a Health weighing older than one typed on the web does not win the sync, nor come back" started.
+✔ Test "a Health weighing older than one typed on the web does not win the sync, nor come back" passed after 0.008 seconds.
+✔ Suite "own workouts sync" passed after 0.093 seconds.
+◇ Suite "stripes" started.
+◇ Test "two bars, each where the SVG puts it" started.
+✔ Test "two bars, each where the SVG puts it" passed after 0.001 seconds.
+◇ Test "the bars stand straight: top-left x equals bottom-left x" started.
+✔ Test "the bars stand straight: top-left x equals bottom-left x" passed after 0.001 seconds.
+✔ Suite "stripes" passed after 0.001 seconds.
+◇ Suite "session rows" started.
+◇ Test "a v2 row round-trips unchanged" started.
+✔ Test "a v2 row round-trips unchanged" passed after 0.001 seconds.
+◇ Test "startedFrom sits at the top of the row's data, and is absent when unset" started.
+✔ Test "startedFrom sits at the top of the row's data, and is absent when unset" passed after 0.003 seconds.
+◇ Test "a v0.9 session converts, keeping the load actually used" started.
+✔ Test "a v0.9 session converts, keeping the load actually used" passed after 0.008 seconds.
+◇ Test "a legacy row the newer app has touched reads its v2 payload" started.
+✔ Test "a legacy row the newer app has touched reads its v2 payload" passed after 0.001 seconds.
+◇ Test "a table URL keeps its query string" started.
+✔ Test "a table URL keeps its query string" passed after 0.001 seconds.
+◇ Test "dates parse whichever way Postgres hands them back" started.
+✔ Test "dates parse whichever way Postgres hands them back" passed after 0.001 seconds.
+◇ Test "an edit keeps what the web app keeps on the row, and clears a field emptied here" started.
+✔ Test "an edit keeps what the web app keeps on the row, and clears a field emptied here" passed after 0.009 seconds.
+◇ Test "an edit to a v0.9 row keeps its shape, with the result under v2, as the web writes it" started.
+✔ Test "an edit to a v0.9 row keeps its shape, with the result under v2, as the web writes it" passed after 0.001 seconds.
+◇ Test "effort rides on the row's data and reads back" started.
+✔ Test "effort rides on the row's data and reads back" passed after 0.001 seconds.
+◇ Test "a workout keeps the web's icon through a phone edit, and sends public only when set here" started.
+✔ Test "a workout keeps the web's icon through a phone edit, and sends public only when set here" passed after 0.001 seconds.
+◇ Test "a sync keeps the phone's unpushed edits and deletes over the server's copy" started.
+✔ Test "a sync keeps the phone's unpushed edits and deletes over the server's copy" passed after 0.001 seconds.
+✔ Suite "session rows" passed after 0.055 seconds.
+◇ Suite "targets" started.
+◇ Test "aims at the best of the last three rounds, in the workout's own terms" started.
+✔ Test "aims at the best of the last three rounds, in the workout's own terms" passed after 0.001 seconds.
+◇ Test "scales with intent: restore holds the middle, overreach adds a round" started.
+✔ Test "scales with intent: restore holds the middle, overreach adds a round" passed after 0.001 seconds.
+◇ Test "reads a part round as reps and aims to finish the round" started.
+✔ Test "reads a part round as reps and aims to finish the round" passed after 0.001 seconds.
+◇ Test "times aim under the best finished run, and a stopped run does not count" started.
+✔ Test "times aim under the best finished run, and a stopped run does not count" passed after 0.001 seconds.
+◇ Test "is nothing for an unscored workout or one with no scored history" started.
+✔ Test "is nothing for an unscored workout or one with no scored history" passed after 0.001 seconds.
+◇ Test "banks reps until the set at the next bell is no harder" started.
+✔ Test "banks reps until the set at the next bell is no harder" passed after 0.001 seconds.
+◇ Test "adds a rep a set at the current load while banking" started.
+✔ Test "adds a rep a set at the current load while banking" passed after 0.001 seconds.
+◇ Test "jumps a bell once every set reached the top, back to the bottom of the range" started.
+✔ Test "jumps a bell once every set reached the top, back to the bottom of the range" passed after 0.001 seconds.
+◇ Test "does not bank past the top of a range" started.
+✔ Test "does not bank past the top of a range" passed after 0.001 seconds.
+◇ Test "reads the working sets at the top load, not warm-ups" started.
+✔ Test "reads the working sets at the top load, not warm-ups" passed after 0.001 seconds.
+◇ Test "restore repeats last time; overreach adds two" started.
+✔ Test "restore repeats last time; overreach adds two" passed after 0.001 seconds.
+◇ Test "bodyweight gets reps" started.
+✔ Test "bodyweight gets reps" passed after 0.001 seconds.
+◇ Test "leaves alone what it should not move" started.
+✔ Test "leaves alone what it should not move" passed after 0.001 seconds.
+◇ Test "today names the exercise and the sets when the workout is not scored" started.
+✔ Test "today names the exercise and the sets when the workout is not scored" passed after 0.001 seconds.
+◇ Test "the timer shows the set for the round it is on" started.
+✔ Test "the timer shows the set for the round it is on" passed after 0.001 seconds.
+◇ Test "next time reads the session just done as the newest, and stands aside for programme rules" started.
+✔ Test "next time reads the session just done as the newest, and stands aside for programme rules" passed after 0.001 seconds.
+✔ Suite "targets" passed after 0.037 seconds.
+◇ Suite "timed and distance records, round times, set edits" started.
+◇ Test "tells timed, distance and calorie work apart" started.
+✔ Test "tells timed, distance and calorie work apart" passed after 0.001 seconds.
+◇ Test "keeps the fastest time per distance, the furthest and the longest hold" started.
+✔ Test "keeps the fastest time per distance, the furthest and the longest hold" passed after 0.001 seconds.
+◇ Test "charts the best pace per session, and the longest hold" started.
+✔ Test "charts the best pace per session, and the longest hold" passed after 0.001 seconds.
+◇ Test "marks a faster time over the same distance, further, more calories, a longer hold" started.
+✔ Test "marks a faster time over the same distance, further, more calories, a longer hold" passed after 0.001 seconds.
+◇ Test "labels a set by what it measured" started.
+✔ Test "labels a set by what it measured" passed after 0.001 seconds.
+◇ Test "round times, fastest and slowest, against last time" started.
+✔ Test "round times, fastest and slowest, against last time" passed after 0.001 seconds.
+◇ Test "the fastest round of a workout, and a PR only against a standing one" started.
+✔ Test "the fastest round of a workout, and a PR only against a standing one" passed after 0.001 seconds.
+◇ Test "an edited copy races the rounds of the workout it was copied from" started.
+✔ Test "an edited copy races the rounds of the workout it was copied from" passed after 0.001 seconds.
+◇ Test "editing a set works target and reps out again, and every reader sees it" started.
+✔ Test "editing a set works target and reps out again, and every reader sees it" passed after 0.001 seconds.
+◇ Test "reps edited below the plan make the row a miss, and back up to it a success" started.
+✔ Test "reps edited below the plan make the row a miss, and back up to it a success" passed after 0.001 seconds.
+✔ Suite "timed and distance records, round times, set edits" passed after 0.062 seconds.
+◇ Suite "timed and distance work" started.
+◇ Test "a countdown that runs out logs its whole length" started.
+✔ Test "a countdown that runs out logs its whole length" passed after 0.001 seconds.
+◇ Test "Done early keeps the time it ran, pauses out; Skip logs nothing" started.
+✔ Test "Done early keeps the time it ran, pauses out; Skip logs nothing" passed after 0.001 seconds.
+◇ Test "a distance logs the plan unless changed, and the time it took" started.
+✔ Test "a distance logs the plan unless changed, and the time it took" passed after 0.001 seconds.
+◇ Test "a rower on the clock logs metres only when entered" started.
+✔ Test "a rower on the clock logs metres only when entered" passed after 0.001 seconds.
+◇ Test "calories count on a calorie step; a set of reps keeps no time" started.
+✔ Test "calories count on a calorie step; a set of reps keeps no time" passed after 0.001 seconds.
+◇ Test "a done set is locked until un-ticked" started.
+✔ Test "a done set is locked until un-ticked" passed after 0.020 seconds.
+◇ Test "a set ticked straight after its rest has no time of its own" started.
+✔ Test "a set ticked straight after its rest has no time of its own" passed after 0.001 seconds.
+◇ Test "for-time rounds are split per round" started.
+✔ Test "for-time rounds are split per round" passed after 0.001 seconds.
+✔ Suite "timed and distance work" passed after 0.026 seconds.
+◇ Suite "workout icon" started.
+◇ Test "the hash matches the web app's, byte for byte" started.
+✔ Test "the hash matches the web app's, byte for byte" passed after 0.001 seconds.
+◇ Test "monograms read like the web's" started.
+✔ Test "monograms read like the web's" passed after 0.001 seconds.
+✔ Suite "workout icon" passed after 0.001 seconds.
+✔ Test run with 350 tests in 62 suites passed after 5.438 seconds.

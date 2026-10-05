@@ -1,0 +1,409 @@
+2026-10-06 00:44:04.261911+0100 TigerWorkoutsUITests-Runner[11777:47794328] [Default] Running tests...
+2026-10-06 00:44:04.386271+0100 TigerWorkoutsUITests-Runner[11777:47794437] [General] Failed to send CA Event for app launch measurements for ca_event_type: 0 event_name: com.apple.app_launch_measurement.FirstFramePresentationMetric
+2026-10-06 00:44:06.448279+0100 TigerWorkoutsUITests-Runner[11777:47794437] [General] Failed to send CA Event for app launch measurements for ca_event_type: 1 event_name: com.apple.app_launch_measurement.ExtendedLaunchMetrics
+    t =      nans Interface orientation changed to Portrait
+Test Suite 'All tests' started at 2026-10-06 00:44:09.961.
+Test Suite 'TigerWorkoutsUITests.xctest' started at 2026-10-06 00:44:09.962.
+Test Suite 'WalkthroughUITests' started at 2026-10-06 00:44:09.963.
+Test Case '-[TigerWorkoutsUITests.WalkthroughUITests testAfterTheSession]' started.
+    t =     0.00s Start Test at 2026-10-06 00:44:09.966
+    t =     0.42s Set Up
+    t =     0.43s     Open dev.brambruesch.tigerworkouts
+    t =     0.43s         Launch dev.brambruesch.tigerworkouts
+    t =     1.00s             Setting up automation session
+    t =     3.08s             Wait for dev.brambruesch.tigerworkouts to idle
+    t =     6.62s     Waiting 3.0s for "Discard" Button to exist
+    t =     7.69s         Checking `Expect predicate `existsNoRetry == 1` for object "Discard" Button`
+    t =     7.69s             Checking existence of `"Discard" Button`
+    t =     7.92s             Capturing element debug description
+    t =     8.66s         Checking `Expect predicate `existsNoRetry == 1` for object "Discard" Button`
+    t =     8.66s             Checking existence of `"Discard" Button`
+    t =     8.76s             Capturing element debug description
+    t =     9.62s         Checking `Expect predicate `existsNoRetry == 1` for object "Discard" Button`
+    t =     9.62s             Checking existence of `"Discard" Button`
+    t =     9.71s             Capturing element debug description
+    t =     9.72s         Checking existence of `"Discard" Button`
+    t =     9.83s     Collecting debug information to assist test failure triage
+    t =     9.83s         Requesting snapshot of accessibility hierarchy for app with pid 11823
+    t =    10.13s Terminate dev.brambruesch.tigerworkouts:11823
+    t =    11.16s Open dev.brambruesch.tigerworkouts
+    t =    11.16s     Launch dev.brambruesch.tigerworkouts
+    t =    11.66s         Setting up automation session
+    t =    14.36s         Wait for dev.brambruesch.tigerworkouts to idle
+    t =    18.08s Waiting 3.0s for "Discard" Button to exist
+    t =    19.14s     Checking `Expect predicate `existsNoRetry == 1` for object "Discard" Button`
+    t =    19.14s         Checking existence of `"Discard" Button`
+    t =    19.36s         Capturing element debug description
+    t =    20.09s     Checking `Expect predicate `existsNoRetry == 1` for object "Discard" Button`
+    t =    20.09s         Checking existence of `"Discard" Button`
+    t =    20.20s         Capturing element debug description
+    t =    21.09s     Checking `Expect predicate `existsNoRetry == 1` for object "Discard" Button`
+    t =    21.09s         Checking existence of `"Discard" Button`
+    t =    21.19s         Capturing element debug description
+    t =    21.20s     Checking existence of `"Discard" Button`
+    t =    21.39s Collecting debug information to assist test failure triage
+    t =    21.39s     Requesting snapshot of accessibility hierarchy for app with pid 11873
+    t =    21.62s Waiting 8.0s for "Me" Button to exist
+    t =    22.67s     Checking `Expect predicate `existsNoRetry == 1` for object "Me" Button`
+    t =    22.67s         Checking existence of `"Me" Button`
+    t =    22.77s Tap "Me" Button
+    t =    22.77s     Wait for dev.brambruesch.tigerworkouts to idle
+    t =    22.78s     Find the "Me" Button
+    t =    22.88s     Check for interrupting elements affecting "person.crop.circle" Button
+    t =    22.91s         Wait for com.apple.springboard to idle
+    t =    23.18s     Found 1 interrupting element:
+    t =    23.18s         Find the "“Tiger” Would Like to Send You Notifications" Alert
+    t =    23.32s "“Tiger” Would Like to Send You Notifications" Alert from Application 'com.apple.springboard'
+    t =    23.32s     Invoking UI interruption monitors for "“Tiger” Would Like to Send You Notifications" Alert from Application 'com.apple.springboard'
+    t =    23.32s         Find the "“Tiger” Would Like to Send You Notifications" Alert
+    t =    23.42s         Checking existence of `Button (Elements matching predicate 'userTestingAttributes CONTAINS "cancel-button"')`
+    t =    23.58s         Get all elements bound by accessibility element for: Elements matching predicate 'userTestingAttributes CONTAINS "default-button"'
+    t =    23.71s         Checking existence of `"Allow" Button`
+    t =    23.81s Default interruption handler attempting to dismiss alert by tapping "Allow" Button.
+    t =    23.82s         Tap "Allow" Button
+    t =    23.82s             Wait for com.apple.springboard to idle
+    t =    23.83s             Find the "Allow" Button
+    t =    23.92s             Check for interrupting elements affecting "Allow" Button
+    t =    24.03s             Synthesize event
+    t =    24.46s             Wait for com.apple.springboard to idle
+    t =    24.73s         Waiting 1.0s for Alert to not exist
+    t =    25.73s             Checking `Expect predicate `existsNoRetry == 0` for object Alert`
+    t =    25.73s                 Checking existence of `Alert`
+    t =    25.78s             Checking existence of `Alert`
+    t =    25.84s         Verifying handling...
+    t =    25.92s Confirmed successful handling of interrupting element
+    t =    25.92s     Synthesize event
+    t =    26.25s     Wait for dev.brambruesch.tigerworkouts to idle
+    t =    28.40s Checking existence of `"Settings" Button`
+    t =    28.54s Swipe up Target Application 'dev.brambruesch.tigerworkouts'
+    t =    28.54s     Wait for dev.brambruesch.tigerworkouts to idle
+    t =    28.55s     Find the Target Application 'dev.brambruesch.tigerworkouts'
+    t =    28.63s     Check for interrupting elements affecting "Tiger" Application
+    t =    28.72s     Synthesize event
+    t =    29.17s     Wait for dev.brambruesch.tigerworkouts to idle
+    t =    31.31s Checking existence of `"Settings" Button`
+    t =    31.47s Find the "Settings" Button
+    t =    31.71s Checking existence of `"Settings" Button`
+    t =    31.86s Find the "Settings" Button
+    t =    32.06s Checking existence of `"Settings" Button`
+    t =    32.20s Find the "Settings" Button
+    t =    32.39s Waiting 8.0s for "Settings" Button to exist
+    t =    33.44s     Checking `Expect predicate `existsNoRetry == 1` for object "Settings" Button`
+    t =    33.44s         Checking existence of `"Settings" Button`
+    t =    33.61s Tap "Settings" Button
+    t =    33.61s     Wait for dev.brambruesch.tigerworkouts to idle
+    t =    33.61s     Find the "Settings" Button
+    t =    33.74s     Check for interrupting elements affecting "Settings" Button
+    t =    33.91s     Synthesize event
+    t =    34.24s     Wait for dev.brambruesch.tigerworkouts to idle
+    t =    34.58s Checking existence of `"Apple Health" Switch`
+    t =    34.98s Swipe up Target Application 'dev.brambruesch.tigerworkouts'
+    t =    34.98s     Wait for dev.brambruesch.tigerworkouts to idle
+    t =    35.83s     Find the Target Application 'dev.brambruesch.tigerworkouts'
+    t =    36.02s     Check for interrupting elements affecting "Tiger" Application
+    t =    36.19s     Synthesize event
+    t =    36.63s     Wait for dev.brambruesch.tigerworkouts to idle
+    t =    37.90s Checking existence of `"Apple Health" Switch`
+    t =    38.10s Find the "Apple Health" Switch
+    t =    38.36s Checking existence of `"Apple Health" Switch`
+    t =    38.52s Find the "Apple Health" Switch
+    t =    38.75s Checking existence of `"Apple Health" Switch`
+    t =    38.92s Find the "Apple Health" Switch
+    t =    39.16s Waiting 5.0s for "Apple Health" Switch to exist
+    t =    40.19s     Checking `Expect predicate `existsNoRetry == 1` for object "Apple Health" Switch`
+    t =    40.19s         Checking existence of `"Apple Health" Switch`
+    t =    40.36s Find the "Apple Health" Switch
+    t =    40.50s Waiting 8.0s for "Workouts" Button to exist
+    t =    41.55s     Checking `Expect predicate `existsNoRetry == 1` for object "Workouts" Button`
+    t =    41.55s         Checking existence of `"Workouts" Button`
+    t =    41.72s Tap "Workouts" Button
+    t =    41.72s     Wait for dev.brambruesch.tigerworkouts to idle
+    t =    41.72s     Find the "Workouts" Button
+    t =    41.91s     Check for interrupting elements affecting "square.grid.2x2" Button
+    t =    42.06s     Synthesize event
+    t =    42.38s     Wait for dev.brambruesch.tigerworkouts to idle
+    t =    44.00s Checking existence of `"TigerWorkouts" NavigationBar`
+    t =    44.09s Checking existence of `"TigerWorkouts" NavigationBar`
+    t =    44.20s Checking existence of `"TigerWorkouts" NavigationBar`
+    t =    44.27s Checking existence of `"Clear text" Button`
+    t =    44.38s Checking existence of `"Close" Button`
+    t =    44.47s Checking existence of `"Cancel" Button`
+    t =    44.56s Waiting 5.0s for "TigerWorkouts" NavigationBar to exist
+    t =    45.60s     Checking `Expect predicate `existsNoRetry == 1` for object "TigerWorkouts" NavigationBar`
+    t =    45.60s         Checking existence of `"TigerWorkouts" NavigationBar`
+    t =    45.70s Waiting 10.0s for "TigerWorkouts" NavigationBar to exist
+    t =    46.77s     Checking `Expect predicate `existsNoRetry == 1` for object "TigerWorkouts" NavigationBar`
+    t =    46.77s         Checking existence of `"TigerWorkouts" NavigationBar`
+    t =    46.87s Checking existence of `SearchField (First Match)`
+    t =    46.96s Waiting 8.0s for SearchField (First Match) to exist
+    t =    48.02s     Checking `Expect predicate `existsNoRetry == 1` for object SearchField (First Match)`
+    t =    48.02s         Checking existence of `SearchField (First Match)`
+    t =    48.16s Tap SearchField (First Match)
+    t =    48.16s     Wait for dev.brambruesch.tigerworkouts to idle
+    t =    48.17s     Find the SearchField (First Match)
+    t =    48.28s     Check for interrupting elements affecting "Workout, exercise or tag" SearchField
+    t =    48.39s     Synthesize event
+    t =    48.72s     Wait for dev.brambruesch.tigerworkouts to idle
+    t =    50.06s Type 'Tabata This' into "Workout, exercise or tag" SearchField
+    t =    50.06s     Wait for dev.brambruesch.tigerworkouts to idle
+    t =    50.56s     Find the "Workout, exercise or tag" SearchField
+    t =    50.87s     Check for interrupting elements affecting "Workout, exercise or tag" SearchField
+    t =    50.98s     Synthesize event
+    t =    51.39s     Wait for dev.brambruesch.tigerworkouts to idle
+    t =    51.41s Waiting 2.0s for Button (First Match) to exist
+    t =    52.48s     Checking `Expect predicate `existsNoRetry == 1` for object Button (First Match)`
+    t =    52.49s         Checking existence of `Button (First Match)`
+    t =    52.80s Checking existence of `Button (First Match)`
+    t =    53.16s Waiting 8.0s for Button (First Match) to exist
+    t =    54.19s     Checking `Expect predicate `existsNoRetry == 1` for object Button (First Match)`
+    t =    54.19s         Checking existence of `Button (First Match)`
+    t =    54.46s Tap Button (First Match)
+    t =    54.46s     Wait for dev.brambruesch.tigerworkouts to idle
+    t =    54.47s     Find the Button (First Match)
+    t =    54.81s     Check for interrupting elements affecting "Tabata This, 24 min, · CrossFit, · Hard" Button
+    t =    54.92s     Synthesize event
+    t =    55.24s     Wait for dev.brambruesch.tigerworkouts to idle
+    t =    55.84s Waiting 5.0s for "Start workout" Button to exist
+    t =    56.89s     Checking `Expect predicate `existsNoRetry == 1` for object "Start workout" Button`
+    t =    56.89s         Checking existence of `"Start workout" Button`
+    t =    57.20s Waiting 8.0s for "Start workout" Button to exist
+    t =    58.25s     Checking `Expect predicate `existsNoRetry == 1` for object "Start workout" Button`
+    t =    58.25s         Checking existence of `"Start workout" Button`
+    t =    58.43s Tap "Start workout" Button
+    t =    58.43s     Wait for dev.brambruesch.tigerworkouts to idle
+    t =    58.44s     Find the "Start workout" Button
+    t =    58.62s     Check for interrupting elements affecting "Start workout" Button
+    t =    58.80s     Synthesize event
+    t =    59.12s     Wait for dev.brambruesch.tigerworkouts to idle
+    t =    59.55s Waiting 8.0s for "End session" Button to exist
+    t =    60.61s     Checking `Expect predicate `existsNoRetry == 1` for object "End session" Button`
+    t =    60.61s         Checking existence of `"End session" Button`
+    t =    60.85s Tap "End session" Button
+    t =    60.85s     Wait for dev.brambruesch.tigerworkouts to idle
+    t =    60.87s     Find the "End session" Button
+    t =    61.07s     Check for interrupting elements affecting "xmark" Button
+    t =    61.28s     Synthesize event
+    t =    61.60s     Wait for dev.brambruesch.tigerworkouts to idle
+    t =    62.38s Waiting 8.0s for "Finish and save" Button to exist
+    t =    63.44s     Checking `Expect predicate `existsNoRetry == 1` for object "Finish and save" Button`
+    t =    63.44s         Checking existence of `"Finish and save" Button`
+    t =    63.69s Tap "Finish and save" Button
+    t =    63.69s     Wait for dev.brambruesch.tigerworkouts to idle
+    t =    63.70s     Find the "Finish and save" Button
+    t =    63.96s     Check for interrupting elements affecting "Finish and save" Button
+    t =    64.49s     Synthesize event
+    t =    64.85s     Wait for dev.brambruesch.tigerworkouts to idle
+    t =    65.08s Waiting 10.0s for "Workout saved" StaticText to exist
+    t =    66.14s     Checking `Expect predicate `existsNoRetry == 1` for object "Workout saved" StaticText`
+    t =    66.14s         Checking existence of `"Workout saved" StaticText`
+    t =    66.44s Waiting 5.0s for StaticText (First Match) to exist
+    t =    67.48s     Checking `Expect predicate `existsNoRetry == 1` for object StaticText (First Match)`
+    t =    67.48s         Checking existence of `StaticText (First Match)`
+    t =    67.83s Added attachment named '50 Finish, celebration'
+    t =    67.83s Waiting 8.0s for "effort-8" Button to exist
+    t =    68.88s     Checking `Expect predicate `existsNoRetry == 1` for object "effort-8" Button`
+    t =    68.88s         Checking existence of `"effort-8" Button`
+    t =    69.11s Tap "effort-8" Button
+    t =    69.12s     Wait for dev.brambruesch.tigerworkouts to idle
+    t =    69.12s     Find the "effort-8" Button
+    t =    69.37s     Check for interrupting elements affecting "effort-8" Button
+    t =    69.59s     Synthesize event
+    t =    69.91s     Wait for dev.brambruesch.tigerworkouts to idle
+    t =    69.91s Waiting 3.0s for "8 · Hard" StaticText to exist
+    t =    70.94s     Checking `Expect predicate `existsNoRetry == 1` for object "8 · Hard" StaticText`
+    t =    70.94s         Checking existence of `"8 · Hard" StaticText`
+    t =    71.22s Waiting 8.0s for "finish-notes" Any to exist
+    t =    72.26s     Checking `Expect predicate `existsNoRetry == 1` for object "finish-notes" Any`
+    t =    72.26s         Checking existence of `"finish-notes" Any`
+    t =    72.41s Tap "finish-notes" Any
+    t =    72.41s     Wait for dev.brambruesch.tigerworkouts to idle
+    t =    72.44s     Find the "finish-notes" Any
+    t =    72.58s     Check for interrupting elements affecting "finish-notes" TextField
+    t =    72.82s     Synthesize event
+    t =    73.15s     Wait for dev.brambruesch.tigerworkouts to idle
+    t =    73.26s Type 'Legs gone by round...' into "finish-notes" TextField
+    t =    73.26s     Wait for dev.brambruesch.tigerworkouts to idle
+    t =    73.63s     Find the "finish-notes" TextField
+    t =    73.93s     Check for interrupting elements affecting "finish-notes" TextField
+    t =    74.28s     Synthesize event
+    t =    74.84s     Wait for dev.brambruesch.tigerworkouts to idle
+    t =    74.85s Swipe down Target Application 'dev.brambruesch.tigerworkouts'
+    t =    74.85s     Wait for dev.brambruesch.tigerworkouts to idle
+    t =    74.86s     Find the Target Application 'dev.brambruesch.tigerworkouts'
+    t =    75.10s     Check for interrupting elements affecting "Tiger" Application
+    t =    75.37s     Synthesize event
+    t =    75.88s     Wait for dev.brambruesch.tigerworkouts to idle
+    t =    76.51s Added attachment named '51 Finish, effort and notes'
+    t =    76.52s Waiting 8.0s for "share-card" Button to exist
+    t =    77.57s     Checking `Expect predicate `existsNoRetry == 1` for object "share-card" Button`
+    t =    77.57s         Checking existence of `"share-card" Button`
+    t =    77.86s Tap "share-card" Button
+    t =    77.86s     Wait for dev.brambruesch.tigerworkouts to idle
+    t =    77.87s     Find the "share-card" Button
+    t =    78.17s     Check for interrupting elements affecting "share-card" Button
+    t =    78.46s     Synthesize event
+    t =    78.78s     Wait for dev.brambruesch.tigerworkouts to idle
+    t =    79.32s Waiting 5.0s for "share-card-image" Image to exist
+    t =    80.38s     Checking `Expect predicate `existsNoRetry == 1` for object "share-card-image" Image`
+    t =    80.38s         Checking existence of `"share-card-image" Image`
+    t =    80.89s Added attachment named '52 Share card'
+    t =    80.89s Waiting 8.0s for "Close" Button to exist
+    t =    81.93s     Checking `Expect predicate `existsNoRetry == 1` for object "Close" Button`
+    t =    81.93s         Checking existence of `"Close" Button`
+    t =    82.22s Tap "Close" Button
+    t =    82.23s     Wait for dev.brambruesch.tigerworkouts to idle
+    t =    82.24s     Find the "Close" Button
+    t =    82.53s     Check for interrupting elements affecting "Close" Button
+    t =    82.78s     Synthesize event
+    t =    83.12s     Wait for dev.brambruesch.tigerworkouts to idle
+    t =    84.19s Waiting 8.0s for "Done" Button to exist
+    t =    85.23s     Checking `Expect predicate `existsNoRetry == 1` for object "Done" Button`
+    t =    85.23s         Checking existence of `"Done" Button`
+    t =    85.52s Tap "Done" Button
+    t =    85.53s     Wait for dev.brambruesch.tigerworkouts to idle
+    t =    85.53s     Find the "Done" Button
+    t =    85.81s     Check for interrupting elements affecting "Done" Button
+    t =    86.06s     Synthesize event
+    t =    86.09s         Scroll element to visible
+    t =    86.09s         Find the "Done" Button
+    t =    86.45s         Computed hit point {201.00000000000009, 430.99999999999983} after scrolling to visible
+    t =    86.75s     Wait for dev.brambruesch.tigerworkouts to idle
+    t =    87.25s Waiting 8.0s for "History" Button to exist
+    t =    88.33s     Checking `Expect predicate `existsNoRetry == 1` for object "History" Button`
+    t =    88.33s         Checking existence of `"History" Button`
+    t =    88.53s Tap "History" Button
+    t =    88.53s     Wait for dev.brambruesch.tigerworkouts to idle
+    t =    88.54s     Find the "History" Button
+    t =    88.73s     Check for interrupting elements affecting "clock.arrow.circlepath" Button
+    t =    88.88s     Synthesize event
+    t =    89.21s     Wait for dev.brambruesch.tigerworkouts to idle
+    t =    90.85s Waiting 5.0s for Button (First Match) to exist
+    t =    91.86s     Checking `Expect predicate `existsNoRetry == 1` for object Button (First Match)`
+    t =    91.86s         Checking existence of `Button (First Match)`
+    t =    92.46s Added attachment named '53 History with effort'
+    t =    92.46s Tap Button (First Match)
+    t =    92.46s     Wait for dev.brambruesch.tigerworkouts to idle
+    t =    92.47s     Find the Button (First Match)
+    t =    92.76s     Check for interrupting elements affecting "Tabata This, 6 Oct 2026 at 0:45 · 6s · stopped early · effort 8" Button
+    t =    92.90s     Synthesize event
+    t =    93.23s     Wait for dev.brambruesch.tigerworkouts to idle
+    t =    93.42s Waiting 5.0s for "8 · Hard" StaticText to exist
+    t =    94.45s     Checking `Expect predicate `existsNoRetry == 1` for object "8 · Hard" StaticText`
+    t =    94.45s         Checking existence of `"8 · Hard" StaticText`
+    t =    94.65s Swipe up Target Application 'dev.brambruesch.tigerworkouts'
+    t =    94.65s     Wait for dev.brambruesch.tigerworkouts to idle
+    t =    94.65s     Find the Target Application 'dev.brambruesch.tigerworkouts'
+    t =    94.76s     Check for interrupting elements affecting "Tiger" Application
+    t =    94.89s     Synthesize event
+    t =    95.40s     Wait for dev.brambruesch.tigerworkouts to idle
+    t =    96.13s Swipe up Target Application 'dev.brambruesch.tigerworkouts'
+    t =    96.13s     Wait for dev.brambruesch.tigerworkouts to idle
+    t =    96.14s     Find the Target Application 'dev.brambruesch.tigerworkouts'
+    t =    96.23s     Check for interrupting elements affecting "Tiger" Application
+    t =    96.33s     Synthesize event
+    t =    96.83s     Wait for dev.brambruesch.tigerworkouts to idle
+    t =    97.33s Swipe up Target Application 'dev.brambruesch.tigerworkouts'
+    t =    97.33s     Wait for dev.brambruesch.tigerworkouts to idle
+    t =    97.34s     Find the Target Application 'dev.brambruesch.tigerworkouts'
+    t =    97.44s     Check for interrupting elements affecting "Tiger" Application
+    t =    97.56s     Synthesize event
+    t =    98.07s     Wait for dev.brambruesch.tigerworkouts to idle
+    t =    98.86s Waiting 8.0s for "session-duration-Increment" Button to exist
+    t =    99.90s     Checking `Expect predicate `existsNoRetry == 1` for object "session-duration-Increment" Button`
+    t =    99.90s         Checking existence of `"session-duration-Increment" Button`
+    t =   100.03s Tap "session-duration-Increment" Button
+    t =   100.03s     Wait for dev.brambruesch.tigerworkouts to idle
+    t =   100.04s     Find the "session-duration-Increment" Button
+    t =   100.18s     Check for interrupting elements affecting "session-duration-Increment" Button
+    t =   100.28s     Synthesize event
+    t =   100.63s     Wait for dev.brambruesch.tigerworkouts to idle
+    t =   100.64s Waiting 8.0s for "session-duration-Increment" Button to exist
+    t =   101.69s     Checking `Expect predicate `existsNoRetry == 1` for object "session-duration-Increment" Button`
+    t =   101.69s         Checking existence of `"session-duration-Increment" Button`
+    t =   101.81s Tap "session-duration-Increment" Button
+    t =   101.81s     Wait for dev.brambruesch.tigerworkouts to idle
+    t =   101.82s     Find the "session-duration-Increment" Button
+    t =   101.95s     Check for interrupting elements affecting "session-duration-Increment" Button
+    t =   102.07s     Synthesize event
+    t =   102.39s     Wait for dev.brambruesch.tigerworkouts to idle
+    t =   102.56s Added attachment named '54 Session detail, edited'
+    t =   102.56s Waiting 8.0s for "Do it again" Button to exist
+    t =   103.60s     Checking `Expect predicate `existsNoRetry == 1` for object "Do it again" Button`
+    t =   103.61s         Checking existence of `"Do it again" Button`
+    t =   103.75s Tap "Do it again" Button
+    t =   103.75s     Wait for dev.brambruesch.tigerworkouts to idle
+    t =   103.75s     Find the "Do it again" Button
+    t =   103.87s     Check for interrupting elements affecting "do-it-again" Button
+    t =   103.98s     Synthesize event
+    t =   104.30s     Wait for dev.brambruesch.tigerworkouts to idle
+    t =   104.73s Waiting 5.0s for "End session" Button to exist
+    t =   105.79s     Checking `Expect predicate `existsNoRetry == 1` for object "End session" Button`
+    t =   105.79s         Checking existence of `"End session" Button`
+    t =   106.03s Waiting 8.0s for "End session" Button to exist
+    t =   107.10s     Checking `Expect predicate `existsNoRetry == 1` for object "End session" Button`
+    t =   107.10s         Checking existence of `"End session" Button`
+    t =   107.25s Tap "End session" Button
+    t =   107.25s     Wait for dev.brambruesch.tigerworkouts to idle
+    t =   107.26s     Find the "End session" Button
+    t =   107.42s     Check for interrupting elements affecting "xmark" Button
+    t =   107.56s     Synthesize event
+    t =   107.87s     Wait for dev.brambruesch.tigerworkouts to idle
+    t =   107.99s Waiting 8.0s for "Finish and save" Button to exist
+    t =   109.02s     Checking `Expect predicate `existsNoRetry == 1` for object "Finish and save" Button`
+    t =   109.02s         Checking existence of `"Finish and save" Button`
+    t =   109.37s Tap "Finish and save" Button
+    t =   109.37s     Wait for dev.brambruesch.tigerworkouts to idle
+    t =   109.39s     Find the "Finish and save" Button
+    t =   109.68s     Check for interrupting elements affecting "Finish and save" Button
+    t =   109.93s     Synthesize event
+    t =   110.34s     Wait for dev.brambruesch.tigerworkouts to idle
+    t =   110.60s Waiting 8.0s for "Done" Button to exist
+    t =   111.64s     Checking `Expect predicate `existsNoRetry == 1` for object "Done" Button`
+    t =   111.64s         Checking existence of `"Done" Button`
+    t =   111.85s Tap "Done" Button
+    t =   111.85s     Wait for dev.brambruesch.tigerworkouts to idle
+    t =   111.85s     Find the "Done" Button
+    t =   112.02s     Check for interrupting elements affecting "Done" Button
+    t =   112.18s     Synthesize event
+    t =   112.20s         Scroll element to visible
+    t =   112.20s         Find the "Done" Button
+    t =   112.39s         Computed hit point {201, 732} after scrolling to visible
+    t =   112.69s     Wait for dev.brambruesch.tigerworkouts to idle
+    t =   113.03s Swipe up Target Application 'dev.brambruesch.tigerworkouts'
+    t =   113.03s     Wait for dev.brambruesch.tigerworkouts to idle
+    t =   113.04s     Find the Target Application 'dev.brambruesch.tigerworkouts'
+    t =   113.13s     Check for interrupting elements affecting "Tiger" Application
+    t =   113.25s     Synthesize event
+    t =   113.74s     Wait for dev.brambruesch.tigerworkouts to idle
+    t =   114.28s Swipe up Target Application 'dev.brambruesch.tigerworkouts'
+    t =   114.28s     Wait for dev.brambruesch.tigerworkouts to idle
+    t =   114.30s     Find the Target Application 'dev.brambruesch.tigerworkouts'
+    t =   114.39s     Check for interrupting elements affecting "Tiger" Application
+    t =   114.50s     Synthesize event
+    t =   115.01s     Wait for dev.brambruesch.tigerworkouts to idle
+    t =   115.69s Swipe up Target Application 'dev.brambruesch.tigerworkouts'
+    t =   115.69s     Wait for dev.brambruesch.tigerworkouts to idle
+    t =   115.70s     Find the Target Application 'dev.brambruesch.tigerworkouts'
+    t =   115.83s     Check for interrupting elements affecting "Tiger" Application
+    t =   116.05s     Synthesize event
+    t =   116.58s     Wait for dev.brambruesch.tigerworkouts to idle
+    t =   117.23s Waiting 8.0s for "Delete session" Button to exist
+    t =   118.28s     Checking `Expect predicate `existsNoRetry == 1` for object "Delete session" Button`
+    t =   118.28s         Checking existence of `"Delete session" Button`
+    t =   118.46s Tap "Delete session" Button
+    t =   118.46s     Wait for dev.brambruesch.tigerworkouts to idle
+    t =   118.47s     Find the "Delete session" Button
+    t =   118.62s     Check for interrupting elements affecting "Delete session" Button
+    t =   118.81s     Synthesize event
+    t =   119.15s     Wait for dev.brambruesch.tigerworkouts to idle
+    t =   119.50s Waiting 3.0s for "Delete" Button to exist
+    t =   120.57s     Checking `Expect predicate `existsNoRetry == 1` for object "Delete" Button`
+    t =   120.57s         Checking existence of `"Delete" Button`
+    t =   120.99s Added attachment named '55 Delete, confirm'
+    t =   121.00s Tap "Delete" Button
+    t =   121.00s     Wait for dev.brambruesch.tigerworkouts to idle
+    t =   121.02s     Find the "Delete" Button
+    t =   121.22s     Check for interrupting elements affecting "Delete" Button
+    t =   121.40s     Synthesize event
+    t =   121.74s     Wait for dev.brambruesch.tigerworkouts to idle
+    t =   122.31s Waiting 5.0s for "History" NavigationBar to exist
