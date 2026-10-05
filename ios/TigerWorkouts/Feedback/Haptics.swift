@@ -51,8 +51,20 @@ final class Haptics {
     private let supportsHaptics = CHHapticEngine.capabilitiesForHardware().supportsHaptics
     private(set) var status = Status.unsupported
     var enabled = Switches.isOn(Switches.haptics)
+    @ObservationIgnored private let appState: () -> UIApplication.State
+    @ObservationIgnored private let vibrator: Vibrator
+    /// What plays a cue with the app on screen; nil is Core Haptics. Tests count it here.
+    @ObservationIgnored private let foreground: ((Cue) -> Void)?
 
-    private init() {
+    /// Only `shared` and tests make one: a test hands in a fake app state and a fake vibrator.
+    init(
+        appState: @escaping () -> UIApplication.State = { UIApplication.shared.applicationState },
+        vibrator: Vibrator = SystemVibrator(),
+        foreground: ((Cue) -> Void)? = nil
+    ) {
+        self.appState = appState
+        self.vibrator = vibrator
+        self.foreground = foreground
         guard supportsHaptics else { return }
         do {
             let engine = try CHHapticEngine()
@@ -103,7 +115,8 @@ final class Haptics {
 
     func play(_ cue: Cue) {
         guard enabled else { return }
-        if UIApplication.shared.applicationState != .active { return vibrate(cue) }
+        if appState() != .active { return vibrate(cue) }
+        if let foreground { return foreground(cue) }
         guard supportsHaptics, let engine else { return fallback(cue) }
         do {
             try engine.start()
@@ -149,18 +162,11 @@ final class Haptics {
         case .tick:
             return
         case .rest:
-            buzz(1)
+            vibrator.buzz(1)
         case .work, .block:
-            buzz(2)
+            vibrator.buzz(2)
         case .finish:
-            buzz(3)
-        }
-    }
-
-    /// Work is two buzzes and rest one, so the pocket can tell them apart.
-    private func buzz(_ times: Int) {
-        for i in 0..<times {
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.6 * Double(i)) { AudioServicesPlaySystemSound(kSystemSoundID_Vibrate) }
+            vibrator.buzz(3)
         }
     }
 
@@ -177,6 +183,20 @@ final class Haptics {
             UINotificationFeedbackGenerator().notificationOccurred(.warning)
         case .finish:
             UINotificationFeedbackGenerator().notificationOccurred(.success)
+        }
+    }
+}
+
+/// The system vibration, behind a protocol so a test can count the buzzes a locked phone gets.
+protocol Vibrator {
+    func buzz(_ times: Int)
+}
+
+struct SystemVibrator: Vibrator {
+    /// Work is two buzzes and rest one, so the pocket can tell them apart.
+    func buzz(_ times: Int) {
+        for i in 0..<times {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.6 * Double(i)) { AudioServicesPlaySystemSound(kSystemSoundID_Vibrate) }
         }
     }
 }

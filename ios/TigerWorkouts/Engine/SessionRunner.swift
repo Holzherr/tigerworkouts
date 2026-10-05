@@ -36,6 +36,9 @@ final class SessionRunner {
     private var cuedPhase: Phase?
     private var lastTick: Int?
     private var appObservers: [NSObjectProtocol] = []
+    /// What the clock's cues are felt through, the ones that reach a locked phone; a test swaps in
+    /// one with a fake app state and vibrator. A button's tap is always on screen: Haptics.shared.
+    @ObservationIgnored var haptics = Haptics.shared
     /// Every session before this one: what a set just ticked is measured against for a record.
     private let history: [SessionResult]
     /// Sets done this session that beat a record when they were ticked; a medal shows on each.
@@ -213,7 +216,12 @@ final class SessionRunner {
     }
 
     private func tick() {
-        now = Date().timeIntervalSince1970 * 1000
+        tick(at: Date().timeIntervalSince1970 * 1000)
+    }
+
+    /// One beat of the clock at `now`: the timer's tick, and a test's way to let time run out.
+    func tick(at now: Double) {
+        self.now = now
         let before = state
         state = Runner.tick(state, now: now)
         if state != before {
@@ -375,7 +383,7 @@ final class SessionRunner {
             }
         }
         if let cue {
-            Haptics.shared.play(cue)
+            haptics.play(cue)
             Cues.shared.play(Self.tone(cue))
             return
         }
@@ -385,7 +393,7 @@ final class SessionRunner {
         let second = Int(left.rounded(.up))
         if second != lastTick, (1...3).contains(second) {
             lastTick = second
-            Haptics.shared.play(.tick)
+            haptics.play(.tick)
             Cues.shared.play(.tick)
         }
     }
