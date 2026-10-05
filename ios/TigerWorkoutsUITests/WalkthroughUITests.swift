@@ -1271,15 +1271,19 @@ final class WalkthroughUITests: XCTestCase {
         tap(app.buttons["Done"])
     }
 
-    /// Eight sets of swings: the set you are on stays in view under the exercise, without a swipe,
-    /// and the rows fade out only at an edge with more rows behind it.
+    /// Eight sets of swings: the set you are on comes into view without a swipe, and the table
+    /// fades out only at an edge with more of it behind.
     func testSetTableFollowsTheSet() {
         open("Tabata Kettlebell Swings")
         tap(app.buttons["Start workout"])
         XCTAssertTrue(app.buttons["Tick set 1"].waitForExistence(timeout: 12), "the swings should run as a set table")
         let rows = app.scrollViews["set-rows"]
-        let header = app.buttons["timer-set-header"]
         XCTAssertFalse((rows.value as? String ?? "").contains("faded top"), "at the top of the table nothing fades above set 1")
+        // The window onto the table, for a side-by-side with main (the header is not pinned).
+        let height = XCTAttachment(string: "set table window \(rows.frame.height) pt")
+        height.name = "Set table window height"
+        height.lifetime = .keepAlways
+        add(height)
         snap("120 Set table at the top, no fade above")
 
         // Each set ended by its tick (set 3 by a tap on set 3), each rest skipped, up to set 7.
@@ -1288,7 +1292,6 @@ final class WalkthroughUITests: XCTestCase {
             XCTAssertTrue(tick.waitForExistence(timeout: 5))
             if n == 6 {
                 XCTAssertTrue(tick.isHittable, "after a tap on set 3, set 6 should come into view on its own")
-                XCTAssertTrue(header.isHittable, "the exercise should stay above the rows")
             }
             tick.tap()
             XCTAssertTrue(app.buttons["Un-tick set \(n)"].waitForExistence(timeout: 5))
@@ -1304,7 +1307,6 @@ final class WalkthroughUITests: XCTestCase {
         XCTAssertTrue(app.buttons["Un-tick set 7"].waitForExistence(timeout: 30), "set 7 should end by its timer")
         sleep(1)
         XCTAssertTrue(app.buttons["Tick set 8"].isHittable, "set 8 should be on screen without a scroll")
-        XCTAssertTrue(header.isHittable, "the exercise should stay above the rows")
         XCTAssertTrue((rows.value as? String ?? "").contains("faded top"), "with sets above, the top edge should fade")
         snap("121 Set table on set 8, sets above fade")
 
