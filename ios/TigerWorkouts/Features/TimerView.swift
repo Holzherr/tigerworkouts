@@ -18,6 +18,7 @@ struct TimerView: View {
     @State private var confirmQuit = false
     /// The set row open for editing on a straight-set block; nil = the set you are on.
     @State private var openSet: String?
+    @State private var rowsFade = RowsFade()
 
     private var isRest: Bool { runner.slot?.kind == .rest }
     private var accent: Color { isRest ? Brand.Night.rest : Brand.coral }
@@ -276,12 +277,11 @@ struct TimerView: View {
                     Text("Rest").font(.title3.weight(.bold)).foregroundStyle(Brand.Night.rest)
                 }
                 countdown(size: 76)
-                ScrollView {
-                    setGrid(straight)
-                }
-                .scrollBounceBehavior(.basedOnSize)
+                setGrid(straight)
             }
             .padding(.horizontal, 16)
+            // Ahead of the spacers around it: the rows get the height there is before they do.
+            .layoutPriority(1)
         } else {
             circuitBody
         }
@@ -488,14 +488,16 @@ struct TimerView: View {
     /// A straight-set block as the gym writes it: a row per set, load and reps filled in from the
     /// plan, the set you are on highlighted, a tick to finish it. A done row shows what was done and
     /// is locked until it is un-ticked (tap the tick again), so a weight is never changed by a stray
-    /// tap on a set already logged.
+    /// tap on a set already logged. The header stays put and only the rows scroll: the set in view
+    /// moves to the middle whenever it changes, and an edge with rows behind it fades out.
     private func setGrid(_ ex: ExerciseStep) -> some View {
         let rows = runner.setRows
         let last = LastTime.sets(store.results, for: ex) ?? []
+        let focus = openSet ?? rows.first(where: \.current)?.slotId
         return VStack(alignment: .leading, spacing: 10) {
             Button { editing = ex } label: {
                 HStack(spacing: 12) {
-                    ExerciseDemo(ref: ex.exercise, size: 64)
+                    ExerciseDemo(ref: ex.exercise, size: 48)
                     VStack(alignment: .leading, spacing: 3) {
                         Text(ex.exercise.name)
                             .font(.system(size: 22, weight: .heavy))
@@ -504,7 +506,7 @@ struct TimerView: View {
                             .minimumScaleFactor(0.7)
                         let cue = ex.exercise.cue ?? Library.shared.exercise(ex.exercise.key)?.cue ?? ""
                         if !cue.isEmpty {
-                            Text(cue).font(.footnote).foregroundStyle(Brand.muted).lineLimit(2)
+                            Text(cue).font(.footnote).foregroundStyle(Brand.muted).lineLimit(1)
                         }
                     }
                     Spacer(minLength: 0)
@@ -512,6 +514,7 @@ struct TimerView: View {
                 .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
+            .accessibilityIdentifier("timer-set-header")
 
             HStack(spacing: SetRowMetrics.spacing) {
                 Text("Set").frame(width: SetRowMetrics.number, alignment: .leading)
@@ -527,8 +530,44 @@ struct TimerView: View {
             .tracking(0.8)
             .foregroundStyle(Brand.muted)
 
-            ForEach(rows) { row in
-                setRow(row, ex, last: last.indices.contains(row.number - 1) && (last[row.number - 1].type ?? .normal) == row.type ? last[row.number - 1] : nil)
+            ScrollViewReader { proxy in
+                ScrollView {
+                    VStack(alignment: .leading, spacing: 10) {
+                        ForEach(rows) { row in
+                            setRow(row, ex, last: last.indices.contains(row.number - 1) && (last[row.number - 1].type ?? .normal) == row.type ? last[row.number - 1] : nil)
+                                .id(row.slotId)
+                        }
+                    }
+                    // Where the visible window sits on the rows, in the rows' own coordinates.
+                    .onGeometryChange(for: RowsFade.self) { g in
+                        let window = g.bounds(of: .named("set-rows")) ?? CGRect(origin: .zero, size: g.size)
+                        return RowsFade(top: window.minY > 1, bottom: window.maxY < g.size.height - 1, height: g.size.height, window: window.height)
+                    } action: { rowsFade = $0 }
+                }
+                .coordinateSpace(.named("set-rows"))
+                .scrollBounceBehavior(.basedOnSize)
+                // No taller than the rows, so a short block leaves no empty card below its last set.
+                .frame(maxHeight: rowsFade.height)
+                .mask {
+                    VStack(spacing: 0) {
+                        LinearGradient(colors: [.clear, .black], startPoint: .top, endPoint: .bottom)
+                            .frame(height: rowsFade.top ? 16 : 0)
+                        Color.black
+                        LinearGradient(colors: [.black, .clear], startPoint: .top, endPoint: .bottom)
+                            .frame(height: rowsFade.bottom ? 16 : 0)
+                    }
+                }
+                .accessibilityIdentifier("set-rows")
+                .accessibilityValue([rowsFade.top ? "faded top" : nil, rowsFade.bottom ? "faded bottom" : nil].compactMap { $0 }.joined(separator: ", "))
+                .onAppear { if let focus { proxy.scrollTo(focus, anchor: .center) } }
+                .onChange(of: focus) {
+                    if let focus { withAnimation(.easeInOut(duration: 0.3)) { proxy.scrollTo(focus, anchor: .center) } }
+                }
+                // A rest adds its ±15 s under the clock and the window shrinks from the bottom,
+                // which hid the last set; centre it again.
+                .onChange(of: rowsFade.window) {
+                    if let focus { withAnimation(.easeInOut(duration: 0.3)) { proxy.scrollTo(focus, anchor: .center) } }
+                }
             }
         }
         .padding(12)
@@ -858,6 +897,15 @@ private enum SetRowMetrics {
     static let number: CGFloat = 28
     static let spacing: CGFloat = 6
     static let inset: CGFloat = 5
+}
+
+/// The set table's scroll state: which edges have rows behind them, how tall the rows are, and
+/// how tall the window onto them is.
+private struct RowsFade: Equatable {
+    var top = false
+    var bottom = false
+    var height: CGFloat?
+    var window: CGFloat = 0
 }
 
 /// The ⋯ menu, apart from the top bar the clock redraws ten times a second: an open menu rebuilt
