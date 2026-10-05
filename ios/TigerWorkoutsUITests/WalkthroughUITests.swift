@@ -458,10 +458,11 @@ final class WalkthroughUITests: XCTestCase {
     /// front of Squat with its steps, while Row runs. It used to snap back.
     func testBlockMovesInTheSessionSheet() {
         open("Tabata This")
+        // Put the tip away here: left up, its OK would sit behind the timer as a second "OK".
+        if app.staticTexts["Hold a block's header to move it"].waitForExistence(timeout: 3) { tap(app.buttons["OK"]) }
         tap(app.buttons["Start workout"])
         XCTAssertTrue(app.buttons["Done early"].waitForExistence(timeout: 10))
         tap(app.buttons["Session overview"])
-        if app.staticTexts["Hold a block's header to move it"].waitForExistence(timeout: 2) { tap(app.buttons["OK"]) }
 
         let squat = app.buttons.matching(NSPredicate(format: "label BEGINSWITH[c] 'Tabata Squat'")).firstMatch
         let squatStep = app.buttons.matching(NSPredicate(format: "label BEGINSWITH[c] 'Bodyweight squat'")).firstMatch
