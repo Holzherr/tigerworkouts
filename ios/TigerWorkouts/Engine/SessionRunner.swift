@@ -662,9 +662,7 @@ final class SessionRunner {
         guard let row = setRows.first(where: { $0.slotId == slotId }) else { return }
         apply { s, _ in
             var s = s
-            var a = s.actuals[slotId] ?? Actual()
-            a.incline = max(0, (row.incline ?? 0) + direction * 0.5)
-            s.actuals[slotId] = a
+            s.actuals[slotId, default: Actual()].incline = max(0, (row.incline ?? 0) + direction * 0.5)
             return s
         }
         Haptics.shared.play(.tick)

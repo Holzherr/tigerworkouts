@@ -1283,7 +1283,8 @@ final class WalkthroughUITests: XCTestCase {
         for _ in 0..<60 where incline.label != "10" {
             app.buttons[(Double(incline.label) ?? 0) < 10 ? "More incline" : "Less incline"].tap()
         }
-        XCTAssertEqual(app.staticTexts.matching(NSPredicate(format: "label CONTAINS '% incline'")).count, 0, "the incline is a stepper, not a line of text")
+        // The workout page under the timer still lists the plan's 6%; only the card could say 10%.
+        XCTAssertEqual(app.staticTexts.matching(NSPredicate(format: "label CONTAINS '10% incline'")).count, 0, "the incline is a stepper, not a line of text")
         snap("120 Next block, speed and incline")
 
         tap(app.buttons["Start Ten by one"])
@@ -1300,8 +1301,7 @@ final class WalkthroughUITests: XCTestCase {
     func testNoInclineOnDumbbells() {
         open("Iron Base · Whole Body A")
         startBlock("Carry")
-        XCTAssertTrue(app.buttons["More"].exists, "the load has its stepper")
-        XCTAssertFalse(app.buttons["More incline"].exists, "a dumbbell has no incline stepper")
+        XCTAssertTrue(app.buttons["More"].exists && !app.buttons["More incline"].exists, "a dumbbell has a load stepper and no incline one")
         tap(app.buttons["Start Carry"])
         XCTAssertTrue(app.buttons["Tick set 1"].waitForExistence(timeout: 5))
         XCTAssertFalse(app.descendants(matching: .any)["Set 1 incline"].exists, "a dumbbell's sets have no incline column")

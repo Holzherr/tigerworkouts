@@ -85,7 +85,6 @@
 		AE6182B42F75E4CEA7DC6A74 /* ResultsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D36AE791E64CAB95929EDB34 /* ResultsTests.swift */; };
 		AE9E6498D245D998B264D7D1 /* RestNotice.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8B7FE8DABC9C1B41E9896692 /* RestNotice.swift */; };
 		B01FA0C771DEBBD6B2393CF8 /* Runner.swift in Sources */ = {isa = PBXBuildFile; fileRef = 36B599742F16E34DF89CB346 /* Runner.swift */; };
-		B12118F2F081D985838657A0 /* InclineTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D6EF011ACA075CB5A38AD275 /* InclineTests.swift */; };
 		B2D8DF3941B699A1D99EDC07 /* SessionLiveActivity.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87A0379EA6B428BEE7F68638 /* SessionLiveActivity.swift */; };
 		B69408139FFD2254609E3258 /* LoadsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73E60ED8258A936B9C69FB41 /* LoadsTests.swift */; };
 		B7DD621A22E46957F60BF22D /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 8ECD0D99BECC297562625D45 /* PrivacyInfo.xcprivacy */; };
@@ -263,7 +262,6 @@
 		CD7FDA4D739693E3EB3F2EB7 /* RoundsViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RoundsViews.swift; sourceTree = "<group>"; };
 		D003D2F2D1E93454087D5B01 /* TigerWorkoutsUITests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = TigerWorkoutsUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		D36AE791E64CAB95929EDB34 /* ResultsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ResultsTests.swift; sourceTree = "<group>"; };
-		D6EF011ACA075CB5A38AD275 /* InclineTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InclineTests.swift; sourceTree = "<group>"; };
 		D81C44075823C1109E6B45BD /* AfterSessionTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AfterSessionTests.swift; sourceTree = "<group>"; };
 		D91D1FE772E16CBEC2B027B2 /* UpNextWidget.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UpNextWidget.swift; sourceTree = "<group>"; };
 		DB29B220F1D0DA49508EF0DE /* StepEditorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StepEditorView.swift; sourceTree = "<group>"; };
@@ -424,7 +422,6 @@
 				FF1037B86A23BEA3B9FCC0CA /* EngineCorrectnessTests.swift */,
 				BD77652B9CB4664C909E3D23 /* GymLoggingTests.swift */,
 				3D87622F139D50161B1F5C9C /* HapticsTests.swift */,
-				D6EF011ACA075CB5A38AD275 /* InclineTests.swift */,
 				DF2925A193B28392EB5F9746 /* LiveActivityTests.swift */,
 				2CFD343754E38E4130A23DAC /* LiveRecordTests.swift */,
 				73E60ED8258A936B9C69FB41 /* LoadsTests.swift */,
@@ -710,7 +707,6 @@
 				336F75C7C99366986A2B3EE4 /* EngineCorrectnessTests.swift in Sources */,
 				8CF31441EEAD7E63BB021F59 /* GymLoggingTests.swift in Sources */,
 				05E59B570AE45E1D3609914C /* HapticsTests.swift in Sources */,
-				B12118F2F081D985838657A0 /* InclineTests.swift in Sources */,
 				EB9FAD39D8876DE07D18AB3E /* LiveActivityTests.swift in Sources */,
 				507F6FD9C9AF04D38ECA1FA6 /* LiveRecordTests.swift in Sources */,
 				B69408139FFD2254609E3258 /* LoadsTests.swift in Sources */,

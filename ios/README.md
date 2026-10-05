@@ -134,7 +134,8 @@ catalogue workout is never written over, and a copy gets fresh step ids, because
 keys its loads by step id and two workouts must not share them.
 
 Blocks hold steps and run as rounds, for time, AMRAP or EMOM. Steps are measured in seconds, reps,
-minutes, metres, calories or max reps, with load, incline and each-side where they apply. Nothing
+minutes, metres, calories or max reps, with load, incline and each-side where they apply; the timer
+has a stepper for speed and one for incline, and a treadmill's set table an Incl column. Nothing
 is sent anywhere until Save; the screen holds one runsheet value and every edit returns a new one.
 Workouts go up private, as the web app writes them, and show up there too. Only Make public / Make
 private sends the `public` column; any other edit leaves it as the server has it.

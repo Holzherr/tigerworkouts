@@ -449,18 +449,13 @@ struct TimerView: View {
                 HStack(spacing: 10) {
                     VStack(alignment: .leading, spacing: 1) {
                         Text("Incline").font(.subheadline.weight(.semibold)).foregroundStyle(Brand.body)
-                        if let last = lastIncline(ex) {
-                            Text("last time \(Format.number(last))%").font(.caption).foregroundStyle(Brand.muted)
-                        }
+                        if let last = lastIncline(ex) { Text("last time \(Format.number(last))%").font(.caption).foregroundStyle(Brand.muted) }
                     }
                     Spacer()
                     nudge("minus", label: "Less incline") { runner.nudgeIncline(-$0 * 0.5) }
                     VStack(spacing: 0) {
-                        Text(incline(ex).map(Format.number) ?? "—")
-                            .font(.system(size: 26, weight: .bold, design: .rounded))
-                            .monospacedDigit()
-                            .foregroundStyle(Brand.ink)
-                            .accessibilityIdentifier("incline-value")
+                        Text(incline(ex).map(Format.number) ?? "—").font(.system(size: 26, weight: .bold, design: .rounded))
+                            .monospacedDigit().foregroundStyle(Brand.ink).accessibilityIdentifier("incline-value")
                         Text("%").font(.caption2).foregroundStyle(Brand.muted)
                     }
                     .frame(minWidth: 64)
@@ -593,8 +588,7 @@ struct TimerView: View {
                             MiniStepper(value: row.incline ?? 0, label: "Set \(row.number) incline", onTint: row.current) { runner.nudgeSetIncline(row.slotId, $0) }
                         } else {
                             Text(row.incline.map(Format.number) ?? "—").font(.system(size: 18, weight: .bold, design: .rounded)).lineLimit(1).minimumScaleFactor(0.6)
-                                .accessibilityLabel("Set \(row.number) incline")
-                                .accessibilityValue(row.incline.map(Format.number) ?? "—")
+                                .accessibilityLabel("Set \(row.number) incline").accessibilityValue(row.incline.map(Format.number) ?? "—")
                         }
                     }
                     .frame(maxWidth: .infinity)
@@ -892,8 +886,7 @@ struct TimerView: View {
 
 /// The timer's set row, sized for a 390 pt phone: 16 pt screen gutters, the card's 12 pt padding
 /// and this inset leave 324 pt for the set mark (28 pt at its narrowest), two steppers (116 pt
-/// each at full tap size) and the 44 pt tick. A treadmill's incline is a third column: its steppers
-/// drop to 38 pt targets to fit.
+/// each at full tap size) and the 44 pt tick.
 private enum SetRowMetrics {
     static let number: CGFloat = 28
     static let spacing: CGFloat = 6

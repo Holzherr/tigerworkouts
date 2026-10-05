@@ -361,6 +361,21 @@ struct SessionRunnerTests {
         let step = try #require(runner.slot?.exercise)
         #expect(TimerView.inclineLabel(runner.incline, for: step) == nil)
     }
+
+    @Test("an incline changed on the set table is what later sets and the log read")
+    @MainActor
+    func setIncline() throws {
+        let runner = SessionRunner(runsheet: Edit.updateStep(Self.sprints(), id: "s1") { $0.incline = 10 })
+        runner.nudgeSetIncline(try #require(runner.setRows.last).slotId, 1)
+        #expect(runner.setRows.map(\.incline) == [10, 10.5], "+ on set 2 leaves set 1")
+        runner.setStepIncline("s1", 10.5)
+        #expect(runner.setRows.map(\.incline) == [10.5, 10.5])
+        runner.done() // lead-in → first set
+        runner.done()
+        runner.finish()
+        #expect(runner.result().steps.first?.incline == 10.5)
+        SessionRunner.clearSaved()
+    }
 }
 
 /// Ported from the 'session safety' block of `runner.test.ts`.
