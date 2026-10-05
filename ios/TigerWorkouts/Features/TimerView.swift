@@ -159,16 +159,7 @@ struct TimerView: View {
                         .background(Brand.Night.raised, in: Circle())
                 }
                 .accessibilityLabel("Session overview")
-                Menu {
-                    Button("Finish and save") { runner.finish() }
-                    Button("Discard", role: .destructive) { discard() }
-                } label: {
-                    Image(systemName: "ellipsis")
-                        .font(.system(size: 16, weight: .bold))
-                        .frame(width: 44, height: 44)
-                        .background(Brand.Night.raised, in: Circle())
-                }
-                .accessibilityLabel("Session menu")
+                SessionMenu(finish: runner.finish, discard: discard).equatable()
             }
             if let ghost = runner.ghost {
                 // Racing the last session of this workout: one signed number, at the latest round or set.
@@ -867,4 +858,26 @@ private enum SetRowMetrics {
     static let number: CGFloat = 28
     static let spacing: CGFloat = 6
     static let inset: CGFloat = 5
+}
+
+/// The ⋯ menu, apart from the top bar the clock redraws ten times a second: an open menu rebuilt
+/// that often never settles, and a tap on Finish and save did nothing. Its actions never change.
+private struct SessionMenu: View, Equatable {
+    let finish: () -> Void
+    let discard: () -> Void
+
+    static func == (a: Self, b: Self) -> Bool { true }
+
+    var body: some View {
+        Menu {
+            Button("Finish and save", action: finish)
+            Button("Discard", role: .destructive, action: discard)
+        } label: {
+            Image(systemName: "ellipsis")
+                .font(.system(size: 16, weight: .bold))
+                .frame(width: 44, height: 44)
+                .background(Brand.Night.raised, in: Circle())
+        }
+        .accessibilityLabel("Session menu")
+    }
 }

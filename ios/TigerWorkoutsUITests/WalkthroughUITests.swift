@@ -1304,6 +1304,7 @@ final class WalkthroughUITests: XCTestCase {
         tap(app.buttons["Session menu"])
         XCTAssertTrue(app.buttons["Discard"].waitForExistence(timeout: 5), "the ⋯ menu should offer Discard")
         tap(app.buttons["Finish and save"])
+        XCTAssertTrue(app.staticTexts["Workout saved"].waitForExistence(timeout: 10), "Finish and save should save the session")
         tap(app.buttons["Done"])
     }
 
