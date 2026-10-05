@@ -159,7 +159,8 @@ enum Edit {
 
     /// One drag in the editor, with `onMove` semantics: `destination` is a row index in the list as
     /// it was before the move. Items in `locked` (done or running in a live session) keep their place
-    /// and contents; a move that would disturb them is refused.
+    /// and contents: a block dragged above them lands just below them, any other move that would
+    /// disturb them is refused.
     static func moveRow(_ r: Runsheet, from: Int, to destination: Int, locked: Set<String> = []) -> Runsheet {
         let rows = rows(r)
         guard rows.indices.contains(from) else { return r }
@@ -180,7 +181,12 @@ enum Edit {
                 case .ref: break
                 }
             }
-            next = moveItems(r, from: [at], to: starts.filter { $0 < destination }.count)
+            // Dropped among another block's rows, it lands past that block when dragged down and in
+            // front of it when dragged up, so a block dragged over a long open block never snaps back.
+            let past = starts.filter { $0 < destination }.count
+            let inside = destination < row && !starts.contains(destination)
+            let to = inside && past - 1 < at ? past - 1 : past
+            next = moveItems(r, from: [at], to: max(to, r.items.prefix { locked.contains($0.id) }.count))
         case .step(let stepId, _):
             guard let step = findStep(r, stepId) else { return r }
             var rest = rows
@@ -206,6 +212,15 @@ enum Edit {
         }
         let fixed = r.items.prefix { locked.contains($0.id) }
         return Array(next.items.prefix(fixed.count)) == Array(fixed) ? next : r
+    }
+
+    /// Move up / Move down on a block's header, for VoiceOver: one place past its neighbour, never
+    /// above what is done or running.
+    static func moveBlock(_ r: Runsheet, id: String, up: Bool, locked: Set<String> = []) -> Runsheet {
+        guard let at = r.items.firstIndex(where: { $0.id == id }) else { return r }
+        let fixed = r.items.prefix { locked.contains($0.id) }.count
+        guard at >= fixed, up ? at > fixed : at < r.items.count - 1 else { return r }
+        return moveItems(r, from: [at], to: up ? at - 1 : at + 2)
     }
 
     static func findStep(_ r: Runsheet, _ stepId: String) -> Step? {

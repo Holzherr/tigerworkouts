@@ -189,6 +189,38 @@ struct EditingTests {
         #expect(Edit.moveRow(r, from: 5, to: 4, locked: [a]) != r)
     }
 
+    @Test("a block dropped among another block's steps lands in front of it going up, past it going down")
+    func moveBlockOntoSteps() {
+        let (r, a, b) = twoBlocks()
+        // Rows: a, swing, add a, b, walk, rest, add b.
+        #expect(names(Edit.moveRow(r, from: 3, to: 1)) == [[b, "Incline walk", "rest"], [a, "Kettlebell swings"]])
+        #expect(names(Edit.moveRow(r, from: 0, to: 5)) == [[b, "Incline walk", "rest"], [a, "Kettlebell swings"]])
+        #expect(Edit.moveRow(r, from: 3, to: 5) == r)
+    }
+
+    @Test("mid-session, a block dragged above what is running lands just below it")
+    func moveBlockBelowLocked() {
+        let (r0, a, b) = twoBlocks()
+        let r = Edit.addBlock(r0)
+        let c = r.items.compactMap(\.asBlock)[2].id
+        // Rows: a, swing, add a, b, walk, rest, add b, c, add c. c dropped on top, a running.
+        #expect(names(Edit.moveRow(r, from: 7, to: 0, locked: [a])).map(\.[0]) == [a, c, b])
+        #expect(names(Edit.moveRow(r, from: 7, to: 1, locked: [a])).map(\.[0]) == [a, c, b])
+    }
+
+    @Test("Move up and Move down shift a block one place, never above what is running")
+    func moveBlockActions() {
+        let (r0, a, b) = twoBlocks()
+        let r = Edit.addBlock(r0)
+        let c = r.items.compactMap(\.asBlock)[2].id
+        #expect(names(Edit.moveBlock(r, id: c, up: true)).map(\.[0]) == [a, c, b])
+        #expect(names(Edit.moveBlock(r, id: a, up: false)).map(\.[0]) == [b, a, c])
+        #expect(Edit.moveBlock(r, id: a, up: true) == r)
+        #expect(Edit.moveBlock(r, id: c, up: false) == r)
+        #expect(Edit.moveBlock(r, id: b, up: true, locked: [a]) == r)
+        #expect(Edit.moveBlock(r, id: a, up: false, locked: [a]) == r)
+    }
+
     @Test("the add row never moves")
     func addRowStays() {
         let (r, _, _) = twoBlocks()

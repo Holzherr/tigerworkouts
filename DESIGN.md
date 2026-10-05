@@ -86,7 +86,7 @@ rules:
   - The mark is always one colour (black, ink, white or coral). Stripes only ever sit behind it, never on it.
   - Units live in labels ("Weight (kg per arm)"), never inside a number control.
   - Every tap target is at least 44px tall. Rows are the tap target, not icons inside them.
-  - No drag handles. Rows move by press-and-drag; blocks by their header.
+  - No drag handles on rows; rows move by press-and-drag. A block header carries one grip (three lines, 44px target) and moves by press-and-drag anywhere on it (Nick, 2026-09-29).
   - Rests are steps. Blocks are brackets around steps with a repeat count; they form by dropping one step onto another.
   - Demo clips autoplay muted and loop; without a clip, show an icon, never a placeholder box.
 ---

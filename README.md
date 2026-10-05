@@ -101,6 +101,10 @@ share link) so the share started from a home recommendation can be measured. The
 same field from its Workouts tab (Pick up again → history, Mine → mine, a catalogue section or a
 search result → search, Saved → saved) and from a `tigerworkouts://w/` link (link). The origin
 rides in the crash-safe copy on both, so a resumed or recovered session keeps it.
+On iOS every block header that can move carries a grip; a one-time tip says "Hold a block's header
+to move it", and Move up / Move down are VoiceOver actions. A block dropped among another block's
+steps lands in front of it going up and past it going down; mid-session, one dropped above what is
+done or running lands just below it instead of snapping back.
 Sign out pushes first, then empties the device for the next account (sessions, workouts, favourites,
 saved, exercises, training maxes and the `tiger:synced` snapshot); while the push fails or a session
 is still unsaved to the account it refuses with a message instead, so no unsynced session is lost.

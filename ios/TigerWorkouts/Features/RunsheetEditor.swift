@@ -23,6 +23,8 @@ struct RunsheetEditor<Header: View>: View {
 
     /// Settings → Default rest: what an added rest starts at.
     @AppStorage(Switches.defaultRest) private var defaultRest = 30.0
+    /// "Hold a block's header to move it", shown until OK is tapped.
+    @AppStorage("tip.blockDrag") private var blockTipSeen = false
     @State private var editingRest: RestStep?
     @State private var editingBlock: Block?
     @State private var picking: PickTarget?
@@ -53,6 +55,20 @@ struct RunsheetEditor<Header: View>: View {
         let frozen = lockedSteps
         List {
             header()
+
+            if !blockTipSeen, runsheet.items.contains(where: { $0.asBlock != nil }) {
+                HStack(spacing: 12) {
+                    Image(systemName: "line.3.horizontal").foregroundStyle(Brand.coralInk)
+                    Text("Hold a block's header to move it").font(.subheadline).foregroundStyle(Brand.ink)
+                    Spacer()
+                    Button("OK") { blockTipSeen = true }
+                        .font(.subheadline.weight(.bold))
+                        .foregroundStyle(Brand.coralInk)
+                        .frame(minWidth: 44, minHeight: 44)
+                }
+                .buttonStyle(.borderless)
+                .listRowBackground(Brand.coralSoft)
+            }
 
             Section {
                 ForEach(rows) { row in
@@ -178,25 +194,41 @@ struct RunsheetEditor<Header: View>: View {
         }
     }
 
-    /// The header is a row of its own, so it can be dragged: the whole block follows it.
+    /// The header is a row of its own, so it can be dragged: the whole block follows it. The grip
+    /// says so; press-and-drag works anywhere on the row.
     private func blockHeader(_ b: Block, done: Bool) -> some View {
-        Button { if !done { editingBlock = b } } label: {
-            HStack(alignment: .firstTextBaseline) {
-                Text(b.name.isEmpty ? "Block" : b.name).font(.headline).foregroundStyle(done ? Brand.muted : Brand.ink)
-                Text(Format.duration(b.estimatedSeconds)).font(.footnote).foregroundStyle(Brand.muted)
-                Spacer()
-                Text(b.modeLabel)
-                    .font(.footnote.weight(.bold))
-                    .padding(.horizontal, 10).frame(height: 24)
-                    .background(Brand.coralSoft, in: Capsule())
-                    .foregroundStyle(Brand.coralInk)
+        HStack(spacing: 4) {
+            Button { if !done { editingBlock = b } } label: {
+                HStack(alignment: .firstTextBaseline) {
+                    Text(b.name.isEmpty ? "Block" : b.name).font(.headline).foregroundStyle(done ? Brand.muted : Brand.ink)
+                    Text(Format.duration(b.estimatedSeconds)).font(.footnote).foregroundStyle(Brand.muted)
+                    Spacer()
+                    Text(b.modeLabel)
+                        .font(.footnote.weight(.bold))
+                        .padding(.horizontal, 10).frame(height: 24)
+                        .background(Brand.coralSoft, in: Capsule())
+                        .foregroundStyle(Brand.coralInk)
+                }
+                .frame(minHeight: 44)
+                .contentShape(Rectangle())
             }
-            .padding(.top, 14)
-            .contentShape(Rectangle())
+            .buttonStyle(.plain)
+            .accessibilityLabel("\(b.name), \(b.modeLabel)")
+            .accessibilityHint(done ? "" : "Tap for rounds and rest. Hold and drag to move the block.")
+            .modifier(MoveActions(enabled: !done) { up in apply(Edit.moveBlock(runsheet, id: b.id, up: up, locked: locked)) })
+            if !done {
+                Image(systemName: "line.3.horizontal")
+                    .font(.body.weight(.semibold))
+                    .foregroundStyle(Brand.muted)
+                    .frame(width: 44, height: 44)
+                    .contentShape(Rectangle())
+                    .accessibilityLabel("Move \(b.name.isEmpty ? "block" : b.name)")
+                    .accessibilityHint("Hold and drag to move the block.")
+                    .accessibilityIdentifier("Block grip")
+                    .modifier(MoveActions(enabled: true) { up in apply(Edit.moveBlock(runsheet, id: b.id, up: up, locked: locked)) })
+            }
         }
-        .buttonStyle(.plain)
-        .accessibilityLabel("\(b.name), \(b.modeLabel)")
-        .accessibilityHint(done ? "" : "Tap for rounds and rest. Hold and drag to move the block.")
+        .padding(.top, 4)
         .listRowBackground(Color.clear)
         .listRowSeparator(.hidden)
         .listRowInsets(EdgeInsets(top: 0, leading: 4, bottom: 6, trailing: 4))
@@ -246,6 +278,21 @@ struct RunsheetEditor<Header: View>: View {
             }
             .buttonStyle(.plain)
             .opacity(done && e.id != current ? 0.5 : 1)
+        }
+    }
+}
+
+/// Move up / Move down on a block's header, for VoiceOver, where press-and-drag is out of reach.
+private struct MoveActions: ViewModifier {
+    var enabled: Bool
+    var move: (_ up: Bool) -> Void
+
+    func body(content: Content) -> some View {
+        content.accessibilityActions {
+            if enabled {
+                Button("Move up") { move(true) }
+                Button("Move down") { move(false) }
+            }
         }
     }
 }
