@@ -10,6 +10,8 @@ export interface LandingScreenProps {
   onGetStarted: () => void;
   onBrowse: () => void;
   onSignIn?: () => void;
+  /** The "For coaches" page (#/coaches). */
+  onCoaches?: () => void;
   workoutCount?: number;
   exerciseCount?: number;
   /** A few clip thumbnails for the mobile strip. */
@@ -46,7 +48,7 @@ const SOURCES = ['CrossFit benchmarks', 'The Open', 'Hero WODs', 'Couch to 5K', 
  * of exercise stills, a three-column feature grid, a four-step dark band, a sources row and a
  * closing call to action.
  */
-export const LandingScreen = ({ onGetStarted, onBrowse, onSignIn, workoutCount = 470, exerciseCount = 340, clips = [], stills = [], demo, className }: LandingScreenProps) => (
+export const LandingScreen = ({ onGetStarted, onBrowse, onSignIn, onCoaches, workoutCount = 470, exerciseCount = 340, clips = [], stills = [], demo, className }: LandingScreenProps) => (
   <div className={cn('flex h-full min-h-0 flex-col bg-canvas', className)}>
     <div className="min-h-0 flex-1 overflow-y-auto">
       <div className="safe-top sticky top-0 z-20 border-b border-line/60 bg-surface/85 backdrop-blur-md">
@@ -56,6 +58,11 @@ export const LandingScreen = ({ onGetStarted, onBrowse, onSignIn, workoutCount =
             <Button variant="quiet" size="sm" onClick={onBrowse} className="hidden sm:inline-flex">
               Browse workouts
             </Button>
+            {onCoaches && (
+              <Button variant="quiet" size="sm" onClick={onCoaches} className="hidden sm:inline-flex">
+                For coaches
+              </Button>
+            )}
             {onSignIn && (
               <Button variant="ghost" size="sm" onClick={onSignIn}>
                 Sign in
@@ -195,6 +202,11 @@ export const LandingScreen = ({ onGetStarted, onBrowse, onSignIn, workoutCount =
       <footer className="border-t border-line bg-surface">
         <div className="mx-auto flex max-w-6xl flex-col items-start gap-2 px-5 py-6 text-[12px] text-muted sm:flex-row sm:items-center sm:justify-between lg:px-8">
           <Logo size="sm" />
+          {onCoaches && (
+            <button type="button" onClick={onCoaches} className="min-h-11 font-bold text-brand">
+              For coaches and PTs
+            </button>
+          )}
           <span>Made in London. Free, open, and yours to export.</span>
         </div>
       </footer>

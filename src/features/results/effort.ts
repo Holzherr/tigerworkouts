@@ -64,7 +64,7 @@ export const effort = (
   };
 };
 
-const startOfWeek = (d: Date) => {
+export const startOfWeek = (d: Date) => {
   const x = new Date(d);
   x.setHours(0, 0, 0, 0);
   x.setDate(x.getDate() - ((x.getDay() + 6) % 7)); // Monday

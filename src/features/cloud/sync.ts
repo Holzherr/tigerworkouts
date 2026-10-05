@@ -103,8 +103,8 @@ export const fromRow = (row: { id: string; data: unknown }): SessionResult => {
   return { id: row.id, runsheetId: String((d as { workoutId?: string })?.workoutId ?? row.id), title: String((d as { title?: string })?.title ?? row.id), startedAt: String((d as { startedAt?: string })?.startedAt ?? new Date().toISOString()), steps: [] };
 };
 
-type WorkoutRow = { id: string; data: unknown; creator?: string | null; title?: string | null; public?: boolean | null; owner?: string | null };
-const workoutFromRow = (row: WorkoutRow): Runsheet => {
+export type WorkoutRow = { id: string; data: unknown; creator?: string | null; title?: string | null; public?: boolean | null; owner?: string | null };
+export const workoutFromRow = (row: WorkoutRow): Runsheet => {
   const d = row.data as Record<string, unknown>;
   const base = d && Array.isArray(d.items) ? { ...(d as unknown as Runsheet), id: row.id } : legacyWorkoutToRunsheet({ id: row.id, title: String(row.title ?? d?.title ?? row.id), creator: row.creator ?? undefined, blocks: (d?.blocks as never) ?? [] });
   // The row's column is the truth for who can see it; the copy inside `data` may be stale.

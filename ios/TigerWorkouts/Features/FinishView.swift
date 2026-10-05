@@ -90,6 +90,10 @@ struct FinishView: View {
 
                 notesField
 
+                if result.startedFrom == SessionOrigin.coach.rawValue, let assignment = store.assignment(forWorkout: result.runsheetId) {
+                    FinishCoachNote(assignment: assignment, sessionId: result.rowId)
+                }
+
                 SessionStatsView(result: current, runsheet: runsheet, history: store.results, bodyweightKg: store.bodyweightKg)
 
                 MadeItCard(runsheet: runsheet, result: current) { id, ok in

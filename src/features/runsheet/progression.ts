@@ -82,8 +82,8 @@ export interface StepResult {
   sets?: SetResult[];
 }
 
-/** The list the user tapped to reach the workout: a Discover tab, the Me tab's saved list, Repeat on a past session, or a share link. */
-export type SessionOrigin = 'recommended' | 'saved' | 'search' | 'mine' | 'history' | 'link' | 'home';
+/** The list the user tapped to reach the workout: a Discover tab, the Me tab's saved list, Repeat on a past session, a share link, or a workout a coach assigned. */
+export type SessionOrigin = 'recommended' | 'saved' | 'search' | 'mine' | 'history' | 'link' | 'home' | 'coach';
 
 export interface SessionResult {
   /** Stable id (sessions.id); assigned on first save. */
