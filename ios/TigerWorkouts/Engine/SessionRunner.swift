@@ -578,6 +578,8 @@ final class SessionRunner {
         var mark: String = ""
         var type: SetType = .normal
         var load: Double?
+        /// The treadmill's incline on this set; nil for work without one.
+        var incline: Double? = nil
         var reps: Double
         /// Metres or calories on a distance or calorie set; nil for other work.
         var amount: Double? = nil
@@ -609,6 +611,7 @@ final class SessionRunner {
                 mark: marks[n],
                 type: types[n],
                 load: Runner.effectiveTarget(state, idx),
+                incline: Runner.effectiveIncline(state, idx),
                 reps: a?.reps ?? sl.exercise?.forValue ?? 0,
                 amount: Runner.amountAt(state, sl),
                 seconds: done ? a?.seconds : nil,
@@ -642,6 +645,20 @@ final class SessionRunner {
         guard let row = setRows.first(where: { $0.slotId == slotId }), let ex = straightSetStep else { return }
         let step = ex.exercise.step == 0 ? 1 : ex.exercise.step
         apply { Runner.adjustAt($0, now: $1, slotId: slotId, target: max(0, (row.load ?? 0) + direction * step)) }
+        Haptics.shared.play(.tick)
+    }
+
+    /// Half a percent of incline on one set; later sets follow it, as they follow a load. On the
+    /// set you are on it is the change `setStepIncline` makes.
+    func nudgeSetIncline(_ slotId: String, _ direction: Double) {
+        guard let row = setRows.first(where: { $0.slotId == slotId }) else { return }
+        apply { s, _ in
+            var s = s
+            var a = s.actuals[slotId] ?? Actual()
+            a.incline = max(0, (row.incline ?? 0) + direction * 0.5)
+            s.actuals[slotId] = a
+            return s
+        }
         Haptics.shared.play(.tick)
     }
 

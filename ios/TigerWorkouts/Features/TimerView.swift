@@ -232,16 +232,6 @@ struct TimerView: View {
             if let first = runner.slot?.exercise {
                 exerciseCard(first, eyebrow: "First up", adjustable: true)
             }
-            if !isRest, let ex = runner.slot?.exercise, let label = TimerView.inclineLabel(runner.incline, for: ex) {
-                Button { editing = ex } label: {
-                    Text(label)
-                        .font(.title3)
-                        .foregroundStyle(Brand.muted)
-                        .frame(minHeight: Tap.regular)
-                        .contentShape(Rectangle())
-                }
-                .buttonStyle(.plain)
-            }
         }
         .padding(.horizontal, 16)
     }
@@ -314,11 +304,23 @@ struct TimerView: View {
     }
 
     /// The treadmill's other dial, under the speed. Nil for anything without one, so a bench has
-    /// no incline line; a treadmill step with none yet set gets a line that opens the sheet.
+    /// no incline stepper or column; a treadmill step with none yet set still gets them.
     nonisolated static func inclineLabel(_ incline: Double?, for step: ExerciseStep) -> String? {
         let treadmill = Library.shared.group(step.exercise.key).map { [.treadmill, .walk, .run].contains($0) } ?? false
         guard incline != nil || step.incline != nil || treadmill else { return nil }
         return incline.map { "\(Format.number($0))% incline" } ?? "Set incline"
+    }
+
+    /// The incline a step runs at: live on the running slot, else what it is planned at.
+    private func incline(_ ex: ExerciseStep) -> Double? {
+        runner.slot?.exercise?.id == ex.id ? runner.incline : runner.plannedIncline(ex.id) ?? ex.incline
+    }
+
+    /// Last session's incline: the same step if it has one, else the same exercise in any workout.
+    private func lastIncline(_ ex: ExerciseStep) -> Double? {
+        let steps = store.results.sorted { $0.startedAt > $1.startedAt }.flatMap(\.steps)
+            .filter { $0.exerciseKey == ex.exercise.key && $0.incline != nil }
+        return (steps.first { $0.stepId == ex.id } ?? steps.first)?.incline
     }
 
     private func countdown(size: CGFloat) -> some View {
@@ -422,9 +424,6 @@ struct TimerView: View {
                 HStack(spacing: 10) {
                     VStack(alignment: .leading, spacing: 1) {
                         Text(ex.settingLabel).font(.subheadline.weight(.semibold)).foregroundStyle(Brand.body)
-                        if let incline = runner.incline, runner.slot?.exercise?.id == ex.id {
-                            Text("\(Format.number(incline))% incline").font(.caption).foregroundStyle(Brand.muted)
-                        }
                     }
                     Spacer()
                     if Plates.kit(ex.exercise) == .barbell {
@@ -440,6 +439,32 @@ struct TimerView: View {
                     }
                     .frame(minWidth: 64)
                     nudge("plus", label: "More") { runner.nudgeTarget($0) }
+                }
+                .disabled(runner.slot?.exercise?.id != ex.id)
+            }
+
+            // The treadmill's other dial, by half a percent.
+            if adjustable, TimerView.inclineLabel(incline(ex), for: ex) != nil {
+                Divider()
+                HStack(spacing: 10) {
+                    VStack(alignment: .leading, spacing: 1) {
+                        Text("Incline").font(.subheadline.weight(.semibold)).foregroundStyle(Brand.body)
+                        if let last = lastIncline(ex) {
+                            Text("last time \(Format.number(last))%").font(.caption).foregroundStyle(Brand.muted)
+                        }
+                    }
+                    Spacer()
+                    nudge("minus", label: "Less incline") { runner.nudgeIncline(-$0 * 0.5) }
+                    VStack(spacing: 0) {
+                        Text(incline(ex).map(Format.number) ?? "—")
+                            .font(.system(size: 26, weight: .bold, design: .rounded))
+                            .monospacedDigit()
+                            .foregroundStyle(Brand.ink)
+                            .accessibilityIdentifier("incline-value")
+                        Text("%").font(.caption2).foregroundStyle(Brand.muted)
+                    }
+                    .frame(minWidth: 64)
+                    nudge("plus", label: "More incline") { runner.nudgeIncline($0 * 0.5) }
                 }
                 .disabled(runner.slot?.exercise?.id != ex.id)
             }
@@ -492,6 +517,7 @@ struct TimerView: View {
     private func setGrid(_ ex: ExerciseStep) -> some View {
         let rows = runner.setRows
         let last = LastTime.sets(store.results, for: ex) ?? []
+        let inclined = TimerView.inclineLabel(rows.lazy.compactMap(\.incline).first, for: ex) != nil
         return VStack(alignment: .leading, spacing: 10) {
             Button { editing = ex } label: {
                 HStack(spacing: 12) {
@@ -516,6 +542,7 @@ struct TimerView: View {
             HStack(spacing: SetRowMetrics.spacing) {
                 Text("Set").frame(width: SetRowMetrics.number, alignment: .leading)
                 if ex.hasSetLoad { Text(ex.shortUnit).frame(maxWidth: .infinity) }
+                if inclined { Text("Incl").frame(maxWidth: .infinity) }
                 if let count = ex.countLabel { Text(count).frame(maxWidth: .infinity) }
                 Color.clear.frame(width: 44, height: 1)
             }
@@ -528,7 +555,7 @@ struct TimerView: View {
             .foregroundStyle(Brand.muted)
 
             ForEach(rows) { row in
-                setRow(row, ex, last: last.indices.contains(row.number - 1) && (last[row.number - 1].type ?? .normal) == row.type ? last[row.number - 1] : nil)
+                setRow(row, ex, inclined: inclined, last: last.indices.contains(row.number - 1) && (last[row.number - 1].type ?? .normal) == row.type ? last[row.number - 1] : nil)
             }
         }
         .padding(12)
@@ -538,7 +565,7 @@ struct TimerView: View {
         .accessibilityIdentifier("timer-set-grid")
     }
 
-    private func setRow(_ row: SessionRunner.SetRow, _ ex: ExerciseStep, last: SetResult?) -> some View {
+    private func setRow(_ row: SessionRunner.SetRow, _ ex: ExerciseStep, inclined: Bool, last: SetResult?) -> some View {
         let hint = LastTime.setLabel(last)
         let editable = !row.done && (openSet == row.slotId || (openSet == nil && row.current))
         return VStack(alignment: .leading, spacing: 2) {
@@ -556,6 +583,18 @@ struct TimerView: View {
                                 Text(row.load.map(Format.number) ?? "—").font(.system(size: 18, weight: .bold, design: .rounded)).lineLimit(1).minimumScaleFactor(0.6)
                                 if Plates.kit(ex.exercise) == .barbell { PlatesButton(load: row.load) }
                             }
+                        }
+                    }
+                    .frame(maxWidth: .infinity)
+                }
+                if inclined {
+                    Group {
+                        if editable {
+                            MiniStepper(value: row.incline ?? 0, label: "Set \(row.number) incline", onTint: row.current) { runner.nudgeSetIncline(row.slotId, $0) }
+                        } else {
+                            Text(row.incline.map(Format.number) ?? "—").font(.system(size: 18, weight: .bold, design: .rounded)).lineLimit(1).minimumScaleFactor(0.6)
+                                .accessibilityLabel("Set \(row.number) incline")
+                                .accessibilityValue(row.incline.map(Format.number) ?? "—")
                         }
                     }
                     .frame(maxWidth: .infinity)
@@ -853,7 +892,8 @@ struct TimerView: View {
 
 /// The timer's set row, sized for a 390 pt phone: 16 pt screen gutters, the card's 12 pt padding
 /// and this inset leave 324 pt for the set mark (28 pt at its narrowest), two steppers (116 pt
-/// each at full tap size) and the 44 pt tick.
+/// each at full tap size) and the 44 pt tick. A treadmill's incline is a third column: its steppers
+/// drop to 38 pt targets to fit.
 private enum SetRowMetrics {
     static let number: CGFloat = 28
     static let spacing: CGFloat = 6

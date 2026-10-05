@@ -1271,4 +1271,52 @@ final class WalkthroughUITests: XCTestCase {
         tap(app.buttons["Done"])
     }
 
+    /// A treadmill step's two settings: Speed and Incline steppers on the next-block card, and an
+    /// incline column in the set table with + on the set you are on.
+    func testInclineOnTheTimer() {
+        open("Engine Room · Ten by One")
+        startBlock("Ten by one")
+        // 14.5 kph at 6% as written; + to 10%, from whatever an earlier run left as last used.
+        XCTAssertTrue(app.buttons["More"].exists, "the speed has its stepper")
+        let incline = app.staticTexts["incline-value"]
+        XCTAssertTrue(incline.waitForExistence(timeout: 5), "the incline has its stepper")
+        for _ in 0..<60 where incline.label != "10" {
+            app.buttons[(Double(incline.label) ?? 0) < 10 ? "More incline" : "Less incline"].tap()
+        }
+        XCTAssertEqual(app.staticTexts.matching(NSPredicate(format: "label CONTAINS '% incline'")).count, 0, "the incline is a stepper, not a line of text")
+        snap("120 Next block, speed and incline")
+
+        tap(app.buttons["Start Ten by one"])
+        let set1 = app.staticTexts["Set 1 incline"]
+        XCTAssertTrue(set1.waitForExistence(timeout: 5), "a treadmill's sets have an incline column")
+        XCTAssertEqual(set1.value as? String, "10")
+        tap(app.buttons["Set 1 incline, more"])
+        XCTAssertEqual(set1.value as? String, "10.5", "+ moves the incline half a percent")
+        XCTAssertEqual(app.staticTexts["Set 2 incline"].value as? String, "10.5", "the next set follows")
+        snap("121 Set table with incline")
+    }
+
+    /// A dumbbell has no incline: no stepper on the next-block card, no column in its sets.
+    func testNoInclineOnDumbbells() {
+        open("Iron Base · Whole Body A")
+        startBlock("Carry")
+        XCTAssertTrue(app.buttons["More"].exists, "the load has its stepper")
+        XCTAssertFalse(app.buttons["More incline"].exists, "a dumbbell has no incline stepper")
+        tap(app.buttons["Start Carry"])
+        XCTAssertTrue(app.buttons["Tick set 1"].waitForExistence(timeout: 5))
+        XCTAssertFalse(app.descendants(matching: .any)["Set 1 incline"].exists, "a dumbbell's sets have no incline column")
+        snap("122 Dumbbell sets, no incline")
+    }
+
+    /// Starts the workout and skips to the gate of the named block, without starting it.
+    private func startBlock(_ name: String) {
+        tap(app.buttons["Start workout"])
+        XCTAssertTrue(app.buttons["End session"].waitForExistence(timeout: 5))
+        let gate = app.buttons["Start \(name)"]
+        for _ in 0..<80 where !gate.exists {
+            let start = app.buttons.matching(NSPredicate(format: "label BEGINSWITH 'Start ' AND label != 'Start workout'")).firstMatch
+            if start.exists, start.isHittable { start.tap() } else if app.buttons["Skip"].exists { app.buttons["Skip"].tap() }
+        }
+        XCTAssertTrue(gate.waitForExistence(timeout: 5), "the timer should wait at \(name)")
+    }
 }
