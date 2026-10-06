@@ -971,6 +971,21 @@ final class WalkthroughUITests: XCTestCase {
         tap(app.buttons["Cancel"])
     }
 
+    /// Mid-session, the Session sheet's set grid for a treadmill block has an Incline row.
+    func testSessionSheetIncline() {
+        open("Engine Room · Ten by One")
+        tap(app.buttons["Start workout"])
+        XCTAssertTrue(app.buttons["End session"].waitForExistence(timeout: 5))
+        tap(app.buttons["Session overview"])
+        let incline = app.descendants(matching: .any)["grid-incline"]
+        for _ in 0..<4 where !(incline.exists && incline.isHittable) { app.swipeUp(velocity: .slow) }
+        XCTAssertTrue(incline.waitForExistence(timeout: 5), "the treadmill block's grid should show its incline")
+        snap("111 Session sheet, treadmill incline")
+        tap(app.buttons["Close"])
+        tap(app.buttons["End session"])
+        tap(app.buttons["Discard"])
+    }
+
     /// The first session asks once for notifications, for the end of a rest in the background.
     func testRestNotificationAsked() {
         app.terminate()

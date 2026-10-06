@@ -886,11 +886,19 @@ struct TimerView: View {
     /// The same editor as the workout screen. What is done or running is greyed and stays put;
     /// everything still to come can be changed or dragged — a block dragged up runs next.
     private var overview: some View {
-        NavigationStack {
+        let used = Settings.lastUsed(store.results)
+        return NavigationStack {
             RunsheetEditor(
                 runsheet: runner.runsheet,
                 locked: runner.passedItems,
                 current: runner.slot?.step.id,
+                incline: { step in
+                    Binding(
+                        get: { runner.plannedIncline(step.id) ?? step.incline },
+                        set: { if let v = $0 { runner.setStepIncline(step.id, v) } }
+                    )
+                },
+                lastIncline: { used["step:\($0.id)"]?.incline ?? used["ex:\($0.exercise.key)"]?.incline },
                 summary: planned,
                 onExercise: { e in
                     showOverview = false
