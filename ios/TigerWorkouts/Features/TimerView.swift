@@ -577,6 +577,7 @@ struct TimerView: View {
     private func setGrid(_ ex: ExerciseStep) -> some View {
         let rows = runner.setRows
         let last = LastTime.sets(store.results, for: ex) ?? []
+        let incline = Self.setColumns(ex, inclines: rows.map(\.incline)).contains("INCL")
         return VStack(alignment: .leading, spacing: 10) {
             Button { editing = ex } label: {
                 HStack(spacing: 12) {
@@ -601,7 +602,8 @@ struct TimerView: View {
             HStack(spacing: SetRowMetrics.spacing) {
                 Text("Set").frame(width: SetRowMetrics.number, alignment: .leading)
                 if ex.hasSetLoad { Text(ex.shortUnit).frame(maxWidth: .infinity) }
-                if let count = ex.countLabel { Text(count).frame(maxWidth: .infinity) }
+                if incline { Text("Incl").frame(width: SetInclineCell.width) }
+                if let count = ex.countLabel { Text(count).frame(maxWidth: Self.countWidth(ex, incline: incline)) }
                 Color.clear.frame(width: 44, height: 1)
             }
             .padding(.horizontal, SetRowMetrics.inset)
@@ -613,7 +615,7 @@ struct TimerView: View {
             .foregroundStyle(Brand.muted)
 
             ForEach(rows) { row in
-                setRow(row, ex, last: last.indices.contains(row.number - 1) && (last[row.number - 1].type ?? .normal) == row.type ? last[row.number - 1] : nil)
+                setRow(row, ex, incline: incline, last: last.indices.contains(row.number - 1) && (last[row.number - 1].type ?? .normal) == row.type ? last[row.number - 1] : nil)
                     .id(row.slotId)
             }
         }
@@ -624,7 +626,12 @@ struct TimerView: View {
         .accessibilityIdentifier("timer-set-grid")
     }
 
-    private func setRow(_ row: SessionRunner.SetRow, _ ex: ExerciseStep, last: SetResult?) -> some View {
+    /// With INCL in, a timed set's count is a short read-only number and gives the steppers its room.
+    private static func countWidth(_ ex: ExerciseStep, incline: Bool) -> CGFloat {
+        incline && (ex.forMode == .seconds || ex.forMode == .minutes) ? 32 : .infinity
+    }
+
+    private func setRow(_ row: SessionRunner.SetRow, _ ex: ExerciseStep, incline: Bool, last: SetResult?) -> some View {
         let hint = LastTime.setLabel(last)
         let editable = !row.done && (openSet == row.slotId || (openSet == nil && row.current))
         return VStack(alignment: .leading, spacing: 2) {
@@ -646,6 +653,12 @@ struct TimerView: View {
                     }
                     .frame(maxWidth: .infinity)
                 }
+                if incline {
+                    SetInclineCell(incline: row.incline, number: row.number, editable: editable, onTint: row.current) {
+                        runner.nudgeSetIncline(row.slotId, $0)
+                    }
+                    .equatable()
+                }
                 if let count = ex.countLabel {
                     // A distance or calorie set counts its metres or calories; a timed one shows the
                     // time it ran once done, and its plan before.
@@ -660,7 +673,7 @@ struct TimerView: View {
                             Text(Format.number((shown * 10).rounded() / 10)).font(.system(size: 18, weight: .bold, design: .rounded)).lineLimit(1).minimumScaleFactor(0.6)
                         }
                     }
-                    .frame(maxWidth: .infinity)
+                    .frame(maxWidth: Self.countWidth(ex, incline: incline))
                 }
                 if runner.records.contains(row.slotId), row.done {
                     Image(systemName: "medal.fill")

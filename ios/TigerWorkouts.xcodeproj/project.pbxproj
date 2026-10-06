@@ -58,6 +58,7 @@
 		69FF8C0873FFC9CB1AC24874 /* BodyMapView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1361DFA536CAFC0E96184089 /* BodyMapView.swift */; };
 		718720872993CC8DF123D1A5 /* AlternativesTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A063D7FDBD9EAB4C94F2CABE /* AlternativesTests.swift */; };
 		723F78A5E55D1D56F63EBBB1 /* Cues.swift in Sources */ = {isa = PBXBuildFile; fileRef = 98F9F72F6AD1476394E67175 /* Cues.swift */; };
+		72E762F9AF4BA5015ECF0853 /* SetInclineCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 69009D70FD515BAB4BCBB3B7 /* SetInclineCell.swift */; };
 		737F62B1E33E1829521FAAF7 /* CoachingTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = DB8933FF7A73F33A43B2E037 /* CoachingTests.swift */; };
 		76085B04BF688AF141413219 /* SessionStatsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0AEA755E81BBCA7F928A9CE4 /* SessionStatsView.swift */; };
 		77321A9F5C2B299AA484314C /* SyncTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E84311BE7C5AA68401341805 /* SyncTests.swift */; };
@@ -83,6 +84,7 @@
 		A87AA59065D1D1141DD2940E /* WorkoutIcon.swift in Sources */ = {isa = PBXBuildFile; fileRef = AE20C98A55B3D5F64BE65F19 /* WorkoutIcon.swift */; };
 		A9DE82EE435E2AF1435C9F4A /* NextUpTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B468F247F04E6A279F2AD6D2 /* NextUpTests.swift */; };
 		AB3689FD65BD7C1FFA101FEA /* EditSets.swift in Sources */ = {isa = PBXBuildFile; fileRef = 35CB9F49E1C6B8CD622ED57D /* EditSets.swift */; };
+		AC7D5578A9CD2622E35EC371 /* SetInclineTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0BCFA7628905A4B3B9EF2BE5 /* SetInclineTests.swift */; };
 		AE6182B42F75E4CEA7DC6A74 /* ResultsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D36AE791E64CAB95929EDB34 /* ResultsTests.swift */; };
 		AE9E6498D245D998B264D7D1 /* RestNotice.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8B7FE8DABC9C1B41E9896692 /* RestNotice.swift */; };
 		B01FA0C771DEBBD6B2393CF8 /* Runner.swift in Sources */ = {isa = PBXBuildFile; fileRef = 36B599742F16E34DF89CB346 /* Runner.swift */; };
@@ -173,6 +175,7 @@
 		03B24D2D55EFBC42BB378AFE /* EditingTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EditingTests.swift; sourceTree = "<group>"; };
 		0A7C84C7FDDB4BA9A91FFEDD /* Editing.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Editing.swift; sourceTree = "<group>"; };
 		0AEA755E81BBCA7F928A9CE4 /* SessionStatsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionStatsView.swift; sourceTree = "<group>"; };
+		0BCFA7628905A4B3B9EF2BE5 /* SetInclineTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SetInclineTests.swift; sourceTree = "<group>"; };
 		0F6246280A2E9FD98AB49D6B /* DataFixesTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DataFixesTests.swift; sourceTree = "<group>"; };
 		1063A8544D812A237CA3F659 /* HistoryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HistoryView.swift; sourceTree = "<group>"; };
 		1361DFA536CAFC0E96184089 /* BodyMapView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BodyMapView.swift; sourceTree = "<group>"; };
@@ -219,6 +222,7 @@
 		624613AA7392B3ED64513166 /* PrefsMerge.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PrefsMerge.swift; sourceTree = "<group>"; };
 		624618DA7F3194F1EB9B1818 /* Effort.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Effort.swift; sourceTree = "<group>"; };
 		62CA4732B4B2A3F75FD14AF1 /* ExercisePickerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExercisePickerView.swift; sourceTree = "<group>"; };
+		69009D70FD515BAB4BCBB3B7 /* SetInclineCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SetInclineCell.swift; sourceTree = "<group>"; };
 		699AC7356AFB42E1FBDBB705 /* ExerciseHistoryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExerciseHistoryView.swift; sourceTree = "<group>"; };
 		6EF54A23D92B76DE75FD5AE2 /* TigerWorkouts-Paid.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = "TigerWorkouts-Paid.entitlements"; sourceTree = "<group>"; };
 		6F781B1689DE90644353CB87 /* StoreSaveTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StoreSaveTests.swift; sourceTree = "<group>"; };
@@ -434,6 +438,7 @@
 				8A91B39264F3D48EC2B176B0 /* RecommendTests.swift */,
 				D36AE791E64CAB95929EDB34 /* ResultsTests.swift */,
 				38611D00C12C8D5497FC0713 /* RunnerTests.swift */,
+				0BCFA7628905A4B3B9EF2BE5 /* SetInclineTests.swift */,
 				E31C0517BC96A0F3D45A39B5 /* SetRowTests.swift */,
 				4091AAF4AF7AB0D132C03B29 /* StallTests.swift */,
 				6F781B1689DE90644353CB87 /* StoreSaveTests.swift */,
@@ -516,6 +521,7 @@
 				5884BC5A4FCB13E065BB2605 /* ScoreEntryView.swift */,
 				0AEA755E81BBCA7F928A9CE4 /* SessionStatsView.swift */,
 				1E38F7FA144B053254278A46 /* SetGrid.swift */,
+				69009D70FD515BAB4BCBB3B7 /* SetInclineCell.swift */,
 				5119F04B55C23A34A8AD9AC5 /* ShareCardView.swift */,
 				5ED4A3BC17499CADDE7EF681 /* SignInView.swift */,
 				DB29B220F1D0DA49508EF0DE /* StepEditorView.swift */,
@@ -720,6 +726,7 @@
 				A8751C5CD711B126ABDBBCE1 /* RecommendTests.swift in Sources */,
 				AE6182B42F75E4CEA7DC6A74 /* ResultsTests.swift in Sources */,
 				2B60AB7BAD0FA3BD84166265 /* RunnerTests.swift in Sources */,
+				AC7D5578A9CD2622E35EC371 /* SetInclineTests.swift in Sources */,
 				A31A032FB773210351CDA2A5 /* SetRowTests.swift in Sources */,
 				F06A699989CEBDCE07E7DD4B /* StallTests.swift in Sources */,
 				159A498BEFAD77C9C584839A /* StoreSaveTests.swift in Sources */,
@@ -785,6 +792,7 @@
 				D13C662CBC346212040F776E /* SessionRunner.swift in Sources */,
 				76085B04BF688AF141413219 /* SessionStatsView.swift in Sources */,
 				E8FF9F709DAB7BE226BC46D1 /* SetGrid.swift in Sources */,
+				72E762F9AF4BA5015ECF0853 /* SetInclineCell.swift in Sources */,
 				47002CAAEF9F51CFC1209BE5 /* ShareCardView.swift in Sources */,
 				46FA540A333C9B330185E064 /* SignInView.swift in Sources */,
 				91DC24981E172C0AF854AA9A /* Stall.swift in Sources */,

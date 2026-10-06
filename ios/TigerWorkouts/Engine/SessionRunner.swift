@@ -591,6 +591,8 @@ final class SessionRunner {
         var amount: Double? = nil
         /// Seconds the set ran, once done; nil before and for work whose time says nothing.
         var seconds: Double? = nil
+        /// Treadmill incline, %: what the set runs at, or ran at once done; nil without one.
+        var incline: Double? = nil
         var done: Bool
         /// The set being done now, or the next one while the rest between sets runs.
         var current: Bool
@@ -620,6 +622,7 @@ final class SessionRunner {
                 reps: a?.reps ?? sl.exercise?.forValue ?? 0,
                 amount: Runner.amountAt(state, sl),
                 seconds: done ? a?.seconds : nil,
+                incline: Runner.effectiveIncline(state, idx),
                 done: done,
                 current: idx == on,
                 tickable: done || idx < state.i || running
@@ -650,6 +653,15 @@ final class SessionRunner {
         guard let row = setRows.first(where: { $0.slotId == slotId }), let ex = straightSetStep else { return }
         let step = ex.exercise.step == 0 ? 1 : ex.exercise.step
         apply { Runner.adjustAt($0, now: $1, slotId: slotId, target: max(0, (row.load ?? 0) + direction * step)) }
+        Haptics.shared.play(.tick)
+    }
+
+    /// Incline on one row of the set table, 0.5 % a step. It lands on that set, not on whichever
+    /// comes next as `setStepIncline` would, so a row tapped open changes itself; later sets carry it.
+    func nudgeSetIncline(_ slotId: String, _ direction: Double) {
+        guard let row = setRows.first(where: { $0.slotId == slotId }) else { return }
+        let next = max(0, (row.incline ?? 0) + direction * 0.5)
+        apply { s, _ in var s = s; s.actuals[slotId, default: Actual()].incline = next; return s }
         Haptics.shared.play(.tick)
     }
 
