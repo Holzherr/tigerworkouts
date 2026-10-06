@@ -1331,4 +1331,24 @@ final class WalkthroughUITests: XCTestCase {
         tap(app.buttons["Done"])
     }
 
+    /// Treadmill sprints counted in metres: the set being done has −/+ on speed, metres and incline,
+    /// and none of them is pushed past the edge of the table.
+    func testSetTableInclineOnMetres() {
+        open("Engine Room · Ten by One")
+        tap(app.buttons.matching(NSPredicate(format: "label BEGINSWITH[c] 'Treadmill sprints'")).firstMatch)
+        tap(app.buttons.matching(NSPredicate(format: "label BEGINSWITH[c] 'How long or how many'")).firstMatch)
+        tap(app.buttons["Measured in"])
+        tap(app.buttons["Metres"])
+        for done in ["Done", "Done", "Start workout"] { tap(app.buttons[done]) }
+        // Past the lead-in and the warm-up walk.
+        for _ in 0..<4 where !app.buttons["Tick set 1"].waitForExistence(timeout: 3) { tap(app.buttons["Skip"]) }
+        let table = app.descendants(matching: .any)["timer-set-grid"].frame
+        for name in ["Set 1 load, less", "Set 1 load, more", "Set 1 incline, less", "Set 1 incline, more", "Set 1 m, less", "Set 1 m, more", "Tick set 1"] {
+            let at = app.buttons[name].frame
+            XCTAssertTrue(app.buttons[name].exists && table.minX <= at.minX && at.maxX <= table.maxX, "\(name) at \(at) is outside \(table)") }
+        snap("125 Set table, metres and incline")
+        tap(app.buttons["End session"])
+        tap(app.buttons["Discard"])
+    }
+
 }
