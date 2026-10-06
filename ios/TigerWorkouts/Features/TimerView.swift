@@ -602,7 +602,7 @@ struct TimerView: View {
             HStack(spacing: SetRowMetrics.spacing) {
                 Text("Set").frame(width: SetRowMetrics.number, alignment: .leading)
                 if ex.hasSetLoad { Text(ex.shortUnit).frame(maxWidth: .infinity) }
-                if incline { Text("Incl").frame(width: SetInclineCell.width) }
+                if incline { Text("Incl").frame(width: SetInclineCell.width(ex)) }
                 if let count = ex.countLabel { Text(count).frame(maxWidth: Self.countWidth(ex, incline: incline)) }
                 Color.clear.frame(width: 44, height: 1)
             }
@@ -626,14 +626,33 @@ struct TimerView: View {
         .accessibilityIdentifier("timer-set-grid")
     }
 
+    /// The set table's columns after SET, as its header writes them. INCL shows when a set has an
+    /// incline or the exercise is a treadmill, walk or run, so a bench never gets one.
+    nonisolated static func setColumns(_ step: ExerciseStep, inclines: [Double?]) -> [String] {
+        let treadmill = Library.shared.group(step.exercise.key).map { [.treadmill, .walk, .run].contains($0) } ?? false
+        let incline = treadmill || inclines.contains { $0 != nil }
+        return ((step.hasSetLoad ? [step.shortUnit] : []) + (incline ? ["Incl"] : []) + (step.countLabel.map { [$0] } ?? []))
+            .map { $0.uppercased() }
+    }
+
+    /// A set counted in metres, reps or calories has −/+ on its count too, and three steppers and
+    /// the tick overflow the row: there the row being set takes its incline on a line under it.
+    nonisolated static func inclineWraps(_ step: ExerciseStep) -> Bool {
+        step.countLabel != nil && step.forMode != .seconds && step.forMode != .minutes
+    }
+
     /// With INCL in, a timed set's count is a short read-only number and gives the steppers its room.
     private static func countWidth(_ ex: ExerciseStep, incline: Bool) -> CGFloat {
-        incline && (ex.forMode == .seconds || ex.forMode == .minutes) ? 32 : .infinity
+        incline && !inclineWraps(ex) ? 32 : .infinity
     }
 
     private func setRow(_ row: SessionRunner.SetRow, _ ex: ExerciseStep, incline: Bool, last: SetResult?) -> some View {
         let hint = LastTime.setLabel(last)
         let editable = !row.done && (openSet == row.slotId || (openSet == nil && row.current))
+        let wraps = incline && editable && Self.inclineWraps(ex)
+        let inclineCell = SetInclineCell(incline: row.incline, number: row.number, editable: editable, onTint: row.current) {
+            runner.nudgeSetIncline(row.slotId, $0)
+        }.equatable()
         return VStack(alignment: .leading, spacing: 2) {
             HStack(spacing: SetRowMetrics.spacing) {
                 SetMarkButton(mark: row.mark, type: row.type, label: "Set \(row.number)", highlight: row.current && !row.done) {
@@ -653,12 +672,7 @@ struct TimerView: View {
                     }
                     .frame(maxWidth: .infinity)
                 }
-                if incline {
-                    SetInclineCell(incline: row.incline, number: row.number, editable: editable, onTint: row.current) {
-                        runner.nudgeSetIncline(row.slotId, $0)
-                    }
-                    .equatable()
-                }
+                if incline, !wraps { inclineCell.frame(width: SetInclineCell.width(ex)) }
                 if let count = ex.countLabel {
                     // A distance or calorie set counts its metres or calories; a timed one shows the
                     // time it ran once done, and its plan before.
@@ -700,6 +714,10 @@ struct TimerView: View {
             }
             .monospacedDigit()
             .foregroundStyle(row.done ? Brand.muted : Brand.ink)
+            if wraps {
+                HStack { Text("INCL").font(.caption.weight(.bold)).tracking(0.8).foregroundStyle(Brand.muted); inclineCell }
+                    .padding(.leading, SetRowMetrics.number + SetRowMetrics.spacing)
+            }
             if let hint, let last, !row.done {
                 // Tap to copy last time's set into this row.
                 Button {
@@ -965,6 +983,41 @@ private enum SetRowMetrics {
     static let number: CGFloat = 28
     static let spacing: CGFloat = 6
     static let inset: CGFloat = 5
+}
+
+/// A set row's incline: −/+ by 0.5 % on the row being set, the value alone on the others. Apart from
+/// the row the clock rebuilds ten times a second; narrower than the load's stepper to fit 390 pt.
+struct SetInclineCell: View, Equatable {
+    static func width(_ step: ExerciseStep) -> CGFloat { TimerView.inclineWraps(step) ? 36 : 88 }
+
+    let incline: Double?
+    let number: Int
+    let editable: Bool
+    let onTint: Bool
+    let nudge: (Double) -> Void
+
+    static func == (a: Self, b: Self) -> Bool {
+        a.incline == b.incline && a.number == b.number && a.editable == b.editable && a.onTint == b.onTint
+    }
+
+    var body: some View {
+        HStack(spacing: 0) {
+            if editable { button("minus", "less") { nudge(-$0) } }
+            Text(incline.map(Format.number) ?? "—").font(.system(size: 18, weight: .bold, design: .rounded)).lineLimit(1).minimumScaleFactor(0.5)
+                .frame(width: 28).accessibilityLabel("Set \(number) incline").accessibilityValue(incline.map(Format.number) ?? "none")
+            if editable { button("plus", "more") { nudge($0) } }
+        }
+    }
+
+    private func button(_ symbol: String, _ word: String, action: @escaping (Double) -> Void) -> some View {
+        RepeatButton(action: action) {
+            Image(systemName: symbol).font(.system(size: 14, weight: .bold)).frame(width: 28, height: 38)
+                .background(onTint ? Brand.surface : Brand.coralSoft, in: RoundedRectangle(cornerRadius: 10, style: .continuous))
+                .overlay(RoundedRectangle(cornerRadius: 10, style: .continuous).strokeBorder(onTint ? Brand.brandLine : .clear))
+                .foregroundStyle(Brand.coralInk).frame(width: 30, height: 44).contentShape(Rectangle())
+        }
+        .accessibilityLabel("Set \(number) incline, \(word)")
+    }
 }
 
 /// The set table's scroll state: which edges have more of the card behind them, and how tall the
