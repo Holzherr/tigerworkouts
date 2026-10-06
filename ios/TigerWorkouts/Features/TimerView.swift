@@ -233,16 +233,6 @@ struct TimerView: View {
             if let first = runner.slot?.exercise {
                 exerciseCard(first, eyebrow: "First up", adjustable: true)
             }
-            if !isRest, let ex = runner.slot?.exercise, let label = TimerView.inclineLabel(runner.incline, for: ex) {
-                Button { editing = ex } label: {
-                    Text(label)
-                        .font(.title3)
-                        .foregroundStyle(Brand.muted)
-                        .frame(minHeight: Tap.regular)
-                        .contentShape(Rectangle())
-                }
-                .buttonStyle(.plain)
-            }
         }
         .padding(.horizontal, 16)
     }
@@ -354,6 +344,38 @@ struct TimerView: View {
         return incline.map { "\(Format.number($0))% incline" } ?? "Set incline"
     }
 
+    /// One dial of the next machine, with what it was set to last time.
+    struct BlockSetting: Equatable {
+        let label: String
+        let unit: String
+        let value: Double?
+        let last: Double?
+
+        var lastLabel: String? {
+            last.map { "last time \(Format.number($0))\(unit == "%" ? "" : " ")\(unit)" }
+        }
+    }
+
+    /// What the Next block card lets you set before the block starts: the step's own dial (speed,
+    /// load) and, beside it, the treadmill's incline.
+    nonisolated static func blockSettings(_ step: ExerciseStep, target: Double?, incline: Double?, results: [SessionResult]) -> [BlockSetting] {
+        var out: [BlockSetting] = []
+        if step.hasSetting, Measure.of(step.exercise.unit) == nil {
+            out.append(BlockSetting(label: step.settingLabel, unit: step.shortUnit, value: target, last: LastTime.set(results, for: step)?.load))
+        }
+        if inclineLabel(incline, for: step) != nil {
+            let used = Settings.lastUsed(results)
+            let last = used["step:\(step.id)"]?.incline ?? used["ex:\(step.exercise.key)"]?.incline
+            out.append(BlockSetting(label: "Incline", unit: "%", value: incline, last: last))
+        }
+        return out
+    }
+
+    /// The incline a press of − or + on the card leaves: half a percent a step, never below flat.
+    nonisolated static func inclineStep(_ incline: Double?, by presses: Double) -> Double {
+        max(0, (incline ?? 0) + 0.5 * presses)
+    }
+
     private func countdown(size: CGFloat) -> some View {
         VStack(spacing: 2) {
             if let left = runner.clock.left {
@@ -395,7 +417,10 @@ struct TimerView: View {
     /// The exercise as a card you can read from a bench: the demo, the name, the cue, and the one
     /// number worth changing without opening anything — the weight in your hand.
     private func exerciseCard(_ ex: ExerciseStep, eyebrow: String?, adjustable: Bool, demo: CGFloat = 104) -> some View {
-        VStack(alignment: .leading, spacing: 14) {
+        // Parked before a block: every dial of the next machine, each with last time's setting.
+        let parked = adjustable && runner.state.phase == .ready && runner.slot?.exercise?.id == ex.id
+        let settings = parked ? TimerView.blockSettings(ex, target: runner.target, incline: runner.incline, results: store.results) : []
+        return VStack(alignment: .leading, spacing: 14) {
             Button { editing = ex } label: {
                 HStack(alignment: .top, spacing: 14) {
                     ExerciseDemo(ref: ex.exercise, size: demo)
@@ -423,7 +448,8 @@ struct TimerView: View {
             }
             .buttonStyle(.plain)
 
-            if let set = LastTime.set(store.results, for: ex), let last = LastTime.label(set, for: ex) {
+            // Parked, a load alone is already under its dial.
+            if let set = LastTime.set(store.results, for: ex), let last = LastTime.label(set, for: ex), settings.isEmpty || set.reps != nil {
                 let text = last.prefix(1).uppercased() + last.dropFirst()
                 // On the running set, a tap puts last time's weight and reps in.
                 if adjustable, let slot = runner.slot, slot.exercise?.id == ex.id, runner.state.phase == .running || runner.state.phase == .paused {
@@ -455,7 +481,9 @@ struct TimerView: View {
                 HStack(spacing: 10) {
                     VStack(alignment: .leading, spacing: 1) {
                         Text(ex.settingLabel).font(.subheadline.weight(.semibold)).foregroundStyle(Brand.body)
-                        if let incline = runner.incline, runner.slot?.exercise?.id == ex.id {
+                        if let last = settings.first(where: { $0.label == ex.settingLabel })?.lastLabel {
+                            Text(last).font(.caption).foregroundStyle(Brand.muted)
+                        } else if !parked, let incline = runner.incline, runner.slot?.exercise?.id == ex.id {
                             Text("\(Format.number(incline))% incline").font(.caption).foregroundStyle(Brand.muted)
                         }
                     }
@@ -475,6 +503,30 @@ struct TimerView: View {
                     nudge("plus", label: "More") { runner.nudgeTarget($0) }
                 }
                 .disabled(runner.slot?.exercise?.id != ex.id)
+            }
+
+            if let incline = settings.first(where: { $0.label == "Incline" }) {
+                Divider()
+                HStack(spacing: 10) {
+                    VStack(alignment: .leading, spacing: 1) {
+                        Text(incline.label).font(.subheadline.weight(.semibold)).foregroundStyle(Brand.body)
+                        if let last = incline.lastLabel {
+                            Text(last).font(.caption).foregroundStyle(Brand.muted)
+                        }
+                    }
+                    Spacer()
+                    nudge("minus", label: "Less incline") { runner.setStepIncline(ex.id, TimerView.inclineStep(runner.incline, by: -$0)) }
+                    VStack(spacing: 0) {
+                        Text(incline.value.map(Format.number) ?? "—")
+                            .font(.system(size: 26, weight: .bold, design: .rounded))
+                            .monospacedDigit()
+                            .foregroundStyle(Brand.ink)
+                            .accessibilityIdentifier("incline-value")
+                        Text(incline.unit).font(.caption2).foregroundStyle(Brand.muted)
+                    }
+                    .frame(minWidth: 64)
+                    nudge("plus", label: "More incline") { runner.setStepIncline(ex.id, TimerView.inclineStep(runner.incline, by: $0)) }
+                }
             }
 
             // Metres rowed or calories on the counter, when not what the plan said.
