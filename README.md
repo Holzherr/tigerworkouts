@@ -91,7 +91,8 @@ Live since 6 Sep 2026. Timer (rounds, for time, AMRAP, EMOM, ladders, resume aft
 button Pause on a countdown, "Set 2 of 4 done" on a set; Finish and Discard in a ⋯ top right;
 on iOS a straight-set block's table keeps the current set centred and fades at an edge with more
 rows behind it; parked before a block, its card has a − / + for every dial, speed or load and a
-treadmill's incline, each with last time's setting),
+treadmill's incline, each with last time's setting; the Session sheet's set grid of a treadmill
+step has an Incline − / + above its sets),
 Supabase sign-in (email code and Google) and three-way sync (sessions, own workouts, favourites,
 prefs, custom exercises; v0.9 rows preserved), editor with drag-to-group and text commands, 472
 imported workouts, scores and progression, follow-along videos, Discover with recommendations

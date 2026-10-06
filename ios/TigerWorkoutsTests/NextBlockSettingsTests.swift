@@ -56,4 +56,21 @@ struct NextBlockSettingsTests {
         #expect(runner.incline == 10.5)
         SessionRunner.clearSaved() // the change wrote a crash-safety copy; leave none behind
     }
+
+    @Test("the Session sheet's set grid has an Incline row for a treadmill step, set or not, and none for a dumbbell")
+    func gridIncline() throws {
+        let sprints = try #require(Self.sheet().exerciseSteps.first { $0.id == "s1" })
+        #expect(SetPlanGrid.showsIncline(sprints.incline, for: sprints))
+        let flat = ExerciseStep(id: "s2", exercise: Self.sprint, target: 14.5, forMode: .seconds, forValue: 30)
+        #expect(flat.incline == nil)
+        #expect(SetPlanGrid.showsIncline(nil, for: flat))
+        let press = ExerciseStep(id: "pr", exercise: Fixtures.press, target: 22, forMode: .reps, forValue: 8)
+        #expect(!SetPlanGrid.showsIncline(nil, for: press))
+    }
+
+    @Test("the grid's Incline stepper moves half a percent a press and never below flat")
+    func gridInclineStepper() {
+        #expect(TimerView.inclineStep(10, by: 1) == 10.5)
+        #expect(TimerView.inclineStep(0, by: -1) == 0)
+    }
 }
