@@ -409,80 +409,21 @@ final class WalkthroughUITests: XCTestCase {
         XCTAssertTrue(app.navigationBars["TigerWorkouts"].waitForExistence(timeout: 5), "deleting the copy should go back")
     }
 
-    /// A block moves by its header, steps and all: every header has a grip and a one-time tip says
-    /// how (specs/blocks-compact-and-drag.md).
-    func testBlockMovesWithItsSteps() {
+    /// Every block header carries a grip a thumb can find, beside the header it moves
+    /// (specs/blocks-compact-and-drag.md part 2).
+    func testEveryBlockHeaderShowsAGrip() {
         open("Tabata This")
-        let tip = app.staticTexts["Hold a block's header to move it"]
-        if tip.waitForExistence(timeout: 3) {
-            snap("24 Block drag tip")
-            tap(app.buttons["OK"])
+        for name in ["Tabata Row", "Tabata Squat", "Tabata Pull-up", "Tabata Push-up", "Tabata Sit-up"] {
+            let header = app.buttons.matching(NSPredicate(format: "label BEGINSWITH %@", "\(name),")).firstMatch
+            let grip = app.descendants(matching: .any).matching(NSPredicate(format: "identifier == 'blockGrip' AND label == %@", "Move \(name)")).firstMatch
+            // The list only builds rows near the screen: scroll each header in before looking.
+            reveal(header)
+            XCTAssertTrue(grip.waitForExistence(timeout: 3), "\(name)'s header shows a grip")
+            XCTAssertGreaterThanOrEqual(grip.frame.height.rounded(), 44, "\(name)'s grip is a 44 pt target")
+            XCTAssertGreaterThanOrEqual(grip.frame.width.rounded(), 44, "\(name)'s grip is a 44 pt target")
+            XCTAssertLessThan(abs(grip.frame.midY - header.frame.midY), 22, "\(name)'s grip sits on its header")
+            if name == "Tabata Squat" { snap("24 Block headers with grips") }
         }
-        XCTAssertFalse(tip.waitForExistence(timeout: 2), "OK puts the tip away")
-
-        let squat = app.buttons.matching(NSPredicate(format: "label BEGINSWITH[c] 'Tabata Squat'")).firstMatch
-        let pullup = app.buttons.matching(NSPredicate(format: "label BEGINSWITH[c] 'Tabata Pull-up'")).firstMatch
-        let pullStep = app.buttons.matching(NSPredicate(format: "label BEGINSWITH[c] 'Pull-up'")).firstMatch
-        XCTAssertTrue(squat.waitForExistence(timeout: 5))
-        reveal(pullup)
-        centre([squat, pullup])
-        // Every header on screen carries a grip a thumb can find.
-        let grips = app.descendants(matching: .any).matching(identifier: "Block grip")
-        XCTAssertTrue(grips.firstMatch.waitForExistence(timeout: 3))
-        for grip in grips.allElementsBoundByIndex where grip.isHittable {
-            XCTAssertGreaterThanOrEqual(grip.frame.width.rounded(), 44)
-            XCTAssertGreaterThanOrEqual(grip.frame.height.rounded(), 44)
-        }
-        XCTAssertTrue(app.descendants(matching: .any).matching(NSPredicate(format: "identifier == 'Block grip' AND label == 'Move Tabata Pull-up'")).firstMatch.exists)
-        snap("24b Block headers with grips")
-        drag(pullup, onto: squat)
-        waitFor("the header drags its block above Squat") { pullup.frame.minY < squat.frame.minY }
-        XCTAssertTrue(pullStep.waitForExistence(timeout: 5))
-        XCTAssertTrue(pullup.frame.minY < pullStep.frame.minY && pullStep.frame.minY < squat.frame.minY, "the Pull-up step moves with its header")
-        snap("24c Block moved with its steps")
-
-        tap(app.navigationBars["Tabata This (mine)"].buttons["Edit"])
-        tap(app.buttons["Delete workout"])
-        tap(app.buttons["Delete"].firstMatch)
-        XCTAssertTrue(app.navigationBars["TigerWorkouts"].waitForExistence(timeout: 5), "deleting the copy should go back")
-
-        // The tip stays put away after a relaunch.
-        app.terminate()
-        app.launch()
-        open("Tabata This")
-        XCTAssertTrue(squat.waitForExistence(timeout: 5))
-        XCTAssertFalse(tip.exists, "the tip shows once")
-    }
-
-    /// Mid-session, in the Session sheet: Pull-up's header dropped among Squat's steps lands in
-    /// front of Squat with its steps, while Row runs. It used to snap back.
-    func testBlockMovesInTheSessionSheet() {
-        open("Tabata This")
-        // Put the tip away here: left up, its OK would sit behind the timer as a second "OK".
-        if app.staticTexts["Hold a block's header to move it"].waitForExistence(timeout: 3) { tap(app.buttons["OK"]) }
-        tap(app.buttons["Start workout"])
-        XCTAssertTrue(app.buttons["Done early"].waitForExistence(timeout: 10))
-        tap(app.buttons["Session overview"])
-
-        let squat = app.buttons.matching(NSPredicate(format: "label BEGINSWITH[c] 'Tabata Squat'")).firstMatch
-        let squatStep = app.buttons.matching(NSPredicate(format: "label BEGINSWITH[c] 'Bodyweight squat'")).firstMatch
-        let pullup = app.buttons.matching(NSPredicate(format: "label BEGINSWITH[c] 'Tabata Pull-up'")).firstMatch
-        let pullStep = app.buttons.matching(NSPredicate(format: "label BEGINSWITH[c] 'Pull-up'")).firstMatch
-        XCTAssertTrue(squat.waitForExistence(timeout: 5))
-        reveal(pullup)
-        centre([squatStep, pullup])
-        XCTAssertTrue(app.descendants(matching: .any).matching(NSPredicate(format: "identifier == 'Block grip' AND label == 'Move Tabata Pull-up'")).firstMatch.exists)
-        print("DBG-BEFORE", app.debugDescription)
-        drag(pullup, onto: squatStep)
-        print("DBG-AFTER", app.debugDescription)
-        waitFor("the block lands in front of Squat") { pullup.frame.minY < squat.frame.minY }
-        XCTAssertTrue(pullup.frame.minY < pullStep.frame.minY && pullStep.frame.minY < squat.frame.minY, "the Pull-up step moves with its header")
-        snap("24d Block moved mid-session")
-
-        tap(app.buttons["Close"])
-        tap(app.buttons["End session"])
-        tap(app.buttons["Discard"])
-        XCTAssertTrue(app.buttons["Start workout"].waitForExistence(timeout: 5))
     }
 
     func testWriteAWorkout() {

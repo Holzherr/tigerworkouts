@@ -23,11 +23,11 @@ struct RunsheetEditor<Header: View>: View {
 
     /// Settings → Default rest: what an added rest starts at.
     @AppStorage(Switches.defaultRest) private var defaultRest = 30.0
-    /// "Hold a block's header to move it", shown until OK is tapped.
-    @AppStorage("tip.blockDrag") private var blockTipSeen = false
     @State private var editingRest: RestStep?
     @State private var editingBlock: Block?
     @State private var picking: PickTarget?
+    /// Set when a move is stopped by what is done or running; cleared after 2 s.
+    @State private var refused: Date?
 
     private struct PickTarget: Identifiable {
         var id: String { blockId ?? "loose" }
@@ -56,20 +56,6 @@ struct RunsheetEditor<Header: View>: View {
         List {
             header()
 
-            if !blockTipSeen, runsheet.items.contains(where: { $0.asBlock != nil }) {
-                HStack(spacing: 12) {
-                    Image(systemName: "line.3.horizontal").foregroundStyle(Brand.coralInk)
-                    Text("Hold a block's header to move it").font(.subheadline).foregroundStyle(Brand.ink)
-                    Spacer()
-                    Button("OK") { blockTipSeen = true }
-                        .font(.subheadline.weight(.bold))
-                        .foregroundStyle(Brand.coralInk)
-                        .frame(minWidth: 44, minHeight: 44)
-                }
-                .buttonStyle(.borderless)
-                .listRowBackground(Brand.coralSoft)
-            }
-
             Section {
                 ForEach(rows) { row in
                     rowView(row, frozen: frozen)
@@ -78,7 +64,9 @@ struct RunsheetEditor<Header: View>: View {
                 }
                 .onMove { from, to in
                     guard let from = from.first else { return }
-                    apply(Edit.moveRow(runsheet, from: from, to: to, locked: locked))
+                    move(Edit.moveBlockClamped(runsheet, from: from, to: to, locked: locked)) {
+                        Edit.moveRow(runsheet, from: from, to: to)
+                    }
                 }
                 .onDelete { offsets in
                     let ids = offsets.compactMap { i -> String? in
@@ -105,6 +93,24 @@ struct RunsheetEditor<Header: View>: View {
         .listStyle(.insetGrouped)
         .scrollContentBackground(.hidden)
         .background(Brand.canvas)
+        .overlay(alignment: .top) {
+            if let refused {
+                Text("Done and running blocks stay in place")
+                    .font(.subheadline.weight(.bold))
+                    .foregroundStyle(Brand.ink)
+                    .padding(.horizontal, 16)
+                    .frame(minHeight: 40)
+                    .background(.white, in: Capsule())
+                    .shadow(color: .black.opacity(0.25), radius: 10, y: 4)
+                    .padding(.top, 8)
+                    .transition(.move(edge: .top).combined(with: .opacity))
+                    .accessibilityIdentifier("lockedMoveToast")
+                    .task(id: refused) {
+                        try? await Task.sleep(for: .seconds(2))
+                        if !Task.isCancelled { withAnimation { self.refused = nil } }
+                    }
+            }
+        }
         .sheet(item: $editingRest) { rest in
             RestEditorView(seconds: rest.seconds) { seconds in
                 apply(Edit.updateRest(runsheet, id: rest.id, seconds: seconds))
@@ -128,6 +134,13 @@ struct RunsheetEditor<Header: View>: View {
                 apply(Edit.addExercise(runsheet, to: target.blockId, exercise: exercise))
             }
         }
+    }
+
+    /// Applies a move. One that changed nothing, where the same move with nothing locked would have,
+    /// was stopped by what is done or running: say so instead of snapping back in silence.
+    private func move(_ result: Runsheet, unlocked: () -> Runsheet) {
+        apply(result)
+        if result == runsheet, unlocked() != runsheet { withAnimation { refused = .now } }
     }
 
     private func isStep(_ row: Edit.Row) -> Bool {
@@ -215,7 +228,7 @@ struct RunsheetEditor<Header: View>: View {
             .buttonStyle(.plain)
             .accessibilityLabel("\(b.name), \(b.modeLabel)")
             .accessibilityHint(done ? "" : "Tap for rounds and rest. Hold and drag to move the block.")
-            .modifier(MoveActions(enabled: !done) { up in apply(Edit.moveBlock(runsheet, id: b.id, up: up, locked: locked)) })
+            .modifier(MoveActions(enabled: !done) { up in moveBlock(b, up: up) })
             if !done {
                 Image(systemName: "line.3.horizontal")
                     .font(.body.weight(.semibold))
@@ -224,14 +237,18 @@ struct RunsheetEditor<Header: View>: View {
                     .contentShape(Rectangle())
                     .accessibilityLabel("Move \(b.name.isEmpty ? "block" : b.name)")
                     .accessibilityHint("Hold and drag to move the block.")
-                    .accessibilityIdentifier("Block grip")
-                    .modifier(MoveActions(enabled: true) { up in apply(Edit.moveBlock(runsheet, id: b.id, up: up, locked: locked)) })
+                    .accessibilityIdentifier("blockGrip")
+                    .modifier(MoveActions(enabled: true) { up in moveBlock(b, up: up) })
             }
         }
         .padding(.top, 4)
         .listRowBackground(Color.clear)
         .listRowSeparator(.hidden)
         .listRowInsets(EdgeInsets(top: 0, leading: 4, bottom: 6, trailing: 4))
+    }
+
+    private func moveBlock(_ b: Block, up: Bool) {
+        move(Edit.moveBlock(runsheet, id: b.id, up: up, locked: locked)) { Edit.moveBlock(runsheet, id: b.id, up: up) }
     }
 
     @ViewBuilder

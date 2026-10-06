@@ -159,8 +159,7 @@ enum Edit {
 
     /// One drag in the editor, with `onMove` semantics: `destination` is a row index in the list as
     /// it was before the move. Items in `locked` (done or running in a live session) keep their place
-    /// and contents: a block dragged above them lands just below them, any other move that would
-    /// disturb them is refused.
+    /// and contents; a move that would disturb them is refused.
     static func moveRow(_ r: Runsheet, from: Int, to destination: Int, locked: Set<String> = []) -> Runsheet {
         let rows = rows(r)
         guard rows.indices.contains(from) else { return r }
@@ -181,12 +180,7 @@ enum Edit {
                 case .ref: break
                 }
             }
-            // Dropped among another block's rows, it lands past that block when dragged down and in
-            // front of it when dragged up, so a block dragged over a long open block never snaps back.
-            let past = starts.filter { $0 < destination }.count
-            let inside = destination < row && !starts.contains(destination)
-            let to = inside && past - 1 < at ? past - 1 : past
-            next = moveItems(r, from: [at], to: max(to, r.items.prefix { locked.contains($0.id) }.count))
+            next = moveItems(r, from: [at], to: starts.filter { $0 < destination }.count)
         case .step(let stepId, _):
             guard let step = findStep(r, stepId) else { return r }
             var rest = rows
@@ -214,13 +208,29 @@ enum Edit {
         return Array(next.items.prefix(fixed.count)) == Array(fixed) ? next : r
     }
 
-    /// Move up / Move down on a block's header, for VoiceOver: one place past its neighbour, never
-    /// above what is done or running.
-    static func moveBlock(_ r: Runsheet, id: String, up: Bool, locked: Set<String> = []) -> Runsheet {
-        guard let at = r.items.firstIndex(where: { $0.id == id }) else { return r }
+    /// `moveRow` for the editor's drag: a block header dropped above or inside what is done or
+    /// running lands just below it instead of snapping back. Every other move is `moveRow`'s.
+    static func moveBlockClamped(_ r: Runsheet, from: Int, to destination: Int, locked: Set<String> = []) -> Runsheet {
+        let rows = rows(r)
         let fixed = r.items.prefix { locked.contains($0.id) }.count
-        guard at >= fixed, up ? at > fixed : at < r.items.count - 1 else { return r }
-        return moveItems(r, from: [at], to: up ? at - 1 : at + 2)
+        guard rows.indices.contains(from), case .block(let blockId) = rows[from], !locked.contains(blockId),
+              let at = r.items.firstIndex(where: { $0.id == blockId }), destination < firstRow(r, item: fixed)
+        else { return moveRow(r, from: from, to: destination, locked: locked) }
+        return moveItems(r, from: [at], to: fixed)
+    }
+
+    /// Move up / Move down on a block's header: a drop on the row where the item above (or the one
+    /// after next) starts, through `moveBlockClamped`, so it never passes what is done or running.
+    static func moveBlock(_ r: Runsheet, id: String, up: Bool, locked: Set<String> = []) -> Runsheet {
+        guard let at = r.items.firstIndex(where: { $0.id == id }), up ? at > 0 : at < r.items.count - 1 else { return r }
+        return moveBlockClamped(r, from: firstRow(r, item: at), to: firstRow(r, item: up ? at - 1 : at + 2), locked: locked)
+    }
+
+    /// The row an item's first row sits on; past the last item, the row count.
+    static func firstRow(_ r: Runsheet, item index: Int) -> Int {
+        var above = r
+        above.items = Array(r.items.prefix(index))
+        return rows(above).count
     }
 
     static func findStep(_ r: Runsheet, _ stepId: String) -> Step? {

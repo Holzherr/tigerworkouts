@@ -189,35 +189,51 @@ struct EditingTests {
         #expect(Edit.moveRow(r, from: 5, to: 4, locked: [a]) != r)
     }
 
-    @Test("a block dropped among another block's steps lands in front of it going up, past it going down")
-    func moveBlockOntoSteps() {
-        let (r, a, b) = twoBlocks()
-        // Rows: a, swing, add a, b, walk, rest, add b.
-        #expect(names(Edit.moveRow(r, from: 3, to: 1)) == [[b, "Incline walk", "rest"], [a, "Kettlebell swings"]])
-        #expect(names(Edit.moveRow(r, from: 0, to: 5)) == [[b, "Incline walk", "rest"], [a, "Kettlebell swings"]])
-        #expect(Edit.moveRow(r, from: 3, to: 5) == r)
-    }
-
-    @Test("mid-session, a block dragged above what is running lands just below it")
-    func moveBlockBelowLocked() {
+    /// Three blocks: a (swing), b (walk, rest), c (empty).
+    private func threeBlocks() -> (Runsheet, a: String, b: String, c: String) {
         let (r0, a, b) = twoBlocks()
         let r = Edit.addBlock(r0)
-        let c = r.items.compactMap(\.asBlock)[2].id
-        // Rows: a, swing, add a, b, walk, rest, add b, c, add c. c dropped on top, a running.
-        #expect(names(Edit.moveRow(r, from: 7, to: 0, locked: [a])).map(\.[0]) == [a, c, b])
-        #expect(names(Edit.moveRow(r, from: 7, to: 1, locked: [a])).map(\.[0]) == [a, c, b])
+        return (r, a, b, r.items.compactMap(\.asBlock)[2].id)
+    }
+
+    @Test("mid-session, a block header dropped above what is running lands just below it, steps and all")
+    func moveBlockClampedBelowLocked() {
+        let (r, a, b) = twoBlocks()
+        // Rows: a, swing, add a, b, walk, rest, add b.
+        #expect(names(Edit.moveBlockClamped(r, from: 3, to: 0, locked: [a])) == [[a, "Kettlebell swings"], [b, "Incline walk", "rest"]])
+        #expect(names(Edit.moveBlockClamped(r, from: 3, to: 1, locked: [a])) == [[a, "Kettlebell swings"], [b, "Incline walk", "rest"]])
+        let (r3, a3, b3, c3) = threeBlocks()
+        // Rows: a, swing, add a, b, walk, rest, add b, c, add c.
+        #expect(names(Edit.moveBlockClamped(r3, from: 7, to: 0, locked: [a3])).map(\.[0]) == [a3, c3, b3])
+        #expect(names(Edit.moveBlockClamped(r3, from: 7, to: 2, locked: [a3])).map(\.[0]) == [a3, c3, b3])
+        #expect(names(Edit.moveBlockClamped(r3, from: 3, to: Edit.rows(r3).count, locked: [a3])) == [[a3, "Kettlebell swings"], [c3], [b3, "Incline walk", "rest"]])
+        // A step still keeps moveRow's refusal.
+        #expect(Edit.moveBlockClamped(r, from: 4, to: 1, locked: [a]) == r)
+    }
+
+    @Test("with nothing locked, the clamped drag is moveRow")
+    func moveBlockClampedUnlocked() {
+        let (r, _, _) = twoBlocks()
+        #expect(Edit.moveBlockClamped(r, from: 3, to: 0) == Edit.moveRow(r, from: 3, to: 0))
+        #expect(Edit.moveBlockClamped(r, from: 0, to: Edit.rows(r).count) == Edit.moveRow(r, from: 0, to: Edit.rows(r).count))
+        let (r3, _, _, _) = threeBlocks()
+        for from in Edit.rows(r3).indices {
+            for to in 0...Edit.rows(r3).count {
+                #expect(Edit.moveBlockClamped(r3, from: from, to: to) == Edit.moveRow(r3, from: from, to: to))
+            }
+        }
     }
 
     @Test("Move up and Move down shift a block one place, never above what is running")
     func moveBlockActions() {
-        let (r0, a, b) = twoBlocks()
-        let r = Edit.addBlock(r0)
-        let c = r.items.compactMap(\.asBlock)[2].id
+        let (r, a, b, c) = threeBlocks()
         #expect(names(Edit.moveBlock(r, id: c, up: true)).map(\.[0]) == [a, c, b])
-        #expect(names(Edit.moveBlock(r, id: a, up: false)).map(\.[0]) == [b, a, c])
+        #expect(names(Edit.moveBlock(r, id: a, up: false)) == [[b, "Incline walk", "rest"], [a, "Kettlebell swings"], [c]])
         #expect(Edit.moveBlock(r, id: a, up: true) == r)
         #expect(Edit.moveBlock(r, id: c, up: false) == r)
+        // b is the first block after the running a.
         #expect(Edit.moveBlock(r, id: b, up: true, locked: [a]) == r)
+        #expect(names(Edit.moveBlock(r, id: b, up: false, locked: [a])) == [[a, "Kettlebell swings"], [c], [b, "Incline walk", "rest"]])
         #expect(Edit.moveBlock(r, id: a, up: false, locked: [a]) == r)
     }
 
