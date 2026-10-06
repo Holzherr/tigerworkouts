@@ -75,6 +75,7 @@
 		91DC24981E172C0AF854AA9A /* Stall.swift in Sources */ = {isa = PBXBuildFile; fileRef = 92412812FEBAA08CD322ABA0 /* Stall.swift */; };
 		9B8A7823988AF5778174C44D /* Effort.swift in Sources */ = {isa = PBXBuildFile; fileRef = 624618DA7F3194F1EB9B1818 /* Effort.swift */; };
 		9BCF69C9560146E675BE5C19 /* Keychain.swift in Sources */ = {isa = PBXBuildFile; fileRef = 781B4703341F053F08AE0613 /* Keychain.swift */; };
+		9CC8D45DAAC037551A54A811 /* NextBlockSettingsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1BE82D4A604D0B70201E1899 /* NextBlockSettingsTests.swift */; };
 		A31A032FB773210351CDA2A5 /* SetRowTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E31C0517BC96A0F3D45A39B5 /* SetRowTests.swift */; };
 		A605B92316A505E8591952CC /* TargetsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = DE66D2C56C04D57BFB270F0F /* TargetsTests.swift */; };
 		A6DFA29A5C8E113653F132FF /* WorkoutIconTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F5CF9DC0EA5841510B9D13F6 /* WorkoutIconTests.swift */; };
@@ -176,6 +177,7 @@
 		1063A8544D812A237CA3F659 /* HistoryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HistoryView.swift; sourceTree = "<group>"; };
 		1361DFA536CAFC0E96184089 /* BodyMapView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BodyMapView.swift; sourceTree = "<group>"; };
 		14A15B576C26A9F28134E487 /* Runsheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Runsheet.swift; sourceTree = "<group>"; };
+		1BE82D4A604D0B70201E1899 /* NextBlockSettingsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NextBlockSettingsTests.swift; sourceTree = "<group>"; };
 		1E0B46392F6B56E20A87A7FF /* NextUp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NextUp.swift; sourceTree = "<group>"; };
 		1E38F7FA144B053254278A46 /* SetGrid.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SetGrid.swift; sourceTree = "<group>"; };
 		22C7059BA09D0BDACDF216B7 /* LogbookTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LogbookTests.swift; sourceTree = "<group>"; };
@@ -427,6 +429,7 @@
 				73E60ED8258A936B9C69FB41 /* LoadsTests.swift */,
 				24B7E58E065ED599B1C47620 /* LockScreenControlsTests.swift */,
 				22C7059BA09D0BDACDF216B7 /* LogbookTests.swift */,
+				1BE82D4A604D0B70201E1899 /* NextBlockSettingsTests.swift */,
 				B468F247F04E6A279F2AD6D2 /* NextUpTests.swift */,
 				8A91B39264F3D48EC2B176B0 /* RecommendTests.swift */,
 				D36AE791E64CAB95929EDB34 /* ResultsTests.swift */,
@@ -712,6 +715,7 @@
 				B69408139FFD2254609E3258 /* LoadsTests.swift in Sources */,
 				49FDE84F31572A299D3273E2 /* LockScreenControlsTests.swift in Sources */,
 				F7998BA235C2AF9735912F93 /* LogbookTests.swift in Sources */,
+				9CC8D45DAAC037551A54A811 /* NextBlockSettingsTests.swift in Sources */,
 				A9DE82EE435E2AF1435C9F4A /* NextUpTests.swift in Sources */,
 				A8751C5CD711B126ABDBBCE1 /* RecommendTests.swift in Sources */,
 				AE6182B42F75E4CEA7DC6A74 /* ResultsTests.swift in Sources */,

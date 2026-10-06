@@ -88,7 +88,12 @@ Storybook under Workouts → Imported. Verbatim originals live in the private as
 ## Status
 
 Live since 6 Sep 2026. Timer (rounds, for time, AMRAP, EMOM, ladders, resume after reload; big
-button Pause on a countdown, "Set 2 of 4 done" on a set; Finish and Discard in a ⋯ top right),
+button Pause on a countdown, "Set 2 of 4 done" on a set; Finish and Discard in a ⋯ top right;
+on iOS a straight-set block's table keeps the current set centred and fades at an edge with more
+rows behind it, and on a treadmill has an INCL column with −/+ by 0.5 % on the set being set;
+parked before a block, its card has a − / + for every dial, speed or load and a treadmill's
+incline, each with last time's setting; the Session sheet's set grid of a treadmill step has an
+Incline − / + above its sets),
 Supabase sign-in (email code and Google) and three-way sync (sessions, own workouts, favourites,
 prefs, custom exercises; v0.9 rows preserved), editor with drag-to-group and text commands, 472
 imported workouts, scores and progression, follow-along videos, Discover with recommendations
