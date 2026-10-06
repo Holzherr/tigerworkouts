@@ -472,7 +472,9 @@ final class WalkthroughUITests: XCTestCase {
         reveal(pullup)
         centre([squatStep, pullup])
         XCTAssertTrue(app.descendants(matching: .any).matching(NSPredicate(format: "identifier == 'Block grip' AND label == 'Move Tabata Pull-up'")).firstMatch.exists)
+        print("DBG-BEFORE", app.debugDescription)
         drag(pullup, onto: squatStep)
+        print("DBG-AFTER", app.debugDescription)
         waitFor("the block lands in front of Squat") { pullup.frame.minY < squat.frame.minY }
         XCTAssertTrue(pullup.frame.minY < pullStep.frame.minY && pullStep.frame.minY < squat.frame.minY, "the Pull-up step moves with its header")
         snap("24d Block moved mid-session")
