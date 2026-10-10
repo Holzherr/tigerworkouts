@@ -188,6 +188,20 @@ actor Supabase {
         return session!.user
     }
 
+    /// Email and password, for an account that has one (App Review's demo login). Email codes stay
+    /// the default; this stores the session the same way.
+    func signInWithPassword(email: String, password: String) async throws -> AuthUser {
+        let grant = Self.passwordGrant(email: email, password: password)
+        let (data, _) = try await request(grant.path, method: "POST", body: grant.body, authed: false)
+        session = try JSONDecoder().decode(AuthSession.self, from: data)
+        persist()
+        return session!.user
+    }
+
+    nonisolated static func passwordGrant(email: String, password: String) -> (path: String, body: [String: String]) {
+        ("auth/v1/token?grant_type=password", ["email": email, "password": password])
+    }
+
     // MARK: - Apple, id token
 
     /// Sign in with Apple: the identity token Apple hands the app, exchanged for a session. Supabase

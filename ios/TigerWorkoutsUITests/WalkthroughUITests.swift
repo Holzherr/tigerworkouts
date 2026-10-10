@@ -968,6 +968,9 @@ final class WalkthroughUITests: XCTestCase {
         signIn.tap()
         XCTAssertTrue(app.buttons["sign-in-apple"].waitForExistence(timeout: 5), "Sign in with Apple should be offered")
         snap("109 Sign in, Apple first")
+        tap(app.buttons["use-password"])
+        XCTAssertTrue(app.secureTextFields["password-field"].waitForExistence(timeout: 3), "the password route reveals a password field")
+        snap("109b Sign in with a password")
         tap(app.buttons["Cancel"])
     }
 
