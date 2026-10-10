@@ -6,4 +6,4 @@ Read first: [README.md](../README.md) (what is where), [DESIGN.md](../DESIGN.md)
 
 Backlog, inbox and ledger: https://github.com/Holzherr/agent-team/tree/main/apps/tigerworkouts. Board: corral, "TigerWorkouts".
 
-Specs: [mcp.md](mcp.md) — the MCP server for Claude and ChatGPT: anonymous start, timer in the chat, claim link. [exercise-library.md](exercise-library.md) — public exercise library: a page per exercise, a JSON download, a sitemap, the app link on each (draft).
+Specs: [mcp.md](mcp.md) — the MCP server for Claude and ChatGPT: anonymous start, timer in the chat, claim link. [exercise-library.md](exercise-library.md) — public exercise library: a page per exercise, a JSON download, a sitemap, the app link on each (draft). [pt-publishing.md](pt-publishing.md) — Hevy Coach and Hevy's main screens against Tiger's coaching, with three build items (draft).
