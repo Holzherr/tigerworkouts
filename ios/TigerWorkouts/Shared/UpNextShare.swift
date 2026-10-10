@@ -39,7 +39,7 @@ struct UpNextSnapshot: Codable, Hashable {
 }
 
 enum UpNextShare {
-    static let group = "group.com.holzherr.tigerworkouts"
+    static let group = "group.dev.brambruesch.tigerworkouts"
     static let kind = "up-next"
     private static let key = "up-next"
 

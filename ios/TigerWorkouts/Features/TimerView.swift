@@ -18,6 +18,7 @@ struct TimerView: View {
     @State private var confirmQuit = false
     /// The set row open for editing on a straight-set block; nil = the set you are on.
     @State private var openSet: String?
+    @State private var rowsFade = RowsFade()
 
     private var isRest: Bool { runner.slot?.kind == .rest }
     private var accent: Color { isRest ? Brand.Night.rest : Brand.coral }
@@ -163,6 +164,7 @@ struct TimerView: View {
                         .background(Brand.Night.raised, in: Circle())
                 }
                 .accessibilityLabel("Session overview")
+                SessionMenu(finish: runner.finish, discard: discard).equatable()
             }
             if let ghost = runner.ghost {
                 // Racing the last session of this workout: one signed number, at the latest round or set.
@@ -235,16 +237,6 @@ struct TimerView: View {
             if let first = runner.slot?.exercise {
                 exerciseCard(first, eyebrow: "First up", adjustable: true)
             }
-            if !isRest, let ex = runner.slot?.exercise, let label = TimerView.inclineLabel(runner.incline, for: ex) {
-                Button { editing = ex } label: {
-                    Text(label)
-                        .font(.title3)
-                        .foregroundStyle(Brand.muted)
-                        .frame(minHeight: Tap.regular)
-                        .contentShape(Rectangle())
-                }
-                .buttonStyle(.plain)
-            }
         }
         .padding(.horizontal, 16)
     }
@@ -279,10 +271,42 @@ struct TimerView: View {
                     Text("Rest").font(.title3.weight(.bold)).foregroundStyle(Brand.Night.rest)
                 }
                 countdown(size: 76)
-                ScrollView {
-                    setGrid(straight)
+                // The whole card scrolls, header and all, so the window is as tall as before; the
+                // set you are on moves to the middle whenever it changes, and an edge with more of
+                // the card behind it fades out instead of cutting a row in half.
+                let focus = openSet ?? runner.setRows.first(where: \.current)?.slotId
+                ScrollViewReader { proxy in
+                    ScrollView {
+                        setGrid(straight)
+                            // Where the window sits on the card, in the card's own coordinates.
+                            .onGeometryChange(for: RowsFade.self) { g in
+                                let window = g.bounds(of: .named("set-rows")) ?? CGRect(origin: .zero, size: g.size)
+                                return RowsFade(top: window.minY > 1, bottom: window.maxY < g.size.height - 1, window: window.height)
+                            } action: { rowsFade = $0 }
+                    }
+                    .coordinateSpace(.named("set-rows"))
+                    .scrollBounceBehavior(.basedOnSize)
+                    .mask {
+                        VStack(spacing: 0) {
+                            LinearGradient(colors: [.clear, .black], startPoint: .top, endPoint: .bottom)
+                                .frame(height: rowsFade.top ? 16 : 0)
+                            Color.black
+                            LinearGradient(colors: [.black, .clear], startPoint: .top, endPoint: .bottom)
+                                .frame(height: rowsFade.bottom ? 16 : 0)
+                        }
+                    }
+                    .accessibilityIdentifier("set-rows")
+                    .accessibilityValue([rowsFade.top ? "faded top" : nil, rowsFade.bottom ? "faded bottom" : nil].compactMap { $0 }.joined(separator: ", "))
+                    .onAppear { if let focus { proxy.scrollTo(focus, anchor: .center) } }
+                    .onChange(of: focus) {
+                        if let focus { withAnimation(.easeInOut(duration: 0.3)) { proxy.scrollTo(focus, anchor: .center) } }
+                    }
+                    // A rest adds its ±15 s under the clock and the window shrinks from the bottom,
+                    // which hid the last set; centre it again.
+                    .onChange(of: rowsFade.window) {
+                        if let focus { withAnimation(.easeInOut(duration: 0.3)) { proxy.scrollTo(focus, anchor: .center) } }
+                    }
                 }
-                .scrollBounceBehavior(.basedOnSize)
             }
             .padding(.horizontal, 16)
         } else {
@@ -322,6 +346,38 @@ struct TimerView: View {
         let treadmill = Library.shared.group(step.exercise.key).map { [.treadmill, .walk, .run].contains($0) } ?? false
         guard incline != nil || step.incline != nil || treadmill else { return nil }
         return incline.map { "\(Format.number($0))% incline" } ?? "Set incline"
+    }
+
+    /// One dial of the next machine, with what it was set to last time.
+    struct BlockSetting: Equatable {
+        let label: String
+        let unit: String
+        let value: Double?
+        let last: Double?
+
+        var lastLabel: String? {
+            last.map { "last time \(Format.number($0))\(unit == "%" ? "" : " ")\(unit)" }
+        }
+    }
+
+    /// What the Next block card lets you set before the block starts: the step's own dial (speed,
+    /// load) and, beside it, the treadmill's incline.
+    nonisolated static func blockSettings(_ step: ExerciseStep, target: Double?, incline: Double?, results: [SessionResult]) -> [BlockSetting] {
+        var out: [BlockSetting] = []
+        if step.hasSetting, Measure.of(step.exercise.unit) == nil {
+            out.append(BlockSetting(label: step.settingLabel, unit: step.shortUnit, value: target, last: LastTime.set(results, for: step)?.load))
+        }
+        if inclineLabel(incline, for: step) != nil {
+            let used = Settings.lastUsed(results)
+            let last = used["step:\(step.id)"]?.incline ?? used["ex:\(step.exercise.key)"]?.incline
+            out.append(BlockSetting(label: "Incline", unit: "%", value: incline, last: last))
+        }
+        return out
+    }
+
+    /// The incline a press of − or + on the card leaves: half a percent a step, never below flat.
+    nonisolated static func inclineStep(_ incline: Double?, by presses: Double) -> Double {
+        max(0, (incline ?? 0) + 0.5 * presses)
     }
 
     private func countdown(size: CGFloat) -> some View {
@@ -371,7 +427,10 @@ struct TimerView: View {
     /// The exercise as a card you can read from a bench: the demo, the name, the cue, and the one
     /// number worth changing without opening anything — the weight in your hand.
     private func exerciseCard(_ ex: ExerciseStep, eyebrow: String?, adjustable: Bool, demo: CGFloat = 104) -> some View {
-        VStack(alignment: .leading, spacing: 14) {
+        // Parked before a block: every dial of the next machine, each with last time's setting.
+        let parked = adjustable && runner.state.phase == .ready && runner.slot?.exercise?.id == ex.id
+        let settings = parked ? TimerView.blockSettings(ex, target: runner.target, incline: runner.incline, results: store.results) : []
+        return VStack(alignment: .leading, spacing: 14) {
             Button { editing = ex } label: {
                 HStack(alignment: .top, spacing: 14) {
                     ExerciseDemo(ref: ex.exercise, size: demo)
@@ -399,7 +458,8 @@ struct TimerView: View {
             }
             .buttonStyle(.plain)
 
-            if let set = LastTime.set(store.results, for: ex), let last = LastTime.label(set, for: ex) {
+            // Parked, a load alone is already under its dial.
+            if let set = LastTime.set(store.results, for: ex), let last = LastTime.label(set, for: ex), settings.isEmpty || set.reps != nil {
                 let text = last.prefix(1).uppercased() + last.dropFirst()
                 // On the running set, a tap puts last time's weight and reps in.
                 if adjustable, let slot = runner.slot, slot.exercise?.id == ex.id, runner.state.phase == .running || runner.state.phase == .paused {
@@ -431,7 +491,9 @@ struct TimerView: View {
                 HStack(spacing: 10) {
                     VStack(alignment: .leading, spacing: 1) {
                         Text(ex.settingLabel).font(.subheadline.weight(.semibold)).foregroundStyle(Brand.body)
-                        if let incline = runner.incline, runner.slot?.exercise?.id == ex.id {
+                        if let last = settings.first(where: { $0.label == ex.settingLabel })?.lastLabel {
+                            Text(last).font(.caption).foregroundStyle(Brand.muted)
+                        } else if !parked, let incline = runner.incline, runner.slot?.exercise?.id == ex.id {
                             Text("\(Format.number(incline))% incline").font(.caption).foregroundStyle(Brand.muted)
                         }
                     }
@@ -451,6 +513,30 @@ struct TimerView: View {
                     nudge("plus", label: "More") { runner.nudgeTarget($0) }
                 }
                 .disabled(runner.slot?.exercise?.id != ex.id)
+            }
+
+            if let incline = settings.first(where: { $0.label == "Incline" }) {
+                Divider()
+                HStack(spacing: 10) {
+                    VStack(alignment: .leading, spacing: 1) {
+                        Text(incline.label).font(.subheadline.weight(.semibold)).foregroundStyle(Brand.body)
+                        if let last = incline.lastLabel {
+                            Text(last).font(.caption).foregroundStyle(Brand.muted)
+                        }
+                    }
+                    Spacer()
+                    nudge("minus", label: "Less incline") { runner.setStepIncline(ex.id, TimerView.inclineStep(runner.incline, by: -$0)) }
+                    VStack(spacing: 0) {
+                        Text(incline.value.map(Format.number) ?? "—")
+                            .font(.system(size: 26, weight: .bold, design: .rounded))
+                            .monospacedDigit()
+                            .foregroundStyle(Brand.ink)
+                            .accessibilityIdentifier("incline-value")
+                        Text(incline.unit).font(.caption2).foregroundStyle(Brand.muted)
+                    }
+                    .frame(minWidth: 64)
+                    nudge("plus", label: "More incline") { runner.setStepIncline(ex.id, TimerView.inclineStep(runner.incline, by: $0)) }
+                }
             }
 
             // Metres rowed or calories on the counter, when not what the plan said.
@@ -501,6 +587,7 @@ struct TimerView: View {
     private func setGrid(_ ex: ExerciseStep) -> some View {
         let rows = runner.setRows
         let last = LastTime.sets(store.results, for: ex) ?? []
+        let incline = Self.setColumns(ex, inclines: rows.map(\.incline)).contains("INCL")
         return VStack(alignment: .leading, spacing: 10) {
             Button { editing = ex } label: {
                 HStack(spacing: 12) {
@@ -525,7 +612,8 @@ struct TimerView: View {
             HStack(spacing: SetRowMetrics.spacing) {
                 Text("Set").frame(width: SetRowMetrics.number, alignment: .leading)
                 if ex.hasSetLoad { Text(ex.shortUnit).frame(maxWidth: .infinity) }
-                if let count = ex.countLabel { Text(count).frame(maxWidth: .infinity) }
+                if incline { Text("Incl").frame(width: SetInclineCell.width(ex)) }
+                if let count = ex.countLabel { Text(count).frame(maxWidth: Self.countWidth(ex, incline: incline)) }
                 Color.clear.frame(width: 44, height: 1)
             }
             .padding(.horizontal, SetRowMetrics.inset)
@@ -537,7 +625,8 @@ struct TimerView: View {
             .foregroundStyle(Brand.muted)
 
             ForEach(rows) { row in
-                setRow(row, ex, last: last.indices.contains(row.number - 1) && (last[row.number - 1].type ?? .normal) == row.type ? last[row.number - 1] : nil)
+                setRow(row, ex, incline: incline, last: last.indices.contains(row.number - 1) && (last[row.number - 1].type ?? .normal) == row.type ? last[row.number - 1] : nil)
+                    .id(row.slotId)
             }
         }
         .padding(12)
@@ -547,9 +636,33 @@ struct TimerView: View {
         .accessibilityIdentifier("timer-set-grid")
     }
 
-    private func setRow(_ row: SessionRunner.SetRow, _ ex: ExerciseStep, last: SetResult?) -> some View {
+    /// The set table's columns after SET, as its header writes them. INCL shows when a set has an
+    /// incline or the exercise is a treadmill, walk or run, so a bench never gets one.
+    nonisolated static func setColumns(_ step: ExerciseStep, inclines: [Double?]) -> [String] {
+        let treadmill = Library.shared.group(step.exercise.key).map { [.treadmill, .walk, .run].contains($0) } ?? false
+        let incline = treadmill || inclines.contains { $0 != nil }
+        return ((step.hasSetLoad ? [step.shortUnit] : []) + (incline ? ["Incl"] : []) + (step.countLabel.map { [$0] } ?? []))
+            .map { $0.uppercased() }
+    }
+
+    /// A set counted in metres, reps or calories has −/+ on its count too, and three steppers and
+    /// the tick overflow the row: there the row being set takes its incline on a line under it.
+    nonisolated static func inclineWraps(_ step: ExerciseStep) -> Bool {
+        step.countLabel != nil && step.forMode != .seconds && step.forMode != .minutes
+    }
+
+    /// With INCL in, a timed set's count is a short read-only number and gives the steppers its room.
+    private static func countWidth(_ ex: ExerciseStep, incline: Bool) -> CGFloat {
+        incline && !inclineWraps(ex) ? 32 : .infinity
+    }
+
+    private func setRow(_ row: SessionRunner.SetRow, _ ex: ExerciseStep, incline: Bool, last: SetResult?) -> some View {
         let hint = LastTime.setLabel(last)
         let editable = !row.done && (openSet == row.slotId || (openSet == nil && row.current))
+        let wraps = incline && editable && Self.inclineWraps(ex)
+        let inclineCell = SetInclineCell(incline: row.incline, number: row.number, editable: editable, onTint: row.current) {
+            runner.nudgeSetIncline(row.slotId, $0)
+        }.equatable()
         return VStack(alignment: .leading, spacing: 2) {
             HStack(spacing: SetRowMetrics.spacing) {
                 SetMarkButton(mark: row.mark, type: row.type, label: "Set \(row.number)", highlight: row.current && !row.done) {
@@ -569,6 +682,7 @@ struct TimerView: View {
                     }
                     .frame(maxWidth: .infinity)
                 }
+                if incline, !wraps { inclineCell.frame(width: SetInclineCell.width(ex)) }
                 if let count = ex.countLabel {
                     // A distance or calorie set counts its metres or calories; a timed one shows the
                     // time it ran once done, and its plan before.
@@ -583,7 +697,7 @@ struct TimerView: View {
                             Text(Format.number((shown * 10).rounded() / 10)).font(.system(size: 18, weight: .bold, design: .rounded)).lineLimit(1).minimumScaleFactor(0.6)
                         }
                     }
-                    .frame(maxWidth: .infinity)
+                    .frame(maxWidth: Self.countWidth(ex, incline: incline))
                 }
                 if runner.records.contains(row.slotId), row.done {
                     Image(systemName: "medal.fill")
@@ -610,6 +724,10 @@ struct TimerView: View {
             }
             .monospacedDigit()
             .foregroundStyle(row.done ? Brand.muted : Brand.ink)
+            if wraps {
+                HStack { Text("INCL").font(.caption.weight(.bold)).tracking(0.8).foregroundStyle(Brand.muted); inclineCell }
+                    .padding(.leading, SetRowMetrics.number + SetRowMetrics.spacing)
+            }
             if let hint, let last, !row.done {
                 // Tap to copy last time's set into this row.
                 Button {
@@ -744,6 +862,7 @@ struct TimerView: View {
         }
     }
 
+    /// A countdown ends by itself: its big button is Pause. A set's says which set it logs.
     private var controls: some View {
         VStack(spacing: 10) {
             if runner.state.phase == .ready {
@@ -762,6 +881,7 @@ struct TimerView: View {
                         .buttonStyle(BigButtonStyle())
                 }
             } else {
+                let countdown = runner.clock.left != nil || runner.state.phase == .lead
                 HStack(spacing: 10) {
                     // Undoes a stray Done — on the Lock Screen too, where there is no way back.
                     Button {
@@ -774,12 +894,13 @@ struct TimerView: View {
                     .disabled(runner.state.i == 0 || runner.state.phase == .lead)
                     .accessibilityLabel("Previous step")
 
-                    Button {
-                        runner.pauseOrResume()
-                    } label: {
-                        Label(runner.state.phase == .paused ? "Resume" : "Pause", systemImage: runner.state.phase == .paused ? "play.fill" : "pause.fill")
+                    if !countdown {
+                        pauseButton.buttonStyle(NightButtonStyle())
+                    } else if runner.timedWork {
+                        // Ends the countdown early and logs the time it ran.
+                        Button("Done early") { runner.done() }
+                            .buttonStyle(NightButtonStyle())
                     }
-                    .buttonStyle(NightButtonStyle())
 
                     Button {
                         runner.skip()
@@ -787,14 +908,30 @@ struct TimerView: View {
                         Label("Skip", systemImage: "forward.end.fill")
                     }
                     .buttonStyle(NightButtonStyle())
+                    .accessibilityLabel(runner.state.phase == .lead ? "Skip" : isRest ? "Skip rest" : "Skip this step")
+                    .accessibilityIdentifier("Skip")
                 }
-                // On a countdown, Done ends it early and logs the time it ran.
-                Button(runner.timedWork ? "Done early" : "Done") { runner.done() }
-                    .buttonStyle(BigButtonStyle(tint: accent))
+                if countdown {
+                    pauseButton.buttonStyle(BigButtonStyle(tint: accent))
+                } else {
+                    Button(setDone) { runner.done() }
+                        .buttonStyle(BigButtonStyle(tint: accent))
+                        .accessibilityIdentifier("Done")
+                }
             }
         }
         .padding(.horizontal, 16)
         .padding(.bottom, 8)
+    }
+
+    private var pauseButton: some View {
+        Button(runner.state.phase == .paused ? "Resume" : "Pause", systemImage: runner.state.phase == .paused ? "play.fill" : "pause.fill") { runner.pauseOrResume() }
+    }
+
+    /// "Set 2 of 4 done". An amrap has no last round to count towards; a one-off step is just Done.
+    private var setDone: String {
+        guard let s = runner.slot, s.kind == .work, s.mode == .amrap || s.rounds > 1 else { return "Done" }
+        return s.mode == .amrap ? "Set \(s.round + 1) done" : "Set \(s.round + 1) of \(s.rounds) done"
     }
 
     // MARK: - Overview
@@ -802,11 +939,19 @@ struct TimerView: View {
     /// The same editor as the workout screen. What is done or running is greyed and stays put;
     /// everything still to come can be changed or dragged — a block dragged up runs next.
     private var overview: some View {
-        NavigationStack {
+        let used = Settings.lastUsed(store.results)
+        return NavigationStack {
             RunsheetEditor(
                 runsheet: runner.runsheet,
                 locked: runner.passedItems,
                 current: runner.slot?.step.id,
+                incline: { step in
+                    Binding(
+                        get: { runner.plannedIncline(step.id) ?? step.incline },
+                        set: { if let v = $0 { runner.setStepIncline(step.id, v) } }
+                    )
+                },
+                lastIncline: { used["step:\($0.id)"]?.incline ?? used["ex:\($0.exercise.key)"]?.incline },
                 summary: planned,
                 onExercise: { e in
                     showOverview = false
@@ -860,4 +1005,69 @@ private enum SetRowMetrics {
     static let number: CGFloat = 28
     static let spacing: CGFloat = 6
     static let inset: CGFloat = 5
+}
+
+/// A set row's incline: −/+ by 0.5 % on the row being set, the value alone on the others. Apart from
+/// the row the clock rebuilds ten times a second; narrower than the load's stepper to fit 390 pt.
+struct SetInclineCell: View, Equatable {
+    static func width(_ step: ExerciseStep) -> CGFloat { TimerView.inclineWraps(step) ? 36 : 88 }
+
+    let incline: Double?
+    let number: Int
+    let editable: Bool
+    let onTint: Bool
+    let nudge: (Double) -> Void
+
+    static func == (a: Self, b: Self) -> Bool {
+        a.incline == b.incline && a.number == b.number && a.editable == b.editable && a.onTint == b.onTint
+    }
+
+    var body: some View {
+        HStack(spacing: 0) {
+            if editable { button("minus", "less") { nudge(-$0) } }
+            Text(incline.map(Format.number) ?? "—").font(.system(size: 18, weight: .bold, design: .rounded)).lineLimit(1).minimumScaleFactor(0.5)
+                .frame(width: 28).accessibilityLabel("Set \(number) incline").accessibilityValue(incline.map(Format.number) ?? "none")
+            if editable { button("plus", "more") { nudge($0) } }
+        }
+    }
+
+    private func button(_ symbol: String, _ word: String, action: @escaping (Double) -> Void) -> some View {
+        RepeatButton(action: action) {
+            Image(systemName: symbol).font(.system(size: 14, weight: .bold)).frame(width: 28, height: 38)
+                .background(onTint ? Brand.surface : Brand.coralSoft, in: RoundedRectangle(cornerRadius: 10, style: .continuous))
+                .overlay(RoundedRectangle(cornerRadius: 10, style: .continuous).strokeBorder(onTint ? Brand.brandLine : .clear))
+                .foregroundStyle(Brand.coralInk).frame(width: 30, height: 44).contentShape(Rectangle())
+        }
+        .accessibilityLabel("Set \(number) incline, \(word)")
+    }
+}
+
+/// The set table's scroll state: which edges have more of the card behind them, and how tall the
+/// window onto it is.
+private struct RowsFade: Equatable {
+    var top = false
+    var bottom = false
+    var window: CGFloat = 0
+}
+
+/// The ⋯ menu, apart from the top bar the clock redraws ten times a second: an open menu rebuilt
+/// that often never settles, and a tap on Finish and save did nothing. Its actions never change.
+private struct SessionMenu: View, Equatable {
+    let finish: () -> Void
+    let discard: () -> Void
+
+    static func == (a: Self, b: Self) -> Bool { true }
+
+    var body: some View {
+        Menu {
+            Button("Finish and save", action: finish)
+            Button("Discard", role: .destructive, action: discard)
+        } label: {
+            Image(systemName: "ellipsis")
+                .font(.system(size: 16, weight: .bold))
+                .frame(width: 44, height: 44)
+                .background(Brand.Night.raised, in: Circle())
+        }
+        .accessibilityLabel("Session menu")
+    }
 }

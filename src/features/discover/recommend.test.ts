@@ -21,6 +21,19 @@ describe('recommend', () => {
     expect(r.length).toBeGreaterThan(0);
     expect(r.some(x => x.runsheet.title === 'Cindy')).toBe(true);
   });
+  it('an edited copy of a program day stands in for the day, which is never offered twice', () => {
+    const mine = { ...w('u-a1', { program: { name: 'P', day: '1', order: 1 }, source: { title: '', kind: 'user', author: 'Me' } }), copyOf: 'a1' };
+    const list = [mine, ...all];
+    // Ran the copy: next is day 2, not the original of the day just done.
+    const r = recommend(list, [did('u-a1')]);
+    expect(r[0].runsheet.id).toBe('a2');
+    expect(r[0].reason).toBe('Next in P');
+    expect(ids(r)).not.toContain('a1');
+    // Ran day 2: back round to day 1, as the copy.
+    const back = recommend(list, [did('a2'), did('a1', 4)]);
+    expect(back[0].runsheet.id).toBe('u-a1');
+    expect(ids(back)).not.toContain('a1');
+  });
   it('puts the next program day first', () => {
     const r = recommend(all, [did('a1')]);
     expect(r[0].runsheet.id).toBe('a2');

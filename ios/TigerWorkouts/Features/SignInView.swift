@@ -16,6 +16,9 @@ struct SignInView: View {
     @Environment(\.dismiss) private var dismiss
     @State private var email = ""
     @State private var code = ""
+    @State private var password = ""
+    /// Hidden behind a link: email codes are the way in, passwords exist for App Review's demo login.
+    @State private var usePassword = false
     @State private var sent = false
     @State private var busy = false
     @State private var error: String?
@@ -26,7 +29,7 @@ struct SignInView: View {
     @State private var resendIn = 0
 
     @FocusState private var focus: Field?
-    private enum Field { case email, code }
+    private enum Field { case email, code, password }
 
     var body: some View {
         NavigationStack {
@@ -89,6 +92,15 @@ struct SignInView: View {
                                 .foregroundStyle(sent ? Brand.muted : Brand.ink)
                         }
 
+                        if usePassword && !sent {
+                            field {
+                                SecureField("Password", text: $password)
+                                    .textContentType(.password)
+                                    .focused($focus, equals: .password)
+                                    .accessibilityIdentifier("password-field")
+                            }
+                        }
+
                         if sent {
                             Text("We sent a six-digit code to \(email). It can take a minute.")
                                 .font(.footnote)
@@ -104,12 +116,34 @@ struct SignInView: View {
                             }
                         }
 
-                        Button(sent ? "Sign in" : "Email me a code") {
-                            Task { sent ? await verify() : await send() }
+                        if usePassword && !sent {
+                            Button("Sign in") {
+                                Task { await passwordSignIn() }
+                            }
+                            .buttonStyle(BigButtonStyle())
+                            .disabled(busy || !email.contains("@") || password.isEmpty)
+                            .opacity(busy ? 0.6 : 1)
+                        } else {
+                            Button(sent ? "Sign in" : "Email me a code") {
+                                Task { sent ? await verify() : await send() }
+                            }
+                            .buttonStyle(BigButtonStyle())
+                            .disabled(busy || (sent ? code.filter(\.isNumber).count < 6 : !email.contains("@")))
+                            .opacity(busy ? 0.6 : 1)
                         }
-                        .buttonStyle(BigButtonStyle())
-                        .disabled(busy || (sent ? code.filter(\.isNumber).count < 6 : !email.contains("@")))
-                        .opacity(busy ? 0.6 : 1)
+
+                        if !sent {
+                            Button(usePassword ? "Email me a code instead" : "Use a password instead") {
+                                usePassword.toggle()
+                                password = ""
+                                error = nil
+                                focus = usePassword ? .password : .email
+                            }
+                            .font(.footnote.weight(.semibold))
+                            .foregroundStyle(Brand.muted)
+                            .frame(minHeight: Tap.regular)
+                            .accessibilityIdentifier("use-password")
+                        }
 
                         if sent {
                             HStack {
@@ -182,6 +216,20 @@ struct SignInView: View {
         defer { busy = false }
         do {
             store.user = try await Supabase.shared.verifyEmailCode(email: email.trimmingCharacters(in: .whitespaces), code: code)
+            await onSignedIn()
+            dismiss()
+        } catch {
+            self.error = error.localizedDescription
+        }
+    }
+
+    private func passwordSignIn() async {
+        busy = true
+        error = nil
+        defer { busy = false }
+        do {
+            store.user = try await Supabase.shared.signInWithPassword(email: email.trimmingCharacters(in: .whitespaces), password: password)
+            password = ""
             await onSignedIn()
             dismiss()
         } catch {

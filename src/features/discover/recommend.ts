@@ -10,6 +10,7 @@
 import type { ExerciseStep, Runsheet } from '@/features/runsheet/model';
 import { runsheetMinutes } from '@/features/runsheet/model';
 import type { SessionResult } from '@/features/runsheet/progression';
+import { copiesOf, programDays, root } from './next-up';
 
 export interface Recommendation {
   runsheet: Runsheet;
@@ -64,21 +65,31 @@ export const recommend = (all: Runsheet[], results: SessionResult[], saved: stri
   // next session of any program in progress; programs with no session yet only ever offer day 1
   const programNext: Recommendation[] = [];
   const started = new Set<string>();
-  const programs = new Map<string, Runsheet[]>();
-  for (const r of all) if (r.program) (programs.get(r.program.name) ?? programs.set(r.program.name, []).get(r.program.name)!).push(r);
-  for (const [name, days] of programs) {
-    const sorted = [...days].sort((a, b) => (a.program?.order ?? 0) - (b.program?.order ?? 0));
-    const lastDone = results.find(x => sorted.some(d => id(d) === x.runsheetId));
-    if (!lastDone) continue;
+  // Your edited copy of a day stands in for the day, as on Up next: a program never offers the same
+  // day twice, nor the day you just did under its other id.
+  const copies = copiesOf(all);
+  const byRid = new Map<string, Runsheet>();
+  for (const r of all) if (!byRid.has(id(r))) byRid.set(id(r), r);
+  const programs = [...new Set(all.flatMap(r => (r.program ? [r.program.name] : [])))];
+  for (const name of programs) {
+    const sorted = programDays(all, name, copies);
+    // A session of the original or of any copy of a day is that day.
+    const day = (x: SessionResult) => {
+      const at = byRid.get(x.runsheetId);
+      const r = at ? root(at) : x.runsheetId;
+      return sorted.findIndex(d => root(d) === r);
+    };
+    const i = results.map(day).find(n => n >= 0);
+    if (i === undefined) continue;
     started.add(name);
-    const i = sorted.findIndex(d => id(d) === lastDone.runsheetId);
-    const next = sorted[(i + 1) % sorted.length];
-    programNext.push({ runsheet: next, reason: `Next in ${name}`, score: 100 });
+    programNext.push({ runsheet: sorted[(i + 1) % sorted.length], reason: `Next in ${name}`, score: 100 });
   }
 
   const scored: Recommendation[] = [];
   for (const r of all) {
     const rid = id(r);
+    // An original you have a copy of is offered as the copy, or not at all.
+    if (!r.copyOf && copies.has(rid)) continue;
     if (recent.has(rid) || programNext.some(p => id(p.runsheet) === rid)) continue;
     if (r.program && !started.has(r.program.name) && r.program.order !== 1) continue;
     const a = author(r);

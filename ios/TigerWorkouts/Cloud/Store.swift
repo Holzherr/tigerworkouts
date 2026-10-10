@@ -45,6 +45,9 @@ final class Store {
 
     var signedIn: Bool { user != nil }
 
+    /// Your coach, what they assigned and the notes between you (Store+Coaching.swift).
+    var coaching = CoachingState()
+
     /// The bundled catalogue, copied in once it has decoded. `Library` is a plain class that
     /// SwiftUI cannot observe, so reading it straight from a view drew an empty list at launch
     /// and never redrew it.
@@ -60,8 +63,9 @@ final class Store {
         return mine + catalogue.filter { !mineIds.contains($0.key) }
     }
 
+    /// A workout a coach assigned is found too: it is the coach's row, not in the catalogue or yours.
     func workout(id: String) -> Runsheet? {
-        allWorkouts.first { $0.key == id }
+        allWorkouts.first { $0.key == id } ?? coaching.workouts.first { $0.key == id }
     }
 
     /// How many times this account has run a given workout — the "done 5×" chip.
@@ -81,6 +85,7 @@ final class Store {
         await Task.detached(priority: .userInitiated) { Library.shared.load() }.value
         catalogue = Library.shared.workouts.map(\.runsheet)
         readCache()
+        readCoachingCache()
         #if DEBUG
         seedLogbookIfAsked()
         seedPaceIfAsked()
@@ -150,6 +155,8 @@ final class Store {
         } catch {
             syncError = error.localizedDescription
         }
+        // Its own failures stay quiet: until migration 0008 is live every call here fails.
+        await refreshCoaching()
     }
 
     /// An effort this phone did not have before a sync (entered on the web, or changed there) goes
@@ -184,6 +191,7 @@ final class Store {
         await Supabase.shared.signOut()
         user = nil
         writeCache()
+        setCoaching(CoachingState())
     }
 
     /// Deletes the account and its data on the server. `clearPhone` also forgets everything here;
@@ -192,6 +200,7 @@ final class Store {
     func deleteAccount(clearPhone: Bool) async throws -> Bool {
         let account = try await Supabase.shared.deleteAccount()
         user = nil
+        setCoaching(CoachingState())
         pending = []
         pendingWorkouts = []
         pendingWorkoutDeletes = []

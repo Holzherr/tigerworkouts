@@ -20,7 +20,9 @@ export interface SettingsSheetProps {
   email?: string;
   onChange: (p: { name?: string; avatar?: Avatar; units?: 'metric' | 'imperial' }) => void;
   onInvite: () => void;
-  onSignOut?: () => void;
+  /** Sign out. Resolves with a message when the sign-out was refused (a session not saved to the
+   * account yet); it shows in the sheet, which stays open. */
+  onSignOut?: () => void | Promise<string | undefined | void>;
   /** Delete the account and its data on the server. `clearDevice` also forgets what is on this
    * device; otherwise it stays here, as if signed out. Resolves with a message to show. */
   onDeleteAccount?: (clearDevice: boolean) => Promise<string>;
@@ -58,7 +60,8 @@ export const SettingsSheet = ({ open, onOpenChange, name, avatar, email, onChang
   const [kit, setKit] = useState(false);
   const [deleting, setDeleting] = useState<'ask' | 'busy' | null>(null);
   const [clearDevice, setClearDevice] = useState(false);
-  const [deleted, setDeleted] = useState<string | null>(null);
+  /** What the last sign-out or account deletion said, under the buttons: a toast would sit behind the sheet. */
+  const [notice, setNotice] = useState<string | null>(null);
   const onPhoto = (f: File) => {
     const img = new Image();
     img.onload = () => {
@@ -142,11 +145,15 @@ export const SettingsSheet = ({ open, onOpenChange, name, avatar, email, onChang
           <Share2 /> Invite someone
         </Button>
         {onSignOut && (
-          <Button variant="quiet" block onClick={onSignOut}>
+          <Button variant="quiet" block onClick={async () => setNotice((await onSignOut()) || null)}>
             Sign out
           </Button>
         )}
-        {deleted && <p className="text-center text-[13px] text-muted">{deleted}</p>}
+        {notice && (
+          <p role="status" className="text-center text-[13px] text-muted">
+            {notice}
+          </p>
+        )}
         {onDeleteAccount && !deleting && (
           <Button variant="quiet" block className="text-danger" onClick={() => setDeleting('ask')}>
             Delete account
@@ -161,7 +168,7 @@ export const SettingsSheet = ({ open, onOpenChange, name, avatar, email, onChang
               Also clear this device (otherwise your history stays here, not synced)
             </label>
             <div className="flex gap-2">
-              <Button variant="danger" block disabled={deleting === 'busy'} onClick={async () => { setDeleting('busy'); const msg = await onDeleteAccount(clearDevice); setDeleting(null); setDeleted(msg); }}>
+              <Button variant="danger" block disabled={deleting === 'busy'} onClick={async () => { setDeleting('busy'); const msg = await onDeleteAccount(clearDevice); setDeleting(null); setNotice(msg); }}>
                 {deleting === 'busy' ? 'Deleting…' : 'Delete account'}
               </Button>
               <Button variant="ghost" disabled={deleting === 'busy'} onClick={() => setDeleting(null)}>

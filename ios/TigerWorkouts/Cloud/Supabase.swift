@@ -114,7 +114,8 @@ actor Supabase {
         URL(string: SupabaseConfig.url.absoluteString + "/" + path)!
     }
 
-    private func request(_ path: String, method: String = "GET", body: Any? = nil, headers: [String: String] = [:], authed: Bool = true) async throws -> (Data, HTTPURLResponse) {
+    /// Internal rather than private so the coaching calls (Supabase+Coaching.swift) go through it.
+    func request(_ path: String, method: String = "GET", body: Any? = nil, headers: [String: String] = [:], authed: Bool = true) async throws -> (Data, HTTPURLResponse) {
         var req = URLRequest(url: Self.endpoint(path))
         req.httpMethod = method
         req.setValue(SupabaseConfig.anonKey, forHTTPHeaderField: "apikey")
@@ -185,6 +186,20 @@ actor Supabase {
         session = try JSONDecoder().decode(AuthSession.self, from: data)
         persist()
         return session!.user
+    }
+
+    /// Email and password, for an account that has one (App Review's demo login). Email codes stay
+    /// the default; this stores the session the same way.
+    func signInWithPassword(email: String, password: String) async throws -> AuthUser {
+        let grant = Self.passwordGrant(email: email, password: password)
+        let (data, _) = try await request(grant.path, method: "POST", body: grant.body, authed: false)
+        session = try JSONDecoder().decode(AuthSession.self, from: data)
+        persist()
+        return session!.user
+    }
+
+    nonisolated static func passwordGrant(email: String, password: String) -> (path: String, body: [String: String]) {
+        ("auth/v1/token?grant_type=password", ["email": email, "password": password])
     }
 
     // MARK: - Apple, id token
@@ -325,7 +340,12 @@ actor Supabase {
     func workouts() async throws -> [Runsheet] {
         guard let uid = session?.user.id else { return [] }
         let (data, _) = try await request("rest/v1/workouts?select=id,data,creator,title,public&owner=eq.\(uid)")
-        guard let rows = try JSONSerialization.jsonObject(with: data) as? [[String: Any]] else { return [] }
+        return Self.decodeWorkouts(data)
+    }
+
+    /// `workouts` rows into runsheets; a row whose `data` is not a runsheet is skipped.
+    static func decodeWorkouts(_ data: Data) -> [Runsheet] {
+        guard let rows = try? JSONSerialization.jsonObject(with: data) as? [[String: Any]] else { return [] }
         let decoder = Library.shared.decoder
         return rows.compactMap { row in
             guard let payload = row["data"] as? [String: Any], payload["items"] != nil,

@@ -71,6 +71,9 @@ struct WorkoutDetailView: View {
                         .foregroundStyle(Brand.body)
                         .lineSpacing(3)
                 }
+                if let assignment = store.assignment(forWorkout: runsheet.key) {
+                    CoachNotesCard(assignment: assignment)
+                }
                 if !runnable {
                     Text("Add an exercise to get going. Start shows up once there is something to run.")
                         .font(.footnote)

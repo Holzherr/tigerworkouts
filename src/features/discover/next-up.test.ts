@@ -8,6 +8,14 @@ const did = (runsheetId: string, day: number, durationSec?: number): SessionResu
 
 describe('nextUp', () => {
   const all = [w('a', { name: 'P', day: 'A', order: 1 }), w('b', { name: 'P', day: 'B', order: 2 }), w('fran')];
+  it('two copies of one day are one day, the later copy standing in, as on iOS', () => {
+    const first = { ...w('u-a1', { name: 'P', day: 'A', order: 1 }), copyOf: 'a' };
+    const second = { ...w('u-a2', { name: 'P', day: 'A', order: 1 }), copyOf: 'a' };
+    const list = [first, second, ...all];
+    expect(nextUp(list, [did('u-a1', 20)])?.runsheet.id).toBe('b');
+    expect(nextUp(list, [did('a', 20)])?.runsheet.id).toBe('b');
+    expect(nextUp(list, [did('b', 20)])?.runsheet.id).toBe('u-a2');
+  });
   it('is nothing without history', () => {
     expect(nextUp(all, [])).toBeUndefined();
   });

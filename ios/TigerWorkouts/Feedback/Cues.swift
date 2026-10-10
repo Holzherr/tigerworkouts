@@ -1,7 +1,7 @@
 import AVFoundation
 import os
 
-private let audioLog = Logger(subsystem: "com.holzherr.tigerworkouts", category: "audio")
+private let audioLog = Logger(subsystem: "dev.brambruesch.tigerworkouts", category: "audio")
 
 /// Tones, and the reason the timer survives a locked screen.
 ///

@@ -29,12 +29,12 @@ type Story = StoryObj<typeof meta>;
 export const RecordsAndDeltas: Story = {};
 export const FirstTime: Story = { args: { celebration: celebrate(history[0], [history[0]]) } };
 
-export const Effort: Story = {
-  render: () => {
-    const [v, setV] = useState<number | undefined>(7);
-    return <EffortRow value={v} onChange={setV} />;
-  },
+const EffortLive = () => {
+  const [v, setV] = useState<number | undefined>(7);
+  return <EffortRow value={v} onChange={setV} />;
 };
+
+export const Effort: Story = { render: () => <EffortLive /> };
 
 export const ShareCard: Story = {
   render: () => <ShareCardSheet open onOpenChange={() => {}} data={shareCardData(today, celebrate(today, [...history, today]), 'time', name)} />,

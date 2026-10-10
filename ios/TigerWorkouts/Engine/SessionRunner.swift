@@ -42,6 +42,9 @@ final class SessionRunner {
     /// Seconds left on the block's cap at the last tick, for the one-minute and ten-second warnings.
     private var lastCapLeft: Double?
     private var appObservers: [NSObjectProtocol] = []
+    /// What the clock's cues are felt through, the ones that reach a locked phone; a test swaps in
+    /// one with a fake app state and vibrator. A button's tap is always on screen: Haptics.shared.
+    @ObservationIgnored var haptics = Haptics.shared
     /// Every session before this one: what a set just ticked is measured against for a record.
     private let history: [SessionResult]
     /// Sets done this session that beat a record when they were ticked; a medal shows on each.
@@ -217,7 +220,12 @@ final class SessionRunner {
     }
 
     private func tick() {
-        now = Date().timeIntervalSince1970 * 1000
+        tick(at: Date().timeIntervalSince1970 * 1000)
+    }
+
+    /// One beat of the clock at `now`: the timer's tick, and a test's way to let time run out.
+    func tick(at now: Double) {
+        self.now = now
         let before = state
         state = Runner.tick(state, now: now)
         if state != before {
@@ -395,7 +403,7 @@ final class SessionRunner {
         let capMark = Self.capWarning(was: lastCapLeft, now: capNow)
         lastCapLeft = capNow
         if let cue {
-            Haptics.shared.play(cue)
+            haptics.play(cue)
             Cues.shared.play(Self.tone(cue))
             return
         }
@@ -416,7 +424,7 @@ final class SessionRunner {
         let second = Int(left.rounded(.up))
         if second != lastTick, (1...3).contains(second) {
             lastTick = second
-            Haptics.shared.play(.tick)
+            haptics.play(.tick)
             Cues.shared.play(.tick)
         }
     }
@@ -640,6 +648,8 @@ final class SessionRunner {
         var amount: Double? = nil
         /// Seconds the set ran, once done; nil before and for work whose time says nothing.
         var seconds: Double? = nil
+        /// Treadmill incline, %: what the set runs at, or ran at once done; nil without one.
+        var incline: Double? = nil
         var done: Bool
         /// The set being done now, or the next one while the rest between sets runs.
         var current: Bool
@@ -669,6 +679,7 @@ final class SessionRunner {
                 reps: a?.reps ?? sl.exercise?.forValue ?? 0,
                 amount: Runner.amountAt(state, sl),
                 seconds: done ? a?.seconds : nil,
+                incline: Runner.effectiveIncline(state, idx),
                 done: done,
                 current: idx == on,
                 tickable: done || idx < state.i || running
@@ -699,6 +710,15 @@ final class SessionRunner {
         guard let row = setRows.first(where: { $0.slotId == slotId }), let ex = straightSetStep else { return }
         let step = ex.exercise.step == 0 ? 1 : ex.exercise.step
         apply { Runner.adjustAt($0, now: $1, slotId: slotId, target: max(0, (row.load ?? 0) + direction * step)) }
+        Haptics.shared.play(.tick)
+    }
+
+    /// Incline on one row of the set table, 0.5 % a step. It lands on that set, not on whichever
+    /// comes next as `setStepIncline` would, so a row tapped open changes itself; later sets carry it.
+    func nudgeSetIncline(_ slotId: String, _ direction: Double) {
+        guard let row = setRows.first(where: { $0.slotId == slotId }) else { return }
+        let next = max(0, (row.incline ?? 0) + direction * 0.5)
+        apply { s, _ in var s = s; s.actuals[slotId, default: Actual()].incline = next; return s }
         Haptics.shared.play(.tick)
     }
 
