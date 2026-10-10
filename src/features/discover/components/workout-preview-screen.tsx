@@ -110,7 +110,8 @@ export const WorkoutPreviewScreen = ({ runsheet: r, history = [], lastTime, onBa
   const [open, setOpen] = useState<ExerciseStep | null>(null);
   const kind = r.source?.kind ?? 'user';
   const score = scoreType(r);
-  const scored = history.filter(h => h.score !== undefined);
+  // A for-time that was stopped or capped has no finish time to be best at.
+  const scored = history.filter(h => h.score !== undefined && (score !== 'time' || h.completed !== false));
   const best = scored.length ? (score === 'time' ? scored.reduce((a, b) => (b.score! < a.score! ? b : a)) : scored.reduce((a, b) => (b.score! > a.score! ? b : a))) : undefined;
   const last = history[0];
   return (

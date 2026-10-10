@@ -175,8 +175,9 @@ describe('Strong import', () => {
     expect(s.exercises[1].sets).toEqual([{ reps: 10 }]);
 
     const plan = planImport(strong, [], FULL_LIBRARY, OWNER);
-    expect(plan.sessions[0].steps.map(x => x.exerciseKey)).toEqual(['bb_bench', 'bw_pullup', 'u_landmine_press_1a2b3c4d']);
-    expect(plan.newExercises[0]).toMatchObject({ key: 'u_landmine_press_1a2b3c4d', unit: 'kg', group: 'body' });
+    // Landmine press is a catalogue staple, so it matches rather than becoming a new exercise.
+    expect(plan.sessions[0].steps.map(x => x.exerciseKey)).toEqual(['bb_bench', 'bw_pullup', 'bb_landmine_press']);
+    expect(plan.newExercises).toEqual([]);
   });
 
   it('reads a distance in the unit the file gives, km when it gives none', () => {

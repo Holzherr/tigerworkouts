@@ -117,3 +117,35 @@ Check the other sources' `new-exercises.json` files first and reuse a key if one
 Each source folder also gets a `LEARNINGS.md`: what the source's workouts look like, what did not
 fit the model and how you bent it, what fields or step types the app should add, and anything odd
 about the site (structure, rate limits, licences). Keep it to bullets.
+
+## Exercise details
+
+`imports/exercise-details.json` adds programming data to every catalogue key (library.ts plus every
+`new-exercises.json`), for anyone building a programme: a PT picks an exercise and gets defaults,
+cues and easier/harder swaps. It sits at the top of `imports/`, outside the source folders, so
+`validate-imports.mjs` and `export-ios.mjs` do not read it as a workout. `catalogue/new-exercises.json`
+holds exercises added for programming rather than for an imported source.
+
+Validate with `node tools/validate-exercises.mjs` (schema, one entry per catalogue key, unique keys,
+every link resolves). Vocabularies live in that script.
+
+```jsonc
+{
+  "key": "bb_back_squat",
+  "pattern": "squat",                          // squat | hinge | lunge | push_horizontal | … | stretch | combo
+  "equipment": ["barbell", "plates", "rack"],  // ["none"] for bodyweight
+  "primary": ["quads", "glutes"],              // fine muscles; BODY_MAP in the validator maps them to the body map
+  "secondary": ["adductors", "hamstrings", "lower_back", "abs"],
+  "difficulty": "Medium",                      // Easy | Medium | Hard, same words as a runsheet's level
+  "cues": ["…", "…", "…"],                     // 3-5, setup → movement → finish
+  "mistakes": ["…"],                           // 1-3
+  "regressions": ["db_goblet_squat", "bw_squat"],
+  "progressions": ["bb_front_squat"],
+  "defaults": { "sets": 4, "forMode": "reps", "min": 5, "max": 8, "restSec": 150 },
+  "perSide": false,
+  "sameAs": "bw_deadbug"                       // only on a duplicate key; the two keys stay (never rename a key)
+}
+```
+
+`defaults` maps onto a block: `repeat` = sets, a step with `forMode`, `forValue` = min, `forMax` = max,
+and `restBetweenSec` = restSec.

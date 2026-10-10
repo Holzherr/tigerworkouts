@@ -3,21 +3,28 @@ import Foundation
 struct LastUsed: Hashable, Sendable {
     var target: Double?
     var incline: Double?
+    /// On a step entry: the exercise that step was when it was done. An edit can put another
+    /// exercise under an old step id, and that one's load is not this one's.
+    var exerciseKey: String?
 }
 
 /// Ported from `src/features/runsheet/last-used.ts`.
 enum Settings {
     /// What you actually used, most recent first: keyed by step id for the exact step in this
-    /// workout, and by exercise key so the same machine carries across workouts. Sessions are read
-    /// newest first and the first hit wins, so an older session never overwrites a newer one.
-    static func lastUsed(_ results: [SessionResult]) -> [String: LastUsed] {
+    /// workout (`step:<id>`, from its own sessions only — step ids are per workout, "s1" is in
+    /// hundreds of them — or the original's for an edited copy), and by exercise key so the same
+    /// machine carries across workouts (`ex:<key>`, from every session). Sessions are read newest
+    /// first and the first hit wins, so an older session never overwrites a newer one. Without a
+    /// workout there are no step entries.
+    static func lastUsed(_ results: [SessionResult], workout: Runsheet? = nil) -> [String: LastUsed] {
         var out: [String: LastUsed] = [:]
         for r in results.sorted(by: { $0.startedAt > $1.startedAt }) {
+            let own = workout?.owns(r) ?? false
             for s in r.steps {
                 // A drop set at the end is not where the next session starts.
                 let v = LastUsed(target: ProgressionRules.workingLoad(s), incline: s.incline)
                 guard v.target != nil || v.incline != nil else { continue }
-                if out["step:\(s.stepId)"] == nil { out["step:\(s.stepId)"] = v }
+                if own, out["step:\(s.stepId)"] == nil { out["step:\(s.stepId)"] = LastUsed(target: v.target, incline: v.incline, exerciseKey: s.exerciseKey) }
                 if out["ex:\(s.exerciseKey)"] == nil { out["ex:\(s.exerciseKey)"] = v }
             }
         }
@@ -29,11 +36,12 @@ enum Settings {
     /// written with — the thing you would otherwise dial in again at the start of every block.
     static func withLastUsed(_ r: Runsheet, results: [SessionResult]) -> Runsheet {
         guard !results.isEmpty else { return r }
-        let m = lastUsed(results)
+        let m = lastUsed(results, workout: r)
         guard !m.isEmpty else { return r }
 
         func seed(_ s: ExerciseStep) -> ExerciseStep {
-            guard let hit = m["step:\(s.id)"] ?? m["ex:\(s.exercise.key)"] else { return s }
+            let step = m["step:\(s.id)"].flatMap { $0.exerciseKey == s.exercise.key ? $0 : nil }
+            guard let hit = step ?? m["ex:\(s.exercise.key)"] else { return s }
             var s = s
             // A relative load (% of a training max) is computed at run time; leave it alone.
             if s.target != nil, let t = hit.target { s.target = t }
@@ -71,18 +79,27 @@ enum LastTime {
         return best
     }
 
-    /// What this step was done at last time — the same step if it has history, else the same
-    /// exercise in any workout. Newest session first.
-    static func set(_ results: [SessionResult], for step: ExerciseStep) -> SetResult? {
-        let newest = results.sorted { $0.startedAt > $1.startedAt }
-        func find(_ match: (StepResult) -> Bool) -> SetResult? {
-            for r in newest {
-                if let hit = r.steps.first(where: { match($0) && topSet($0) != nil }) { return topSet(hit) }
-            }
-            return nil
+    /// The step of this workout first (its own sessions, or the original's for an edited copy),
+    /// then the same exercise in any workout. Without a workout, only the exercise.
+    private static func stepThenExercise(_ step: ExerciseStep, _ workout: Runsheet?) -> [(SessionResult, StepResult) -> Bool] {
+        let sameExercise: (SessionResult, StepResult) -> Bool = { _, x in x.exerciseKey == step.exercise.key }
+        guard let workout else { return [sameExercise] }
+        let sameStep: (SessionResult, StepResult) -> Bool = { r, x in
+            workout.owns(r) && x.stepId == step.id && x.exerciseKey == step.exercise.key
         }
-        return find { $0.stepId == step.id && $0.exerciseKey == step.exercise.key }
-            ?? find { $0.exerciseKey == step.exercise.key }
+        return [sameStep, sameExercise]
+    }
+
+    /// What this step was done at last time — the same step of this workout if it has history,
+    /// else the same exercise in any workout. Newest session first.
+    static func set(_ results: [SessionResult], for step: ExerciseStep, in workout: Runsheet? = nil) -> SetResult? {
+        let newest = results.sorted { $0.startedAt > $1.startedAt }
+        for match in stepThenExercise(step, workout) {
+            for r in newest {
+                if let hit = r.steps.first(where: { match(r, $0) && topSet($0) != nil }) { return topSet(hit) }
+            }
+        }
+        return nil
     }
 
     static func label(_ set: SetResult?, for step: ExerciseStep) -> String? {
@@ -95,27 +112,25 @@ enum LastTime {
         }
     }
 
-    static func label(_ results: [SessionResult], for step: ExerciseStep) -> String? {
-        label(set(results, for: step), for: step)
+    static func label(_ results: [SessionResult], for step: ExerciseStep, in workout: Runsheet? = nil) -> String? {
+        label(set(results, for: step, in: workout), for: step)
     }
 
-    /// Every set of this step last time, in order — the same step if it has history, else the same
-    /// exercise. For the set grid, where set 2 is shown against last time's set 2. Ported from
-    /// `lastSets` in `last-used.ts`.
-    static func sets(_ results: [SessionResult], for step: ExerciseStep) -> [SetResult]? {
+    /// Every set of this step last time, in order — the same step of this workout if it has
+    /// history, else the same exercise. For the set grid, where set 2 is shown against last time's
+    /// set 2. Ported from `lastSets` in `last-used.ts`.
+    static func sets(_ results: [SessionResult], for step: ExerciseStep, in workout: Runsheet? = nil) -> [SetResult]? {
         let newest = results.sorted { $0.startedAt > $1.startedAt }
-        func find(_ match: (StepResult) -> Bool) -> [SetResult]? {
+        for match in stepThenExercise(step, workout) {
             for r in newest {
                 // A legacy row that logged metres, seconds or calories as the load reads as that
                 // measure, so "Use last time" never writes it onto the set as a load (last-used.ts).
-                if let hit = r.steps.first(where: { match($0) && $0.sets?.isEmpty == false }) {
+                if let hit = r.steps.first(where: { match(r, $0) && $0.sets?.isEmpty == false }) {
                     return Logbook.measured(hit.sets ?? [], unit: step.exercise.unit)
                 }
             }
-            return nil
         }
-        return find { $0.stepId == step.id && $0.exerciseKey == step.exercise.key }
-            ?? find { $0.exerciseKey == step.exercise.key }
+        return nil
     }
 
     /// "last 57.5 × 8" under a set row.

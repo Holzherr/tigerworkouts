@@ -24,9 +24,17 @@ enum RestNotice {
         }
     }
 
-    /// When the running rest ends, if there is one: the instant to notify at, and what comes next.
+    /// A rest shorter than this ends with the tones alone: a banner for every 20 s rest of a circuit
+    /// was one a minute on the Lock Screen and the watch.
+    nonisolated static let shortest: Double = 30
+
+    /// When the running rest ends, if it is worth a notice: the instant to notify at, and what comes
+    /// next. Not for a short rest, an EMOM's wait (the minute's clock, not a rest), or a rest that
+    /// runs straight into another one.
     nonisolated static func restEnd(_ state: RunState) -> (at: Double, next: String?)? {
-        guard state.phase == .running, let slot = Runner.current(state), slot.kind == .rest, let endsAt = state.endsAt else { return nil }
+        guard state.phase == .running, let slot = Runner.current(state), slot.kind == .rest, !slot.untilBoundary,
+              (slot.seconds ?? 0) >= shortest, let endsAt = state.endsAt else { return nil }
+        if Runner.next(state)?.kind == .rest { return nil }
         let next = state.slots.dropFirst(state.i + 1).first { $0.kind == .work }?.exercise?.exercise.name
         return (endsAt, next)
     }

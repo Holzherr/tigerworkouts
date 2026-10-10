@@ -43,7 +43,8 @@ export const celebrate = (result: SessionResult, all: SessionResult[], today = n
   const lastVolume = last && totalVolume(last, unitOf);
   const diff = (a?: number, b?: number) => (a !== undefined && b !== undefined ? a - b : undefined);
   const deltas: Celebration['deltas'] = {};
-  const score = diff(result.score, last?.score);
+  // A capped for-time scored the cap, not a finish time: nothing to set against a finish.
+  const score = result.capped || last?.capped ? undefined : diff(result.score, last?.score);
   const durationSec = diff(result.durationSec, last?.durationSec);
   const vol = diff(volume, lastVolume);
   if (score !== undefined) deltas.score = score;
@@ -79,6 +80,7 @@ export const deltaLines = (c: Celebration, type: ScoreType): DeltaLine[] => {
   if (score !== undefined && type !== 'none') {
     if (score === 0) out.push({ label: 'Score', text: 'Same as last time' });
     else if (type === 'time') out.push({ label: 'Score', text: `${fmtClock(Math.abs(score))} ${score < 0 ? 'faster' : 'slower'}`, better: score < 0 });
+    else if (type === 'rounds' && c.last?.score !== undefined) out.push(roundsDelta(c.last.score + score, c.last.score));
     else out.push({ label: 'Score', text: `${score > 0 ? '+' : '−'}${fmtScore(type, Math.round(Math.abs(score) * 1000) / 1000)}`, better: score > 0 });
   }
   if (volume !== undefined) {
@@ -89,6 +91,20 @@ export const deltaLines = (c: Celebration, type: ScoreType): DeltaLine[] => {
     out.push({ label: 'Time', text: `${a < 60 ? `${Math.round(a)}s` : `${Math.round(a / 60)} min`} ${durationSec > 0 ? 'longer' : 'shorter'}` });
   }
   return out;
+};
+
+/** An AMRAP score is rounds + reps / 1000, so the two are set against each other apart: 7 + 3 on
+ * 6 + 15 is "+1 round − 12 reps", never a subtraction of the encoded numbers. A partial round is
+ * always fewer reps than a round, so more rounds is better whatever the reps. */
+const roundsDelta = (now: number, was: number): DeltaLine => {
+  const split = (x: number) => [Math.floor(x + 1e-9), Math.round((x - Math.floor(x + 1e-9)) * 1000)];
+  const [r1, p1] = split(now);
+  const [r0, p0] = split(was);
+  const dr = r1 - r0;
+  const dp = p1 - p0;
+  const part = (n: number, one: string, many: string) => `${Math.abs(n)} ${Math.abs(n) === 1 ? one : many}`;
+  const parts = [dr ? `${dr > 0 ? '+' : '−'}${part(dr, 'round', 'rounds')}` : '', dp ? `${dr ? (dp > 0 ? '+ ' : '− ') : dp > 0 ? '+' : '−'}${part(dp, 'rep', 'reps')}` : ''].filter(Boolean);
+  return { label: 'Score', text: parts.length ? parts.join(' ') : 'Same as last time', ...(parts.length ? { better: dr > 0 || (dr === 0 && dp > 0) } : {}) };
 };
 
 /** "Workout 42", "Workout 1". */
