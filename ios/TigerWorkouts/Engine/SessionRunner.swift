@@ -79,7 +79,7 @@ final class SessionRunner {
         self.history = history
         let fresh = Runner.start(runsheet, now: Date().timeIntervalSince1970 * 1000)
         self.state = history.isEmpty ? fresh : Runner.prefillReps(fresh) { step, round in
-            LastTime.sets(history, for: step).flatMap { $0.indices.contains(round) ? $0[round].reps : nil }
+            LastTime.sets(history, for: step, in: runsheet).flatMap { $0.indices.contains(round) ? $0[round].reps : nil }
         }
         self.rival = Pace.lastTimed(history, runsheetIds: runsheet.lineage)
         self.today = Targets.today(runsheet, results: history, intent: Intent.current(), kit: Equipment.current())

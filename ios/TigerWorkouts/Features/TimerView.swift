@@ -362,14 +362,15 @@ struct TimerView: View {
 
     /// What the Next block card lets you set before the block starts: the step's own dial (speed,
     /// load) and, beside it, the treadmill's incline.
-    nonisolated static func blockSettings(_ step: ExerciseStep, target: Double?, incline: Double?, results: [SessionResult]) -> [BlockSetting] {
+    nonisolated static func blockSettings(_ step: ExerciseStep, target: Double?, incline: Double?, results: [SessionResult], in workout: Runsheet? = nil) -> [BlockSetting] {
         var out: [BlockSetting] = []
         if step.hasSetting, Measure.of(step.exercise.unit) == nil {
-            out.append(BlockSetting(label: step.settingLabel, unit: step.shortUnit, value: target, last: LastTime.set(results, for: step)?.load))
+            out.append(BlockSetting(label: step.settingLabel, unit: step.shortUnit, value: target, last: LastTime.set(results, for: step, in: workout)?.load))
         }
         if inclineLabel(incline, for: step) != nil {
-            let used = Settings.lastUsed(results)
-            let last = used["step:\(step.id)"]?.incline ?? used["ex:\(step.exercise.key)"]?.incline
+            let used = Settings.lastUsed(results, workout: workout)
+            let own = used["step:\(step.id)"].flatMap { $0.exerciseKey == step.exercise.key ? $0 : nil }
+            let last = own?.incline ?? used["ex:\(step.exercise.key)"]?.incline
             out.append(BlockSetting(label: "Incline", unit: "%", value: incline, last: last))
         }
         return out
@@ -429,7 +430,7 @@ struct TimerView: View {
     private func exerciseCard(_ ex: ExerciseStep, eyebrow: String?, adjustable: Bool, demo: CGFloat = 104) -> some View {
         // Parked before a block: every dial of the next machine, each with last time's setting.
         let parked = adjustable && runner.state.phase == .ready && runner.slot?.exercise?.id == ex.id
-        let settings = parked ? TimerView.blockSettings(ex, target: runner.target, incline: runner.incline, results: store.results) : []
+        let settings = parked ? TimerView.blockSettings(ex, target: runner.target, incline: runner.incline, results: store.results, in: runner.runsheet) : []
         return VStack(alignment: .leading, spacing: 14) {
             Button { editing = ex } label: {
                 HStack(alignment: .top, spacing: 14) {
@@ -459,7 +460,7 @@ struct TimerView: View {
             .buttonStyle(.plain)
 
             // Parked, a load alone is already under its dial.
-            if let set = LastTime.set(store.results, for: ex), let last = LastTime.label(set, for: ex), settings.isEmpty || set.reps != nil {
+            if let set = LastTime.set(store.results, for: ex, in: runner.runsheet), let last = LastTime.label(set, for: ex), settings.isEmpty || set.reps != nil {
                 let text = last.prefix(1).uppercased() + last.dropFirst()
                 // On the running set, a tap puts last time's weight and reps in.
                 if adjustable, let slot = runner.slot, slot.exercise?.id == ex.id, runner.state.phase == .running || runner.state.phase == .paused {
@@ -586,7 +587,7 @@ struct TimerView: View {
     /// tap on a set already logged.
     private func setGrid(_ ex: ExerciseStep) -> some View {
         let rows = runner.setRows
-        let last = LastTime.sets(store.results, for: ex) ?? []
+        let last = LastTime.sets(store.results, for: ex, in: runner.runsheet) ?? []
         let incline = Self.setColumns(ex, inclines: rows.map(\.incline)).contains("INCL")
         return VStack(alignment: .leading, spacing: 10) {
             Button { editing = ex } label: {
@@ -939,7 +940,7 @@ struct TimerView: View {
     /// The same editor as the workout screen. What is done or running is greyed and stays put;
     /// everything still to come can be changed or dragged — a block dragged up runs next.
     private var overview: some View {
-        let used = Settings.lastUsed(store.results)
+        let used = Settings.lastUsed(store.results, workout: runner.runsheet)
         return NavigationStack {
             RunsheetEditor(
                 runsheet: runner.runsheet,
@@ -951,7 +952,7 @@ struct TimerView: View {
                         set: { if let v = $0 { runner.setStepIncline(step.id, v) } }
                     )
                 },
-                lastIncline: { used["step:\($0.id)"]?.incline ?? used["ex:\($0.exercise.key)"]?.incline },
+                lastIncline: { step in used["step:\(step.id)"].flatMap { $0.exerciseKey == step.exercise.key ? $0.incline : nil } ?? used["ex:\(step.exercise.key)"]?.incline },
                 summary: planned,
                 onExercise: { e in
                     showOverview = false
