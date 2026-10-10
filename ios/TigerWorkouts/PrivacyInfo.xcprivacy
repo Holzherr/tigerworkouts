@@ -3,7 +3,7 @@
 <!--
   App Store Connect rejects an upload without this file (since 1 May 2024) when the app calls a
   required-reason API. Ours: the modification date of the crash-safe session file
-  (SessionRunner.readSaved) and UserDefaults (the Me switches, @AppStorage). Collected data is what
+  (SessionRunner.readSaved) and UserDefaults (the Me switches, @AppStorage, and the App Group suite shared with the widget). Collected data is what
   syncs to our own Supabase when signed in; nothing is used for tracking.
 -->
 <plist version="1.0">
@@ -30,6 +30,8 @@
       <array>
         <!-- Read and written by this app only. -->
         <string>CA92.1</string>
+        <!-- The App Group suite the Up next widget reads (UpNextShare). -->
+        <string>1C8F.1</string>
       </array>
     </dict>
   </array>

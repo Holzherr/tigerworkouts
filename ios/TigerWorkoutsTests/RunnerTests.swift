@@ -136,7 +136,7 @@ struct RunTests {
         var s = Runner.tick(Runner.start(Fixtures.interval(), now: 0), now: 5_000)
         s = Runner.drop(s, now: 6_000, stepId: "pr")
         #expect(!s.slots.contains { $0.step.id == "pr" })
-        #expect(s.slots.count == 6)
+        #expect(s.slots.count == 5) // the last round's closing rest is not run
     }
 
     @Test("amrap stops at the cap and scores rounds + reps")
@@ -180,6 +180,8 @@ struct RunTests {
         #expect(s.phase == .ready)
         #expect(s.i == 1)
         s = Runner.startBlock(s, now: 40_000)
+        #expect(s.phase == .lead) // a timed block gets its Get ready
+        s = Runner.tick(s, now: 45_000)
         #expect(s.phase == .running)
     }
 
@@ -408,9 +410,9 @@ struct SessionSafetyTests {
         s = Runner.resume(s, now: 110_000)
         s = Runner.tick(s, now: 135_000)
         #expect(s.phase == .ready)
-        s = Runner.startBlock(s, now: 140_000)
-        #expect(Runner.blockElapsed(s, now: 150_000) == 10)
-        s = Runner.tick(s, now: 140_000 + 61_000)
+        s = Runner.tick(Runner.startBlock(s, now: 140_000), now: 145_000) // Get ready, then the block
+        #expect(Runner.blockElapsed(s, now: 155_000) == 10)
+        s = Runner.tick(s, now: 145_000 + 61_000)
         #expect(s.phase == .done)
     }
 

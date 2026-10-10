@@ -8,7 +8,9 @@ enum Rounds {
     /// tick. Round 1 of a split kept before the block's start was has no time.
     static func times(_ sp: RoundSplit) -> [Double?] {
         sp.at.indices.map { i in
-            let from = i == 0 ? sp.from : sp.at[i - 1]
+            // From when the round's work began, so the rest before it is not in it; older splits
+            // fall back to the block's start or the round before.
+            let from = sp.starts.flatMap { $0.indices.contains(i) ? $0[i] : nil } ?? (i == 0 ? sp.from : sp.at[i - 1])
             return from.map { max(0, (sp.at[i] - $0).rounded()) }
         }
     }

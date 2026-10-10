@@ -1,6 +1,9 @@
 import { createClient, type Session, type User } from '@supabase/supabase-js';
 import { useSyncExternalStore } from 'react';
 import { SB_KEY, SB_URL } from '@/app/config';
+import { clearDevice, getState, setState } from '@/app/store';
+import { rebase } from './rebase';
+import { clearSnap, dirtyCount, inTurn, pullPush } from './sync';
 
 export const sb = createClient(SB_URL, SB_KEY, { auth: { persistSession: true, detectSessionInUrl: true, flowType: 'pkce' } });
 
@@ -34,9 +37,25 @@ export const signInGoogle = async () => {
   const { error } = await sb.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: location.origin + location.pathname } });
   if (error) throw error;
 };
-export const signOut = async () => {
-  await sb.auth.signOut();
-};
+/**
+ * Pushes what this device holds, then signs out and clears the device for the next account,
+ * including what the server was last seen holding (`tiger:synced`). When the push fails, or a
+ * session is still unsaved to the account afterwards, nothing changes and the reason comes back
+ * as a message: clearing then would delete the only copy. Holds the sync turn throughout: a sync
+ * already out finishes and lands in the store first, and none can start until the device is clear.
+ */
+export const signOut = (): Promise<string | undefined> =>
+  inTurn(async () => {
+    const local = getState();
+    const out = await pullPush(local);
+    // Applied as use-sync does: the sync has already noted what it pulled as seen, so the store must hold it too.
+    if (out.changed || out.error !== getState().syncError) setState({ ...rebase(getState(), local, out.patch), lastSync: new Date().toISOString(), syncError: out.error });
+    if (out.error || dirtyCount(getState())) return 'Some sessions are not saved to your account yet; try again when online.';
+    await sb.auth.signOut();
+    clearDevice();
+    clearSnap();
+    return undefined;
+  });
 
 /** Which external providers the project has enabled (Google shows only when configured). */
 export const providers = async (): Promise<Record<string, boolean>> => {

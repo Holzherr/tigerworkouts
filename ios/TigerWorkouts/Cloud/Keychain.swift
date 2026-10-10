@@ -4,7 +4,7 @@ import Security
 /// The refresh token is the one long-lived secret the app holds, so it lives in the keychain
 /// rather than UserDefaults. Everything else is derived and can be thrown away.
 enum Keychain {
-    private static let service = "com.holzherr.tigerworkouts"
+    private static let service = "dev.brambruesch.tigerworkouts"
 
     static func set(_ value: String?, for account: String) {
         let query: [String: Any] = [

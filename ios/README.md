@@ -16,8 +16,8 @@ What you get that the PWA cannot do:
   each have their own haptic shape, so you know what happened without looking. The finish is a long
   roll into three taps.
 - **Tones as well.** Generated in memory, no audio files, ducked over your music rather than
-  stopping it. Tones are what still reach you once the screen has locked — haptics are a
-  foreground-only API on iOS and no app can work around that.
+  stopping it. Core Haptics is foreground-only, so with the screen locked a change is a tone plus
+  the system vibration instead: two buzzes for work, one for rest, three for the finish, no ticks.
 - **The timer survives a locked screen.** `UIBackgroundModes: audio` plus a near-silent keep-alive
   loop, held open only for the length of a session.
 - **The session on the Lock Screen.** A Live Activity with the exercise, the countdown and the
@@ -28,7 +28,7 @@ What you get that the PWA cannot do:
   that run in the app's process and reach the running session through `SessionControls.active`.
 - **Up next on the home screen.** A small and a medium widget with the same pick as the Up next
   card and this week's count; a tap opens that workout's page. The app writes what it shows into
-  the App Group `group.com.holzherr.tigerworkouts` (`Shared/UpNextShare.swift`), which has to be
+  the App Group `group.dev.brambruesch.tigerworkouts` (`Shared/UpNextShare.swift`), which has to be
   enabled for both bundle ids in the developer portal before it works on a device.
 - **Apple Health, both ways.** A finished session becomes an `HKWorkout` typed by what the session
   mostly was, so it counts towards the rings. Coming back the other way: your bodyweight, so the
@@ -83,11 +83,19 @@ After changing `project.yml`, re-run `xcodegen generate` in `ios/`.
 
 Two things are yours to do once, because they need credentials or admin rights:
 
-1. **Signing.** `DEVELOPMENT_TEAM` is empty. Set your team on the TigerWorkouts target in Xcode
-   (Signing & Capabilities) before running on a device.
+1. **Signing.** Signed by the paid team `2JDH6Z4WZ8` with automatic signing; Xcode registers the
+   App IDs and capabilities itself (`-allowProvisioningUpdates`).
 2. **Google sign-in.** Add `tigerworkouts://auth` to Supabase → Authentication → URL Configuration →
    Redirect URLs. Until then use the email-code route, which needs no project configuration and is
    the default on the sign-in screen.
+
+## TestFlight
+
+`./testflight.sh` archives and uploads to App Store Connect (bundle `dev.brambruesch.tigerworkouts`).
+App Store Connect numbers the builds, so nothing needs bumping between uploads. Testers join through
+the public TestFlight link (https://testflight.apple.com/join/r8uFaWKY) on brambruesch.dev/tiger.
+That page's source is `site/`; it deploys into the `brambruesch-dev` Pages project alongside Sloth's
+`/sloth/` (a Pages deploy replaces every file, so assemble both before `wrangler pages deploy`).
 
 ## Tests
 
@@ -112,10 +120,10 @@ a second leg that may fail on the runner without blocking the PR, and a failed l
 `out.xcresult` as an artifact.
 
 The app logs its Live Activity updates and audio session under the subsystem
-`com.holzherr.tigerworkouts`, which is how the update flood below was found:
+`dev.brambruesch.tigerworkouts`, which is how the update flood below was found:
 
 ```sh
-xcrun simctl spawn booted log stream --predicate 'subsystem == "com.holzherr.tigerworkouts"'
+xcrun simctl spawn booted log stream --predicate 'subsystem == "dev.brambruesch.tigerworkouts"'
 ```
 
 ## Things the simulator taught

@@ -1,4 +1,4 @@
-import { Check, ChevronLeft, ChevronRight, List, Medal, MoreHorizontal, Pause, Play, Shuffle, SkipForward, Square, Volume2, VolumeX } from 'lucide-react';
+import { Check, ChevronLeft, ChevronRight, ChevronsRight, List, Medal, MoreHorizontal, Pause, Play, Shuffle, SkipForward, Square, Volume2, VolumeX } from 'lucide-react';
 import { useState } from 'react';
 import { Button } from '@/shared/components/ui/button';
 import { ClipThumb } from '@/shared/components/ui/clip-thumb';
@@ -58,6 +58,8 @@ export interface TimerScreenProps {
   onSwap?: (stepId: string, to: ExerciseRef, target?: number) => void;
   /** Slots whose set beat a record when it was ticked: a medal on the row. */
   prs?: string[];
+  /** End the running block here and go on to the next one, from the ⋯ menu. */
+  onEndBlock?: () => void;
 }
 
 export interface SetActions {
@@ -201,11 +203,11 @@ const stepLine = (s: ExerciseStep) => [forLabel(s), s.target !== undefined ? `${
  * The gym screen. Header: block name, "Block 2 of 7 · Round 3 of 8", a progress bar whose
  * background is the whole session and whose bright fill is the current step, elapsed top right.
  * Work steps sit on ink, rest steps on navy so the colour alone says which is which. Entering a
- * new block parks the timer on a "Start block" card (equipment changes take time). Bottom bar:
- * a ⋯ menu (previous, overview, stop), Pause and Skip/Done at equal size. Tap the Next row to see
- * what the coming block asks for; the overview sheet lists every part with progress.
+ * new block parks the timer on a "Start block" card (equipment changes take time). ⋯ top right
+ * (swap, overview, end workout); Back, Pause or Done early, and Skip small; the big button Pause on
+ * a countdown, "Set 2 of 4 done" on a set. Tap Next for the coming block; the overview lists all.
  */
-export const TimerScreen = ({ runsheet, state, now, onDone, onSkip, onBack, onPause, onResume, onAdjust, onAdjustIncline, onSetReps, onSetAmount, onDrop, onStartBlock, onAdjustStep, sets, onAdjustRest, lastFor, onFill, ghost, goal, muted, onToggleMute, equipment, onFinish, onExit, alternativesFor, onSwap, prs }: TimerScreenProps) => {
+export const TimerScreen = ({ runsheet, state, now, onDone, onSkip, onBack, onPause, onResume, onAdjust, onAdjustIncline, onSetReps, onSetAmount, onDrop, onStartBlock, onAdjustStep, sets, onAdjustRest, lastFor, onFill, ghost, goal, muted, onToggleMute, equipment, onFinish, onExit, alternativesFor, onSwap, prs, onEndBlock }: TimerScreenProps) => {
   const [confirmExit, setConfirmExit] = useState(false);
   const [confirmDiscard, setConfirmDiscard] = useState(false);
   const [menu, setMenu] = useState(false);
@@ -231,6 +233,11 @@ export const TimerScreen = ({ runsheet, state, now, onDone, onSkip, onBack, onPa
   const timed = clock.left !== undefined;
   // Timed work ends with Done early, which logs the time it ran; a rest or the lead-in is skipped.
   const timedWork = timed && !isRest && !lead && slot?.kind === 'work' && R.timesWork(slot);
+  // EMOM reps: the big clock is the minute running out, and Done logs the set as for any reps.
+  const emomWork = !lead && R.minuteOnly(slot);
+  // A countdown ends by itself: its big button is Pause. A set's says which set it logs.
+  const countdown = (timed && !emomWork) || lead;
+  const setDone = slot?.kind !== 'work' ? 'Done' : slot.mode === 'amrap' ? `Set ${slot.round + 1} done` : slot.rounds > 1 ? `Set ${slot.round + 1} of ${slot.rounds} done` : 'Done';
   const amountField = slot ? R.amountField(slot) : undefined;
   const amount = slot && amountField ? R.amountAt(state, slot) : undefined;
   const bigNumber = done ? fmtClock(total) : lead ? String(Math.ceil(clock.left ?? 0)) : timed ? fmtClock(clock.left ?? 0) : fmtClock(clock.spent);
@@ -280,6 +287,11 @@ export const TimerScreen = ({ runsheet, state, now, onDone, onSkip, onBack, onPa
             <div className="text-[15px] font-bold tabular-nums">{Math.round(all * 100)}%</div>
             <div className="text-[12px] tabular-nums text-white/60">{fmtClock(total)}</div>
           </button>
+          {!done && (
+            <button type="button" onClick={() => setMenu(true)} aria-label="More" className="grid size-11 shrink-0 place-items-center rounded-full bg-white/10">
+              <MoreHorizontal className="size-5" />
+            </button>
+          )}
         </div>
         {(ghost || goal) && !done && (
           <div className="mt-1.5 flex flex-wrap gap-1.5">
@@ -343,6 +355,7 @@ export const TimerScreen = ({ runsheet, state, now, onDone, onSkip, onBack, onPa
             {lead && <div className="-mt-2 pb-3 text-center text-[13px] text-white/60">Get ready</div>}
             {lead && <div className="-mt-1 pb-3 text-center text-[12px] text-white/40">The web timer needs the screen on.</div>}
             {!timed && !lead && !done && slot && <div className="-mt-2 pb-3 text-center text-[13px] text-white/60">{isRest ? 'Rest' : straight ? 'Tick the set when you finish it' : 'Tap Done when finished'}</div>}
+            {emomWork && !done && <div className="-mt-2 pb-3 text-center text-[13px] text-white/60">Tap Done when finished</div>}
             {minuteLeft !== undefined && !lead && !done && (
               <div className={cn('mx-auto mb-3 w-fit rounded-full bg-white/10 px-3 py-1 text-[13px] font-bold tabular-nums', minuteLeft <= 10 && 'text-brand')} aria-label={`Time left in the ${slot?.everySec && slot.everySec !== 60 ? 'interval' : 'minute'}`}>
                 {fmtClock(minuteLeft)} left in the {slot?.everySec && slot.everySec !== 60 ? 'interval' : 'minute'}
@@ -458,35 +471,41 @@ export const TimerScreen = ({ runsheet, state, now, onDone, onSkip, onBack, onPa
           </Button>
         ) : ready ? (
           <div className="flex gap-2">
-            <Button variant="dark" size="icon" onClick={() => setMenu(true)} aria-label="More" className="h-16 shrink-0 bg-white/10">
-              <MoreHorizontal />
-            </Button>
             <Button block size="xl" variant="brand" onClick={onStartBlock}>
               <Play /> Start block
             </Button>
           </div>
         ) : (
-          <div className="flex gap-2">
-            <Button variant="dark" size="icon" onClick={() => setMenu(true)} aria-label="More" className="h-16 shrink-0 bg-white/10">
-              <MoreHorizontal />
-            </Button>
-            <Button block size="xl" variant="dark" onClick={paused ? onResume : onPause} className={cn('bg-white/10', paused && 'bg-white text-ink')}>
-              {paused ? <Play /> : <Pause />} {paused ? 'Resume' : 'Pause'}
-            </Button>
-            {timedWork ? (
-              <Button block size="xl" variant="ghost" onClick={onDone} className="border-white/20 bg-white/10 text-white">
-                <Check /> Done early
+          <>
+            <div className="flex gap-2 pb-2">
+              <Button variant="dark" size="lg" onClick={onBack} disabled={idx === 0 || lead} aria-label="Previous step" className="shrink-0 bg-white/10">
+                <ChevronLeft />
               </Button>
-            ) : timed || lead ? (
-              <Button block size="xl" variant="ghost" onClick={onSkip} className="border-white/20 bg-white/10 text-white">
+              {!countdown ? (
+                <Button block size="lg" variant="dark" onClick={paused ? onResume : onPause} className={cn('bg-white/10', paused && 'bg-white text-ink')}>
+                  {paused ? <Play /> : <Pause />} {paused ? 'Resume' : 'Pause'}
+                </Button>
+              ) : (
+                timedWork && (
+                  <Button block size="lg" variant="dark" onClick={onDone} className="bg-white/10">
+                    <Check /> Done early
+                  </Button>
+                )
+              )}
+              <Button block size="lg" variant="dark" onClick={onSkip} aria-label={lead || isRest ? undefined : 'Skip this step'} className="bg-white/10">
                 <SkipForward /> Skip{isRest ? ' rest' : ''}
+              </Button>
+            </div>
+            {countdown ? (
+              <Button block size="xl" variant="brand" onClick={paused ? onResume : onPause} className={cn(paused && 'bg-white text-ink')}>
+                {paused ? <Play /> : <Pause />} {paused ? 'Resume' : 'Pause'}
               </Button>
             ) : (
               <Button block size="xl" variant="brand" onClick={onDone}>
-                <Check /> Done
+                <Check /> {setDone}
               </Button>
             )}
-          </div>
+          </>
         )}
         {paused && !done && <div className="pt-2 text-center text-[12px] text-white/60">Paused</div>}
       </div>
@@ -496,9 +515,14 @@ export const TimerScreen = ({ runsheet, state, now, onDone, onSkip, onBack, onPa
           <Button block variant="ghost" onClick={() => (setMenu(false), onBack())}>
             <ChevronLeft /> Previous step
           </Button>
-          {(!timed || timedWork) && !lead && !ready && (
+          {(!timed || timedWork || emomWork) && !lead && !ready && (
             <Button block variant="ghost" onClick={() => (setMenu(false), onSkip())}>
               <SkipForward /> Skip this step
+            </Button>
+          )}
+          {onEndBlock && slot?.blockId && !lead && (state.phase === 'running' || paused) && (
+            <Button block variant="ghost" onClick={() => (setMenu(false), onEndBlock())}>
+              <ChevronsRight /> End this block
             </Button>
           )}
           {options.length > 0 && (

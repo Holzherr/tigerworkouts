@@ -91,6 +91,8 @@ struct MeView: View {
                     }
                 }
 
+                CoachSection()
+
                 Section {
                     NavigationLink {
                         SettingsView()

@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>TigerWorkouts timer</title>
+<style>
+:root{--brand:#ff4d2e;--ink:#0f172a;--body:#334155;--muted:#64748b;--line:#e2e8f0;--surface:#fff;--well:#f1f5f9;--rest:#0ea5e9}
+@media (prefers-color-scheme:dark){:root:not([data-theme=light]){--ink:#f1f5f9;--body:#cbd5e1;--muted:#94a3b8;--line:#334155;--surface:#0f172a;--well:#1e293b}}
+:root[data-theme=dark]{--ink:#f1f5f9;--body:#cbd5e1;--muted:#94a3b8;--line:#334155;--surface:#0f172a;--well:#1e293b}
+*{box-sizing:border-box}html,body{margin:0;background:var(--surface);color:var(--body);font:15px/1.45 -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif}
+.wrap{padding:16px;max-width:520px;margin:0 auto}
+.head{display:flex;justify-content:space-between;align-items:baseline;gap:8px;color:var(--ink);margin-bottom:10px}
+.bar{height:6px;border-radius:3px;background:var(--well);overflow:hidden}.bar i{display:block;height:100%;background:var(--brand);transition:width .25s}
+.now{text-align:center;padding:18px 0 10px}.clock{font:700 64px/1 ui-rounded,-apple-system,sans-serif;font-variant-numeric:tabular-nums;color:var(--ink)}
+.now.rest .clock{color:var(--rest)}.name{font-size:20px;font-weight:700;color:var(--ink);margin-top:6px}
+.muted{color:var(--muted);font-size:13px}
+button{font:inherit;cursor:pointer;border-radius:12px;padding:12px;border:1px solid var(--line);background:transparent;color:var(--ink);width:100%}
+.big{background:var(--brand);border:0;color:#fff;font-weight:700;font-size:17px;padding:15px;margin-top:8px}
+.row{display:flex;gap:8px;margin-top:8px}.row button{flex:1;padding:9px}
+.foot{margin-top:16px;padding-top:12px;border-top:1px solid var(--line);display:flex;flex-direction:column;gap:6px}
+.foot a{color:var(--brand);font-weight:600;text-decoration:none}.foot a.sub{color:var(--muted);font-weight:400;font-size:13px}
+</style>
+</head>
+<body>
+<div class="wrap">
+<div id="main"></div>
+<div class="foot">
+<a id="app" href="https://testflight.apple.com/join/r8uFaWKY" target="_blank" rel="noopener">Get the app for lock-screen timer &amp; notifications</a>
+<a id="web" class="sub" href="https://tigerworkouts.com/" target="_blank" rel="noopener">Open on tigerworkouts.com</a>
+</div>
+</div>
+<script>/*BUNDLE*/</script>
+</body>
+</html>
