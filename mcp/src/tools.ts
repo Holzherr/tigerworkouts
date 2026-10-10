@@ -6,13 +6,17 @@
 import { fromRow, workoutFromRow } from '@/features/cloud/rows';
 import type { LibraryExercise } from '@/features/exercises/library';
 import { forLabel, loadLabel, modeLabel, ROLE_LABEL, runsheetMinutes, type ExerciseStep, type Item, type Runsheet, type Step } from '@/features/runsheet/model';
-import type { SessionResult } from '@/features/runsheet/progression';
+import { parsePlan } from '@/features/runsheet/parse-text';
+import type { ExerciseRef } from '@/features/runsheet/model';
+import type { SessionResult, StepResult } from '@/features/runsheet/progression';
 import { shareUrlAt } from '@/features/share/link';
 import { catalogue, FULL_LIBRARY, libraryRef } from './catalogue';
 import { keepUnknownFields, normalise, type RunsheetInput } from './runsheet';
 import type { Db } from './supabase';
 
 export const SITE = 'https://tigerworkouts.com/';
+/** The iPhone app's public TestFlight link: lock-screen timer and notifications. */
+export const APP_DOWNLOAD_URL = 'https://testflight.apple.com/join/r8uFaWKY';
 
 export class ToolError extends Error {}
 
@@ -225,13 +229,38 @@ const profileName = async (db: Db) => {
   return states?.[0]?.prefs?.name ?? profiles?.[0]?.name ?? undefined;
 };
 
-export const createWorkout = async (db: Db, a: { workout: RunsheetInput; public?: boolean }) => {
-  const r = normalise(a.workout, await resolver(db));
+/** What create_workout and start_workout take: a structured runsheet, or a plain-text plan. */
+export interface DraftArgs {
+  workout?: RunsheetInput;
+  /** Plain text, one block per line, read by the app's own parser (src/features/runsheet/parse-text.ts). */
+  plan?: string;
+  title?: string;
+}
+
+/** A plain-text plan through the app's parser. Lines it cannot read fail the call, listed, so the
+ * agent can rewrite them or send a structured workout instead. */
+export const planToRunsheet = async (db: Db, plan: string, title?: string): Promise<{ runsheet: Runsheet; assumptions: string[] }> => {
+  const lib: Record<string, ExerciseRef> = { ...FULL_LIBRARY, ...(await ownExercises(db)) };
+  const { items, unparsed, assumptions } = parsePlan(plan, lib);
+  if (unparsed.length || !items.length)
+    throw new ToolError(`Could not read ${unparsed.length ? `these lines:\n${unparsed.map(l => `- ${l}`).join('\n')}` : 'the plan'}\nWrite one block per line like "kb swings 24 + push ups x5 40/20" or "row 10 min", or send a structured workout instead.`);
+  return { runsheet: { title: title?.trim() || 'Workout', items }, assumptions };
+};
+
+const draftToRunsheet = async (db: Db, a: DraftArgs): Promise<{ runsheet: Runsheet; assumptions?: string[] }> => {
+  if (a.workout && a.plan) throw new ToolError('Pass workout or plan, not both.');
+  if (a.plan) return planToRunsheet(db, a.plan, a.title);
+  if (a.workout) return { runsheet: normalise(a.workout, await resolver(db)) };
+  throw new ToolError('Pass workout (structured) or plan (plain text).');
+};
+
+export const createWorkout = async (db: Db, a: DraftArgs & { public?: boolean }) => {
+  const { runsheet: r, assumptions } = await draftToRunsheet(db, a);
   const id = newId();
   const creator = r.creator ?? (await profileName(db));
   const runsheet: Runsheet = { ...r, id, creator, source: { title: r.title, kind: 'user', author: creator } };
   await db.post('workouts', { id, owner: db.userId, creator: creator ?? null, title: r.title, public: a.public ?? false, data: runsheet });
-  return { id, title: r.title, public: a.public ?? false, minutes: runsheetMinutes(runsheet), outline: outline(runsheet), appUrl: appUrl(id), previewUrl: previewUrl(runsheet) };
+  return { id, title: r.title, public: a.public ?? false, minutes: runsheetMinutes(runsheet), outline: outline(runsheet), appUrl: appUrl(id), previewUrl: previewUrl(runsheet), assumptions };
 };
 
 export const updateWorkout = async (db: Db, a: { id: string; workout?: RunsheetInput; public?: boolean }) => {
@@ -284,4 +313,89 @@ export const searchExercises = async (db: Db, a: { query?: string; group?: strin
   const seen = new Set<string>();
   const unique = hits.filter(e => !seen.has(e.key) && seen.add(e.key));
   return { total: unique.length, exercises: unique.slice(0, clampLimit(a.limit, 30, 200)).map(e => ({ key: e.key, name: e.name, unit: e.unit, step: e.step, group: e.group, cue: e.cue, mine: e.mine || undefined })) };
+};
+
+// ── start a workout in the chat ──
+
+/** start_workout: the runsheet for the timer view, plus the links out of the chat. */
+export const startWorkout = async (db: Db, a: DraftArgs & { id?: string }) => {
+  let runsheet: Runsheet;
+  let assumptions: string[] | undefined;
+  let saved = false;
+  if (a.id) {
+    if (a.workout || a.plan) throw new ToolError('Pass id (a saved workout) or a draft, not both.');
+    const w = await findWorkout(db, a.id);
+    if (!w) throw new ToolError(`No workout ${a.id} that you can see. list_workouts shows the ids.`);
+    runsheet = w.runsheet;
+    saved = true;
+  } else ({ runsheet, assumptions } = await draftToRunsheet(db, a));
+  return {
+    title: runsheet.title,
+    minutes: runsheetMinutes(runsheet),
+    outline: outline(runsheet),
+    saved,
+    workoutId: saved ? runsheet.id : undefined,
+    appUrl: saved && runsheet.id ? appUrl(runsheet.id) : undefined,
+    previewUrl: previewUrl(runsheet),
+    appDownloadUrl: APP_DOWNLOAD_URL,
+    assumptions,
+    runsheet,
+  };
+};
+
+export interface LogSessionArgs {
+  id?: string;
+  workoutId: string;
+  title?: string;
+  startedAt: string;
+  endedAt?: string;
+  durationSec?: number;
+  completed?: boolean;
+  notes?: string;
+  rpe?: number;
+  score?: number;
+  scoreText?: string;
+  steps?: StepResult[];
+}
+
+/** One finished session into the sessions table, in the row shape the web app's sync writes for v2
+ * results (toRow in src/features/cloud/sync.ts), so it shows in the app's history. */
+export const logSession = async (db: Db, a: LogSessionArgs) => {
+  const started = Date.parse(a.startedAt);
+  if (Number.isNaN(started)) throw new ToolError('startedAt must be an ISO date/time.');
+  const id = a.id ?? `s-${started.toString(36)}${Math.random().toString(36).slice(2, 6)}`;
+  const result: SessionResult = {
+    id,
+    runsheetId: a.workoutId,
+    title: a.title,
+    startedAt: new Date(started).toISOString(),
+    endedAt: a.endedAt,
+    durationSec: a.durationSec,
+    completed: a.completed ?? true,
+    notes: a.notes,
+    rpe: a.rpe,
+    score: a.score,
+    scoreText: a.scoreText,
+    steps: a.steps ?? [],
+  };
+  const row = {
+    id,
+    owner: db.userId,
+    workout_id: a.workoutId,
+    type: 'v2',
+    title: a.title ?? a.workoutId,
+    started_at: result.startedAt,
+    ended_at: a.endedAt ?? null,
+    duration_min: a.durationSec ? Math.round(a.durationSec / 60) : 0,
+    completed: result.completed,
+    data: { format: 'v2', blocks: [], ...JSON.parse(JSON.stringify(result)) },
+  };
+  try {
+    await db.post('sessions', row);
+  } catch (e) {
+    // The timer view retries with the same id; a second write of one session is not an error.
+    if ((e as { status?: number }).status === 409) return { id, logged: true, already: true };
+    throw e;
+  }
+  return { id, logged: true, durationMin: row.duration_min, note: 'Saved to the TigerWorkouts history (list_sessions shows it; so does the app once signed in to this account).' };
 };

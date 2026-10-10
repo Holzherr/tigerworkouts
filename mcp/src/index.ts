@@ -9,11 +9,17 @@
  *
  * Who may connect: ALLOWED_USER_IDS (comma-separated Supabase user ids). Empty = anyone with a
  * TigerWorkouts account, which is the whole of "going public".
+ *
+ * ANONYMOUS_SIGNUP="true" adds "Start without an account" to the sign-in page: Supabase anonymous
+ * sign-in, one tap, and the grant carries that user like any other. claim_account (claim.ts) later
+ * puts an email on the same user.
  */
 import { OAuthError, OAuthProvider, type AuthRequest, type OAuthHelpers } from '@cloudflare/workers-oauth-provider';
-import { codePage, errorPage, landingPage, landingText, notOpenPage, signInPage } from './pages';
+import { claimDonePage, claimPage, codePage, errorPage, landingPage, landingText, notOpenPage, signInPage } from './pages';
 import { handleMcp } from './server';
-import { allowed, ttlFor } from './access';
+import { allowed, anonymousOn, ttlFor } from './access';
+import { claimAccount, dropClaim, readClaim, sendClaim } from './claim';
+import { ToolError } from './tools';
 import { auth, b64url, db, pkce, SupabaseError, type SupabaseSession } from './supabase';
 
 export interface Env {
@@ -23,16 +29,19 @@ export interface Env {
   ALLOWED_USER_IDS?: string;
   /** "true" once https://<host>/callback is in Supabase's redirect URLs; shows the Google button. */
   GOOGLE_SIGNIN?: string;
+  /** "true" offers "Start without an account" (needs anonymous sign-ins on in Supabase). */
+  ANONYMOUS_SIGNUP?: string;
 }
 
 // ── the protected API: /mcp ──
 const api = {
   async fetch(request: Request, env: Env, ctx: ExecutionContext) {
     const props = (ctx as unknown as { props: SupabaseSession }).props;
-    if (!allowed(env, props.userId)) return Response.json({ error: 'access_denied', error_description: 'TigerWorkouts for AI assistants is invite-only for now.' }, { status: 403 });
+    if (!allowed(env, props)) return Response.json({ error: 'access_denied', error_description: 'TigerWorkouts for AI assistants is invite-only for now.' }, { status: 403 });
     if (props.expiresAt <= Date.now() / 1000)
       return Response.json({ error: 'invalid_token', error_description: 'expired' }, { status: 401, headers: { 'www-authenticate': 'Bearer error="invalid_token", error_description="expired"' } });
-    return handleMcp(request, db(props), props.email);
+    const origin = new URL(request.url).origin;
+    return handleMcp(request, db(props), { email: props.email, anonymous: props.anonymous, claim: a => claimAccount({ session: props, origin, kv: env.OAUTH_KV }, a) });
   },
 };
 
@@ -50,7 +59,7 @@ const EXPIRED = 'This sign-in expired. Start again from your assistant.';
 
 const finish = async (env: Env, rid: string, p: Pending, s: SupabaseSession) => {
   await env.OAUTH_KV.delete(`signin:${rid}`);
-  if (!allowed(env, s.userId)) return notOpenPage(s.email);
+  if (!allowed(env, s)) return notOpenPage(s.email);
   const { redirectTo } = await env.OAUTH_PROVIDER.completeAuthorization({
     request: p.req,
     userId: s.userId,
@@ -68,8 +77,8 @@ const signIn = {
     const url = new URL(request.url);
     const google = env.GOOGLE_SIGNIN === 'true';
 
-    if (request.method === 'GET' && url.pathname === '/') return landingPage(url.origin);
-    if (request.method === 'GET' && url.pathname === '/llms.txt') return new Response(landingText(url.origin, google), { headers: { 'content-type': 'text/plain; charset=utf-8' } });
+    if (request.method === 'GET' && url.pathname === '/') return landingPage(url.origin, anonymousOn(env));
+    if (request.method === 'GET' && url.pathname === '/llms.txt') return new Response(landingText(url.origin, google, anonymousOn(env)), { headers: { 'content-type': 'text/plain; charset=utf-8' } });
 
     if (request.method === 'GET' && url.pathname === '/authorize') {
       let req: AuthRequest;
@@ -90,7 +99,40 @@ const signIn = {
       const rid = b64url(crypto.getRandomValues(new Uint8Array(24)));
       const name = client.clientName || new URL(req.redirectUri).host;
       await putPending(env, rid, { req, client: name });
-      return signInPage({ rid, client: name, redirect: req.redirectUri, google });
+      return signInPage({ rid, client: name, redirect: req.redirectUri, google, anonymous: anonymousOn(env) });
+    }
+
+    if (request.method === 'POST' && url.pathname === '/authorize/anonymous') {
+      const rid = String((await request.formData()).get('rid') ?? '');
+      const p = await getPending(env, rid);
+      if (!p) return errorPage(EXPIRED);
+      if (!anonymousOn(env)) return errorPage('Starting without an account is not open yet. Sign in with your email instead.');
+      let s: SupabaseSession;
+      try {
+        s = await auth().signInAnonymously();
+      } catch (e) {
+        const msg = e instanceof SupabaseError && e.status === 429 ? 'Too many new accounts from here just now. Try again in a few minutes, or sign in with your email.' : 'Could not start without an account. Sign in with your email instead.';
+        return signInPage({ rid, client: p.client, redirect: p.req.redirectUri, google, anonymous: true, error: msg });
+      }
+      return finish(env, rid, p, { ...s, viaAnonymous: true });
+    }
+
+    // Claim page: the link claim_account hands out. The person types their email here.
+    const claimId = url.pathname.match(/^\/claim\/([\w-]{20,64})$/)?.[1];
+    if (claimId && (request.method === 'GET' || request.method === 'POST')) {
+      const c = await readClaim(env.OAUTH_KV, claimId);
+      if (!c) return errorPage('This link has expired. Ask your assistant for a new one ("keep my TigerWorkouts account").', 410);
+      if (request.method === 'GET') return claimPage({ id: claimId });
+      const email = String((await request.formData()).get('email') ?? '');
+      try {
+        const r = await sendClaim(c.accessToken, email);
+        await dropClaim(env.OAUTH_KV, claimId);
+        return claimDonePage(r);
+      } catch (e) {
+        if (e instanceof ToolError) return claimPage({ id: claimId, error: e.message });
+        if (e instanceof SupabaseError && e.status === 401) return errorPage('This link has expired. Ask your assistant for a new one.', 410);
+        return claimPage({ id: claimId, error: 'Could not do that just now. Try again.' });
+      }
     }
 
     if (request.method === 'POST' && url.pathname === '/authorize/email') {
@@ -99,12 +141,12 @@ const signIn = {
       const email = String(form.get('email') ?? '').trim().toLowerCase();
       const p = await getPending(env, rid);
       if (!p) return errorPage(EXPIRED);
-      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return signInPage({ rid, client: p.client, redirect: p.req.redirectUri, google, error: 'That email does not look right.' });
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return signInPage({ rid, client: p.client, redirect: p.req.redirectUri, google, anonymous: anonymousOn(env), error: 'That email does not look right.' });
       try {
         await auth().sendCode(email);
       } catch (e) {
         const msg = e instanceof SupabaseError && e.status === 429 ? 'Too many codes asked for. Wait a minute and try again.' : 'Could not send the code. Try again.';
-        return signInPage({ rid, client: p.client, redirect: p.req.redirectUri, google, error: msg });
+        return signInPage({ rid, client: p.client, redirect: p.req.redirectUri, google, anonymous: anonymousOn(env), error: msg });
       }
       await putPending(env, rid, { ...p, email });
       return codePage({ rid, email });
@@ -182,11 +224,11 @@ const makeProvider = (env: Env, origin: string) =>
     resourceMetadata: origin.startsWith('https://') ? { resource: `${origin}/mcp`, authorization_servers: [origin], scopes_supported: RESOURCE_SCOPES, bearer_methods_supported: ['header'], resource_name: 'TigerWorkouts' } : undefined,
     tokenExchangeCallback: async ({ grantType, props }) => {
       const s = props as SupabaseSession;
-      if (!allowed(env, s.userId)) throw new OAuthError('invalid_grant', { description: 'TigerWorkouts for AI assistants is invite-only for now.' });
+      if (!allowed(env, s)) throw new OAuthError('invalid_grant', { description: 'TigerWorkouts for AI assistants is invite-only for now.' });
       if (grantType === 'authorization_code') return { accessTokenTTL: ttlFor(s) };
       if (grantType === 'refresh_token') {
         try {
-          const next = await auth().refresh(s.refreshToken);
+          const next: SupabaseSession = { ...(await auth().refresh(s.refreshToken)), ...(s.viaAnonymous ? { viaAnonymous: true } : {}) };
           return { newProps: next, accessTokenTTL: ttlFor(next) };
         } catch (e) {
           if (e instanceof SupabaseError && e.status >= 400 && e.status < 500) throw new OAuthError('invalid_grant', { description: 'TigerWorkouts sign-in has ended; connect again.' });

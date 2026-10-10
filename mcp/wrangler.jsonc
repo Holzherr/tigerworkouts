@@ -12,7 +12,10 @@
     // Nick only, until it opens. Empty string = every TigerWorkouts account may connect.
     "ALLOWED_USER_IDS": "71ee1910-ef0a-471d-81bb-345ce7b9c2e3",
     // Flip to "true" once https://mcp.tigerworkouts.com/callback is an allowed Supabase redirect URL.
-    "GOOGLE_SIGNIN": "false"
+    "GOOGLE_SIGNIN": "false",
+    // "true" adds "Start now, no account needed" (Supabase anonymous sign-in). Needs Authentication →
+    // Sign In / Providers → "Allow anonymous sign-ins" on in Supabase first. See specs/mcp.md.
+    "ANONYMOUS_SIGNUP": "false"
   },
   "routes": [{ "pattern": "mcp.tigerworkouts.com", "custom_domain": true }]
 }

@@ -8,8 +8,10 @@ import worker from '../src/index';
 import { SB_URL } from '../src/supabase';
 import { fakeSupabase, tokenFor } from './fake-supabase';
 
+
 const NICK = '71ee1910-ef0a-471d-81bb-345ce7b9c2e3';
 const STRANGER = '00000000-0000-4000-8000-000000000009';
+const ANON = '00000000-0000-4000-8000-0000000000aa';
 const ORIGIN = 'https://mcp.example.test';
 const REDIRECT = 'http://localhost:9999/cb';
 
@@ -30,20 +32,28 @@ const memoryKv = () => {
 let env: Record<string, unknown>;
 let refreshes = 0;
 let emailUser = NICK;
+let emailChanges: { email: string; auth: string | null }[] = [];
 const ctx = { waitUntil: () => {}, passThroughOnException: () => {}, props: {} } as unknown as ExecutionContext;
 const call = (path: string, init?: RequestInit) => worker.fetch(new Request(`${ORIGIN}${path}`, init), env as never, ctx);
 
 beforeEach(() => {
-  env = { OAUTH_KV: memoryKv(), ALLOWED_USER_IDS: NICK, GOOGLE_SIGNIN: 'false' };
+  env = { OAUTH_KV: memoryKv(), ALLOWED_USER_IDS: NICK, GOOGLE_SIGNIN: 'false', ANONYMOUS_SIGNUP: 'true' };
+  emailChanges = [];
   refreshes = 0;
   emailUser = NICK;
   const rest = fakeSupabase({ profiles: [{ id: NICK, name: 'Nick', units: 'metric' }], user_state: [], workouts: [], sessions: [], exercises: [] });
-  const session = (uid: string) => ({ access_token: tokenFor(uid), refresh_token: `refresh-${uid}-${refreshes}`, expires_in: 3600, user: { id: uid, email: `${uid}@example.com` } });
+  const session = (uid: string) => ({ access_token: tokenFor(uid), refresh_token: `refresh-${uid}-${refreshes}`, expires_in: 3600, user: uid === ANON ? { id: uid, is_anonymous: true } : { id: uid, email: `${uid}@example.com` } });
   vi.stubGlobal('fetch', async (input: RequestInfo | URL, init?: RequestInit) => {
     const url = String(input);
     if (url === `${SB_URL}/auth/v1/otp`) return Response.json({});
     if (url === `${SB_URL}/auth/v1/verify`) return JSON.parse(String(init?.body)).token === '123456' ? Response.json(session(emailUser)) : Response.json({ msg: 'Token has expired or is invalid' }, { status: 403 });
-    if (url === `${SB_URL}/auth/v1/token?grant_type=refresh_token`) return (refreshes++, Response.json(session(NICK)));
+    if (url === `${SB_URL}/auth/v1/token?grant_type=refresh_token`) return (refreshes++, Response.json(session(JSON.parse(String(init?.body)).refresh_token.split('-').slice(1, -1).join('-'))));
+    if (url === `${SB_URL}/auth/v1/signup`) return Response.json(session(ANON));
+    if (url === `${SB_URL}/auth/v1/user` && init?.method === 'PUT') {
+      const { email } = JSON.parse(String(init.body));
+      emailChanges.push({ email, auth: new Headers(init.headers).get('authorization') });
+      return email === 'taken@example.com' ? Response.json({ code: 'email_exists', msg: 'A user with this email address has already been registered' }, { status: 422 }) : Response.json({ id: ANON, new_email: email, is_anonymous: true });
+    }
     return rest.fetch(input, init);
   });
 });
@@ -122,5 +132,66 @@ describe('OAuth end to end', () => {
   it('serves the landing page and llms.txt', async () => {
     expect(await (await call('/')).text()).toContain(`${ORIGIN}/mcp`);
     expect(await (await call('/llms.txt')).text()).toContain('claude mcp add --transport http tigerworkouts');
+  });
+});
+
+/** Register and open /authorize; returns the page's rid and what the token call needs. */
+const openAuthorize = async () => {
+  const reg = await json(call('/oauth/register', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ client_name: 'ChatGPT', redirect_uris: [REDIRECT], token_endpoint_auth_method: 'none' }) }));
+  const { verifier, challenge } = await pkce();
+  const q = new URLSearchParams({ response_type: 'code', client_id: reg.client_id, redirect_uri: REDIRECT, code_challenge: challenge, code_challenge_method: 'S256', state: 's', scope: 'workouts', resource: `${ORIGIN}/mcp` });
+  const page = await (await call(`/authorize?${q}`)).text();
+  return { page, rid: page.match(/name="rid" value="([^"]+)"/)![1], verifier, clientId: reg.client_id as string };
+};
+const tokensFor = async (res: Response, a: { verifier: string; clientId: string }) =>
+  json(call('/oauth/token', form({ grant_type: 'authorization_code', code: new URL(res.headers.get('location')!).searchParams.get('code')!, redirect_uri: REDIRECT, client_id: a.clientId, code_verifier: a.verifier, resource: `${ORIGIN}/mcp` })));
+const rpc = (token: string, method: string, params: unknown = {}) =>
+  json(call('/mcp', { method: 'POST', headers: { authorization: `Bearer ${token}`, 'content-type': 'application/json', accept: 'application/json, text/event-stream' }, body: JSON.stringify({ jsonrpc: '2.0', id: 1, method, params }) }));
+
+describe('start without an account', () => {
+  it('one tap makes an anonymous account; it works past the allowlist, refreshes, and can be claimed by link', async () => {
+    const a = await openAuthorize();
+    expect(a.page).toContain('Start now, no account needed');
+    const res = await call('/authorize/anonymous', form({ rid: a.rid }));
+    expect(res.status).toBe(302);
+    const tok = await tokensFor(res, a);
+
+    const profile = await rpc(tok.access_token, 'tools/call', { name: 'get_profile', arguments: {} });
+    expect(JSON.parse(profile.result.content[0].text)).toMatchObject({ userId: ANON, anonymous: true });
+
+    const made = await rpc(tok.access_token, 'tools/call', { name: 'create_workout', arguments: { plan: 'kb swings 24 + push ups x5 40/20', title: 'Quick one' } });
+    expect(made.result.isError).toBeFalsy();
+    expect(JSON.parse(made.result.content[0].text)).toMatchObject({ title: 'Quick one', public: false });
+
+    const next = await json(call('/oauth/token', form({ grant_type: 'refresh_token', refresh_token: tok.refresh_token, client_id: a.clientId })));
+    expect(next.access_token).toBeTruthy();
+
+    // claim by link: the page takes the email and puts it on the same user with that user's token
+    const claim = await rpc(next.access_token, 'tools/call', { name: 'claim_account', arguments: {} });
+    const { claimUrl } = JSON.parse(claim.result.content[0].text);
+    expect(claimUrl).toMatch(new RegExp(`^${ORIGIN}/claim/[\\w-]{20,}$`));
+    const path = new URL(claimUrl).pathname;
+    expect(await (await call(path)).text()).toContain('Keep your TigerWorkouts account');
+    expect(await (await call(path, form({ email: 'taken@example.com' }))).text()).toContain('already has a TigerWorkouts account');
+    expect(await (await call(path, form({ email: 'New@Example.com' }))).text()).toContain('Check your email');
+    expect(emailChanges.at(-1)).toEqual({ email: 'new@example.com', auth: `Bearer ${tokenFor(ANON)}` });
+    expect((await call(path)).status).toBe(410);
+  });
+
+  it('claim_account with an email does it in the chat', async () => {
+    const a = await openAuthorize();
+    const tok = await tokensFor(await call('/authorize/anonymous', form({ rid: a.rid })), a);
+    const out = await rpc(tok.access_token, 'tools/call', { name: 'claim_account', arguments: { email: 'me@example.com' } });
+    expect(JSON.parse(out.result.content[0].text)).toMatchObject({ status: 'confirm', email: 'me@example.com' });
+  });
+
+  it('is not offered, and refused, while ANONYMOUS_SIGNUP is off; turning it off cuts existing anonymous connections', async () => {
+    const a = await openAuthorize();
+    const tok = await tokensFor(await call('/authorize/anonymous', form({ rid: a.rid })), a);
+    env.ANONYMOUS_SIGNUP = 'false';
+    const b = await openAuthorize();
+    expect(b.page).not.toContain('Start now');
+    expect(await (await call('/authorize/anonymous', form({ rid: b.rid }))).text()).toContain('not open yet');
+    expect((await call('/mcp', { method: 'POST', headers: { authorization: `Bearer ${tok.access_token}`, 'content-type': 'application/json', accept: 'application/json' }, body: '{}' })).status).toBe(403);
   });
 });

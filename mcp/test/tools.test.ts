@@ -5,6 +5,8 @@ import { RunsheetError, runsheetInput, type RunsheetInput } from '../src/runshee
 import { handleMcp } from '../src/server';
 import { db as makeDb, type Db } from '../src/supabase';
 import * as T from '../src/tools';
+import { TIMER_URI } from '../src/server';
+import { claimAccount, sendClaim } from '../src/claim';
 import { fakeSupabase, tokenFor, type Tables } from './fake-supabase';
 
 const NICK = '71ee1910-ef0a-471d-81bb-345ce7b9c2e3';
@@ -188,10 +190,16 @@ describe('writes', () => {
 
 describe('access', () => {
   it('the allowlist admits listed ids, and an empty list admits everyone', () => {
-    expect(allowed({ ALLOWED_USER_IDS: NICK }, NICK)).toBe(true);
-    expect(allowed({ ALLOWED_USER_IDS: NICK }, OTHER)).toBe(false);
-    expect(allowed({ ALLOWED_USER_IDS: `${OTHER}, ${NICK}` }, NICK)).toBe(true);
-    expect(allowed({ ALLOWED_USER_IDS: '' }, OTHER)).toBe(true);
+    expect(allowed({ ALLOWED_USER_IDS: NICK }, { userId: NICK })).toBe(true);
+    expect(allowed({ ALLOWED_USER_IDS: NICK }, { userId: OTHER })).toBe(false);
+    expect(allowed({ ALLOWED_USER_IDS: `${OTHER}, ${NICK}` }, { userId: NICK })).toBe(true);
+    expect(allowed({ ALLOWED_USER_IDS: '' }, { userId: OTHER })).toBe(true);
+  });
+
+  it('a connection started anonymously is let in by ANONYMOUS_SIGNUP, not the allowlist', () => {
+    expect(allowed({ ALLOWED_USER_IDS: NICK, ANONYMOUS_SIGNUP: 'true' }, { userId: OTHER, viaAnonymous: true })).toBe(true);
+    expect(allowed({ ALLOWED_USER_IDS: '', ANONYMOUS_SIGNUP: 'false' }, { userId: OTHER, viaAnonymous: true })).toBe(false);
+    expect(allowed({ ALLOWED_USER_IDS: NICK, ANONYMOUS_SIGNUP: 'true' }, { userId: OTHER })).toBe(false);
   });
 
   it('client tokens expire before the Supabase token does', () => {
@@ -212,7 +220,7 @@ describe('over MCP', () => {
     expect(init.result.instructions).toContain('runsheet');
 
     const list = await rpc({ jsonrpc: '2.0', id: 2, method: 'tools/list' });
-    expect(list.result.tools.map((t: { name: string }) => t.name).sort()).toEqual(['create_workout', 'get_profile', 'get_session', 'get_workout', 'list_sessions', 'list_workouts', 'preview_workout_url', 'search_exercises', 'update_workout']);
+    expect(list.result.tools.map((t: { name: string }) => t.name).sort()).toEqual(['create_workout', 'get_profile', 'get_session', 'get_workout', 'list_sessions', 'list_workouts', 'log_session', 'preview_workout_url', 'search_exercises', 'start_workout', 'update_workout']);
 
     const call = await rpc({ jsonrpc: '2.0', id: 3, method: 'tools/call', params: { name: 'create_workout', arguments: { workout: draft() } } });
     expect(call.result.isError).toBeFalsy();
@@ -223,5 +231,80 @@ describe('over MCP', () => {
     const call = await rpc({ jsonrpc: '2.0', id: 4, method: 'tools/call', params: { name: 'create_workout', arguments: { workout: { title: 'x', items: [{ kind: 'exercise', exercise: 'nope', forMode: 'reps', forValue: 5 }] } } } });
     expect(call.result.isError).toBe(true);
     expect(call.result.content[0].text).toContain('unknown exercise key "nope"');
+  });
+
+  it('start_workout points Claude and ChatGPT at the timer view and hands it the runsheet', async () => {
+    const list = await rpc({ jsonrpc: '2.0', id: 5, method: 'tools/list' });
+    const start = list.result.tools.find((t: { name: string }) => t.name === 'start_workout');
+    expect(start._meta).toMatchObject({ ui: { resourceUri: TIMER_URI }, 'openai/outputTemplate': TIMER_URI });
+
+    const res = await rpc({ jsonrpc: '2.0', id: 6, method: 'resources/read', params: { uri: TIMER_URI } });
+    const c = res.result.contents[0];
+    expect(c.mimeType).toBe('text/html;profile=mcp-app');
+    expect(c.text).toContain('ui/initialize');
+    expect(c.text).toContain('https://testflight.apple.com/join/r8uFaWKY');
+
+    const out = await rpc({ jsonrpc: '2.0', id: 7, method: 'tools/call', params: { name: 'start_workout', arguments: { id: 'u-mine' } } });
+    expect(out.result.structuredContent).toMatchObject({ title: 'Nick legs', saved: true, workoutId: 'u-mine', appDownloadUrl: T.APP_DOWNLOAD_URL });
+    expect(out.result.structuredContent.runsheet.items).toHaveLength(1);
+    expect(out.result.content[0].text).toContain('https://tigerworkouts.com/#/import/');
+  });
+});
+
+describe('plans, timer and logging', () => {
+  it('create_workout reads a plain-text plan with the app’s parser', async () => {
+    const out = await T.createWorkout(db, { plan: 'row 5 min\nkb swings 24 + push ups x5 40/20', title: 'Text plan' });
+    const row = tables.workouts.find(w => w.id === out.id)!;
+    expect(row).toMatchObject({ owner: NICK, title: 'Text plan', public: false });
+    const items = (row.data as { items: { kind: string; repeat?: number }[] }).items;
+    expect(items[0].kind).toBe('exercise');
+    expect(items[1]).toMatchObject({ kind: 'block', repeat: 5 });
+  });
+
+  it('a plan line it cannot read is listed back, and nothing is saved', async () => {
+    const before = tables.workouts.length;
+    await expect(T.createWorkout(db, { plan: 'row 5 min\nflibbertigibbet 12' })).rejects.toThrow(/flibbertigibbet/);
+    expect(tables.workouts.length).toBe(before);
+  });
+
+  it('start_workout takes a saved id, a catalogue id or a draft, and never writes', async () => {
+    const before = JSON.stringify(tables);
+    expect(await T.startWorkout(db, { id: 'coach-circuit-15' })).toMatchObject({ saved: true, appUrl: 'https://tigerworkouts.com/#/w/coach-circuit-15' });
+    const draftRun = await T.startWorkout(db, { workout: draft() });
+    expect(draftRun).toMatchObject({ saved: false, title: 'Upper push', appUrl: undefined });
+    expect(draftRun.previewUrl).toMatch(/^https:\/\/tigerworkouts\.com\/#\/import\//);
+    await expect(T.startWorkout(db, { id: 'u-theirs-private' })).rejects.toThrow(/No workout/);
+    expect(JSON.stringify(tables)).toBe(before);
+  });
+
+  it('log_session writes the row shape the app syncs, once per id', async () => {
+    const steps = [{ stepId: 'e1', exerciseKey: 'bb_back_squat', target: 100, reps: [5, 5, 5] }];
+    const a = { id: 's-abc-run', workoutId: 'u-mine', title: 'Nick legs', startedAt: '2026-10-10T07:00:00Z', durationSec: 1800, steps };
+    expect(await T.logSession(db, a)).toMatchObject({ id: 's-abc-run', logged: true, durationMin: 30 });
+    expect(await T.logSession(db, a)).toMatchObject({ already: true });
+    const row = tables.sessions.find(r => r.id === 's-abc-run')!;
+    expect(row).toMatchObject({ owner: NICK, workout_id: 'u-mine', type: 'v2', duration_min: 30, completed: true });
+    expect(row.data).toMatchObject({ format: 'v2', blocks: [], runsheetId: 'u-mine', steps });
+    const back = await T.listSessions(db, { workoutId: 'u-mine' });
+    expect(back.sessions[0]).toMatchObject({ id: 's-abc-run', exercises: [{ exerciseKey: 'bb_back_squat', load: 100, reps: [5, 5, 5] }] });
+  });
+});
+
+describe('claim', () => {
+  const session = { userId: OTHER, accessToken: tokenFor(OTHER), refreshToken: 'r', expiresAt: 2_000_000_000 };
+  it('an account with an email has nothing to claim', async () => {
+    expect(await claimAccount({ session: { ...session, email: 'p@example.com' }, origin: 'https://x', kv: {} as KVNamespace }, {})).toMatchObject({ status: 'already-claimed' });
+  });
+  it('a link lives no longer than the access token it holds', async () => {
+    const put: unknown[] = [];
+    const kv = { put: async (...a: unknown[]) => void put.push(a) } as unknown as KVNamespace;
+    const out = await claimAccount({ session: { ...session, anonymous: true, expiresAt: 1000 + 600 }, origin: 'https://x', kv }, {}, 1000);
+    expect(out).toMatchObject({ status: 'link', expiresInMinutes: 9 });
+    expect(put[0]).toEqual([expect.stringMatching(/^claim:/), JSON.stringify({ userId: OTHER, accessToken: tokenFor(OTHER) }), { expirationTtl: 570 }]);
+    expect(JSON.stringify(put)).not.toContain('"r"');
+  });
+  it('an auto-confirmed email is reported as claimed', async () => {
+    const f = (async () => Response.json({ id: OTHER, email: 'me@example.com' })) as unknown as typeof fetch;
+    expect(await sendClaim('t', ' Me@Example.com ', f)).toMatchObject({ status: 'claimed', email: 'me@example.com' });
   });
 });

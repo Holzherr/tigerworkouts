@@ -15,6 +15,11 @@ export interface SupabaseSession {
   refreshToken: string;
   /** Unix seconds when accessToken stops working. */
   expiresAt: number;
+  /** Supabase says the user has no email or other identity yet (anonymous sign-in, not claimed). */
+  anonymous?: boolean;
+  /** The grant began with "Start without an account". Kept across refreshes and after a claim, so
+   * ANONYMOUS_SIGNUP (not the allowlist) keeps deciding whether this connection may stay. */
+  viaAnonymous?: boolean;
 }
 
 type Fetch = typeof fetch;
@@ -43,7 +48,14 @@ interface AuthResponse {
   refresh_token: string;
   expires_in: number;
   expires_at?: number;
-  user: { id: string; email?: string };
+  user: SupabaseUser;
+}
+export interface SupabaseUser {
+  id: string;
+  email?: string;
+  /** Set while an email change (a claim) waits for the person to confirm it. */
+  new_email?: string;
+  is_anonymous?: boolean;
 }
 const toSession = (r: AuthResponse): SupabaseSession => ({
   userId: r.user.id,
@@ -51,17 +63,24 @@ const toSession = (r: AuthResponse): SupabaseSession => ({
   accessToken: r.access_token,
   refreshToken: r.refresh_token,
   expiresAt: r.expires_at ?? Math.floor(Date.now() / 1000) + r.expires_in,
+  ...(r.user.is_anonymous ? { anonymous: true } : {}),
 });
 
 /** Sign-in and token calls against Supabase Auth (GoTrue). */
 export const auth = (f: Fetch = fetch) => {
-  const post = async <T>(path: string, body: unknown): Promise<T> => {
-    const res = await f(`${SB_URL}/auth/v1/${path}`, { method: 'POST', headers: { apikey: SB_KEY, 'content-type': 'application/json' }, body: JSON.stringify(body) });
+  const send = async <T>(method: string, path: string, body: unknown, accessToken?: string): Promise<T> => {
+    const res = await f(`${SB_URL}/auth/v1/${path}`, { method, headers: { apikey: SB_KEY, 'content-type': 'application/json', ...(accessToken ? { authorization: `Bearer ${accessToken}` } : {}) }, body: JSON.stringify(body) });
     if (!res.ok) throw new SupabaseError(res.status, await readError(res));
     const text = await res.text();
     return (text ? JSON.parse(text) : {}) as T;
   };
+  const post = <T>(path: string, body: unknown) => send<T>('POST', path, body);
   return {
+    /** A new anonymous user (Supabase "anonymous sign-ins", which must be on for the project). */
+    signInAnonymously: async () => toSession(await post<AuthResponse>('signup', { data: {} })),
+    /** Claim: put an email on the signed-in (anonymous) user. Supabase emails a confirmation unless
+     * the project auto-confirms; the returned user says which (email set vs new_email pending). */
+    requestEmail: (accessToken: string, email: string) => send<SupabaseUser>('PUT', 'user', { email }, accessToken),
     /** Email a 6-digit code. New addresses get an account, as they do in the app. */
     sendCode: (email: string) => post<unknown>('otp', { email, create_user: true }),
     verifyCode: async (email: string, token: string) => toSession(await post<AuthResponse>('verify', { type: 'email', email, token: token.replace(/\s+/g, '') })),

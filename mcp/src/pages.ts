@@ -22,11 +22,16 @@ export const page = (title: string, body: string, status = 200) =>
 
 const who = (client: string, redirect: string) => `<p class="muted">Connecting <b>${esc(client)}</b> (returns to ${esc(new URL(redirect).host || redirect)}). It will be able to read your workouts and training history and create or change your own workouts.</p>`;
 
-export const signInPage = (a: { rid: string; client: string; redirect: string; google: boolean; error?: string }) =>
+const anonymousCard = (rid: string) => `<div class="card"><form method="post" action="/authorize/anonymous"><input type="hidden" name="rid" value="${esc(rid)}">
+<button type="submit">Start now, no account needed</button></form>
+<p class="muted">Your workouts and history are kept. Add your email later (ask the assistant to keep your account) to use them in the app.</p></div>
+<h2>Already use TigerWorkouts?</h2>`;
+
+export const signInPage = (a: { rid: string; client: string; redirect: string; google: boolean; anonymous?: boolean; error?: string }) =>
   page(
     'Sign in · TigerWorkouts',
-    `<h1>Connect TigerWorkouts</h1>${who(a.client, a.redirect)}
-<div class="card">${a.error ? `<p class="err">${esc(a.error)}</p>` : ''}
+    `<h1>Connect TigerWorkouts</h1>${who(a.client, a.redirect)}${a.error && a.anonymous ? `<p class="err">${esc(a.error)}</p>` : ''}${a.anonymous ? anonymousCard(a.rid) : ''}
+<div class="card">${a.error && !a.anonymous ? `<p class="err">${esc(a.error)}</p>` : ''}
 <form method="post" action="/authorize/email"><input type="hidden" name="rid" value="${esc(a.rid)}">
 <label for="email">Your TigerWorkouts email</label><input id="email" name="email" type="email" autocomplete="email" required>
 <button type="submit">Email me a code</button></form>
@@ -50,6 +55,25 @@ export const notOpenPage = (email?: string) =>
     403,
   );
 
+export const claimPage = (a: { id: string; error?: string }) =>
+  page(
+    'Keep your account · TigerWorkouts',
+    `<h1>Keep your TigerWorkouts account</h1><p>Add your email to the account your assistant made. Your workouts and history stay where they are, and you can sign in to the app with this email.</p>
+<div class="card">${a.error ? `<p class="err">${esc(a.error)}</p>` : ''}
+<form method="post" action="/claim/${esc(a.id)}"><label for="email">Email</label><input id="email" name="email" type="email" autocomplete="email" required autofocus>
+<button type="submit">Keep my account</button></form></div>`,
+  );
+
+export const claimDonePage = (r: { status: 'claimed' | 'confirm'; email: string }) =>
+  page(
+    'Account kept · TigerWorkouts',
+    r.status === 'claimed'
+      ? `<h1>Done</h1><p>Your account is now <b>${esc(r.email)}</b>. Sign in to the app with that email to see your workouts.</p>${APP_LINKS}`
+      : `<h1>Check your email</h1><p>We sent a confirmation link to <b>${esc(r.email)}</b>. Click it, then sign in to the app with that email to see your workouts.</p>${APP_LINKS}`,
+  );
+
+const APP_LINKS = `<a class="btn" href="https://testflight.apple.com/join/r8uFaWKY">Get the iPhone app (lock-screen timer &amp; notifications)</a><a class="btn ghost" href="https://tigerworkouts.com/">Open tigerworkouts.com</a>`;
+
 export const errorPage = (msg: string, status = 400) => page('Something went wrong · TigerWorkouts', `<h1>That didn't work</h1><p>${esc(msg)}</p><p class="muted">Start again from your assistant's connector settings.</p>`, status);
 
 const TOOLS: [string, string][] = [
@@ -62,15 +86,18 @@ const TOOLS: [string, string][] = [
   ['create_workout', 'save a new workout (private by default)'],
   ['update_workout', 'change one of your own workouts'],
   ['preview_workout_url', 'a link that opens a workout with no sign-in'],
+  ['start_workout', 'run a workout now with a timer in the chat'],
+  ['log_session', 'save a finished session to the history'],
+  ['claim_account', 'add an email to an account started without one'],
 ];
 
-export const landingText = (origin: string, google = false) => `# TigerWorkouts MCP server
+export const landingText = (origin: string, google = false, anonymous = false) => `# TigerWorkouts MCP server
 
 TigerWorkouts (https://tigerworkouts.com) is a workout app with a guided timer. This is its Model Context Protocol server: an AI assistant connected here can read a person's training history and coach from it, find workouts, and write new workouts into their account.
 
 MCP endpoint (Streamable HTTP): ${origin}/mcp
 Auth: OAuth 2.1 with PKCE. Discovery: ${origin}/.well-known/oauth-protected-resource/mcp and ${origin}/.well-known/oauth-authorization-server. Clients register with Client ID Metadata Documents or Dynamic Client Registration (${origin}/oauth/register). The person signs in with their TigerWorkouts account (email code${google ? ' or Google' : ''}); the assistant then acts as that person and sees only what they can see.
-Access: invite-only for now. Accounts not on the list get a "not open yet" page after sign-in.
+${anonymous ? 'Access: anyone. "Start now, no account needed" makes an anonymous account in one tap; claim_account adds an email to it later. Existing accounts sign in with email.' : 'Access: invite-only for now. Accounts not on the list get a "not open yet" page after sign-in.'}
 
 Tools:
 ${TOOLS.map(([n, d]) => `- ${n}: ${d}`).join('\n')}
@@ -84,12 +111,12 @@ Connect:
 - Anything else that speaks MCP over HTTP with OAuth: point it at ${origin}/mcp.
 `;
 
-export const landingPage = (origin: string) =>
+export const landingPage = (origin: string, anonymous = false) =>
   page(
     'TigerWorkouts for AI assistants',
     `<h1>TigerWorkouts for AI assistants</h1>
 <p>Connect Claude, ChatGPT or any MCP client to your <a href="https://tigerworkouts.com">TigerWorkouts</a> account. Ask for coaching based on what you have actually lifted and run, and have it write the next session straight into the app.</p>
-<p class="muted">Invite-only for now. Machine-readable version: <a href="/llms.txt">/llms.txt</a>.</p>
+<p class="muted">${anonymous ? 'No account needed to start: connect, tap "Start now", and keep the account later with your email.' : 'Invite-only for now.'} Machine-readable version: <a href="/llms.txt">/llms.txt</a>.</p>
 <h2>Server URL</h2><pre>${esc(origin)}/mcp</pre>
 <h2>Claude</h2><p>Settings → Connectors → <b>Add custom connector</b>, paste the URL, then <b>Connect</b> and sign in with your TigerWorkouts email.</p>
 <p>Claude Code:</p><pre>claude mcp add --transport http tigerworkouts ${esc(origin)}/mcp</pre>
