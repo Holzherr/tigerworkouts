@@ -71,6 +71,24 @@ describe('deltaLines', () => {
   });
 });
 
+describe('an AMRAP against last time', () => {
+  it('sets rounds and reps apart, never the encoded numbers', () => {
+    const a = s('a', '2026-09-01T10:00:00Z', [], { runsheetId: 'cindy', score: 6.015 });
+    const b = s('b', '2026-09-08T10:00:00Z', [], { runsheetId: 'cindy', score: 7.003 });
+    expect(deltaLines(celebrate(b, [a, b]), 'rounds')[0]).toEqual({ label: 'Score', text: '+1 round − 12 reps', better: true });
+    const c = s('c', '2026-09-15T10:00:00Z', [], { runsheetId: 'cindy', score: 7.01 });
+    expect(deltaLines(celebrate(c, [a, b, c]), 'rounds')[0]).toEqual({ label: 'Score', text: '+7 reps', better: true });
+  });
+});
+
+describe('a capped for-time', () => {
+  it('is not set against a finish time', () => {
+    const a = s('a', '2026-09-01T10:00:00Z', [], { runsheetId: 'fran', score: 420 });
+    const b = s('b', '2026-09-08T10:00:00Z', [], { runsheetId: 'fran', score: 720, capped: true, capReps: 57, completed: false });
+    expect(celebrate(b, [a, b]).deltas.score).toBeUndefined();
+  });
+});
+
 describe('short sessions', () => {
   it('say seconds under a minute', () => {
     const a = s('a', '2026-09-01T10:00:00Z', [], { durationSec: 37 });

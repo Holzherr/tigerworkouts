@@ -66,6 +66,11 @@ import { timerTarget, today as todayFor, type Intent } from '@/features/runsheet
 import { exerciseStall, workoutStall, type Stall } from '@/features/results/stall';
 import { dismissStall, getDismissed, getIntent, setIntent as storeIntent } from '@/features/results/suggestions';
 import { alternatives } from '@/features/exercises/alternatives';
+import { myAssignments, type MyAssignment } from '@/features/cloud/coaching';
+import { doneBy } from '@/features/coaching/rollup';
+import { FromCoach } from '@/features/coaching/components/from-coach';
+import { CoachesPage } from '@/features/coaching/components/coaches-page';
+import { ClientRoute, CoachRoute, JoinRoute, MyCoaches } from '@/features/coaching/components/coaching-routes';
 
 
 const TABS = [
@@ -75,12 +80,15 @@ const TABS = [
 ] as const;
 type Tab = (typeof TABS)[number]['id'];
 
-type Route = { name: 'tab'; tab: Tab; sub?: string } | { name: 'new' } | { name: 'workout' | 'edit' | 'follow' | 'result' | 'do' | 'session' | 'import' | 'log' | 'creator' | 'exercise'; id: string };
+type Route = { name: 'tab'; tab: Tab; sub?: string } | { name: 'new' } | { name: 'coaches' } | { name: 'coach'; id?: string } | { name: 'workout' | 'edit' | 'follow' | 'result' | 'do' | 'session' | 'import' | 'log' | 'creator' | 'exercise' | 'join'; id: string };
 
 const parse = (hash: string): Route => {
   const seg = hash.replace(/^#\/?/, '').split('/');
   const id = seg[1] ? decodeURIComponent(seg[1]) : '';
   if (seg[0] === 'new') return { name: 'new' };
+  if (seg[0] === 'coaches') return { name: 'coaches' };
+  if (seg[0] === 'coach') return { name: 'coach', id: id || undefined };
+  if (seg[0] === 'join' && id) return { name: 'join', id };
   if (seg[0] === 'w' && id) return { name: 'workout', id };
   if (seg[0] === 'edit' && id) return { name: 'edit', id };
   if (seg[0] === 'follow' && id) return { name: 'follow', id };
@@ -119,6 +127,13 @@ export default function App() {
   useEffect(() => {
     fetchPublicWorkouts().then(setRemote).catch(() => {});
   }, [cloud.user]);
+  // Workouts a coach sent this account (migration 0008); they open and run like any other, never synced as its own.
+  const [fetched, setAssigned] = useState<MyAssignment[]>([]);
+  const [coachTick, setCoachTick] = useState(0);
+  useEffect(() => {
+    if (cloud.user) myAssignments().then(setAssigned).catch(() => setAssigned([]));
+  }, [cloud.user, coachTick]);
+  const assigned = useMemo(() => (cloud.user ? fetched : []), [cloud.user, fetched]);
   const [route, setRoute] = useState<Route>(() => parse(location.hash));
   // The list the current workout was opened from. Set by every path into /w/:id, cleared whenever a
   // tab shows, so a Repeat or a Me-tab card after a Discover visit cannot inherit a stale origin.
@@ -136,7 +151,11 @@ export default function App() {
     return () => removeEventListener('hashchange', on);
   }, []);
 
-  const all = useMemo(() => [...withStarter(st.workouts, st.results), ...remote.filter(r => !st.workouts.some(w => w.id === r.id)), ...IMPORTED.map(w => w.runsheet)], [st.workouts, st.results, remote]);
+  const all = useMemo(() => {
+    const coach = assigned.flatMap(a => (a.workout && !st.workouts.some(w => w.id === a.workout!.id) ? [a.workout] : []));
+    const coachIds = new Set(coach.map(w => w.id));
+    return [...withStarter(st.workouts, st.results), ...coach.filter((w, i) => coach.findIndex(x => x.id === w.id) === i), ...remote.filter(r => !st.workouts.some(w => w.id === r.id) && !coachIds.has(r.id)), ...IMPORTED.map(w => w.runsheet)];
+  }, [st.workouts, st.results, remote, assigned]);
   const byId = useMemo(() => new Map(all.map(r => [wid(r), r])), [all]);
   const lookup = (id: string) => byId.get(id);
   const refTitle = (id: string) => byId.get(id)?.title;
@@ -247,6 +266,24 @@ export default function App() {
     </Sheet>
   );
 
+  const signInCard = (title: string, reasons: string[]) => <SignInCard title={title} reasons={reasons} onSendCode={sendCode} onVerify={async (e, c) => { await verifyCode(e, c); act.setSignedIn(true); }} onGoogle={google ? signInGoogle : undefined} />;
+  if (route.name === 'coaches') {
+    return (
+      <div className="h-dvh">
+        <CoachesPage onBack={() => back('/discover')} onStart={() => go('/coach')} shots={{ dashboard: 'media/coaches/dashboard.png', client: 'media/coaches/client.png', join: 'media/coaches/join.png' }} />
+      </div>
+    );
+  }
+  if (route.name === 'join') {
+    return full(<JoinRoute key={route.id} code={route.id} signedIn={!!cloud.user} signIn={signInCard('Sign in to accept', ['A free account; no password, we email you a 6-digit code', 'Same account as the iPhone app'])} onAccepted={() => setCoachTick(t => t + 1)} onContinue={() => go('/discover')} />);
+  }
+  if (route.name === 'coach' && route.id && cloud.user) {
+    const mine = st.workouts.filter(w => w.id);
+    return full(<ClientRoute key={route.id} clientId={route.id} me={cloud.user.id} workouts={mine} lookup={lookup} exercise={k => ({ name: library[k]?.name ?? k, unit: library[k]?.unit ?? '' })} onBack={() => go('/coach')} syncNow={cloud.syncNow} say={say} />);
+  }
+  if (route.name === 'coach') {
+    return full(<CoachRoute signedIn={!!cloud.user} signIn={signInCard('Sign in to coach', ['Your clients link to your account', 'No password: we email you a 6-digit code'])} onOpenClient={id => go(`/coach/${encodeURIComponent(id)}`)} onHowItWorks={() => go('/coaches')} onBack={() => go('/me')} say={say} />);
+  }
   if (route.name === 'workout') {
     const r = byId.get(route.id);
     if (!r) return shell('discover', <Missing />);
@@ -498,7 +535,7 @@ export default function App() {
                 {r && <WorkoutIcon runsheet={r} size={36} />}
                 <div className="min-w-0 flex-1">
                   <div className="truncate text-[14px] font-bold">{res.title ?? r?.title ?? res.runsheetId}</div>
-                  <div className="text-[12px] text-muted">{localDate(res.startedAt)}{res.durationSec ? ` · ${Math.round(res.durationSec / 60)} min` : res.activity ? ` · ${res.activity.minutes} min` : ''}{res.completed === false ? ' · stopped early' : ''}{res.rpe ? ` · effort ${res.rpe}` : ''}</div>
+                  <div className="text-[12px] text-muted">{localDate(res.startedAt)}{res.durationSec ? ` · ${Math.round(res.durationSec / 60)} min` : res.activity ? ` · ${res.activity.minutes} min` : ''}{res.completed === false && !res.capped ? ' · stopped early' : ''}{res.rpe ? ` · effort ${res.rpe}` : ''}</div>
                 </div>
                 <div className="text-[15px] font-extrabold tabular-nums">{r ? fmtScore(scoreType(r), res.score, res.scoreText) : (res.scoreText ?? '')}</div>
               </button>
@@ -541,6 +578,7 @@ export default function App() {
             setTimeout(() => URL.revokeObjectURL(url), 1000);
           }}
           onImport={() => setImportOpen(true)}
+          onCoach={() => go('/coach')}
         >
           {!cloud.user && <SignInCard title="Sign in to sync" reasons={['Sessions logged here are kept on this device until you do', 'Same account as the iPhone app: one history on both', 'No password: we email you a 6-digit code']} onSendCode={sendCode} onVerify={async (e, c) => { await verifyCode(e, c); act.setSignedIn(true); }} onGoogle={google ? signInGoogle : undefined} />}
           {cloud.user && (
@@ -551,7 +589,8 @@ export default function App() {
               </Button>
             </div>
           )}
-          {cloud.user && <CreatorPageCard publicCount={st.workouts.filter(w => w.public).length} onOpenPage={key => go(`/c/${encodeURIComponent(key)}`)} />}
+          {cloud.user && <MyCoaches me={cloud.user.id} about={n => (n.assignmentId ? assigned.find(a => a.id === n.assignmentId)?.workout?.title : undefined)} onLeft={() => (setCoachTick(t => t + 1), say('Coaching ended'))} />}
+          {cloud.user && <CreatorPageCard publicCount={st.workouts.filter(w => w.public).length} onOpenPage={key => go(`/c/${encodeURIComponent(key)}`)} onCoach={() => go('/coach')} />}
           <Button variant="ghost" block onClick={() => setSettingsOpen(true)}>
             Name, avatar and app settings
           </Button>
@@ -582,7 +621,7 @@ export default function App() {
     const stills = Object.values(LIB).filter(e => e.poster).slice(0, 28).map(e => e.poster!);
     return (
       <div className="h-dvh">
-        <LandingScreen onGetStarted={() => leaveLanding('/me')} onSignIn={() => leaveLanding('/me')} onBrowse={() => leaveLanding('/discover/search')} workoutCount={all.length} exerciseCount={Object.keys(FULL_LIBRARY).length} clips={clips} stills={stills} demo={<TimerDemo />} />
+        <LandingScreen onCoaches={() => go('/coaches')} onGetStarted={() => leaveLanding('/me')} onSignIn={() => leaveLanding('/me')} onBrowse={() => leaveLanding('/discover/search')} workoutCount={all.length} exerciseCount={Object.keys(FULL_LIBRARY).length} clips={clips} stills={stills} demo={<TimerDemo />} />
       </div>
     );
   }
@@ -634,7 +673,8 @@ export default function App() {
     }
     return undefined;
   })();
-  const top = next && (
+  const fromCoach = assigned.length > 0 && <FromCoach assignments={assigned} isDone={a => !!doneBy(a, st.results)} onOpen={r => open(r, 'coach')} />;
+  const nextCard = next && (
     <NextUpCard
       runsheet={next.runsheet}
       reason={next.reason}
@@ -644,6 +684,12 @@ export default function App() {
       onOpen={() => open(next.runsheet, 'home')}
       onStart={() => (unlockAudio(), setDrafted(null), setFrom('home'), go(`/do/${encodeURIComponent(wid(next.runsheet))}`))}
     />
+  );
+  const top = (fromCoach || nextCard) && (
+    <>
+      {fromCoach}
+      {nextCard}
+    </>
   );
   return shell('discover', <DiscoverScreen key={initialTab} initialTab={initialTab} workouts={all} results={st.results} savedIds={st.saved} above={above} top={top} onCreate={() => (setDrafted(null), go('/new'))} onOpen={open} onOpenProgram={(_, days) => open(days[0], 'search')} />);
 }
@@ -792,6 +838,12 @@ const RunSession = ({ runsheet, results, intent, equipment, library, origin: sta
     act.drop(stepId);
     undo.offer(step?.kind === 'exercise' ? `Dropped ${step.exercise.name}` : 'Dropped step', () => act.restore(before));
   };
+  const endBlock = () => {
+    const before = state;
+    act.endBlock();
+    if (Runner.endBlock(before, Date.now()).phase === 'done') return;
+    undo.offer('Block ended', () => act.restore(before));
+  };
   return (
     <div className="relative h-dvh">
       {!over && undo.toast}
@@ -802,7 +854,7 @@ const RunSession = ({ runsheet, results, intent, equipment, library, origin: sta
           </div>
         </div>
       )}
-      <TimerScreen runsheet={runsheet} state={state} now={now} onDone={act.done} onSkip={skip} onBack={act.back} onPause={act.pause} onResume={act.resume} onAdjust={act.adjust} onAdjustIncline={act.adjustIncline} onSetReps={act.setReps} onSetAmount={act.setAmount} onDrop={drop} onStartBlock={startBlock} onAdjustStep={act.adjustStep} sets={{ adjust: act.adjustAt, setReps: act.setRepsAt, setAmount: act.setAmountAt, complete: act.completeSet, reopen: act.reopenSet, lastFor: (step, round) => lastSets(results, step)?.[round], fill: act.fillSet, setType: act.setTypeAt }} onAdjustRest={act.extendRest} lastFor={step => lastSet(results, step)} onFill={act.fillSet} ghost={pace?.text} goal={goal} muted={muted} onToggleMute={() => { setMuted(!muted); setMute(!muted); }} equipment={equipment} alternativesFor={(step, target) => alternatives(step.exercise.key, target, library, 6, equipment)} onSwap={act.swap} prs={prs} onFinish={() => { const res = log(state.phase === 'done' ? state : Runner.finish(state, Date.now())); Runner.clearPersisted(); onFinish(res); }} onExit={() => (act.discard(), onExit())} />
+      <TimerScreen runsheet={runsheet} state={state} now={now} onDone={act.done} onSkip={skip} onBack={act.back} onPause={act.pause} onResume={act.resume} onAdjust={act.adjust} onAdjustIncline={act.adjustIncline} onSetReps={act.setReps} onSetAmount={act.setAmount} onDrop={drop} onStartBlock={startBlock} onAdjustStep={act.adjustStep} sets={{ adjust: act.adjustAt, setReps: act.setRepsAt, setAmount: act.setAmountAt, complete: act.completeSet, reopen: act.reopenSet, lastFor: (step, round) => lastSets(results, step)?.[round], fill: act.fillSet, setType: act.setTypeAt }} onAdjustRest={act.extendRest} lastFor={step => lastSet(results, step)} onFill={act.fillSet} ghost={pace?.text} goal={goal} muted={muted} onToggleMute={() => { setMuted(!muted); setMute(!muted); }} equipment={equipment} alternativesFor={(step, target) => alternatives(step.exercise.key, target, library, 6, equipment)} onSwap={act.swap} prs={prs} onEndBlock={endBlock} onFinish={() => { const res = log(state.phase === 'done' ? state : Runner.finish(state, Date.now())); Runner.clearPersisted(); onFinish(res); }} onExit={() => (act.discard(), onExit())} />
     </div>
   );
 };

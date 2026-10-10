@@ -218,6 +218,35 @@ final class WalkthroughUITests: XCTestCase {
         tap(app.buttons["Done"])
     }
 
+    /// At a block's gate, Previous step takes back a stray Done; mid-block, the X ends the block in
+    /// one tap and parks at the next gate.
+    func testGateBackAndEndBlock() {
+        open("Iron Base · Whole Body A")
+        tap(app.buttons["Start workout"])
+        XCTAssertTrue(app.buttons["End session"].waitForExistence(timeout: 5))
+        let gate = app.buttons.matching(NSPredicate(format: "label BEGINSWITH 'Start ' AND label != 'Start workout'")).firstMatch
+        for _ in 0..<60 where !(gate.exists && gate.isHittable) {
+            if app.buttons["Skip"].exists { app.buttons["Skip"].tap() }
+        }
+        XCTAssertTrue(gate.waitForExistence(timeout: 5), "the session should reach a block's gate")
+        XCTAssertTrue(app.buttons["Previous step"].isHittable, "the gate should offer Previous step")
+        snap("32a Gate with Previous step")
+        let name = gate.label
+        tap(gate)
+        XCTAssertTrue(app.buttons["End session"].waitForExistence(timeout: 5))
+        tap(app.buttons["End session"])
+        let end = app.buttons["End this block"]
+        XCTAssertTrue(end.waitForExistence(timeout: 5), "a running block can be ended from the X")
+        snap("32b End this block")
+        end.tap()
+        let next = app.buttons.matching(NSPredicate(format: "label BEGINSWITH 'Start ' AND label != 'Start workout' AND label != %@", name)).firstMatch
+        XCTAssertTrue(next.waitForExistence(timeout: 5), "ending the block should park at the next gate")
+        snap("32c Next gate after ending a block")
+        tap(app.buttons["End session"])
+        tap(app.buttons["Finish and save"])
+        tap(app.buttons["Done"])
+    }
+
     /// A program's rule on the finish screen, as on the web's result sheet: Made it / Missed on
     /// each lift it reads, and "Next time" with the load it makes of the session.
     func testMadeItOnTheFinishScreen() {
@@ -968,7 +997,25 @@ final class WalkthroughUITests: XCTestCase {
         signIn.tap()
         XCTAssertTrue(app.buttons["sign-in-apple"].waitForExistence(timeout: 5), "Sign in with Apple should be offered")
         snap("109 Sign in, Apple first")
+        tap(app.buttons["use-password"])
+        XCTAssertTrue(app.secureTextFields["password-field"].waitForExistence(timeout: 3), "the password route reveals a password field")
+        snap("109b Sign in with a password")
         tap(app.buttons["Cancel"])
+    }
+
+    /// Mid-session, the Session sheet's set grid for a treadmill block has an Incline row.
+    func testSessionSheetIncline() {
+        open("Engine Room · Ten by One")
+        tap(app.buttons["Start workout"])
+        XCTAssertTrue(app.buttons["End session"].waitForExistence(timeout: 5))
+        tap(app.buttons["Session overview"])
+        let incline = app.descendants(matching: .any)["grid-incline"]
+        for _ in 0..<4 where !(incline.exists && incline.isHittable) { app.swipeUp(velocity: .slow) }
+        XCTAssertTrue(incline.waitForExistence(timeout: 5), "the treadmill block's grid should show its incline")
+        snap("111 Session sheet, treadmill incline")
+        tap(app.buttons["Close"])
+        tap(app.buttons["End session"])
+        tap(app.buttons["Discard"])
     }
 
     /// The first session asks once for notifications, for the end of a rest in the background.
@@ -1267,7 +1314,74 @@ final class WalkthroughUITests: XCTestCase {
         tap(app.buttons["Session menu"])
         XCTAssertTrue(app.buttons["Discard"].waitForExistence(timeout: 5), "the ⋯ menu should offer Discard")
         tap(app.buttons["Finish and save"])
+        XCTAssertTrue(app.staticTexts["Workout saved"].waitForExistence(timeout: 10), "Finish and save should save the session")
         tap(app.buttons["Done"])
+    }
+
+    /// Eight sets of swings: the set you are on comes into view without a swipe, and the table
+    /// fades out only at an edge with more of it behind.
+    func testSetTableFollowsTheSet() {
+        open("Tabata Kettlebell Swings")
+        tap(app.buttons["Start workout"])
+        XCTAssertTrue(app.buttons["Tick set 1"].waitForExistence(timeout: 12), "the swings should run as a set table")
+        let rows = app.scrollViews["set-rows"]
+        XCTAssertFalse((rows.value as? String ?? "").contains("faded top"), "at the top of the table nothing fades above set 1")
+        // The window onto the table, for a side-by-side with main (the header is not pinned).
+        let height = XCTAttachment(string: "set table window \(rows.frame.height) pt")
+        height.name = "Set table window height"
+        height.lifetime = .keepAlways
+        add(height)
+        snap("120 Set table at the top, no fade above")
+
+        // Each set ended by its tick (set 3 by a tap on set 3), each rest skipped, up to set 7.
+        for n in 1...6 {
+            let tick = app.buttons["Tick set \(n)"]
+            XCTAssertTrue(tick.waitForExistence(timeout: 5))
+            if n == 6 {
+                XCTAssertTrue(tick.isHittable, "after a tap on set 3, set 6 should come into view on its own")
+            }
+            tick.tap()
+            XCTAssertTrue(app.buttons["Un-tick set \(n)"].waitForExistence(timeout: 5))
+            // "Done early" is on a timed set and gone in the rest. ("Rest" is also on the page under the timer.)
+            let early = app.buttons["Done early"]
+            expectation(for: NSPredicate(format: "exists == false"), evaluatedWith: early)
+            waitForExpectations(timeout: 5)
+            tap(app.buttons["Skip"])
+            XCTAssertTrue(early.waitForExistence(timeout: 5), "skipping the rest should start set \(n + 1)")
+        }
+
+        // Set 7 runs out on its 20 s clock; set 8 is next, and in view.
+        XCTAssertTrue(app.buttons["Un-tick set 7"].waitForExistence(timeout: 30), "set 7 should end by its timer")
+        sleep(1)
+        XCTAssertTrue(app.buttons["Tick set 8"].isHittable, "set 8 should be on screen without a scroll")
+        XCTAssertTrue((rows.value as? String ?? "").contains("faded top"), "with sets above, the top edge should fade")
+        snap("121 Set table on set 8, sets above fade")
+
+        tap(app.buttons["Session menu"])
+        tap(app.buttons["Finish and save"])
+        XCTAssertTrue(app.staticTexts["Workout saved"].waitForExistence(timeout: 10))
+        tap(app.buttons["Done"])
+    }
+
+    /// Treadmill sprints counted in metres: the set being done has −/+ on speed, metres and incline,
+    /// and none of them is pushed past the edge of the table.
+    func testSetTableInclineOnMetres() {
+        open("Engine Room · Ten by One")
+        tap(app.buttons.matching(NSPredicate(format: "label BEGINSWITH[c] 'Treadmill sprints'")).firstMatch)
+        tap(app.buttons.matching(NSPredicate(format: "label BEGINSWITH[c] 'How long or how many'")).firstMatch)
+        tap(app.buttons.matching(NSPredicate(format: "label BEGINSWITH 'Measured in'")).firstMatch)
+        tap(app.buttons["Metres"])
+        for done in ["Done", "Done", "Start workout"] { tap(app.buttons[done]) }
+        // Past the lead-in and the warm-up walk, then start the parked block.
+        for _ in 0..<4 where !app.buttons["Tick set 1"].waitForExistence(timeout: 3) { tap(app.buttons["Skip"].exists ? app.buttons["Skip"] : app.buttons["Start Ten by one"]) }
+        let table = app.descendants(matching: .any)["timer-set-grid"]
+        let names = ["Set 1 load, less", "Set 1 load, more", "Set 1 incline, less", "Set 1 incline, more", "Set 1 m, less", "Set 1 m, more", "Tick set 1"]
+        let frames = names.map { table.buttons[$0].frame }
+        for (i, at) in frames.enumerated() {
+            XCTAssertTrue(table.frame.minX <= at.minX && at.maxX <= table.frame.maxX && !frames[(i + 1)...].contains { at.insetBy(dx: 1, dy: 1).intersects($0) }, "\(names[i]) at \(at) is outside \(table.frame) or under another control: \(frames)") }
+        snap("125 Set table, metres and incline")
+        tap(app.buttons["End session"])
+        tap(app.buttons["Discard"])
     }
 
 }
