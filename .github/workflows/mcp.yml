@@ -6,9 +6,9 @@ name: MCP worker
 on:
   push:
     branches: [main]
-    paths: ['mcp/**', 'src/features/**', 'src/app/config.ts', 'imports/**', '.github/workflows/mcp.yml']
+    paths: ['mcp/**', 'src/features/**', 'src/shared/**', 'src/app/config.ts', 'imports/**', 'package-lock.json', '.github/workflows/mcp.yml']
   pull_request:
-    paths: ['mcp/**', 'src/features/**', 'src/app/config.ts', 'imports/**', '.github/workflows/mcp.yml']
+    paths: ['mcp/**', 'src/features/**', 'src/shared/**', 'src/app/config.ts', 'imports/**', 'package-lock.json', '.github/workflows/mcp.yml']
   workflow_dispatch:
 
 permissions:
@@ -26,7 +26,12 @@ jobs:
         with:
           node-version: '24'
           cache: npm
-          cache-dependency-path: mcp/package-lock.json
+          cache-dependency-path: |
+            package-lock.json
+            mcp/package-lock.json
+      # The worker imports app code (src/), which imports root packages (clsx, tailwind-merge…).
+      - run: npm ci
+        working-directory: .
       - run: npm ci
       - run: npm run check-types
       - run: npm test
