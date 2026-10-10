@@ -14,6 +14,7 @@ src/          the web app — React, a component library first and an app second
 imports/      472 public workouts and the exercises they need; the one catalogue both apps read
 ios/          the native iPhone app (SwiftUI) — see ios/README.md
 legacy/       the v0.9 single-file app, served at /legacy/; also holds the Supabase schema
+mcp/          the MCP server for AI assistants (Cloudflare Worker, mcp.tigerworkouts.com) — specs/mcp.md
 tools/        catalogue validation, the v0.9 library port, and the iOS catalogue export
 .github/      the build and deploy to tigerworkouts.com
 ```
@@ -21,6 +22,7 @@ tools/        catalogue validation, the v0.9 library port, and the iOS catalogue
 - **Live:** https://tigerworkouts.com — the React app (PWA)
 - **Legacy:** https://tigerworkouts.com/legacy/ — v0.9, kept after the cutover, no new features
 - **Storybook:** https://tigerworkouts.com/storybook/
+- **MCP server:** https://mcp.tigerworkouts.com — connect Claude or ChatGPT; deployed by hand with `cd mcp && npm run deploy`
 
 ## Deploy
 
@@ -85,9 +87,20 @@ attribution, plus 277 exercises they needed. Format in `imports/SCHEMA.md`, find
 list in `imports/LEARNINGS.md`. Validate with `node tools/validate-imports.mjs`; browse them in
 Storybook under Workouts → Imported. Verbatim originals live in the private assistant repo.
 
+`imports/exercise-details.json` gives all 399 catalogue exercises a movement pattern, equipment,
+muscles, difficulty, cues, mistakes, easier/harder swaps and default sets, reps and rest;
+`imports/catalogue/new-exercises.json` adds 50 staples (they show in the web picker; iOS after
+`npm run export:ios`). No app reads the details yet. Validate with `node tools/validate-exercises.mjs`.
+
 ## Status
 
-Live since 6 Sep 2026. Timer (rounds, for time, AMRAP, EMOM, ladders, resume after reload),
+Live since 6 Sep 2026. Timer (rounds, for time, AMRAP, EMOM, ladders, resume after reload; big
+button Pause on a countdown, "Set 2 of 4 done" on a set; Finish and Discard in a ⋯ top right;
+on iOS a straight-set block's table keeps the current set centred and fades at an edge with more
+rows behind it, and on a treadmill has an INCL column with −/+ by 0.5 % on the set being set;
+parked before a block, its card has a − / + for every dial, speed or load and a treadmill's
+incline, each with last time's setting; the Session sheet's set grid of a treadmill step has an
+Incline − / + above its sets),
 Supabase sign-in (email code and Google) and three-way sync (sessions, own workouts, favourites,
 prefs, custom exercises; v0.9 rows preserved), editor with drag-to-group and text commands, 472
 imported workouts, scores and progression, follow-along videos, Discover with recommendations
@@ -104,6 +117,12 @@ share link) so the share started from a home recommendation can be measured. The
 same field from its Workouts tab (Pick up again → history, Mine → mine, a catalogue section or a
 search result → search, Saved → saved) and from a `tigerworkouts://w/` link (link). The origin
 rides in the crash-safe copy on both, so a resumed or recovered session keeps it.
+Sign out pushes first, then empties the device for the next account (sessions, workouts, favourites,
+saved, exercises, training maxes and the `tiger:synced` snapshot); while the push fails or a session
+is still unsaved to the account it refuses with a message instead, so no unsynced session is lost.
+Coaching (`#/coach`, `#/coaches`, migration 0008): a PT invites clients by link, sends them workouts
+with a note, sees their sessions against what was prescribed and trades notes; the comparison with
+Hevy Coach and the next three items are in `specs/pt-publishing.md` (draft).
 
 Not yet: imperial units in the UI (stored only), Fitbit heart rate is read on the session page but
 not charted, Storybook stories for every screen state.

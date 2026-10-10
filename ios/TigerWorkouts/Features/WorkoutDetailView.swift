@@ -46,7 +46,7 @@ struct WorkoutDetailView: View {
         RunsheetEditor(
             runsheet: runsheet,
             setHint: { step, round in
-                let sets = LastTime.sets(store.results, for: step) ?? []
+                let sets = LastTime.sets(store.results, for: step, in: runsheet) ?? []
                 return sets.indices.contains(round) ? LastTime.setLabel(sets[round]) : nil
             },
             summary: settingSummary,
@@ -70,6 +70,9 @@ struct WorkoutDetailView: View {
                         .font(.callout)
                         .foregroundStyle(Brand.body)
                         .lineSpacing(3)
+                }
+                if let assignment = store.assignment(forWorkout: runsheet.key) {
+                    CoachNotesCard(assignment: assignment)
                 }
                 if !runnable {
                     Text("Add an exercise to get going. Start shows up once there is something to run.")
@@ -404,7 +407,7 @@ struct WorkoutDetailView: View {
             parts.append("\(Format.number(kg)) \(e.shortUnit)")
         }
         if let incline = e.incline { parts.append("\(Format.number(incline))% incline") }
-        if let last = LastTime.label(store.results, for: e) { parts.append(last) }
+        if let last = LastTime.label(store.results, for: e, in: runsheet) { parts.append(last) }
         return parts.joined(separator: " · ")
     }
 

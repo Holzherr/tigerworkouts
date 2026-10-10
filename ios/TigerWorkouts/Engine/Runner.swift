@@ -106,6 +106,13 @@ struct RunState: Hashable, Sendable, Codable {
     /// warm-up.
     var partAt: [Int: Double]?
     var partOut: [Int: Double]?
+    /// Blocks whose time cap ran out before they were finished, and blocks ended early from the
+    /// menu: a for-time block in either did not finish, so its time is not a finish time.
+    var capped: [String]?
+    var endedEarly: [String]?
+    /// Session time, seconds, each round of a block began its work, by block id and round: a
+    /// round's time runs from here, so the rest before it is not counted in it.
+    var roundAt: [String: [Int: Double]]?
 }
 
 enum Runner {
@@ -166,10 +173,13 @@ enum Runner {
             if mode == .ladder {
                 let rungs = b.ladder ?? [Double(b.repeatCount)]
                 for (ri, rung) in rungs.enumerated() {
-                    for s in b.rungSteps(rung) {
+                    let steps = b.rungSteps(rung)
+                    let lastWork = steps.lastIndex { $0.asExercise != nil } ?? -1
+                    for (j, s) in steps.enumerated() {
+                        if lastWork >= 0, j > lastWork, ri == rungs.count - 1 || b.restBetweenSec != nil { continue }
                         push(s) {
                             $0.blockId = b.id; $0.blockName = b.name; $0.mode = slotMode
-                            $0.round = ri; $0.rounds = rungs.count; $0.rung = rung; $0.capSec = b.timeCapSec
+                            $0.round = ri; $0.rounds = rungs.count; $0.rung = rung; $0.capSec = (b.timeCapSec ?? 0) > 0 ? b.timeCapSec : nil
                         }
                     }
                     between(ri, rungs.count)
@@ -200,12 +210,21 @@ enum Runner {
             let roundLen = b.steps.reduce(0.0) { $0 + estimate($1) }
             // An amrap's rounds are a guess to start from: a capped one grows a round at a time
             // (see `extendAmrap`) and ends on the cap, however fast the rounds go.
+            let capOrNil = (b.timeCapSec ?? 0) > 0 ? b.timeCapSec : nil
             let rounds: Int = mode == .amrap
-                ? max(2, Int(((b.timeCapSec ?? 600) / max(15, roundLen)).rounded(.up)))
+                ? max(2, Int(((capOrNil ?? 600) / max(15, roundLen)).rounded(.up)))
                 : max(1, b.repeatCount)
-            let cap = (mode == .amrap || mode == .fortime) ? b.timeCapSec : nil
+            let cap = (mode == .amrap || mode == .fortime) ? capOrNil : nil
+            // A rest after the round's last exercise is a rest before the next round: the last round
+            // has none (the gate or the end follows), and a rest between rounds stands in for it
+            // rather than running after it. An amrap keeps it, since its rounds run on until the cap.
+            let lastWork = b.steps.lastIndex { $0.asExercise != nil } ?? -1
+            func trailing(_ j: Int, _ ri: Int) -> Bool {
+                guard lastWork >= 0, j > lastWork else { return false }
+                return mode == .amrap ? b.restBetweenSec != nil : (ri == rounds - 1 || b.restBetweenSec != nil)
+            }
             for ri in 0..<rounds {
-                for s in b.steps {
+                for (j, s) in b.steps.enumerated() where !trailing(j, ri) {
                     var step = s
                     var plan: SetPlan?
                     // A set with its own reps runs them; its load goes on the slot for effectiveTarget.
@@ -337,9 +356,82 @@ enum Runner {
         return s
     }
 
-    /// Start the block the timer is parked on.
+    /// A block whose first slot runs on a clock — an EMOM, an AMRAP or a capped for-time, a timed
+    /// interval — gets the 5 s Get ready before it, as the session does: Start is tapped with the
+    /// phone in hand, not in position.
+    static func needsLead(_ sl: Slot?) -> Bool {
+        guard let sl else { return false }
+        return sl.capSec != nil || sl.mode == .emom || sl.seconds != nil
+    }
+
+    /// Start the block the timer is parked on: straight away, or after a Get ready when it runs on a clock.
     static func startBlock(_ s: RunState, now: Double) -> RunState {
-        s.phase == .ready ? activate(s, s.i, now) : s
+        guard s.phase == .ready else { return s }
+        guard needsLead(current(s)) else { return activate(s, s.i, now) }
+        var s = s
+        s.phase = .lead
+        s.slotStartedAt = now
+        s.endsAt = now + leadSec * 1000
+        s.remainingMs = nil
+        return s
+    }
+
+    /// When an EMOM work slot's minute (or interval) ends, ms; nil for other slots and before its
+    /// block starts.
+    private static func emomBoundary(_ s: RunState, _ sl: Slot) -> Double? {
+        guard sl.mode == .emom, sl.kind == .work, let every = sl.everySec, let id = sl.blockId, let began = s.blockStart[id] else { return nil }
+        return began + Double(sl.round + 1) * every * 1000
+    }
+
+    /// The work slot's EMOM minute ends on its own clock, not a countdown of the set's: shown as the
+    /// minute running down, with Done to log the set, rather than as timed work.
+    static func minuteOnly(_ sl: Slot?) -> Bool {
+        guard let sl else { return false }
+        return sl.mode == .emom && sl.kind == .work && sl.seconds == nil
+    }
+
+    /// An EMOM minute ran out on its work: the set in hand and the rest of the minute's sets are
+    /// logged as planned (they were done; nobody taps Done 24 times in an EMOM 12), and the next
+    /// minute's work starts at once — its wait is already over.
+    private static func nextMinute(_ given: RunState, _ now: Double) -> RunState {
+        guard let c = current(given), let block = c.blockId else { return advance(given, now: now) }
+        var s = given
+        var j = s.i
+        while j < s.slots.count, s.slots[j].blockId == block, s.slots[j].round == c.round, !s.slots[j].untilBoundary {
+            let sl = s.slots[j]
+            if sl.kind == .work, s.actuals[sl.id]?.doneAt == nil {
+                var a = s.actuals[sl.id] ?? Actual()
+                if j == given.i, let worked = workedSeconds(given, sl, now) { a.seconds = worked }
+                a.doneAt = now
+                a.at = elapsed(given, now: now).rounded()
+                s.actuals[sl.id] = a
+                s.blockDone[block, default: 0] += 1
+            }
+            j += 1
+        }
+        if j < s.slots.count, s.slots[j].untilBoundary, s.slots[j].blockId == block, s.slots[j].round == c.round { j += 1 }
+        return enter(s, j, now)
+    }
+
+    /// The block's cap has run out: what is left of it is skipped, and it is marked as capped.
+    private static func capOut(_ given: RunState, _ block: String, _ now: Double, from: Int? = nil) -> RunState {
+        var s = given
+        var j = from ?? s.i
+        while j < s.slots.count, s.slots[j].blockId == block { j += 1 }
+        if !(s.capped ?? []).contains(block) { s.capped = (s.capped ?? []) + [block] }
+        return enter(s, j, now)
+    }
+
+    /// End the running block here, in one tap: what is left of it is skipped and the next block's
+    /// gate (or the end of the session) comes up. Cutting a circuit short is one tap, not one per
+    /// station.
+    static func endBlock(_ given: RunState, now: Double) -> RunState {
+        guard let c = current(given), let block = c.blockId, given.phase == .running || given.phase == .paused else { return given }
+        var s = given
+        var j = s.i
+        while j < s.slots.count, s.slots[j].blockId == block { j += 1 }
+        s.endedEarly = (s.endedEarly ?? []) + [block]
+        return enter(s, j, now)
     }
 
     private static func activate(_ s: RunState, _ i: Int, _ now: Double) -> RunState {
@@ -363,16 +455,19 @@ enum Runner {
         // A capped block that has run out: skip its remaining slots.
         if let cap = slot.capSec, let id = slot.blockId, let began = s.blockStart[id] {
             let into = (now - began) / 1000
-            if into >= cap {
-                var j = i
-                while j < s.slots.count, s.slots[j].blockId == id { j += 1 }
-                return enter(s, j, now)
-            }
+            if into >= cap { return capOut(s, id, now, from: i) }
+        }
+        if slot.kind == .work, let id = slot.blockId, s.roundAt?[id]?[slot.round] == nil {
+            s.roundAt = s.roundAt ?? [:]
+            s.roundAt![id, default: [:]][slot.round] = elapsed(s, now: now)
         }
         s.i = i
         s.phase = .running
         s.slotStartedAt = now
         s.endsAt = seconds.map { now + $0 * 1000 }
+        // EMOM work ends on its minute's boundary at the latest: the next minute starts on the
+        // clock whether or not Done was tapped (see `nextMinute`).
+        if let boundary = emomBoundary(s, slot), boundary > now { s.endsAt = min(s.endsAt ?? boundary, boundary) }
         s.remainingMs = nil
         return s
     }
@@ -382,7 +477,7 @@ enum Runner {
         if given.phase == .done { return given }
         // Done on a paused timer: the pause comes out first, and a paused lead-in is still a lead-in.
         var s = given.phase == .paused ? resume(given, now: now) : given
-        if s.phase == .lead { return enter(s, 0, now) }
+        if s.phase == .lead { return enter(s, s.i, now) }
         if s.phase == .ready {
             let sameParts = s.i + 1 < s.slots.count && s.slots[s.i + 1].part == s.slots[s.i].part
             return activate(s, sameParts ? s.i + 1 : s.i, now)
@@ -451,13 +546,15 @@ enum Runner {
 
     /// Countdown expiry check; call from the tick.
     static func tick(_ s: RunState, now: Double) -> RunState {
-        if s.phase == .lead, let end = s.endsAt, now >= end { return enter(s, 0, now) }
-        if s.phase == .running, let end = s.endsAt, now >= end { return advance(s, now: now) }
+        // The session's lead-in, or the Get ready before a block started on a clock.
+        if s.phase == .lead, let end = s.endsAt, now >= end { return enter(s, s.i, now) }
+        if s.phase == .running, let end = s.endsAt, now >= end {
+            if let c = current(s), let boundary = emomBoundary(s, c), now >= boundary { return nextMinute(s, now) }
+            return advance(s, now: now)
+        }
         if s.phase == .running, let c = current(s), let cap = c.capSec, let id = c.blockId, let began = s.blockStart[id],
            (now - began) / 1000 >= cap {
-            var j = s.i
-            while j < s.slots.count, s.slots[j].blockId == id { j += 1 }
-            return enter(s, j, now)
+            return capOut(s, id, now)
         }
         return s
     }
@@ -732,10 +829,27 @@ enum Runner {
         // Read the cursor before mutating: `s.i` inside a closure that is assigning `s.slots` is a
         // simultaneous access to the same value, which traps under exclusivity checking.
         let cursor = s.i
+        let was = s
         var s = s
         s.slots = s.slots.enumerated().filter { idx, sl in idx < cursor || sl.step.id != stepId }.map(\.element)
+        // Nothing of it left to run (every set done): nothing is dropped, and nothing counts as missed.
+        if s.slots.count == was.slots.count { return was }
         s.dropped.append(stepId)
-        return c?.step.id == stepId ? enter(s, s.i, now) : s
+        return c?.step.id == stepId ? stayPut(was, s, now) : s
+    }
+
+    /// The slot in hand changed under the cursor (dropped or swapped). Parked at a block's gate, the
+    /// gate stays: the block has not started, and a machine found taken is found at the gate.
+    /// Paused, it stays paused. Running, the slot starts again.
+    private static func stayPut(_ was: RunState, _ st: RunState, _ now: Double) -> RunState {
+        if was.phase == .ready || was.phase == .lead {
+            guard st.i >= st.slots.count else { return st }
+            var done = st
+            done.phase = .done; done.endsAt = nil; done.endedAt = now
+            return done
+        }
+        let out = enter(st, st.i, now)
+        return was.phase == .paused && out.phase == .running ? pause(out, now: now) : out
     }
 
     /// Swap the exercise of a step for another, from the current slot to the end of the session.
@@ -744,6 +858,7 @@ enum Runner {
     static func swap(_ s: RunState, now: Double, stepId: String, to: ExerciseRef, target: Double?) -> RunState {
         let c = current(s)
         let cursor = s.i
+        let was = s
         var s = s
         s.slots = s.slots.enumerated().map { idx, sl in
             guard idx >= cursor, sl.step.id == stepId, case .exercise(var e) = sl.step else { return sl }
@@ -755,7 +870,7 @@ enum Runner {
             sl.plan = Runner.keptOnSwap(sl.plan)
             return sl
         }
-        return c?.step.id == stepId ? enter(s, s.i, now) : s
+        return c?.step.id == stepId ? stayPut(was, s, now) : s
     }
 
     /// Re-plan the session around an edited runsheet (specs/unified-editing.md). What is done or
@@ -767,7 +882,7 @@ enum Runner {
     /// How many slots an edit keeps as they are: everything done, and the running part to its end.
     static func keptCount(_ s: RunState) -> Int {
         if s.phase == .done { return s.slots.count }
-        if s.phase == .ready { return s.i }
+        if s.phase == .ready || (s.phase == .lead && s.i > 0) { return s.i }
         if s.phase != .lead, let cur = current(s) {
             return s.slots.firstIndex { $0.part > cur.part } ?? s.slots.count
         }
@@ -826,7 +941,23 @@ enum Runner {
             return slot
         }
         s.actuals = actuals
-        return s.phase == .ready && tail.isEmpty ? enter(s, s.i, now) : s
+        if (s.phase == .ready || s.phase == .lead), s.i > 0, tail.isEmpty {
+            s.phase = .ready
+            return enter(s, s.i, now)
+        }
+        return s
+    }
+
+    /// A kept run, picked up again: paused at the moment it was last saved, so the time the app was
+    /// closed never counts and nothing counts down before you are ready. Parked at a gate the clock
+    /// runs, so the time away comes out as a pause. Ported from `restore` in runner.ts.
+    static func restore(_ s: RunState, savedAt: Double, now: Double) -> RunState {
+        if s.phase == .running || s.phase == .lead { return pause(s, now: savedAt) }
+        guard s.phase == .ready, now > savedAt else { return s }
+        var s = s
+        s.pausedMs += now - savedAt
+        s.slotStartedAt += now - savedAt
+        return s
     }
 
     static func finish(_ given: RunState, now: Double) -> RunState {
@@ -850,10 +981,14 @@ enum Runner {
     static func effectiveTarget(_ s: RunState, _ idx: Int) -> Double? {
         guard s.slots.indices.contains(idx) else { return nil }
         let slot = s.slots[idx]
+        let type = typeAt(s, idx)
         var j = idx
         while j >= 0 {
             let sl = s.slots[j]
-            if sameWork(sl, slot), let t = s.actuals[sl.id]?.target ?? sl.plan?.load { return t }
+            // A warm-up's or a drop set's load is its own: the working sets after it keep theirs.
+            let kind = j == idx ? type : typeAt(s, j)
+            let own = j == idx || !((kind == .warmup || kind == .drop) && kind != type)
+            if own, sameWork(sl, slot), let t = s.actuals[sl.id]?.target ?? sl.plan?.load { return t }
             j -= 1
         }
         return slot.exercise?.target
@@ -947,8 +1082,9 @@ enum Runner {
             var set = SetResult(reps: done, load: target, at: doneAtSec(s, a), type: type == .normal ? nil : type)
             set.seconds = a.seconds
             if f == .meters { set.meters = amount } else if f == .calories { set.calories = amount }
-            // A working set short of its prescribed reps is a miss.
-            let short = !warm && ex.forMode == .reps && (done.map { $0 < ex.forValue } ?? false)
+            // A working set short of its prescribed reps is a miss. A drop set is not: it inherits
+            // the step's reps, and fewer at the lighter load is the point of it.
+            let short = !warm && type != .drop && ex.forMode == .reps && (done.map { $0 < ex.forValue } ?? false)
             steps[key] = StepResult(
                 stepId: ex.id,
                 exerciseKey: ex.exercise.key,
@@ -961,12 +1097,15 @@ enum Runner {
         }
 
         // A set of the step left undone (skipped, never reached) is a missed session for the
-        // progression rules, not a success. An AMRAP's rounds are a guess, so its undone ones say nothing.
+        // progression rules, not a success. An AMRAP's rounds are a guess, so its undone ones say
+        // nothing, and a planned drop set left out is not a working set missed.
         for (idx, slot) in s.slots.enumerated() {
             guard slot.kind == .work, let ex = slot.exercise, slot.mode != .amrap, s.actuals[slot.id]?.doneAt == nil,
-                  typeAt(s, idx) != .warmup else { continue }
+                  typeAt(s, idx) != .warmup, typeAt(s, idx) != .drop else { continue }
             if steps["\(ex.id)|\(ex.exercise.key)"]?.success != nil { steps["\(ex.id)|\(ex.exercise.key)"]?.success = false }
         }
+        // A lift dropped part-way: its slots left the session with the drop, but its sets were not done.
+        for key in order where steps[key]?.success != nil && s.dropped.contains(steps[key]!.stepId) { steps[key]?.success = false }
 
         var score: Double?
         switch type {
@@ -988,19 +1127,43 @@ enum Runner {
             score = nil
         }
 
+        // A main block for time whose cap ran out, or any main block ended early, did not finish:
+        // the session is not a completed one, and a capped for-time scores the reps it reached.
+        func block(_ id: String) -> Block? { r.items.compactMap(\.asBlock).first { $0.id == id } }
+        func main(_ id: String) -> Bool { (block(id)?.role ?? .main) == .main }
+        let capped = (s.capped ?? []).filter { main($0) && (block($0)?.runMode == .fortime || block($0)?.runMode == .ladder) }
+        let cut = !capped.isEmpty || (s.endedEarly ?? []).contains(where: main)
+
         var result = SessionResult(
             runsheetId: s.runsheetId,
             title: r.title,
             startedAt: ISO8601.string(Date(timeIntervalSince1970: s.startedAt / 1000)),
             endedAt: ISO8601.string(Date(timeIntervalSince1970: (s.endedAt ?? now) / 1000)),
             durationSec: durationSec,
-            completed: s.phase == .done && s.i >= s.slots.count,
+            completed: s.phase == .done && s.i >= s.slots.count && !cut,
             score: score,
             steps: order.compactMap { steps[$0] }
         )
+        if type == .time, !capped.isEmpty {
+            let reps = capReps(s, capped)
+            result.capped = true
+            result.capReps = reps
+            result.scoreText = "Capped · \(Format.number(reps)) \(reps == 1 ? "rep" : "reps")"
+        }
         let split = splits(s)
         result.splits = split.isEmpty ? nil : split
         return result
+    }
+
+    /// Reps done in the given blocks: what a capped for-time scores. A set of reps counts what was
+    /// counted, else the plan; other work (metres, a hold) has no reps to add.
+    private static func capReps(_ s: RunState, _ blocks: [String]) -> Double {
+        s.slots.indices.reduce(0.0) { t, idx in
+            let sl = s.slots[idx]
+            guard sl.kind == .work, let ex = sl.exercise, let block = sl.blockId, blocks.contains(block),
+                  let a = s.actuals[sl.id], a.doneAt != nil, typeAt(s, idx) != .warmup else { return t }
+            return t + (a.reps ?? (ex.forMode == .reps ? ex.forValue : 0))
+        }
     }
 
     /// Seconds spent in the main parts — blocks and loose steps that are not a warm-up or cool-down —
@@ -1045,6 +1208,7 @@ enum Runner {
             guard circuit else { continue }
             let order = byRound.keys.sorted()
             var at: [Double] = []
+            var starts: [Double] = []
             for (k, r) in order.enumerated() {
                 let round = byRound[r] ?? []
                 let times = round.compactMap { doneAtSec(s, s.actuals[$0.id]) }
@@ -1052,9 +1216,10 @@ enum Runner {
                 let closed = round.last.map { s.actuals[$0.id]?.doneAt != nil } == true || later
                 guard let latest = times.max(), closed else { break }
                 at.append(latest)
+                if let began = s.roundAt?[block]?[r] { starts.append(began.rounded()) }
             }
             let from = all.first.flatMap { s.partAt?[$0.part] }?.rounded()
-            if !at.isEmpty { out.append(RoundSplit(blockId: block, at: at, from: from)) }
+            if !at.isEmpty { out.append(RoundSplit(blockId: block, at: at, from: from, starts: starts.count == at.count ? starts : nil)) }
         }
         return out
     }

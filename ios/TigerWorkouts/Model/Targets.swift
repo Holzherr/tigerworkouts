@@ -207,7 +207,7 @@ enum Targets {
         for s in r.exerciseSteps {
             if seen.contains(s.exercise.key) || (s.role ?? .main) != .main || ruled(r, s) { continue }
             seen.insert(s.exercise.key)
-            if let t = set(s, last: LastTime.sets(results, for: s), intent: intent, kit: kit) { out.append(t) }
+            if let t = set(s, last: LastTime.sets(results, for: s, in: r), intent: intent, kit: kit) { out.append(t) }
         }
         return out
     }

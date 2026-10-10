@@ -1,4 +1,4 @@
-import { ChevronRight, Download, Dumbbell, Settings, Upload } from 'lucide-react';
+import { ChevronRight, Download, Dumbbell, Settings, Upload, Users } from 'lucide-react';
 import { Button } from '@/shared/components/ui/button';
 import { StatTiles } from '@/shared/components/ui/stat-tiles';
 import { Stepper } from '@/shared/components/ui/stepper';
@@ -30,6 +30,8 @@ export interface MeScreenProps {
   onExport?: () => void;
   /** Opens the Hevy / Strong CSV import. */
   onImport?: () => void;
+  /** Opens the coach dashboard (#/coach). */
+  onCoach?: () => void;
   /** Account and app settings, rendered under a "Settings" heading at the bottom. */
   children?: React.ReactNode;
 }
@@ -41,7 +43,7 @@ const heading = 'px-1 pt-2 text-[11px] font-bold tracking-widest text-muted uppe
  * Then four tiles two by two (sessions, this week, weeks running, time trained), the streak row, the body map
  * for the last four weeks, the Exercises row, bodyweight, and the settings passed as children last.
  */
-export const MeScreen = ({ name, avatar, status, results, load, bodyweightKg, onBodyweight, onSettings, onOpenHistory, onOpenWeek, onOpenExercises, onExport, onImport, children }: MeScreenProps) => {
+export const MeScreen = ({ name, avatar, status, results, load, bodyweightKg, onBodyweight, onSettings, onOpenHistory, onOpenWeek, onOpenExercises, onExport, onImport, onCoach, children }: MeScreenProps) => {
   const s = streak(results);
   return (
     <div className="flex h-full flex-col bg-canvas">
@@ -85,6 +87,7 @@ export const MeScreen = ({ name, avatar, status, results, load, bodyweightKg, on
         <div className={heading}>You</div>
         {onOpenExercises && <Row icon={<Dumbbell className="size-5 text-brand" />} title="Exercises" hint="Every exercise you have logged, and how it is going" onClick={onOpenExercises} />}
         {onExport && <Row icon={<Download className="size-5 text-brand" />} title="Export history" hint="Every set you have logged, as a CSV file" onClick={onExport} />}
+        {onCoach && <Row icon={<Users className="size-5 text-brand" />} title="Coach clients" hint="Invite clients, send them workouts, see what they did" onClick={onCoach} />}
         {onImport && <Row icon={<Upload className="size-5 text-brand" />} title="Import from Hevy or Strong" hint="Their CSV export, checked before anything is added" onClick={onImport} />}
         <div className="flex items-center justify-between gap-3 rounded-card border border-line bg-surface px-3 py-2">
           <div className="min-w-0">

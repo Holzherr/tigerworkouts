@@ -2,7 +2,7 @@ import ActivityKit
 import Foundation
 import os
 
-let activityLog = Logger(subsystem: "com.holzherr.tigerworkouts", category: "activity")
+let activityLog = Logger(subsystem: "dev.brambruesch.tigerworkouts", category: "activity")
 
 /// Runs the Lock Screen activity for a session: one per run, updated only when something actually
 /// changes. The clock between updates is the Lock Screen's own — see `SessionActivity.timerRange`.

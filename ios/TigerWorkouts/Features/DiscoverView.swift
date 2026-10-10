@@ -112,6 +112,7 @@ struct DiscoverView: View {
                 .padding(.bottom, 40)
             }
             .background(Brand.canvas)
+            .refreshable { await store.sync() }
             .onAppear { dismissedStalls = StallDismissals.all() }
             .scrollDismissesKeyboard(.immediately)
             .searchable(text: $query, prompt: "Workout, exercise or tag")
@@ -326,13 +327,38 @@ struct DiscoverView: View {
     @ViewBuilder
     private var saved: some View {
         let sheets = store.allWorkouts.filter { store.saved.contains($0.key) }
+        // What your coach sent comes first: it is the reason you opened the app today.
+        let assigned = store.coachAssignments.filter { store.workout(id: $0.workoutId) != nil }
+        if !assigned.isEmpty {
+            section("From your coach", subtitle: store.coachName.map { "Sent by \($0)" } ?? "Sent by your coach") {
+                LazyVStack(spacing: 0) {
+                    ForEach(Array(assigned.enumerated()), id: \.element.id) { index, a in
+                        if index > 0 { Divider().padding(.leading, 80) }
+                        NavigationLink(value: Opened(key: a.workoutId, from: .coach)) {
+                            CoachAssignmentRow(
+                                runsheet: store.workout(id: a.workoutId)!,
+                                coach: Coaching.name(of: a.coach, in: store.coaching),
+                                note: a.note,
+                                done: Coaching.isDone(a, results: store.results)
+                            )
+                        }
+                        .buttonStyle(.plain)
+                    }
+                }
+                .background(Brand.surface, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+                .overlay(RoundedRectangle(cornerRadius: 16, style: .continuous).strokeBorder(Brand.brandLine))
+                .padding(.horizontal, 16)
+                .accessibilityElement(children: .contain)
+                .accessibilityIdentifier("from-your-coach")
+            }
+        }
         // Your own sit with what you saved, as on the web's Saved tab: home opens here.
         if !store.myWorkouts.isEmpty {
             section("Mine", subtitle: "Workouts you wrote") {
                 carousel(store.myWorkouts, large: false, from: .mine)
             }
         }
-        if sheets.isEmpty && store.myWorkouts.isEmpty {
+        if sheets.isEmpty && store.myWorkouts.isEmpty && assigned.isEmpty {
             ContentUnavailableView {
                 Label("Nothing saved yet", systemImage: "bookmark")
             } description: {
@@ -502,6 +528,50 @@ struct WorkoutRow: View {
                     .padding(.horizontal, 8).padding(.vertical, 4)
                     .background(Brand.coralSoft, in: Capsule())
                     .foregroundStyle(Brand.coralInk)
+            }
+            Image(systemName: "chevron.right").font(.footnote.weight(.semibold)).foregroundStyle(Brand.faint)
+        }
+        .padding(.horizontal, 14)
+        .padding(.vertical, 12)
+        .contentShape(Rectangle())
+        .accessibilityElement(children: .combine)
+    }
+}
+
+/// A workout your coach sent: what it is, who sent it, their note, and a tick once you have done it.
+struct CoachAssignmentRow: View {
+    let runsheet: Runsheet
+    var coach: String
+    var note: String?
+    var done: Bool
+
+    var body: some View {
+        HStack(spacing: 14) {
+            WorkoutIcon(runsheet: runsheet, size: 50)
+            VStack(alignment: .leading, spacing: 4) {
+                Text(runsheet.title)
+                    .font(.body.weight(.semibold))
+                    .foregroundStyle(Brand.ink)
+                    .lineLimit(2)
+                    .multilineTextAlignment(.leading)
+                Text("\(runsheet.minutes) min · from \(coach)")
+                    .font(.footnote)
+                    .foregroundStyle(Brand.muted)
+                    .lineLimit(1)
+                if let note, !note.isEmpty {
+                    Text(note)
+                        .font(.footnote)
+                        .foregroundStyle(Brand.body)
+                        .lineLimit(2)
+                        .multilineTextAlignment(.leading)
+                }
+            }
+            Spacer(minLength: 8)
+            if done {
+                Image(systemName: "checkmark.circle.fill")
+                    .font(.title3)
+                    .foregroundStyle(Brand.coral)
+                    .accessibilityLabel("Done")
             }
             Image(systemName: "chevron.right").font(.footnote.weight(.semibold)).foregroundStyle(Brand.faint)
         }
