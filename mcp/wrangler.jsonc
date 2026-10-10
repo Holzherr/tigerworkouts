@@ -15,7 +15,7 @@
     "GOOGLE_SIGNIN": "false",
     // "true" adds "Start now, no account needed" (Supabase anonymous sign-in). Needs Authentication →
     // Sign In / Providers → "Allow anonymous sign-ins" on in Supabase first. See specs/mcp.md.
-    "ANONYMOUS_SIGNUP": "false"
+    "ANONYMOUS_SIGNUP": "true"
   },
   "routes": [{ "pattern": "mcp.tigerworkouts.com", "custom_domain": true }]
 }
