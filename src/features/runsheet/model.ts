@@ -212,6 +212,19 @@ export const editedCopy = (edited: Runsheet, original: Runsheet, id: string, cre
   ownerId: undefined,
 });
 
+/** The first edit of a workout you do not own: your copy, "(mine)" as on the phone. */
+export const copyOnEdit = (edited: Runsheet, original: Runsheet, newId: string, creator: string): Runsheet => {
+  const title = edited.title.endsWith(' (mine)') ? edited.title : `${edited.title} (mine)`;
+  return editedCopy({ ...edited, title }, original, newId, creator);
+};
+
+/** One copy per original: your copy of a workout you do not own, if you made one. Its page is the
+ * original's page from then on, so a later edit lands on the copy with its earlier edits intact. */
+export const copyIn = (mine: Runsheet[], original: Runsheet): Runsheet | undefined => {
+  const root = original.copyOf ?? original.id ?? original.title;
+  return mine.find(w => w.copyOf === root);
+};
+
 /** The ids a workout's sessions are logged under: its own, and the one it was copied from. */
 export const lineage = (r: Pick<Runsheet, 'id' | 'title' | 'copyOf'>): string[] => [r.id ?? r.title, ...(r.copyOf ? [r.copyOf] : [])];
 /** A test for "this session was a run of this workout (or of the workout it was copied from)". */
@@ -235,6 +248,12 @@ export const makeExercise = (exercise: ExerciseRef, init: Partial<Omit<ExerciseS
   incline: init.incline,
 });
 const defaultTarget = (ex: ExerciseRef) => (ex.unit === 'kph' ? 10 : ex.step * 4);
+
+/** A new empty block at the end, named for its place: Add block on the workout page (iOS `Edit.addBlock`). */
+export const addBlock = (items: Item[]): { items: Item[]; blockId: string } => {
+  const block: Block = { kind: 'block', id: uid('b'), name: `Block ${items.filter(i => i.kind === 'block').length + 1}`, repeat: 8, mode: 'rounds', steps: [] };
+  return { items: [...items, block], blockId: block.id };
+};
 
 // ── timing ──
 /** Seconds a step takes on the timer. Reps have no clock; assume 3s per rep for estimates. */
@@ -554,8 +573,8 @@ export const flatten = (items: Item[]): Row[] =>
         : [{ type: 'step', id: it.id, step: it }]
   );
 
-/** Rebuild items from rows; a block with fewer than two steps dissolves. */
-export const rebuild = (rows: Row[]): Item[] => {
+/** Rebuild items from rows; a block with fewer than two steps dissolves, unless `keep` holds it. */
+export const rebuild = (rows: Row[], keep?: (b: Block) => boolean): Item[] => {
   const out: Item[] = [];
   let open: { block: Block; steps: Step[] } | null = null;
   for (const r of rows) {
@@ -563,7 +582,7 @@ export const rebuild = (rows: Row[]): Item[] => {
     else if (r.type === 'block-head') open = { block: r.block, steps: [] };
     else if (r.type === 'block-end') {
       if (open) {
-        if (open.steps.length >= 2) out.push({ ...open.block, steps: open.steps });
+        if (open.steps.length >= 2 || keep?.(open.block)) out.push({ ...open.block, steps: open.steps });
         else out.push(...open.steps);
       }
       open = null;
@@ -602,8 +621,11 @@ const placeRow = (lift: NonNullable<ReturnType<typeof liftRow>>, insertAt: numbe
     }
   }
   rest.splice(at, 0, ...chunk);
-  return rebuild(rest);
+  return rebuild(rest, untouched(active));
 };
+/** Only the block a step was dragged out of can dissolve: a one-set block or a new empty one
+ * elsewhere in the list stays a block, as on the phone. */
+const untouched = (active: Row) => (b: Block) => active.type !== 'step' || active.blockId !== b.id;
 /** Put the active row immediately before or after a specific row (a block's `:end` row = just after that block). */
 export const moveRowTo = (items: Item[], activeId: string, rowId: string, where: 'before' | 'after'): Item[] => {
   if (activeId === rowId) return items;
@@ -653,7 +675,7 @@ export const moveRow = (items: Item[], activeId: string, overId: string): Item[]
     }
   }
   rest.splice(insertAt, 0, ...chunk);
-  return rebuild(rest);
+  return rebuild(rest, untouched(active));
 };
 
 // ── legacy import (v0.9 data.js shapes) ──

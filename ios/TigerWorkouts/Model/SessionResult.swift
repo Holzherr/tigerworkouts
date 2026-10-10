@@ -28,6 +28,9 @@ struct RoundSplit: Codable, Hashable, Sendable {
     var at: [Double]
     /// Session time the block started at, same clock as `at`. Nil on sessions logged before it was kept.
     var from: Double? = nil
+    /// Session time each round's work began, same clock: a round's time runs from here, so the rest
+    /// before it is not in it. Nil on sessions logged before it was kept.
+    var starts: [Double]? = nil
 }
 
 /// What was logged for one exercise step in a session.
@@ -75,7 +78,7 @@ enum SessionOrigin: String, CaseIterable, Codable, Sendable {
 /// apps read each other's history without a migration.
 struct SessionResult: Codable, Hashable, Sendable, Identifiable {
     enum CodingKeys: String, CodingKey, CaseIterable {
-        case id, runsheetId, startedFrom, title, startedAt, endedAt, durationSec, completed, activity, device, score, scoreText, steps, splits, notes, rpe
+        case id, runsheetId, startedFrom, title, startedAt, endedAt, durationSec, completed, activity, device, score, scoreText, capped, capReps, steps, splits, notes, rpe
     }
 
     var id: String?
@@ -92,6 +95,10 @@ struct SessionResult: Codable, Hashable, Sendable, Identifiable {
     var device: DeviceSummary?
     var score: Double?
     var scoreText: String?
+    /// A for-time block's cap ran out before it was finished: `score` is the cap, not a finish
+    /// time, and `capReps` the reps reached by then. Nil on a finish and on rows from before it was kept.
+    var capped: Bool?
+    var capReps: Double?
     var steps: [StepResult] = []
     /// Round times per circuit or AMRAP block; nil on rows from before times were kept.
     var splits: [RoundSplit]?
@@ -132,6 +139,8 @@ struct SessionResult: Codable, Hashable, Sendable, Identifiable {
         device = try c.decodeIfPresent(DeviceSummary.self, forKey: .device)
         score = try c.decodeIfPresent(Double.self, forKey: .score)
         scoreText = try c.decodeIfPresent(String.self, forKey: .scoreText)
+        capped = try c.decodeIfPresent(Bool.self, forKey: .capped)
+        capReps = try c.decodeIfPresent(Double.self, forKey: .capReps)
         steps = try c.decodeIfPresent([StepResult].self, forKey: .steps) ?? []
         splits = try c.decodeIfPresent([RoundSplit].self, forKey: .splits)
         notes = try c.decodeIfPresent(String.self, forKey: .notes)

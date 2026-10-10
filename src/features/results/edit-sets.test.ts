@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { SessionResult } from '@/features/runsheet/progression';
 import type { Runsheet } from '@/features/runsheet/model';
-import { addSet, editSet, plannedReps, removeSet, withRowLoad } from './edit-sets';
+import { addSet, editSet, plannedFor, plannedReps, removeSet, withRowLoad } from './edit-sets';
 import { records } from './logbook';
 import { lastUsed } from '@/features/runsheet/last-used';
 
@@ -101,5 +101,37 @@ describe('adding and removing sets after the session', () => {
     const r: SessionResult = { runsheetId: 'w', startedAt: '2026-09-01T10:00:00Z', steps: [{ stepId: 'x', exerciseKey: 'row', target: 500, sets: [{ load: 500 }, { load: 500 }] }] };
     expect(addSet(r, 'x|row', 'm').steps[0].sets).toEqual([{ meters: 500 }, { meters: 500 }, { meters: 500 }]);
     expect(removeSet(r, 'x|row', 0, 'm').steps[0].sets).toEqual([{ meters: 500 }]);
+  });
+});
+
+describe('success follows the edit, as the timer would judge it', () => {
+  // 3 × 8 at 60 under a rule; the session logged a warm-up and two working sets, the third skipped.
+  const sheet = (sets?: { reps?: number; type?: 'warmup' | 'drop' }[]): Runsheet => ({ id: 'w', title: 'W', progression: { onSuccessKg: 2.5, deloadPct: 10, failAfter: 3 }, items: [{ kind: 'block', id: 'b', name: 'B', repeat: 3, steps: [{ kind: 'exercise', id: 'a', exercise: { key: 'bench', name: 'Bench', unit: 'kg', step: 2.5 }, target: 60, forMode: 'reps', forValue: 8, ...(sets ? { sets } : {}) }] }] });
+  const skipped = (): SessionResult => ({ ...result(), steps: [{ ...result().steps[0], success: false }] });
+
+  it('a skipped set stays a miss when a short set is put right', () => {
+    const miss = { ...skipped(), steps: [{ ...skipped().steps[0], sets: [{ load: 40, reps: 10, type: 'warmup' as const }, { load: 60, reps: 8 }, { load: 60, reps: 6 }] }] };
+    expect(editSet(miss, 'a|bench', 2, { reps: 8 }, plannedFor(sheet(), 'a')).steps[0].success).toBe(false);
+  });
+  it('the set added back clears it, and one taken off makes it a miss again', () => {
+    const back = addSet(skipped(), 'a|bench', undefined, plannedFor(sheet(), 'a'));
+    expect(back.steps[0].success).toBe(true);
+    expect(removeSet(back, 'a|bench', 3, undefined, plannedFor(sheet(), 'a')).steps[0].success).toBe(false);
+  });
+  it('a working set marked a warm-up is one working set fewer', () => {
+    const ok: SessionResult = { ...result(), steps: [{ ...result().steps[0], sets: [...result().steps[0].sets!, { load: 60, reps: 8 }] }] };
+    expect(editSet(ok, 'a|bench', 3, { type: 'warmup' }, plannedFor(sheet(), 'a')).steps[0].success).toBe(false);
+  });
+  it('a drop set short of the reps is not a miss', () => {
+    const ok: SessionResult = { ...result(), steps: [{ ...result().steps[0], sets: [...result().steps[0].sets!, { load: 60, reps: 8 }, { load: 40, reps: 6, type: 'drop' }] }] };
+    expect(editSet(ok, 'a|bench', 4, { reps: 5 }, plannedFor(sheet(), 'a')).steps[0].success).toBe(true);
+  });
+  it('the plan counts working sets, set by set for a per-set plan', () => {
+    expect(plannedFor(sheet(), 'a')).toEqual({ reps: 8, sets: 3 });
+    expect(plannedFor(sheet([{ type: 'warmup' }, { reps: 5 }, { reps: 3 }]), 'a')).toEqual({ setReps: [5, 3], sets: 2 });
+    const loose: Runsheet = { id: 'l', title: 'L', items: [{ kind: 'exercise', id: 'x', exercise: { key: 'bench', name: 'Bench', unit: 'kg', step: 2.5 }, forMode: 'reps', forValue: 8, sets: [{ reps: 5 }] }] };
+    // A loose step runs once at its own reps, whatever sets it carries: the timer runs it so.
+    expect(plannedFor(loose, 'x')).toEqual({ reps: 8, sets: 1 });
+    expect(plannedReps(loose, 'x')).toBe(8);
   });
 });

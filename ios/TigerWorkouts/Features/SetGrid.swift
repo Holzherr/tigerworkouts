@@ -11,6 +11,10 @@ struct SetPlanGrid: View {
     var locked = false
     /// Grey line under a set, e.g. last time's set of the same number.
     var hint: (Int) -> String? = { _ in nil }
+    /// The treadmill's incline, one for the whole step, drawn as a row above the sets. Nil: no row.
+    var incline: Binding<Double?>? = nil
+    /// Last time's incline, grey under the row.
+    var lastIncline: Double? = nil
     var apply: (_ change: (Runsheet) -> Runsheet) -> Void
 
     @State private var varying = false
@@ -26,8 +30,40 @@ struct SetPlanGrid: View {
         }
     }
 
+    /// The rule the timer's incline line uses: a step with an incline, or any treadmill, walk or run.
+    nonisolated static func showsIncline(_ incline: Double?, for step: ExerciseStep) -> Bool {
+        TimerView.inclineLabel(incline, for: step) != nil
+    }
+
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
+            if let incline, Self.showsIncline(incline.wrappedValue, for: step) {
+                HStack(spacing: 8) {
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("Incline").font(.subheadline.weight(.semibold)).foregroundStyle(Brand.body)
+                        if let lastIncline {
+                            Text("last time \(Format.number(lastIncline))%").font(.caption).foregroundStyle(Brand.muted)
+                        }
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    Group {
+                        if locked {
+                            Text(incline.wrappedValue.map { "\(Format.number($0))%" } ?? "—")
+                                .font(.system(size: 18, weight: .bold, design: .rounded))
+                                .foregroundStyle(Brand.ink)
+                        } else {
+                            // The binding reads the runner as it is now, so a held button keeps counting up.
+                            MiniStepper(value: incline.wrappedValue ?? 0, label: "Incline") { presses in
+                                incline.wrappedValue = TimerView.inclineStep(incline.wrappedValue, by: presses)
+                            }
+                        }
+                    }
+                    .frame(maxWidth: .infinity)
+                }
+                .padding(.bottom, 10)
+                .accessibilityElement(children: .contain)
+                .accessibilityIdentifier("grid-incline")
+            }
             HStack(spacing: 8) {
                 Text("Set").frame(width: 36, alignment: .leading)
                 if step.hasSetLoad { Text(step.shortUnit).frame(maxWidth: .infinity) }

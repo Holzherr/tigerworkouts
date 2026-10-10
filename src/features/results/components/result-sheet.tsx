@@ -82,7 +82,9 @@ export const ResultSheet = ({ runsheet, history = [], allResults = history, trai
       })
     )
   );
-  const result: SessionResult = { ...initial, runsheetId: runsheet.id ?? runsheet.title, title: runsheet.title, startedAt: initial?.startedAt ?? startedAt ?? new Date().toISOString(), endedAt: initial?.endedAt ?? new Date().toISOString(), score, scoreText: score !== undefined ? fmtScore(type, score) : undefined, steps: [...Object.values(rows), ...extra], notes: notes || undefined, rpe, startedFrom };
+  // A capped for-time stays capped, with its reps, until its score is changed by hand.
+  const capped = !!initial?.capped && score === initial.score;
+  const result: SessionResult = { ...initial, runsheetId: runsheet.id ?? runsheet.title, title: runsheet.title, startedAt: initial?.startedAt ?? startedAt ?? new Date().toISOString(), endedAt: initial?.endedAt ?? new Date().toISOString(), score, scoreText: capped ? initial?.scoreText : score !== undefined ? fmtScore(type, score) : undefined, capped: capped || undefined, capReps: capped ? initial?.capReps : undefined, steps: [...Object.values(rows), ...extra], notes: notes || undefined, rpe, startedFrom };
   const exerciseName = (k: string) => ({ name: LIB[k]?.name ?? k, unit: LIB[k]?.unit });
   const celebration = celebrate(result, allResults, undefined, k => exerciseSteps(runsheet).find(s => s.exercise.key === k)?.exercise.unit ?? LIB[k]?.unit);
   const next = useMemo(() => nextLoads(runsheet, result, history, trainingMaxes, equipment), [runsheet, result, history, trainingMaxes, equipment]);
@@ -99,7 +101,7 @@ export const ResultSheet = ({ runsheet, history = [], allResults = history, trai
       <header className="safe-top shrink-0 border-b border-line bg-surface px-4 pt-3 pb-3">
         <div className="text-[12px] text-muted">Log result</div>
         <h1 className="text-[19px] leading-tight font-extrabold">{runsheet.title}</h1>
-        {initial?.durationSec !== undefined && <div className="mt-0.5 text-[12px] text-muted">{Math.round(initial.durationSec / 60)} min{initial.completed === false ? ' · stopped early' : ''}</div>}
+        {initial?.durationSec !== undefined && <div className="mt-0.5 text-[12px] text-muted">{Math.round(initial.durationSec / 60)} min{initial.capped ? ` · ${initial.scoreText ?? 'capped'}` : initial.completed === false ? ' · stopped early' : ''}</div>}
         {type !== 'none' && <ScoreEntry type={type} value={score} onChange={setScore} className="mt-3" />}
       </header>
       <div className="min-h-0 flex-1 space-y-2 overflow-y-auto px-3 py-3">

@@ -80,7 +80,7 @@ export const BlockHeader = forwardRef<HTMLDivElement, BlockHeaderProps>(({ block
           {(block.mode === 'amrap' || block.mode === 'fortime') && (
             <div className="flex items-center justify-between gap-3">
               <span className="text-[14px]">{block.mode === 'amrap' ? 'Time' : 'Time cap'} <span className="text-muted">(min)</span></span>
-              <Stepper aria-label="Time cap" value={Math.round((block.timeCapSec ?? 0) / 60)} min={0} max={90} onChange={m => onChange({ timeCapSec: m ? m * 60 : undefined })} />
+              <Stepper aria-label="Time cap" value={Math.round((block.timeCapSec ?? (block.mode === 'amrap' ? 600 : 0)) / 60)} min={block.mode === 'amrap' ? 1 : 0} max={90} onChange={m => onChange({ timeCapSec: m ? m * 60 : undefined })} />
             </div>
           )}
           {block.mode === 'ladder' && (

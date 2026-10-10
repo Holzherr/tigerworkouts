@@ -107,6 +107,14 @@ struct SyncTests {
         #expect(Supabase.endpoint("auth/v1/token?grant_type=pkce").query == "grant_type=pkce")
     }
 
+    @Test("password sign-in is GoTrue's password grant")
+    func passwordGrant() throws {
+        let grant = Supabase.passwordGrant(email: "review@example.com", password: "pw")
+        #expect(grant.path == "auth/v1/token?grant_type=password")
+        #expect(Supabase.endpoint(grant.path).query == "grant_type=password")
+        #expect(grant.body == ["email": "review@example.com", "password": "pw"])
+    }
+
     @Test("dates parse whichever way Postgres hands them back")
     func dates() {
         #expect(ISO8601.date("2026-09-06T10:00:00.000Z") != nil)

@@ -12,6 +12,10 @@ struct RunsheetEditor<Header: View>: View {
     var current: String?
     /// Grey line under one set of a straight-set block: last time's set of that number.
     var setHint: (ExerciseStep, Int) -> String? = { _, _ in nil }
+    /// A straight-set block's incline, set from its grid; nil leaves the grid without one.
+    var incline: (ExerciseStep) -> Binding<Double?>? = { _ in nil }
+    /// Last time's incline for a step, shown under the grid's Incline row.
+    var lastIncline: (ExerciseStep) -> Double? = { _ in nil }
     /// The grey line under an exercise's name.
     var summary: (ExerciseStep) -> String
     var onExercise: (ExerciseStep) -> Void
@@ -160,7 +164,8 @@ struct RunsheetEditor<Header: View>: View {
             // on the block's last row so a drag still counts rows the way it always has.
             if let b = runsheet.items.compactMap(\.asBlock).first(where: { $0.id == blockId }), let step = b.straightSetStep {
                 VStack(alignment: .leading, spacing: 12) {
-                    SetPlanGrid(block: b, step: step, locked: locked.contains(blockId), hint: { setHint(step, $0) }) { change in
+                    SetPlanGrid(block: b, step: step, locked: locked.contains(blockId), hint: { setHint(step, $0) },
+                                incline: incline(step), lastIncline: lastIncline(step)) { change in
                         apply(change(runsheet))
                     }
                     if !locked.contains(blockId) { addButtons(blockId) }

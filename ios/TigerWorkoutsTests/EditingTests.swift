@@ -128,7 +128,7 @@ struct EditingTests {
         #expect(back.items.compactMap(\.asBlock)[0].restBetweenSec == 60)
         #expect(back.exerciseSteps.map(\.id) == r.exerciseSteps.map(\.id))
         // And it still runs: the engine has to be able to expand what the editor wrote.
-        #expect(Runner.expand(back).count == 8 * 2 + 7)
+        #expect(Runner.expand(back).count == 8 + 7)
     }
 
     // MARK: - One drag moves a step anywhere, and a block by its header
