@@ -93,6 +93,6 @@ struct TimedWorkTests {
         let sheet = Runsheet(id: "f", title: "F", items: [.block(Block(id: "b", name: "F", repeatCount: 3, mode: .fortime, steps: [Fixtures.work("a", Fixtures.pullup, forMode: .reps, forValue: 5), Fixtures.work("c", Fixtures.pushup, forMode: .reps, forValue: 10)]))])
         var s = Runner.tick(Runner.start(sheet, now: 0), now: 5000)
         for t in [20.0, 40, 70, 95, 130, 150] { s = Runner.advance(s, now: t * 1000) }
-        #expect(Runner.toResult(s, sheet, now: 150_000).splits == [RoundSplit(blockId: "b", at: [40, 95, 150], from: 5)])
+        #expect(Runner.toResult(s, sheet, now: 150_000).splits == [RoundSplit(blockId: "b", at: [40, 95, 150], from: 5, starts: [5, 40, 95])])
     }
 }

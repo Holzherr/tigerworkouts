@@ -180,7 +180,7 @@ export const setTargets = (r: Runsheet, results: SessionResult[], intent: Intent
   for (const s of exerciseSteps(r.items)) {
     if (seen.has(s.exercise.key) || (s.role ?? 'main') !== 'main' || ruled(r, s)) continue;
     seen.add(s.exercise.key);
-    const t = setTarget(s, lastSets(results, s), intent, kit);
+    const t = setTarget(s, lastSets(results, s, r), intent, kit);
     if (t) out.push(t);
   }
   return out;

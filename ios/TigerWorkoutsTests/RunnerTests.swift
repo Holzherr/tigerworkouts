@@ -136,7 +136,7 @@ struct RunTests {
         var s = Runner.tick(Runner.start(Fixtures.interval(), now: 0), now: 5_000)
         s = Runner.drop(s, now: 6_000, stepId: "pr")
         #expect(!s.slots.contains { $0.step.id == "pr" })
-        #expect(s.slots.count == 6)
+        #expect(s.slots.count == 5) // the last round's closing rest is not run
     }
 
     @Test("amrap stops at the cap and scores rounds + reps")
@@ -180,6 +180,8 @@ struct RunTests {
         #expect(s.phase == .ready)
         #expect(s.i == 1)
         s = Runner.startBlock(s, now: 40_000)
+        #expect(s.phase == .lead) // a timed block gets its Get ready
+        s = Runner.tick(s, now: 45_000)
         #expect(s.phase == .running)
     }
 
@@ -318,6 +320,37 @@ struct SessionRunnerTests {
         #expect(Runner.effectiveTarget(runner.state, 0) == 12)
     }
 
+    // Step ids are per workout: "s1" is a step in hundreds of catalogue workouts.
+    @Test("a step id from another workout does not seed this one")
+    func noLeakAcrossWorkouts() {
+        let other = SessionResult(runsheetId: "other", title: "Other", startedAt: "2026-09-20T17:00:00.000Z",
+                                  steps: [StepResult(stepId: "s1", exerciseKey: "db_incline_press", target: 40, incline: 3, reps: nil, success: true)])
+        let seeded = Settings.withLastUsed(Self.sprints(), results: Self.history() + [other])
+        #expect(seeded.exerciseSteps.first?.target == 12)
+        #expect(seeded.exerciseSteps.first?.incline == 1)
+        #expect(Settings.lastUsed([other], workout: Self.sprints())["step:s1"] == nil)
+    }
+
+    @Test("an edited copy starts on the numbers logged against the original")
+    func copyInherits() {
+        var copy = Self.sprints()
+        copy.id = "u-copy"
+        copy.copyOf = "sp"
+        let elsewhere = SessionResult(runsheetId: "other", title: "Other", startedAt: "2026-09-20T17:00:00.000Z",
+                                      steps: [StepResult(stepId: "z", exerciseKey: "sprint", target: 9, incline: nil, reps: nil, success: true)])
+        let seeded = Settings.withLastUsed(copy, results: Self.history() + [elsewhere])
+        #expect(seeded.exerciseSteps.first?.target == 12)
+        #expect(seeded.exerciseSteps.first?.incline == 1)
+    }
+
+    @Test("a step whose id now holds another exercise is not this one's history")
+    func stepHoldsAnotherExercise() {
+        let mine = SessionResult(runsheetId: "sp", title: "Sprints", startedAt: "2026-09-20T17:00:00.000Z",
+                                 steps: [StepResult(stepId: "s1", exerciseKey: "bb_bench_press", target: 80, incline: nil, reps: nil, success: true)])
+        let seeded = Settings.withLastUsed(Self.sprints(), results: Self.history() + [mine])
+        #expect(seeded.exerciseSteps.first?.target == 12)
+    }
+
     @Test("the runner leaves every target and incline exactly as passed")
     @MainActor
     func verbatim() {
@@ -377,9 +410,9 @@ struct SessionSafetyTests {
         s = Runner.resume(s, now: 110_000)
         s = Runner.tick(s, now: 135_000)
         #expect(s.phase == .ready)
-        s = Runner.startBlock(s, now: 140_000)
-        #expect(Runner.blockElapsed(s, now: 150_000) == 10)
-        s = Runner.tick(s, now: 140_000 + 61_000)
+        s = Runner.tick(Runner.startBlock(s, now: 140_000), now: 145_000) // Get ready, then the block
+        #expect(Runner.blockElapsed(s, now: 155_000) == 10)
+        s = Runner.tick(s, now: 145_000 + 61_000)
         #expect(s.phase == .done)
     }
 
@@ -518,5 +551,23 @@ struct HonestLoggingTests {
         let label = LastTime.label([session("2026-09-02T10:00:00Z", [StepResult(stepId: "zz", exerciseKey: "db_incline_press", target: 20, reps: [8, 10])], runsheet: "other")], for: bench)
         #expect(label == "last time 20 × 10")
         #expect(LastTime.label([], for: bench) == nil)
+    }
+
+    @Test("reads the step of this workout first, not the same step id of another")
+    func stepOfThisWorkout() {
+        let u1 = Runsheet(id: "u-1", title: "Push", items: [])
+        let results = [
+            session("2026-09-01T10:00:00Z", [StepResult(stepId: "zz", exerciseKey: "db_incline_press", sets: [SetResult(reps: 8, load: 50)])]),
+            session("2026-09-03T10:00:00Z", [StepResult(stepId: "e2", exerciseKey: "db_incline_press", sets: [SetResult(reps: 8, load: 60)])]),
+            session("2026-09-05T10:00:00Z", [StepResult(stepId: "e2", exerciseKey: "db_incline_press", sets: [SetResult(reps: 12, load: 30)])], runsheet: "u-other"),
+        ]
+        #expect(LastTime.set(results, for: bench, in: u1) == SetResult(reps: 8, load: 60))
+        #expect(LastTime.sets(results, for: bench, in: u1) == [SetResult(reps: 8, load: 60)])
+        // Another workout has no step history of its own here, so it gets the exercise's newest.
+        #expect(LastTime.set(results, for: bench, in: Runsheet(id: "u-third", title: "Third", items: [])) == SetResult(reps: 12, load: 30))
+        // An edited copy reads the original's step.
+        var copy = Runsheet(id: "u-copy", title: "Copy", items: [])
+        copy.copyOf = "u-1"
+        #expect(LastTime.set(results, for: bench, in: copy) == SetResult(reps: 8, load: 60))
     }
 }

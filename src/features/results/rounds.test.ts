@@ -8,6 +8,8 @@ describe('round times', () => {
   it('each round from the one before, round 1 from the block start', () => {
     expect(roundTimes({ blockId: 'b', at: [100, 190, 290], from: 5 })).toEqual([95, 90, 100]);
     expect(roundTimes({ blockId: 'b', at: [100, 190] })).toEqual([undefined, 90]); // kept before `from` was
+    // With round starts kept, the rest before a round is not in its time.
+    expect(roundTimes({ blockId: 'b', at: [100, 190, 290], from: 5, starts: [5, 130, 220] })).toEqual([95, 60, 70]);
   });
   it('marks the fastest and slowest, and compares each round with last time', () => {
     const [row] = roundRows(s('2026-09-08', [100, 190, 290], 5), s('2026-09-01', [105, 200, 290], 5));

@@ -73,7 +73,8 @@ extension Block {
     /// "×8", "AMRAP 20:00", "EMOM 10", "5 rounds for time", "21-15-9"
     var modeLabel: String {
         switch runMode {
-        case .amrap: "AMRAP \(Int(((timeCapSec ?? 0) / 60).rounded())):00"
+        // A block with no time set reads AMRAP, not AMRAP 0:00; 90 s reads 1:30, as on the web.
+        case .amrap: (timeCapSec ?? 0) > 0 ? "AMRAP \(Format.clock(timeCapSec ?? 0))" : "AMRAP"
         case .emom: "EMOM \(repeatCount)"
         case .fortime: "\(repeatCount) round\(repeatCount == 1 ? "" : "s") for time"
         case .ladder: (ladder ?? []).map { Format.number($0) }.joined(separator: "-")

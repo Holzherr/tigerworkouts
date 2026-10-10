@@ -37,8 +37,8 @@ struct SyncTests {
 
     @Test("startedFrom sits at the top of the row's data, and is absent when unset")
     func startedFrom() {
-        // The six literals the web app writes (SessionOrigin in progression.ts), in its order.
-        #expect(SessionOrigin.allCases.map(\.rawValue) == ["recommended", "saved", "search", "mine", "history", "link", "home"])
+        // The literals the web app writes (SessionOrigin in progression.ts), in its order.
+        #expect(SessionOrigin.allCases.map(\.rawValue) == ["recommended", "saved", "search", "mine", "history", "link", "home", "coach"])
 
         let mine = SessionResult(runsheetId: "u-1", title: "Mine", startedAt: "2026-09-27T10:00:00.000Z", id: "s-a", startedFrom: "mine")
         let data = SessionRow.encode(mine, owner: "u")["data"] as! [String: Any]
@@ -105,6 +105,14 @@ struct SyncTests {
         #expect(url.absoluteString == "https://icpdzjohsvlpyaluxgbt.supabase.co/rest/v1/sessions?select=id,data&owner=eq.abc")
         #expect(url.query == "select=id,data&owner=eq.abc")
         #expect(Supabase.endpoint("auth/v1/token?grant_type=pkce").query == "grant_type=pkce")
+    }
+
+    @Test("password sign-in is GoTrue's password grant")
+    func passwordGrant() throws {
+        let grant = Supabase.passwordGrant(email: "review@example.com", password: "pw")
+        #expect(grant.path == "auth/v1/token?grant_type=password")
+        #expect(Supabase.endpoint(grant.path).query == "grant_type=password")
+        #expect(grant.body == ["email": "review@example.com", "password": "pw"])
     }
 
     @Test("dates parse whichever way Postgres hands them back")

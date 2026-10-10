@@ -6,11 +6,12 @@
  */
 import type { RoundSplit, SessionResult } from '@/features/runsheet/progression';
 
-/** Seconds each round took: from the block's start (or the round before) to the round's last tick.
- * Round 1 of a split kept before the block's start was has no time. */
+/** Seconds each round took: from when its work began to its last tick, so the rest before a round is
+ * not in it and round 1 is not always the fastest. A split kept before round starts were falls back
+ * to the block's start (or the round before); round 1 of one kept before that has no time. */
 export const roundTimes = (sp: RoundSplit): (number | undefined)[] =>
   sp.at.map((t, i) => {
-    const from = i === 0 ? sp.from : sp.at[i - 1];
+    const from = sp.starts?.[i] ?? (i === 0 ? sp.from : sp.at[i - 1]);
     return from === undefined ? undefined : Math.max(0, Math.round(t - from));
   });
 

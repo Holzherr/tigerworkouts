@@ -9,6 +9,10 @@ struct RootView: View {
     @State private var interrupted: Interrupted?
     /// A workout the Up next widget asked to start, waiting for the catalogue on a cold launch.
     @State private var widgetStart: String?
+    /// A coach's invite link that opened the app.
+    @State private var joining: JoinCode?
+
+    struct JoinCode: Identifiable { var id: String }
 
     /// A session the app was killed in the middle of, waiting for a decision.
     private struct Interrupted {
@@ -90,11 +94,16 @@ struct RootView: View {
         .onChange(of: scenePhase) { _, phase in
             Self.scenePhaseChanged(to: phase)
             // Heart rate Health could not give with the phone locked, or before the watch synced.
-            if phase == .active { Task { await store.backfillHeartRate() } }
+            if phase == .active {
+                Task { await store.backfillHeartRate() }
+                // What a coach sent while the app was in the background.
+                Task { await store.refreshCoaching() }
+            }
         }
         // A workout link lands on the Workouts tab, whichever tab was open.
         .onOpenURL { url in
             if url.host == "w" { tab = .workouts }
+            if let code = JoinLink.code(from: url) { joining = JoinCode(id: code) }
             // The Up next widget: tigerworkouts://do/<id> starts the session, as home's Start does.
             if url.host == "do", let id = UpNextSnapshot.workoutId(fromStart: url) {
                 widgetStart = id
@@ -102,6 +111,9 @@ struct RootView: View {
             }
         }
         .onChange(of: store.loaded) { _, _ in startFromWidget() }
+        .sheet(item: $joining) { join in
+            JoinCoachView(code: join.id)
+        }
     }
 
     /// Runs once the catalogue is in (the lookup finds nothing before), and not over a session
