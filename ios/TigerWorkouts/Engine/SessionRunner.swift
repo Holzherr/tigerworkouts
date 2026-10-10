@@ -35,7 +35,16 @@ final class SessionRunner {
     private var discarded = false
     private var cuedPhase: Phase?
     private var lastTick: Int?
+    /// When the timer parked at the current gate, and how many times it has cued since: a gate
+    /// reached with the phone in a pocket is cued again, so it is not missed.
+    private var parkedAt: Double?
+    private var gateCues = 0
+    /// Seconds left on the block's cap at the last tick, for the one-minute and ten-second warnings.
+    private var lastCapLeft: Double?
     private var appObservers: [NSObjectProtocol] = []
+    /// What the clock's cues are felt through, the ones that reach a locked phone; a test swaps in
+    /// one with a fake app state and vibrator. A button's tap is always on screen: Haptics.shared.
+    @ObservationIgnored var haptics = Haptics.shared
     /// Every session before this one: what a set just ticked is measured against for a record.
     private let history: [SessionResult]
     /// Sets done this session that beat a record when they were ticked; a medal shows on each.
@@ -70,7 +79,7 @@ final class SessionRunner {
         self.history = history
         let fresh = Runner.start(runsheet, now: Date().timeIntervalSince1970 * 1000)
         self.state = history.isEmpty ? fresh : Runner.prefillReps(fresh) { step, round in
-            LastTime.sets(history, for: step).flatMap { $0.indices.contains(round) ? $0[round].reps : nil }
+            LastTime.sets(history, for: step, in: runsheet).flatMap { $0.indices.contains(round) ? $0[round].reps : nil }
         }
         self.rival = Pace.lastTimed(history, runsheetIds: runsheet.lineage)
         self.today = Targets.today(runsheet, results: history, intent: Intent.current(), kit: Equipment.current())
@@ -87,9 +96,7 @@ final class SessionRunner {
         self.rival = Pace.lastTimed(history, runsheetIds: runsheet.lineage, excluding: SessionRunner.rowId(saved.state))
         self.today = Targets.today(runsheet, results: history.filter { $0.id != SessionRunner.rowId(saved.state) }, intent: Intent.current(), kit: Equipment.current())
         let at = saved.savedAt.timeIntervalSince1970 * 1000
-        self.state = saved.state.phase == .running || saved.state.phase == .lead
-            ? Runner.pause(saved.state, now: at)
-            : saved.state
+        self.state = Runner.restore(saved.state, savedAt: at, now: Date().timeIntervalSince1970 * 1000)
     }
 
     /// What an interrupted session had got to, as a result that can be logged without resuming.
@@ -213,18 +220,30 @@ final class SessionRunner {
     }
 
     private func tick() {
-        now = Date().timeIntervalSince1970 * 1000
+        tick(at: Date().timeIntervalSince1970 * 1000)
+    }
+
+    /// One beat of the clock at `now`: the timer's tick, and a test's way to let time run out.
+    func tick(at now: Double) {
+        self.now = now
         let before = state
         state = Runner.tick(state, now: now)
         if state != before {
             save()
             refreshGhost()
             syncRestNotice()
+            // A timed set that ran out, or an EMOM minute that logged itself, can beat a record too.
+            for id in Self.newlyDone(before, state) { checkRecord(id) }
         }
         deliver()
         fireCues()
         pushActivity()
         release()
+    }
+
+    /// Work slots done in `after` that were not in `before`.
+    nonisolated static func newlyDone(_ before: RunState, _ after: RunState) -> [String] {
+        after.slots.filter { $0.kind == .work && after.actuals[$0.id]?.doneAt != nil && before.actuals[$0.id]?.doneAt == nil }.map(\.id)
     }
 
     /// A finished session lets go of the phone: the screen may sleep, the tick stops and the audio
@@ -346,7 +365,8 @@ final class SessionRunner {
         if s.phase == .done { return cuedPhase == .done ? nil : .finish }
         if s.phase == .ready { return cuedPhase != .ready && cuedSlot != nil ? .block : nil }
         guard s.phase == .running, let slot = Runner.current(s), slot.id != cuedSlot else { return nil }
-        let startingBlock = cuedSlot != nil && cuedPhase != .ready && slot.round == 0 && slot.blockId != nil
+        // Started from the gate (straight away, or after its Get ready): that is work starting.
+        let startingBlock = cuedSlot != nil && cuedPhase != .ready && cuedPhase != .lead && slot.round == 0 && slot.blockId != nil
             && s.slots.first(where: { $0.id == cuedSlot })?.blockId != slot.blockId
         return startingBlock ? .block : slot.kind == .work ? .work : .rest
     }
@@ -374,9 +394,28 @@ final class SessionRunner {
                 lastTick = nil
             }
         }
+        if state.phase == .ready {
+            if parkedAt == nil { parkedAt = now; gateCues = 0 }
+        } else {
+            parkedAt = nil
+        }
+        let capNow = state.phase == .running ? capLeft : nil
+        let capMark = Self.capWarning(was: lastCapLeft, now: capNow)
+        lastCapLeft = capNow
         if let cue {
-            Haptics.shared.play(cue)
+            haptics.play(cue)
             Cues.shared.play(Self.tone(cue))
+            return
+        }
+        if let parkedAt, Self.gateRecue(parkedFor: (now - parkedAt) / 1000, cued: gateCues) {
+            gateCues += 1
+            Haptics.shared.play(.block)
+            Cues.shared.play(.block)
+            return
+        }
+        if capMark != nil {
+            Haptics.shared.play(.work)
+            Cues.shared.play(.warning)
             return
         }
 
@@ -385,9 +424,24 @@ final class SessionRunner {
         let second = Int(left.rounded(.up))
         if second != lastTick, (1...3).contains(second) {
             lastTick = second
-            Haptics.shared.play(.tick)
+            haptics.play(.tick)
             Cues.shared.play(.tick)
         }
+    }
+
+    /// A gate reached in a pocket is cued again at 30 s and at 90 s, then left alone: a block that
+    /// waits for you should not nag through a long set-up.
+    nonisolated static func gateRecue(parkedFor seconds: Double, cued: Int) -> Bool {
+        let at: [Double] = [30, 90]
+        return cued < at.count && seconds >= at[cued]
+    }
+
+    /// A minute left and ten seconds left on an AMRAP's or a capped block's clock, on crossing only:
+    /// a block started with less left says nothing. Returns the mark crossed.
+    nonisolated static func capWarning(was: Double?, now: Double?) -> Double? {
+        guard let was, let now else { return nil }
+        for mark in [60.0, 10.0] where was > mark && now <= mark { return mark }
+        return nil
     }
 
     // MARK: - Controls
@@ -421,6 +475,13 @@ final class SessionRunner {
         apply { Runner.advance($0, now: $1, skipped: true) }
     }
     func back() { apply { Runner.back($0, now: $1) } }
+    /// End the running block here, from the X: what is left of it is skipped. Undo puts it back.
+    func endBlock() {
+        keepForUndo("Block ended")
+        apply { Runner.endBlock($0, now: $1) }
+    }
+    /// The running block can be ended early: running or paused inside a block, not at a gate.
+    var canEndBlock: Bool { slot?.blockId != nil && (state.phase == .running || state.phase == .paused) }
     func finish() { apply { Runner.finish($0, now: $1) } }
     /// Stops the session without logging it, from the timer's X: an accidental start is not saved,
     /// streaked or written to Health. The crash-safe copy goes too, so nothing offers it back.
@@ -562,11 +623,15 @@ final class SessionRunner {
 
     // MARK: - The set grid
 
-    /// The block the running slot belongs to, when it is one exercise done for sets.
+    /// The block the running slot belongs to, when it is one exercise done for sets — as it runs
+    /// now: a swap mid-block changes the exercise from the set on, so the header, demo, kit and
+    /// load step follow it.
     var straightSetStep: ExerciseStep? {
         guard let blockId = slot?.blockId,
-              let block = runsheet.items.compactMap(\.asBlock).first(where: { $0.id == blockId }) else { return nil }
-        return block.straightSetStep
+              let block = runsheet.items.compactMap(\.asBlock).first(where: { $0.id == blockId }),
+              let planned = block.straightSetStep else { return nil }
+        let live = state.slots.dropFirst(state.i).first { $0.blockId == blockId && $0.kind == .work }?.exercise
+        return live.flatMap { $0.exercise.key != planned.exercise.key ? $0 : nil } ?? planned
     }
 
     /// One row per set of the running block, in order.
@@ -583,6 +648,8 @@ final class SessionRunner {
         var amount: Double? = nil
         /// Seconds the set ran, once done; nil before and for work whose time says nothing.
         var seconds: Double? = nil
+        /// Treadmill incline, %: what the set runs at, or ran at once done; nil without one.
+        var incline: Double? = nil
         var done: Bool
         /// The set being done now, or the next one while the rest between sets runs.
         var current: Bool
@@ -612,6 +679,7 @@ final class SessionRunner {
                 reps: a?.reps ?? sl.exercise?.forValue ?? 0,
                 amount: Runner.amountAt(state, sl),
                 seconds: done ? a?.seconds : nil,
+                incline: Runner.effectiveIncline(state, idx),
                 done: done,
                 current: idx == on,
                 tickable: done || idx < state.i || running
@@ -642,6 +710,15 @@ final class SessionRunner {
         guard let row = setRows.first(where: { $0.slotId == slotId }), let ex = straightSetStep else { return }
         let step = ex.exercise.step == 0 ? 1 : ex.exercise.step
         apply { Runner.adjustAt($0, now: $1, slotId: slotId, target: max(0, (row.load ?? 0) + direction * step)) }
+        Haptics.shared.play(.tick)
+    }
+
+    /// Incline on one row of the set table, 0.5 % a step. It lands on that set, not on whichever
+    /// comes next as `setStepIncline` would, so a row tapped open changes itself; later sets carry it.
+    func nudgeSetIncline(_ slotId: String, _ direction: Double) {
+        guard let row = setRows.first(where: { $0.slotId == slotId }) else { return }
+        let next = max(0, (row.incline ?? 0) + direction * 0.5)
+        apply { s, _ in var s = s; s.actuals[slotId, default: Actual()].incline = next; return s }
         Haptics.shared.play(.tick)
     }
 
@@ -819,7 +896,7 @@ extension SessionRunner: SessionControllable {
             }
         }
         // During a rest, and before a block, the set to get ready for is the next piece of work.
-        let from = state.phase == .lead ? 0 : state.i
+        let from = state.i
         let work = state.slots.indices.first { $0 >= from && state.slots[$0].kind == .work }
         content.setLine = state.phase == .done ? nil : work.flatMap { setLine(state, $0) }
         content.token = token(state)

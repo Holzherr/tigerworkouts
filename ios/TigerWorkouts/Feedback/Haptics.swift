@@ -12,7 +12,8 @@ private let hapticLog = Logger(subsystem: "dev.brambruesch.tigerworkouts", categ
 ///
 /// Core Haptics is foreground-only: with the screen locked it plays nothing. The session keeps the
 /// app alive in the background (Cues' audio), so a locked phone gets the system vibration instead —
-/// two long buzzes for work, one for rest, the only buzz iOS lets a backgrounded app make.
+/// two long buzzes for work, one for rest, three for a block's end, the only buzz iOS lets a
+/// backgrounded app make.
 @MainActor
 @Observable
 final class Haptics {
@@ -51,8 +52,20 @@ final class Haptics {
     private let supportsHaptics = CHHapticEngine.capabilitiesForHardware().supportsHaptics
     private(set) var status = Status.unsupported
     var enabled = Switches.isOn(Switches.haptics)
+    @ObservationIgnored private let appState: () -> UIApplication.State
+    @ObservationIgnored private let vibrator: Vibrator
+    /// What plays a cue with the app on screen; nil is Core Haptics. Tests count it here.
+    @ObservationIgnored private let foreground: ((Cue) -> Void)?
 
-    private init() {
+    /// Only `shared` and tests make one: a test hands in a fake app state and a fake vibrator.
+    init(
+        appState: @escaping () -> UIApplication.State = { UIApplication.shared.applicationState },
+        vibrator: Vibrator = SystemVibrator(),
+        foreground: ((Cue) -> Void)? = nil
+    ) {
+        self.appState = appState
+        self.vibrator = vibrator
+        self.foreground = foreground
         guard supportsHaptics else { return }
         do {
             let engine = try CHHapticEngine()
@@ -103,7 +116,8 @@ final class Haptics {
 
     func play(_ cue: Cue) {
         guard enabled else { return }
-        if UIApplication.shared.applicationState != .active { return vibrate(cue) }
+        if appState() != .active { return vibrate(cue) }
+        if let foreground { return foreground(cue) }
         guard supportsHaptics, let engine else { return fallback(cue) }
         do {
             try engine.start()
@@ -145,22 +159,19 @@ final class Haptics {
     /// Screen locked or app in the background. The ticks stay silent: three long buzzes a second
     /// apart would blur into one, and the work/rest buzz that follows is the one that matters.
     private func vibrate(_ cue: Cue) {
-        switch cue {
-        case .tick:
-            return
-        case .rest:
-            buzz(1)
-        case .work, .block:
-            buzz(2)
-        case .finish:
-            buzz(3)
-        }
+        let times = Self.buzzes(cue)
+        if times > 0 { vibrator.buzz(times) }
     }
 
-    /// Work is two buzzes and rest one, so the pocket can tell them apart.
-    private func buzz(_ times: Int) {
-        for i in 0..<times {
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.6 * Double(i)) { AudioServicesPlaySystemSound(kSystemSoundID_Vibrate) }
+    /// How many system buzzes a cue is with the phone locked: rest one, work two, a block's end
+    /// three, the session's end four, so the pocket can tell a gate from the next set.
+    nonisolated static func buzzes(_ cue: Cue) -> Int {
+        switch cue {
+        case .tick: 0
+        case .rest: 1
+        case .work: 2
+        case .block: 3
+        case .finish: 4
         }
     }
 
@@ -177,6 +188,20 @@ final class Haptics {
             UINotificationFeedbackGenerator().notificationOccurred(.warning)
         case .finish:
             UINotificationFeedbackGenerator().notificationOccurred(.success)
+        }
+    }
+}
+
+/// The system vibration, behind a protocol so a test can count the buzzes a locked phone gets.
+protocol Vibrator {
+    func buzz(_ times: Int)
+}
+
+struct SystemVibrator: Vibrator {
+    /// Work is two buzzes and rest one, so the pocket can tell them apart.
+    func buzz(_ times: Int) {
+        for i in 0..<times {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.6 * Double(i)) { AudioServicesPlaySystemSound(kSystemSoundID_Vibrate) }
         }
     }
 }

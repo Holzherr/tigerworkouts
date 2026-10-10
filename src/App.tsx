@@ -160,8 +160,9 @@ export default function App() {
   const lookup = (id: string) => byId.get(id);
   const refTitle = (id: string) => byId.get(id)?.title;
   const resolve = (s: ExerciseStep) => resolveTarget(s, st.trainingMaxes, st.bodyweightKg, st.equipment);
-  const lastTime = (s: ExerciseStep) => lastTimeLabel(lastSet(st.results, s), s);
-  const lastSetHint = (s: ExerciseStep, round: number) => lastSetLabel(lastSets(st.results, s)?.[round]);
+  // Step ids are per workout, so "last time" on a row is read against the workout it is in.
+  const lastTime = (r: Runsheet) => (s: ExerciseStep) => lastTimeLabel(lastSet(st.results, s, r), s);
+  const lastSetHint = (r: Runsheet) => (s: ExerciseStep, round: number) => lastSetLabel(lastSets(st.results, s, r)?.[round]);
 
   // exercise picker as a promise so the editor can await a pick
   const [pickerOpen, setPickerOpen] = useState(false);
@@ -295,7 +296,7 @@ export default function App() {
           stall={stall}
           onDismissStall={stall ? () => dismiss(stall) : undefined}
           history={st.results.filter(ofWorkout(r))}
-          lastTime={lastTime}
+          lastTime={lastTime(r)}
           onExerciseHistory={s => go(exerciseLink(s.exercise.key))}
           hasHistory={s => st.results.some(x => x.steps.some(y => y.exerciseKey === s.exercise.key))}
           onBack={() => go('/discover')}
@@ -339,8 +340,8 @@ export default function App() {
           onSaveAsMine={() => { const m = saveMine(); say('Saved to My workouts'); go(`/w/${encodeURIComponent(m.id!)}`); }}
           onStart={() => { unlockAudio(); const m = saveMine(); go(`/do/${encodeURIComponent(m.id!)}`); }}
           resolveTarget={resolve}
-          hintFor={lastTime}
-          setHintFor={lastSetHint}
+          hintFor={lastTime(r)}
+          setHintFor={lastSetHint(r)}
           equipment={st.equipment}
           refTitle={refTitle}
           autoRest={defaultRest}
@@ -378,8 +379,8 @@ export default function App() {
             go(`/w/${encodeURIComponent(id)}`);
           }}
           resolveTarget={resolve}
-          hintFor={lastTime}
-          setHintFor={lastSetHint}
+          hintFor={lastTime(r)}
+          setHintFor={lastSetHint(r)}
           equipment={st.equipment}
           refTitle={refTitle}
           autoRest={defaultRest}
@@ -535,7 +536,7 @@ export default function App() {
                 {r && <WorkoutIcon runsheet={r} size={36} />}
                 <div className="min-w-0 flex-1">
                   <div className="truncate text-[14px] font-bold">{res.title ?? r?.title ?? res.runsheetId}</div>
-                  <div className="text-[12px] text-muted">{localDate(res.startedAt)}{res.durationSec ? ` · ${Math.round(res.durationSec / 60)} min` : res.activity ? ` · ${res.activity.minutes} min` : ''}{res.completed === false ? ' · stopped early' : ''}{res.rpe ? ` · effort ${res.rpe}` : ''}</div>
+                  <div className="text-[12px] text-muted">{localDate(res.startedAt)}{res.durationSec ? ` · ${Math.round(res.durationSec / 60)} min` : res.activity ? ` · ${res.activity.minutes} min` : ''}{res.completed === false && !res.capped ? ' · stopped early' : ''}{res.rpe ? ` · effort ${res.rpe}` : ''}</div>
                 </div>
                 <div className="text-[15px] font-extrabold tabular-nums">{r ? fmtScore(scoreType(r), res.score, res.scoreText) : (res.scoreText ?? '')}</div>
               </button>
@@ -753,7 +754,7 @@ const RunRoute = ({ resume, lookup, onLogKept, onResumeKept, ...props }: RunRout
 
 const RunSession = ({ runsheet, results, intent, equipment, library, origin: startedFrom, onLog, onFinish, onExit, from }: RunRouteProps & { from?: Runner.RunState }) => {
   // Open reps (a range, a max) start on what was done last time, set for set.
-  const { state, now, act } = useRunner(runsheet, { from, seed: s => Runner.prefillReps(s, (step, round) => lastSets(results, step)?.[round]?.reps) });
+  const { state, now, act } = useRunner(runsheet, { from, seed: s => Runner.prefillReps(s, (step, round) => lastSets(results, step, runsheet)?.[round]?.reps) });
   // A fresh run keeps its origin beside it on the device; a resumed one reads it back. Writing it
   // again (StrictMode runs this twice) changes nothing.
   const [origin] = useState(() => {
@@ -838,6 +839,12 @@ const RunSession = ({ runsheet, results, intent, equipment, library, origin: sta
     act.drop(stepId);
     undo.offer(step?.kind === 'exercise' ? `Dropped ${step.exercise.name}` : 'Dropped step', () => act.restore(before));
   };
+  const endBlock = () => {
+    const before = state;
+    act.endBlock();
+    if (Runner.endBlock(before, Date.now()).phase === 'done') return;
+    undo.offer('Block ended', () => act.restore(before));
+  };
   return (
     <div className="relative h-dvh">
       {!over && undo.toast}
@@ -848,7 +855,7 @@ const RunSession = ({ runsheet, results, intent, equipment, library, origin: sta
           </div>
         </div>
       )}
-      <TimerScreen runsheet={runsheet} state={state} now={now} onDone={act.done} onSkip={skip} onBack={act.back} onPause={act.pause} onResume={act.resume} onAdjust={act.adjust} onAdjustIncline={act.adjustIncline} onSetReps={act.setReps} onSetAmount={act.setAmount} onDrop={drop} onStartBlock={startBlock} onAdjustStep={act.adjustStep} sets={{ adjust: act.adjustAt, setReps: act.setRepsAt, setAmount: act.setAmountAt, complete: act.completeSet, reopen: act.reopenSet, lastFor: (step, round) => lastSets(results, step)?.[round], fill: act.fillSet, setType: act.setTypeAt }} onAdjustRest={act.extendRest} lastFor={step => lastSet(results, step)} onFill={act.fillSet} ghost={pace?.text} goal={goal} muted={muted} onToggleMute={() => { setMuted(!muted); setMute(!muted); }} equipment={equipment} alternativesFor={(step, target) => alternatives(step.exercise.key, target, library, 6, equipment)} onSwap={act.swap} prs={prs} onFinish={() => { const res = log(state.phase === 'done' ? state : Runner.finish(state, Date.now())); Runner.clearPersisted(); onFinish(res); }} onExit={() => (act.discard(), onExit())} />
+      <TimerScreen runsheet={runsheet} state={state} now={now} onDone={act.done} onSkip={skip} onBack={act.back} onPause={act.pause} onResume={act.resume} onAdjust={act.adjust} onAdjustIncline={act.adjustIncline} onSetReps={act.setReps} onSetAmount={act.setAmount} onDrop={drop} onStartBlock={startBlock} onAdjustStep={act.adjustStep} sets={{ adjust: act.adjustAt, setReps: act.setRepsAt, setAmount: act.setAmountAt, complete: act.completeSet, reopen: act.reopenSet, lastFor: (step, round) => lastSets(results, step, runsheet)?.[round], fill: act.fillSet, setType: act.setTypeAt }} onAdjustRest={act.extendRest} lastFor={step => lastSet(results, step, runsheet)} onFill={act.fillSet} ghost={pace?.text} goal={goal} muted={muted} onToggleMute={() => { setMuted(!muted); setMute(!muted); }} equipment={equipment} alternativesFor={(step, target) => alternatives(step.exercise.key, target, library, 6, equipment)} onSwap={act.swap} prs={prs} onEndBlock={endBlock} onFinish={() => { const res = log(state.phase === 'done' ? state : Runner.finish(state, Date.now())); Runner.clearPersisted(); onFinish(res); }} onExit={() => (act.discard(), onExit())} />
     </div>
   );
 };

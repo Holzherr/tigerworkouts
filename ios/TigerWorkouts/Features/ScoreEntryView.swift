@@ -86,9 +86,13 @@ struct ScoreEntryView: View {
 
     /// The result with a new score and the text the web shows for it.
     nonisolated static func scored(_ r: SessionResult, _ score: Double?, type: ScoreType) -> SessionResult {
+        // A capped for-time stays capped, with its reps, until its score is changed by hand.
+        if r.capped == true, score == r.score { return r }
         var out = r
         out.score = score
         out.scoreText = score.map { Celebrate.formatScore(type, $0) }
+        out.capped = nil
+        out.capReps = nil
         return out
     }
 }

@@ -213,7 +213,7 @@ struct LoggedSetsCard: View {
             ForEach(Array(sets.enumerated()), id: \.offset) { i, x in
                 HStack(spacing: 6) {
                     SetMarkButton(mark: marks[i], type: x.type ?? .normal, label: "Set \(i + 1)") {
-                        onEdit(EditSets.edit(session, row: step.id, index: i) { $0.type = ($0.type ?? .normal).next })
+                        onEdit(EditSets.edit(session, row: step.id, index: i, plan: EditSets.plannedFor(runsheet, stepId: step.stepId)) { $0.type = ($0.type ?? .normal).next })
                     }
                     .frame(width: 34, alignment: .leading)
                     ForEach(fields, id: \.self) { f in
@@ -221,7 +221,7 @@ struct LoggedSetsCard: View {
                             "–",
                             value: Binding(
                                 get: { Self.value(x, f) },
-                                set: { v in onEdit(EditSets.edit(session, row: step.id, index: i, plan: EditSets.plannedReps(runsheet, stepId: step.stepId)) { Self.set(&$0, f, v) }) }
+                                set: { v in onEdit(EditSets.edit(session, row: step.id, index: i, plan: EditSets.plannedFor(runsheet, stepId: step.stepId)) { Self.set(&$0, f, v) }) }
                             ),
                             format: .number
                         )
@@ -236,7 +236,7 @@ struct LoggedSetsCard: View {
                         .accessibilityIdentifier("set-\(step.exerciseKey)-\(i)-\(f.rawValue)")
                     }
                     Button {
-                        onEdit(EditSets.removeSet(session, row: step.id, index: i))
+                        onEdit(EditSets.removeSet(session, row: step.id, index: i, plan: EditSets.plannedFor(runsheet, stepId: step.stepId)))
                     } label: {
                         Image(systemName: "minus.circle")
                             .font(.system(size: 18, weight: .semibold))
@@ -250,7 +250,7 @@ struct LoggedSetsCard: View {
                 }
             }
             Button {
-                onEdit(EditSets.addSet(session, row: step.id))
+                onEdit(EditSets.addSet(session, row: step.id, plan: EditSets.plannedFor(runsheet, stepId: step.stepId)))
             } label: {
                 Label("Add set", systemImage: "plus")
                     .font(.subheadline.weight(.semibold))
