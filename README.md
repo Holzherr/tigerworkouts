@@ -108,6 +108,10 @@ imported workouts, scores and progression, follow-along videos, Discover with re
 with your history, saved-not-done, and the next day of a program in progress; a creator done twice
 outranks any exercise overlap; For you sends the user to Search when history yields no picks),
 settings, share links, quick log, post-workout stats with a body map, a finish screen that leads with the workout count, streak, records set and deltas vs last time plus a share card (PNG), a 1–10 session effort on every result (written to Apple Health as the workout effort score on iOS 18+), offline via a service worker.
+The web timer announces each step to a screen reader through one hidden polite live region ("Rest,
+30 seconds", "Barbell bench press, set 2 of 3", "Paused", "Workout finished"): it speaks on a slot
+or phase change, never on a tick. The landing page's looping hero demo renders the same screen with
+`announce={false}`, so it stays silent.
 Each session records where it was started (`startedFrom`: a Discover tab, the Up next card on home, the Me tab, Repeat, a
 share link) so the share started from a home recommendation can be measured. The iOS app writes the
 same field from its Workouts tab (Pick up again → history, Mine → mine, a catalogue section or a
