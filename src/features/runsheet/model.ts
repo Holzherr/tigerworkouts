@@ -358,6 +358,24 @@ export const addSet = (b: Block): Block => {
   sets.push({ reps: last.reps, ...(last.load !== undefined ? { load: last.load } : {}) });
   return { ...b, repeat: b.repeat + 1, steps: b.steps.map(s => (s.id === step.id ? { ...step, sets } : s)) };
 };
+/** Consecutive sets alike in type, load and count, folded: 8 identical sets are one run of 8, a
+ * warm-up then 4 working sets are two runs. `from` is the run's first round. Edit.setRuns on iOS. */
+export interface SetRun { from: number; count: number; type: SetType; reps: number; load?: number }
+export const setRuns = (b: Block): SetRun[] => {
+  const step = straightSetStep(b);
+  const runs: SetRun[] = [];
+  for (let i = 0; step && i < b.repeat; i++) {
+    const { reps, load } = plannedSet(step, i);
+    const type = plannedType(step, i);
+    const last = runs[runs.length - 1];
+    if (last && last.type === type && last.reps === reps && last.load === load) last.count++;
+    else runs.push({ from: i, count: 1, type, reps, ...(load !== undefined ? { load } : {}) });
+  }
+  return runs;
+};
+/** Change every set of a run at once, as a stepper on a folded row does. */
+export const editRun = (b: Block, run: SetRun, patch: SetPlan): Block => Array.from({ length: run.count }, (_, k) => run.from + k).reduce((acc, round) => editSet(acc, round, patch), b);
+
 /** Drop the last set. A block keeps at least one. */
 export const removeSet = (b: Block): Block => {
   const step = straightSetStep(b);

@@ -16,13 +16,15 @@ import { SortableContext, useSortable, verticalListSortingStrategy } from '@dnd-
 import { CSS, getEventCoordinates } from '@dnd-kit/utilities';
 import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { cn } from '@/shared/utils/ui-utils';
-import { appendToBlock, straightSetStep, flatten, groupOnto, isEmptyMain, repeatAsRounds, startBlock, insertAfter, makeRest, moveRow, moveRowTo, removeItem, removeStep, replaceStep, ROLE_LABEL, updateBlock, type Block, type ExerciseStep, type Item, type ItemRole, type Row, type Step } from '../model';
-import { Link2, Repeat, X } from 'lucide-react';
+import { addSet, appendToBlock, countLabel, editRun, straightSetStep, flatten, groupOnto, isEmptyMain, nextSetType, plannedType, removeSet, repeatAsRounds, setMarks, setRuns, shortUnit, showsLoad, startBlock, insertAfter, makeRest, moveRow, moveRowTo, removeItem, removeStep, replaceStep, ROLE_LABEL, updateBlock, type Block, type ExerciseStep, type Item, type ItemRole, type Row, type Step } from '../model';
+import { Link2, Menu, Minus, Plus, Repeat, X } from 'lucide-react';
 import { Button } from '@/shared/components/ui/button';
+import { Stepper } from '@/shared/components/ui/stepper';
 import { AddTile, SeamInsert, type AddKind } from './add-controls';
 import { BlockBracket, BlockHeader } from './block-bracket';
-import { SetGrid } from './set-grid';
-import type { Equipment } from '../plates';
+import { PlatesButton } from './plate-sheet';
+import { SetGrid, SetMark, type SetGridProps } from './set-grid';
+import { kitOf, type Equipment } from '../plates';
 import { StepRow } from './step-row';
 import { SwipeToRemove } from './swipe-to-remove';
 
@@ -63,6 +65,67 @@ const underPointer: CollisionDetection = args => {
 const GROUP_DWELL_MS = 250;
 const GROUP_BAND = 0.6; // middle share of the target row that means "onto"
 const LIFT_MS = 350;
+const TIP_KEY = 'tiger:tip-block-drag';
+
+/**
+ * A straight-set block with sets alike in a row folded into one (`8×  − 20 +  − 30 +`); a stepper
+ * there changes every set in the run. Vary sets opens the per-set SetGrid; Add set / Remove set
+ * add or drop a set at the end.
+ */
+export const SetRuns = ({ block, onChange, onVary, hintFor, equipment }: SetGridProps & { onVary: () => void }) => {
+  const step = straightSetStep(block);
+  if (!step) return null;
+  const hasLoad = showsLoad(step);
+  const count = countLabel(step.forMode);
+  const marks = setMarks(Array.from({ length: block.repeat }, (_, i) => plannedType(step, i)));
+  return (
+    <div className="bg-surface px-3 py-2" aria-label="Sets">
+      <div className="flex items-center gap-2 pb-1 text-[11px] font-bold tracking-widest text-muted uppercase">
+        <span className="w-10">Sets</span>
+        {hasLoad && <span className="flex-1 text-center">{shortUnit(step.exercise.unit)}</span>}
+        {count && <span className="flex-1 text-center">{count}</span>}
+      </div>
+      {setRuns(block).map(run => {
+        const label = run.count > 1 ? `Sets ${run.from + 1} to ${run.from + run.count}` : `Set ${run.from + 1}`;
+        const hint = hintFor?.(run.from);
+        return (
+          <div key={run.from} className="border-t border-line-soft py-1.5">
+            <div className="flex items-center gap-2">
+              <div className="w-10">
+                <SetMark mark={run.count > 1 ? `${run.count}×` : marks[run.from]} type={run.type} label={label} onCycle={() => onChange(editRun(block, run, { type: nextSetType(run.type) }))} />
+              </div>
+              {hasLoad && (
+                <div className="flex flex-1 items-center justify-center">
+                  <Stepper size="sm" aria-label={`${label} load`} value={run.load ?? 0} step={step.exercise.step || 1} max={1000} onChange={load => onChange(editRun(block, run, { load }))} />
+                  {kitOf(step.exercise) === 'barbell' && <PlatesButton load={run.load} equipment={equipment} className="-mr-2" />}
+                </div>
+              )}
+              {count && (
+                <div className="flex flex-1 justify-center">
+                  <Stepper size="sm" aria-label={`${label} ${count.toLowerCase()}`} value={run.reps} min={1} max={999} onChange={reps => onChange(editRun(block, run, { reps }))} />
+                </div>
+              )}
+            </div>
+            {hint && <div className="pl-12 text-[11px] text-muted">{hint}</div>}
+          </div>
+        );
+      })}
+      <div className="flex gap-2 border-t border-line-soft pt-2">
+        <Button variant="ghost" size="sm" onClick={() => onChange(addSet(block))}>
+          <Plus /> Add set
+        </Button>
+        <Button variant="ghost" size="sm" disabled={block.repeat <= 1} onClick={() => onChange(removeSet(block))}>
+          <Minus /> Remove set
+        </Button>
+        {block.repeat > 1 && (
+          <Button variant="quiet" size="sm" className="ml-auto" onClick={onVary}>
+            Vary sets
+          </Button>
+        )}
+      </div>
+    </div>
+  );
+};
 
 /**
  * The editable runsheet. Rows are one flat sortable list (dnd-kit): loose steps, block headers,
@@ -82,6 +145,8 @@ export const RunsheetList = ({ items, onChange, onPickExercise, onSwapExercise, 
   const ids = useMemo(() => rows.map(r => r.id), [rows]);
 
   const [activeId, setActiveId] = useState<string | null>(null);
+  const [varying, setVarying] = useState<string | null>(null);
+  const [tipSeen, setTipSeen] = useState(() => localStorage.getItem(TIP_KEY) === '1');
   const [groupTarget, setGroupTarget] = useState<string | null>(null);
   const [insertion, setInsertion] = useState<{ id: string; where: 'before' | 'after' } | null>(null);
   const dwell = useRef<{ id: string; since: number } | null>(null);
@@ -313,9 +378,23 @@ export const RunsheetList = ({ items, onChange, onPickExercise, onSwapExercise, 
         );
         j++;
       }
-      // One exercise done for N sets: the sets are the rows that matter, so they get a grid.
+      // One exercise done for N sets: the sets are the rows that matter. Sets alike fold into one
+      // row; Vary sets gives each its own, until an edit makes them alike again.
       const straight = straightSetStep(block);
-      if (straight && !activeId) inner.push(<SetGrid key={`${block.id}:sets`} block={block} onChange={b => onChange(items.map(it => (it.id === b.id ? b : it)))} hintFor={setHintFor ? round => setHintFor(straight, round) : undefined} equipment={equipment} />);
+      if (straight && !activeId) {
+        const setBlock = (b: Block) => {
+          if (setRuns(b).length === 1) setVarying(null);
+          onChange(items.map(it => (it.id === b.id ? b : it)));
+        };
+        const hints = setHintFor ? (round: number) => setHintFor(straight, round) : undefined;
+        inner.push(
+          varying === block.id ? (
+            <SetGrid key={`${block.id}:sets`} block={block} onChange={setBlock} hintFor={hints} equipment={equipment} />
+          ) : (
+            <SetRuns key={`${block.id}:runs`} block={block} onChange={setBlock} onVary={() => setVarying(block.id)} hintFor={hints} equipment={equipment} />
+          )
+        );
+      }
       const endRow = rows[j];
       const div = divider(r);
       if (div) blocks.push(div);
@@ -330,7 +409,13 @@ export const RunsheetList = ({ items, onChange, onPickExercise, onSwapExercise, 
               dissolving={dissolvingBlockId === block.id}
               groupTarget={groupTarget === block.id}
               header={
-                <BlockHeader {...p} block={block} expanded={expandedId === block.id} onToggle={() => toggle(block.id)} onChange={patch => onChange(updateBlock(items, block.id, patch))} onRemove={() => removeBlock(block.id)} dissolving={dissolvingBlockId === block.id} lifted={activeId === block.id} />
+                // The grip says the header moves the block; press-and-drag works anywhere on it.
+                <div {...p} className={cn('flex items-start', activeId === block.id && 'rounded-card bg-surface shadow-lift')}>
+                  <BlockHeader block={block} expanded={expandedId === block.id} onToggle={() => toggle(block.id)} onChange={patch => onChange(updateBlock(items, block.id, patch))} onRemove={() => removeBlock(block.id)} dissolving={dissolvingBlockId === block.id} className="min-w-0 flex-1" />
+                  <span aria-hidden className="grid size-11 shrink-0 place-items-center text-faint" data-testid="block-grip">
+                    <Menu className="size-5" />
+                  </span>
+                </div>
               }
               footer={<AddTile onAdd={k => add(k, { block: block.id })} />}
             >
@@ -349,6 +434,15 @@ export const RunsheetList = ({ items, onChange, onPickExercise, onSwapExercise, 
     <DndContext sensors={sensors} collisionDetection={underPointer} onDragStart={onDragStart} onDragMove={onDragMove} onDragEnd={onDragEnd} onDragCancel={() => (setActiveId(null), setGroupTarget(null), setInsertion(null))}>
       <SortableContext items={ids} strategy={verticalListSortingStrategy}>
         <div className={cn('space-y-2', className)}>
+          {!tipSeen && items.some(it => it.kind === 'block') && (
+            <div className="flex items-center gap-2.5 rounded-card bg-brand-soft py-1 pr-1 pl-3 text-[14px] font-semibold text-ink">
+              <Menu className="size-4 shrink-0 text-brand-ink" />
+              <span className="flex-1">Hold a block's header to move it</span>
+              <Button variant="quiet" className="text-brand-ink" onClick={() => (localStorage.setItem(TIP_KEY, '1'), setTipSeen(true))}>
+                OK
+              </Button>
+            </div>
+          )}
           {blocks}
           {items.some(it => (it.kind === 'exercise' || it.kind === 'rest') && (it.role ?? 'main') === 'main') && (
             <button

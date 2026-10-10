@@ -27,6 +27,8 @@ struct RunsheetEditor<Header: View>: View {
 
     /// Settings → Default rest: what an added rest starts at.
     @AppStorage(Switches.defaultRest) private var defaultRest = 30.0
+    /// "Hold a block's header to move it", shown until OK is tapped.
+    @AppStorage("tip.blockDrag") private var blockTipSeen = false
     @State private var editingRest: RestStep?
     @State private var editingBlock: Block?
     @State private var picking: PickTarget?
@@ -57,6 +59,17 @@ struct RunsheetEditor<Header: View>: View {
         let frozen = lockedSteps
         List {
             header()
+
+            if !blockTipSeen, runsheet.items.contains(where: { $0.asBlock != nil }) {
+                HStack(spacing: 12) {
+                    Image(systemName: "line.3.horizontal").foregroundStyle(Brand.coralInk)
+                    Text("Hold a block's header to move it").font(.subheadline).foregroundStyle(Brand.ink)
+                    Spacer()
+                    Button("OK") { blockTipSeen = true }.font(.subheadline.weight(.bold)).foregroundStyle(Brand.coralInk)
+                }
+                .buttonStyle(.borderless)
+                .listRowBackground(Brand.coralSoft)
+            }
 
             Section {
                 ForEach(rows) { row in
@@ -186,7 +199,7 @@ struct RunsheetEditor<Header: View>: View {
     /// The header is a row of its own, so it can be dragged: the whole block follows it.
     private func blockHeader(_ b: Block, done: Bool) -> some View {
         Button { if !done { editingBlock = b } } label: {
-            HStack(alignment: .firstTextBaseline) {
+            HStack(spacing: 8) {
                 Text(b.name.isEmpty ? "Block" : b.name).font(.headline).foregroundStyle(done ? Brand.muted : Brand.ink)
                 Text(Format.duration(b.estimatedSeconds)).font(.footnote).foregroundStyle(Brand.muted)
                 Spacer()
@@ -195,8 +208,14 @@ struct RunsheetEditor<Header: View>: View {
                     .padding(.horizontal, 10).frame(height: 24)
                     .background(Brand.coralSoft, in: Capsule())
                     .foregroundStyle(Brand.coralInk)
+                if !done {
+                    Image(systemName: "line.3.horizontal")
+                        .font(.body.weight(.semibold))
+                        .foregroundStyle(Brand.faint)
+                        .frame(width: 44, height: 44)
+                }
             }
-            .padding(.top, 14)
+            .padding(.top, 4)
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)

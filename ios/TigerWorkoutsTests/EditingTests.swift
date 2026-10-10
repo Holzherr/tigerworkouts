@@ -215,3 +215,36 @@ enum LibraryExerciseFixture {
         return try! JSONDecoder().decode(LibraryExercise.self, from: Data(json.utf8))
     }
 }
+
+/// The same cases as src/features/runsheet/set-runs.test.ts.
+@Suite("set runs")
+struct SetRunTests {
+    static func sets(_ n: Int) -> Runsheet {
+        Runsheet(id: "g", title: "Runs", items: [.block(Block(
+            id: "b", name: "Press", repeatCount: n,
+            steps: [Fixtures.work("pr", Fixtures.press, target: 20, forMode: .seconds, forValue: 30), Fixtures.rest("r", 60)]
+        ))])
+    }
+    static func runs(_ r: Runsheet) -> [Edit.SetRun] { Edit.setRuns(r.items[0].asBlock!) }
+
+    @Test("8 identical sets fold into one run, and a stepper on it changes all 8")
+    func eight() {
+        #expect(Self.runs(Self.sets(8)) == [Edit.SetRun(from: 0, count: 8, type: .normal, reps: 30, load: 20)])
+        let r = Edit.editRun(Self.sets(8), block: "b", run: Self.runs(Self.sets(8))[0], load: 22.5)
+        let step = r.items[0].asBlock!.straightSetStep!
+        #expect((0..<8).map { step.plannedSet($0).load } == Array(repeating: 22.5, count: 8))
+        #expect(Self.runs(r).count == 1)
+    }
+
+    @Test("a warm-up and 4 working sets are two runs")
+    func warmUp() {
+        let r = Edit.editSet(Self.sets(5), block: "b", round: 0, reps: 12, load: 40, type: .warmup)
+        #expect(Self.runs(r) == [
+            Edit.SetRun(from: 0, count: 1, type: .warmup, reps: 12, load: 40),
+            Edit.SetRun(from: 1, count: 4, type: .normal, reps: 30, load: 20),
+        ])
+        let c = Edit.editRun(r, block: "b", run: Self.runs(r)[1], reps: 8)
+        #expect(Self.runs(c).map(\.count) == [1, 4])
+        #expect(Self.runs(c).map(\.reps) == [12, 8])
+    }
+}

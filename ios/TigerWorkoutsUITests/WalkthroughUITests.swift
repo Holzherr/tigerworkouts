@@ -438,6 +438,43 @@ final class WalkthroughUITests: XCTestCase {
         XCTAssertTrue(app.navigationBars["TigerWorkouts"].waitForExistence(timeout: 5), "deleting the copy should go back")
     }
 
+    /// A block moves by its header, steps and all: every header has a grip and a one-time tip says
+    /// how (specs/blocks-compact-and-drag.md).
+    func testBlockMovesWithItsSteps() {
+        open("Tabata This")
+        let tip = app.staticTexts["Hold a block's header to move it"]
+        if tip.waitForExistence(timeout: 3) {
+            snap("24 Block drag tip")
+            tap(app.buttons["OK"])
+        }
+        XCTAssertFalse(tip.waitForExistence(timeout: 2), "OK puts the tip away")
+
+        let squat = app.buttons.matching(NSPredicate(format: "label BEGINSWITH[c] 'Tabata Squat'")).firstMatch
+        let pullup = app.buttons.matching(NSPredicate(format: "label BEGINSWITH[c] 'Tabata Pull-up'")).firstMatch
+        let pullStep = app.buttons.matching(NSPredicate(format: "label BEGINSWITH[c] 'Pull-up'")).firstMatch
+        XCTAssertTrue(squat.waitForExistence(timeout: 5))
+        reveal(pullup)
+        centre([squat, pullup])
+        snap("24b Block headers with grips")
+        drag(pullup, onto: squat)
+        waitFor("the header drags its block above Squat") { pullup.frame.minY < squat.frame.minY }
+        XCTAssertTrue(pullStep.waitForExistence(timeout: 5))
+        XCTAssertTrue(pullup.frame.minY < pullStep.frame.minY && pullStep.frame.minY < squat.frame.minY, "the Pull-up step moves with its header")
+        snap("24c Block moved with its steps")
+
+        tap(app.navigationBars["Tabata This (mine)"].buttons["Edit"])
+        tap(app.buttons["Delete workout"])
+        tap(app.buttons["Delete"].firstMatch)
+        XCTAssertTrue(app.navigationBars["TigerWorkouts"].waitForExistence(timeout: 5), "deleting the copy should go back")
+
+        // The tip stays put away after a relaunch.
+        app.terminate()
+        app.launch()
+        open("Tabata This")
+        XCTAssertTrue(squat.waitForExistence(timeout: 5))
+        XCTAssertFalse(tip.exists, "the tip shows once")
+    }
+
     func testWriteAWorkout() {
         XCTAssertTrue(app.navigationBars["TigerWorkouts"].waitForExistence(timeout: 10))
         tap(app.buttons["New workout"])

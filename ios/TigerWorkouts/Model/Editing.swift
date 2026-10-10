@@ -314,6 +314,36 @@ enum Edit {
         }
     }
 
+    /// Consecutive sets alike in type, load and count, folded: 8 identical sets are one run of 8, a
+    /// warm-up then 4 working sets are two runs. `setRuns` in the web's model.ts.
+    struct SetRun: Hashable {
+        var from: Int
+        var count: Int
+        var type: SetType
+        var reps: Double
+        var load: Double?
+    }
+
+    static func setRuns(_ block: Block) -> [SetRun] {
+        guard let step = block.straightSetStep else { return [] }
+        var runs: [SetRun] = []
+        for round in 0..<block.repeatCount {
+            let p = step.plannedSet(round)
+            let type = step.plannedType(round)
+            if let last = runs.last, last.type == type, last.reps == p.reps, last.load == p.load {
+                runs[runs.count - 1].count += 1
+            } else {
+                runs.append(SetRun(from: round, count: 1, type: type, reps: p.reps, load: p.load))
+            }
+        }
+        return runs
+    }
+
+    /// Change every set of a run at once, as a stepper on a folded row does.
+    static func editRun(_ r: Runsheet, block blockId: String, run: SetRun, reps: Double? = nil, load: Double? = nil, type: SetType? = nil) -> Runsheet {
+        (run.from..<(run.from + run.count)).reduce(r) { editSet($0, block: blockId, round: $1, reps: reps, load: load, type: type) }
+    }
+
     /// Drop the last set. A block keeps at least one.
     static func removeSet(_ r: Runsheet, block blockId: String) -> Runsheet {
         updateStraightSet(r, block: blockId) { b, step in
