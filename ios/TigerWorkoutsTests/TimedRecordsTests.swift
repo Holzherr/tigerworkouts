@@ -82,6 +82,8 @@ struct TimedRecordsTests {
     func roundTimes() {
         #expect(Rounds.times(RoundSplit(blockId: "b", at: [100, 190, 290], from: 5)) == [95, 90, 100])
         #expect(Rounds.times(RoundSplit(blockId: "b", at: [100, 190])) == [nil, 90])
+        // With round starts kept, the rest before a round is not in its time.
+        #expect(Rounds.times(RoundSplit(blockId: "b", at: [100, 190, 290], from: 5, starts: [5, 130, 220])) == [95, 60, 70])
         let row = Rounds.rows(split("2026-09-08", [100, 190, 290], from: 5), last: split("2026-09-01", [105, 200, 290], from: 5))[0]
         #expect(row.times == [95, 90, 100] && row.fastest == 1 && row.slowest == 2 && row.vsLast == [-5, -5, 10])
         #expect(Rounds.rows(split("2026-09-08", [100], from: 5))[0].fastest == nil)

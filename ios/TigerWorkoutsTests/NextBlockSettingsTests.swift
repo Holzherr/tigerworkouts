@@ -51,6 +51,8 @@ struct NextBlockSettingsTests {
         #expect(runner.incline == 10)
         runner.setStepIncline("s1", TimerView.inclineStep(runner.incline, by: 1))
         runner.startBlock()
+        #expect(runner.state.phase == .lead) // a block on a clock gets its Get ready first
+        runner.tick(at: (runner.state.endsAt ?? 0) + 1)
         #expect(runner.state.phase == .running)
         #expect(runner.slot?.step.id == "s1")
         #expect(runner.incline == 10.5)

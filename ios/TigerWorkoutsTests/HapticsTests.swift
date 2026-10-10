@@ -83,8 +83,8 @@ struct LockedBuzzTests {
             let changes = Self.changes(app: app)
             #expect(Set(changes.map(\.to)) == ["work", "rest", "finish"])
             #expect(changes.last?.to == "finish")
-            // Work two buzzes, rest one, the finish three — one call each, nothing through Core Haptics.
-            let times = ["work": 2, "rest": 1, "finish": 3]
+            // Work two buzzes, rest one, the finish four — one call each, nothing through Core Haptics.
+            let times = ["work": 2, "rest": 1, "finish": 4]
             #expect(changes.map(\.buzzes) == changes.map { [times[$0.to]!] })
             #expect(changes.allSatisfy { $0.felt.isEmpty })
         }

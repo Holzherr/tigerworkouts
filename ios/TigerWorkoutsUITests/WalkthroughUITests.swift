@@ -218,6 +218,35 @@ final class WalkthroughUITests: XCTestCase {
         tap(app.buttons["Done"])
     }
 
+    /// At a block's gate, Previous step takes back a stray Done; mid-block, the X ends the block in
+    /// one tap and parks at the next gate.
+    func testGateBackAndEndBlock() {
+        open("Iron Base · Whole Body A")
+        tap(app.buttons["Start workout"])
+        XCTAssertTrue(app.buttons["End session"].waitForExistence(timeout: 5))
+        let gate = app.buttons.matching(NSPredicate(format: "label BEGINSWITH 'Start ' AND label != 'Start workout'")).firstMatch
+        for _ in 0..<60 where !(gate.exists && gate.isHittable) {
+            if app.buttons["Skip"].exists { app.buttons["Skip"].tap() }
+        }
+        XCTAssertTrue(gate.waitForExistence(timeout: 5), "the session should reach a block's gate")
+        XCTAssertTrue(app.buttons["Previous step"].isHittable, "the gate should offer Previous step")
+        snap("32a Gate with Previous step")
+        let name = gate.label
+        tap(gate)
+        XCTAssertTrue(app.buttons["End session"].waitForExistence(timeout: 5))
+        tap(app.buttons["End session"])
+        let end = app.buttons["End this block"]
+        XCTAssertTrue(end.waitForExistence(timeout: 5), "a running block can be ended from the X")
+        snap("32b End this block")
+        end.tap()
+        let next = app.buttons.matching(NSPredicate(format: "label BEGINSWITH 'Start ' AND label != 'Start workout' AND label != %@", name)).firstMatch
+        XCTAssertTrue(next.waitForExistence(timeout: 5), "ending the block should park at the next gate")
+        snap("32c Next gate after ending a block")
+        tap(app.buttons["End session"])
+        tap(app.buttons["Finish and save"])
+        tap(app.buttons["Done"])
+    }
+
     /// A program's rule on the finish screen, as on the web's result sheet: Made it / Missed on
     /// each lift it reads, and "Next time" with the load it makes of the session.
     func testMadeItOnTheFinishScreen() {
