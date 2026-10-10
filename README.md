@@ -87,6 +87,11 @@ attribution, plus 277 exercises they needed. Format in `imports/SCHEMA.md`, find
 list in `imports/LEARNINGS.md`. Validate with `node tools/validate-imports.mjs`; browse them in
 Storybook under Workouts → Imported. Verbatim originals live in the private assistant repo.
 
+`imports/exercise-details.json` gives all 399 catalogue exercises a movement pattern, equipment,
+muscles, difficulty, cues, mistakes, easier/harder swaps and default sets, reps and rest;
+`imports/catalogue/new-exercises.json` adds 50 staples (they show in the web picker; iOS after
+`npm run export:ios`). No app reads the details yet. Validate with `node tools/validate-exercises.mjs`.
+
 ## Status
 
 Live since 6 Sep 2026. Timer (rounds, for time, AMRAP, EMOM, ladders, resume after reload; big
