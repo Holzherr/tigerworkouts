@@ -1,11 +1,11 @@
-import { ChevronLeft, ChevronRight, ExternalLink, Globe, Lock, Pencil, Play, Share2, Smartphone, Trash2, Video } from 'lucide-react';
+import { ChevronLeft, ChevronRight, ExternalLink, Globe, Layers, Lock, Pencil, Play, Plus, Share2, Smartphone, Trash2, Video } from 'lucide-react';
 import { localDate } from '@/shared/utils/dates';
 import { Fragment, useState } from 'react';
 import { Button } from '@/shared/components/ui/button';
 import { Chip } from '@/shared/components/ui/chip';
 import { ClipThumb } from '@/shared/components/ui/clip-thumb';
 import { fmtClock, fmtNum, plural } from '@/shared/utils/ui-utils';
-import { blockSeconds, countLabel, forLabel, loadLabel, modeLabel, plannedSet, ROLE_LABEL, runsheetMinutes, scoreType, shortUnit, straightSetStep, type Block, type ExerciseStep, type Runsheet } from '@/features/runsheet/model';
+import { addBlock, blockSeconds, countLabel, forLabel, loadLabel, modeLabel, plannedSet, removeItem, ROLE_LABEL, runsheetMinutes, scoreType, shortUnit, straightSetStep, type Block, type ExerciseStep, type Item, type Runsheet } from '@/features/runsheet/model';
 import { ExerciseSheet } from '@/features/runsheet/components/exercise-sheet';
 import type { SessionResult } from '@/features/runsheet/progression';
 import { fmtScore } from '@/features/runsheet/progression';
@@ -13,6 +13,34 @@ import { KIND_LABEL } from './workout-card';
 import type { Today } from '@/features/runsheet/targets';
 import type { Stall } from '@/features/results/stall';
 import { StallCard, TodayLine } from '@/features/results/components/targets';
+import { RunsheetList, type RunsheetListProps } from '@/features/runsheet/components/runsheet-list';
+import { BlockSheet } from '@/features/runsheet/components/block-sheet';
+import { useUndo } from '@/shared/components/ui/undo-toast';
+
+/** The workout's rows, editable in place: the editor's list, block settings in a sheet. */
+const EditableList = ({ runsheet: r, editor: { onChange, ...list } }: { runsheet: Runsheet; editor: NonNullable<WorkoutPreviewScreenProps['editor']> }) => {
+  const [expanded, setExpanded] = useState<string | null>(null);
+  const undo = useUndo();
+  const block = r.items.find((i): i is Block => i.kind === 'block' && i.id === expanded) ?? null;
+  const setItems = (items: Item[]) => onChange({ ...r, items });
+  const add = (items: Item[], open: string) => (setItems(items), setExpanded(open));
+  const oneOff = () => list.onPickExercise().then(step => step && add([...r.items, step], step.id));
+  return (
+    <>
+      <RunsheetList {...list} items={r.items} onChange={setItems} expandedId={block ? null : expanded} onExpandedChange={setExpanded} onRemoved={(before, what) => undo.offer(what, () => setItems(before))} />
+      <div className="flex gap-2">
+        <Button variant="ghost" block onClick={() => { const next = addBlock(r.items); add(next.items, next.blockId); }}>
+          <Layers /> Add block
+        </Button>
+        <Button variant="ghost" block onClick={oneOff}>
+          <Plus /> Add a one-off exercise
+        </Button>
+      </div>
+      <BlockSheet block={block} onOpenChange={o => !o && setExpanded(null)} onChange={b => setItems(r.items.map(i => (i.id === b.id ? b : i)))} onRemove={() => block && (setItems(removeItem(r.items, block.id)), undo.offer(`Removed ${block.name || 'block'}`, () => setItems(r.items)))} />
+      {undo.toast}
+    </>
+  );
+};
 
 export interface WorkoutPreviewScreenProps {
   runsheet: Runsheet;
@@ -46,6 +74,9 @@ export interface WorkoutPreviewScreenProps {
   onDismissStall?: () => void;
   /** Given for your own workouts: deletes it, after asking. */
   onDelete?: () => void;
+  /** Given, the page is the editor (as on the phone): the same rows as the editor, a block's header
+   * opens its sheet, Add block and Add a one-off exercise under the list. Every change comes here. */
+  editor?: Omit<RunsheetListProps, 'items' | 'onChange' | 'expandedId' | 'onExpandedChange' | 'onRemoved'> & { onChange: (r: Runsheet) => void };
 }
 
 /** A straight-set block read as the gym writes it: set, load, reps — one line each. */
@@ -75,7 +106,7 @@ const SCORE_TEXT: Record<string, string> = { time: 'For time', rounds: 'AMRAP: r
  * Edit & start, Follow along for videos, Save. Tapping any exercise opens it — the clip, the cue,
  * and its numbers as steppers when the host can save them.
  */
-export const WorkoutPreviewScreen = ({ runsheet: r, history = [], lastTime, onBack, onStart, onEditAndStart, onFollowAlong, onLogOnly, onSave, saved, onShare, onStepChange, onCreator, onTogglePublic, appHref, onExerciseHistory, hasHistory, today, stall, onDismissStall, onDelete }: WorkoutPreviewScreenProps) => {
+export const WorkoutPreviewScreen = ({ runsheet: r, history = [], lastTime, onBack, onStart, onEditAndStart, onFollowAlong, onLogOnly, onSave, saved, onShare, onStepChange, onCreator, onTogglePublic, appHref, onExerciseHistory, hasHistory, today, stall, onDismissStall, onDelete, editor }: WorkoutPreviewScreenProps) => {
   const [open, setOpen] = useState<ExerciseStep | null>(null);
   const kind = r.source?.kind ?? 'user';
   const score = scoreType(r);
@@ -158,7 +189,7 @@ export const WorkoutPreviewScreen = ({ runsheet: r, history = [], lastTime, onBa
             )}
           </div>
         )}
-        {r.items.map((it, i) => {
+        {editor ? <EditableList runsheet={r} editor={editor} /> : r.items.map((it, i) => {
           if (it.kind === 'ref') return null;
           const role = it.role && it.role !== 'main' ? ROLE_LABEL[it.role] : null;
           if (it.kind === 'block') {
@@ -253,9 +284,11 @@ export const WorkoutPreviewScreen = ({ runsheet: r, history = [], lastTime, onBa
               <Play /> Start
             </Button>
           )}
-          <Button variant="ghost" onClick={onEditAndStart} aria-label="Edit and start">
-            <Pencil /> Edit
-          </Button>
+          {onEditAndStart && (
+            <Button variant="ghost" onClick={onEditAndStart} aria-label="Edit and start">
+              <Pencil /> Edit
+            </Button>
+          )}
           {onSave && (
             <Button variant={saved ? 'soft' : 'ghost'} onClick={onSave}>
               {saved ? 'Saved' : 'Save'}

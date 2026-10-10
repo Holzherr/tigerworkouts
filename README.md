@@ -72,8 +72,10 @@ so the next person (or agent) can find the component instead of rebuilding it.
 ## Runsheet model
 
 A workout is a list of items. An item is a step (exercise or rest) or a block (name, repeat count,
-list of steps). Blocks are made by dropping one step onto another and dissolve when one step is
-left. `src/features/runsheet/model.ts` holds every edit as a pure function; `fromLegacy()` converts
+list of steps). Blocks are made by dropping one step onto another or with Add block, and dissolve
+when a step taken out of them leaves one. The workout page (`#/w/<id>`) is the one editor, as on
+the phone: a block's header opens its sheet; the first edit of a workout not yours saves one copy
+of it, "(mine)" (`copyOnEdit`), which Search never lists and Saved shows in place of the original. `src/features/runsheet/model.ts` holds every edit as a pure function; `fromLegacy()` converts
 v0.9 `legacy/data.js` workouts. The iPhone app runs the same model, ported: the timer engine in
 `ios/TigerWorkouts/Engine/Runner.swift` is `src/features/timer/runner.ts` line for line, and has to
 follow it when it changes. Mid-session, `replan` takes an edited runsheet and rebuilds every slot

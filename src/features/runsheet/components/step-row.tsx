@@ -1,4 +1,4 @@
-import { ChevronUp, X } from 'lucide-react';
+import { ChevronRight, ChevronUp, X } from 'lucide-react';
 import { forwardRef } from 'react';
 import { Button } from '@/shared/components/ui/button';
 import { Chip } from '@/shared/components/ui/chip';
@@ -41,6 +41,8 @@ export interface StepRowProps extends Omit<React.HTMLAttributes<HTMLDivElement>,
   hint?: string;
   /** kg this user should load when the step is % TM or × BW. */
   resolvedTarget?: number;
+  /** Given, the expanded exercise has a History row that opens its logbook. */
+  onHistory?: () => void;
 }
 
 const stop = (e: React.SyntheticEvent) => e.stopPropagation();
@@ -53,7 +55,7 @@ const stop = (e: React.SyntheticEvent) => e.stopPropagation();
  * seconds / reps / minutes dropdown. Rest steps show quick-pick chips instead of a weight row.
  * Pure: every change is handed back through onChange.
  */
-export const StepRow = forwardRef<HTMLDivElement, StepRowProps>(({ step, expanded, onToggle, onChange, onRemove, onSwap, lifted, groupTarget, hint, resolvedTarget, className, ...rest }, ref) => {
+export const StepRow = forwardRef<HTMLDivElement, StepRowProps>(({ step, expanded, onToggle, onChange, onRemove, onSwap, lifted, groupTarget, hint, resolvedTarget, onHistory, className, ...rest }, ref) => {
   const isRest = step.kind === 'rest';
   const shell = cn(
     'relative bg-surface transition-[box-shadow,transform] duration-150 select-none',
@@ -110,6 +112,14 @@ export const StepRow = forwardRef<HTMLDivElement, StepRowProps>(({ step, expande
       </div>
       <div className="mx-2 mb-2 space-y-2.5 rounded-control bg-canvas px-3 py-3" onPointerDown={stop} onClick={stop}>
         {isRest ? <RestBody step={step} onChange={onChange} /> : <ExerciseBody step={step} onChange={onChange} />}
+        {onHistory && (
+          <button type="button" onClick={onHistory} className="flex w-full items-center justify-between gap-3 rounded-card border border-line bg-surface px-3 py-2.5 text-left active:bg-line-soft">
+            <span className="text-[15px] font-semibold">History</span>
+            <span className="flex items-center gap-1 text-[13px] text-muted">
+              Chart and records <ChevronRight className="size-4 text-faint" />
+            </span>
+          </button>
+        )}
       </div>
     </div>
   );

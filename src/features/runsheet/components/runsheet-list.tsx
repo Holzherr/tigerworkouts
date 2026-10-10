@@ -49,6 +49,8 @@ export interface RunsheetListProps {
   refTitle?: (runsheetId: string) => string | undefined;
   /** After a step or block is removed, with the list as it was, so the host can offer Undo. */
   onRemoved?: (before: Item[], what: string) => void;
+  /** Given, an expanded exercise offers History; undefined where there is nothing to open. */
+  historyFor?: (step: ExerciseStep) => (() => void) | undefined;
   className?: string;
 }
 
@@ -70,7 +72,7 @@ const LIFT_MS = 350;
  * to make a block or join one. Blocks drag as a chunk by their header. Tap a row to expand it,
  * swipe or ✕ to remove, ＋ on a seam to insert there.
  */
-export const RunsheetList = ({ items, onChange, onPickExercise, onSwapExercise, expandedId: expandedProp, onExpandedChange, autoRest = 30, resolveTarget, hintFor, setHintFor, equipment, refTitle, onRemoved, className }: RunsheetListProps) => {
+export const RunsheetList = ({ items, onChange, onPickExercise, onSwapExercise, expandedId: expandedProp, onExpandedChange, autoRest = 30, resolveTarget, hintFor, setHintFor, equipment, refTitle, onRemoved, historyFor, className }: RunsheetListProps) => {
   const [expandedLocal, setExpandedLocal] = useState<string | null>(null);
   const expandedId = expandedProp === undefined ? expandedLocal : expandedProp;
   const setExpanded = (id: string | null) => (onExpandedChange ? onExpandedChange(id) : setExpandedLocal(id));
@@ -241,6 +243,7 @@ export const RunsheetList = ({ items, onChange, onPickExercise, onSwapExercise, 
             groupTarget={groupTarget === row.id}
             resolvedTarget={row.step.kind === 'exercise' && resolveTarget ? resolveTarget(row.step) : undefined}
             hint={row.step.kind === 'exercise' ? hintFor?.(row.step) : undefined}
+            onHistory={row.step.kind === 'exercise' ? historyFor?.(row.step) : undefined}
           />
         </SwipeToRemove>
       )}

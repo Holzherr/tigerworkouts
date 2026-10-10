@@ -30,8 +30,10 @@ const MIN_OVERLAP = 2;
 export const recommend = (all: Runsheet[], results: SessionResult[], saved: string[] = [], limit = 6): Recommendation[] => {
   const byId = new Map(all.map(r => [id(r), r]));
   const done = results.map(x => byId.get(x.runsheetId)).filter((r): r is Runsheet => !!r);
-  const doneIds = new Set(results.map(x => x.runsheetId));
-  const recent = new Set(results.slice(0, 5).map(x => x.runsheetId));
+  // A session of your copy is a session of the original, and the other way round.
+  const rootOf = (rid: string) => (byId.has(rid) ? root(byId.get(rid)!) : rid);
+  const doneIds = new Set(results.map(x => rootOf(x.runsheetId)));
+  const recent = new Set(results.slice(0, 5).map(x => rootOf(x.runsheetId)));
 
   if (done.length === 0) {
     const pick = (pred: (r: Runsheet) => boolean, reason: string) => {
@@ -90,12 +92,12 @@ export const recommend = (all: Runsheet[], results: SessionResult[], saved: stri
     const rid = id(r);
     // An original you have a copy of is offered as the copy, or not at all.
     if (!r.copyOf && copies.has(rid)) continue;
-    if (recent.has(rid) || programNext.some(p => id(p.runsheet) === rid)) continue;
+    if (recent.has(root(r)) || programNext.some(p => id(p.runsheet) === rid)) continue;
     if (r.program && !started.has(r.program.name) && r.program.order !== 1) continue;
     const a = author(r);
     const creatorSessions = a ? (authors.get(a) ?? 0) : 0;
     const shared = [...exerciseKeys(r)].filter(x => keys.has(x));
-    const savedNotDone = saved.includes(rid) && !doneIds.has(rid);
+    const savedNotDone = saved.includes(rid) && !doneIds.has(root(r));
     if (creatorSessions < CREATOR_SESSIONS && shared.length < MIN_OVERLAP && !savedNotDone) continue;
     let s = 0;
     const reasons: [number, string][] = [];
@@ -120,7 +122,7 @@ export const recommend = (all: Runsheet[], results: SessionResult[], saved: stri
       s += 4;
       reasons.push([4, 'Saved and not done yet']);
     }
-    if (doneIds.has(rid)) {
+    if (doneIds.has(root(r))) {
       s += 1;
       reasons.push([0.5, 'Beat your last score']);
     }
