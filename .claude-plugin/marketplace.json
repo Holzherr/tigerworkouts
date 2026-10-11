@@ -11,7 +11,17 @@
     {
       "name": "tigerworkouts",
       "source": "./plugin",
-      "description": "Coaching from your real training history, new workouts written straight into the TigerWorkouts app, and a guided timer in the chat."
+      "description": "Coaching from your real training history, new workouts written straight into the TigerWorkouts app, and a guided timer in the chat.",
+      "displayName": "TigerWorkouts",
+      "category": "lifestyle",
+      "tags": [
+        "fitness",
+        "workouts",
+        "training",
+        "timer",
+        "coaching"
+      ],
+      "homepage": "https://mcp.tigerworkouts.com"
     }
   ]
 }

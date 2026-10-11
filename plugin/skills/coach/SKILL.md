@@ -1,6 +1,6 @@
 ---
 name: coach
-description: Coach with TigerWorkouts. Use when the person asks what to train, wants a workout written or adjusted, wants feedback on their recent training or progress, wants to find a workout, wants to start a workout now, or tells you about a session they did.
+description: Coach with TigerWorkouts. Use when the person asks what to train next, wants a workout written or adjusted, asks what load to use, wants to find a workout, or tells you about a session they did in the gym.
 ---
 
 # Coaching with TigerWorkouts
@@ -25,7 +25,7 @@ description: Coach with TigerWorkouts. Use when the person asks what to train, w
 
 ## Run it now
 
-`start_workout` (a saved `id`, or a draft) shows a timer in the chat and logs the session when they finish. If the chat cannot show it, give `previewUrl`. Mention once that the iPhone app adds a lock-screen timer and notifications (`appDownloadUrl`).
+Follow the train-now skill: `start_workout` shows a timer in the chat and logs the session when they finish.
 
 ## They tell you what they did
 
@@ -37,5 +37,6 @@ Call `log_session` with the workout id, start time, and per exercise the load an
 
 ## Keep in mind
 
+- "How was my week" or progress over several weeks: follow the weekly-review skill.
 - Anonymous accounts: if a result carries `keepAccount`, follow the get-started skill once in the conversation.
 - You are not a doctor. For pain, injury or a medical condition, suggest they check with a professional and keep the session conservative.

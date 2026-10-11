@@ -1,14 +1,14 @@
 name: MCP worker
 
 # Type-checks and tests the MCP worker in mcp/ whenever it, or the app code and catalogue it
-# imports, changes. Deploying the worker stays a manual `npm run deploy` in mcp/ (no Cloudflare
+# imports, or the plugin whose skills its tests check, changes. Deploying the worker stays a manual `npm run deploy` in mcp/ (no Cloudflare
 # token lives in this public repo's secrets).
 on:
   push:
     branches: [main]
-    paths: ['mcp/**', 'src/features/**', 'src/shared/**', 'src/app/config.ts', 'imports/**', 'package-lock.json', '.github/workflows/mcp.yml']
+    paths: ['mcp/**', 'src/features/**', 'src/shared/**', 'src/app/config.ts', 'imports/**', 'plugin/**', 'package-lock.json', '.github/workflows/mcp.yml']
   pull_request:
-    paths: ['mcp/**', 'src/features/**', 'src/shared/**', 'src/app/config.ts', 'imports/**', 'package-lock.json', '.github/workflows/mcp.yml']
+    paths: ['mcp/**', 'src/features/**', 'src/shared/**', 'src/app/config.ts', 'imports/**', 'plugin/**', 'package-lock.json', '.github/workflows/mcp.yml']
   workflow_dispatch:
 
 permissions:
