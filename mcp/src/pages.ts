@@ -24,7 +24,7 @@ const who = (client: string, redirect: string) => `<p class="muted">Connecting <
 
 const anonymousCard = (rid: string) => `<div class="card"><form method="post" action="/authorize/anonymous"><input type="hidden" name="rid" value="${esc(rid)}">
 <button type="submit">Start now, no account needed</button></form>
-<p class="muted">Your workouts and history are kept. Add your email later (ask the assistant to keep your account) to use them in the app.</p></div>
+<p class="muted">A temporary account: it is deleted after 7 days unless you keep it. To keep it, give the assistant your email ("keep my TigerWorkouts account") and click the link it sends; then sign in to the app with that email.</p></div>
 <h2>Already use TigerWorkouts?</h2>`;
 
 export const signInPage = (a: { rid: string; client: string; redirect: string; google: boolean; anonymous?: boolean; error?: string }) =>
@@ -69,7 +69,7 @@ export const claimDonePage = (r: { status: 'claimed' | 'confirm'; email: string 
     'Account kept · TigerWorkouts',
     r.status === 'claimed'
       ? `<h1>Done</h1><p>Your account is now <b>${esc(r.email)}</b>. Sign in to the app with that email to see your workouts.</p>${APP_LINKS}`
-      : `<h1>Check your email</h1><p>We sent a confirmation link to <b>${esc(r.email)}</b>. Click it, then sign in to the app with that email to see your workouts.</p>${APP_LINKS}`,
+      : `<h1>One more step</h1><p>We sent a confirmation link to <b>${esc(r.email)}</b> (check spam). Your account is kept once you click it, and the link opens tigerworkouts.com signed in. After that, sign in to the iPhone app with the same email.</p>${APP_LINKS}`,
   );
 
 const APP_LINKS = `<a class="btn" href="https://testflight.apple.com/join/r8uFaWKY">Get the iPhone app (lock-screen timer &amp; notifications)</a><a class="btn ghost" href="https://tigerworkouts.com/">Open tigerworkouts.com</a>`;
@@ -88,7 +88,7 @@ const TOOLS: [string, string][] = [
   ['preview_workout_url', 'a link that opens a workout with no sign-in'],
   ['start_workout', 'run a workout now with a timer in the chat'],
   ['log_session', 'save a finished session to the history'],
-  ['claim_account', 'add an email to an account started without one'],
+  ['claim_account', 'keep an account started without an email (else deleted after 7 days)'],
 ];
 
 export const landingText = (origin: string, google = false, anonymous = false) => `# TigerWorkouts MCP server
@@ -97,7 +97,7 @@ TigerWorkouts (https://tigerworkouts.com) is a workout app with a guided timer. 
 
 MCP endpoint (Streamable HTTP): ${origin}/mcp
 Auth: OAuth 2.1 with PKCE. Discovery: ${origin}/.well-known/oauth-protected-resource/mcp and ${origin}/.well-known/oauth-authorization-server. Clients register with Client ID Metadata Documents or Dynamic Client Registration (${origin}/oauth/register). The person signs in with their TigerWorkouts account (email code${google ? ' or Google' : ''}); the assistant then acts as that person and sees only what they can see.
-${anonymous ? 'Access: anyone. "Start now, no account needed" makes an anonymous account in one tap; claim_account adds an email to it later. Existing accounts sign in with email.' : 'Access: invite-only for now. Accounts not on the list get a "not open yet" page after sign-in.'}
+${anonymous ? `Access: anyone. "Start now, no account needed" makes a temporary account in one tap. It works like any other except nothing can be made public, and it is deleted 7 days after it started unless kept. To keep it: claim_account with the person's email (or no email, for a link where they type it), then they click the confirmation link in the email; after that they sign in to the apps with that email. Tool results carry keepAccount while the account is temporary. Existing accounts sign in with email.` : 'Access: invite-only for now. Accounts not on the list get a "not open yet" page after sign-in.'}
 
 Tools:
 ${TOOLS.map(([n, d]) => `- ${n}: ${d}`).join('\n')}
@@ -116,7 +116,7 @@ export const landingPage = (origin: string, anonymous = false) =>
     'TigerWorkouts for AI assistants',
     `<h1>TigerWorkouts for AI assistants</h1>
 <p>Connect Claude, ChatGPT or any MCP client to your <a href="https://tigerworkouts.com">TigerWorkouts</a> account. Ask for coaching based on what you have actually lifted and run, and have it write the next session straight into the app.</p>
-<p class="muted">${anonymous ? 'No account needed to start: connect, tap "Start now", and keep the account later with your email.' : 'Invite-only for now.'} Machine-readable version: <a href="/llms.txt">/llms.txt</a>.</p>
+<p class="muted">${anonymous ? 'No account needed to start: connect and tap "Start now". That account lasts 7 days; ask the assistant to keep it, click the link it emails you, and it is yours, in the app too.' : 'Invite-only for now.'} Machine-readable version: <a href="/llms.txt">/llms.txt</a>.</p>
 <h2>Server URL</h2><pre>${esc(origin)}/mcp</pre>
 <h2>Claude</h2><p>Settings → Connectors → <b>Add custom connector</b>, paste the URL, then <b>Connect</b> and sign in with your TigerWorkouts email.</p>
 <p>Claude Code:</p><pre>claude mcp add --transport http tigerworkouts ${esc(origin)}/mcp</pre>

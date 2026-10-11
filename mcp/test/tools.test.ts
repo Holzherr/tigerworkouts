@@ -6,7 +6,7 @@ import { handleMcp } from '../src/server';
 import { db as makeDb, type Db } from '../src/supabase';
 import * as T from '../src/tools';
 import { TIMER_URI } from '../src/server';
-import { claimAccount, sendClaim } from '../src/claim';
+import { accountStatus, claimAccount, keepNote, sendClaim } from '../src/claim';
 import { fakeSupabase, tokenFor, type Tables } from './fake-supabase';
 
 const NICK = '71ee1910-ef0a-471d-81bb-345ce7b9c2e3';
@@ -306,5 +306,14 @@ describe('claim', () => {
   it('an auto-confirmed email is reported as claimed', async () => {
     const f = (async () => Response.json({ id: OTHER, email: 'me@example.com' })) as unknown as typeof fetch;
     expect(await sendClaim('t', ' Me@Example.com ', f)).toMatchObject({ status: 'claimed', email: 'me@example.com' });
+  });
+  it('says when a temporary account goes, and stops once it is claimed', async () => {
+    const user = (u: object) => (async () => Response.json(u)) as unknown as typeof fetch;
+    const anon = await accountStatus('t', user({ id: OTHER, is_anonymous: true, created_at: '2026-10-01T23:30:00Z' }));
+    expect(anon).toEqual({ anonymous: true, pendingEmail: undefined, deleteOn: '2026-10-08' });
+    expect(keepNote(anon)).toContain('deleted on 2026-10-08');
+    expect(keepNote({ ...anon, pendingEmail: 'p@example.com' })).toContain('Waiting for p@example.com');
+    expect(keepNote(await accountStatus('t', user({ id: OTHER, email: 'p@example.com' })))).toBeUndefined();
+    expect(keepNote(undefined)).toContain('7 days');
   });
 });

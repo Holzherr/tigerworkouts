@@ -40,7 +40,38 @@ export const sendClaim = async (accessToken: string, rawEmail: string, f: Fetch 
   }
   if (user.email?.toLowerCase() === email)
     return { status: 'claimed', email, next: `Done. Sign in to the TigerWorkouts app with ${email} (email code) to see these workouts there.` };
-  return { status: 'confirm', email, next: `Supabase sent a confirmation link to ${email}. Once it is clicked, sign in to the TigerWorkouts app with that email to see these workouts there.` };
+  return { status: 'confirm', email, next: confirmNext(email) };
+};
+
+const confirmNext = (email: string) =>
+  `Not done yet: a confirmation email went to ${email}. Tell the person to open it (check spam) and click the link; that confirms the address and opens tigerworkouts.com signed in, with these workouts. Until they click it the account is still temporary. After that the iPhone app signs in with ${email} (email code).`;
+
+/** Unclaimed anonymous users are deleted this long after they start (migration 0009). */
+export const ANON_DAYS = 7;
+
+export interface AccountStatus {
+  anonymous: boolean;
+  email?: string;
+  /** Claimed, waiting for the person to click the confirmation link. */
+  pendingEmail?: string;
+  /** YYYY-MM-DD the account is deleted on if still unclaimed. */
+  deleteOn?: string;
+}
+
+/** Where an anonymous connection stands now. The grant's props only say how it was at the last refresh. */
+export const accountStatus = async (accessToken: string, f: Fetch = fetch): Promise<AccountStatus> => {
+  const u = await auth(f).getUser(accessToken);
+  if (!u.is_anonymous) return { anonymous: false, email: u.email };
+  const born = u.created_at ? Date.parse(u.created_at) : NaN;
+  return { anonymous: true, pendingEmail: u.new_email || undefined, deleteOn: Number.isNaN(born) ? undefined : new Date(born + ANON_DAYS * 86400e3).toISOString().slice(0, 10) };
+};
+
+/** The line write tools add for an account that is still temporary; nothing once it is claimed. */
+export const keepNote = (s: AccountStatus | undefined) => {
+  if (s && !s.anonymous) return undefined;
+  const when = s?.deleteOn ? `on ${s.deleteOn}` : `${ANON_DAYS} days after it started`;
+  if (s?.pendingEmail) return `Waiting for ${s.pendingEmail} to click the confirmation link (check spam). Until then this account is temporary and is deleted ${when}.`;
+  return `This account has no email yet and is deleted ${when}, with everything in it. Offer to keep it: ask for their email and call claim_account.`;
 };
 
 interface Pending {

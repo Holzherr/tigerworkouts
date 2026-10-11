@@ -24,6 +24,9 @@ export interface SupabaseSession {
 
 type Fetch = typeof fetch;
 
+/** Where a claim's confirmation link lands: the web app, which signs the person in from the link. */
+export const CLAIMED_REDIRECT = 'https://tigerworkouts.com/';
+
 export class SupabaseError extends Error {
   constructor(
     readonly status: number,
@@ -56,6 +59,7 @@ export interface SupabaseUser {
   /** Set while an email change (a claim) waits for the person to confirm it. */
   new_email?: string;
   is_anonymous?: boolean;
+  created_at?: string;
 }
 const toSession = (r: AuthResponse): SupabaseSession => ({
   userId: r.user.id,
@@ -69,7 +73,7 @@ const toSession = (r: AuthResponse): SupabaseSession => ({
 /** Sign-in and token calls against Supabase Auth (GoTrue). */
 export const auth = (f: Fetch = fetch) => {
   const send = async <T>(method: string, path: string, body: unknown, accessToken?: string): Promise<T> => {
-    const res = await f(`${SB_URL}/auth/v1/${path}`, { method, headers: { apikey: SB_KEY, 'content-type': 'application/json', ...(accessToken ? { authorization: `Bearer ${accessToken}` } : {}) }, body: JSON.stringify(body) });
+    const res = await f(`${SB_URL}/auth/v1/${path}`, { method, headers: { apikey: SB_KEY, 'content-type': 'application/json', ...(accessToken ? { authorization: `Bearer ${accessToken}` } : {}) }, body: body === undefined ? undefined : JSON.stringify(body) });
     if (!res.ok) throw new SupabaseError(res.status, await readError(res));
     const text = await res.text();
     return (text ? JSON.parse(text) : {}) as T;
@@ -80,7 +84,9 @@ export const auth = (f: Fetch = fetch) => {
     signInAnonymously: async () => toSession(await post<AuthResponse>('signup', { data: {} })),
     /** Claim: put an email on the signed-in (anonymous) user. Supabase emails a confirmation unless
      * the project auto-confirms; the returned user says which (email set vs new_email pending). */
-    requestEmail: (accessToken: string, email: string) => send<SupabaseUser>('PUT', 'user', { email }, accessToken),
+    requestEmail: (accessToken: string, email: string) => send<SupabaseUser>('PUT', `user?redirect_to=${encodeURIComponent(CLAIMED_REDIRECT)}`, { email }, accessToken),
+    /** The user as Supabase has it now: the grant's props say only how it was at the last refresh. */
+    getUser: (accessToken: string) => send<SupabaseUser>('GET', 'user', undefined, accessToken),
     /** Email a 6-digit code. New addresses get an account, as they do in the app. */
     sendCode: (email: string) => post<unknown>('otp', { email, create_user: true }),
     verifyCode: async (email: string, token: string) => toSession(await post<AuthResponse>('verify', { type: 'email', email, token: token.replace(/\s+/g, '') })),
