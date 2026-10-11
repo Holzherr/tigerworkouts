@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "tigerworkouts": {
+      "type": "http",
+      "url": "https://mcp.tigerworkouts.com/mcp"
+    }
+  }
+}

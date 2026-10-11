@@ -1,0 +1,17 @@
+{
+  "name": "tigerworkouts",
+  "owner": {
+    "name": "Brambruesch Ltd",
+    "url": "https://tigerworkouts.com"
+  },
+  "metadata": {
+    "description": "The TigerWorkouts plugin: coaching, workouts and a guided timer from Claude."
+  },
+  "plugins": [
+    {
+      "name": "tigerworkouts",
+      "source": "./plugin",
+      "description": "Coaching from your real training history, new workouts written straight into the TigerWorkouts app, and a guided timer in the chat."
+    }
+  ]
+}

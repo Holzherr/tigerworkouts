@@ -76,7 +76,7 @@ const run = async (f: () => Promise<unknown>): Promise<Result> => {
   }
 };
 
-const readOnly = { readOnlyHint: true, openWorldHint: false } as const;
+const readOnly = { readOnlyHint: true, destructiveHint: false, openWorldHint: false } as const;
 
 export const buildServer = (db: Db, account: Account = {}) => {
   const { email } = account;

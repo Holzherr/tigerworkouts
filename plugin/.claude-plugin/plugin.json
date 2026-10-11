@@ -1,0 +1,11 @@
+{
+  "name": "tigerworkouts",
+  "displayName": "TigerWorkouts",
+  "version": "1.0.0",
+  "description": "Coaching from your real training history, new workouts written straight into the TigerWorkouts app, and a guided timer in the chat.",
+  "author": { "name": "Brambruesch Ltd", "url": "https://tigerworkouts.com" },
+  "homepage": "https://mcp.tigerworkouts.com",
+  "repository": "https://github.com/Holzherr/tigerworkouts",
+  "license": "MIT",
+  "keywords": ["fitness", "workouts", "training", "timer", "coaching"]
+}

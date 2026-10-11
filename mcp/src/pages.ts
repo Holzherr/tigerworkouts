@@ -12,7 +12,7 @@ code,pre{font:13px ui-monospace,SFMono-Regular,Menlo,monospace;background:var(--
 label{display:block;font-weight:600;color:var(--ink);margin-bottom:6px}input{width:100%;font:inherit;padding:11px 12px;border:1px solid var(--line);border-radius:10px;background:var(--canvas);color:var(--ink)}
 button,.btn{display:block;width:100%;margin-top:12px;padding:12px;border:0;border-radius:10px;background:var(--brand);color:#fff;font:600 15px inherit;font-family:inherit;text-align:center;text-decoration:none;cursor:pointer}
 .ghost{background:transparent;color:var(--ink);border:1px solid var(--line)}.muted{color:var(--muted);font-size:13px}.err{color:var(--danger);font-weight:600}
-ul{padding-left:20px}li{margin:4px 0}a{color:var(--brand)}`;
+summary{cursor:pointer;font-weight:600;color:var(--ink)}details label{margin-top:12px}ul{padding-left:20px}li{margin:4px 0}a{color:var(--brand)}`;
 
 export const page = (title: string, body: string, status = 200) =>
   new Response(`<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${esc(title)}</title><meta name="robots" content="noindex"><style>${CSS}</style></head><body><main><div class="mark" aria-hidden="true"><i></i><i></i></div>${body}</main></body></html>`, {
@@ -27,7 +27,7 @@ const anonymousCard = (rid: string) => `<div class="card"><form method="post" ac
 <p class="muted">A temporary account: it is deleted after 7 days unless you keep it. To keep it, give the assistant your email ("keep my TigerWorkouts account") and click the link it sends; then sign in to the app with that email.</p></div>
 <h2>Already use TigerWorkouts?</h2>`;
 
-export const signInPage = (a: { rid: string; client: string; redirect: string; google: boolean; anonymous?: boolean; error?: string }) =>
+export const signInPage = (a: { rid: string; client: string; redirect: string; google: boolean; anonymous?: boolean; error?: string; password?: boolean }) =>
   page(
     'Sign in · TigerWorkouts',
     `<h1>Connect TigerWorkouts</h1>${who(a.client, a.redirect)}${a.error && a.anonymous ? `<p class="err">${esc(a.error)}</p>` : ''}${a.anonymous ? anonymousCard(a.rid) : ''}
@@ -35,7 +35,12 @@ export const signInPage = (a: { rid: string; client: string; redirect: string; g
 <form method="post" action="/authorize/email"><input type="hidden" name="rid" value="${esc(a.rid)}">
 <label for="email">Your TigerWorkouts email</label><input id="email" name="email" type="email" autocomplete="email" required>
 <button type="submit">Email me a code</button></form>
-${a.google ? `<a class="btn ghost" href="/authorize/google?rid=${encodeURIComponent(a.rid)}">Continue with Google</a>` : ''}</div>`,
+${a.google ? `<a class="btn ghost" href="/authorize/google?rid=${encodeURIComponent(a.rid)}">Continue with Google</a>` : ''}</div>
+<details class="card"${a.password ? ' open' : ''}><summary>Use a password instead</summary>
+<form method="post" action="/authorize/password"><input type="hidden" name="rid" value="${esc(a.rid)}">
+<label for="pw-email">Email</label><input id="pw-email" name="email" type="email" autocomplete="username" required>
+<label for="pw">Password</label><input id="pw" name="password" type="password" autocomplete="current-password" required>
+<button type="submit">Sign in</button></form></details>`,
   );
 
 export const codePage = (a: { rid: string; email: string; error?: string }) =>
@@ -107,6 +112,7 @@ A workout is a runsheet: an ordered list of steps (exercise or rest) and blocks 
 Connect:
 - Claude (claude.ai / Desktop / mobile): Settings → Connectors → Add custom connector → URL ${origin}/mcp → Connect, then sign in.
 - Claude Code: claude mcp add --transport http tigerworkouts ${origin}/mcp  (then /mcp to sign in)
+- Claude plugin (connector plus coaching skills): /plugin marketplace add Holzherr/tigerworkouts, then /plugin install tigerworkouts@tigerworkouts. On claude.ai: Customize → Plugins → Add → Add marketplace → Holzherr/tigerworkouts.
 - ChatGPT: Settings → Apps & Connectors → Advanced settings → Developer mode on → Create → URL ${origin}/mcp, authentication OAuth.
 - Anything else that speaks MCP over HTTP with OAuth: point it at ${origin}/mcp.
 `;
@@ -120,6 +126,8 @@ export const landingPage = (origin: string, anonymous = false) =>
 <h2>Server URL</h2><pre>${esc(origin)}/mcp</pre>
 <h2>Claude</h2><p>Settings → Connectors → <b>Add custom connector</b>, paste the URL, then <b>Connect</b> and sign in with your TigerWorkouts email.</p>
 <p>Claude Code:</p><pre>claude mcp add --transport http tigerworkouts ${esc(origin)}/mcp</pre>
+<p>Or the plugin, which adds coaching skills to the connector. Claude Code:</p><pre>/plugin marketplace add Holzherr/tigerworkouts
+/plugin install tigerworkouts@tigerworkouts</pre><p>claude.ai and Cowork: Customize → Plugins → Add → <b>Add marketplace</b> → <code>Holzherr/tigerworkouts</code>.</p>
 <h2>ChatGPT</h2><p>Settings → Apps &amp; Connectors → Advanced settings → turn on <b>Developer mode</b> → <b>Create</b>. Paste the URL, choose OAuth, and sign in.</p>
 <h2>What it can do</h2><ul>${TOOLS.map(([n, d]) => `<li><code>${n}</code> ${esc(d)}</li>`).join('')}</ul>
 <h2>Try asking</h2><ul><li>"Look at my last month in TigerWorkouts and tell me what to change."</li><li>"Write me a 30-minute upper-body session for tomorrow using my last loads."</li><li>"Find a 20-minute kettlebell workout and send me the link."</li></ul>
