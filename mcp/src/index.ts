@@ -74,6 +74,14 @@ const finish = async (env: Env, rid: string, p: Pending, s: SupabaseSession) => 
 
 const cookie = (req: Request, name: string) => req.headers.get('cookie')?.match(new RegExp(`(?:^|; )${name}=([^;]+)`))?.[1] ?? null;
 
+// A rid is shown to whoever opens /authorize, so it alone must not drive a sign-in: an attacker
+// could start one and send the victim to /authorize/google?rid=… (or post the email form across
+// sites) and receive the victim's code at their own redirect_uri. The browser that saw the page
+// carries the rid in a cookie, and every later step needs it.
+const RID_COOKIE = 'tw_rid';
+const ridCookie = (rid: string, ttl = PENDING_TTL) => `${RID_COOKIE}=${rid}; Path=/; Max-Age=${ttl}; HttpOnly; Secure; SameSite=Lax`;
+const boundPending = (req: Request, env: Env, rid: string | null) => (rid && cookie(req, RID_COOKIE) === rid ? getPending(env, rid) : Promise.resolve(null));
+
 const signIn = {
   async fetch(request: Request, env: Env) {
     const url = new URL(request.url);
@@ -104,12 +112,14 @@ const signIn = {
       const rid = b64url(crypto.getRandomValues(new Uint8Array(24)));
       const name = client.clientName || new URL(req.redirectUri).host;
       await putPending(env, rid, { req, client: name });
-      return signInPage({ rid, client: name, redirect: req.redirectUri, google, anonymous: anonymousOn(env) });
+      const page = signInPage({ rid, client: name, redirect: req.redirectUri, google, anonymous: anonymousOn(env) });
+      page.headers.append('set-cookie', ridCookie(rid));
+      return page;
     }
 
     if (request.method === 'POST' && url.pathname === '/authorize/anonymous') {
       const rid = String((await request.formData()).get('rid') ?? '');
-      const p = await getPending(env, rid);
+      const p = await boundPending(request, env, rid);
       if (!p) return errorPage(EXPIRED);
       if (!anonymousOn(env)) return errorPage('Starting without an account is not open yet. Sign in with your email instead.');
       let s: SupabaseSession;
@@ -144,7 +154,7 @@ const signIn = {
       const form = await request.formData();
       const rid = String(form.get('rid') ?? '');
       const email = String(form.get('email') ?? '').trim().toLowerCase();
-      const p = await getPending(env, rid);
+      const p = await boundPending(request, env, rid);
       if (!p) return errorPage(EXPIRED);
       if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return signInPage({ rid, client: p.client, redirect: p.req.redirectUri, google, anonymous: anonymousOn(env), error: 'That email does not look right.' });
       try {
@@ -161,7 +171,7 @@ const signIn = {
       const form = await request.formData();
       const rid = String(form.get('rid') ?? '');
       const email = String(form.get('email') ?? '').trim().toLowerCase();
-      const p = await getPending(env, rid);
+      const p = await boundPending(request, env, rid);
       if (!p) return errorPage(EXPIRED);
       let s: SupabaseSession;
       try {
@@ -177,7 +187,7 @@ const signIn = {
       const form = await request.formData();
       const rid = String(form.get('rid') ?? '');
       const code = String(form.get('code') ?? '');
-      const p = await getPending(env, rid);
+      const p = await boundPending(request, env, rid);
       if (!p?.email) return errorPage(EXPIRED);
       let s: SupabaseSession;
       try {
@@ -190,19 +200,19 @@ const signIn = {
 
     if (request.method === 'GET' && url.pathname === '/authorize/google' && google) {
       const rid = url.searchParams.get('rid');
-      const p = await getPending(env, rid);
+      const p = await boundPending(request, env, rid);
       if (!p || !rid) return errorPage(EXPIRED);
       const { verifier, challenge } = await pkce();
       await putPending(env, rid, { ...p, verifier });
       return new Response(null, {
         status: 302,
-        headers: { location: auth().googleUrl(`${url.origin}/callback`, challenge), 'set-cookie': `tw_signin=${rid}; Path=/callback; Max-Age=${PENDING_TTL}; HttpOnly; Secure; SameSite=Lax` },
+        headers: { location: auth().googleUrl(`${url.origin}/callback`, challenge) },
       });
     }
 
     if (request.method === 'GET' && url.pathname === '/callback') {
-      const rid = cookie(request, 'tw_signin');
-      const p = await getPending(env, rid);
+      const rid = cookie(request, RID_COOKIE);
+      const p = await boundPending(request, env, rid);
       const code = url.searchParams.get('code');
       if (!p?.verifier || !rid) return errorPage(EXPIRED);
       if (!code) return errorPage(url.searchParams.get('error_description') ?? 'Google sign-in was cancelled.');
@@ -214,7 +224,7 @@ const signIn = {
       }
       const res = await finish(env, rid, p, s);
       const out = new Response(res.body, res);
-      out.headers.append('set-cookie', 'tw_signin=; Path=/callback; Max-Age=0; HttpOnly; Secure; SameSite=Lax');
+      out.headers.append('set-cookie', ridCookie('', 0));
       return out;
     }
 

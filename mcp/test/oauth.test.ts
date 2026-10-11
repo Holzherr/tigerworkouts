@@ -35,9 +35,19 @@ let emailUser = NICK;
 let emailChanges: { email: string; auth: string | null }[] = [];
 let pendingEmail: string | undefined;
 const ctx = { waitUntil: () => {}, passThroughOnException: () => {}, props: {} } as unknown as ExecutionContext;
-const call = (path: string, init?: RequestInit) => worker.fetch(new Request(`${ORIGIN}${path}`, init), env as never, ctx);
+/** The browser's tw_rid cookie, carried between calls as a browser would. */
+let jar = '';
+const call = async (path: string, init?: RequestInit) => {
+  const req = new Request(`${ORIGIN}${path}`, init);
+  if (jar) req.headers.set('cookie', jar);
+  const res = await worker.fetch(req, env as never, ctx);
+  const set = res.headers.get('set-cookie')?.match(/tw_rid=([^;]*)/);
+  if (set) jar = set[1] ? `tw_rid=${set[1]}` : '';
+  return res;
+};
 
 beforeEach(() => {
+  jar = '';
   env = { OAUTH_KV: memoryKv(), ALLOWED_USER_IDS: NICK, GOOGLE_SIGNIN: 'false', ANONYMOUS_SIGNUP: 'true' };
   emailChanges = [];
   pendingEmail = undefined;
@@ -154,6 +164,15 @@ describe('OAuth end to end', () => {
   it('serves the landing page and llms.txt', async () => {
     expect(await (await call('/')).text()).toContain(`${ORIGIN}/mcp`);
     expect(await (await call('/llms.txt')).text()).toContain('claude mcp add --transport http tigerworkouts');
+  });
+
+  it('a rid handed to another browser cannot sign that browser in for the app that opened it', async () => {
+    const a = await openAuthorize();
+    env.GOOGLE_SIGNIN = 'true';
+    jar = ''; // the victim's browser: it never saw the sign-in page
+    expect((await call(`/authorize/google?rid=${a.rid}`)).status).not.toBe(302);
+    expect(await (await call('/authorize/email', form({ rid: a.rid, email: 'nick@example.com' }))).text()).not.toContain('Check your email');
+    expect(await (await call('/authorize/anonymous', form({ rid: a.rid }))).text()).toContain('expired');
   });
 });
 

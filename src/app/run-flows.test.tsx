@@ -5,6 +5,7 @@ import { EX } from '@/features/runsheet/fixtures';
 import { makeExercise, type Runsheet } from '@/features/runsheet/model';
 import type { SessionResult } from '@/features/runsheet/progression';
 import { setState } from './store';
+import { enc } from '@/features/share/link';
 
 // Two loose steps: no block gate between them.
 const loose: Runsheet = { id: 'mine', title: 'Mine', items: [{ ...makeExercise(EX.bw_pushup, { forMode: 'reps', forValue: 5 }), id: 'p1' }, { ...makeExercise(EX.bw_squat, { forMode: 'reps', forValue: 5 }), id: 'p2' }] };
@@ -139,5 +140,16 @@ describe('the web timer and the screen', () => {
     fireEvent.click(await screen.findByRole('button', { name: /^Mine/ }));
     await findClick(/^Start$/);
     expect(await screen.findByText(/needs the screen on/)).toBeTruthy();
+  });
+});
+
+describe('a logged-session link', () => {
+  it('cannot overwrite a session already in History', async () => {
+    setState({ results: [{ id: 's-real', runsheetId: 'mine', title: 'Mine', startedAt: '2026-10-01T10:00:00.000Z', steps: [] }] });
+    location.hash = '#/log/' + enc(JSON.stringify({ id: 's-real', runsheetId: 'mine', title: 'Fake', startedAt: '2026-10-02T10:00:00.000Z', steps: [] }));
+    render(<App />);
+    await findClick(/Save to History/);
+    await waitFor(() => expect(location.hash).toBe('#/history'));
+    expect(stored().filter(r => r.id === 's-real').map(r => r.title)).toEqual(['Mine']);
   });
 });

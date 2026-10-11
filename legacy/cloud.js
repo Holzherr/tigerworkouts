@@ -71,8 +71,8 @@
     // public content for everyone (anon too)
     const { data: pubW } = await sb.from('workouts').select('id,data,updated_at').eq('public', true);
     const { data: pubE } = await sb.from('exercises').select('key,data').eq('public', true);
-    cloud.remote.workouts = (pubW || []).map(r => r.data).filter(w => !WORKOUTS.some(x => x.id === w.id) && !store.workouts.some(x => x.id === w.id));
-    cloud.remote.exercises = Object.fromEntries((pubE || []).filter(r => !EXERCISES[r.key]).map(r => [r.key, r.data]));
+    cloud.remote.workouts = (pubW || []).map(r => tame(r.data)).filter(w => !WORKOUTS.some(x => x.id === w.id) && !store.workouts.some(x => x.id === w.id));
+    cloud.remote.exercises = Object.fromEntries((pubE || []).filter(r => !EXERCISES[r.key]).map(r => [tame(r.key), tame(r.data)]));
     if (!uid) return;
     const { data: rows } = await sb.from('sessions').select('id,data').eq('owner', uid);
     const remote = new Map((rows || []).map(r => [r.id, r.data]));

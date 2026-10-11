@@ -11,4 +11,6 @@ sleep 1
 P="psql -q -h 127.0.0.1 -p $PORT -U postgres -v ON_ERROR_STOP=1"
 $P -f stub-auth.sql
 for f in ../migrations/*.sql; do $P -f "$f" >/dev/null 2>&1 || { echo "FAILED: $f"; $P -f "$f"; exit 1; }; done
-for t in *_rls.sql; do echo "== $t"; psql -q -h 127.0.0.1 -p $PORT -U postgres -f "$t" 2>&1 | grep -v '^$'; done
+for t in *_rls.sql; do echo "== $t"; psql -q -h 127.0.0.1 -p $PORT -U postgres -f "$t" 2>&1 | grep -v '^$'; done | tee "$DIR/out"
+# Scenarios that assert print FAIL; the rest are read by eye against their "expected" lines.
+! grep -q FAIL "$DIR/out"
