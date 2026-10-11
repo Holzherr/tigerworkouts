@@ -379,6 +379,11 @@ export default function App() {
         result={logged}
         exercise={k => library[k] ?? { key: k, name: k, unit: '', step: 1 }}
         onSave={res => {
+          // The link's id keeps a second open from logging it twice; it never replaces a session already here.
+          if (res.id && st.results.some(x => x.id === res.id)) {
+            say('Already in History');
+            return go('/history');
+          }
           act.addResult(res);
           say('Workout saved');
           go('/history');

@@ -156,7 +156,7 @@ ${logged === 'failed' ? '<button id="retry" class="ghost">Try saving again</butt
 <div class="now ${cur?.kind === 'rest' && !lead ? 'rest' : ''}"><div class="clock">${big}</div><div class="name">${esc(name)}</div><div class="muted">${esc(detail)}${cap !== undefined ? ` · cap ${mmss(cap)}` : ''}</div></div>
 <button id="primary" class="big">${primary[1]}</button>
 <div class="row"><button id="back" class="ghost">Back</button><button id="skip" class="ghost">${userPaced || s.phase === 'ready' ? 'Skip' : 'Next'}</button><button id="end" class="ghost">End</button></div>
-${nx && !lead && s.phase !== 'ready' ? `<p class="muted">Up next: ${esc(slotTitle(nx))}${nx.step.kind === 'exercise' ? ` · ${esc(slotDetail(s, nx))}` : nx.seconds ? ` · ${nx.seconds}s` : ''}</p>` : ''}`;
+${nx && !lead && s.phase !== 'ready' ? `<p class="muted">Up next: ${esc(slotTitle(nx))}${nx.step.kind === 'exercise' ? ` · ${esc(slotDetail(s, nx))}` : nx.seconds ? ` · ${Math.round(Number(nx.seconds)) || 0}s` : ''}</p>` : ''}`;
   $('primary').onclick = () => act(primary[0]);
   $('back').onclick = () => act('back');
   $('skip').onclick = () => act('skip');

@@ -317,6 +317,17 @@ export const searchExercises = async (db: Db, a: { query?: string; group?: strin
 
 // ── start a workout in the chat ──
 
+// A stored workout is whatever its owner wrote into the jsonb column. The timer view draws these
+// fields as numbers, so one that is not a finite number is dropped before it reaches the view.
+const NUMERIC = ['seconds', 'forValue', 'forMax', 'target', 'targetPct', 'loadFactor', 'incline', 'repeat', 'timeCapSec', 'everySec', 'restBetweenSec', 'startSeconds', 'endSeconds', 'ladderFactor'];
+const numbersOnly = <T extends object>(o: T): T => {
+  const out = { ...o } as Record<string, unknown>;
+  for (const k of NUMERIC) if (k in out && !(typeof out[k] === 'number' && Number.isFinite(out[k]))) delete out[k];
+  return out as T;
+};
+const safeRunsheet = (r: Runsheet): Runsheet =>
+  numbersOnly({ ...r, items: r.items.map(it => (it.kind === 'block' ? numbersOnly({ ...it, steps: it.steps.map(st => numbersOnly(st)) }) : numbersOnly(it))) });
+
 /** start_workout: the runsheet for the timer view, plus the links out of the chat. */
 export const startWorkout = async (db: Db, a: DraftArgs & { id?: string }) => {
   let runsheet: Runsheet;
@@ -326,7 +337,7 @@ export const startWorkout = async (db: Db, a: DraftArgs & { id?: string }) => {
     if (a.workout || a.plan) throw new ToolError('Pass id (a saved workout) or a draft, not both.');
     const w = await findWorkout(db, a.id);
     if (!w) throw new ToolError(`No workout ${a.id} that you can see. list_workouts shows the ids.`);
-    runsheet = w.runsheet;
+    runsheet = safeRunsheet(w.runsheet);
     saved = true;
   } else ({ runsheet, assumptions } = await draftToRunsheet(db, a));
   return {

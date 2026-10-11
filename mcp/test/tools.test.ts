@@ -277,6 +277,19 @@ describe('plans, timer and logging', () => {
     expect(JSON.stringify(tables)).toBe(before);
   });
 
+  it('start_workout hands the timer view numbers only, whatever someone stored in a public workout', async () => {
+    const evil = '<img src=x onerror=alert(1)>';
+    tables.workouts.push({ id: 'u-evil', owner: OTHER, creator: 'x', title: 'Evil', public: true, data: { id: 'u-evil', title: 'Evil', items: [
+      { kind: 'exercise', id: 'e1', exercise: { key: 'bb_bench', name: 'Bench', unit: 'kg', step: 2.5 }, forMode: 'reps', forValue: 5, target: evil },
+      { kind: 'block', id: 'b1', name: 'B', repeat: evil, steps: [{ kind: 'rest', id: 'r1', seconds: evil }] },
+      { kind: 'rest', id: 'r2', seconds: 45 },
+    ] } });
+    const r = await T.startWorkout(db, { id: 'u-evil' });
+    expect(JSON.stringify(r.runsheet)).not.toContain('<img');
+    expect(r.runsheet.items[2]).toMatchObject({ seconds: 45 });
+    expect(r.runsheet.items[0]).toMatchObject({ forValue: 5 });
+  });
+
   it('log_session writes the row shape the app syncs, once per id', async () => {
     const steps = [{ stepId: 'e1', exerciseKey: 'bb_back_squat', target: 100, reps: [5, 5, 5] }];
     const a = { id: 's-abc-run', workoutId: 'u-mine', title: 'Nick legs', startedAt: '2026-10-10T07:00:00Z', durationSec: 1800, steps };

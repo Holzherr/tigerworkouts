@@ -133,6 +133,11 @@ const $ = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => [...r.querySelectorAll(s)];
 const app = $('#app');
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+// Data from anyone else (a link, other people's public rows) is rendered in places esc() never
+// reached: ids inside href and onclick, numbers as raw text. Every string in it loses the
+// characters that can leave a text node, an attribute or a JS string, swapped for look-alikes.
+const tame = v => typeof v === 'string' ? v.replace(/[<>"'`\\&]/g, c => ({ '<': '‹', '>': '›', '"': '”', "'": '’', '`': 'ʼ', '\\': '/', '&': '＆' }[c]))
+  : Array.isArray(v) ? v.map(tame) : v && typeof v === 'object' ? Object.fromEntries(Object.entries(v).map(([k, x]) => [tame(k), tame(x)])) : v;
 const fmtNum0 = n => (Math.round(n * 100) / 100).toString();
 const fmtNum = n => (n === undefined || n === null || !Number.isFinite(+n)) ? '' : fmtNum0(n);
 const pad = n => String(n).padStart(2, '0');
@@ -1433,7 +1438,7 @@ function shareWorkout(id) {
 }
 function importWorkout(payload) {
   try {
-    const { w, ex } = JSON.parse(b64d(payload));
+    const { w, ex } = tame(JSON.parse(b64d(payload)));
     Object.assign(store.exercises, ex || {});
     const i = store.workouts.findIndex(x => x.id === w.id);
     if (i >= 0) store.workouts[i] = w; else if (!WORKOUTS.some(x => x.id === w.id)) store.workouts.unshift(w);
@@ -1444,7 +1449,7 @@ function importWorkout(payload) {
 // arrives as a link; opening it logs the session here and syncs it if signed in.
 function importSession(payload) {
   try {
-    const { s } = JSON.parse(b64d(payload));
+    const { s } = tame(JSON.parse(b64d(payload)));
     if (!s?.id || !s.startedAt) throw new Error('bad');
     const i = store.sessions.findIndex(x => x.id === s.id);
     if (i >= 0) store.sessions[i] = s; else store.sessions.push(s);
