@@ -65,7 +65,8 @@ extension Block {
             return work + (restBetweenSec ?? 0) * Double(max(0, rungs.count - 1))
         case .rounds, .fortime:
             let est = roundSeconds * Double(repeatCount) + between
-            if runMode == .fortime, let cap = timeCapSec { return min(est, cap) }
+            // A cap of 0 is no cap, as in the runner and on the web.
+            if runMode == .fortime, let cap = timeCapSec, cap > 0 { return min(est, cap) }
             return est
         }
     }
@@ -96,7 +97,7 @@ extension Item {
 extension Runsheet {
     var estimatedSeconds: Double {
         let est = items.reduce(0) { $0 + $1.estimatedSeconds }
-        if let cap = timeCapSec { return min(est, cap) }
+        if let cap = timeCapSec, cap > 0 { return min(est, cap) }
         return est
     }
 

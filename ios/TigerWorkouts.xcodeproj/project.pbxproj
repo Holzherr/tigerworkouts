@@ -88,6 +88,7 @@
 		B01FA0C771DEBBD6B2393CF8 /* Runner.swift in Sources */ = {isa = PBXBuildFile; fileRef = 36B599742F16E34DF89CB346 /* Runner.swift */; };
 		B2D8DF3941B699A1D99EDC07 /* SessionLiveActivity.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87A0379EA6B428BEE7F68638 /* SessionLiveActivity.swift */; };
 		B69408139FFD2254609E3258 /* LoadsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73E60ED8258A936B9C69FB41 /* LoadsTests.swift */; };
+		B6A53108CC5E8808D8B387EE /* RunsheetMathTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 99F9042C8F1F12DC30940E30 /* RunsheetMathTests.swift */; };
 		B7DD621A22E46957F60BF22D /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 8ECD0D99BECC297562625D45 /* PrivacyInfo.xcprivacy */; };
 		B9014443750E9D5F6AF43DB2 /* exercises.json in Resources */ = {isa = PBXBuildFile; fileRef = DCDAF2AE594C1D1C9FF54BED /* exercises.json */; };
 		B93A33E53D67696378829605 /* ProgressionRules.swift in Sources */ = {isa = PBXBuildFile; fileRef = 999C30448673579D520EBCB0 /* ProgressionRules.swift */; };
@@ -240,6 +241,7 @@
 		92412812FEBAA08CD322ABA0 /* Stall.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Stall.swift; sourceTree = "<group>"; };
 		98F9F72F6AD1476394E67175 /* Cues.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Cues.swift; sourceTree = "<group>"; };
 		999C30448673579D520EBCB0 /* ProgressionRules.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProgressionRules.swift; sourceTree = "<group>"; };
+		99F9042C8F1F12DC30940E30 /* RunsheetMathTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RunsheetMathTests.swift; sourceTree = "<group>"; };
 		9DEDC2C77E61EEC2DBC8D7A7 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		9F5AADA27786288575C5751A /* TigerWorkouts.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = TigerWorkouts.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		9FB9C9CD6B4C02371785711D /* Store+Coaching.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Store+Coaching.swift"; sourceTree = "<group>"; };
@@ -440,6 +442,7 @@
 				8A91B39264F3D48EC2B176B0 /* RecommendTests.swift */,
 				D36AE791E64CAB95929EDB34 /* ResultsTests.swift */,
 				38611D00C12C8D5497FC0713 /* RunnerTests.swift */,
+				99F9042C8F1F12DC30940E30 /* RunsheetMathTests.swift */,
 				E31C0517BC96A0F3D45A39B5 /* SetRowTests.swift */,
 				4091AAF4AF7AB0D132C03B29 /* StallTests.swift */,
 				6F781B1689DE90644353CB87 /* StoreSaveTests.swift */,
@@ -736,6 +739,7 @@
 				A8751C5CD711B126ABDBBCE1 /* RecommendTests.swift in Sources */,
 				AE6182B42F75E4CEA7DC6A74 /* ResultsTests.swift in Sources */,
 				2B60AB7BAD0FA3BD84166265 /* RunnerTests.swift in Sources */,
+				B6A53108CC5E8808D8B387EE /* RunsheetMathTests.swift in Sources */,
 				A31A032FB773210351CDA2A5 /* SetRowTests.swift in Sources */,
 				F06A699989CEBDCE07E7DD4B /* StallTests.swift in Sources */,
 				159A498BEFAD77C9C584839A /* StoreSaveTests.swift in Sources */,
