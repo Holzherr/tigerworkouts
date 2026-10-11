@@ -47,6 +47,23 @@ Facts checked 10 Oct 2026:
 - Supabase rate-limits anonymous sign-ins per IP (default 30 an hour). Every start comes from Cloudflare's egress IPs, so the limit is shared across all users.
 - Workouts made by an anonymous account cannot be merged into an existing account.
 
+## Plugin for Claude and ChatGPT
+
+Nick, 11 Oct 2026: "can you also create ChatGPT + Claude plugins for Tiger?" Then, on the key use case: someone in ChatGPT/Claude wants a workout shown with a timer, or as a native app; "What other options would a user have? Also to track that week on week. And to then use their Agent as a coach based on workouts they've done in the gym."
+
+`plugin/` holds both packages (`package.sh` zips them): `.claude-plugin/plugin.json` + `.mcp.json` for Claude, `plugin.json` + `mcp.json` (Agent Plugins format) for ChatGPT, the same skills and assets. The repo root's `.claude-plugin/marketplace.json` makes the repo a Claude marketplace.
+
+Skills: `get-started` (setup, accounts, the app), `coach` (loads from history, write, change and log workouts), `train-now` (timer in the chat, browser link or iPhone app), `weekly-review` (week on week from `list_sessions`). `mcp/test/plugin.test.ts` fails if a skill names a tool the server does not have.
+
+Facts checked 11 Oct 2026:
+- Claude directory (claude.com/docs/plugins/pre-submission-checklist): submit at claude.ai/directory/manage → Plugin bundle, from the repo. Blocking: `.claude-plugin/plugin.json` in the plugin folder, a README of 40+ words, a LICENSE or `license`, no `.DS_Store`, remote MCP servers `type: http` with an `https://` URL. Warning: missing `description`, `author` or `version`. Raise `version` on every release.
+- `plugin.json` listing fields read only by the directory (code.claude.com/docs/en/plugins/manifest-reference): `icon`, `documentationUrl`, `supportUrl`, `privacyPolicyUrl`, `termsOfServiceUrl`.
+- What loads where (claude.com/docs/plugins/platform-support): skills load in chat, Cowork and Claude Code; agents and hooks are ignored in chat; a remote MCP server shows on the plugin's Connectors tab in chat. New plugins use `skills/`, not `commands/`.
+- Connector directory (claude.com/docs/connectors/building/submission): every tool needs a `title` and `readOnlyHint` or `destructiveHint`; OAuth for an authenticated service; a test account with data; MCP Apps listings need 3 to 5 PNG screenshots at least 1000 px wide, each with its prompt.
+- ChatGPT (developers.openai.com/apps-sdk/app-submission-guidelines): `readOnlyHint`, `destructiveHint` and `openWorldHint` set on every tool; a reviewer account with a password login and sample data (no email codes); org verification and a domain token at `/.well-known/openai-apps-challenge`; 5 positive and 3 negative test cases, a demo video.
+
+Not done (Nick): the directory submissions themselves, the reviewer account and its data, screenshots and demo video, and a live install test in Claude and ChatGPT.
+
 ## Auth — built for public, closed for now
 
 - **OAuth 2.1** via `@cloudflare/workers-oauth-provider`: discovery metadata (RFC 9728 + RFC 8414), client registration by Client ID Metadata Document or Dynamic Client Registration, PKCE (S256), refresh-token rotation. Grants and tokens live in KV (`OAUTH_KV`), tokens stored hashed, props encrypted.
