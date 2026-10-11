@@ -8,6 +8,7 @@ import { z } from 'zod';
 import { FOR_MODE_HELP, RunsheetError, runsheetInput } from './runsheet';
 import { SupabaseError, type Db } from './supabase';
 import * as T from './tools';
+import { keepNote, type AccountStatus } from './claim';
 import widget from './generated/widget.json';
 
 /** The timer view. Versioned in the URI so hosts that cache resources pick up a new build. */
@@ -21,6 +22,8 @@ export interface Account {
   anonymous?: boolean;
   /** claim_account; absent where no KV/origin is at hand (tests of the plain tools). */
   claim?: (a: { email?: string }) => Promise<unknown>;
+  /** Where an anonymous account stands now (claimed, waiting on the link, deletion date). */
+  status?: () => Promise<AccountStatus>;
 }
 
 export const INSTRUCTIONS = `TigerWorkouts (tigerworkouts.com) is a workout app with a guided timer. You are connected as one signed-in user and see what they see: their own workouts, their training history, and the public catalogue (about 480 workouts: CrossFit benchmarks, NHS, lifting programmes, follow-along videos, coach programmes).
@@ -31,7 +34,14 @@ Coaching flow that works: get_profile → list_sessions (what they did, with loa
 
 To train now: start_workout (a saved id, a structured workout, or a plain-text plan) shows a timer in the chat; the finished session is logged to their history. Mention that the iPhone app gives a lock-screen timer and notifications (appDownloadUrl).
 
-A connection may have started without an account (get_profile says anonymous: true). Everything still saves. When the person wants to keep it or use the app, claim_account adds their email to the same account.`;
+Accounts started without an email ("Start now, no account needed" on the sign-in page). get_profile then says anonymous: true. Everything saves as usual, with two limits: nothing can be made public, and the account is deleted 7 days after it started, with everything in it, unless the person keeps it. Results of get_profile and the write tools carry keepAccount while that is the case.
+Keeping it is your job, not theirs to discover:
+1. Once they have something worth keeping (their first saved workout or finished session), or they ask about the app, their phone or their history, say the account is temporary and offer to keep it. Once per conversation is enough unless keepAccount changes.
+2. Ask for their email and call claim_account with it. If they would rather not type it into the chat, call claim_account with no email and give them claimUrl (it works for up to an hour).
+3. Read the result's next to them. Usually status is "confirm": a confirmation email went out, and the account is kept only once they click its link (check spam). The link opens tigerworkouts.com signed in.
+4. Then point them to the iPhone app (appDownloadUrl from start_workout, or https://testflight.apple.com/join/r8uFaWKY) and tell them to sign in there with the same email (email code). Same workouts, same history.
+If claim_account says the email already has an account: the two cannot be merged yet. They can keep this connection as it is, or remove the connector, add it again and sign in with that email (what was made here stays behind).
+A person who already uses TigerWorkouts should not start anonymously: tell them to reconnect and sign in with their email instead.`;
 
 const RUNSHEET_HELP = `A runsheet. items is a list of:
 - {"kind":"exercise","exercise":"<key from search_exercises>","forMode":"reps","forValue":8,"target":60} — forMode: ${FOR_MODE_HELP}. target is the load/speed in the exercise's unit; omit it for bodyweight.
@@ -70,10 +80,24 @@ const readOnly = { readOnlyHint: true, openWorldHint: false } as const;
 
 export const buildServer = (db: Db, account: Account = {}) => {
   const { email } = account;
+  // Asked at most once per request, and only for a connection that started anonymous.
+  let asked: Promise<AccountStatus | undefined> | undefined;
+  const status = () => (asked ??= account.anonymous && account.status ? account.status().catch(() => undefined) : Promise.resolve(undefined));
+  /** keepAccount on a write's result while the account is still temporary. */
+  const keep = async <R extends object>(r: R): Promise<R> => {
+    if (!account.anonymous) return r;
+    const note = keepNote(await status());
+    return note ? { ...r, keepAccount: note } : r;
+  };
   const s = new McpServer({ name: 'tigerworkouts', title: 'TigerWorkouts', version: '0.1.0', websiteUrl: 'https://tigerworkouts.com' }, { instructions: INSTRUCTIONS });
 
   s.registerTool('get_profile', { title: 'Profile', description: "The signed-in user's name, units, bodyweight, training maxes (kg, by exercise key), saved workout ids and a count of recent sessions, and whether the account is still anonymous. Start here.", inputSchema: {}, annotations: readOnly }, () =>
-    run(async () => ({ ...(await T.getProfile(db, email)), ...(account.anonymous ? { anonymous: true, claim: 'No email on this account yet. claim_account keeps it and opens it in the app.' } : {}) })),
+    run(async () => {
+      const p = await T.getProfile(db, email);
+      const st = await status();
+      if (!account.anonymous || (st && !st.anonymous)) return { ...p, ...(st?.email ? { email: st.email } : {}) };
+      return { ...p, anonymous: true, ...(st?.pendingEmail ? { pendingEmail: st.pendingEmail } : {}), ...(st?.deleteOn ? { deleteOn: st.deleteOn } : {}), keepAccount: keepNote(st) };
+    }),
   );
 
   s.registerTool(
@@ -123,11 +147,11 @@ export const buildServer = (db: Db, account: Account = {}) => {
     'create_workout',
     {
       title: 'Create workout',
-      description: `Save a new workout to the user's account. Private unless public is true (public = it shows in everyone's Discover). It appears in the app under Me once it syncs. Returns appUrl and a no-sign-in previewUrl to show the user. Pass workout (structured) or plan (plain text).\n\n${RUNSHEET_HELP}`,
+      description: `Save a new workout to the user's account. Private unless public is true (public = it shows in everyone's Discover; an anonymous account's workouts stay private until it is kept). It appears in the app under Me once it syncs. Returns appUrl and a no-sign-in previewUrl to show the user. Pass workout (structured) or plan (plain text).\n\n${RUNSHEET_HELP}`,
       inputSchema: { workout: runsheetInput.optional(), plan: z.string().max(4000).optional().describe(PLAN_HELP), title: z.string().max(120).optional().describe('Title for a plan'), public: z.boolean().optional().describe('Default false') },
       annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: false },
     },
-    a => run(() => T.createWorkout(db, a)),
+    a => run(async () => keep(await T.createWorkout(db, a))),
   );
 
   s.registerTool(
@@ -138,7 +162,7 @@ export const buildServer = (db: Db, account: Account = {}) => {
       inputSchema: { id: z.string(), workout: runsheetInput.optional(), public: z.boolean().optional() },
       annotations: { readOnlyHint: false, destructiveHint: true, idempotentHint: true, openWorldHint: false },
     },
-    a => run(() => T.updateWorkout(db, a)),
+    a => run(async () => keep(await T.updateWorkout(db, a))),
   );
 
   s.registerTool(
@@ -166,8 +190,9 @@ export const buildServer = (db: Db, account: Account = {}) => {
     a =>
       runStructured(async () => {
         const r = await T.startWorkout(db, a);
-        const { runsheet: _r, ...forModel } = r;
+        const { runsheet: _r, ...rest } = r;
         void _r;
+        const forModel = await keep(rest);
         return { text: `${r.title} (${r.minutes} min)\n${r.outline}\n\nTimer: shown above. No timer? ${r.previewUrl}\nLock-screen timer & notifications: ${r.appDownloadUrl}`, structured: r, forModel };
       }),
   );
@@ -197,7 +222,7 @@ export const buildServer = (db: Db, account: Account = {}) => {
       },
       annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: false },
     },
-    a => run(() => T.logSession(db, a)),
+    a => run(async () => keep(await T.logSession(db, a))),
   );
 
   if (account.claim) {
@@ -206,7 +231,7 @@ export const buildServer = (db: Db, account: Account = {}) => {
       'claim_account',
       {
         title: 'Keep this account',
-        description: 'Add an email to this account so the person keeps their workouts and history and can sign in to the TigerWorkouts app (web and iPhone) with it. With email: done here (Supabase may email a confirmation link). Without: returns claimUrl, a page where they type the email themselves; it works for up to an hour.',
+        description: 'Keep an account that started without an email (otherwise deleted 7 days after it started). Adds the email to the same account, so workouts and history stay put and the person can sign in to the TigerWorkouts app (web and iPhone) with it. With email: done here; usually a confirmation email goes out and the claim completes when they click its link (status "confirm"). Without: returns claimUrl, a page where they type the email themselves; it works for up to an hour. Always pass on next to the person.',
         inputSchema: { email: z.string().max(200).optional() },
         annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: true },
       },

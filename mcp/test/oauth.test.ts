@@ -33,12 +33,14 @@ let env: Record<string, unknown>;
 let refreshes = 0;
 let emailUser = NICK;
 let emailChanges: { email: string; auth: string | null }[] = [];
+let pendingEmail: string | undefined;
 const ctx = { waitUntil: () => {}, passThroughOnException: () => {}, props: {} } as unknown as ExecutionContext;
 const call = (path: string, init?: RequestInit) => worker.fetch(new Request(`${ORIGIN}${path}`, init), env as never, ctx);
 
 beforeEach(() => {
   env = { OAUTH_KV: memoryKv(), ALLOWED_USER_IDS: NICK, GOOGLE_SIGNIN: 'false', ANONYMOUS_SIGNUP: 'true' };
   emailChanges = [];
+  pendingEmail = undefined;
   refreshes = 0;
   emailUser = NICK;
   const rest = fakeSupabase({ profiles: [{ id: NICK, name: 'Nick', units: 'metric' }], user_state: [], workouts: [], sessions: [], exercises: [] });
@@ -49,11 +51,14 @@ beforeEach(() => {
     if (url === `${SB_URL}/auth/v1/verify`) return JSON.parse(String(init?.body)).token === '123456' ? Response.json(session(emailUser)) : Response.json({ msg: 'Token has expired or is invalid' }, { status: 403 });
     if (url === `${SB_URL}/auth/v1/token?grant_type=refresh_token`) return (refreshes++, Response.json(session(JSON.parse(String(init?.body)).refresh_token.split('-').slice(1, -1).join('-'))));
     if (url === `${SB_URL}/auth/v1/signup`) return Response.json(session(ANON));
-    if (url === `${SB_URL}/auth/v1/user` && init?.method === 'PUT') {
+    if (url === `${SB_URL}/auth/v1/user?redirect_to=${encodeURIComponent('https://tigerworkouts.com/')}` && init?.method === 'PUT') {
       const { email } = JSON.parse(String(init.body));
       emailChanges.push({ email, auth: new Headers(init.headers).get('authorization') });
-      return email === 'taken@example.com' ? Response.json({ code: 'email_exists', msg: 'A user with this email address has already been registered' }, { status: 422 }) : Response.json({ id: ANON, new_email: email, is_anonymous: true });
+      if (email === 'taken@example.com') return Response.json({ code: 'email_exists', msg: 'A user with this email address has already been registered' }, { status: 422 });
+      pendingEmail = email;
+      return Response.json({ id: ANON, new_email: email, is_anonymous: true });
     }
+    if (url === `${SB_URL}/auth/v1/user` && init?.method === 'GET') return Response.json({ id: ANON, is_anonymous: true, created_at: '2026-10-11T09:00:00Z', ...(pendingEmail ? { new_email: pendingEmail } : {}) });
     return rest.fetch(input, init);
   });
 });
@@ -157,11 +162,11 @@ describe('start without an account', () => {
     const tok = await tokensFor(res, a);
 
     const profile = await rpc(tok.access_token, 'tools/call', { name: 'get_profile', arguments: {} });
-    expect(JSON.parse(profile.result.content[0].text)).toMatchObject({ userId: ANON, anonymous: true });
+    expect(JSON.parse(profile.result.content[0].text)).toMatchObject({ userId: ANON, anonymous: true, deleteOn: '2026-10-18', keepAccount: expect.stringContaining('claim_account') });
 
     const made = await rpc(tok.access_token, 'tools/call', { name: 'create_workout', arguments: { plan: 'kb swings 24 + push ups x5 40/20', title: 'Quick one' } });
     expect(made.result.isError).toBeFalsy();
-    expect(JSON.parse(made.result.content[0].text)).toMatchObject({ title: 'Quick one', public: false });
+    expect(JSON.parse(made.result.content[0].text)).toMatchObject({ title: 'Quick one', public: false, keepAccount: expect.stringContaining('deleted on 2026-10-18') });
 
     const next = await json(call('/oauth/token', form({ grant_type: 'refresh_token', refresh_token: tok.refresh_token, client_id: a.clientId })));
     expect(next.access_token).toBeTruthy();
@@ -173,7 +178,7 @@ describe('start without an account', () => {
     const path = new URL(claimUrl).pathname;
     expect(await (await call(path)).text()).toContain('Keep your TigerWorkouts account');
     expect(await (await call(path, form({ email: 'taken@example.com' }))).text()).toContain('already has a TigerWorkouts account');
-    expect(await (await call(path, form({ email: 'New@Example.com' }))).text()).toContain('Check your email');
+    expect(await (await call(path, form({ email: 'New@Example.com' }))).text()).toContain('One more step');
     expect(emailChanges.at(-1)).toEqual({ email: 'new@example.com', auth: `Bearer ${tokenFor(ANON)}` });
     expect((await call(path)).status).toBe(410);
   });
@@ -182,7 +187,10 @@ describe('start without an account', () => {
     const a = await openAuthorize();
     const tok = await tokensFor(await call('/authorize/anonymous', form({ rid: a.rid })), a);
     const out = await rpc(tok.access_token, 'tools/call', { name: 'claim_account', arguments: { email: 'me@example.com' } });
-    expect(JSON.parse(out.result.content[0].text)).toMatchObject({ status: 'confirm', email: 'me@example.com' });
+    expect(JSON.parse(out.result.content[0].text)).toMatchObject({ status: 'confirm', email: 'me@example.com', next: expect.stringContaining('click the link') });
+    // until the link is clicked the account is still temporary, and the agent can see it is waiting
+    const profile = JSON.parse((await rpc(tok.access_token, 'tools/call', { name: 'get_profile', arguments: {} })).result.content[0].text);
+    expect(profile).toMatchObject({ anonymous: true, pendingEmail: 'me@example.com', keepAccount: expect.stringContaining('Waiting for me@example.com') });
   });
 
   it('is not offered, and refused, while ANONYMOUS_SIGNUP is off; turning it off cuts existing anonymous connections', async () => {

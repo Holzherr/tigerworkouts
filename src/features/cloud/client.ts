@@ -20,6 +20,29 @@ const set = (next: AuthState) => {
 
 sb.auth.onAuthStateChange((_event: string, session: Session | null) => set({ user: session?.user ?? null, ready: true }));
 
+/** The session a Supabase email link puts in the hash (implicit flow), or null. */
+export const linkSession = (hash: string) => {
+  const h = new URLSearchParams(hash.replace(/^#/, ''));
+  const access_token = h.get('access_token');
+  const refresh_token = h.get('refresh_token');
+  return access_token && refresh_token ? { access_token, refresh_token } : null;
+};
+
+/**
+ * A kept account's confirmation link (claim_account in the MCP worker) lands here with its session
+ * in the hash, which this PKCE client does not read. Signed out, it is adopted, so the person arrives
+ * signed in to the account their assistant made; signed in already, that session stays. The hash
+ * goes first, before the router reads it.
+ */
+const adoptLinkSession = async () => {
+  const link = linkSession(location.hash);
+  if (!link) return;
+  history.replaceState(null, '', `${location.pathname}${location.search}#/me`);
+  const { data } = await sb.auth.getSession();
+  if (!data.session) await sb.auth.setSession(link);
+};
+if (typeof location !== 'undefined') void adoptLinkSession();
+
 export const useAuth = () => useSyncExternalStore(cb => (listeners.add(cb), () => listeners.delete(cb)), () => auth);
 export const currentUser = () => auth.user;
 

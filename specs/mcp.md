@@ -23,7 +23,8 @@ Plan Nick approved (10 Oct 2026):
 - **Hosting**: the Cloudflare Worker above.
 
 Facts checked 10 Oct 2026:
-- Supabase project `icpdzjohsvlpyaluxgbt` has anonymous sign-ins **off** (`GET /auth/v1/settings` → `external.anonymous_users: false`) and `mailer_autoconfirm: true`.
+- Supabase project `icpdzjohsvlpyaluxgbt` (checked 10 Oct 2026): anonymous sign-ins **on**, confirm email **on** (`mailer_autoconfirm: false`), secure email change on, anonymous sign-ins limited to 300 an hour. `ANONYMOUS_SIGNUP` is `"true"` in production.
+- Migration 0009: anything an anonymous user writes is kept private, and anonymous users older than 7 days are deleted daily (pg_cron, 03:17 UTC).
 - MCP Apps (spec version `2026-01-26`): tool `_meta.ui.resourceUri` → a `ui://` resource with mimeType `text/html;profile=mcp-app`; the view talks to the host over postMessage JSON-RPC (`ui/initialize`, `ui/notifications/tool-result`, `ui/open-link`, `tools/call`). ChatGPT implements the same standard and keeps `_meta["openai/outputTemplate"]` and `window.openai` as aliases (developers.openai.com/apps-sdk/build/chatgpt-ui).
 - Claude and ChatGPT connectors that act for a user authenticate with OAuth; neither passes a stable user identity to an authless server.
 
@@ -32,6 +33,8 @@ Facts checked 10 Oct 2026:
 - **Anonymous start is one tap inside the OAuth flow.** The connector still does OAuth (it is how the connector holds a per-user token); `/authorize` shows "Start now, no account needed" above the email sign-in when `ANONYMOUS_SIGNUP` is `"true"`. The tap calls Supabase `POST /auth/v1/signup` with no email and completes the grant with that session; the refresh token lives in the grant's encrypted props like any other.
 - **Access.** A grant that began anonymously is admitted by `ANONYMOUS_SIGNUP`, not by `ALLOWED_USER_IDS`, before and after it is claimed. Setting it back to `"false"` stops new anonymous starts and cuts existing anonymous connections at their next call or refresh. Email sign-ins still follow the allowlist.
 - **Claim** (`claim_account`, `mcp/src/claim.ts`): with an email, the worker calls Supabase `PUT /auth/v1/user {email}` as the anonymous user; without one, it returns `https://mcp.tigerworkouts.com/claim/<id>`, a page where the person types it. The link's KV entry holds the user's access token only (never the refresh token, which would rotate under the grant) and expires with it, at most an hour. An email that already has an account is refused with an explanation; merging two accounts is not built.
+- **Leading the person to keep it.** The server instructions tell the agent to offer `claim_account` once there is something worth keeping, and what to say after. While the account is still anonymous, `get_profile` and the write tools (`create_workout`, `update_workout`, `start_workout`, `log_session`) add `keepAccount`: the deletion date, or that a confirmation link is waiting to be clicked. The worker asks Supabase (`GET /auth/v1/user`) for this, since the grant's props only change at a token refresh.
+- **Confirmation link lands in the web app.** The claim's `PUT /auth/v1/user` passes `redirect_to=https://tigerworkouts.com/`; the link arrives with the session in the hash (implicit flow), which the PKCE web client ignores, so `src/features/cloud/client.ts` adopts it when nobody is signed in and opens `#/me`.
 - **Claim page lives in the worker, not the app** (`#/claim/<token>` was the alternative): it needs the worker's KV entry and no app routing change.
 - **Plain-text plans.** `create_workout` and `start_workout` take `plan` (text) as well as `workout` (structured). Text goes through the app's `parsePlan` (`src/features/runsheet/parse-text.ts`); unread lines fail the call and are listed back.
 - **`start_workout`** never writes. It returns the runsheet as `structuredContent` (for the view) and text with the outline, `previewUrl` (the share link) and `appDownloadUrl` (TestFlight) for hosts with no view. Saved, public and catalogue ids work, and so do drafts.
@@ -40,10 +43,8 @@ Facts checked 10 Oct 2026:
 
 ### Not built yet / open
 
-- Anonymous sign-ins are off in Supabase, so the anonymous path has only run against a mocked Supabase.
-- With `mailer_autoconfirm: true`, Supabase may set a claimed email without asking the address to confirm. If so, someone could claim an address they do not own. Needs checking on the live project before opening it.
+- The anonymous path, and the claim's confirmation link, have only run against a mocked Supabase; nobody has gone through them on the live project.
 - Supabase rate-limits anonymous sign-ins per IP (default 30 an hour). Every start comes from Cloudflare's egress IPs, so the limit is shared across all users.
-- Anonymous users that are never claimed stay in Supabase; no clean-up job.
 - Workouts made by an anonymous account cannot be merged into an existing account.
 
 ## Auth — built for public, closed for now
