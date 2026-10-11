@@ -1,0 +1,31 @@
+{
+  "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
+  "name": "tigerworkouts",
+  "version": "1.0.0",
+  "description": "Coaching from your real training history, new workouts written straight into the TigerWorkouts app, and a guided timer in the chat.",
+  "author": { "name": "Brambruesch Ltd", "email": "brambruesch@nickholzherr.com", "url": "https://tigerworkouts.com" },
+  "homepage": "https://mcp.tigerworkouts.com",
+  "repository": "https://github.com/Holzherr/tigerworkouts",
+  "license": "MIT",
+  "keywords": ["fitness", "workouts", "training", "timer", "coaching"],
+  "extensions": {
+    "com.openai": {
+      "interface": {
+        "displayName": "TigerWorkouts",
+        "shortDescription": "Workouts with a guided timer",
+        "longDescription": "TigerWorkouts is a workout app with a guided timer. Connected here, ChatGPT can read your training history (the loads, reps and times you actually did) and coach from it, search about 480 workouts (benchmarks, lifting programmes, NHS plans, follow-along videos), write new workouts straight into your account, and run any workout now with a timer in the chat that logs the session when you finish. No account is needed to start; keep it later with your email and use the same workouts in the TigerWorkouts website and iPhone app.",
+        "developerName": "Brambruesch Ltd",
+        "category": "Lifestyle",
+        "websiteURL": "https://tigerworkouts.com",
+        "supportURL": "https://tigerworkouts.com/support/",
+        "privacyPolicyURL": "https://tigerworkouts.com/privacy/",
+        "termsOfServiceURL": "https://tigerworkouts.com/terms/",
+        "brandColor": "#FF4D2E",
+        "brandColorDark": "#FF4D2E",
+        "composerIcon": "./assets/icon.png",
+        "logo": "./assets/logo.png"
+      },
+      "onboardingSkill": "./skills/get-started/SKILL.md"
+    }
+  }
+}

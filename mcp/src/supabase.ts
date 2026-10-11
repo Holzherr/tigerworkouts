@@ -89,6 +89,8 @@ export const auth = (f: Fetch = fetch) => {
     getUser: (accessToken: string) => send<SupabaseUser>('GET', 'user', undefined, accessToken),
     /** Email a 6-digit code. New addresses get an account, as they do in the app. */
     sendCode: (email: string) => post<unknown>('otp', { email, create_user: true }),
+    /** For accounts with a password (the store reviewers' demo account): no email round trip. */
+    signInWithPassword: async (email: string, password: string) => toSession(await post<AuthResponse>('token?grant_type=password', { email, password })),
     verifyCode: async (email: string, token: string) => toSession(await post<AuthResponse>('verify', { type: 'email', email, token: token.replace(/\s+/g, '') })),
     refresh: async (refreshToken: string) => toSession(await post<AuthResponse>('token?grant_type=refresh_token', { refresh_token: refreshToken })),
     /** Finish Google (PKCE): the code Supabase appended to our callback plus the verifier we kept. */

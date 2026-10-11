@@ -31,6 +31,8 @@ export interface Env {
   GOOGLE_SIGNIN?: string;
   /** "true" offers "Start without an account" (needs anonymous sign-ins on in Supabase). */
   ANONYMOUS_SIGNUP?: string;
+  /** Token the OpenAI dashboard asks to see at /.well-known/openai-apps-challenge (domain check). */
+  OPENAI_APPS_CHALLENGE?: string;
 }
 
 // ── the protected API: /mcp ──
@@ -79,6 +81,9 @@ const signIn = {
 
     if (request.method === 'GET' && url.pathname === '/') return landingPage(url.origin, anonymousOn(env));
     if (request.method === 'GET' && url.pathname === '/llms.txt') return new Response(landingText(url.origin, google, anonymousOn(env)), { headers: { 'content-type': 'text/plain; charset=utf-8' } });
+
+    if (request.method === 'GET' && url.pathname === '/.well-known/openai-apps-challenge')
+      return env.OPENAI_APPS_CHALLENGE ? new Response(env.OPENAI_APPS_CHALLENGE, { headers: { 'content-type': 'text/plain; charset=utf-8' } }) : new Response('Not found', { status: 404 });
 
     if (request.method === 'GET' && url.pathname === '/authorize') {
       let req: AuthRequest;
@@ -150,6 +155,22 @@ const signIn = {
       }
       await putPending(env, rid, { ...p, email });
       return codePage({ rid, email });
+    }
+
+    if (request.method === 'POST' && url.pathname === '/authorize/password') {
+      const form = await request.formData();
+      const rid = String(form.get('rid') ?? '');
+      const email = String(form.get('email') ?? '').trim().toLowerCase();
+      const p = await getPending(env, rid);
+      if (!p) return errorPage(EXPIRED);
+      let s: SupabaseSession;
+      try {
+        s = await auth().signInWithPassword(email, String(form.get('password') ?? ''));
+      } catch (e) {
+        const msg = e instanceof SupabaseError && e.status === 429 ? 'Too many tries. Wait a minute and try again.' : 'That email and password did not work. Accounts without a password sign in with an email code above.';
+        return signInPage({ rid, client: p.client, redirect: p.req.redirectUri, google, anonymous: anonymousOn(env), error: msg, password: true });
+      }
+      return finish(env, rid, p, s);
     }
 
     if (request.method === 'POST' && url.pathname === '/authorize/code') {

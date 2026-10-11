@@ -50,6 +50,7 @@ beforeEach(() => {
     if (url === `${SB_URL}/auth/v1/otp`) return Response.json({});
     if (url === `${SB_URL}/auth/v1/verify`) return JSON.parse(String(init?.body)).token === '123456' ? Response.json(session(emailUser)) : Response.json({ msg: 'Token has expired or is invalid' }, { status: 403 });
     if (url === `${SB_URL}/auth/v1/token?grant_type=refresh_token`) return (refreshes++, Response.json(session(JSON.parse(String(init?.body)).refresh_token.split('-').slice(1, -1).join('-'))));
+    if (url === `${SB_URL}/auth/v1/token?grant_type=password`) return JSON.parse(String(init?.body)).password === 'right' ? Response.json(session(emailUser)) : Response.json({ msg: 'Invalid login credentials' }, { status: 400 });
     if (url === `${SB_URL}/auth/v1/signup`) return Response.json(session(ANON));
     if (url === `${SB_URL}/auth/v1/user?redirect_to=${encodeURIComponent('https://tigerworkouts.com/')}` && init?.method === 'PUT') {
       const { email } = JSON.parse(String(init.body));
@@ -119,6 +120,22 @@ describe('OAuth end to end', () => {
     const next = await json(call('/oauth/token', form({ grant_type: 'refresh_token', refresh_token: tok.refresh_token, client_id: clientId })));
     expect(refreshes).toBe(1);
     expect((await mcp(next.access_token)).status).toBe(200);
+  });
+
+  it('signs in with a password (the store reviewers\' account), and says so when it is wrong', async () => {
+    const a = await openAuthorize();
+    expect(a.page).toContain('Use a password instead');
+    const bad = await call('/authorize/password', form({ rid: a.rid, email: 'nick@example.com', password: 'wrong' }));
+    expect(await bad.text()).toContain('That email and password did not work');
+    const res = await call('/authorize/password', form({ rid: a.rid, email: 'nick@example.com', password: 'right' }));
+    expect(res.status).toBe(302);
+    expect((await tokensFor(res, a)).access_token).toBeTruthy();
+  });
+
+  it('serves the OpenAI domain-check token only when one is set', async () => {
+    expect((await call('/.well-known/openai-apps-challenge')).status).toBe(404);
+    env.OPENAI_APPS_CHALLENGE = 'tok-123';
+    expect(await (await call('/.well-known/openai-apps-challenge')).text()).toBe('tok-123');
   });
 
   it('an account outside the allowlist gets "not open yet" and no code', async () => {
