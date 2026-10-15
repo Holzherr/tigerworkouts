@@ -373,7 +373,9 @@
     "unit": "",
     "step": 1,
     "group": "core",
-    "cue": "Seated, lean back, feet up or down, rotate the torso side to side."
+    "cue": "Seated, lean back, feet up or down, rotate the torso side to side.",
+    "clip": "media/bw_russian_twist.mp4",
+    "poster": "media/bw_russian_twist.jpg"
   },
   {
     "key": "bw_heel_touch",
