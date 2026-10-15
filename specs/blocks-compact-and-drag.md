@@ -1,4 +1,4 @@
-Status: building
+Status: built
 
 # Blocks: compact sets and an obvious drag
 
@@ -44,14 +44,30 @@ Mockup: https://claude.ai/artifact/K2JvQ2mxAhFrpeNhTsnMNC (now, then 1–3 below
   not shown again.
 - Accessibility: keep the hint; add Move up / Move down as accessibility actions on the header.
 
-### 3. The whole block moves as one
+### 3. The whole block moves as one — the reorder view
 
-- When a block drag starts, every block folds to a one-line card (name, exercise count, sets or
-  rounds, time); the dragged card lifts, a coral line shows where it will land, and blocks open
-  again on drop. Haptic on pick-up and drop.
-- Steps still drag within and between blocks as today (TW-006); only block drags fold the list.
-- Done when: dragging a block's header on the phone moves a card that is visibly the whole block,
-  and dropping it puts the block, with all its steps, at the line.
+Status: built (TW-026 and TW-034, 2026-10-15). The first plan, every block folding to a card while
+one drags in the editor, needed a SwiftUI press-then-drag inside a List, which never took the drag
+on the simulator (LEARNINGS 2026-09-30). Nick said yes to a separate reorder view instead.
+
+- Tapping a block header's grip opens "Reorder blocks": every block (and loose step) as one line
+  card — name, exercise count, sets or rounds, time. Drag a card to its new place; Done applies
+  the order, Cancel drops it. Each item moves whole, so a block keeps all its steps.
+- iOS: a plain List in edit mode with `.onMove` (`BlockReorderView`, `Edit.moveCard`), a haptic on
+  each drop (the lift is the system's own). Web: `BlockReorder` with pointer drag and the coral
+  insertion line (`block-reorder.tsx`, `moveItemClamped`).
+- Press-and-drag on a header in the editor still moves the block as before.
+- Mid-session (TW-034): done and running blocks show fixed at the top of the reorder view, with a
+  lock and no drag control. A block dropped above them — in the reorder view or by its header on
+  the Session sheet — lands right after the running block, and a line says "Moved to next — done
+  and current blocks stay put". Before, the drop snapped back silently: SwiftUI refuses every drop
+  onto the slot of a row marked `moveDisabled`, so the editor's done and running rows are no longer
+  marked; `Edit.moveRowClamped` keeps them in place and dragging one of them says "Done and current
+  blocks stay put".
+- The web has no mid-session editing yet; `BlockReorder` takes `locked` for when it does.
+- Done when: on the phone, start a workout, finish block 1, tap a block's grip, drag block 3 to
+  the top: it lands after the running block with the line above. Proof: EditingTests
+  (`clampAboveLocked`, `reorderCards`), `testBlockReorderView`, `block-reorder.test.tsx`.
 
 ## Not in scope
 
