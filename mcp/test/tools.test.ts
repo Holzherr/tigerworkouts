@@ -129,6 +129,15 @@ describe('writes', () => {
     expect(tables.workouts.find(w => w.id === out.id)!.public).toBe(true);
   });
 
+  it('shareUrl is the #/w/ link only where others can open it, the #/import/ link otherwise', async () => {
+    expect((await T.createWorkout(db, { workout: draft() })).shareUrl.startsWith('https://tigerworkouts.com/#/import/')).toBe(true);
+    const pub = await T.createWorkout(db, { workout: draft(), public: true });
+    expect(pub.shareUrl).toBe(pub.appUrl);
+    expect((await T.getWorkout(db, 'coach-circuit-15')).shareUrl).toBe('https://tigerworkouts.com/#/w/coach-circuit-15');
+    expect((await T.updateWorkout(db, { id: 'u-mine', public: true })).shareUrl).toBe('https://tigerworkouts.com/#/w/u-mine');
+    expect((await T.startWorkout(db, { workout: draft() })).shareUrl).toMatch(/#\/import\//);
+  });
+
   it('create_workout rejects unknown exercise keys and broken blocks, listing every problem', async () => {
     const bad = draft({ items: [{ kind: 'exercise', exercise: 'no_such_thing', forMode: 'reps', forValue: 5 }, { kind: 'block', repeat: 1, mode: 'amrap', steps: [{ kind: 'rest', seconds: 10 }] }] });
     const err = await T.createWorkout(db, { workout: bad }).catch(e => e);
@@ -226,6 +235,12 @@ describe('over MCP', () => {
     const call = await rpc({ jsonrpc: '2.0', id: 3, method: 'tools/call', params: { name: 'create_workout', arguments: { workout: draft() } } });
     expect(call.result.isError).toBeFalsy();
     expect(JSON.parse(call.result.content[0].text)).toMatchObject({ title: 'Upper push', public: false });
+  });
+
+  it('the tools that return links tell the model to send shareUrl to other people', async () => {
+    const list = await rpc({ jsonrpc: '2.0', id: 8, method: 'tools/list' });
+    for (const name of ['create_workout', 'update_workout', 'get_workout', 'start_workout'])
+      expect(list.result.tools.find((t: { name: string }) => t.name === name).description).toContain('Send shareUrl to anyone else');
   });
 
   it('reports a fixable workout as a tool error, not a crash', async () => {

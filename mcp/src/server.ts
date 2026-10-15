@@ -30,7 +30,7 @@ export const INSTRUCTIONS = `TigerWorkouts (tigerworkouts.com) is a workout app 
 
 A workout is a "runsheet": an ordered list of items. Each item is a step (an exercise or a rest) or a block (a named group of steps repeated N times, or run as AMRAP / EMOM / for time / a rep ladder). Items have a role (warmup, main, cooldown). Loads are kilograms ("kg" or "kg per arm"), treadmill speed is kph, incline is %, rests and caps are seconds.
 
-Coaching flow that works: get_profile → list_sessions (what they did, with loads and reps actually used) → list_workouts / get_workout for ideas → search_exercises for keys → create_workout (private by default) → give the user previewUrl or appUrl.
+Coaching flow that works: get_profile → list_sessions (what they did, with loads and reps actually used) → list_workouts / get_workout for ideas → search_exercises for keys → create_workout (private by default) → give the user appUrl, and anyone else shareUrl.
 
 To train now: start_workout (a saved id, a structured workout, or a plain-text plan) shows a timer in the chat; the finished session is logged to their history. Mention that the iPhone app gives a lock-screen timer and notifications (appDownloadUrl).
 
@@ -63,6 +63,7 @@ const ok = (v: unknown): Result => ({ content: [{ type: 'text', text: JSON.strin
 const fail = (msg: string): Result => ({ content: [{ type: 'text', text: msg }], isError: true });
 
 const PLAN_HELP = 'Plain text instead of workout: one block per line, read by the app\'s own parser, e.g. "row 5 min" / "kb swings 24 + push ups x5 40/20" (5 rounds, 40 s on, 20 s off) / "plank x3 rest 30". Lines it cannot read are listed back; then send a structured workout.';
+const LINKS = 'Send shareUrl to anyone else (a client, a friend): it opens for them, signed in or not. appUrl opens only for the owner, signed in, unless the workout is public.';
 
 /** Expected failures become readable tool errors; anything else is rethrown. */
 const run = async (f: () => Promise<unknown>): Promise<Result> => {
@@ -139,7 +140,7 @@ export const buildServer = (db: Db, account: Account = {}) => {
     a => run(() => T.listWorkouts(db, a)),
   );
 
-  s.registerTool('get_workout', { title: 'Workout', description: 'One workout: a readable outline, the full runsheet (the same shape create_workout takes), whether the user can edit it, and its link in the app.', inputSchema: { id: z.string() }, annotations: readOnly }, a => run(() => T.getWorkout(db, a.id)));
+  s.registerTool('get_workout', { title: 'Workout', description: `One workout: a readable outline, the full runsheet (the same shape create_workout takes), whether the user can edit it, and its links. ${LINKS}`, inputSchema: { id: z.string() }, annotations: readOnly }, a => run(() => T.getWorkout(db, a.id)));
 
   s.registerTool('search_exercises', { title: 'Exercise library', description: 'Find exercise keys for create_workout: key, name, unit of the load ("kg", "kg per arm", "kph", "" = bodyweight), stepper increment and a coaching cue. Includes the user\'s own custom exercises.', inputSchema: { query: z.string().optional().describe('e.g. "bench", "kettlebell swing", "row"'), group: z.string().optional().describe('kettlebell, dumbbell, barbell, body, core, band, treadmill, walk, run, rower, bike, swim, gym'), limit: z.number().int().min(1).max(200).optional() }, annotations: readOnly }, a => run(() => T.searchExercises(db, a)));
 
@@ -147,7 +148,7 @@ export const buildServer = (db: Db, account: Account = {}) => {
     'create_workout',
     {
       title: 'Create workout',
-      description: `Save a new workout to the user's account. Private unless public is true (public = it shows in everyone's Discover; an anonymous account's workouts stay private until it is kept). It appears in the app under Me once it syncs. Returns appUrl and a no-sign-in previewUrl to show the user. Pass workout (structured) or plan (plain text).\n\n${RUNSHEET_HELP}`,
+      description: `Save a new workout to the user's account. Private unless public is true (public = it shows in everyone's Discover; an anonymous account's workouts stay private until it is kept). It appears in the app under Me once it syncs. Returns appUrl, shareUrl and a no-sign-in previewUrl. ${LINKS} Pass workout (structured) or plan (plain text).\n\n${RUNSHEET_HELP}`,
       inputSchema: { workout: runsheetInput.optional(), plan: z.string().max(4000).optional().describe(PLAN_HELP), title: z.string().max(120).optional().describe('Title for a plan'), public: z.boolean().optional().describe('Default false') },
       annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: false },
     },
@@ -158,7 +159,7 @@ export const buildServer = (db: Db, account: Account = {}) => {
     'update_workout',
     {
       title: 'Update workout',
-      description: "Change one of the user's own workouts (owner \"me\"). workout replaces the whole runsheet (get_workout first, edit, send it back); public alone flips visibility. Catalogue and other people's workouts cannot be changed — copy them with create_workout.",
+      description: `Change one of the user's own workouts (owner "me"). workout replaces the whole runsheet (get_workout first, edit, send it back); public alone flips visibility. Catalogue and other people's workouts cannot be changed — copy them with create_workout. ${LINKS}`,
       inputSchema: { id: z.string(), workout: runsheetInput.optional(), public: z.boolean().optional() },
       annotations: { readOnlyHint: false, destructiveHint: true, idempotentHint: true, openWorldHint: false },
     },
@@ -182,7 +183,7 @@ export const buildServer = (db: Db, account: Account = {}) => {
     'start_workout',
     {
       title: 'Start workout',
-      description: `Run a workout now with a timer shown in the chat (countdowns, rests, rounds, beeps; the finished session is logged to the user's history). Pass id (a saved, public or catalogue workout), or a draft: workout (structured) or plan (plain text). A draft is not saved; create_workout first to keep it. Returns the outline, previewUrl (opens on tigerworkouts.com with no sign-in) and appDownloadUrl (the iPhone app: lock-screen timer and notifications) to offer where the chat cannot show the timer.\n\n${PLAN_HELP}`,
+      description: `Run a workout now with a timer shown in the chat (countdowns, rests, rounds, beeps; the finished session is logged to the user's history). Pass id (a saved, public or catalogue workout), or a draft: workout (structured) or plan (plain text). A draft is not saved; create_workout first to keep it. Returns the outline, previewUrl (opens on tigerworkouts.com with no sign-in) and appDownloadUrl (the iPhone app: lock-screen timer and notifications) to offer where the chat cannot show the timer. ${LINKS}\n\n${PLAN_HELP}`,
       inputSchema: { id: z.string().optional(), workout: runsheetInput.optional(), plan: z.string().max(4000).optional(), title: z.string().max(120).optional() },
       annotations: readOnly,
       _meta: ui,

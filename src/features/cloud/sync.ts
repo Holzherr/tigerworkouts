@@ -290,6 +290,12 @@ export const fetchPublicWorkouts = async (): Promise<Runsheet[]> => {
   return (data ?? []).filter(r => r.owner !== me).map(r => workoutFromRow(r as WorkoutRow));
 };
 
+/** One workout by id, for a `#/w/` link opened cold; null when RLS hides it (private, not yours) or it does not exist. */
+export const fetchWorkout = async (id: string): Promise<Runsheet | null> => {
+  const { data } = await sb.from('workouts').select('id,owner,creator,title,public,data').eq('id', id).maybeSingle();
+  return data ? workoutFromRow(data as WorkoutRow) : null;
+};
+
 export interface CreatorProfile {
   id: string;
   name: string;
