@@ -229,7 +229,9 @@
     "unit": "",
     "step": 1,
     "group": "core",
-    "cue": "Knees bent at 90 degrees, pull the knees to the chest until the tailbone lifts off the floor, lower slowly."
+    "cue": "Knees bent at 90 degrees, pull the knees to the chest until the tailbone lifts off the floor, lower slowly.",
+    "clip": "media/bw_reverse_crunch.mp4",
+    "poster": "media/bw_reverse_crunch.jpg"
   },
   {
     "key": "bw_back_raise",
