@@ -87,7 +87,9 @@ export const DiscoverScreen = ({ workouts, results = [], savedIds = [], onOpen, 
     const lastDone = new Map<string, string>();
     for (const res of results) if (!lastDone.has(res.runsheetId)) lastDone.set(res.runsheetId, res.startedAt);
     const copied = new Set(workouts.flatMap(r => (r.copyOf ? [r.copyOf] : [])));
-    return workouts.filter(r => !copied.has(wid(r)) && (set.has(wid(r)) || (r.source?.kind ?? 'user') === 'user')).sort((a, b) => (lastDone.get(wid(b)) ?? '').localeCompare(lastDone.get(wid(a)) ?? ''));
+    // Last done or first saved, whichever is later: a workout just made sits on top until you do it.
+    const recent = (r: Runsheet) => [lastDone.get(wid(r)) ?? '', r.createdAt ?? ''].sort().pop()!;
+    return workouts.filter(r => !copied.has(wid(r)) && (set.has(wid(r)) || (r.source?.kind ?? 'user') === 'user')).sort((a, b) => recent(b).localeCompare(recent(a)));
   }, [workouts, savedIds, results]);
 
   const { programs, singles } = useMemo(() => {

@@ -175,6 +175,8 @@ export interface Runsheet {
   creator?: string;
   description?: string;
   source?: Source;
+  /** When it was first saved (ISO), so a workout you have not done yet still sorts as new. */
+  createdAt?: string;
   tags?: string[];
   level?: 'Easy' | 'Medium' | 'Hard';
   /** Set when the workout is one day of a multi-day program. */

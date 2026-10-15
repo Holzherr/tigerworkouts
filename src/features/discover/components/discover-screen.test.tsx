@@ -59,3 +59,13 @@ describe('DiscoverScreen onOpen', () => {
     expect(onOpen).toHaveBeenCalledWith(expect.objectContaining({ id: 'cf-girls-fran' }), 'search');
   });
 });
+
+describe('DiscoverScreen Saved order', () => {
+  it('puts a workout made after your last session above the one you did', () => {
+    const fresh: Runsheet = { id: 'u-fresh', title: 'Fresh one', createdAt: '2026-10-15T09:00:00Z', source: { title: 'Fresh one', author: 'AI Coach', kind: 'user' }, items: [] };
+    render(<DiscoverScreen workouts={[priyanka(), fresh]} results={ONE_SESSION} initialTab="saved" onOpen={() => {}} />);
+    const fresh_ = screen.getByText('Fresh one');
+    const done = screen.getByText(priyanka().title);
+    expect(fresh_.compareDocumentPosition(done) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  });
+});
