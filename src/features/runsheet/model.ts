@@ -678,6 +678,26 @@ export const moveRow = (items: Item[], activeId: string, overId: string): Item[]
   return rebuild(rest, untouched(active));
 };
 
+/** Said when a drop landed after the running block instead of above it. Same words as the phone's. */
+export const CLAMP_NOTE = 'Moved to next — done and current blocks stay put';
+
+/**
+ * Move one top-level item, its steps with it, so it lands at `to`, an index in the list as it was
+ * before the move (SwiftUI `onMove`, `Edit.moveItemsClamped` on iOS). Mid-session the done and
+ * running items at the top (`locked`) stay put: a drop above them lands right after them, the next
+ * to run, and `clamped` says so. A locked item never moves.
+ */
+export const moveItemClamped = (items: Item[], id: string, to: number, locked: ReadonlySet<string> = new Set()): { items: Item[]; clamped: boolean } => {
+  let fixed = 0;
+  while (fixed < items.length && locked.has(items[fixed].id)) fixed++;
+  const from = items.findIndex(it => it.id === id);
+  if (from < fixed) return { items, clamped: false };
+  const dest = Math.max(to, fixed);
+  const out = items.filter((_, i) => i !== from);
+  out.splice(Math.min(out.length, dest > from ? dest - 1 : dest), 0, items[from]);
+  return { items: out, clamped: to < fixed };
+};
+
 // ── legacy import (v0.9 data.js shapes) ──
 interface LegacyEx {
   ex: string;

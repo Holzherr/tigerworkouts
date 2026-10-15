@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 import { priyanka } from '../fixtures';
 import { RunsheetList } from './runsheet-list';
@@ -19,5 +19,11 @@ describe('RunsheetList', () => {
     expect(screen.getByText('Swings + incline press')).toBeTruthy();
     expect(screen.getByText('Sprints')).toBeTruthy();
     expect(screen.getByText('Swings + lateral raises')).toBeTruthy();
+  });
+
+  it("a block header's grip opens the reorder view", () => {
+    render(<RunsheetList items={priyanka().items} {...noop} />);
+    fireEvent.click(screen.getAllByRole('button', { name: 'Reorder blocks' })[1]);
+    expect(screen.getByRole('dialog', { name: 'Reorder blocks' })).toBeTruthy();
   });
 });
