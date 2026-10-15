@@ -339,7 +339,7 @@ actor Supabase {
     /// The account's own workouts, on top of the bundled catalogue.
     func workouts() async throws -> [Runsheet] {
         guard let uid = session?.user.id else { return [] }
-        let (data, _) = try await request("rest/v1/workouts?select=id,data,creator,title,public&owner=eq.\(uid)")
+        let (data, _) = try await request("rest/v1/workouts?select=id,data,creator,title,public&owner=eq.\(uid)&order=updated_at.desc")
         return Self.decodeWorkouts(data)
     }
 

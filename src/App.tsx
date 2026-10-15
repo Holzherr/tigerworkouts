@@ -285,6 +285,8 @@ export default function App() {
   }
   if (route.name === 'workout') {
     const found = byId.get(route.id);
+    // Your own workouts (u-…) live in your account, so a signed-out browser can't see them yet.
+    if (!found && !cloud.user && route.id.startsWith('u-')) return shell('discover', <div className="p-4">{signInCard('Sign in to see this workout', ['It is saved in your TigerWorkouts account', 'No password: we email you a 6-digit code'])}</div>);
     if (!found) return shell('discover', <Missing />);
     const foundOwn = st.workouts.some(w => w.id === wid(found));
     // One copy per original: once you have a copy, the original's page is your copy's page.
@@ -330,7 +332,7 @@ export default function App() {
     const saveMine = (): Runsheet => {
       const title = r.title.trim() || 'My workout';
       const id = `u-${Date.now().toString(36)}`;
-      const mine: Runsheet = { ...r, id, title, creator: st.name || undefined, source: { title, author: st.name || undefined, kind: 'user' }, program: undefined, icon: r.icon ?? defaultIcon(id) };
+      const mine: Runsheet = { ...r, id, title, createdAt: new Date().toISOString(), creator: st.name || undefined, source: { title, author: st.name || undefined, kind: 'user' }, program: undefined, icon: r.icon ?? defaultIcon(id) };
       act.saveWorkout(mine);
       setDrafted(null);
       return mine;
