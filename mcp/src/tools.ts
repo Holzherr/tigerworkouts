@@ -213,6 +213,7 @@ export const getWorkout = async (db: Db, id: string) => {
     description: w.runsheet.description,
     outline: outline(w.runsheet),
     appUrl: appUrl(id),
+    shareUrl: shareUrl(w.runsheet, w.owner === 'catalogue' || !!w.row?.public),
     runsheet: w.runsheet,
   };
 };
@@ -259,7 +260,7 @@ export const createWorkout = async (db: Db, a: DraftArgs & { public?: boolean })
   const creator = r.creator ?? AI_COACH;
   const runsheet: Runsheet = { ...r, id, creator, createdAt: new Date().toISOString(), source: { title: r.title, kind: 'user', author: creator } };
   await db.post('workouts', { id, owner: db.userId, creator: creator ?? null, title: r.title, public: a.public ?? false, data: runsheet });
-  return { id, title: r.title, public: a.public ?? false, minutes: runsheetMinutes(runsheet), outline: outline(runsheet), appUrl: appUrl(id), previewUrl: previewUrl(runsheet), assumptions };
+  return { id, title: r.title, public: a.public ?? false, minutes: runsheetMinutes(runsheet), outline: outline(runsheet), appUrl: appUrl(id), previewUrl: previewUrl(runsheet), shareUrl: shareUrl(runsheet, a.public ?? false), assumptions };
 };
 
 export const updateWorkout = async (db: Db, a: { id: string; workout?: RunsheetInput; public?: boolean }) => {
@@ -287,11 +288,14 @@ export const updateWorkout = async (db: Db, a: { id: string; workout?: RunsheetI
   if (a.public !== undefined) patch.public = a.public;
   const updated = await db.patch<WorkoutRow[]>(`workouts?id=eq.${enc(a.id)}&owner=eq.${db.userId}`, patch);
   if (!updated?.length) throw new ToolError(`Could not update ${a.id}.`);
-  return { id: a.id, title: runsheet.title, public: updated[0].public, minutes: runsheetMinutes(runsheet), outline: outline(runsheet), appUrl: appUrl(a.id), previewUrl: previewUrl(runsheet) };
+  return { id: a.id, title: runsheet.title, public: updated[0].public, minutes: runsheetMinutes(runsheet), outline: outline(runsheet), appUrl: appUrl(a.id), previewUrl: previewUrl(runsheet), shareUrl: shareUrl(runsheet, updated[0].public) };
 };
 
 /** The web app's own share link: the runsheet travels in the URL, so it opens with no sign-in. */
 export const previewUrl = (r: Runsheet) => shareUrlAt(r, SITE);
+/** The link to give anyone else. `#/w/` opens only a public or catalogue workout (RLS hides a
+ * private row from all but its owner), so a private one travels in the URL instead. */
+const shareUrl = (r: Runsheet, open: boolean) => (open && r.id ? appUrl(r.id) : previewUrl(r));
 
 export const previewWorkoutUrl = async (db: Db, a: { id?: string; workout?: RunsheetInput }) => {
   let r: Runsheet;
@@ -332,12 +336,14 @@ export const startWorkout = async (db: Db, a: DraftArgs & { id?: string }) => {
   let runsheet: Runsheet;
   let assumptions: string[] | undefined;
   let saved = false;
+  let open = false;
   if (a.id) {
     if (a.workout || a.plan) throw new ToolError('Pass id (a saved workout) or a draft, not both.');
     const w = await findWorkout(db, a.id);
     if (!w) throw new ToolError(`No workout ${a.id} that you can see. list_workouts shows the ids.`);
     runsheet = safeRunsheet(w.runsheet);
     saved = true;
+    open = w.owner === 'catalogue' || !!w.row?.public;
   } else ({ runsheet, assumptions } = await draftToRunsheet(db, a));
   return {
     title: runsheet.title,
@@ -347,6 +353,7 @@ export const startWorkout = async (db: Db, a: DraftArgs & { id?: string }) => {
     workoutId: saved ? runsheet.id : undefined,
     appUrl: saved && runsheet.id ? appUrl(runsheet.id) : undefined,
     previewUrl: previewUrl(runsheet),
+    shareUrl: shareUrl(runsheet, open),
     appDownloadUrl: APP_DOWNLOAD_URL,
     assumptions,
     runsheet,

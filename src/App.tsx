@@ -27,6 +27,7 @@ import { nextUp } from '@/features/discover/next-up';
 import { streak, workedFrom } from '@/features/results/effort';
 import { muscleLoad } from '@/features/results/muscles';
 import { ImportScreen } from '@/features/share/components/import-screen';
+import { SharedWorkoutRoute } from '@/features/share/components/shared-workout-route';
 import { LogImportScreen } from '@/features/results/components/log-import-screen';
 import { ImportCsvSheet } from '@/features/results/components/import-csv-sheet';
 import { exportFileName, toCsv } from '@/features/results/csv';
@@ -285,8 +286,10 @@ export default function App() {
   }
   if (route.name === 'workout') {
     const found = byId.get(route.id);
-    // Your own workouts (u-…) live in your account, so a signed-out browser can't see them yet.
-    if (!found && !cloud.user && route.id.startsWith('u-')) return shell('discover', <div className="p-4">{signInCard('Sign in to see this workout', ['It is saved in your TigerWorkouts account', 'No password: we email you a 6-digit code'])}</div>);
+    // Someone's own workout (u-…) not loaded yet: ask the server for it. A hidden row is private, or,
+    // to a signed-out browser, maybe its own and not visible until sign-in.
+    if (!found && route.id.startsWith('u-'))
+      return shell('discover', <SharedWorkoutRoute key={route.id} id={route.id} signedIn={!!cloud.user} signIn={signInCard('Sign in to see this workout', ['It is saved in your TigerWorkouts account', 'No password: we email you a 6-digit code'])} onFound={r => setRemote(rs => [r, ...rs.filter(x => x.id !== r.id)])} onBack={() => go('/discover')} />);
     if (!found) return shell('discover', <Missing />);
     const foundOwn = st.workouts.some(w => w.id === wid(found));
     // One copy per original: once you have a copy, the original's page is your copy's page.
