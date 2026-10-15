@@ -189,6 +189,50 @@ struct EditingTests {
         #expect(Edit.moveRow(r, from: 5, to: 4, locked: [a]) != r)
     }
 
+    /// A done, B running, then C [swing] and D [walk]. Rows: hA swing addA hB walk rest addB hC swing addC hD walk addD.
+    private func fourBlocks() -> (Runsheet, ids: [String]) {
+        var (r, _, _) = twoBlocks()
+        r = Edit.addBlock(r)
+        r = Edit.addBlock(r)
+        let ids = r.items.map(\.id)
+        r = Edit.addExercise(r, to: ids[2], exercise: swing)
+        r = Edit.addExercise(r, to: ids[3], exercise: walk)
+        return (r, ids)
+    }
+
+    @Test("mid-session, a block dropped above what is done or running lands right after the running block")
+    func clampAboveLocked() {
+        let (r, ids) = fourBlocks()
+        let locked: Set<String> = [ids[0], ids[1]]
+        let header = Edit.rows(r).firstIndex(of: .block(ids[3]))!
+        let moved = Edit.moveRowClamped(r, from: header, to: 0, locked: locked)
+        #expect(moved.clamped)
+        #expect(moved.sheet.items.map(\.id) == [ids[0], ids[1], ids[3], ids[2]])
+        #expect(names(moved.sheet).last == [ids[2], "Kettlebell swings"], "every block keeps its steps")
+        // Dropped right under the running block: where it was asked to go, no message.
+        let below = Edit.rows(r).firstIndex(of: .block(ids[2]))!
+        let plain = Edit.moveRowClamped(r, from: header, to: below, locked: locked)
+        #expect(!plain.clamped)
+        #expect(plain.sheet.items.map(\.id) == [ids[0], ids[1], ids[3], ids[2]])
+        // A running block never moves, and a step still cannot go above it.
+        #expect(Edit.moveRowClamped(r, from: Edit.rows(r).firstIndex(of: .block(ids[1]))!, to: 0, locked: locked).sheet == r)
+    }
+
+    @Test("the reorder view moves whole blocks and clamps above the locked ones")
+    func reorderCards() {
+        let (r, ids) = fourBlocks()
+        let swapped = Edit.moveCard(r, from: [3], to: 2)
+        #expect(swapped.sheet.items.map(\.id) == [ids[0], ids[1], ids[3], ids[2]])
+        #expect(names(swapped.sheet)[2] == [ids[3], "Incline walk"])
+        let top = Edit.moveCard(r, from: [2], to: 0)
+        #expect(top.sheet.items.map(\.id) == [ids[2], ids[0], ids[1], ids[3]])
+        #expect(!top.clamped)
+        let clamped = Edit.moveCard(r, from: [3], to: 0, locked: [ids[0], ids[1]])
+        #expect(clamped.clamped)
+        #expect(clamped.sheet.items.map(\.id) == [ids[0], ids[1], ids[3], ids[2]])
+        #expect(Edit.moveCard(r, from: [0], to: 4, locked: [ids[0]]).sheet == r, "a locked card never moves")
+    }
+
     @Test("the add row never moves")
     func addRowStays() {
         let (r, _, _) = twoBlocks()

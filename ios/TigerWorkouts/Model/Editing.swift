@@ -157,18 +157,53 @@ enum Edit {
         }
     }
 
+    /// Top-level items moved with `onMove` semantics. Mid-session the done and running items at the
+    /// top (`locked`) stay put: a drop above them lands right after them, the next to run, and
+    /// `clamped` says so. A locked item never moves.
+    static func moveItemsClamped(_ r: Runsheet, from source: IndexSet, to destination: Int, locked: Set<String>) -> (sheet: Runsheet, clamped: Bool) {
+        let fixed = r.items.prefix { locked.contains($0.id) }.count
+        guard !source.isEmpty, source.allSatisfy({ $0 >= fixed }) else { return (r, false) }
+        return (moveItems(r, from: source, to: max(destination, fixed)), destination < fixed)
+    }
+
+    /// Said when a drop landed after the running block instead of above it.
+    static let clampNote = "Moved to next — done and current blocks stay put"
+    /// Said when a done or running row is dragged.
+    static let lockedNote = "Done and current blocks stay put"
+
+    /// The reorder view's list: every block and loose step, one card each, in order. Included
+    /// workouts (refs) keep their place and are not listed.
+    static func cards(_ r: Runsheet) -> [Item] {
+        r.items.filter { if case .ref = $0 { false } else { true } }
+    }
+
+    /// A move in the reorder view, with `onMove` indices into `cards(r)`: the whole item moves, its
+    /// steps with it, and a drop above the locked prefix lands right after it.
+    static func moveCard(_ r: Runsheet, from source: IndexSet, to destination: Int, locked: Set<String> = []) -> (sheet: Runsheet, clamped: Bool) {
+        let cards = cards(r)
+        let at = { (card: Int) in r.items.firstIndex { $0.id == cards[card].id } ?? r.items.count }
+        let from = IndexSet(source.filter(cards.indices.contains).map(at))
+        return moveItemsClamped(r, from: from, to: destination < cards.count ? at(destination) : r.items.count, locked: locked)
+    }
+
     /// One drag in the editor, with `onMove` semantics: `destination` is a row index in the list as
     /// it was before the move. Items in `locked` (done or running in a live session) keep their place
-    /// and contents; a move that would disturb them is refused.
+    /// and contents: a block dropped above them lands right after them (`moveRowClamped` says when),
+    /// any other move that would disturb them is refused.
     static func moveRow(_ r: Runsheet, from: Int, to destination: Int, locked: Set<String> = []) -> Runsheet {
+        moveRowClamped(r, from: from, to: destination, locked: locked).sheet
+    }
+
+    static func moveRowClamped(_ r: Runsheet, from: Int, to destination: Int, locked: Set<String> = []) -> (sheet: Runsheet, clamped: Bool) {
         let rows = rows(r)
-        guard rows.indices.contains(from) else { return r }
+        guard rows.indices.contains(from) else { return (r, false) }
         let next: Runsheet
+        var clamped = false
         switch rows[from] {
         case .add:
-            return r
+            return (r, false)
         case .block(let blockId):
-            guard let at = r.items.firstIndex(where: { $0.id == blockId }) else { return r }
+            guard let at = r.items.firstIndex(where: { $0.id == blockId }) else { return (r, false) }
             // The block lands after every item whose first row sits above the drop point.
             var starts: [Int] = []
             var row = 0
@@ -180,9 +215,9 @@ enum Edit {
                 case .ref: break
                 }
             }
-            next = moveItems(r, from: [at], to: starts.filter { $0 < destination }.count)
+            (next, clamped) = moveItemsClamped(r, from: [at], to: starts.filter { $0 < destination }.count, locked: locked)
         case .step(let stepId, _):
-            guard let step = findStep(r, stepId) else { return r }
+            guard let step = findStep(r, stepId) else { return (r, false) }
             var rest = rows
             rest.remove(at: from)
             let landing = max(0, min(rest.count, destination > from ? destination - 1 : destination))
@@ -205,7 +240,7 @@ enum Edit {
             next = sheet
         }
         let fixed = r.items.prefix { locked.contains($0.id) }
-        return Array(next.items.prefix(fixed.count)) == Array(fixed) ? next : r
+        return Array(next.items.prefix(fixed.count)) == Array(fixed) ? (next, clamped) : (r, false)
     }
 
     static func findStep(_ r: Runsheet, _ stepId: String) -> Step? {

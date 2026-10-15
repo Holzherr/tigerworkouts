@@ -22,6 +22,7 @@ import { Button } from '@/shared/components/ui/button';
 import { Stepper } from '@/shared/components/ui/stepper';
 import { AddTile, SeamInsert, type AddKind } from './add-controls';
 import { BlockBracket, BlockHeader } from './block-bracket';
+import { BlockReorder } from './block-reorder';
 import { PlatesButton } from './plate-sheet';
 import { SetGrid, SetMark, type SetGridProps } from './set-grid';
 import { kitOf, type Equipment } from '../plates';
@@ -132,7 +133,8 @@ export const SetRuns = ({ block, onChange, onVary, hintFor, equipment }: SetGrid
  * block steps and an invisible end marker per block. Drag a row and a coral line shows where it
  * lands, following the finger (the one drag style since 22 Sep); hold a lifted
  * row over the middle of another for 250ms and it becomes a group target (orange ring): release
- * to make a block or join one. Blocks drag as a chunk by their header. Tap a row to expand it,
+ * to make a block or join one. Blocks drag as a chunk by their header; the grip on a header opens
+ * BlockReorder, every block as one card. Tap a row to expand it,
  * swipe or ✕ to remove, ＋ on a seam to insert there.
  */
 export const RunsheetList = ({ items, onChange, onPickExercise, onSwapExercise, expandedId: expandedProp, onExpandedChange, autoRest = 30, resolveTarget, hintFor, setHintFor, equipment, refTitle, onRemoved, historyFor, className }: RunsheetListProps) => {
@@ -146,6 +148,7 @@ export const RunsheetList = ({ items, onChange, onPickExercise, onSwapExercise, 
 
   const [activeId, setActiveId] = useState<string | null>(null);
   const [varying, setVarying] = useState<string | null>(null);
+  const [reordering, setReordering] = useState(false);
   const [tipSeen, setTipSeen] = useState(() => localStorage.getItem(TIP_KEY) === '1');
   const [groupTarget, setGroupTarget] = useState<string | null>(null);
   const [insertion, setInsertion] = useState<{ id: string; where: 'before' | 'after' } | null>(null);
@@ -412,9 +415,9 @@ export const RunsheetList = ({ items, onChange, onPickExercise, onSwapExercise, 
                 // The grip says the header moves the block; press-and-drag works anywhere on it.
                 <div {...p} className={cn('flex items-start', activeId === block.id && 'rounded-card bg-surface shadow-lift')}>
                   <BlockHeader block={block} expanded={expandedId === block.id} onToggle={() => toggle(block.id)} onChange={patch => onChange(updateBlock(items, block.id, patch))} onRemove={() => removeBlock(block.id)} dissolving={dissolvingBlockId === block.id} className="min-w-0 flex-1" />
-                  <span aria-hidden className="grid size-11 shrink-0 place-items-center text-faint" data-testid="block-grip">
+                  <button type="button" aria-label="Reorder blocks" onClick={() => setReordering(true)} className="grid size-11 shrink-0 place-items-center rounded-control text-faint active:bg-brand-line/40" data-testid="block-grip">
                     <Menu className="size-5" />
-                  </span>
+                  </button>
                 </div>
               }
               footer={<AddTile onAdd={k => add(k, { block: block.id })} />}
@@ -461,6 +464,7 @@ export const RunsheetList = ({ items, onChange, onPickExercise, onSwapExercise, 
         </div>
       </SortableContext>
       <DragOverlay dropAnimation={null}>{null}</DragOverlay>
+      {reordering && <BlockReorder open items={items} refTitle={refTitle} onCancel={() => setReordering(false)} onDone={next => (setReordering(false), next.some((it, k) => it !== items[k]) && onChange(next))} />}
     </DndContext>
   );
 };

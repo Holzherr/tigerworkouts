@@ -32,6 +32,10 @@ struct RunsheetEditor<Header: View>: View {
     @State private var editingRest: RestStep?
     @State private var editingBlock: Block?
     @State private var picking: PickTarget?
+    /// The reorder view, opened from a block's grip.
+    @State private var reordering = false
+    /// A short line after a drop that did not land where it was dropped.
+    @State private var note: String?
 
     private struct PickTarget: Identifiable {
         var id: String { blockId ?? "loose" }
@@ -72,14 +76,20 @@ struct RunsheetEditor<Header: View>: View {
             }
 
             Section {
+                // Done and running rows are not moveDisabled: SwiftUI refuses every drop above a
+                // row that cannot move and snaps the drag back, which read as "drag doesn't work".
+                // The move lands here instead; Edit clamps it below them or keeps them in place.
                 ForEach(rows) { row in
                     rowView(row, frozen: frozen)
-                        .moveDisabled(isFrozen(row, frozen))
+                        .moveDisabled(isAdd(row))
                         .deleteDisabled(!isStep(row) || isFrozen(row, frozen))
                 }
                 .onMove { from, to in
                     guard let from = from.first else { return }
-                    apply(Edit.moveRow(runsheet, from: from, to: to, locked: locked))
+                    let moved = Edit.moveRowClamped(runsheet, from: from, to: to, locked: locked)
+                    apply(moved.sheet)
+                    if moved.clamped { show(Edit.clampNote) }
+                    else if moved.sheet == runsheet, isFrozen(rows[from], frozen) { show(Edit.lockedNote) }
                 }
                 .onDelete { offsets in
                     let ids = offsets.compactMap { i -> String? in
@@ -106,6 +116,22 @@ struct RunsheetEditor<Header: View>: View {
         .listStyle(.insetGrouped)
         .scrollContentBackground(.hidden)
         .background(Brand.canvas)
+        .overlay(alignment: .bottom) {
+            if let note {
+                Text(note)
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(.white)
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal, 16).padding(.vertical, 12)
+                    .background(Brand.ink, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+                    .padding(16)
+                    .transition(.move(edge: .bottom).combined(with: .opacity))
+                    .accessibilityIdentifier("move-note")
+            }
+        }
+        .sheet(isPresented: $reordering) {
+            BlockReorderView(draft: runsheet, locked: locked) { apply($0) }
+        }
         .sheet(item: $editingRest) { rest in
             RestEditorView(seconds: rest.seconds) { seconds in
                 apply(Edit.updateRest(runsheet, id: rest.id, seconds: seconds))
@@ -129,6 +155,19 @@ struct RunsheetEditor<Header: View>: View {
                 apply(Edit.addExercise(runsheet, to: target.blockId, exercise: exercise))
             }
         }
+    }
+
+    private func show(_ message: String) {
+        withAnimation { note = message }
+        Task { @MainActor in
+            try? await Task.sleep(for: .seconds(3))
+            if note == message { withAnimation { note = nil } }
+        }
+    }
+
+    private func isAdd(_ row: Edit.Row) -> Bool {
+        if case .add = row { return true }
+        return false
     }
 
     private func isStep(_ row: Edit.Row) -> Bool {
@@ -196,31 +235,41 @@ struct RunsheetEditor<Header: View>: View {
         }
     }
 
-    /// The header is a row of its own, so it can be dragged: the whole block follows it.
+    /// The header is a row of its own, so it can be dragged: the whole block follows it. Its grip
+    /// opens the reorder view, every block as one card (TW-026).
     private func blockHeader(_ b: Block, done: Bool) -> some View {
-        Button { if !done { editingBlock = b } } label: {
-            HStack(spacing: 8) {
-                Text(b.name.isEmpty ? "Block" : b.name).font(.headline).foregroundStyle(done ? Brand.muted : Brand.ink)
-                Text(Format.duration(b.estimatedSeconds)).font(.footnote).foregroundStyle(Brand.muted)
-                Spacer()
-                Text(b.modeLabel)
-                    .font(.footnote.weight(.bold))
-                    .padding(.horizontal, 10).frame(height: 24)
-                    .background(Brand.coralSoft, in: Capsule())
-                    .foregroundStyle(Brand.coralInk)
-                if !done {
+        HStack(spacing: 0) {
+            Button { if !done { editingBlock = b } } label: {
+                HStack(spacing: 8) {
+                    Text(b.name.isEmpty ? "Block" : b.name).font(.headline).foregroundStyle(done ? Brand.muted : Brand.ink)
+                    Text(Format.duration(b.estimatedSeconds)).font(.footnote).foregroundStyle(Brand.muted)
+                    Spacer()
+                    Text(b.modeLabel)
+                        .font(.footnote.weight(.bold))
+                        .padding(.horizontal, 10).frame(height: 24)
+                        .background(Brand.coralSoft, in: Capsule())
+                        .foregroundStyle(Brand.coralInk)
+                }
+                .frame(minHeight: 44)
+                .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel("\(b.name), \(b.modeLabel)")
+            .accessibilityHint(done ? "" : "Tap for rounds and rest. Hold and drag to move the block.")
+            if !done {
+                Button { reordering = true } label: {
                     Image(systemName: "line.3.horizontal")
                         .font(.body.weight(.semibold))
                         .foregroundStyle(Brand.faint)
                         .frame(width: 44, height: 44)
+                        .contentShape(Rectangle())
                 }
+                .buttonStyle(.plain)
+                .accessibilityLabel("Reorder blocks")
+                .accessibilityIdentifier("block-grip")
             }
-            .padding(.top, 4)
-            .contentShape(Rectangle())
         }
-        .buttonStyle(.plain)
-        .accessibilityLabel("\(b.name), \(b.modeLabel)")
-        .accessibilityHint(done ? "" : "Tap for rounds and rest. Hold and drag to move the block.")
+        .padding(.top, 4)
         .listRowBackground(Color.clear)
         .listRowSeparator(.hidden)
         .listRowInsets(EdgeInsets(top: 0, leading: 4, bottom: 6, trailing: 4))
@@ -270,6 +319,122 @@ struct RunsheetEditor<Header: View>: View {
             }
             .buttonStyle(.plain)
             .opacity(done && e.id != current ? 0.5 : 1)
+        }
+    }
+}
+
+/// Every block as one line card — name, exercises, sets or rounds, time — to drag into a new order
+/// (TW-026, specs/blocks-compact-and-drag.md part 3). A plain List in edit mode, because a SwiftUI
+/// press-then-drag inside a List never took the drag (LEARNINGS 2026-09-30). Done applies the order;
+/// each item moves whole, so a block keeps all its steps. Mid-session the done and running blocks
+/// sit fixed at the top, and a card dropped above them lands right after the running one.
+struct BlockReorderView: View {
+    @State var draft: Runsheet
+    var locked: Set<String> = []
+    var onDone: (Runsheet) -> Void
+
+    @Environment(\.dismiss) private var dismiss
+    @State private var note: String?
+    @State private var drops = 0
+
+    var body: some View {
+        NavigationStack {
+            List {
+                if let note {
+                    Text(note)
+                        .font(.subheadline.weight(.semibold))
+                        .foregroundStyle(Brand.coralInk)
+                        .listRowBackground(Brand.coralSoft)
+                        .accessibilityIdentifier("move-note")
+                }
+                let cards = Edit.cards(draft)
+                let fixed = cards.prefix { locked.contains($0.id) }.count
+                Section {
+                    ForEach(Array(cards.dropFirst(fixed))) { item in
+                        card(item, fixed: false)
+                    }
+                    .onMove { from, to in
+                        let moved = Edit.moveCard(draft, from: IndexSet(from.map { $0 + fixed }), to: to + fixed, locked: locked)
+                        draft = moved.sheet
+                        // Nothing goes above the done and running blocks: the top here is next.
+                        note = moved.clamped || (fixed > 0 && to == 0 && from.first != 0) ? Edit.clampNote : nil
+                        drops += 1
+                    }
+                } header: {
+                    // Done and running blocks sit above the list, not in it: a row that cannot
+                    // move also refuses every drop above it, so SwiftUI would snap the card back.
+                    if fixed > 0 {
+                        VStack(spacing: 8) {
+                            ForEach(Array(cards.prefix(fixed))) { item in
+                                card(item, fixed: true)
+                                    .padding(.horizontal, 16)
+                                    .background(Brand.well, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+                            }
+                        }
+                        .textCase(nil)
+                        .padding(.bottom, 8)
+                        .accessibilityIdentifier("fixed-cards")
+                    }
+                } footer: {
+                    Text("Drag a card to move the block, steps and all.")
+                }
+            }
+            .accessibilityIdentifier("reorder-list")
+            .environment(\.editMode, .constant(.active))
+            .sensoryFeedback(.impact(weight: .medium), trigger: drops)
+            .navigationTitle("Reorder blocks")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) { Button("Cancel") { dismiss() } }
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Done") {
+                        onDone(draft)
+                        dismiss()
+                    }
+                    .fontWeight(.bold)
+                }
+            }
+        }
+        .presentationDetents([.large])
+    }
+
+    private func card(_ item: Item, fixed: Bool) -> some View {
+        HStack(spacing: 12) {
+            if fixed {
+                Image(systemName: "lock.fill").font(.footnote).foregroundStyle(Brand.faint)
+            }
+            VStack(alignment: .leading, spacing: 2) {
+                Text(Self.title(item)).font(.body.weight(.semibold)).foregroundStyle(fixed ? Brand.muted : Brand.ink).lineLimit(1)
+                Text(Self.detail(item)).font(.footnote).foregroundStyle(Brand.muted).lineLimit(1)
+            }
+            Spacer(minLength: 8)
+            Text(Format.duration(item.estimatedSeconds)).font(.footnote.weight(.semibold)).monospacedDigit().foregroundStyle(Brand.muted)
+        }
+        .frame(minHeight: 44)
+        .accessibilityElement(children: .combine)
+    }
+
+    static func title(_ item: Item) -> String {
+        switch item {
+        case .block(let b): b.name.isEmpty ? "Block" : b.name
+        case .step(.exercise(let e)): e.exercise.name
+        case .step(.rest): "Rest"
+        case .ref: "Included workout"
+        }
+    }
+
+    /// "2 exercises · 8 rounds", "1 exercise · 5 sets", "3 exercises · AMRAP 10:00".
+    static func detail(_ item: Item) -> String {
+        switch item {
+        case .block(let b):
+            let n = b.steps.compactMap(\.asExercise).count
+            let exercises = "\(n) exercise\(n == 1 ? "" : "s")"
+            let runs = b.straightSetStep != nil ? "\(b.repeatCount) set\(b.repeatCount == 1 ? "" : "s")"
+                : b.runMode == .rounds ? "\(b.repeatCount) round\(b.repeatCount == 1 ? "" : "s")" : b.modeLabel
+            return "\(exercises) · \(runs)"
+        case .step(.exercise(let e)): return e.forLabel
+        case .step(.rest(let r)): return Format.clock(r.seconds)
+        case .ref: return ""
         }
     }
 }
