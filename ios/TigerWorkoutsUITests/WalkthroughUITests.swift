@@ -475,6 +475,87 @@ final class WalkthroughUITests: XCTestCase {
         XCTAssertFalse(tip.exists, "the tip shows once")
     }
 
+    /// The grip opens the reorder view: every block one card, dragged by its reorder control, Done
+    /// applies it with each block's steps (TW-026). Mid-session the running block's card is fixed
+    /// and a card dropped above it lands right after it, with a line that says so (TW-034).
+    func testBlockReorderView() {
+        open("Tabata This")
+        if app.staticTexts["Hold a block's header to move it"].waitForExistence(timeout: 2) { tap(app.buttons["OK"]) }
+        tap(app.buttons["block-grip"].firstMatch)
+        XCTAssertTrue(app.navigationBars["Reorder blocks"].waitForExistence(timeout: 5))
+        let squatCard = card("Tabata Squat")
+        let pullCard = card("Tabata Pull-up")
+        XCTAssertTrue(pullCard.waitForExistence(timeout: 5))
+        snap("24d Reorder blocks")
+        reorder("Tabata Pull-up", above: squatCard)
+        waitFor("the Pull-up card moves above Squat") { pullCard.frame.minY < squatCard.frame.minY }
+        snap("24e Reorder blocks, Pull-up moved up")
+        tap(app.navigationBars["Reorder blocks"].buttons["Done"])
+
+        let squat = app.buttons.matching(NSPredicate(format: "label BEGINSWITH[c] 'Tabata Squat'")).firstMatch
+        let pullup = app.buttons.matching(NSPredicate(format: "label BEGINSWITH[c] 'Tabata Pull-up'")).firstMatch
+        let pullStep = app.buttons.matching(NSPredicate(format: "label BEGINSWITH[c] 'Pull-up'")).firstMatch
+        XCTAssertTrue(app.navigationBars["Tabata This (mine)"].waitForExistence(timeout: 5), "the reorder saves as a copy")
+        reveal(pullup)
+        XCTAssertTrue(pullStep.waitForExistence(timeout: 5))
+        XCTAssertTrue(pullup.frame.minY < pullStep.frame.minY, "the Pull-up step moves with its header")
+        if squat.exists { XCTAssertTrue(pullStep.frame.minY < squat.frame.minY, "Pull-up and its step now come before Squat") }
+
+        // Mid-session: past the count-in the first block is running and fixed at the top.
+        tap(app.buttons["Start workout"])
+        XCTAssertTrue(app.buttons["End session"].waitForExistence(timeout: 5))
+        tap(app.buttons["Skip"])
+        tap(app.buttons["Session overview"])
+        tap(app.buttons["block-grip"].firstMatch)
+        XCTAssertTrue(app.navigationBars["Reorder blocks"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.descendants(matching: .any)["fixed-cards"].waitForExistence(timeout: 5), "the running block sits fixed above the list")
+        let running = card("Tabata Row")
+        XCTAssertEqual(running.buttons.count, 0, "the running block cannot be dragged")
+        let last = card("Tabata Sit-up")
+        reorder("Tabata Sit-up", above: running, at: 0.3)
+        XCTAssertTrue(app.staticTexts["Moved to next — done and current blocks stay put"].waitForExistence(timeout: 5))
+        snap("24f Reorder mid-session, clamped after the running block")
+        waitFor("the card lands right after the running block") { last.frame.minY > running.frame.minY && last.frame.minY < running.frame.maxY + 10 }
+        tap(app.navigationBars["Reorder blocks"].buttons["Done"])
+
+        // The same drop by the header on the Session sheet lands after the running block too.
+        let rowHeader = app.buttons.matching(NSPredicate(format: "label BEGINSWITH 'Tabata Row,'")).firstMatch
+        let sitHeader = app.buttons.matching(NSPredicate(format: "label BEGINSWITH 'Tabata Sit-up,'")).firstMatch
+        XCTAssertTrue(sitHeader.waitForExistence(timeout: 5))
+        centre([rowHeader, sitHeader])
+        drag(sitHeader, onto: rowHeader)
+        XCTAssertTrue(app.staticTexts["Moved to next — done and current blocks stay put"].waitForExistence(timeout: 5), "a header dropped above the running block says where it went")
+        snap("24g Session sheet, header drop clamped after the running block")
+        waitFor("Sit-up still runs next") { sitHeader.frame.minY > rowHeader.frame.minY }
+        tap(app.buttons["Close"])
+        tap(app.buttons["End session"])
+        tap(app.buttons["Discard"])
+
+        tap(app.navigationBars["Tabata This (mine)"].buttons["Edit"])
+        tap(app.buttons["Delete workout"])
+        tap(app.buttons["Delete"].firstMatch)
+        XCTAssertTrue(app.navigationBars["TigerWorkouts"].waitForExistence(timeout: 5))
+    }
+
+    /// A card in the reorder view, by its block's name; a card reads "name, detail, time".
+    private func card(_ name: String) -> XCUIElement {
+        reorderCells.containing(NSPredicate(format: "label BEGINSWITH %@", name + ",")).firstMatch
+    }
+
+    /// The reorder sheet's own cells; the screen under the sheet has cells too.
+    private var reorderCells: XCUIElementQuery {
+        app.collectionViews["reorder-list"].cells
+    }
+
+    /// Drags a card by its reorder control onto the top edge of another, holding at both ends.
+    private func reorder(_ name: String, above target: XCUIElement, at edge: CGFloat = 0) {
+        let handle = app.collectionViews["reorder-list"].buttons["Reorder \(name)"]
+        XCTAssertTrue(handle.waitForExistence(timeout: 5), "missing reorder control on \(name)")
+        handle.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5))
+            .press(forDuration: 0.5, thenDragTo: target.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: edge)),
+                   withVelocity: .slow, thenHoldForDuration: 0.6)
+    }
+
     func testWriteAWorkout() {
         XCTAssertTrue(app.navigationBars["TigerWorkouts"].waitForExistence(timeout: 10))
         tap(app.buttons["New workout"])
