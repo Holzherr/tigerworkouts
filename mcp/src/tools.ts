@@ -224,10 +224,8 @@ const resolver = async (db: Db) => {
   return (key: string) => libraryRef(key) ?? own[key];
 };
 
-const profileName = async (db: Db) => {
-  const [states, profiles] = await Promise.all([db.get<{ prefs: { name?: string } }[]>(`user_state?owner=eq.${db.userId}&select=prefs`), db.get<{ name: string | null }[]>(`profiles?id=eq.${db.userId}&select=name`)]);
-  return states?.[0]?.prefs?.name ?? profiles?.[0]?.name ?? undefined;
-};
+/** Shown as the author of workouts made through the connector (Nick, 15 Oct 2026). */
+export const AI_COACH = 'AI Coach';
 
 /** What create_workout and start_workout take: a structured runsheet, or a plain-text plan. */
 export interface DraftArgs {
@@ -257,8 +255,9 @@ const draftToRunsheet = async (db: Db, a: DraftArgs): Promise<{ runsheet: Runshe
 export const createWorkout = async (db: Db, a: DraftArgs & { public?: boolean }) => {
   const { runsheet: r, assumptions } = await draftToRunsheet(db, a);
   const id = newId();
-  const creator = r.creator ?? (await profileName(db));
-  const runsheet: Runsheet = { ...r, id, creator, source: { title: r.title, kind: 'user', author: creator } };
+  // Workouts an assistant writes say so; the person can still pass their own name as creator.
+  const creator = r.creator ?? AI_COACH;
+  const runsheet: Runsheet = { ...r, id, creator, createdAt: new Date().toISOString(), source: { title: r.title, kind: 'user', author: creator } };
   await db.post('workouts', { id, owner: db.userId, creator: creator ?? null, title: r.title, public: a.public ?? false, data: runsheet });
   return { id, title: r.title, public: a.public ?? false, minutes: runsheetMinutes(runsheet), outline: outline(runsheet), appUrl: appUrl(id), previewUrl: previewUrl(runsheet), assumptions };
 };

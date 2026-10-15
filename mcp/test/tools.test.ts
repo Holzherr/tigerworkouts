@@ -113,9 +113,10 @@ describe('writes', () => {
     const out = await T.createWorkout(db, { workout: draft() });
     expect(out.public).toBe(false);
     const row = tables.workouts.find(w => w.id === out.id)!;
-    expect(row).toMatchObject({ owner: NICK, public: false, creator: 'Nick', title: 'Upper push' });
+    expect(row).toMatchObject({ owner: NICK, public: false, creator: 'AI Coach', title: 'Upper push' });
     const data = row.data as { items: { kind: string; id: string; name?: string; steps?: { exercise?: { name: string; unit: string } }[] }[]; source: { kind: string } };
     expect(data.source.kind).toBe('user');
+    expect((row.data as { createdAt?: string }).createdAt).toMatch(/^\d{4}-/);
     expect(data.items.every(i => i.id)).toBe(true);
     expect(data.items[1].name).toBe('Barbell bench press');
     expect(data.items[1].steps![0].exercise).toMatchObject({ name: 'Barbell bench press', unit: 'kg' });
@@ -328,5 +329,15 @@ describe('claim', () => {
     expect(keepNote({ ...anon, pendingEmail: 'p@example.com' })).toContain('Waiting for p@example.com');
     expect(keepNote(await accountStatus('t', user({ id: OTHER, email: 'p@example.com' })))).toBeUndefined();
     expect(keepNote(undefined)).toContain('7 days');
+  });
+});
+
+describe('db', () => {
+  it('retries a refused (401) call once, then succeeds', async () => {
+    let calls = 0;
+    const f = (async () => (++calls === 1 ? new Response('{"message":"JWT issued at future"}', { status: 401 }) : new Response('[{"id":1}]', { status: 200 }))) as unknown as typeof fetch;
+    const out = await makeDb({ userId: NICK, accessToken: 't' }, f).get<{ id: number }[]>('sessions');
+    expect(out).toEqual([{ id: 1 }]);
+    expect(calls).toBe(2);
   });
 });

@@ -108,13 +108,23 @@ export interface Db {
   patch<T>(path: string, body: unknown): Promise<T>;
 }
 
+export const RETRY_401_MS = 1000;
+
 export const db = (session: Pick<SupabaseSession, 'userId' | 'accessToken'>, f: Fetch = fetch): Db => {
-  const call = async <T>(method: string, path: string, body?: unknown): Promise<T> => {
-    const res = await f(`${SB_URL}/rest/v1/${path}`, {
+  const send = (method: string, path: string, body?: unknown) =>
+    f(`${SB_URL}/rest/v1/${path}`, {
       method,
       headers: { apikey: SB_KEY, authorization: `Bearer ${session.accessToken}`, 'content-type': 'application/json', ...(method === 'GET' ? {} : { prefer: 'return=representation' }) },
       body: body === undefined ? undefined : JSON.stringify(body),
     });
+  const call = async <T>(method: string, path: string, body?: unknown): Promise<T> => {
+    let res = await send(method, path, body);
+    // A token minted moments ago can be refused once (its issued-at is ahead of PostgREST's clock);
+    // the same call a second later goes through. Seen 15 Oct 2026 right after a sign-in.
+    if (res.status === 401) {
+      await new Promise(r => setTimeout(r, RETRY_401_MS));
+      res = await send(method, path, body);
+    }
     if (!res.ok) throw new SupabaseError(res.status, await readError(res));
     const text = await res.text();
     return (text ? JSON.parse(text) : null) as T;
