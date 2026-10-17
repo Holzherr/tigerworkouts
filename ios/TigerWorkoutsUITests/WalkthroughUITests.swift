@@ -62,7 +62,7 @@ final class WalkthroughUITests: XCTestCase {
     }
 
     func testBrowseRunAndFinish() {
-        XCTAssertTrue(app.navigationBars["TigerWorkouts"].waitForExistence(timeout: 10))
+        XCTAssertTrue(app.navigationBars["Workouts"].waitForExistence(timeout: 10))
         snap("01 Workouts")
         // The last carousel has to clear the tab bar.
         for _ in 0..<6 { app.swipeUp() }
@@ -118,12 +118,20 @@ final class WalkthroughUITests: XCTestCase {
         tap(app.buttons["Done"])
 
         tap(app.tabBars.buttons["History"])
+        // The week so far sits at the top of History since home went plain (17 Oct 2026).
+        XCTAssertTrue(app.descendants(matching: .any)["week-line"].waitForExistence(timeout: 5), "History should open on the week so far")
         snap("10 History")
 
-        // Home now knows you: the next thing to do, one tap to start it.
+        // Saved, it is on Mine, the first row once done, one tap to start it.
         home()
-        XCTAssertTrue(app.buttons["up-next"].waitForExistence(timeout: 5), "with history, home should offer what to do next")
-        snap("10b Home, up next")
+        open("Tabata This")
+        let save = app.buttons["Save to my list"]
+        if save.waitForExistence(timeout: 2) { save.tap() }
+        home()
+        // An earlier walkthrough's copy, "Tabata This (mine)", stands in for the original on Mine.
+        let play = app.buttons.matching(NSPredicate(format: "label BEGINSWITH 'Start Tabata This'")).firstMatch
+        XCTAssertTrue(play.waitForExistence(timeout: 5), "a saved workout should be on Mine with a play button")
+        snap("10b Home, Mine")
 
         tap(app.tabBars.buttons["Me"])
         XCTAssertTrue(app.navigationBars["Me"].waitForExistence(timeout: 5))
@@ -133,8 +141,8 @@ final class WalkthroughUITests: XCTestCase {
         snap("10d Me, profile scrolled")
 
         home()
-        tap(app.buttons.matching(NSPredicate(format: "label BEGINSWITH 'Start '")).firstMatch)
-        XCTAssertTrue(app.buttons["End session"].waitForExistence(timeout: 5), "Start on home should run the workout straight away")
+        tap(play)
+        XCTAssertTrue(app.buttons["End session"].waitForExistence(timeout: 5), "play on home should run the workout straight away")
         tap(app.buttons["End session"])
         tap(app.buttons["Finish and save"])
         tap(app.buttons["Done"])
@@ -435,7 +443,7 @@ final class WalkthroughUITests: XCTestCase {
         tap(app.navigationBars["Tabata This (mine)"].buttons["Edit"])
         tap(app.buttons["Delete workout"])
         tap(app.buttons["Delete"].firstMatch)
-        XCTAssertTrue(app.navigationBars["TigerWorkouts"].waitForExistence(timeout: 5), "deleting the copy should go back")
+        XCTAssertTrue(app.navigationBars["Workouts"].waitForExistence(timeout: 5), "deleting the copy should go back")
     }
 
     /// A block moves by its header, steps and all: every header has a grip and a one-time tip says
@@ -465,7 +473,7 @@ final class WalkthroughUITests: XCTestCase {
         tap(app.navigationBars["Tabata This (mine)"].buttons["Edit"])
         tap(app.buttons["Delete workout"])
         tap(app.buttons["Delete"].firstMatch)
-        XCTAssertTrue(app.navigationBars["TigerWorkouts"].waitForExistence(timeout: 5), "deleting the copy should go back")
+        XCTAssertTrue(app.navigationBars["Workouts"].waitForExistence(timeout: 5), "deleting the copy should go back")
 
         // The tip stays put away after a relaunch.
         app.terminate()
@@ -534,7 +542,7 @@ final class WalkthroughUITests: XCTestCase {
         tap(app.navigationBars["Tabata This (mine)"].buttons["Edit"])
         tap(app.buttons["Delete workout"])
         tap(app.buttons["Delete"].firstMatch)
-        XCTAssertTrue(app.navigationBars["TigerWorkouts"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.navigationBars["Workouts"].waitForExistence(timeout: 5))
     }
 
     /// A card in the reorder view, by its block's name; a card reads "name, detail, time".
@@ -557,7 +565,7 @@ final class WalkthroughUITests: XCTestCase {
     }
 
     func testWriteAWorkout() {
-        XCTAssertTrue(app.navigationBars["TigerWorkouts"].waitForExistence(timeout: 10))
+        XCTAssertTrue(app.navigationBars["Workouts"].waitForExistence(timeout: 10))
         tap(app.buttons["New workout"])
         // New workout opens the workout screen itself, asking for a name first.
         let name = app.textFields["Name"]
@@ -593,7 +601,7 @@ final class WalkthroughUITests: XCTestCase {
 
         // No Save: it saved itself once it had a name and an exercise.
         app.navigationBars.buttons.element(boundBy: 0).tap()
-        XCTAssertTrue(app.staticTexts["Mine"].waitForExistence(timeout: 5), "a saved workout should appear under Mine")
+        XCTAssertTrue(app.buttons["Start Swings and sprints"].waitForExistence(timeout: 5), "a saved workout should appear under Mine")
         snap("15 Workouts with Mine")
     }
 
@@ -908,7 +916,7 @@ final class WalkthroughUITests: XCTestCase {
         if discard.waitForExistence(timeout: 3) { discard.tap() }
 
         // A machine the catalogue does not have, made from the picker and used straight away.
-        XCTAssertTrue(app.navigationBars["TigerWorkouts"].waitForExistence(timeout: 10))
+        XCTAssertTrue(app.navigationBars["Workouts"].waitForExistence(timeout: 10))
         tap(app.buttons["New workout"])
         let name = app.textFields["Name"]
         tap(name)
@@ -964,8 +972,7 @@ final class WalkthroughUITests: XCTestCase {
         if discard.waitForExistence(timeout: 3) { discard.tap() }
 
         home()
-        let feed = app.segmentedControls.firstMatch
-        if feed.waitForExistence(timeout: 5) { feed.buttons["For you"].tap() }
+        tap(app.buttons["Discover"])
         let forYou = app.descendants(matching: .any)["for-you"].firstMatch
         XCTAssertTrue(forYou.waitForExistence(timeout: 5), "with history, For you should rank picks")
         snap("100 For you, ranked from history")
@@ -1157,7 +1164,7 @@ final class WalkthroughUITests: XCTestCase {
     }
 
     private func open(_ title: String) {
-        XCTAssertTrue(app.navigationBars["TigerWorkouts"].waitForExistence(timeout: 10))
+        XCTAssertTrue(app.navigationBars["Workouts"].waitForExistence(timeout: 10))
         let search = app.searchFields.firstMatch
         if !search.exists { app.swipeDown() }
         tap(search)
@@ -1177,19 +1184,19 @@ final class WalkthroughUITests: XCTestCase {
         XCTAssertTrue(app.buttons["Start workout"].waitForExistence(timeout: 5))
     }
 
-    /// Back to the top of the Workouts tab with the search cleared, where the Up next card lives.
+    /// Back to the top of the Workouts tab with the search cleared, where Mine lives.
     private func home() {
         tap(app.tabBars.buttons["Workouts"])
-        for _ in 0..<3 where !app.navigationBars["TigerWorkouts"].exists {
+        for _ in 0..<3 where !app.navigationBars["Workouts"].exists {
             app.navigationBars.buttons.element(boundBy: 0).tap()
         }
-        // The search that found the workout is still filled in; the card only shows without one.
-        let clear = app.navigationBars["TigerWorkouts"].buttons["Clear text"]
+        // The search that found the workout is still filled in; Mine only shows without one.
+        let clear = app.navigationBars["Workouts"].buttons["Clear text"]
         if clear.exists { clear.tap() }
-        for label in ["Close", "Cancel"] where app.navigationBars["TigerWorkouts"].buttons[label].exists {
-            app.navigationBars["TigerWorkouts"].buttons[label].tap()
+        for label in ["Close", "Cancel"] where app.navigationBars["Workouts"].buttons[label].exists {
+            app.navigationBars["Workouts"].buttons[label].tap()
         }
-        XCTAssertTrue(app.navigationBars["TigerWorkouts"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.navigationBars["Workouts"].waitForExistence(timeout: 5))
     }
 
     private func tap(_ element: XCUIElement, file: StaticString = #filePath, line: UInt = #line) {
@@ -1262,17 +1269,15 @@ final class WalkthroughUITests: XCTestCase {
         let discard = app.alerts.buttons["Discard"]
         if discard.waitForExistence(timeout: 3) { discard.tap() }
 
-        XCTAssertTrue(app.descendants(matching: .any)["today-target"].waitForExistence(timeout: 10), "Up next should carry a Today target")
-        XCTAssertTrue(app.descendants(matching: .any)["stall-line"].exists, "a stalled exercise should get one line on Up next")
-        snap("60 Up next with Today and a stall")
-
-        // The stall line opens the exercise's logbook, where the two options are.
-        tap(app.descendants(matching: .any)["stall-line"])
+        // The stall is on the exercise's logbook, where the two options are.
+        tap(app.tabBars.buttons["History"])
+        tap(app.navigationBars["History"].buttons["Exercises"])
+        tap(app.buttons.matching(NSPredicate(format: "label BEGINSWITH[c] 'Kettlebell swings'")).firstMatch)
         XCTAssertTrue(app.descendants(matching: .any)["stall-card"].waitForExistence(timeout: 5), "the logbook should show the stall")
         snap("61 Exercise logbook with a stall")
-        tap(app.navigationBars.buttons.element(boundBy: 0))
+        tap(app.tabBars.buttons["Workouts"])
 
-        tap(app.buttons["up-next"])
+        open("Jack")
         XCTAssertTrue(app.descendants(matching: .any)["today-target"].waitForExistence(timeout: 5), "the workout page should carry the Today target")
         snap("62 Workout page with Today")
         tap(app.buttons["Start workout"])

@@ -1,11 +1,10 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { SignInCard } from '@/features/auth/components/sign-in-card';
 import { EX } from '@/features/runsheet/fixtures';
-import { assignmentsFixture, clientSessionsFixture, CLIENT_ID, COACH_ID, coachWorkouts, clientSummaries, myAssignmentsFixture, notesFixture, pendingInvites } from '../fixtures';
+import { assignmentsFixture, clientSessionsFixture, CLIENT_ID, COACH_ID, coachWorkouts, clientSummaries, notesFixture, pendingInvites } from '../fixtures';
 import { ClientDetailScreen } from './client-detail-screen';
 import { CoachDashboardScreen } from './coach-dashboard-screen';
 import { CoachesPage } from './coaches-page';
-import { FromCoach } from './from-coach';
 import { JoinScreen } from './join-screen';
 import { MyCoachCard } from './my-coach-card';
 
@@ -66,7 +65,6 @@ export const JoinSignedIn: Story = { render: () => <JoinScreen info={info} signe
 export const JoinBadLink: Story = { render: () => <JoinScreen info={null} signedIn onAccept={ok} onContinue={noop} /> };
 
 /** Top of Discover for a coached client; the done one sorts last. */
-export const FromYourCoach: Story = { render: () => <div className="p-3"><FromCoach assignments={myAssignmentsFixture()} isDone={a => a.id === 'a1'} onOpen={noop} /></div> };
 
 /** Me tab: notes with the coach, a reply box, Leave coach. */
 export const MeCoachCard: Story = {

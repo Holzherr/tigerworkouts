@@ -1,4 +1,4 @@
-import { Flame, History, ImageUp, Medal, User } from 'lucide-react';
+import { Flame, History, ImageUp, Medal, TrendingUp, User } from 'lucide-react';
 import { newRecords } from '@/features/timer/live-pr';
 import { setLabel } from '@/features/results/logbook';
 import { useEffect, useMemo, useState } from 'react';
@@ -22,9 +22,7 @@ import { ExercisePicker } from '@/features/exercises/components/exercise-picker'
 import type { LibraryExercise } from '@/features/exercises/library';
 import { SettingsSheet } from '@/features/profile/components/settings-sheet';
 import { MeScreen } from '@/features/profile/components/me-screen';
-import { NextUpCard } from '@/features/discover/components/next-up-card';
-import { nextUp } from '@/features/discover/next-up';
-import { streak, workedFrom } from '@/features/results/effort';
+import { streak, weekLine, workedFrom } from '@/features/results/effort';
 import { muscleLoad } from '@/features/results/muscles';
 import { ImportScreen } from '@/features/share/components/import-screen';
 import { SharedWorkoutRoute } from '@/features/share/components/shared-workout-route';
@@ -68,7 +66,6 @@ import { dismissStall, getDismissed, getIntent, setIntent as storeIntent } from 
 import { alternatives } from '@/features/exercises/alternatives';
 import { myAssignments, type MyAssignment } from '@/features/cloud/coaching';
 import { doneBy } from '@/features/coaching/rollup';
-import { FromCoach } from '@/features/coaching/components/from-coach';
 import { CoachesPage } from '@/features/coaching/components/coaches-page';
 import { ClientRoute, CoachRoute, JoinRoute, MyCoaches } from '@/features/coaching/components/coaching-routes';
 
@@ -499,6 +496,17 @@ export default function App() {
           </div>
         </header>
         <div className="min-h-0 flex-1 space-y-2 overflow-y-auto px-3 py-3">
+          {st.results.length > 0 && (() => {
+            // The week so far, moved here from home (17 Oct 2026).
+            const s = streak(st.results);
+            return (
+              <div aria-label="Week so far" className="flex items-center gap-2 rounded-card border border-line bg-surface px-3 py-2.5 text-[13px]">
+                <TrendingUp className="size-4 shrink-0 text-brand" />
+                <span className="font-bold">{weekLine(s)}</span>
+                <span className="text-muted">· {s.total} all time</span>
+              </div>
+            );
+          })()}
           <div className="px-1 text-[11px] font-bold tracking-widest text-muted uppercase">{sub === 'week' ? 'Last 7 days' : 'Sessions'}</div>
           {st.results.length === 0 && <div className="py-10 text-center text-[13px] text-muted">No sessions yet. Finish a workout and it lands here.</div>}
           {!cloud.user && st.results.length > 0 && (
@@ -603,7 +611,7 @@ export default function App() {
       </div>
     );
   }
-  const initialTab: DiscoverTab = sub === 'search' ? 'search' : sub === 'foryou' ? 'recommended' : 'saved';
+  const initialTab: DiscoverTab = sub === 'search' || sub === 'foryou' ? 'discover' : 'mine';
   const kept = Runner.loadPersisted();
   const saved = kept?.state;
   // A run that cannot be resumed (its workout gone, or left more than six hours) can still be saved.
@@ -637,39 +645,24 @@ export default function App() {
       )}
     </>
   );
-  const next = nextUp(all, st.results);
-  const nextSheet = next && resolveRefs(next.runsheet, lookup);
-  const nextToday = nextSheet && todayFor(nextSheet, st.results, intent, st.equipment);
-  // One stall line at most: the workout's own score, else the first of its exercises that is stuck.
-  const nextStall = nextSheet && (() => {
-    const w = live(workoutStall(nextSheet, st.results, new Date()));
-    if (w) return { stall: w, onOpen: () => open(nextSheet, 'home') };
-    const keys = [...new Set(nextSheet.items.flatMap(i => (i.kind === 'block' ? i.steps : i.kind === 'ref' ? [] : [i])).flatMap(x => (x.kind === 'exercise' ? [x.exercise.key] : [])))];
-    for (const k of keys) {
-      const x = stallOf(k);
-      if (x) return { name: library[k]?.name ?? k, stall: x, onOpen: () => go(exerciseLink(k)) };
-    }
-    return undefined;
-  })();
-  const fromCoach = assigned.length > 0 && <FromCoach assignments={assigned} isDone={a => !!doneBy(a, st.results)} onOpen={r => open(r, 'coach')} />;
-  const nextCard = next && (
-    <NextUpCard
-      runsheet={next.runsheet}
-      reason={next.reason}
-      streak={streak(st.results)}
-      today={nextToday}
-      stall={nextStall}
-      onOpen={() => open(next.runsheet, 'home')}
-      onStart={() => (unlockAudio(), setDrafted(null), setFrom('home'), go(`/do/${encodeURIComponent(wid(next.runsheet))}`))}
+  const fromCoach = assigned.flatMap(a => (a.workout ? [{ id: a.id, runsheet: a.workout, coachName: a.coachName, done: !!doneBy(a, st.results) }] : []));
+  return shell(
+    'discover',
+    <DiscoverScreen
+      key={initialTab}
+      initialTab={initialTab}
+      workouts={all}
+      results={st.results}
+      savedIds={st.saved}
+      ownIds={withStarter(st.workouts, st.results).map(wid)}
+      fromCoach={fromCoach}
+      above={above}
+      onCreate={() => (setDrafted(null), go('/new'))}
+      onOpen={open}
+      onStart={(r, origin) => (unlockAudio(), setDrafted(null), setFrom(origin), go(`/do/${encodeURIComponent(wid(r))}`))}
+      onOpenProgram={(_, days) => open(days[0], 'search')}
     />
   );
-  const top = (fromCoach || nextCard) && (
-    <>
-      {fromCoach}
-      {nextCard}
-    </>
-  );
-  return shell('discover', <DiscoverScreen key={initialTab} initialTab={initialTab} workouts={all} results={st.results} savedIds={st.saved} above={above} top={top} onCreate={() => (setDrafted(null), go('/new'))} onOpen={open} onOpenProgram={(_, days) => open(days[0], 'search')} />);
 }
 
 /**

@@ -217,16 +217,3 @@ struct MadeItCard: View {
         .accessibilityIdentifier(title == "Made it" ? "made-it-yes" : "made-it-no")
     }
 }
-
-extension Stall {
-    /// The one stall worth a line on the Up next card for this workout: the workout's own, else the
-    /// first of its exercises, skipping dismissed ones.
-    static func forCard(_ r: Runsheet, results: [SessionResult], dismissed: Set<String> = StallDismissals.all()) -> Found? {
-        if let w = workout(r, results: results), !dismissed.contains(w.id) { return w }
-        var seen = Set<String>()
-        for s in r.exerciseSteps where seen.insert(s.exercise.key).inserted {
-            if let x = exercise(results, key: s.exercise.key), !dismissed.contains(x.id) { return x }
-        }
-        return nil
-    }
-}
