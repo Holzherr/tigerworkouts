@@ -56,13 +56,15 @@ on the simulator (LEARNINGS 2026-09-30). Nick said yes to a separate reorder vie
 - iOS: a plain List in edit mode with `.onMove` (`BlockReorderView`, `Edit.moveCard`), a haptic on
   each drop (the lift is the system's own). Web: `BlockReorder` with pointer drag and the coral
   insertion line (`block-reorder.tsx`, `moveItemClamped`).
-- Press-and-drag on a header in the editor still moves the block as before.
+- Holding a header in the editor (or on the Session sheet) opens the same reorder view (TW-042).
+  A header is never dragged on its own: it lifted alone and left its steps behind until the drop.
+  A step dropped on a header's slot snaps back, as on an add row's. The tip reads "Hold a block's
+  header to reorder blocks".
 - Mid-session (TW-034): done and running blocks show fixed at the top of the reorder view, with a
-  lock and no drag control. A block dropped above them — in the reorder view or by its header on
-  the Session sheet — lands right after the running block, and a line says "Moved to next — done
-  and current blocks stay put". Before, the drop snapped back silently: SwiftUI refuses every drop
-  onto the slot of a row marked `moveDisabled`, so the editor's done and running rows are no longer
-  marked; `Edit.moveRowClamped` keeps them in place and dragging one of them says "Done and current
+  lock and no drag control. A block dropped above them in the reorder view lands right after the
+  running block, and a line says "Moved to next — done and current blocks stay put". Before, the
+  drop snapped back silently: SwiftUI refuses every drop onto the slot of a row marked
+  `moveDisabled`, so the editor's done and running step rows are no longer marked; `Edit.moveRowClamped` keeps them in place and dragging one of them says "Done and current
   blocks stay put".
 - The web has no mid-session editing yet; `BlockReorder` takes `locked` for when it does.
 - Done when: on the phone, start a workout, finish block 1, tap a block's grip, drag block 3 to
