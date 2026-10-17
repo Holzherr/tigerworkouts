@@ -483,6 +483,8 @@ struct Runsheet: Codable, Hashable, Sendable, Identifiable {
     /// The card icon the web app picked or uploaded (`WorkoutIcon` in icon.ts). Not drawn here yet,
     /// but kept as it came, so a workout edited on the phone does not lose it.
     var icon: JSONValue?
+    /// When it was made, ISO 8601, as the web app writes it: a new workout sits on top of Mine until done.
+    var createdAt: String?
 
     /// Stable identity for lists: the id if it has one, else the title.
     var key: String { id ?? title }
@@ -495,7 +497,7 @@ struct Runsheet: Codable, Hashable, Sendable, Identifiable {
     func owns(_ r: SessionResult) -> Bool { lineage.contains(r.runsheetId) }
 
     private enum CodingKeys: String, CodingKey {
-        case id, title, creator, description, source, tags, level, program, timeCapSec, score, progression, video, items, copyOf, icon
+        case id, title, creator, description, source, tags, level, program, timeCapSec, score, progression, video, items, copyOf, icon, createdAt
         case isPublic = "public"
     }
 
@@ -526,6 +528,7 @@ struct Runsheet: Codable, Hashable, Sendable, Identifiable {
         isPublic = try c.decodeIfPresent(Bool.self, forKey: .isPublic)
         copyOf = try c.decodeIfPresent(String.self, forKey: .copyOf)
         icon = try? c.decodeIfPresent(JSONValue.self, forKey: .icon)
+        createdAt = try c.decodeIfPresent(String.self, forKey: .createdAt)
     }
 }
 

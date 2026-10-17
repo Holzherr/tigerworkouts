@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { effort, loadTrend, streak, workedFrom } from './effort';
+import { effort, loadTrend, streak, weekLine, workedFrom } from './effort';
 import { muscleLoad, musclesFor } from './muscles';
 import type { SessionResult } from '@/features/runsheet/progression';
 
@@ -100,5 +100,13 @@ describe('a loose top-level exercise', () => {
     const w = workedFrom({ ...res('2026-09-17T17:00:00Z'), durationSec: 600, steps: [{ stepId: 'w1', exerciseKey: 'incline_walk', target: 6 }] }, sheet, k => ({ name: k, group: 'walk' as const }));
     expect(w).toHaveLength(1);
     expect(w[0].seconds).toBe(600);
+  });
+});
+
+describe('weekLine', () => {
+  it('reads the week so far, or last week when this one is empty', () => {
+    expect(weekLine({ weeks: 7, thisWeek: 20, lastWeek: 3, total: 31 })).toBe('20 this week · 7 weeks running');
+    expect(weekLine({ weeks: 1, thisWeek: 2, lastWeek: 0, total: 2 })).toBe('2 this week');
+    expect(weekLine({ weeks: 0, thisWeek: 0, lastWeek: 3, total: 9 })).toBe('None yet this week · 3 last week');
   });
 });

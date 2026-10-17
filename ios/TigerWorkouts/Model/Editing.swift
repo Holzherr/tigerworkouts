@@ -13,6 +13,7 @@ enum Edit {
         var sheet = Runsheet(id: id("w"), title: "", creator: creator)
         sheet.source = Source(title: "", author: creator, kind: "user")
         sheet.items = [.block(newBlock(number: 1))]
+        sheet.createdAt = ISO8601DateFormatter().string(from: Date())
         return sheet
     }
 

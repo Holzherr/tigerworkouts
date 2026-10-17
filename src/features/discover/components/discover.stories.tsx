@@ -7,7 +7,7 @@ import { IMPORTED } from '@/features/workouts/imported';
 import { DiscoverScreen } from './discover-screen';
 import { WorkoutCard } from './workout-card';
 import { WorkoutPreviewScreen } from './workout-preview-screen';
-import { NextUpCard } from './next-up-card';
+import { myAssignmentsFixture } from '@/features/coaching/fixtures';
 
 const ALL: Runsheet[] = [priyanka(), ...IMPORTED.map(w => w.runsheet)];
 const HISTORY: SessionResult[] = [
@@ -27,8 +27,8 @@ const FEW: Runsheet[] = [
 const meta = {
   title: 'Discover/DiscoverScreen',
   component: DiscoverScreen,
-  parameters: { layout: 'fullscreen', docs: { description: { component: 'Home feed at phone size: title, a three-way segmented control (Saved / For you / Search). Saved lists bookmarked and own workouts. For you lists ranked recommendations with an orange reason line above each card. Search puts the field first; empty query shows filter chips and the catalogue with programs as orange rows, a query shows matches only.' } } },
-  args: { workouts: ALL, onOpen: () => {}, onCreate: () => {} },
+  parameters: { layout: 'fullscreen', docs: { description: { component: 'Home at phone size, plain (17 Oct 2026): large Workouts title with a round +, the search field, then Mine | Discover pills. Mine lists what a coach sent, then own and saved workouts, each a card with a coral play. Discover shows kind chips, the For you picks under their reasons, then the catalogue with programs as one row each. A query lists matches only.' } } },
+  args: { workouts: ALL, ownIds: [priyanka().id!], onOpen: () => {}, onStart: () => {}, onCreate: () => {} },
   decorators: [S => <div className="mx-auto h-[820px] w-[393px] overflow-hidden border-x border-line"><S /></div>],
 } satisfies Meta<typeof DiscoverScreen>;
 
@@ -38,16 +38,18 @@ type Story = StoryObj<typeof meta>;
 const Flow = () => {
   const [sel, setSel] = useState<Runsheet | null>(null);
   if (sel) return <WorkoutPreviewScreen runsheet={sel} onBack={() => setSel(null)} onStart={() => alert('start')} onEditAndStart={() => alert('edit')} onFollowAlong={() => alert('follow')} onLogOnly={() => alert('log')} onSave={() => alert('save')} history={HISTORY.filter(h => h.runsheetId === sel.id)} />;
-  return <DiscoverScreen workouts={ALL} results={HISTORY} savedIds={SAVED} onOpen={setSel} onOpenProgram={(_n, d) => setSel(d[0])} onCreate={() => alert('create')} />;
+  return <DiscoverScreen workouts={ALL} results={HISTORY} savedIds={SAVED} ownIds={[priyanka().id!]} onOpen={setSel} onStart={r => alert(`start ${r.title}`)} onOpenProgram={(_n, d) => setSel(d[0])} onCreate={() => alert('create')} />;
 };
 
-export const ForYou: Story = { render: () => <Flow /> };
-export const ForYouColdStart: Story = { args: { results: [], savedIds: [] } };
-export const ForYouEmpty: Story = { args: { initialTab: 'recommended', workouts: FEW, results: [{ runsheetId: priyanka().id!, startedAt: '2026-09-25T18:00:00Z', steps: [] }], savedIds: [] } };
-export const Saved: Story = { args: { initialTab: 'saved', savedIds: SAVED } };
-export const SavedEmpty: Story = { args: { initialTab: 'saved', savedIds: [], workouts: IMPORTED.map(w => w.runsheet) } };
-export const SearchBrowse: Story = { args: { initialTab: 'search' } };
-export const SearchPrograms: Story = { args: { initialTab: 'search', initialFilter: 'program' } };
+const FROM_COACH = myAssignmentsFixture().flatMap(a => (a.workout ? [{ id: a.id, runsheet: a.workout, coachName: a.coachName, done: a.id === 'a1' }] : []));
+
+export const Mine: Story = { render: () => <Flow /> };
+export const MineFromCoach: Story = { args: { results: HISTORY, savedIds: SAVED, fromCoach: FROM_COACH } };
+export const MineEmpty: Story = { args: { savedIds: [], ownIds: [], workouts: IMPORTED.map(w => w.runsheet) } };
+export const Discover: Story = { args: { initialTab: 'discover', results: HISTORY, savedIds: SAVED } };
+export const DiscoverColdStart: Story = { args: { initialTab: 'discover', results: [], savedIds: [] } };
+export const DiscoverNothingToSuggest: Story = { args: { initialTab: 'discover', workouts: FEW, results: [{ runsheetId: priyanka().id!, startedAt: '2026-09-25T18:00:00Z', steps: [] }], savedIds: [] } };
+export const DiscoverPrograms: Story = { args: { initialTab: 'discover', initialFilter: 'program' } };
 export const Cards: Story = {
   render: () => (
     <div className="space-y-2 p-3">
@@ -59,24 +61,3 @@ export const Cards: Story = {
   ),
 };
 export const Preview: Story = { render: () => <WorkoutPreviewScreen runsheet={ALL.find(r => r.title === 'Fran') ?? ALL[1]} onStart={() => {}} onEditAndStart={() => {}} onSave={() => {}} history={[{ runsheetId: 'cf-girls-fran', startedAt: '2026-08-20T18:00:00Z', score: 402, scoreText: '6:42', steps: [] }, { runsheetId: 'cf-girls-fran', startedAt: '2026-07-02T18:00:00Z', score: 455, scoreText: '7:35', steps: [] }]} /> };
-const upNext = ALL.find(r => r.program?.order === 2) ?? ALL[1];
-const top = <NextUpCard runsheet={upNext} reason={`Next in ${upNext.program?.name ?? 'your program'}`} streak={{ weeks: 3, thisWeek: 2, lastWeek: 3, total: 14 }} onStart={() => alert('start')} onOpen={() => alert('open')} />;
-/** With history: the Up next card over Saved. */
-export const WithHistory: Story = { args: { initialTab: 'saved', results: HISTORY, savedIds: SAVED, top } };
-export const UpNextCard: Story = { render: () => <div className="p-3">{top}</div> };
-/** With history to read: the Today target under the title and one quiet stall line. */
-export const UpNextWithTarget: Story = {
-  render: () => (
-    <div className="p-3">
-      <NextUpCard
-        runsheet={upNext}
-        reason="Your last workout"
-        streak={{ weeks: 3, thisWeek: 2, lastWeek: 3, total: 14 }}
-        today={{ text: 'Aim for 8+ rounds', detail: 'Last 3 times: 7, 7, 8 rounds' }}
-        stall={{ name: 'Goblet squat', stall: { id: 'x', best: '24 kg × 8', sessions: 4, weeks: 5, line: 'At 24 kg × 8 for 5 weeks', options: [{ title: 'a', detail: '' }, { title: 'b', detail: '' }] }, onOpen: () => alert('open') }}
-        onStart={() => alert('start')}
-        onOpen={() => alert('open')}
-      />
-    </div>
-  ),
-};

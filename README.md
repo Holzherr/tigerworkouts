@@ -75,7 +75,7 @@ A workout is a list of items. An item is a step (exercise or rest) or a block (n
 list of steps). Blocks are made by dropping one step onto another or with Add block, and dissolve
 when a step taken out of them leaves one. The workout page (`#/w/<id>`) is the one editor, as on
 the phone: a block's header opens its sheet; the first edit of a workout not yours saves one copy
-of it, "(mine)" (`copyOnEdit`), which Search never lists and Saved shows in place of the original. A `#/w/u-…` link to a
+of it, "(mine)" (`copyOnEdit`), which Search never lists and Mine shows in place of the original. A `#/w/u-…` link to a
 workout not loaded yet fetches the row (`SharedWorkoutRoute`): the page, or "private" / sign in. The
 MCP tools give `shareUrl` for other people: `#/w/` only for public or catalogue workouts, else
 `#/import/`. `src/features/runsheet/model.ts` holds every edit as a pure function; `fromLegacy()` converts
@@ -108,10 +108,11 @@ incline, each with last time's setting; the Session sheet's set grid of a treadm
 Incline − / + above its sets),
 Supabase sign-in (email code and Google) and three-way sync (sessions, own workouts, favourites,
 prefs, custom exercises; v0.9 rows preserved), editor with drag-to-group and text commands, 472
-imported workouts, scores and progression, follow-along videos, Discover with recommendations
-(For you lists at most six: workouts by a creator done at least twice, ones sharing two exercises
+imported workouts, scores and progression, follow-along videos, a plain home list (Workouts: Mine |
+Discover; Mine is what a coach sent, then own and saved workouts, each with a play button;
+Discover shows For you above the catalogue) with recommendations (For you lists at most six: workouts by a creator done at least twice, ones sharing two exercises
 with your history, saved-not-done, and the next day of a program in progress; a creator done twice
-outranks any exercise overlap; For you sends the user to Search when history yields no picks),
+outranks any exercise overlap),
 settings, share links, quick log, post-workout stats with a body map, a finish screen that leads with the workout count, streak, records set and deltas vs last time plus a share card (PNG), a 1–10 session effort on every result (written to Apple Health as the workout effort score on iOS 18+), offline via a service worker.
 In the editor, on web and iOS, sets alike in a row fold into one row (`8×`; its stepper changes every set, Vary sets
 gives each its own; `setRuns` in model.ts, `Edit.setRuns` on iOS), and block headers carry a grip and a one-time
@@ -120,10 +121,10 @@ The web timer announces each step to a screen reader through one hidden polite l
 30 seconds", "Barbell bench press, set 2 of 3", "Paused", "Workout finished"): it speaks on a slot
 or phase change, never on a tick. The landing page's looping hero demo renders the same screen with
 `announce={false}`, so it stays silent.
-Each session records where it was started (`startedFrom`: a Discover tab, the Up next card on home, the Me tab, Repeat, a
+Each session records where it was started (`startedFrom`: the home list it was in, the Me tab, Repeat, a
 share link) so the share started from a home recommendation can be measured. The iOS app writes the
-same field from its Workouts tab (Pick up again → history, Mine → mine, a catalogue section or a
-search result → search, Saved → saved) and from a `tigerworkouts://w/` link (link). The origin
+same field from its Workouts tab (Mine: own → mine, saved → saved, a coach's → coach; For you →
+recommended; the catalogue or a search result → search) and from a `tigerworkouts://w/` link (link). The origin
 rides in the crash-safe copy on both, so a resumed or recovered session keeps it.
 Sign out pushes first, then empties the device for the next account (sessions, workouts, favourites,
 saved, exercises, training maxes and the `tiger:synced` snapshot); while the push fails or a session

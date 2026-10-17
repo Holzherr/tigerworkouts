@@ -52,6 +52,19 @@ struct HistoryView: View {
                     .background(Brand.canvas)
                 } else {
                     List {
+                        // The week so far, moved here from home (17 Oct 2026).
+                        Section {
+                            let streak = EffortModel.streak(store.results)
+                            HStack(spacing: 8) {
+                                Image(systemName: "chart.line.uptrend.xyaxis").foregroundStyle(Brand.coral)
+                                // One Text, so a long week line wraps as a sentence instead of splitting into two columns.
+                                Text("\(Text(NextUp.weekLine(streak)).fontWeight(.semibold).foregroundStyle(Brand.ink)) \(Text("· \(streak.total) all time").foregroundStyle(Brand.muted))")
+                                    .font(.subheadline)
+                                Spacer(minLength: 0)
+                            }
+                            .accessibilityElement(children: .combine)
+                            .accessibilityIdentifier("week-line")
+                        }
                         if !store.signedIn {
                             Section {
                                 Button { signingIn = true } label: {

@@ -80,6 +80,14 @@ export interface Streak {
 }
 
 /** Sessions per week and how many weeks in a row you have trained, counting back from today. */
+/** "3 this week · 2 weeks running", or how last week went when this one has nothing yet. iOS: `NextUp.weekLine`. */
+export const weekLine = (s: Streak) =>
+  s.thisWeek
+    ? `${s.thisWeek} this week${s.weeks > 1 ? ` · ${s.weeks} weeks running` : ''}`
+    : s.lastWeek
+      ? `None yet this week · ${s.lastWeek} last week`
+      : 'None yet this week';
+
 export const streak = (results: SessionResult[], today = new Date()): Streak => {
   const week = startOfWeek(today).getTime();
   const wk = (iso: string) => startOfWeek(new Date(iso)).getTime();

@@ -26,8 +26,8 @@ What you get that the PWA cannot do:
   buttons that work without unlocking: Done on a set, Start at a block, +15 s and Skip rest on a
   rest, and it shows the set's load × reps. They are App Intents (`Shared/SessionIntents.swift`)
   that run in the app's process and reach the running session through `SessionControls.active`.
-- **Up next on the home screen.** A small and a medium widget with the same pick as the Up next
-  card and this week's count; a tap opens that workout's page. The app writes what it shows into
+- **Up next on the home screen.** A small and a medium widget with what to do next (the next
+  program day, or the last workout) and this week's count; a tap opens that workout's page. The app writes what it shows into
   the App Group `group.dev.brambruesch.tigerworkouts` (`Shared/UpNextShare.swift`), which has to be
   enabled for both bundle ids in the developer portal before it works on a device.
 - **Apple Health, both ways.** A finished session becomes an `HKWorkout` typed by what the session

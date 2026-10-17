@@ -1,13 +1,14 @@
 import SwiftUI
 
-/// Home. The same three feeds as the web app — Saved, For you, Browse — with the catalogue grouped
-/// the way people ask for it: benchmarks, programs, protocols, NHS routines, follow-alongs.
+/// Home, as Nick picked it after Priyanka found it too busy (17 Oct 2026): a plain list. Two pill
+/// tabs under the search field. Mine: what your coach sent, then your own and saved workouts, each
+/// row one tap to its page and a coral play to start it. Discover: the For you picks and the whole
+/// catalogue, filtered by kind. Searching lists matches from everything.
 struct DiscoverView: View {
     @Environment(Store.self) private var store
     var onStart: (Runsheet, SessionOrigin?) -> Void
 
-    /// Saved first, as on the web (Nick, 10 Sep 2026: "Saved first on the home screen").
-    @State private var tab: Tab = .saved
+    @State private var tab: Tab = .mine
     @State private var query = ""
     @State private var filter: Kind?
     @State private var writing: Runsheet?
@@ -16,9 +17,6 @@ struct DiscoverView: View {
     /// A link that arrived before the catalogue was in — a cold launch from the Up next widget —
     /// opened once it is.
     @State private var pendingLink: String?
-    @AppStorage(Intent.storageKey) private var intent = Intent.maintain.rawValue
-    /// Read again whenever home shows, so a stall dismissed on its page drops off the card.
-    @State private var dismissedStalls = StallDismissals.all()
 
     /// A workout on the stack, with the list it was tapped in: the session it starts records that.
     struct Opened: Hashable {
@@ -27,7 +25,7 @@ struct DiscoverView: View {
     }
 
     enum Tab: String, CaseIterable, Identifiable {
-        case saved = "Saved", forYou = "For you", browse = "Browse"
+        case mine = "Mine", discover = "Discover"
         var id: String { rawValue }
     }
 
@@ -43,16 +41,6 @@ struct DiscoverView: View {
             case .protocolKind: "Protocols"
             case .article: "NHS"
             case .video: "Follow-alongs"
-            }
-        }
-        var blurb: String {
-            switch self {
-            case .coach: "Our own, at 15, 30 and 45 minutes"
-            case .benchmark: "CrossFit Girls, Heroes and the Open"
-            case .program: "StrongLifts, 5/3/1 and friends, day by day"
-            case .protocolKind: "Tabata, EMOMs and the 7-minute workout"
-            case .article: "Short routines from the NHS"
-            case .video: "Timed to the video; the video plays on the web"
             }
         }
     }
@@ -73,50 +61,27 @@ struct DiscoverView: View {
         }
     }
 
-    /// What you have done, most recent first — the thing you actually do, one tap from launch.
-    private var recent: [(sheet: Runsheet, done: Int, last: Date)] {
-        let byId = Dictionary(grouping: store.results, by: \.runsheetId)
-        return byId.compactMap { id, sessions -> (Runsheet, Int, Date)? in
-            guard let sheet = store.workout(id: id) else { return nil }
-            return (sheet, sessions.count, sessions.map(\.startedDate).max() ?? .distantPast)
-        }
-        .sorted { $0.2 > $1.2 }
-        .map { (sheet: $0.0, done: $0.1, last: $0.2) }
-    }
-
     var body: some View {
         NavigationStack(path: $path) {
             ScrollView {
-                VStack(alignment: .leading, spacing: 22) {
-                    if !searching, let next = NextUp.find(in: store.allWorkouts, results: store.results) {
-                        nextUpCard(next)
-                    }
-                    if !searching {
-                        Picker("Feed", selection: $tab) {
-                            ForEach(Tab.allCases) { Text($0.rawValue).tag($0) }
-                        }
-                        .pickerStyle(.segmented)
-                        .padding(.horizontal, 16)
-                    }
-
-                    if searching || tab == .browse {
+                LazyVStack(alignment: .leading, spacing: 10) {
+                    if searching {
                         browse
-                    } else if tab == .forYou {
-                        forYou
                     } else {
-                        saved
+                        tabs
+                        if tab == .mine { mine } else { discover }
                     }
                 }
                 .padding(.vertical, 8)
-                // Room under the last carousel so it clears the floating tab bar.
+                // Room under the last row so it clears the floating tab bar.
                 .padding(.bottom, 40)
             }
             .background(Brand.canvas)
             .refreshable { await store.sync() }
-            .onAppear { dismissedStalls = StallDismissals.all() }
             .scrollDismissesKeyboard(.immediately)
-            .searchable(text: $query, prompt: "Workout, exercise or tag")
-            .navigationTitle("TigerWorkouts")
+            .searchable(text: $query, placement: .navigationBarDrawer(displayMode: .always), prompt: "Search")
+            .navigationTitle("Workouts")
+            .navigationBarTitleDisplayMode(.large)
             .navigationDestination(for: Opened.self) { opened in
                 if let sheet = store.workout(id: opened.key) {
                     WorkoutDetailView(runsheet: sheet, startedFrom: opened.from, onStart: onStart)
@@ -127,14 +92,15 @@ struct DiscoverView: View {
                     Button {
                         writing = Edit.newRunsheet(creator: store.user?.email)
                     } label: {
-                        // Spelled out: a bare ＋ in the corner did not read as "write a workout".
-                        HStack(spacing: 4) {
-                            Image(systemName: "plus")
-                            Text("New workout")
-                        }
-                        .font(.subheadline.weight(.semibold))
-                        .fixedSize()
+                        Image(systemName: "plus")
+                            .font(.system(size: 17, weight: .bold))
+                            .foregroundStyle(Brand.coralInk)
+                            .frame(width: 36, height: 36)
+                            .background(Brand.coralSoft, in: Circle())
+                            .frame(width: 44, height: 44)
+                            .contentShape(Circle())
                     }
+                    .buttonStyle(.plain)
                     .accessibilityLabel("New workout")
                 }
             }
@@ -162,422 +128,183 @@ struct DiscoverView: View {
         path = [Opened(key: id, from: .link)]
     }
 
-    // MARK: - Up next
+    // MARK: - Tabs
 
-    /// Only once there is history: the next day of the program you are on, or your last workout,
-    /// one tap from launch, and the week so far. The first run stays the catalogue.
-    private func nextUpCard(_ next: NextUp) -> some View {
-        let streak = EffortModel.streak(store.results)
-        return VStack(alignment: .leading, spacing: 12) {
-            Text(next.reason)
-                .font(.footnote.weight(.bold))
-                .foregroundStyle(Brand.coralInk)
-            HStack(spacing: 12) {
-                Button {
-                    path = [Opened(key: next.runsheet.key, from: .home)]
-                } label: {
-                    HStack(spacing: 12) {
-                        WorkoutIcon(runsheet: next.runsheet, size: 52)
-                        VStack(alignment: .leading, spacing: 3) {
-                            Text(next.runsheet.title)
-                                .font(.headline)
-                                .foregroundStyle(Brand.ink)
-                                .lineLimit(2)
-                                .multilineTextAlignment(.leading)
-                            Text(["\(next.runsheet.minutes) min", next.runsheet.program?.day].compactMap { $0 }.filter { !$0.isEmpty }.joined(separator: " · "))
-                                .font(.footnote)
-                                .foregroundStyle(Brand.muted)
-                        }
-                        Spacer(minLength: 0)
-                    }
-                    .contentShape(Rectangle())
-                }
-                .buttonStyle(.plain)
-                .accessibilityIdentifier("up-next")
-
-                Button {
-                    // What the workout page would show: last time's numbers carried over.
-                    onStart(store.seeded(next.runsheet), .home)
-                } label: {
-                    Label("Start", systemImage: "play.fill")
-                        .font(.system(size: 17, weight: .semibold))
-                        .padding(.horizontal, 18)
-                        .frame(minHeight: Tap.regular)
-                        .foregroundStyle(.white)
-                        .background(Brand.coral, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
-                }
-                .buttonStyle(.plain)
-                .accessibilityLabel("Start \(next.runsheet.title)")
-            }
-            if let today = Targets.today(store.prepared(next.runsheet), results: store.results, intent: Intent(rawValue: intent) ?? .maintain, kit: store.equipment) {
-                TodayLine(today: today)
-            }
-            if let stall = Stall.forCard(next.runsheet, results: store.results, dismissed: dismissedStalls) {
-                stallLine(stall, in: next.runsheet)
-            }
-            Divider()
-            HStack(spacing: 8) {
-                Image(systemName: "chart.line.uptrend.xyaxis").foregroundStyle(Brand.coral)
-                // One Text, so a long week line wraps as a sentence instead of splitting into two columns.
-                Text("\(Text(NextUp.weekLine(streak)).fontWeight(.semibold).foregroundStyle(Brand.ink)) \(Text("· \(streak.total) all time").foregroundStyle(Brand.muted))")
-                    .font(.subheadline)
-                Spacer(minLength: 0)
+    private var tabs: some View {
+        HStack(spacing: 8) {
+            ForEach(Tab.allCases) { t in
+                pill(t.rawValue, on: tab == t) { tab = t }
+                    .accessibilityAddTraits(tab == t ? .isSelected : [])
             }
         }
-        .padding(16)
-        .background(Brand.surface, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
-        .overlay(RoundedRectangle(cornerRadius: 18, style: .continuous).strokeBorder(Brand.brandLine))
         .padding(.horizontal, 16)
+        .padding(.bottom, 4)
     }
 
-    /// One quiet line under Up next when something in it has stalled; the options are a tap away.
-    @ViewBuilder
-    private func stallLine(_ stall: Stall.Found, in runsheet: Runsheet) -> some View {
-        let name = stall.exerciseKey.flatMap { Library.shared.exercise($0)?.name } ?? runsheet.title
-        let label = HStack(spacing: 6) {
-            Image(systemName: "pause.circle").foregroundStyle(Brand.coralInk)
-            Text("\(name) · \(stall.line) · two options")
-                .font(.footnote)
-                .foregroundStyle(Brand.body)
-                .lineLimit(2)
-                .multilineTextAlignment(.leading)
-            Spacer(minLength: 0)
-            Image(systemName: "chevron.right").font(.caption2.weight(.bold)).foregroundStyle(Brand.faint)
-        }
-        .contentShape(Rectangle())
-        Group {
-            if let key = stall.exerciseKey {
-                NavigationLink { ExerciseHistoryView(exerciseKey: key) } label: { label }
-            } else {
-                Button { path = [Opened(key: runsheet.key, from: .home)] } label: { label }
-            }
-        }
-        .buttonStyle(.plain)
-        .accessibilityIdentifier("stall-line")
-    }
-
-    // MARK: - For you
-
-    /// Ranked picks from history, the web's For you rules (`Recommend`). A session started from one
-    /// records `recommended`, the origin G-06 counts.
-    @ViewBuilder
-    private var recommendations: some View {
-        let recs = Recommend.recommend(store.allWorkouts, results: store.results, saved: Array(store.saved))
-        if store.results.isEmpty {
-            Text("Log a workout and this list learns what you like. Until then, some good first ones.")
-                .font(.footnote)
-                .foregroundStyle(Brand.muted)
-                .padding(.horizontal, 16)
-        }
-        if recs.isEmpty {
-            if !store.results.isEmpty {
-                VStack(alignment: .leading, spacing: 8) {
-                    Text("Nothing to suggest yet").font(.headline).foregroundStyle(Brand.ink)
-                    Text("Log a couple more workouts and this list learns what you like.")
-                        .font(.footnote)
-                        .foregroundStyle(Brand.muted)
-                    Button("Browse workouts") { tab = .browse }
-                        .font(.subheadline.weight(.semibold))
-                }
-                .padding(.horizontal, 16)
-            }
-        } else {
-            VStack(alignment: .leading, spacing: 14) {
-                ForEach(Array(Recommend.grouped(recs).enumerated()), id: \.offset) { _, group in
-                    VStack(alignment: .leading, spacing: 8) {
-                        HStack(spacing: 6) {
-                            Image(systemName: "sparkles")
-                            Text(group.reason)
-                        }
-                        .font(.footnote.weight(.bold))
-                        .foregroundStyle(Brand.coralInk)
-                        .padding(.horizontal, 16)
-                        list(group.picks.map(\.runsheet), from: .recommended)
-                    }
-                }
-            }
-            .accessibilityElement(children: .contain)
-            .accessibilityIdentifier("for-you")
-        }
-    }
+    // MARK: - Mine
 
     @ViewBuilder
-    private var forYou: some View {
-        recommendations
-        if !recent.isEmpty {
-            section("Pick up again", subtitle: "What you do most") {
-                carousel(recent.prefix(10).map(\.sheet), large: true, from: .history)
-            }
-        }
-        ForEach(Kind.allCases) { kind in
-            let sheets = store.allWorkouts.filter { self.kind(of: $0) == kind }
-            if !sheets.isEmpty {
-                section(kind.label, subtitle: kind.blurb, seeAll: {
-                    filter = kind
-                    tab = .browse
-                }) {
-                    carousel(Array(sheets.prefix(12)), large: false, from: .search)
-                }
-            }
-        }
-    }
-
-    // MARK: - Saved
-
-    @ViewBuilder
-    private var saved: some View {
-        let sheets = store.allWorkouts.filter { store.saved.contains($0.key) }
+    private var mine: some View {
         // What your coach sent comes first: it is the reason you opened the app today.
-        let assigned = store.coachAssignments.filter { store.workout(id: $0.workoutId) != nil }
-        if !assigned.isEmpty {
-            section("From your coach", subtitle: store.coachName.map { "Sent by \($0)" } ?? "Sent by your coach") {
-                LazyVStack(spacing: 0) {
-                    ForEach(Array(assigned.enumerated()), id: \.element.id) { index, a in
-                        if index > 0 { Divider().padding(.leading, 80) }
-                        NavigationLink(value: Opened(key: a.workoutId, from: .coach)) {
-                            CoachAssignmentRow(
-                                runsheet: store.workout(id: a.workoutId)!,
-                                coach: Coaching.name(of: a.coach, in: store.coaching),
-                                note: a.note,
-                                done: Coaching.isDone(a, results: store.results)
-                            )
-                        }
-                        .buttonStyle(.plain)
-                    }
-                }
-                .background(Brand.surface, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
-                .overlay(RoundedRectangle(cornerRadius: 16, style: .continuous).strokeBorder(Brand.brandLine))
-                .padding(.horizontal, 16)
-                .accessibilityElement(children: .contain)
-                .accessibilityIdentifier("from-your-coach")
-            }
-        }
-        // Your own sit with what you saved, as on the web's Saved tab: home opens here.
-        if !store.myWorkouts.isEmpty {
-            section("Mine", subtitle: "Workouts you wrote") {
-                carousel(store.myWorkouts, large: false, from: .mine)
-            }
-        }
-        if sheets.isEmpty && store.myWorkouts.isEmpty && assigned.isEmpty {
+        let assigned = store.coachAssignments.compactMap { a in store.workout(id: a.workoutId).map { (a, $0) } }
+        let sheets = Home.mine(own: store.myWorkouts, all: store.allWorkouts, saved: store.saved, results: store.results, skip: Set(assigned.map(\.1.key)))
+        let last = Home.lastDone(store.results)
+        let own = Set(store.myWorkouts.map(\.key))
+        if assigned.isEmpty && sheets.isEmpty {
             ContentUnavailableView {
-                Label("Nothing saved yet", systemImage: "bookmark")
+                Label("No workouts yet", systemImage: "bookmark")
             } description: {
-                Text("Tap the bookmark on any workout, or write your own with New workout.")
+                Text("Write your own with +, or save one from Discover.")
             } actions: {
-                Button("Browse workouts") { tab = .browse }
+                Button("Discover workouts") { tab = .discover }
                     .buttonStyle(.borderedProminent)
             }
             .padding(.top, 40)
-        } else if !sheets.isEmpty {
-            list(sheets, from: .saved)
+        } else {
+            ForEach(assigned, id: \.0.id) { pair in
+                let (a, sheet) = pair
+                let coach = Coaching.name(of: a.coach, in: store.coaching)
+                let done = Coaching.isDone(a, results: store.results)
+                row(sheet, meta: "\(sheet.minutes) min · from \(coach)\(done ? " · done" : "")", tint: Brand.coralInk, from: .coach, play: true)
+            }
+            ForEach(sheets, id: \.key) { sheet in
+                let mine = own.contains(sheet.key)
+                row(sheet, meta: Home.line(minutes: sheet.minutes, lastDone: Home.lastDone(of: sheet, in: last), isNew: mine), from: mine ? .mine : .saved, play: true)
+            }
         }
+    }
+
+    // MARK: - Discover
+
+    /// The kind chips, then the For you picks under their reasons while no chip is on, then the
+    /// catalogue.
+    @ViewBuilder
+    private var discover: some View {
+        chips
+        if filter == nil {
+            let recs = Recommend.recommend(store.allWorkouts, results: store.results, saved: Array(store.saved))
+            if !recs.isEmpty {
+                VStack(alignment: .leading, spacing: 10) {
+                    ForEach(Array(Recommend.grouped(recs).enumerated()), id: \.offset) { _, group in
+                        header(group.reason, tint: Brand.coralInk)
+                        ForEach(group.picks, id: \.runsheet.key) { pick in
+                            row(pick.runsheet, meta: about(pick.runsheet), from: .recommended)
+                        }
+                    }
+                }
+                .accessibilityElement(children: .contain)
+                .accessibilityIdentifier("for-you")
+            }
+        }
+        catalogue
     }
 
     // MARK: - Browse
 
     @ViewBuilder
     private var browse: some View {
+        chips
+        catalogue
+    }
+
+    @ViewBuilder
+    private var catalogue: some View {
+        let found = results
+        header(found.isEmpty ? "Nothing matches — try a creator, a program or an exercise." : "\(found.count) workout\(found.count == 1 ? "" : "s")")
+        ForEach(found, id: \.key) { sheet in
+            row(sheet, meta: about(sheet), from: .search)
+        }
+    }
+
+    private var chips: some View {
         ScrollView(.horizontal) {
             HStack(spacing: 8) {
-                chip("All", on: filter == nil) { filter = nil }
+                pill("All", on: filter == nil) { filter = nil }
                 ForEach(Kind.allCases) { kind in
-                    chip(kind.label, on: filter == kind) { filter = filter == kind ? nil : kind }
+                    pill(kind.label, on: filter == kind) { filter = filter == kind ? nil : kind }
                 }
             }
             .padding(.horizontal, 16)
         }
         .scrollIndicators(.hidden)
-
-        let found = results
-        Text(found.isEmpty ? "Nothing matches — try a creator, a program or an exercise." : "\(found.count) workout\(found.count == 1 ? "" : "s")")
-            .font(.subheadline)
-            .foregroundStyle(Brand.muted)
-            .padding(.horizontal, 16)
-        list(found, from: .search)
     }
 
     // MARK: - Pieces
 
-    private func section<Content: View>(_ title: String, subtitle: String, seeAll: (() -> Void)? = nil, @ViewBuilder content: () -> Content) -> some View {
-        VStack(alignment: .leading, spacing: 10) {
-            HStack(alignment: .firstTextBaseline) {
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(title).font(.title3.weight(.bold)).foregroundStyle(Brand.ink)
-                    Text(subtitle).font(.footnote).foregroundStyle(Brand.muted)
-                }
-                Spacer()
-                if let seeAll {
-                    Button("See all", action: seeAll)
-                        .font(.subheadline.weight(.semibold))
-                }
-            }
-            .padding(.horizontal, 16)
-            content()
-        }
+    /// "20 min · CrossFit · Beginner".
+    private func about(_ r: Runsheet) -> String {
+        (["\(r.minutes) min"] + [r.creator, r.level].compactMap { $0 }.filter { !$0.isEmpty }).joined(separator: " · ")
     }
 
-    private func carousel(_ sheets: [Runsheet], large: Bool, from: SessionOrigin) -> some View {
-        ScrollView(.horizontal) {
-            LazyHStack(alignment: .top, spacing: 12) {
-                ForEach(sheets, id: \.key) { sheet in
-                    NavigationLink(value: Opened(key: sheet.key, from: from)) {
-                        WorkoutTile(runsheet: sheet, done: store.doneCount(sheet.key), large: large)
+    private func header(_ text: String, tint: Color = Brand.muted) -> some View {
+        Text(text)
+            .font(.footnote.weight(.bold))
+            .foregroundStyle(tint)
+            .padding(.horizontal, 20)
+            .padding(.top, 6)
+    }
+
+    /// One workout as a card: its name and one meta line open its page; with `play`, a coral play
+    /// button on the right starts it straight away, last time's numbers carried over.
+    private func row(_ sheet: Runsheet, meta: String, tint: Color = Brand.muted, from: SessionOrigin, play: Bool = false) -> some View {
+        HStack(spacing: 12) {
+            NavigationLink(value: Opened(key: sheet.key, from: from)) {
+                HStack(spacing: 8) {
+                    VStack(alignment: .leading, spacing: 3) {
+                        Text(sheet.title)
+                            .font(.body.weight(.semibold))
+                            .foregroundStyle(Brand.ink)
+                            .lineLimit(2)
+                            .multilineTextAlignment(.leading)
+                        Text(meta)
+                            .font(.footnote)
+                            .foregroundStyle(tint)
+                            .lineLimit(1)
                     }
-                    .buttonStyle(.plain)
+                    Spacer(minLength: 0)
+                    if !play {
+                        Image(systemName: "chevron.right").font(.footnote.weight(.semibold)).foregroundStyle(Brand.faint)
+                    }
                 }
+                .frame(minHeight: 44)
+                .contentShape(Rectangle())
+                .accessibilityElement(children: .combine)
             }
-            .padding(.horizontal, 16)
-        }
-        .scrollIndicators(.hidden)
-    }
-
-    private func list(_ sheets: [Runsheet], from: SessionOrigin) -> some View {
-        LazyVStack(spacing: 0) {
-            ForEach(Array(sheets.enumerated()), id: \.element.key) { index, sheet in
-                if index > 0 { Divider().padding(.leading, 80) }
-                NavigationLink(value: Opened(key: sheet.key, from: from)) {
-                    WorkoutRow(runsheet: sheet, done: store.doneCount(sheet.key))
+            .buttonStyle(.plain)
+            if play {
+                Button {
+                    onStart(store.seeded(sheet), from)
+                } label: {
+                    Image(systemName: "play.fill")
+                        .font(.system(size: 17, weight: .bold))
+                        .foregroundStyle(.white)
+                        .frame(width: 44, height: 44)
+                        .background(Brand.coral, in: Circle())
                 }
                 .buttonStyle(.plain)
+                .accessibilityLabel("Start \(sheet.title)")
             }
         }
+        .padding(.leading, 16)
+        .padding(.trailing, play ? 10 : 14)
+        .padding(.vertical, 10)
         .background(Brand.surface, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
         .overlay(RoundedRectangle(cornerRadius: 16, style: .continuous).strokeBorder(Brand.line))
         .padding(.horizontal, 16)
     }
 
-    private func chip(_ label: String, on: Bool, action: @escaping () -> Void) -> some View {
+    private func pill(_ label: String, on: Bool, action: @escaping () -> Void) -> some View {
         Button(action: action) {
             Text(label)
                 .font(.subheadline.weight(.semibold))
-                .padding(.horizontal, 14)
+                .padding(.horizontal, 16)
                 .frame(height: 36)
                 .background(on ? Brand.ink : Brand.surface, in: Capsule())
                 .overlay(Capsule().strokeBorder(on ? .clear : Brand.line))
-                .foregroundStyle(on ? .white : Brand.ink)
+                .foregroundStyle(on ? Brand.canvas : Brand.ink)
+                .frame(minHeight: 44)
+                .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
-    }
-}
-
-/// A workout in a carousel: its icon, its name, how long, how hard.
-struct WorkoutTile: View {
-    let runsheet: Runsheet
-    var done: Int
-    var large = false
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            WorkoutIcon(runsheet: runsheet, size: large ? 56 : 44)
-            Text(runsheet.title)
-                .font((large ? Font.headline : .subheadline).weight(.bold))
-                .foregroundStyle(Brand.ink)
-                .lineLimit(2)
-                .multilineTextAlignment(.leading)
-                .frame(maxWidth: .infinity, alignment: .leading)
-            Spacer(minLength: 0)
-            HStack(spacing: 6) {
-                Text("\(runsheet.minutes) min")
-                if let level = runsheet.level { Text("· \(level)") }
-            }
-            .font(.caption)
-            .foregroundStyle(Brand.muted)
-            if done > 0 {
-                Text("done \(done)×")
-                    .font(.caption2.weight(.bold))
-                    .padding(.horizontal, 7).padding(.vertical, 3)
-                    .background(Brand.coralSoft, in: Capsule())
-                    .foregroundStyle(Brand.coralInk)
-            }
-        }
-        .padding(14)
-        .frame(width: large ? 190 : 150, height: large ? 190 : 168, alignment: .topLeading)
-        .background(Brand.surface, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
-        .overlay(RoundedRectangle(cornerRadius: 18, style: .continuous).strokeBorder(Brand.line))
-        .contentShape(Rectangle())
-        .accessibilityElement(children: .combine)
-    }
-}
-
-/// A workout in a list: icon, name, and what you need to know before you tap.
-struct WorkoutRow: View {
-    let runsheet: Runsheet
-    var done: Int
-
-    var body: some View {
-        HStack(spacing: 14) {
-            WorkoutIcon(runsheet: runsheet, size: 50)
-            VStack(alignment: .leading, spacing: 4) {
-                Text(runsheet.title)
-                    .font(.body.weight(.semibold))
-                    .foregroundStyle(Brand.ink)
-                    .lineLimit(2)
-                    .multilineTextAlignment(.leading)
-                HStack(spacing: 6) {
-                    Text("\(runsheet.minutes) min")
-                    if let creator = runsheet.creator { Text("· \(creator)").lineLimit(1) }
-                    if let level = runsheet.level { Text("· \(level)") }
-                }
-                .font(.footnote)
-                .foregroundStyle(Brand.muted)
-            }
-            Spacer(minLength: 8)
-            if done > 0 {
-                Text("\(done)×")
-                    .font(.caption.weight(.bold))
-                    .padding(.horizontal, 8).padding(.vertical, 4)
-                    .background(Brand.coralSoft, in: Capsule())
-                    .foregroundStyle(Brand.coralInk)
-            }
-            Image(systemName: "chevron.right").font(.footnote.weight(.semibold)).foregroundStyle(Brand.faint)
-        }
-        .padding(.horizontal, 14)
-        .padding(.vertical, 12)
-        .contentShape(Rectangle())
-        .accessibilityElement(children: .combine)
-    }
-}
-
-/// A workout your coach sent: what it is, who sent it, their note, and a tick once you have done it.
-struct CoachAssignmentRow: View {
-    let runsheet: Runsheet
-    var coach: String
-    var note: String?
-    var done: Bool
-
-    var body: some View {
-        HStack(spacing: 14) {
-            WorkoutIcon(runsheet: runsheet, size: 50)
-            VStack(alignment: .leading, spacing: 4) {
-                Text(runsheet.title)
-                    .font(.body.weight(.semibold))
-                    .foregroundStyle(Brand.ink)
-                    .lineLimit(2)
-                    .multilineTextAlignment(.leading)
-                Text("\(runsheet.minutes) min · from \(coach)")
-                    .font(.footnote)
-                    .foregroundStyle(Brand.muted)
-                    .lineLimit(1)
-                if let note, !note.isEmpty {
-                    Text(note)
-                        .font(.footnote)
-                        .foregroundStyle(Brand.body)
-                        .lineLimit(2)
-                        .multilineTextAlignment(.leading)
-                }
-            }
-            Spacer(minLength: 8)
-            if done {
-                Image(systemName: "checkmark.circle.fill")
-                    .font(.title3)
-                    .foregroundStyle(Brand.coral)
-                    .accessibilityLabel("Done")
-            }
-            Image(systemName: "chevron.right").font(.footnote.weight(.semibold)).foregroundStyle(Brand.faint)
-        }
-        .padding(.horizontal, 14)
-        .padding(.vertical, 12)
-        .contentShape(Rectangle())
-        .accessibilityElement(children: .combine)
     }
 }
