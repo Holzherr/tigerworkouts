@@ -115,7 +115,8 @@ outranks any exercise overlap; For you sends the user to Search when history yie
 settings, share links, quick log, post-workout stats with a body map, a finish screen that leads with the workout count, streak, records set and deltas vs last time plus a share card (PNG), a 1–10 session effort on every result (written to Apple Health as the workout effort score on iOS 18+), offline via a service worker.
 In the editor, on web and iOS, sets alike in a row fold into one row (`8×`; its stepper changes every set, Vary sets
 gives each its own; `setRuns` in model.ts, `Edit.setRuns` on iOS), and block headers carry a grip and a one-time
-"Hold a block's header to move it" tip. Not yet: blocks folding to one line while one is dragged.
+tip. On iOS holding a header (or tapping its grip) opens "Reorder blocks", where each block moves as
+one card; a header row is never dragged alone. Not yet: blocks folding to one line while one is dragged.
 The web timer announces each step to a screen reader through one hidden polite live region ("Rest,
 30 seconds", "Barbell bench press, set 2 of 3", "Paused", "Workout finished"): it speaks on a slot
 or phase change, never on a tick. The landing page's looping hero demo renders the same screen with

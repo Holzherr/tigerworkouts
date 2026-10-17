@@ -2,8 +2,9 @@ import SwiftUI
 
 /// The one way to edit a workout (specs/unified-editing.md). The workout screen uses it before a
 /// session and the timer's Session sheet during one. One flat list: hold and drag a step within a
-/// block, into another block or out on its own; hold and drag a block's header to move the whole
-/// block. Tap a header for its rounds and rest, a step for its sheet; swipe a step to remove it.
+/// block, into another block or out on its own; hold a block's header (or tap its grip) to reorder
+/// the blocks, each as one card. Tap a header for its rounds and rest, a step for its sheet; swipe a
+/// step to remove it.
 struct RunsheetEditor<Header: View>: View {
     var runsheet: Runsheet
     /// Items done or running in a live session: shown, never moved or changed.
@@ -27,12 +28,13 @@ struct RunsheetEditor<Header: View>: View {
 
     /// Settings → Default rest: what an added rest starts at.
     @AppStorage(Switches.defaultRest) private var defaultRest = 30.0
-    /// "Hold a block's header to move it", shown until OK is tapped.
-    @AppStorage("tip.blockDrag") private var blockTipSeen = false
+    /// "Hold a block's header to reorder blocks", shown until OK is tapped. A new key, so it shows
+    /// once more where the old "move it" tip was dismissed.
+    @AppStorage("tip.blockReorder") private var blockTipSeen = false
     @State private var editingRest: RestStep?
     @State private var editingBlock: Block?
     @State private var picking: PickTarget?
-    /// The reorder view, opened from a block's grip.
+    /// The reorder view, opened by holding a block's header or tapping its grip.
     @State private var reordering = false
     /// A short line after a drop that did not land where it was dropped.
     @State private var note: String?
@@ -67,7 +69,7 @@ struct RunsheetEditor<Header: View>: View {
             if !blockTipSeen, runsheet.items.contains(where: { $0.asBlock != nil }) {
                 HStack(spacing: 12) {
                     Image(systemName: "line.3.horizontal").foregroundStyle(Brand.coralInk)
-                    Text("Hold a block's header to move it").font(.subheadline).foregroundStyle(Brand.ink)
+                    Text("Hold a block's header to reorder blocks").font(.subheadline).foregroundStyle(Brand.ink)
                     Spacer()
                     Button("OK") { blockTipSeen = true }.font(.subheadline.weight(.bold)).foregroundStyle(Brand.coralInk)
                 }
@@ -76,12 +78,14 @@ struct RunsheetEditor<Header: View>: View {
             }
 
             Section {
-                // Done and running rows are not moveDisabled: SwiftUI refuses every drop above a
-                // row that cannot move and snaps the drag back, which read as "drag doesn't work".
-                // The move lands here instead; Edit clamps it below them or keeps them in place.
+                // Headers are not drag sources: a header lifted alone left its steps behind, so
+                // holding one opens the reorder view instead, and a step dropped on a header's slot
+                // snaps back as on an add row's. Done and running step rows stay movable: SwiftUI
+                // refuses every drop above a row that cannot move, so the move lands here and Edit
+                // clamps it below them or keeps them in place.
                 ForEach(rows) { row in
                     rowView(row, frozen: frozen)
-                        .moveDisabled(isAdd(row))
+                        .moveDisabled(isAdd(row) || isHeader(row))
                         .deleteDisabled(!isStep(row) || isFrozen(row, frozen))
                 }
                 .onMove { from, to in
@@ -170,6 +174,11 @@ struct RunsheetEditor<Header: View>: View {
         return false
     }
 
+    private func isHeader(_ row: Edit.Row) -> Bool {
+        if case .block = row { return true }
+        return false
+    }
+
     private func isStep(_ row: Edit.Row) -> Bool {
         if case .step = row { return true }
         return false
@@ -235,11 +244,12 @@ struct RunsheetEditor<Header: View>: View {
         }
     }
 
-    /// The header is a row of its own, so it can be dragged: the whole block follows it. Its grip
-    /// opens the reorder view, every block as one card (TW-026).
+    /// The header is a row of its own that never drags: holding it, or tapping its grip, opens the
+    /// reorder view, every block as one card (TW-026, TW-042).
     private func blockHeader(_ b: Block, done: Bool) -> some View {
         HStack(spacing: 0) {
-            Button { if !done { editingBlock = b } } label: {
+            // A hold has already opened the reorder view by the time the finger lifts.
+            Button { if !done, !reordering { editingBlock = b } } label: {
                 HStack(spacing: 8) {
                     Text(b.name.isEmpty ? "Block" : b.name).font(.headline).foregroundStyle(done ? Brand.muted : Brand.ink)
                     Text(Format.duration(b.estimatedSeconds)).font(.footnote).foregroundStyle(Brand.muted)
@@ -254,8 +264,9 @@ struct RunsheetEditor<Header: View>: View {
                 .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
+            .simultaneousGesture(LongPressGesture(minimumDuration: 0.5).onEnded { _ in if !done { reordering = true } })
             .accessibilityLabel("\(b.name), \(b.modeLabel)")
-            .accessibilityHint(done ? "" : "Tap for rounds and rest. Hold and drag to move the block.")
+            .accessibilityHint(done ? "" : "Tap for rounds and rest. Hold to reorder blocks.")
             if !done {
                 Button { reordering = true } label: {
                     Image(systemName: "line.3.horizontal")
