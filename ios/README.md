@@ -16,8 +16,9 @@ What you get that the PWA cannot do:
   each have their own haptic shape, so you know what happened without looking. The finish is a long
   roll into three taps.
 - **Tones as well.** Generated in memory, no audio files, ducked over your music rather than
-  stopping it. Core Haptics is foreground-only, so with the screen locked a change is a tone plus
-  the system vibration instead: two buzzes for work, one for rest, three for the finish, no ticks.
+  stopping it. Every change also gets the system vibration, screen on or off: two buzzes for work,
+  one for rest, three for a block's end, four for the finish, no ticks. On screen it comes on top of
+  the haptic shape, which is too light to feel through a pocket; locked, it is all there is.
 - **The timer survives a locked screen.** `UIBackgroundModes: audio` plus a near-silent keep-alive
   loop, held open only for the length of a session.
 - **The session on the Lock Screen.** A Live Activity with the exercise, the countdown and the

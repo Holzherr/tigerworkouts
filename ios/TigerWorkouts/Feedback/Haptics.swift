@@ -10,10 +10,10 @@ private let hapticLog = Logger(subsystem: "dev.brambruesch.tigerworkouts", categ
 /// end-of-workout buzz is a silent no-op; here every transition has a shape you can feel through a
 /// pocket without looking.
 ///
-/// Core Haptics is foreground-only: with the screen locked it plays nothing. The session keeps the
-/// app alive in the background (Cues' audio), so a locked phone gets the system vibration instead —
-/// two long buzzes for work, one for rest, three for a block's end, the only buzz iOS lets a
-/// backgrounded app make.
+/// Every cue also gets the system vibration, screen on or off — two long buzzes for work, one for
+/// rest, three for a block's end. Core Haptics is foreground-only and too light to feel through a
+/// pocket or a bench, so on screen it plays on top; locked, the system vibration is all there is,
+/// the only buzz iOS lets a backgrounded app make (the session stays alive on Cues' audio).
 @MainActor
 @Observable
 final class Haptics {
@@ -116,7 +116,8 @@ final class Haptics {
 
     func play(_ cue: Cue) {
         guard enabled else { return }
-        if appState() != .active { return vibrate(cue) }
+        vibrate(cue)
+        if appState() != .active { return }
         if let foreground { return foreground(cue) }
         guard supportsHaptics, let engine else { return fallback(cue) }
         do {
@@ -156,14 +157,14 @@ final class Haptics {
         }
     }
 
-    /// Screen locked or app in the background. The ticks stay silent: three long buzzes a second
-    /// apart would blur into one, and the work/rest buzz that follows is the one that matters.
+    /// Screen on or off. The ticks stay silent: three long buzzes a second apart would blur into
+    /// one, and the work/rest buzz that follows is the one that matters.
     private func vibrate(_ cue: Cue) {
         let times = Self.buzzes(cue)
         if times > 0 { vibrator.buzz(times) }
     }
 
-    /// How many system buzzes a cue is with the phone locked: rest one, work two, a block's end
+    /// How many system buzzes a cue is, screen on or off: rest one, work two, a block's end
     /// three, the session's end four, so the pocket can tell a gate from the next set.
     nonisolated static func buzzes(_ cue: Cue) -> Int {
         switch cue {
