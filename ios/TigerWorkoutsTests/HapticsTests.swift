@@ -90,13 +90,42 @@ struct LockedBuzzTests {
         }
     }
 
-    @Test("on screen, an automatic change never calls the vibrator and plays its cue as before")
-    func activeFeelsInstead() {
+    @Test("on screen, an automatic change calls the vibrator too and still plays its cue")
+    func activeBuzzesToo() {
         let changes = Self.changes(app: .active)
-        #expect(!changes.isEmpty)
+        #expect(Set(changes.map(\.to)) == ["work", "rest", "finish"])
         let cues: [String: Haptics.Cue] = ["work": .work, "rest": .rest, "finish": .finish]
-        #expect(changes.allSatisfy { $0.buzzes.isEmpty })
+        // A phone face down on a bench, screen on: rest one buzz, work two, the finish four.
+        let times = ["work": 2, "rest": 1, "finish": 4]
+        #expect(changes.map(\.buzzes) == changes.map { [times[$0.to]!] })
         #expect(changes.map(\.felt) == changes.map { [cues[$0.to]!] })
+    }
+
+    @Test("on screen, a block's end calls the vibrator once with three and still plays its cue")
+    func activeBlockBuzzesThree() {
+        let vibrator = FakeVibrator()
+        var felt: [Haptics.Cue] = []
+        let haptics = Haptics(appState: { .active }, vibrator: vibrator, foreground: { felt.append($0) })
+        haptics.play(.block)
+        #expect(vibrator.calls == [3])
+        #expect(felt == [.block])
+    }
+
+    @Test("the last three seconds' ticks never call the vibrator, on screen or locked")
+    func ticksNeverBuzz() {
+        for app in [UIApplication.State.active, .inactive, .background] {
+            let vibrator = FakeVibrator()
+            let haptics = Haptics(appState: { app }, vibrator: vibrator, foreground: { _ in })
+            for _ in 0..<3 { haptics.play(.tick) }
+            #expect(vibrator.calls.isEmpty)
+        }
+    }
+
+    @Test("haptics off, an on-screen automatic change is neither buzzed nor felt")
+    func hapticsOffActiveIsSilent() {
+        let changes = Self.changes(app: .active, hapticsOn: false)
+        #expect(!changes.isEmpty)
+        #expect(changes.allSatisfy { $0.buzzes.isEmpty && $0.felt.isEmpty })
     }
 
     @Test("haptics off, a locked phone is never buzzed")
