@@ -701,12 +701,13 @@ struct TimerView: View {
             parts.append([row.load.map(Format.number) ?? "—", ex.shortUnit].filter { !$0.isEmpty }.joined(separator: " "))
         }
         if let count = ex.countLabel {
-            let clocked = ex.forMode == .seconds || ex.forMode == .minutes
-            let shown = row.amount ?? (clocked ? row.seconds.map { ex.forMode == .minutes ? $0 / 60 : $0 } ?? row.reps : row.reps)
-            let n = Format.number((shown * 10).rounded() / 10)
+            let n = Format.number((Self.countShown(row, ex) * 10).rounded() / 10)
             parts.append(count == "Reps" ? n : "\(n) \(count.lowercased())")
         }
-        let line = parts.joined(separator: " × ")
+        var line = parts.joined(separator: " × ")
+        if let extra = ex.extraLog, let v = Self.loggedShown(row, extra) {
+            line = [line, Rounds.amount(v, extra)].filter { !$0.isEmpty }.joined(separator: " · ")
+        }
         return row.incline.map { "\(line) · \(Format.number($0))%" } ?? line
     }
 
@@ -770,12 +771,28 @@ struct TimerView: View {
         .accessibilityIdentifier("more-sets")
     }
 
+    /// The number in a set's count column: metres or calories on a distance or calorie set, the time
+    /// a timed one ran once done (its plan before), else the reps.
+    nonisolated static func countShown(_ row: SessionRunner.SetRow, _ ex: ExerciseStep) -> Double {
+        switch ex.forMode {
+        case .meters, .calories: row.amount ?? row.reps
+        case .seconds, .minutes: row.seconds.map { ex.forMode == .minutes ? $0 / 60 : $0 } ?? row.plan
+        default: row.reps
+        }
+    }
+
+    /// What a set logged beyond its count (`ExerciseStep.extraLog`); nil until entered.
+    nonisolated static func loggedShown(_ row: SessionRunner.SetRow, _ log: StepLog) -> Double? {
+        log == .reps ? row.counted : row.amount
+    }
+
     /// The set table's columns after SET, as its header writes them. INCL shows when a set has an
     /// incline or the exercise is a treadmill, walk or run, so a bench never gets one.
     nonisolated static func setColumns(_ step: ExerciseStep, inclines: [Double?]) -> [String] {
         let treadmill = Library.shared.group(step.exercise.key).map { [.treadmill, .walk, .run].contains($0) } ?? false
         let incline = treadmill || inclines.contains { $0 != nil }
-        return ((step.hasSetLoad ? [step.shortUnit] : []) + (incline ? ["Incl"] : []) + (step.countLabel.map { [$0] } ?? []))
+        let extra = step.extraLog.map { [$0 == .reps ? "Reps" : $0 == .meters ? "m" : "Cal"] } ?? []
+        return ((step.hasSetLoad ? [step.shortUnit] : []) + (incline ? ["Incl"] : []) + (step.countLabel.map { [$0] } ?? []) + extra)
             .map { $0.uppercased() }
     }
 
@@ -822,11 +839,11 @@ struct TimerView: View {
                     // A distance or calorie set counts its metres or calories; a timed one shows the
                     // time it ran once done, and its plan before.
                     let clocked = ex.forMode == .seconds || ex.forMode == .minutes
-                    let shown = row.amount ?? (clocked ? row.seconds.map { ex.forMode == .minutes ? $0 / 60 : $0 } ?? row.reps : row.reps)
+                    let shown = Self.countShown(row, ex)
                     Group {
                         if editable, !clocked {
                             MiniStepper(value: shown, label: "Set \(row.number) \(count.lowercased())", onTint: row.current) {
-                                if row.amount != nil { runner.nudgeSetAmount(row.slotId, $0) } else { runner.nudgeSetReps(row.slotId, $0) }
+                                if ex.forMode == .meters || ex.forMode == .calories { runner.nudgeSetAmount(row.slotId, $0) } else { runner.nudgeSetReps(row.slotId, $0) }
                             }
                         } else {
                             Text(Format.number((shown * 10).rounded() / 10)).font(.system(size: 18, weight: .bold, design: .rounded)).lineLimit(1).minimumScaleFactor(0.6)
@@ -834,6 +851,21 @@ struct TimerView: View {
                     }
                     .frame(maxWidth: Self.countWidth(ex, incline: incline))
                     .overlay(alignment: .bottom) { if editable { unitCaption(count.lowercased()) } }
+                }
+                if let extra = ex.extraLog {
+                    // What the step is set to log beyond its count: reps in a timed set, metres on a timed row.
+                    let unit = extra == .reps ? "reps" : extra == .meters ? "m" : "cal"
+                    Group {
+                        if editable {
+                            MiniStepper(value: Self.loggedShown(row, extra) ?? 0, label: "Set \(row.number) \(extra.label.lowercased()) done", onTint: row.current) {
+                                if extra == .reps { runner.nudgeSetCounted(row.slotId, $0) } else { runner.nudgeSetAmount(row.slotId, $0) }
+                            }
+                        } else {
+                            Text(Self.loggedShown(row, extra).map(Format.number) ?? "—").font(.system(size: 18, weight: .bold, design: .rounded)).lineLimit(1).minimumScaleFactor(0.6)
+                        }
+                    }
+                    .frame(maxWidth: .infinity)
+                    .overlay(alignment: .bottom) { if editable { unitCaption("\(unit) done") } }
                 }
                 if runner.records.contains(row.slotId), row.done {
                     Image(systemName: "medal.fill")
@@ -870,7 +902,7 @@ struct TimerView: View {
                 // Tap to copy last time's set into this row.
                 Button {
                     openSet = row.slotId
-                    runner.fill(row.slotId, with: SetResult(reps: ex.countLabel == nil ? nil : last.reps, load: ex.hasSetLoad ? last.load : nil))
+                    runner.fill(row.slotId, with: SetResult(reps: ex.countLabel == nil && ex.extraLog != .reps ? nil : last.reps, load: ex.hasSetLoad ? last.load : nil, meters: ex.amountLog == .meters ? last.meters : nil, calories: ex.amountLog == .calories ? last.calories : nil))
                 } label: {
                     Text(hint)
                         .font(.caption.weight(.semibold))

@@ -26,6 +26,7 @@ const swings = { ...makeExercise(EX.kb_swing, { target: 28 }), id: 'a' };
 const press = { ...makeExercise(EX.db_incline_press, { target: 20 }), id: 'b' };
 const pushups = { ...makeExercise(EX.pushup, { forMode: 'reps', forValue: 12 }), id: 'c' };
 const rest = { ...makeRest(30), id: 'r' };
+const rower = { ...makeExercise(EX.cardio_rower, { forMode: 'seconds', forValue: 30 }), id: 'd' };
 
 const Live = ({ step: init, expanded: e0 = false }: { step: Step; expanded?: boolean }) => {
   const [step, setStep] = useState<Step>(init);
@@ -41,3 +42,7 @@ export const RestExpanded: Story = { render: () => <Live step={rest} expanded />
 export const Lifted: Story = { args: { step: swings, lifted: true } };
 export const GroupTarget: Story = { args: { step: press, groupTarget: true } };
 export const WithHint: Story = { args: { step: press, hint: 'last time 17.5 kg' } };
+/** A timed rower logs nothing extra until Add to log is tapped: Reps, Metres or Calories. */
+export const TimedRowerNoLog: Story = { render: () => <Live step={rower} expanded /> };
+/** The same rower set to log metres: the timer asks for them after each set. The ✕ takes the row off. */
+export const TimedRowerLogsMetres: Story = { render: () => <Live step={{ ...rower, log: 'meters' }} expanded /> };

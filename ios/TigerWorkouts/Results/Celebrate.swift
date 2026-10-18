@@ -44,8 +44,9 @@ enum Celebrate {
     }
 
     /// `all` is every session logged, with or without this one in it.
-    /// `lineage` (`Runsheet.lineage`) lets an edited copy's rounds race the original's.
-    static func celebrate(_ result: SessionResult, all: [SessionResult], today: Date? = nil, lineage: [String]? = nil) -> Celebration {
+    /// `lineage` (`Runsheet.lineage`) lets an edited copy's rounds race the original's. `runsheet`,
+    /// the workout it ran, keeps the blocks whose round time the timer fixed out of the round records.
+    static func celebrate(_ result: SessionResult, all: [SessionResult], today: Date? = nil, lineage: [String]? = nil, runsheet: Runsheet? = nil) -> Celebration {
         let others = all.filter { !same($0, result) }
         let before = others.filter { $0.startedAt < result.startedAt }
         let last = result.activity != nil ? nil : before
@@ -58,7 +59,7 @@ enum Celebrate {
             ordinal: before.count + 1,
             streak: EffortModel.streak(others.filter { $0.startedAt <= result.startedAt } + [result], today: today ?? result.startedDate),
             prs: Logbook.sessionPRs(result, all: all),
-            rounds: Rounds.prs(result, all: all, lineage: lineage),
+            rounds: Rounds.prs(result, all: all, lineage: lineage, runsheet: runsheet),
             volume: volume,
             last: last,
             // A capped for-time scored the cap, not a finish time: nothing to set against a finish.

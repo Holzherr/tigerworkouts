@@ -79,7 +79,7 @@ Not done (Nick): the directory submissions themselves, the reviewer account and 
 | Tool | Reads/writes | Notes |
 |---|---|---|
 | `get_profile` | read | name, units, bodyweight, training maxes, saved ids, 30-day session count |
-| `list_sessions` | read | newest first; per exercise: load used, incline, reps per set, success. Filters: `since`, `until`, `workoutId`, `limit` |
+| `list_sessions` | read | newest first; per exercise: load used, incline, reps per set, success, and `sets` (each set with only what was recorded: type, reps, load, seconds, meters, calories, at). Filters: `since`, `until`, `workoutId`, `limit` |
 | `get_session` | read | one session plus the outline of its workout |
 | `list_workouts` | read | own (`owner: me`, with `public`), others' public, catalogue (484 from `imports/`); filters: scope, query, source, tag, exercise, minutes |
 | `get_workout` | read | outline + full runsheet + `canEdit` + app link |
@@ -88,7 +88,7 @@ Not done (Nick): the directory submissions themselves, the reviewer account and 
 | `update_workout` | write | own only; full runsheet replacement and/or `public` flip; catalogue/others' → "copy it with create_workout" |
 | `preview_workout_url` | read | no-sign-in link for a saved workout or an unsaved draft |
 | `start_workout` | read | timer view in the chat (MCP Apps / ChatGPT) for a saved id or a draft (`workout` or text `plan`); returns `previewUrl` and `appDownloadUrl` |
-| `log_session` | write | one finished session into `sessions`, as the apps write it |
+| `log_session` | write | one finished session into `sessions`, as the apps write it; `steps[].sets` for per-set detail |
 | `claim_account` | write | adds an email to an anonymous account, in the chat or by a claim link |
 
 Tool descriptions carry what a runsheet is, the units, every `forMode` and block mode, and a worked example; the server's `instructions` give the coaching flow.

@@ -5,7 +5,7 @@
  * still read, are worked out again from the sets exactly as the timer writes them, so every reader
  * sees the edit. Pure; ported to `ios/TigerWorkouts/Results/EditSets.swift`.
  */
-import { findStep, plannedSet, type Runsheet } from '@/features/runsheet/model';
+import { findStep, plannedSet, type ExerciseStep, type Runsheet } from '@/features/runsheet/model';
 import type { SessionResult, SetResult, StepResult } from '@/features/runsheet/progression';
 import { setsOf } from './logbook';
 
@@ -63,6 +63,15 @@ const successAfter = (row: StepResult, before: SetResult[], after: SetResult[], 
   if (plan?.sets !== undefined) return work.length >= plan.sets && !short(after);
   if (plan?.reps !== undefined) return short(after) ? false : short(before) ? true : row.success;
   return after.length === before.length && after.some((x, i) => x.type !== 'warmup' && x.type !== 'drop' && x.reps !== undefined && before[i]?.reps !== undefined && x.reps < before[i].reps!) ? false : row.success;
+};
+
+/** The exercise step a logged row ran, while it is still in the workout. */
+export const stepFor = (r: Runsheet | undefined, stepId: string): ExerciseStep | undefined => {
+  const p = r ? findStep(r.items, stepId) : null;
+  if (!r || !p) return undefined;
+  const it = r.items[p.itemIndex];
+  const step = it.kind === 'block' && p.stepIndex !== undefined ? it.steps[p.stepIndex] : it;
+  return step.kind === 'exercise' ? step : undefined;
 };
 
 /** The plan a logged row is judged against (see StepPlan); undefined for a ladder (its rungs scale

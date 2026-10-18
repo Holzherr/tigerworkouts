@@ -105,7 +105,7 @@ export const buildServer = (db: Db, account: Account = {}) => {
     'list_sessions',
     {
       title: 'Training history',
-      description: 'Recent sessions, newest first, with what was actually done per exercise: load used (kg or the exercise unit), incline, reps per set, and whether every set hit its reps. Use it to judge progress and pick next loads.',
+      description: 'Recent sessions, newest first, with what was actually done per exercise: load used (kg or the exercise unit), incline, reps per set, whether every set hit its reps, and `sets`: each set in order with only what was recorded (type, reps, load, seconds worked, meters, calories, at = session second it was ticked). Use it to judge progress and pick next loads.',
       inputSchema: {
         limit: z.number().int().min(1).max(100).optional().describe('Default 20'),
         since: z.string().optional().describe('ISO date/time, inclusive'),
@@ -216,10 +216,24 @@ export const buildServer = (db: Db, account: Account = {}) => {
         score: z.number().optional(),
         scoreText: z.string().max(60).optional(),
         steps: z
-          .array(z.looseObject({ stepId: z.string(), exerciseKey: z.string(), target: z.number().optional(), incline: z.number().optional(), reps: z.array(z.number()).optional(), success: z.boolean().optional() }))
+          .array(
+            z.looseObject({
+              stepId: z.string(),
+              exerciseKey: z.string(),
+              target: z.number().optional(),
+              incline: z.number().optional(),
+              reps: z.array(z.number()).optional(),
+              success: z.boolean().optional(),
+              sets: z
+                .array(z.looseObject({ reps: z.number().optional(), load: z.number().optional(), seconds: z.number().optional(), meters: z.number().optional(), calories: z.number().optional(), type: z.enum(['normal', 'warmup', 'drop', 'failure']).optional(), at: z.number().optional() }))
+                .max(100)
+                .optional()
+                .describe('Each set in order, with what was recorded: reps, load, seconds worked, meters, calories; type for a warm-up, drop set or set to failure'),
+            }),
+          )
           .max(200)
           .optional()
-          .describe('Per exercise: load used (target), reps per set'),
+          .describe('Per exercise: load used (target), reps per set, and sets for per-set detail (a timed rower sprint is { seconds: 30, meters: 142 })'),
       },
       annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: false },
     },

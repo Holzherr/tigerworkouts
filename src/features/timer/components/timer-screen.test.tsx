@@ -1,5 +1,5 @@
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
-import { expect, it, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { EX } from '@/features/runsheet/fixtures';
 import { makeExercise, type Runsheet } from '@/features/runsheet/model';
 import * as R from '../runner';
@@ -102,4 +102,36 @@ it('shows a done set as one line, the next with its steppers, the rest folded', 
 it('the RestBetweenSets story rests after set 1 with set 3 folded', () => {
   render(<Stories.RestBetweenSets />);
   expect([!!screen.getByRole('button', { name: 'Un-tick set 1' }), !!screen.getByLabelText('Set 2 load'), !!screen.getByRole('button', { name: /^1 more set,/ }), !!screen.getByText('Target 70 × 8 · 0:12 ahead of last time')]).toEqual([true, true, true, true]);
+});
+
+describe('what the card asks to log', () => {
+  const rowerSheet = (log?: 'meters'): Runsheet => ({ id: 'rs', title: 'Rower sprints', items: [{ ...makeExercise(EX.cardio_rower, { forMode: 'seconds', forValue: 30 }), ...(log ? { log } : {}), id: 'rw' }, { ...makeExercise(EX.kb_swing, { forMode: 'seconds', forValue: 30, target: 24 }), log: 'reps', id: 'sw' }] });
+  const card = (r: Runsheet, state = R.advance(R.start(r, 0), 0, { skipped: true })) =>
+    render(<TimerScreen runsheet={r} state={state} now={0} onDone={noop} onSkip={noop} onBack={noop} onPause={noop} onResume={noop} onAdjust={noop} onSetReps={noop} onSetAmount={noop} onDrop={noop} onFinish={noop} onExit={noop} />);
+  it('a timed rower asks for no metres', () => {
+    card(rowerSheet());
+    expect(screen.queryByRole('button', { name: /m\. Change$/ })).toBeNull();
+    expect(screen.queryByText('Metres done')).toBeNull();
+  });
+  it('a timed rower set to log metres asks for them', () => {
+    card(rowerSheet('meters'));
+    fireEvent.click(screen.getByRole('button', { name: /^0 m\. Change$/ }));
+    expect(screen.getByText('Metres done')).toBeTruthy();
+  });
+  it('timed swings set to log reps ask for reps next to the load', () => {
+    const r = rowerSheet();
+    card(r, R.advance(R.advance(R.start(r, 0), 0, { skipped: true }), 0));
+    fireEvent.click(screen.getByRole('button', { name: /^24 kg × 0 reps\. Change$/ }));
+    expect(screen.getByText('Reps done')).toBeTruthy();
+  });
+});
+
+it('the set grid gives a timed row set to log metres a metres column, and shows them on done sets', () => {
+  const r: Runsheet = { id: 'g', title: 'G', items: [{ kind: 'block', id: 'b', name: 'Rower sprints', repeat: 3, steps: [{ ...makeExercise(EX.cardio_rower, { forMode: 'seconds', forValue: 30 }), log: 'meters', id: 'rw' }, { kind: 'rest', id: 'r', seconds: 30 }] }] };
+  let s = R.advance(R.startBlock(R.start(r, 0), 0), 0, { skipped: true });
+  s = R.setAmountAt(s, s.slots[s.i].id, 142);
+  s = R.tick(s, 30000);
+  render(<TimerScreen runsheet={r} state={s} now={30000} onDone={noop} onSkip={noop} onBack={noop} onPause={noop} onResume={noop} onAdjust={noop} onSetReps={noop} onDrop={noop} onFinish={noop} onExit={noop} sets={{ ...grid, setAmount: noop }} />);
+  expect(screen.getByText('30 sec · 142 m')).toBeTruthy();
+  expect(screen.getByLabelText('Set 2 metres done')).toBeTruthy();
 });

@@ -1,7 +1,7 @@
 {
   "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
   "name": "tigerworkouts",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "description": "Coaching from your real training history, new workouts written straight into the TigerWorkouts app, and a guided timer in the chat.",
   "author": {
     "name": "Brambruesch Ltd",

@@ -145,9 +145,17 @@ describe('ResultSheet load and round times', () => {
   it('shows each round against the same round last time', () => {
     const initial: SessionResult = { id: 's-r', runsheetId: 'p', startedAt: '2026-09-27T10:00:00Z', steps: [], splits: [{ blockId: 'b1', at: [100, 190], from: 5 }] };
     const before: SessionResult = { id: 's-o', runsheetId: priyanka().id!, startedAt: '2026-09-20T10:00:00Z', steps: [], splits: [{ blockId: 'b1', at: [105, 200], from: 5 }] };
-    render(<ResultSheet runsheet={priyanka()} initial={initial} history={[before]} onSave={vi.fn()} />);
+    // Done for reps, so each round's time is the person's, not the timer's.
+    const reps = priyanka();
+    reps.items = reps.items.map(it => (it.kind === 'block' ? { ...it, steps: it.steps.map(st => (st.kind === 'exercise' ? { ...st, forMode: 'reps' as const, forValue: 10 } : st)) } : it));
+    render(<ResultSheet runsheet={reps} initial={initial} history={[before]} onSave={vi.fn()} />);
     expect(screen.getByLabelText('Round times')).toBeTruthy();
     expect(screen.getByLabelText('Round 2 1:30, fastest')).toBeTruthy();
     expect(screen.getAllByText('−5 s')).toHaveLength(2);
+  });
+  it('has no round times for a block the timer fixed', () => {
+    const initial: SessionResult = { id: 's-r', runsheetId: 'p', startedAt: '2026-09-27T10:00:00Z', steps: [], splits: [{ blockId: 'b1', at: [100, 190], from: 5 }] };
+    render(<ResultSheet runsheet={priyanka()} initial={initial} onSave={vi.fn()} />);
+    expect(screen.queryByLabelText('Round times')).toBeNull();
   });
 });

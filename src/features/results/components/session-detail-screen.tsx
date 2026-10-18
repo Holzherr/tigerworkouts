@@ -14,7 +14,7 @@ import { celebrate } from '../celebrate';
 import { shareCardData } from '../share-card';
 import { EffortRow } from './effort-row';
 import { ShareCardSheet } from './share-card-sheet';
-import { addSet, editSet, plannedFor, removeSet, rowKey } from '../edit-sets';
+import { addSet, editSet, plannedFor, removeSet, rowKey, stepFor } from '../edit-sets';
 import { setLabel, setsOf } from '../logbook';
 import { roundPRs } from '../rounds';
 import { LoggedSets } from './logged-sets';
@@ -104,7 +104,7 @@ export const SessionDetailScreen = ({ result: r, runsheet, exercise, loadDevice,
             </span>
           </div>
         )}
-        <SplitsCard result={r} last={last} blockName={blockName} records={roundPRs(r, history)} />
+        <SplitsCard result={r} last={last} runsheet={runsheet} exerciseName={k => exercise(k).name} blockName={blockName} records={roundPRs(r, history, runsheet)} />
         {r.steps.length > 0 && (
           <section aria-label="Sets" className="overflow-hidden rounded-card border border-line bg-surface">
             <div className="flex items-center justify-between border-b border-line-soft px-3 py-1.5">
@@ -126,7 +126,7 @@ export const SessionDetailScreen = ({ result: r, runsheet, exercise, loadDevice,
                       {s.success === false && <Chip size="sm" variant="danger">missed</Chip>}
                       {onExercise && !editing && <ChevronRight className="size-4 shrink-0 text-faint" />}
                     </Head>
-                    <LoggedSets row={s} exercise={ex} editing={editing} onEdit={(i, patch) => onChange({ steps: editSet(r, rowKey(s), i, patch, plannedFor(runsheet, s.stepId), ex.unit).steps })} onAdd={() => onChange({ steps: addSet(r, rowKey(s), ex.unit, plannedFor(runsheet, s.stepId)).steps })} onRemove={i => (setsOf(s, ex.unit).length > 1 || confirm(`Remove ${ex.name} from this session?`)) && onChange({ steps: removeSet(r, rowKey(s), i, ex.unit, plannedFor(runsheet, s.stepId)).steps })} />
+                    <LoggedSets row={s} exercise={ex} step={stepFor(runsheet, s.stepId)} editing={editing} onEdit={(i, patch) => onChange({ steps: editSet(r, rowKey(s), i, patch, plannedFor(runsheet, s.stepId), ex.unit).steps })} onAdd={() => onChange({ steps: addSet(r, rowKey(s), ex.unit, plannedFor(runsheet, s.stepId)).steps })} onRemove={i => (setsOf(s, ex.unit).length > 1 || confirm(`Remove ${ex.name} from this session?`)) && onChange({ steps: removeSet(r, rowKey(s), i, ex.unit, plannedFor(runsheet, s.stepId)).steps })} />
                   </div>
                 );
               })}
@@ -148,7 +148,7 @@ export const SessionDetailScreen = ({ result: r, runsheet, exercise, loadDevice,
             <Copy /> Copy
           </Button>
         </div>
-        {sharing && <ShareCardSheet open={sharing} onOpenChange={setSharing} data={shareCardData(r, celebrate(r, history, undefined, k => exercise(k).unit), type, k => exercise(k))} />}
+        {sharing && <ShareCardSheet open={sharing} onOpenChange={setSharing} data={shareCardData(r, celebrate(r, history, undefined, k => exercise(k).unit, runsheet), type, k => exercise(k))} />}
         <Button variant="danger" block onClick={() => confirm('Delete this session?') && onDelete()}>
           <Trash2 /> Delete session
         </Button>

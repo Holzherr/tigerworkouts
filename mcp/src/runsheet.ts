@@ -4,7 +4,7 @@
  * fails the type-check; `normalise` returns a value typed as the model's Runsheet.
  */
 import { z } from 'zod';
-import type { Block, BlockMode, ExerciseRef, ExerciseStep, ForMode, Item, ItemRole, RestStep, Runsheet, ScoreType, SetType, Step } from '@/features/runsheet/model';
+import type { Block, BlockMode, ExerciseRef, ExerciseStep, ForMode, Item, ItemRole, RestStep, Runsheet, ScoreType, SetType, Step, StepLog } from '@/features/runsheet/model';
 import { runsheetMinutes, uid } from '@/features/runsheet/model';
 
 const FOR_MODE: Record<ForMode, string> = {
@@ -24,6 +24,7 @@ const BLOCK_MODE: Record<BlockMode, string> = {
   emom: 'start the steps every everySec seconds (default 60), `repeat` times',
   ladder: 'one pass per rung of `ladder` (e.g. [21,15,9]); rep steps take the rung as their reps',
 };
+const STEP_LOG: Record<StepLog, string> = { reps: 'reps done (e.g. kettlebell swings in 30 s)', meters: 'metres the machine counted (e.g. a 30 s rower sprint)', calories: 'calories the machine counted' };
 const SCORE: Record<ScoreType, true> = { time: true, rounds: true, reps: true, load: true, distance: true, none: true };
 const ROLE: Record<ItemRole, true> = { warmup: true, main: true, cooldown: true };
 const SET_TYPE: Record<SetType, string> = { normal: 'a working set (default)', warmup: 'lighter, before the work; left out of records', drop: 'straight on from the set before at a lighter load, no rest', failure: 'a working set taken to failure' };
@@ -65,6 +66,7 @@ export const exerciseStepInput = z.object({
   ladderFixed: z.boolean().optional(),
   sets: z.array(z.object({ reps: pos.optional(), load: pos.optional(), type: z.enum(keys(SET_TYPE)).optional().describe(Object.entries(SET_TYPE).map(([k, v]) => `${k}: ${v}`).join('; ')) }))
     .max(30).optional().describe('Per-set prescription inside a rounds block, one entry per round: a pyramid, ramping sets, warm-up or drop sets. A reps or load left out carries the one before it'),
+  log: z.enum(keys(STEP_LOG)).optional().describe(`What to record after the step, beyond its target; omit to log nothing extra (finishing is the result). ${Object.entries(STEP_LOG).map(([k, v]) => `${k}: ${v}`).join('; ')}. Reps are already counted for forMode reps/amrap/max, and metres/calories for forMode meters/calories`),
   role: role.optional(),
   note: z.string().max(300).optional(),
 });

@@ -644,8 +644,12 @@ final class SessionRunner {
         var type: SetType = .normal
         var load: Double?
         var reps: Double
-        /// Metres or calories on a distance or calorie set; nil for other work.
+        /// Metres or calories on a distance or calorie set, or one set to log them; nil for other work.
         var amount: Double? = nil
+        /// Reps counted on a set whose plan is not reps (timed swings set to log them); nil until counted.
+        var counted: Double? = nil
+        /// The plan's count for the set: reps, or the seconds of a timed set.
+        var plan: Double = 0
         /// Seconds the set ran, once done; nil before and for work whose time says nothing.
         var seconds: Double? = nil
         /// Treadmill incline, %: what the set runs at, or ran at once done; nil without one.
@@ -678,6 +682,8 @@ final class SessionRunner {
                 load: Runner.effectiveTarget(state, idx),
                 reps: a?.reps ?? sl.exercise?.forValue ?? 0,
                 amount: Runner.amountAt(state, sl),
+                counted: a?.reps,
+                plan: sl.exercise?.forValue ?? 0,
                 seconds: done ? a?.seconds : nil,
                 incline: Runner.effectiveIncline(state, idx),
                 done: done,
@@ -725,6 +731,13 @@ final class SessionRunner {
     func nudgeSetReps(_ slotId: String, _ direction: Double) {
         guard let row = setRows.first(where: { $0.slotId == slotId }) else { return }
         apply { s, _ in Runner.setRepsAt(s, slotId: slotId, reps: max(0, row.reps + direction)) }
+        Haptics.shared.play(.tick)
+    }
+
+    /// The reps on a timed set set to log them: from nothing counted, the first press lands on one.
+    func nudgeSetCounted(_ slotId: String, _ direction: Double) {
+        guard let row = setRows.first(where: { $0.slotId == slotId }) else { return }
+        apply { s, _ in Runner.setRepsAt(s, slotId: slotId, reps: max(0, (row.counted ?? 0) + direction)) }
         Haptics.shared.play(.tick)
     }
 

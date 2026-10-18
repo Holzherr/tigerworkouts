@@ -60,6 +60,8 @@ struct StepEditorView: View {
                     }
                 }
 
+                logSection
+
                 if showsIncline {
                     Section("Incline") {
                         Stepper(value: Binding(get: { step.incline ?? 0 }, set: { step.incline = $0 == 0 ? nil : $0 }), in: 0...30, step: 0.5) {
@@ -90,9 +92,46 @@ struct StepEditorView: View {
             .onChange(of: step.forMode) { old, new in
                 guard old != new else { return }
                 step.forValue = defaultValue(for: new)
+                // A log the new target records itself is dropped: reps counted twice is one too many.
+                if let log = step.log, !Self.logChoices(step).contains(log) { step.log = nil }
             }
         }
     }
+
+    /// What to record after the step, beyond its target. Nothing by default; Add to log offers what
+    /// the target does not already record, and the row it adds can be taken off again.
+    @ViewBuilder private var logSection: some View {
+        let choices = Self.logChoices(step)
+        if let log = step.log {
+            Section {
+                HStack {
+                    LabeledContent("Log", value: log.label)
+                    Button { step.log = nil } label: {
+                        Image(systemName: "minus.circle.fill").foregroundStyle(Brand.faint)
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityLabel("Stop logging \(log.label.lowercased())")
+                    .accessibilityIdentifier("remove-log")
+                }
+            } footer: {
+                Text("Asked for after each set.")
+            }
+        } else if !choices.isEmpty {
+            Section {
+                Menu {
+                    ForEach(choices, id: \.self) { c in
+                        Button(c.label) { step.log = c }
+                    }
+                } label: {
+                    Label("Add to log", systemImage: "plus")
+                }
+                .accessibilityIdentifier("add-log")
+            }
+        }
+    }
+
+    /// The measures a step can be set to log: not one its target records already.
+    nonisolated static func logChoices(_ step: ExerciseStep) -> [StepLog] { step.logChoices }
 
     private var stepSize: Double {
         switch step.forMode {

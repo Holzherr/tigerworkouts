@@ -875,8 +875,8 @@ describe('timed and distance work', () => {
     expect(r.steps[0].sets?.[0]).toMatchObject({ meters: 480, seconds: 99 });
     expect(r.steps[0].sets?.[0].load).toBeUndefined();
   });
-  it('a rower on the clock logs metres only when entered', () => {
-    const sheet: Runsheet = { id: 't', title: 'T', items: [{ ...makeExercise(EX.cardio_rower, { forMode: 'minutes', forValue: 2 }), id: 'x' }] };
+  it('a rower on the clock set to log metres logs them only when entered', () => {
+    const sheet: Runsheet = { id: 't', title: 'T', items: [{ ...makeExercise(EX.cardio_rower, { forMode: 'minutes', forValue: 2 }), log: 'meters', id: 'x' }] };
     let s = tick(start(sheet, 0), 5000);
     expect(R.amountField(s.slots[0])).toBe('meters');
     expect(R.amountAt(s, s.slots[0])).toBeUndefined();
@@ -913,5 +913,52 @@ describe('timed and distance work', () => {
     let s = tick(start(sheet, 0), 5000);
     for (const t of [20, 40, 70, 95, 130, 150]) s = advance(s, t * 1000);
     expect(toResult(s, sheet, 150000).splits).toEqual([{ blockId: 'b', at: [40, 95, 150], from: 5, starts: [5, 40, 95] }]);
+  });
+});
+
+describe('what a step logs', () => {
+  const one = (step: Parameters<typeof makeExercise>[1] & { log?: 'reps' | 'meters' | 'calories' }, ex = EX.cardio_rower): Runsheet => {
+    const { log, ...rest } = step;
+    return { id: 'w', title: 'W', items: [{ ...makeExercise(ex, rest), ...(log ? { log } : {}), id: 'x' }] };
+  };
+  const slot = (r: Runsheet) => tick(start(r, 0), 5000).slots[0];
+  it('a timed rower asks for nothing, and logs only its time', () => {
+    const r = one({ forMode: 'seconds', forValue: 30 });
+    expect(R.amountField(slot(r))).toBeUndefined();
+    expect(R.repsField(slot(r))).toBe(false);
+    const s = tick(tick(start(r, 0), 5000), 5000 + 30000);
+    expect(toResult(s, r, 40000).steps[0].sets?.[0]).toEqual({ seconds: 30, at: 35 });
+  });
+  it('a timed rower set to log metres asks for metres', () => {
+    const r = one({ forMode: 'seconds', forValue: 30, log: 'meters' });
+    let s = tick(start(r, 0), 5000);
+    expect(R.amountField(s.slots[0])).toBe('meters');
+    s = R.setAmount(s, 142);
+    s = tick(s, 5000 + 30000);
+    expect(toResult(s, r, 40000).steps[0].sets?.[0]).toMatchObject({ meters: 142, seconds: 30 });
+  });
+  it('a distance rower keeps its metres, the plan unless changed', () => {
+    const r = one({ forMode: 'meters', forValue: 500 });
+    const s = tick(start(r, 0), 5000);
+    expect(R.amountField(s.slots[0])).toBe('meters');
+    expect(R.amountAt(s, s.slots[0])).toBe(500);
+  });
+  it('timed kettlebell swings ask for reps only when set to log them', () => {
+    expect(R.repsField(slot(one({ forMode: 'seconds', forValue: 30, target: 24 }, EX.kb_swing)))).toBe(false);
+    const r = one({ forMode: 'seconds', forValue: 30, target: 24, log: 'reps' }, EX.kb_swing);
+    let s = tick(start(r, 0), 5000);
+    expect(R.repsField(s.slots[0])).toBe(true);
+    expect(R.amountField(s.slots[0])).toBeUndefined();
+    s = R.setReps(s, 21);
+    s = tick(s, 5000 + 30000);
+    expect(toResult(s, r, 40000).steps[0].sets?.[0]).toMatchObject({ reps: 21, load: 24, seconds: 30 });
+  });
+  it('chest-supported rows ask for reps and keep their load; a plank asks for nothing', () => {
+    const rows = slot(one({ forMode: 'reps', forValue: 10, target: 20 }, EX.db_row));
+    expect(R.repsField(rows)).toBe(true);
+    expect(R.amountField(rows)).toBeUndefined();
+    const plank = slot(one({ forMode: 'seconds', forValue: 45 }, EX.bw_plank));
+    expect(R.repsField(plank)).toBe(false);
+    expect(R.amountField(plank)).toBeUndefined();
   });
 });
