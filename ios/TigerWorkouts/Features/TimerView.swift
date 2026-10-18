@@ -19,6 +19,11 @@ struct TimerView: View {
     /// The set row open for editing on a straight-set block; nil = the set you are on.
     @State private var openSet: String?
     @State private var rowsFade = RowsFade()
+    /// The card's steppers flipped from how they start: shut on a running step, open at the block
+    /// gate, where the machine gets set. Back to that on every new step.
+    @State private var amountsFlipped = false
+    /// The sets still to come on a straight-set block, spread out from their one-line summary.
+    @State private var showAllSets = false
 
     private var isRest: Bool { runner.slot?.kind == .rest }
     private var accent: Color { isRest ? Brand.Night.rest : Brand.coral }
@@ -54,7 +59,8 @@ struct TimerView: View {
         .animation(.easeInOut(duration: 0.2), value: runner.slot?.id)
         .animation(.easeInOut(duration: 0.2), value: runner.state.phase)
         .onAppear { runner.begin() }
-        .onChange(of: runner.slot?.id) { openSet = nil }
+        .onChange(of: runner.slot?.id) { openSet = nil; amountsFlipped = false }
+        .onChange(of: runner.straightSetStep?.id) { showAllSets = false }
         .onDisappear { runner.end() }
         .sheet(isPresented: $showOverview) { overview.preferredColorScheme(.light) }
         .sheet(item: $editing) { step in
@@ -109,7 +115,6 @@ struct TimerView: View {
             default: slotBody
             }
             Spacer(minLength: 12)
-            blockStrip
             controls
         }
     }
@@ -147,48 +152,8 @@ struct TimerView: View {
                         .foregroundStyle(Brand.Night.muted)
                         .monospacedDigit()
                 }
-                Button {
-                    sound.toggle()
-                    Cues.shared.enabled = sound
-                } label: {
-                    Image(systemName: sound ? "speaker.wave.2.fill" : "speaker.slash.fill")
-                        .font(.system(size: 16, weight: .bold))
-                        .frame(width: 44, height: 44)
-                        .background(Brand.Night.raised, in: Circle())
-                }
-                .accessibilityLabel(sound ? "Mute tones" : "Unmute tones")
-                Button { showOverview = true } label: {
-                    Image(systemName: "list.bullet")
-                        .font(.system(size: 16, weight: .bold))
-                        .frame(width: 44, height: 44)
-                        .background(Brand.Night.raised, in: Circle())
-                }
-                .accessibilityLabel("Session overview")
-                SessionMenu(finish: runner.finish, discard: discard).equatable()
-            }
-            if let ghost = runner.ghost {
-                // Racing the last session of this workout: one signed number, at the latest round or set.
-                Text(ghost.text)
-                    .font(.subheadline.weight(.bold))
-                    .monospacedDigit()
-                    .padding(.horizontal, 12)
-                    .frame(height: 28)
-                    .background(Brand.Night.raised, in: Capsule())
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .accessibilityLabel("Against last time: \(ghost.text)")
-                    .accessibilityIdentifier("ghost")
-            }
-            if let target = runner.goal, runner.state.phase != .done {
-                // Today's target for this round or set, quieter than the race.
-                Text(target)
-                    .font(.footnote.weight(.semibold))
-                    .monospacedDigit()
-                    .foregroundStyle(Brand.Night.muted)
-                    .padding(.horizontal, 12)
-                    .frame(height: 24)
-                    .overlay(Capsule().strokeBorder(Brand.Night.line))
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .accessibilityIdentifier("target")
+                // Sound and the overview sit in the ⋯ menu with Finish: the bar keeps to where you are.
+                SessionMenu(sound: sound, toggleSound: toggleSound, overview: { showOverview = true }, finish: runner.finish, discard: discard).equatable()
             }
             GeometryReader { geo in
                 ZStack(alignment: .leading) {
@@ -197,10 +162,47 @@ struct TimerView: View {
                 }
             }
             .frame(height: 6)
+            if runner.ghost != nil || (runner.goal != nil && runner.state.phase != .done) {
+                pace
+            }
         }
         .foregroundStyle(Brand.Night.text)
         .padding(.horizontal, 16)
         .padding(.top, 6)
+    }
+
+    /// One quiet line: today's target, then the race against last time — "Target 45 × 10 · 14:26
+    /// ahead of last time". Either part alone when the other has nothing to say.
+    private var pace: some View {
+        let target = runner.state.phase == .done ? nil : runner.goal
+        return HStack(spacing: 0) {
+            if let target {
+                Text(target).accessibilityIdentifier("target")
+            }
+            if let ghost = runner.ghost {
+                Text((target == nil ? "" : " · ") + TimerView.paceLine(ghost.short))
+                    .accessibilityLabel("Against last time: \(ghost.text)")
+                    .accessibilityIdentifier("ghost")
+            }
+            Spacer(minLength: 0)
+        }
+        .font(.subheadline)
+        .monospacedDigit()
+        .foregroundStyle(Brand.Night.muted)
+        .lineLimit(1)
+        .minimumScaleFactor(0.7)
+    }
+
+    /// "14:26 ahead" → "14:26 ahead of last time", "8 s behind" → "8 s behind last time",
+    /// "on pace" → "on pace with last time".
+    nonisolated static func paceLine(_ short: String) -> String {
+        if short == "on pace" { return "on pace with last time" }
+        return short.hasSuffix("behind") ? "\(short) last time" : "\(short) of last time"
+    }
+
+    private func toggleSound() {
+        sound.toggle()
+        Cues.shared.enabled = sound
     }
 
     /// "Block 2 of 9 · Round 3 of 8"
@@ -319,9 +321,9 @@ struct TimerView: View {
     /// the screen and pushed the top bar under the status bar.
     private var circuitBody: some View {
         ViewThatFits(in: .vertical) {
-            circuitBody(clock: 110, demo: 104, spacing: 16)
-            circuitBody(clock: 84, demo: 80, spacing: 12)
-            circuitBody(clock: 64, demo: 64, spacing: 10)
+            circuitBody(clock: 110, demo: 72, spacing: 16)
+            circuitBody(clock: 84, demo: 72, spacing: 12)
+            circuitBody(clock: 64, demo: 56, spacing: 10)
         }
     }
 
@@ -384,33 +386,36 @@ struct TimerView: View {
     private func countdown(size: CGFloat) -> some View {
         VStack(spacing: 2) {
             if let left = runner.clock.left {
-                Text(Format.clock(left))
+                let clock = Text(Format.clock(left))
                     .font(.system(size: size, weight: .heavy, design: .rounded))
                     .monospacedDigit()
                     .foregroundStyle(left <= 3 ? Brand.coral : (isRest ? Brand.Night.rest : Brand.Night.text))
                     .contentTransition(.numericText(countsDown: true))
                     .minimumScaleFactor(0.6)
                     .lineLimit(1)
-                // Both figures: how far into this step, and how long the step is. A 10-minute
-                // walk should read as a 10-minute walk, not only as a number falling.
-                if let total = runner.slot?.seconds {
-                    Text("\(Format.clock(runner.clock.spent)) of \(Format.clock(total))")
-                        .font(.subheadline)
-                        .foregroundStyle(Brand.Night.muted)
-                        .monospacedDigit()
-                } else if Runner.minuteOnly(runner.slot) {
-                    // EMOM reps: the minute running out. Done logs the set; left alone, the minute
-                    // logs it and the next one starts.
-                    Text("Tap Done when you finish the set")
-                        .font(.subheadline)
-                        .foregroundStyle(Brand.Night.muted)
-                }
                 if runner.restAdjustable {
-                    HStack(spacing: 10) {
-                        restNudge("−15 s", label: "15 seconds less rest") { runner.extendRest(by: -15); Haptics.shared.play(.tick) }
-                        restNudge("+15 s", label: "15 seconds more rest") { runner.extendRest(by: 15); Haptics.shared.play(.tick) }
+                    // −15 s and +15 s either side of the clock, one row instead of two.
+                    HStack(spacing: 12) {
+                        restNudge("−15s", label: "15 seconds less rest") { runner.extendRest(by: -15); Haptics.shared.play(.tick) }
+                        clock
+                        restNudge("+15s", label: "15 seconds more rest") { runner.extendRest(by: 15); Haptics.shared.play(.tick) }
                     }
-                    .padding(.top, 8)
+                } else {
+                    clock
+                    // Both figures: how far into this step, and how long the step is. A 10-minute
+                    // walk should read as a 10-minute walk, not only as a number falling.
+                    if let total = runner.slot?.seconds {
+                        Text("\(Format.clock(runner.clock.spent)) of \(Format.clock(total))")
+                            .font(.subheadline)
+                            .foregroundStyle(Brand.Night.muted)
+                            .monospacedDigit()
+                    } else if Runner.minuteOnly(runner.slot) {
+                        // EMOM reps: the minute running out. Done logs the set; left alone, the minute
+                        // logs it and the next one starts.
+                        Text("Tap Done when you finish the set")
+                            .font(.subheadline)
+                            .foregroundStyle(Brand.Night.muted)
+                    }
                 }
             } else {
                 Text(Format.clock(runner.clock.spent))
@@ -425,17 +430,24 @@ struct TimerView: View {
         }
     }
 
-    /// The exercise as a card you can read from a bench: the demo, the name, the cue, and the one
-    /// number worth changing without opening anything — the weight in your hand.
-    private func exerciseCard(_ ex: ExerciseStep, eyebrow: String?, adjustable: Bool, demo: CGFloat = 104) -> some View {
+    /// The exercise as a card you can read from a bench: the demo (tap for the how-to), the name,
+    /// and one line of what you are about to do — "24 kg × 10 reps" — that opens its steppers.
+    private func exerciseCard(_ ex: ExerciseStep, eyebrow: String?, adjustable: Bool, demo: CGFloat = 72) -> some View {
         // Parked before a block: every dial of the next machine, each with last time's setting.
         let parked = adjustable && runner.state.phase == .ready && runner.slot?.exercise?.id == ex.id
         let settings = parked ? TimerView.blockSettings(ex, target: runner.target, incline: runner.incline, results: store.results, in: runner.runsheet) : []
+        let live = adjustable && runner.slot?.exercise?.id == ex.id
+        let hasLoad = adjustable && ex.hasSetting && Measure.of(ex.exercise.unit) == nil
+        let hasDials = hasLoad || !settings.isEmpty || (live && (runner.amountField != nil || runner.countsReps))
+        // At the gate the steppers start open: that is when the weight goes on the bar.
+        let open = hasDials && (parked != amountsFlipped)
+        let lastSet = LastTime.set(store.results, for: ex, in: runner.runsheet)
+        let last = LastTime.label(lastSet, for: ex).map { $0.prefix(1).uppercased() + $0.dropFirst() }
         return VStack(alignment: .leading, spacing: 14) {
             Button { editing = ex } label: {
-                HStack(alignment: .top, spacing: 14) {
+                HStack(alignment: .center, spacing: 14) {
                     ExerciseDemo(ref: ex.exercise, size: demo)
-                    VStack(alignment: .leading, spacing: 5) {
+                    VStack(alignment: .leading, spacing: 3) {
                         if let eyebrow {
                             Text(eyebrow)
                                 .font(.caption.weight(.bold))
@@ -448,10 +460,13 @@ struct TimerView: View {
                             .foregroundStyle(Brand.ink)
                             .lineLimit(2)
                             .minimumScaleFactor(0.7)
-                        Text(detail(ex))
-                            .font(.subheadline)
-                            .foregroundStyle(Brand.muted)
-                            .lineLimit(3)
+                        // With no dials, what the step asks for; the cue is in the how-to.
+                        if !hasDials {
+                            Text(ex.forLabel).font(.subheadline).foregroundStyle(Brand.muted)
+                            if let last {
+                                Text(last).font(.subheadline.weight(.semibold)).foregroundStyle(Brand.coralInk)
+                            }
+                        }
                     }
                     Spacer(minLength: 0)
                 }
@@ -459,13 +474,42 @@ struct TimerView: View {
             }
             .buttonStyle(.plain)
 
-            // Parked, a load alone is already under its dial.
-            if let set = LastTime.set(store.results, for: ex, in: runner.runsheet), let last = LastTime.label(set, for: ex), settings.isEmpty || set.reps != nil {
-                let text = last.prefix(1).uppercased() + last.dropFirst()
+            if hasDials {
+                Button { withAnimation(.easeInOut(duration: 0.2)) { amountsFlipped.toggle() } } label: {
+                    HStack(spacing: 10) {
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text(amountsLine(ex, live: live, hasLoad: hasLoad, settings: settings))
+                                .font(.system(size: 22, weight: .heavy))
+                                .monospacedDigit()
+                                .foregroundStyle(Brand.ink)
+                                .lineLimit(1)
+                                .minimumScaleFactor(0.6)
+                            if let last {
+                                Text(last).font(.footnote).foregroundStyle(Brand.muted)
+                            }
+                        }
+                        Spacer(minLength: 0)
+                        Text(open ? "Close" : "Change")
+                            .font(.subheadline.weight(.semibold))
+                            .foregroundStyle(Brand.coralInk)
+                    }
+                    .padding(.horizontal, 14)
+                    .padding(.vertical, 10)
+                    .frame(maxWidth: .infinity, minHeight: 60, alignment: .leading)
+                    .background(Brand.lineSoft, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+                    .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel(open ? "Close" : "Change")
+                .accessibilityValue(amountsLine(ex, live: live, hasLoad: hasLoad, settings: settings))
+                .accessibilityIdentifier("amounts")
+            }
+
+            if open {
                 // On the running set, a tap puts last time's weight and reps in.
-                if adjustable, let slot = runner.slot, slot.exercise?.id == ex.id, runner.state.phase == .running || runner.state.phase == .paused {
-                    Button { runner.fill(slot.id, with: SetResult(reps: runner.countsReps ? set.reps : nil, load: ex.hasSetting ? set.load : nil)) } label: {
-                        Text(text)
+                if live, let lastSet, last != nil, runner.state.phase == .running || runner.state.phase == .paused, let slot = runner.slot {
+                    Button { runner.fill(slot.id, with: SetResult(reps: runner.countsReps ? lastSet.reps : nil, load: ex.hasSetting ? lastSet.load : nil)) } label: {
+                        Text("Use last time")
                             .font(.subheadline.weight(.semibold))
                             .underline(pattern: .dot)
                             .foregroundStyle(Brand.coralInk)
@@ -473,21 +517,44 @@ struct TimerView: View {
                             .contentShape(Rectangle())
                     }
                     .buttonStyle(.plain)
-                    .padding(.leading, demo + 14)
-                    .padding(.top, -10)
+                    .padding(.vertical, -6)
                     .accessibilityLabel("Use last time")
-                    .accessibilityValue(last)
+                    .accessibilityValue(last ?? "")
                     .accessibilityIdentifier("use-last-time")
-                } else {
-                    Text(text)
-                        .font(.subheadline.weight(.semibold))
-                        .foregroundStyle(Brand.coralInk)
-                        .padding(.leading, demo + 14)
-                        .padding(.top, -10)
                 }
+                dials(ex, parked: parked, live: live, hasLoad: hasLoad, settings: settings)
             }
+        }
+        .padding(16)
+        .background(.white, in: RoundedRectangle(cornerRadius: 24, style: .continuous))
+        // White card on the dark timer: its ink has to be the light-appearance ink.
+        .environment(\.colorScheme, .light)
+    }
 
-            if adjustable, ex.hasSetting, Measure.of(ex.exercise.unit) == nil {
+    /// "24 kg × 10 reps", "500 m", "10 kph · 2% incline": the card's dials in one line.
+    private func amountsLine(_ ex: ExerciseStep, live: Bool, hasLoad: Bool, settings: [BlockSetting]) -> String {
+        var parts: [String] = []
+        if hasLoad, let load = live ? runner.target : runner.plannedTarget(ex.id) ?? ex.target {
+            parts.append([Format.number(load), ex.shortUnit].filter { !$0.isEmpty }.joined(separator: " "))
+        }
+        if live, let field = runner.amountField {
+            parts.append("\(runner.amount.map(Format.number) ?? "—") \(field == .meters ? "m" : "cal")")
+        }
+        if live, runner.countsReps {
+            let reps = runner.reps ?? ex.forValue
+            parts.append("\(Format.number(reps)) \(reps == 1 ? "rep" : "reps")")
+        }
+        var line = parts.isEmpty ? ex.forLabel : parts.joined(separator: " × ")
+        if let incline = settings.first(where: { $0.label == "Incline" })?.value ?? (live ? runner.incline : nil) {
+            line += " · \(Format.number(incline))% incline"
+        }
+        return line
+    }
+
+    /// The card's steppers: the load, at the gate the incline, then metres or calories and reps.
+    @ViewBuilder
+    private func dials(_ ex: ExerciseStep, parked: Bool, live: Bool, hasLoad: Bool, settings: [BlockSetting]) -> some View {
+            if hasLoad {
                 Divider()
                 HStack(spacing: 10) {
                     VStack(alignment: .leading, spacing: 1) {
@@ -541,7 +608,7 @@ struct TimerView: View {
             }
 
             // Metres rowed or calories on the counter, when not what the plan said.
-            if adjustable, runner.slot?.exercise?.id == ex.id, let field = runner.amountField {
+            if live, let field = runner.amountField {
                 Divider()
                 HStack(spacing: 10) {
                     Text(field == .meters ? "Metres done" : "Calories done").font(.subheadline.weight(.semibold)).foregroundStyle(Brand.body)
@@ -559,7 +626,7 @@ struct TimerView: View {
 
             // What you did, not what the plan said: without this every rep in History was the
             // planned rep.
-            if adjustable, runner.slot?.exercise?.id == ex.id, runner.countsReps {
+            if live, runner.countsReps {
                 Divider()
                 HStack(spacing: 10) {
                     Text("Reps done").font(.subheadline.weight(.semibold)).foregroundStyle(Brand.body)
@@ -574,60 +641,50 @@ struct TimerView: View {
                     nudge("plus", label: "More reps") { runner.nudgeReps($0) }
                 }
             }
-        }
-        .padding(16)
-        .background(.white, in: RoundedRectangle(cornerRadius: 24, style: .continuous))
-        // White card on the dark timer: its ink has to be the light-appearance ink.
-        .environment(\.colorScheme, .light)
     }
 
-    /// A straight-set block as the gym writes it: a row per set, load and reps filled in from the
-    /// plan, the set you are on highlighted, a tick to finish it. A done row shows what was done and
-    /// is locked until it is un-ticked (tap the tick again), so a weight is never changed by a stray
-    /// tap on a set already logged.
+    /// A straight-set block as the gym writes it, folded to what matters now: a done set is one
+    /// line, the set you are on (or the next one, during the rest) has its steppers and last time,
+    /// and the sets after it are one line until tapped. A done set is locked until it is un-ticked
+    /// (tap the tick again), so a weight is never changed by a stray tap on a set already logged.
     private func setGrid(_ ex: ExerciseStep) -> some View {
         let rows = runner.setRows
         let last = LastTime.sets(store.results, for: ex, in: runner.runsheet) ?? []
         let incline = Self.setColumns(ex, inclines: rows.map(\.incline)).contains("INCL")
-        return VStack(alignment: .leading, spacing: 10) {
+        let folded = rows.filter { !$0.done && !$0.current && openSet != $0.slotId && !showAllSets }
+        return VStack(alignment: .leading, spacing: 4) {
             Button { editing = ex } label: {
                 HStack(spacing: 12) {
-                    ExerciseDemo(ref: ex.exercise, size: 64)
-                    VStack(alignment: .leading, spacing: 3) {
-                        Text(ex.exercise.name)
-                            .font(.system(size: 22, weight: .heavy))
-                            .foregroundStyle(Brand.ink)
-                            .lineLimit(2)
-                            .minimumScaleFactor(0.7)
-                        let cue = ex.exercise.cue ?? Library.shared.exercise(ex.exercise.key)?.cue ?? ""
-                        if !cue.isEmpty {
-                            Text(cue).font(.footnote).foregroundStyle(Brand.muted).lineLimit(2)
-                        }
-                    }
+                    ExerciseDemo(ref: ex.exercise, size: 56)
+                    Text(ex.exercise.name)
+                        .font(.system(size: 22, weight: .heavy))
+                        .foregroundStyle(Brand.ink)
+                        .lineLimit(2)
+                        .minimumScaleFactor(0.7)
                     Spacer(minLength: 0)
                 }
                 .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
-
-            HStack(spacing: SetRowMetrics.spacing) {
-                Text("Set").frame(width: SetRowMetrics.number, alignment: .leading)
-                if ex.hasSetLoad { Text(ex.shortUnit).frame(maxWidth: .infinity) }
-                if incline { Text("Incl").frame(width: SetInclineCell.width(ex)) }
-                if let count = ex.countLabel { Text(count).frame(maxWidth: Self.countWidth(ex, incline: incline)) }
-                Color.clear.frame(width: 44, height: 1)
+            // The row being set has no room for the plates; they sit by the name, for its load.
+            .overlay(alignment: .trailing) {
+                if Plates.kit(ex.exercise) == .barbell, let row = rows.first(where: { openSet == $0.slotId }) ?? rows.first(where: \.current) {
+                    PlatesButton(load: row.load)
+                }
             }
-            .padding(.horizontal, SetRowMetrics.inset)
-            .lineLimit(1)
-            .minimumScaleFactor(0.7)
-            .font(.caption.weight(.bold))
-            .textCase(.uppercase)
-            .tracking(0.8)
-            .foregroundStyle(Brand.muted)
+            .padding(.bottom, 6)
 
             ForEach(rows) { row in
-                setRow(row, ex, incline: incline, last: last.indices.contains(row.number - 1) && (last[row.number - 1].type ?? .normal) == row.type ? last[row.number - 1] : nil)
-                    .id(row.slotId)
+                Group {
+                    if row.done {
+                        doneLine(row, ex)
+                    } else if folded.first?.slotId == row.slotId {
+                        foldedLine(folded, ex)
+                    } else if !folded.contains(where: { $0.slotId == row.slotId }) {
+                        setRow(row, ex, incline: incline, last: last.indices.contains(row.number - 1) && (last[row.number - 1].type ?? .normal) == row.type ? last[row.number - 1] : nil)
+                    }
+                }
+                .id(row.slotId)
             }
         }
         .padding(12)
@@ -635,6 +692,82 @@ struct TimerView: View {
         .environment(\.colorScheme, .light)
         .accessibilityElement(children: .contain)
         .accessibilityIdentifier("timer-set-grid")
+    }
+
+    /// "45 kg × 10", "20 sec", "500 m · 2%": a set in a few characters.
+    private func setSummary(_ row: SessionRunner.SetRow, _ ex: ExerciseStep) -> String {
+        var parts: [String] = []
+        if ex.hasSetLoad, Measure.of(ex.exercise.unit) == nil {
+            parts.append([row.load.map(Format.number) ?? "—", ex.shortUnit].filter { !$0.isEmpty }.joined(separator: " "))
+        }
+        if let count = ex.countLabel {
+            let clocked = ex.forMode == .seconds || ex.forMode == .minutes
+            let shown = row.amount ?? (clocked ? row.seconds.map { ex.forMode == .minutes ? $0 / 60 : $0 } ?? row.reps : row.reps)
+            let n = Format.number((shown * 10).rounded() / 10)
+            parts.append(count == "Reps" ? n : "\(n) \(count.lowercased())")
+        }
+        let line = parts.joined(separator: " × ")
+        return row.incline.map { "\(line) · \(Format.number($0))%" } ?? line
+    }
+
+    /// "✓ Set 1    45 kg × 10". The tick takes it back.
+    private func doneLine(_ row: SessionRunner.SetRow, _ ex: ExerciseStep) -> some View {
+        HStack(spacing: 10) {
+            Button {
+                openSet = row.slotId
+                runner.tickSet(row.slotId)
+            } label: {
+                Image(systemName: "checkmark")
+                    .font(.system(size: 13, weight: .heavy))
+                    .foregroundStyle(.white)
+                    .frame(width: 28, height: 28)
+                    .background(Brand.coral, in: Circle())
+                    .frame(width: 44, height: 44)
+                    .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            .disabled(!row.tickable)
+            .accessibilityLabel("Un-tick set \(row.number)")
+            Text(row.type == .normal ? "Set \(row.number)" : "Set \(row.number) · \(row.type.label)")
+                .font(.body)
+            Spacer(minLength: 8)
+            if runner.records.contains(row.slotId) {
+                Image(systemName: "medal.fill")
+                    .font(.system(size: 15, weight: .bold))
+                    .foregroundStyle(Brand.coral)
+                    .accessibilityLabel("New record")
+                    .accessibilityIdentifier("set-record")
+            }
+            Text(setSummary(row, ex))
+                .font(.body.weight(.semibold))
+                .monospacedDigit()
+        }
+        .foregroundStyle(Brand.body)
+        .padding(.horizontal, SetRowMetrics.inset)
+    }
+
+    /// "2 more sets    45 kg × 10": the sets after the next one, spread out by a tap.
+    private func foldedLine(_ rows: [SessionRunner.SetRow], _ ex: ExerciseStep) -> some View {
+        Button { withAnimation(.easeInOut(duration: 0.2)) { showAllSets = true } } label: {
+            HStack(spacing: 10) {
+                Circle()
+                    .strokeBorder(Brand.line, lineWidth: 2)
+                    .frame(width: 28, height: 28)
+                    .frame(width: 44, height: 44)
+                Text(rows.count == 1 ? "1 more set" : "\(rows.count) more sets")
+                Spacer(minLength: 8)
+                Text(setSummary(rows[0], ex)).monospacedDigit()
+            }
+            .font(.body)
+            .foregroundStyle(Brand.faint)
+            .padding(.horizontal, SetRowMetrics.inset)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel(rows.count == 1 ? "1 more set" : "\(rows.count) more sets")
+        .accessibilityValue(setSummary(rows[0], ex))
+        .accessibilityHint("Shows them to change")
+        .accessibilityIdentifier("more-sets")
     }
 
     /// The set table's columns after SET, as its header writes them. INCL shows when a set has an
@@ -682,8 +815,9 @@ struct TimerView: View {
                         }
                     }
                     .frame(maxWidth: .infinity)
+                    .overlay(alignment: .bottom) { if editable { unitCaption(ex.shortUnit) } }
                 }
-                if incline, !wraps { inclineCell.frame(width: SetInclineCell.width(ex)) }
+                if incline, !wraps { inclineCell.frame(width: SetInclineCell.width(ex)).overlay(alignment: .bottom) { if editable { unitCaption("incl %") } } }
                 if let count = ex.countLabel {
                     // A distance or calorie set counts its metres or calories; a timed one shows the
                     // time it ran once done, and its plan before.
@@ -699,6 +833,7 @@ struct TimerView: View {
                         }
                     }
                     .frame(maxWidth: Self.countWidth(ex, incline: incline))
+                    .overlay(alignment: .bottom) { if editable { unitCaption(count.lowercased()) } }
                 }
                 if runner.records.contains(row.slotId), row.done {
                     Image(systemName: "medal.fill")
@@ -725,11 +860,13 @@ struct TimerView: View {
             }
             .monospacedDigit()
             .foregroundStyle(row.done ? Brand.muted : Brand.ink)
+            // Room for the unit captions under the steppers.
+            .padding(.bottom, editable ? 12 : 0)
             if wraps {
                 HStack { Text("INCL").font(.caption.weight(.bold)).tracking(0.8).foregroundStyle(Brand.muted); inclineCell }
                     .padding(.leading, SetRowMetrics.number + SetRowMetrics.spacing)
             }
-            if let hint, let last, !row.done {
+            if editable, let hint, let last {
                 // Tap to copy last time's set into this row.
                 Button {
                     openSet = row.slotId
@@ -745,8 +882,6 @@ struct TimerView: View {
                 .buttonStyle(.plain)
                 .padding(.leading, SetRowMetrics.number + SetRowMetrics.spacing)
                 .accessibilityLabel("Use last time for set \(row.number)")
-            } else if let hint {
-                Text(hint).font(.caption).foregroundStyle(Brand.muted).padding(.leading, SetRowMetrics.number + SetRowMetrics.spacing)
             }
         }
         .padding(.horizontal, SetRowMetrics.inset)
@@ -756,9 +891,14 @@ struct TimerView: View {
         .onTapGesture { if !row.done { openSet = row.slotId } }
     }
 
-    private func detail(_ ex: ExerciseStep) -> String {
-        let cue = ex.exercise.cue ?? Library.shared.exercise(ex.exercise.key)?.cue ?? ""
-        return cue.isEmpty ? ex.forLabel : "\(ex.forLabel) · \(cue)"
+    /// "kg", "reps" under a stepper's number, now the table has no header to name its columns.
+    private func unitCaption(_ unit: String) -> some View {
+        Text(unit)
+            .font(.caption2)
+            .foregroundStyle(Brand.muted)
+            .offset(y: 12)
+            .allowsHitTesting(false)
+            .accessibilityHidden(true)
     }
 
     private func restNudge(_ title: String, label: String, action: @escaping () -> Void) -> some View {
@@ -766,7 +906,7 @@ struct TimerView: View {
             Text(title)
                 .font(.headline)
                 .monospacedDigit()
-                .frame(width: 88, height: 48)
+                .frame(width: 64, height: 44)
                 .background(Brand.Night.raised, in: Capsule())
                 .foregroundStyle(Brand.Night.text)
         }
@@ -808,59 +948,25 @@ struct TimerView: View {
         }
     }
 
+    /// "NEXT  Rest  1:20": one line, the thumbnail and card gone.
     private func nextCard(_ next: Slot) -> some View {
-        HStack(spacing: 14) {
-            if let ex = next.exercise {
-                ExerciseThumb(ref: ex.exercise, size: 48)
-            } else {
-                Image(systemName: "pause.fill")
-                    .font(.system(size: 16, weight: .bold))
-                    .frame(width: 48, height: 48)
-                    .background(Brand.Night.line, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
-                    .foregroundStyle(Brand.Night.rest)
-            }
-            VStack(alignment: .leading, spacing: 1) {
-                Text("Next")
-                    .font(.caption.weight(.bold)).textCase(.uppercase).tracking(0.8)
-                    .foregroundStyle(Brand.Night.muted)
-                Text(next.exercise?.exercise.name ?? "Rest").font(.headline).foregroundStyle(Brand.Night.text)
-            }
-            Spacer()
+        HStack(spacing: 10) {
+            Text("Next")
+                .font(.caption.weight(.semibold)).textCase(.uppercase).tracking(0.8)
+                .foregroundStyle(Brand.Night.muted)
+            Text(next.exercise?.exercise.name ?? "Rest")
+                .font(.body)
+                .foregroundStyle(Brand.Night.text)
+                .lineLimit(1)
+            Spacer(minLength: 8)
             Text(next.exercise?.forLabel ?? Format.clock(next.seconds ?? 0))
-                .font(.subheadline.weight(.semibold))
+                .font(.body)
                 .monospacedDigit()
                 .foregroundStyle(Brand.Night.muted)
         }
-        .padding(12)
-        .background(Brand.Night.raised, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
-    }
-
-    /// Where you are inside the block, at a glance — the live exercise filled in.
-    @ViewBuilder
-    private var blockStrip: some View {
-        let steps = runner.blockSteps
-        if steps.count > 1, runner.state.phase != .lead {
-            ScrollView(.horizontal) {
-                HStack(spacing: 8) {
-                    ForEach(steps) { s in
-                        let live = s.id == runner.slot?.step.id
-                        Button { editing = s } label: {
-                            Text(s.exercise.name)
-                                .font(.footnote.weight(live ? .bold : .medium))
-                                .lineLimit(1)
-                                .padding(.horizontal, 12)
-                                .padding(.vertical, 9)
-                                .background(live ? Brand.coral : Brand.Night.raised, in: Capsule())
-                                .foregroundStyle(live ? .white : Brand.Night.muted)
-                        }
-                        .buttonStyle(.plain)
-                    }
-                }
-                .padding(.horizontal, 16)
-            }
-            .scrollIndicators(.hidden)
-            .padding(.bottom, 10)
-        }
+        .padding(.horizontal, 6)
+        .accessibilityElement(children: .combine)
+        .accessibilityIdentifier("next-up")
     }
 
     /// A countdown ends by itself: its big button is Pause. A set's says which set it logs.
@@ -1052,15 +1158,21 @@ private struct RowsFade: Equatable {
 }
 
 /// The ⋯ menu, apart from the top bar the clock redraws ten times a second: an open menu rebuilt
-/// that often never settles, and a tap on Finish and save did nothing. Its actions never change.
+/// that often never settles, and a tap on Finish and save did nothing. Only the sound switch changes it.
 private struct SessionMenu: View, Equatable {
+    let sound: Bool
+    let toggleSound: () -> Void
+    let overview: () -> Void
     let finish: () -> Void
     let discard: () -> Void
 
-    static func == (a: Self, b: Self) -> Bool { true }
+    static func == (a: Self, b: Self) -> Bool { a.sound == b.sound }
 
     var body: some View {
         Menu {
+            Button("Session overview", systemImage: "list.bullet", action: overview)
+            Button(sound ? "Mute tones" : "Unmute tones", systemImage: sound ? "speaker.slash.fill" : "speaker.wave.2.fill", action: toggleSound)
+            Divider()
             Button("Finish and save", action: finish)
             Button("Discard", role: .destructive, action: discard)
         } label: {

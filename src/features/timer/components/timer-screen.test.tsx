@@ -1,9 +1,13 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { expect, it, vi } from 'vitest';
 import { EX } from '@/features/runsheet/fixtures';
 import { makeExercise, type Runsheet } from '@/features/runsheet/model';
 import * as R from '../runner';
+import { composeStories } from '@storybook/react-vite';
 import { TimerScreen } from './timer-screen';
+import * as stories from './timer.stories';
+
+const Stories = composeStories(stories);
 
 // Push-ups for 3 rounds, then a 30 s hold on the clock.
 const sheet: Runsheet = { id: 'c', title: 'C', items: [{ kind: 'block', id: 'b', name: 'Push', repeat: 3, steps: [{ ...makeExercise(EX.bw_pushup, { forMode: 'reps', forValue: 10 }), id: 'p' }] }, { ...makeExercise(EX.bw_pushup, { forMode: 'seconds', forValue: 30 }), id: 'h' }] };
@@ -22,4 +26,80 @@ it('makes Set n of m done the big button on a set, Skip says Skip this step, ⋯
 it('makes Pause the big button on a countdown, with Done early small', () => {
   show(3);
   expect([big('Pause'), big('Done early')]).toEqual([true, false]);
+});
+
+// Goblet squat 24 kg × 10 for 2 rounds, a 30 s rest, then bench 4 × 10 at 45 kg with 90 s rests.
+const tidy: Runsheet = {
+  id: 't',
+  title: 'T',
+  items: [
+    { ...makeExercise(EX.db_incline_press, { forMode: 'reps', forValue: 10, target: 24 }), id: 'g' },
+    { kind: 'rest', id: 'r0', seconds: 30 },
+    { kind: 'block', id: 'bb', name: 'Bench', repeat: 4, steps: [{ ...makeExercise(EX.bb_bench, { forMode: 'reps', forValue: 10, target: 45 }), id: 'bench' }, { kind: 'rest', id: 'r', seconds: 90 }] },
+  ],
+};
+const noop = () => {};
+const grid = { adjust: noop, setReps: noop, complete: noop, reopen: noop };
+const at = (state: R.RunState, extra: Partial<Parameters<typeof TimerScreen>[0]> = {}) =>
+  render(<TimerScreen runsheet={tidy} state={state} now={0} onDone={noop} onSkip={noop} onBack={noop} onPause={noop} onResume={noop} onAdjust={noop} onSetReps={noop} onDrop={noop} onFinish={noop} onExit={noop} sets={grid} onAdjustRest={noop} {...extra} />);
+const onCard = () => R.advance(R.start(tidy, 0), 0, { skipped: true });
+/** Bench set 1 ticked, resting before set 2. */
+const resting = () => R.advance(R.startBlock(R.advance(R.advance(onCard(), 0), 0), 0), 0);
+
+it('keeps sound and the overview in the ⋯ menu, with ✕ to end the session', () => {
+  const toggle = vi.fn();
+  at(onCard(), { onToggleMute: toggle });
+  fireEvent.click(screen.getByRole('button', { name: 'End session' }));
+  expect(screen.getByText('End this session?')).toBeTruthy();
+  expect([screen.queryByRole('button', { name: 'Mute tones' }), screen.queryByRole('button', { name: 'Workout overview' })]).toEqual([null, null]);
+  fireEvent.click(screen.getByRole('button', { name: 'More' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Mute tones' }));
+  expect(toggle).toHaveBeenCalledOnce();
+  expect(screen.getByRole('button', { name: /Workout overview/ })).toBeTruthy();
+});
+
+it('folds load and reps into one line, Change opens the steppers in place', () => {
+  const v = at(onCard());
+  const row = screen.getByRole('button', { name: /^24 kg × 10 reps\. Change$/ });
+  expect([row.getAttribute('aria-expanded'), screen.queryByRole('group', { name: 'Reps' }), screen.queryByLabelText('Reps')]).toEqual(['false', null, null]);
+  expect(v.container.textContent).not.toContain('Exercise 1 of');
+  fireEvent.click(row);
+  expect(screen.getByRole('button', { name: /Close$/ }).getAttribute('aria-expanded')).toBe('true');
+  expect(screen.getAllByLabelText(/Reps|Target/).length).toBeGreaterThan(0);
+  // The next step comes folded again.
+  v.rerender(<TimerScreen runsheet={tidy} state={R.advance(onCard(), 0)} now={0} onDone={noop} onSkip={noop} onBack={noop} onPause={noop} onResume={noop} onAdjust={noop} onSetReps={noop} onDrop={noop} onFinish={noop} onExit={noop} sets={grid} />);
+  expect(screen.queryByRole('button', { name: /Close$/ })).toBeNull();
+});
+
+it('says what comes next on one line', () => {
+  at(onCard());
+  expect(screen.getByRole('button', { name: 'NextRest0:30' })).toBeTruthy();
+  cleanup();
+  at(R.advance(onCard(), 0));
+  expect(screen.getByRole('button', { name: 'Next blockBench10 reps' })).toBeTruthy();
+});
+
+it('reads target and race as one line, ±15 s either side of the rest clock', () => {
+  const v = at(resting(), { goal: 'Target 45 × 10', ghost: 'Set 1 — 14:26 ahead' });
+  expect(v.container.textContent).toContain('Target 45 × 10 · 14:26 ahead of last time');
+  const less = screen.getByRole('button', { name: '15 seconds less rest' });
+  expect(less.parentElement).toBe(screen.getByRole('button', { name: '15 seconds more rest' }).parentElement);
+  expect(less.parentElement!.textContent).toContain('1:30');
+});
+
+it('shows a done set as one line, the next with its steppers, the rest folded', () => {
+  const v = at(resting());
+  const sets = screen.getByLabelText('Sets');
+  expect(sets.textContent).not.toMatch(/^.*SetKG/i);
+  expect(screen.getByRole('button', { name: 'Un-tick set 1' }).parentElement!.textContent).toContain('Set 145 kg × 10');
+  expect(screen.getAllByRole('group').length >= 0 && screen.getByLabelText('Set 2 load')).toBeTruthy();
+  expect(screen.queryByLabelText('Set 3 load')).toBeNull();
+  fireEvent.click(screen.getByRole('button', { name: /^2 more sets, 45 kg × 10/ }));
+  expect(screen.getByRole('button', { name: 'Tick set 4' })).toBeTruthy();
+  expect(v.container.textContent).toContain('Set 3');
+});
+
+it('the RestBetweenSets story rests after set 1 with set 3 folded', () => {
+  render(<Stories.RestBetweenSets />);
+  expect([!!screen.getByRole('button', { name: 'Un-tick set 1' }), !!screen.getByLabelText('Set 2 load'), !!screen.getByRole('button', { name: /^1 more set,/ }), !!screen.getByText('Target 70 × 8 · 0:12 ahead of last time')]).toEqual([true, true, true, true]);
 });

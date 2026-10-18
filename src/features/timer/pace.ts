@@ -70,3 +70,14 @@ export const ghost = (now: SessionResult, last: SessionResult | undefined, block
   const short = delta === 0 ? 'on pace' : `${span(Math.abs(delta))} ${delta > 0 ? 'ahead' : 'behind'}`;
   return { label: hit.label, delta, text: `${hit.label} — ${short}`, short };
 };
+
+/**
+ * Today's target and the race against last time as one quiet line: "Target 45 × 10 · 14:26 ahead
+ * of last time". `ghost` is the pace text ("Set 1 — 14:26 ahead"); its set or round is dropped,
+ * since the header already says where you are.
+ */
+export const raceLine = (goal?: string, ghost?: string) => {
+  const pace = ghost?.split(' — ').pop();
+  const vs = pace ? (pace === 'on pace' ? 'on pace with last time' : pace.endsWith('behind') ? `${pace} last time` : `${pace} of last time`) : undefined;
+  return [goal, vs].filter(Boolean).join(' · ') || undefined;
+};

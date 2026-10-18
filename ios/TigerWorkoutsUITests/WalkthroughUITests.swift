@@ -91,7 +91,7 @@ final class WalkthroughUITests: XCTestCase {
         sleep(2)
         snap("05 Timer")
 
-        tap(app.buttons["Session overview"])
+        openOverview()
         snap("06 Session overview")
         tap(app.buttons["Close"])
 
@@ -307,9 +307,11 @@ final class WalkthroughUITests: XCTestCase {
             }
         }
         tap(startPull)
-        // Tones off from the top bar, then back on so later walks keep them.
+        // Tones off from the ⋯ menu, then back on so later walks keep them.
+        tap(app.buttons["Session menu"])
         tap(app.buttons["Mute tones"])
-        XCTAssertTrue(app.buttons["Unmute tones"].waitForExistence(timeout: 3), "the speaker should show tones are off")
+        tap(app.buttons["Session menu"])
+        XCTAssertTrue(app.buttons["Unmute tones"].waitForExistence(timeout: 3), "the menu should show tones are off")
         snap("36a Tones muted on the timer")
         tap(app.buttons["Unmute tones"])
         let useLast = app.buttons["Use last time for set 1"]
@@ -336,6 +338,8 @@ final class WalkthroughUITests: XCTestCase {
         tap(app.buttons["Start workout"])
         let done = app.buttons["Done"]
         XCTAssertTrue(app.descendants(matching: .any)["cap-left"].waitForExistence(timeout: 12))
+        // The reps sit folded in one line; Change opens their stepper and last time.
+        tap(app.buttons["Change"])
         XCTAssertTrue(app.buttons["use-last-time"].waitForExistence(timeout: 3), "the card should offer last time")
         snap("40 Last time on the card")
         for _ in 0..<3 { tap(done) }
@@ -527,7 +531,7 @@ final class WalkthroughUITests: XCTestCase {
         tap(app.buttons["Start workout"])
         XCTAssertTrue(app.buttons["End session"].waitForExistence(timeout: 5))
         tap(app.buttons["Skip"])
-        tap(app.buttons["Session overview"])
+        openOverview()
         tap(app.buttons["block-grip"].firstMatch)
         XCTAssertTrue(app.navigationBars["Reorder blocks"].waitForExistence(timeout: 5))
         XCTAssertTrue(app.descendants(matching: .any)["fixed-cards"].waitForExistence(timeout: 5), "the running block sits fixed above the list")
@@ -1147,7 +1151,7 @@ final class WalkthroughUITests: XCTestCase {
         open("Engine Room · Ten by One")
         tap(app.buttons["Start workout"])
         XCTAssertTrue(app.buttons["End session"].waitForExistence(timeout: 5))
-        tap(app.buttons["Session overview"])
+        openOverview()
         let incline = app.descendants(matching: .any)["grid-incline"]
         for _ in 0..<4 where !(incline.exists && incline.isHittable) { app.swipeUp(velocity: .slow) }
         XCTAssertTrue(incline.waitForExistence(timeout: 5), "the treadmill block's grid should show its incline")
@@ -1211,6 +1215,12 @@ final class WalkthroughUITests: XCTestCase {
             app.navigationBars["Workouts"].buttons[label].tap()
         }
         XCTAssertTrue(app.navigationBars["Workouts"].waitForExistence(timeout: 5))
+    }
+
+    /// The Session sheet is in the timer's ⋯ menu.
+    private func openOverview(file: StaticString = #filePath, line: UInt = #line) {
+        tap(app.buttons["Session menu"], file: file, line: line)
+        tap(app.buttons["Session overview"], file: file, line: line)
     }
 
     private func tap(_ element: XCUIElement, file: StaticString = #filePath, line: UInt = #line) {
@@ -1350,7 +1360,9 @@ final class WalkthroughUITests: XCTestCase {
         }
         tap(startBench)
         XCTAssertTrue(app.buttons["Tick set 1"].waitForExistence(timeout: 5))
-        XCTAssertTrue(app.buttons["Set 4: Drop set"].exists, "the drop set shows as D")
+        // The sets after the one you are on sit folded in one line until tapped.
+        tap(app.buttons["more-sets"])
+        XCTAssertTrue(app.buttons["Set 4: Drop set"].waitForExistence(timeout: 5), "the drop set shows as D")
         snap("72 Set types on the timer")
 
         tap(app.buttons["Plates for 60 kg"].firstMatch)
@@ -1424,6 +1436,8 @@ final class WalkthroughUITests: XCTestCase {
         open("Row intervals")
         tap(app.buttons["Start workout"])
         // The first block starts after the lead-in, with no gate.
+        XCTAssertTrue(app.buttons["Change"].waitForExistence(timeout: 12), "the metres should sit folded under Change")
+        tap(app.buttons["Change"])
         XCTAssertTrue(app.staticTexts["amount-done"].waitForExistence(timeout: 12), "a distance should have its metres to change")
         tap(app.buttons["More metres"])
         snap("94 Timer, metres done")
@@ -1520,5 +1534,6 @@ final class WalkthroughUITests: XCTestCase {
         tap(app.buttons["End session"])
         tap(app.buttons["Discard"])
     }
+
 
 }

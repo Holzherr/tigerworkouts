@@ -257,3 +257,14 @@ struct SetInclineTests {
         }
     }
 }
+
+/// The timer's one quiet line: target, then the race against last time.
+@Suite("pace line")
+struct PaceLineTests {
+    @Test("ahead, behind and on pace read as plain English")
+    func wording() {
+        #expect(TimerView.paceLine("14:26 ahead") == "14:26 ahead of last time")
+        #expect(TimerView.paceLine("24 s behind") == "24 s behind last time")
+        #expect(TimerView.paceLine("on pace") == "on pace with last time")
+    }
+}

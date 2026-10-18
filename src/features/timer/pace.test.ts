@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { SessionResult } from '@/features/runsheet/progression';
-import { ghost, lastTimed, marks } from './pace';
+import { ghost, lastTimed, marks, raceLine } from './pace';
 
 const session = (over: Partial<SessionResult>): SessionResult => ({ runsheetId: 'w', startedAt: '2026-09-20T10:00:00Z', steps: [], ...over });
 const circuit = (at: number[], startedAt = '2026-09-20T10:00:00Z') => session({ startedAt, splits: [{ blockId: 'b', at }], steps: [{ stepId: 'sw', exerciseKey: 'kb', sets: at.map(t => ({ reps: 10, at: t - 5 })) }] });
@@ -54,5 +54,11 @@ describe('ghost on the block clock', () => {
   });
   it('falls back to session time against a session logged before', () => {
     expect(ghost(split([95], 20), split([160]))?.text).toBe('Round 1 — 1:05 ahead');
+  });
+});
+
+describe('raceLine', () => {
+  it('joins the target and the race, without the set the header already shows', () => {
+    expect([raceLine('Target 45 × 10', 'Set 1 — 14:26 ahead'), raceLine(undefined, 'Round 2 — 8 s behind'), raceLine('Target 24 × 10'), raceLine(undefined, 'Round 1 — on pace'), raceLine()]).toEqual(['Target 45 × 10 · 14:26 ahead of last time', '8 s behind last time', 'Target 24 × 10', 'on pace with last time', undefined]);
   });
 });
