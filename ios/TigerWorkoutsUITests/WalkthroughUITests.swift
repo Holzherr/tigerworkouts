@@ -368,8 +368,8 @@ final class WalkthroughUITests: XCTestCase {
         tap(app.buttons["Done"])
     }
 
-    /// EMOM work counts down its minute; Previous step undoes a stray Done; a finished session can
-    /// be discarded, which asks first.
+    /// EMOM work counts down its minute, and its big button logs the set; Previous step undoes a
+    /// stray tap; a finished session can be discarded, which asks first.
     func testEmomPreviousAndDiscard() {
         open("EMOM 10: 5 burpees")
         tap(app.buttons["Start workout"])
@@ -377,7 +377,7 @@ final class WalkthroughUITests: XCTestCase {
         XCTAssertTrue(minute.waitForExistence(timeout: 12), "EMOM work should show the time left in the minute")
         XCTAssertTrue(minute.label.contains("left in the minute"))
         snap("37 EMOM minute clock")
-        tap(app.buttons["Done"])
+        tap(app.buttons["Set 1 of 10 done"])
         XCTAssertTrue(app.staticTexts["Rest"].waitForExistence(timeout: 5))
         tap(app.buttons["Previous step"])
         XCTAssertTrue(minute.waitForExistence(timeout: 5), "Previous step should go back to the set")

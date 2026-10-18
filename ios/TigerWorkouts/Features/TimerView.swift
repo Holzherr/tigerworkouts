@@ -1020,7 +1020,8 @@ struct TimerView: View {
                         .buttonStyle(BigButtonStyle())
                 }
             } else {
-                let countdown = runner.clock.left != nil || runner.state.phase == .lead
+                // EMOM reps run against the minute, but only Done moves them on: they keep "Set n of m done".
+                let countdown = (runner.clock.left != nil && !Runner.minuteOnly(runner.slot)) || runner.state.phase == .lead
                 HStack(spacing: 10) {
                     // Undoes a stray Done — on the Lock Screen too, where there is no way back.
                     Button {
