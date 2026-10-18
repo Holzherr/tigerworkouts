@@ -122,7 +122,8 @@ final class WalkthroughUITests: XCTestCase {
         XCTAssertTrue(app.descendants(matching: .any)["week-line"].waitForExistence(timeout: 5), "History should open on the week so far")
         snap("10 History")
 
-        // Saved, it is on Mine, the first row once done, one tap to start it.
+        // Saved, it is on Mine, one tap to start it: under your own not yet done (pinned on top since
+        // 18 Oct 2026), first of the rest once done.
         home()
         open("Tabata This")
         let save = app.buttons["Save to my list"]
@@ -130,6 +131,7 @@ final class WalkthroughUITests: XCTestCase {
         home()
         // An earlier walkthrough's copy, "Tabata This (mine)", stands in for the original on Mine.
         let play = app.buttons.matching(NSPredicate(format: "label BEGINSWITH 'Start Tabata This'")).firstMatch
+        for _ in 0..<6 where !play.waitForExistence(timeout: 2) { app.swipeUp(velocity: .slow) }
         XCTAssertTrue(play.waitForExistence(timeout: 5), "a saved workout should be on Mine with a play button")
         snap("10b Home, Mine")
 
