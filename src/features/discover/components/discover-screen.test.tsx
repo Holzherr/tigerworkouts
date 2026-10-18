@@ -42,13 +42,26 @@ describe('DiscoverScreen Mine', () => {
     fireEvent.click(screen.getByText('Fran'));
     expect(onOpen).toHaveBeenCalledWith(expect.objectContaining({ id: 'cf-girls-fran' }), 'saved');
   });
-  it('puts a workout made after your last session above the one you did, and calls it new', () => {
-    const fresh: Runsheet = { id: 'u-fresh', title: 'Fresh one', createdAt: '2026-10-15T09:00:00Z', source: { title: 'Fresh one', author: 'AI Coach', kind: 'user' }, items: [] };
-    render(<DiscoverScreen workouts={[priyanka(), fresh]} ownIds={[...OWN, 'u-fresh']} results={ONE_SESSION} onOpen={() => {}} />);
+  it('pins a new workout made for you on top as Up next, with its why, and clears the badge once done', () => {
+    // Made before the last session, and still on top: not done yet.
+    const fresh: Runsheet = { id: 'u-fresh', title: 'Fresh one', creator: 'AI Coach', description: 'Balances the swings day. Same rhythm.', createdAt: '2026-09-01T09:00:00Z', source: { title: 'Fresh one', author: 'AI Coach', kind: 'user' }, items: [] };
+    const { rerender, container } = render(<DiscoverScreen workouts={[priyanka(), fresh]} ownIds={[...OWN, 'u-fresh']} results={ONE_SESSION} onOpen={() => {}} />);
     const fresh_ = screen.getByText('Fresh one');
     const done = screen.getByText(priyanka().title);
     expect(fresh_.compareDocumentPosition(done) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
-    expect(screen.getByText(/min · new$/)).toBeInTheDocument();
+    expect(screen.getByText('New · made for you')).toBeInTheDocument();
+    expect(screen.getByText('Balances the swings day.')).toBeInTheDocument();
+    expect(container.querySelectorAll('[data-up-next]')).toHaveLength(1);
+    expect(within(container.querySelector('[data-up-next]') as HTMLElement).getByText('Fresh one')).toBeInTheDocument();
+    // Done once: no badge, and Up next moves to the one done longest ago.
+    rerender(<DiscoverScreen workouts={[priyanka(), fresh]} ownIds={[...OWN, 'u-fresh']} results={[{ runsheetId: 'u-fresh', startedAt: '2026-10-01T18:00:00Z', steps: [] }, ...ONE_SESSION]} onOpen={() => {}} />);
+    expect(screen.queryByText('New · made for you')).not.toBeInTheDocument();
+    expect(within(container.querySelector('[data-up-next]') as HTMLElement).getByText(priyanka().title)).toBeInTheDocument();
+  });
+  it('shows what is in each workout by block name', () => {
+    render(<DiscoverScreen workouts={ALL} ownIds={OWN} results={ONE_SESSION} onOpen={() => {}} />);
+    const blocks = priyanka().items.flatMap(i => (i.kind === 'block' ? [i.name] : []));
+    expect(screen.getByText(new RegExp(`^${blocks[0].replace(/[+]/g, '\\+')} · `))).toBeInTheDocument();
   });
   it('lists what a coach sent first, once, marked from the coach', () => {
     const onStart = vi.fn();

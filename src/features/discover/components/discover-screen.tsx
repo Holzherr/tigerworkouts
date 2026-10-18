@@ -6,7 +6,7 @@ import { cn } from '@/shared/utils/ui-utils';
 import { runsheetMinutes, type Runsheet } from '@/features/runsheet/model';
 import type { SessionResult } from '@/features/runsheet/progression';
 import { recommend } from '../recommend';
-import { lastDoneById, lastDoneOf, mineLine, mineList } from '../mine';
+import { contentsLine, lastDoneById, lastDoneOf, mineLine, mineList, newBadge, upNextOf, whyLine } from '../mine';
 
 export type DiscoverTab = 'mine' | 'discover';
 /** The list a workout was tapped in, recorded on the session it starts. */
@@ -73,12 +73,26 @@ const groupRecs = (recs: ReturnType<typeof recommend>) => {
 /** "20 min · CrossFit", "45 min · StrongLifts 5×5 · Workout A". */
 const about = (r: Runsheet) => [`${runsheetMinutes(r)} min`, r.program ? `${r.program.name} · ${r.program.day}` : (r.source?.author ?? r.creator)].filter(Boolean).join(' · ');
 
-/** One workout as a card: name and one meta line open its page; with `onStart`, a round coral play starts it. */
-const Row = ({ runsheet: r, meta, coach, onOpen, onStart }: { runsheet: Runsheet; meta: string; coach?: boolean; onOpen: () => void; onStart?: () => void }) => (
-  <div className="flex items-center gap-2 rounded-card border border-line bg-surface pr-2">
+/**
+ * One workout as a card: name and one meta line open its page; with `onStart`, a round coral play
+ * starts it. On Mine a card says more, a line each (Nick, 18 Oct 2026): a New badge until it is
+ * first done, with the description's first sentence under the title; what is in it; then the
+ * meta. `upNext` gives the one card to do next a light coral edge and an "Up next" label.
+ */
+const Row = ({ runsheet: r, meta, coach, badge, why, contents, upNext, onOpen, onStart }: { runsheet: Runsheet; meta: string; coach?: boolean; badge?: string; why?: string; contents?: string; upNext?: boolean; onOpen: () => void; onStart?: () => void }) => (
+  <div className={cn('flex items-center gap-2 rounded-card border bg-surface pr-2', upNext ? 'border-brand-line' : 'border-line')} data-up-next={upNext || undefined}>
     <button type="button" onClick={onOpen} className="flex min-h-14 min-w-0 flex-1 items-center gap-2 py-2.5 pl-4 text-left">
-      <span className="min-w-0 flex-1">
+      <span className="flex min-w-0 flex-1 flex-col">
         <span className="block truncate text-[15px] font-bold">{r.title}</span>
+        {/* Drawn above the title, read after it: the card is named by its title. */}
+        {(badge || upNext) && (
+          <span className="order-first mb-0.5 flex items-center gap-1.5 text-[11px] font-bold">
+            {upNext && <span className="text-brand-ink">Up next</span>}
+            {badge && <span className="rounded-full bg-brand-soft px-2 py-px text-brand-ink">{badge}</span>}
+          </span>
+        )}
+        {why && <span className="block truncate text-[12px] text-body">{why}</span>}
+        {contents && <span className="block truncate text-[12px] text-body">{contents}</span>}
         {meta && <span className={cn('block truncate text-[12px]', coach ? 'font-semibold text-brand-ink' : 'text-muted')}>{meta}</span>}
       </span>
       {!onStart && <ChevronRight className="size-4 shrink-0 text-faint" />}
@@ -111,6 +125,8 @@ export const DiscoverScreen = ({ workouts, results = [], savedIds = [], ownIds =
   const coachRows = useMemo(() => [...fromCoach].sort((a, b) => Number(a.done) - Number(b.done)), [fromCoach]);
   const mine = useMemo(() => mineList(workouts, ownIds, savedIds, results, coachRows.map(c => wid(c.runsheet))), [workouts, ownIds, savedIds, results, coachRows]);
   const own = useMemo(() => new Set(ownIds), [ownIds]);
+  // One card to do next: what a coach sent and is not done, else Mine's own pick.
+  const upNext = coachRows.find(c => !c.done)?.id ?? upNextOf(mine, ownIds, last);
 
   const { programs, singles } = useMemo(() => {
     const ql = q.trim().toLowerCase();
@@ -196,11 +212,13 @@ export const DiscoverScreen = ({ workouts, results = [], savedIds = [], ownIds =
         {!searching && tab === 'mine' && (
           <>
             {coachRows.map(c => (
-              <Row key={c.id} runsheet={c.runsheet} coach meta={`${runsheetMinutes(c.runsheet)} min · from ${c.coachName}${c.done ? ' · done' : ''}`} onOpen={() => onOpen(c.runsheet, 'coach')} onStart={onStart && (() => onStart(c.runsheet, 'coach'))} />
+              <Row key={c.id} runsheet={c.runsheet} coach badge={c.done ? undefined : 'New · made for you'} why={c.done ? undefined : whyLine(c.runsheet)} contents={contentsLine(c.runsheet)} upNext={c.id === upNext} meta={`${runsheetMinutes(c.runsheet)} min · from ${c.coachName}${c.done ? ' · done' : ''}`} onOpen={() => onOpen(c.runsheet, 'coach')} onStart={onStart && (() => onStart(c.runsheet, 'coach'))} />
             ))}
-            {mine.map(r => (
-              <Row key={wid(r)} runsheet={r} meta={mineLine(r, lastDoneOf(r, last), own.has(wid(r)))} onOpen={() => onOpen(r, 'saved')} onStart={onStart && (() => onStart(r, 'saved'))} />
-            ))}
+            {mine.map(r => {
+              const done = lastDoneOf(r, last);
+              const fresh = !done && own.has(wid(r));
+              return <Row key={wid(r)} runsheet={r} badge={fresh ? newBadge(r) : undefined} why={fresh ? whyLine(r) : undefined} contents={contentsLine(r)} upNext={wid(r) === upNext} meta={mineLine(r, done)} onOpen={() => onOpen(r, 'saved')} onStart={onStart && (() => onStart(r, 'saved'))} />;
+            })}
             {coachRows.length === 0 && mine.length === 0 && <EmptyState icon={<Bookmark />} title="No workouts yet" body="Write your own with +, or save one from Discover." action={{ label: 'Discover workouts', onClick: () => setTab('discover') }} />}
           </>
         )}
