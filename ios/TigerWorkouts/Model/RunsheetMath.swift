@@ -193,6 +193,20 @@ extension ExerciseStep {
         }
     }
 
+    /// The measures the step can be set to log: not one its target records already.
+    var logChoices: [StepLog] {
+        StepLog.allCases.filter { c in
+            switch c {
+            case .reps: ![.reps, .amrap, .max, .segment].contains(forMode)
+            case .meters, .calories: ![.meters, .calories, .segment].contains(forMode)
+            }
+        }
+    }
+
+    /// What the step logs beyond its count, for a column of its own: reps on a timed set, metres
+    /// on a timed row. Nil when it logs nothing extra.
+    var extraLog: StepLog? { log.flatMap { logChoices.contains($0) ? $0 : nil } }
+
     /// The set grid's column for the per-set count; nil for modes with nothing to count per set.
     var countLabel: String? {
         switch forMode {

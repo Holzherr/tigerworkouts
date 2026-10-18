@@ -169,6 +169,30 @@ struct StepLogTests {
         #expect(StepEditorView.logChoices(ExerciseStep(id: "a", exercise: Self.row, forMode: .reps, forValue: 10)) == [.meters, .calories])
     }
 
+    @Test("the set grid gives a timed row set to log metres its own column; the count stays the time")
+    func grid() {
+        var step = ExerciseStep(id: "rw", exercise: TimedWorkTests.rower, forMode: .seconds, forValue: 30)
+        #expect(TimerView.setColumns(step, inclines: []) == ["SEC"])
+        step.log = .meters
+        #expect(TimerView.setColumns(step, inclines: []) == ["SEC", "M"])
+        let before = SessionRunner.SetRow(slotId: "a", number: 1, reps: 30, amount: 140, plan: 30, done: false, current: true, tickable: true)
+        #expect(TimerView.countShown(before, step) == 30 && TimerView.loggedShown(before, .meters) == 140)
+        var swings = ExerciseStep(id: "sw", exercise: Fixtures.swing, target: 24, forMode: .seconds, forValue: 30)
+        swings.log = .reps
+        // Reps counted on a timed set never show in its seconds column.
+        let counted = SessionRunner.SetRow(slotId: "b", number: 1, reps: 21, counted: 21, plan: 30, done: false, current: true, tickable: true)
+        #expect(TimerView.countShown(counted, swings) == 30 && TimerView.loggedShown(counted, .reps) == 21)
+    }
+
+    @Test("Edit sets offers the columns the step logs")
+    func editColumns() {
+        var rower = ExerciseStep(id: "rw", exercise: TimedWorkTests.rower, forMode: .seconds, forValue: 30)
+        #expect(LoggedSetsCard.fields([SetResult(reps: nil, load: nil, seconds: 30)], unit: "m", step: rower) == [.seconds])
+        rower.log = .meters
+        #expect(LoggedSetsCard.fields([SetResult(reps: nil, load: nil, seconds: 30)], unit: "m", step: rower) == [.meters, .seconds])
+        #expect(LoggedSetsCard.fields([SetResult(reps: nil, load: nil, seconds: 30)], unit: "m") == [.meters, .seconds])
+    }
+
     @Test("log survives a save and an unknown one reads as nothing")
     func codable() throws {
         var step = ExerciseStep(id: "a", exercise: TimedWorkTests.rower, forMode: .seconds, forValue: 30)

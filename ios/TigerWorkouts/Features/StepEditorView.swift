@@ -131,15 +131,7 @@ struct StepEditorView: View {
     }
 
     /// The measures a step can be set to log: not one its target records already.
-    nonisolated static func logChoices(_ step: ExerciseStep) -> [StepLog] {
-        StepLog.allCases.filter { c in
-            switch c {
-            case .reps: ![.reps, .amrap, .max, .segment].contains(step.forMode)
-            case .meters: ![.meters, .calories, .segment].contains(step.forMode)
-            case .calories: ![.meters, .calories, .segment].contains(step.forMode)
-            }
-        }
-    }
+    nonisolated static func logChoices(_ step: ExerciseStep) -> [StepLog] { step.logChoices }
 
     private var stepSize: Double {
         switch step.forMode {

@@ -44,3 +44,11 @@ export const RestBetweenSets: Story = {
     ghost: 'Set 1 — 0:12 ahead',
   },
 };
+
+/** Rower sprints, 3 × 30 s on the rower with 30 s rest: a timed piece asks for nothing to log. */
+const sprints = (log?: 'meters'): Runsheet => ({ id: 'sprints', title: 'Rower sprints', items: [{ kind: 'block', id: 'b', name: 'Rower sprints', repeat: 3, steps: [{ ...makeExercise(EX.cardio_rower, { forMode: 'seconds', forValue: 30 }), ...(log ? { log } : {}), id: 'rw' }, { kind: 'rest', id: 'r', seconds: 30 }] }, { ...makeExercise(EX.kb_swing, { forMode: 'seconds', forValue: 30, target: 24 }), id: 'sw' }] });
+const onSprint = (r: Runsheet) => R.advance(R.start(r, 0), 0, { skipped: true });
+/** A 30 s rower step that logs nothing: no metres to enter, finishing the timer is the result. */
+export const TimedRowerNoLog: Story = { args: { runsheet: sprints(), state: onSprint(sprints()), now: 12000, onSetAmount: () => {} } };
+/** The same step set to log metres (Add to log in the editor): the card asks for them. */
+export const TimedRowerLogsMetres: Story = { args: { runsheet: sprints('meters'), state: onSprint(sprints('meters')), now: 12000, onSetAmount: () => {} } };
