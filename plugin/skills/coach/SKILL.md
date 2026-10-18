@@ -18,7 +18,7 @@ description: Coach with TigerWorkouts. Use when the person asks what to train ne
 ## Write a workout
 
 - Get exercise keys from `search_exercises`; never guess them.
-- Build the runsheet as `create_workout` describes: warmup, main, cooldown roles; blocks for rounds, AMRAP, EMOM, for time or ladders; loads in the exercise's unit.
+- Build the runsheet as `create_workout` describes: warmup, main, cooldown roles; blocks for rounds, AMRAP, EMOM, for time or ladders; loads in the exercise's unit. A timed step logs only its time; set `log` (reps, meters, calories) when the person should record more, e.g. metres on a 30 s rower sprint.
 - A plain-text `plan` is fine for simple sessions ("row 5 min" / "kb swings 24 + push ups x5 40/20").
 - Saved workouts are private. Make one public only when asked.
 - Reply with the title, length, a short outline, and `previewUrl` or `appUrl`. Don't paste the JSON.
@@ -29,7 +29,7 @@ Follow the train-now skill: `start_workout` shows a timer in the chat and logs t
 
 ## They tell you what they did
 
-Call `log_session` with the workout id, start time, and per exercise the load and reps per set. Use an `id` starting `s-` so a retry is not logged twice. Confirm in one line, with anything that beat their previous best.
+Call `log_session` with the workout id, start time, and per exercise the load and reps per set (`sets` for per-set detail: seconds worked, metres, calories). Use an `id` starting `s-` so a retry is not logged twice. Confirm in one line, with anything that beat their previous best.
 
 ## Changing a workout
 

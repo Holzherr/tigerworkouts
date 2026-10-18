@@ -48,7 +48,7 @@ struct FinishView: View {
         ProgressionRules.nextLoads(runsheet, last: current, history: store.results, maxes: store.trainingMaxes, kit: Equipment.current())
     }
 
-    private var celebration: Celebrate.Celebration { Celebrate.celebrate(current, all: store.results, lineage: runsheet.lineage) }
+    private var celebration: Celebrate.Celebration { Celebrate.celebrate(current, all: store.results, lineage: runsheet.lineage, runsheet: runsheet) }
     /// Notes from the last time of this workout, offered back as a starting point.
     private var lastNotes: String? {
         store.results
@@ -81,7 +81,7 @@ struct FinishView: View {
                     .accessibilityIdentifier("score-entry")
                 }
 
-                RoundTimesCard(result: current, last: celebration.last, blockName: blockName, records: celebration.rounds)
+                RoundTimesCard(result: current, last: celebration.last, runsheet: runsheet, blockName: blockName, records: celebration.rounds)
 
                 EffortRow(value: rpe) { value in
                     rpe = value

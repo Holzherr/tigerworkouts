@@ -1,6 +1,6 @@
 import { Plus, X } from 'lucide-react';
 import { useState } from 'react';
-import { measureOf, nextSetType, setMarks, shortUnit, type ExerciseRef } from '@/features/runsheet/model';
+import { amountOf, countsReps, measureOf, nextSetType, setMarks, shortUnit, type ExerciseRef, type ExerciseStep } from '@/features/runsheet/model';
 import type { SetResult, StepResult } from '@/features/runsheet/progression';
 import { SetMark } from '@/features/runsheet/components/set-grid';
 import { cn, fmtClock } from '@/shared/utils/ui-utils';
@@ -9,15 +9,17 @@ import { setLabel, setsOf } from '../logbook';
 
 type Field = 'load' | 'reps' | 'seconds' | 'meters' | 'calories';
 
-/** The numbers a row's sets are edited in: what any set has, plus what the exercise counts in. */
-export const fieldsFor = (sets: SetResult[], unit: string): Field[] => {
+/** The numbers a row's sets are edited in: what any set has, plus what the step asks to log (given
+ * the step it ran) or else what the exercise counts in. */
+export const fieldsFor = (sets: SetResult[], unit: string, step?: ExerciseStep): Field[] => {
   const has = (f: Field) => sets.some(x => x[f] !== undefined);
   const measure = measureOf(unit);
+  const amount = step ? amountOf(step) : measure === 'meters' || measure === 'calories' ? measure : undefined;
   const out: Field[] = [];
   if (has('load') || (unit && unit !== 'reps' && !measure)) out.push('load');
-  if (has('reps') || !(has('seconds') || has('meters') || has('calories') || measure)) out.push('reps');
-  if (has('meters') || measure === 'meters') out.push('meters');
-  if (has('calories') || measure === 'calories') out.push('calories');
+  if (has('reps') || (step && countsReps(step)) || !(has('seconds') || has('meters') || has('calories') || measure || amount)) out.push('reps');
+  if (has('meters') || amount === 'meters') out.push('meters');
+  if (has('calories') || amount === 'calories') out.push('calories');
   if (has('seconds') || measure) out.push('seconds');
   return out;
 };
@@ -27,6 +29,8 @@ const HEAD: Record<Field, (unit: string) => string> = { load: u => shortUnit(u) 
 export interface LoggedSetsProps {
   row: StepResult;
   exercise: ExerciseRef;
+  /** The step it ran, for the measures it asks to log: editing offers their columns. */
+  step?: ExerciseStep;
   /** Editing: each set's numbers are inputs and its mark cycles the type. */
   editing?: boolean;
   onEdit?: (index: number, patch: SetPatch) => void;
@@ -42,7 +46,7 @@ export interface LoggedSetsProps {
  * it was ticked. Editing: one line per set, the mark (tap to change the type) then a number box per
  * measure the row has — load, reps, metres, calories, seconds — under a heading row.
  */
-export const LoggedSets = ({ row, exercise, editing, onEdit, onAdd, onRemove }: LoggedSetsProps) => {
+export const LoggedSets = ({ row, exercise, step, editing, onEdit, onAdd, onRemove }: LoggedSetsProps) => {
   const sets = setsOf(row, exercise.unit);
   if (!sets.length) return null;
   const marks = setMarks(sets.map(x => x.type));
@@ -59,12 +63,12 @@ export const LoggedSets = ({ row, exercise, editing, onEdit, onAdd, onRemove }: 
         ))}
       </div>
     );
-  return <SetsEditor sets={sets} marks={marks} exercise={exercise} onEdit={onEdit} onAdd={onAdd} onRemove={onRemove} />;
+  return <SetsEditor sets={sets} marks={marks} exercise={exercise} step={step} onEdit={onEdit} onAdd={onAdd} onRemove={onRemove} />;
 };
 
 /** The editing lines. The columns are fixed when editing starts, so clearing a box keeps it. */
-const SetsEditor = ({ sets, marks, exercise, onEdit, onAdd, onRemove }: { sets: SetResult[]; marks: string[]; exercise: ExerciseRef; onEdit?: LoggedSetsProps['onEdit']; onAdd?: () => void; onRemove?: (index: number) => void }) => {
-  const [fields] = useState(() => fieldsFor(sets, exercise.unit));
+const SetsEditor = ({ sets, marks, exercise, step, onEdit, onAdd, onRemove }: { sets: SetResult[]; marks: string[]; exercise: ExerciseRef; step?: ExerciseStep; onEdit?: LoggedSetsProps['onEdit']; onAdd?: () => void; onRemove?: (index: number) => void }) => {
+  const [fields] = useState(() => fieldsFor(sets, exercise.unit, step));
   const num = (v: string) => {
     const n = Number(v.replace(',', '.'));
     return v.trim() === '' || !Number.isFinite(n) ? undefined : n;

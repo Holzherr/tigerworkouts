@@ -179,8 +179,19 @@ extension ExerciseStep {
         }
     }
 
-    /// Done to a count, so the reps done are worth logging: reps, reps-plus, max.
-    var countsReps: Bool { forMode == .reps || forMode == .amrap || forMode == .max }
+    /// Asks for the reps done: done to a count (reps, reps-plus, max), or set to log them.
+    var countsReps: Bool { forMode == .reps || forMode == .amrap || forMode == .max || log == .reps }
+
+    /// The amount the step records: metres or calories for a step done for either (the plan, changed
+    /// if it went otherwise), or for one whose `log` asks for them. Never from the exercise alone: a
+    /// rower on the clock asks for metres only when the step says so. `amountOf` in model.ts.
+    var amountLog: StepLog? {
+        switch forMode {
+        case .meters: .meters
+        case .calories: .calories
+        default: log == .meters || log == .calories ? log : nil
+        }
+    }
 
     /// The set grid's column for the per-set count; nil for modes with nothing to count per set.
     var countLabel: String? {

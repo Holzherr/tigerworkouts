@@ -3,30 +3,42 @@ import SwiftUI
 /// Round times per circuit, AMRAP or for-time block: a heading per block, then a wrapping row of
 /// small tiles — "R3", the round's time, and against last time under it (faster in coral ink,
 /// slower muted). The fastest round has a coral outline and "fastest", the slowest says "slowest";
-/// a round that was the workout's fastest ever carries a medal. Nothing for a session with no
-/// splits. Follows `splits-card.tsx`.
+/// a round that was the workout's fastest ever carries a medal. The marks only go on rounds really
+/// apart. A block whose round time the timer fixed shows what each round logged instead, the most
+/// marked "best", or nothing. Nothing at all when no block has either. Follows `splits-card.tsx`.
 struct RoundTimesCard: View {
     let result: SessionResult
     var last: SessionResult?
+    /// The workout it ran: without it every split shows, as before.
+    var runsheet: Runsheet?
     var blockName: (String) -> String? = { _ in nil }
     var records: [Rounds.PR] = []
 
     var body: some View {
-        let rows = Rounds.rows(result, last: last).filter { $0.times.contains { $0 != nil } }
-        if !rows.isEmpty {
+        let rows = Rounds.rows(result, last: last, runsheet: runsheet).filter { $0.times.contains { $0 != nil } }
+        let amounts = Rounds.amountRows(result, runsheet: runsheet)
+        if !rows.isEmpty || !amounts.isEmpty {
             VStack(alignment: .leading, spacing: 10) {
-                Text(last == nil ? "Round times" : "Round times · vs last time")
+                Text(rows.isEmpty ? "Per round" : last == nil ? "Round times" : "Round times · vs last time")
                     .font(.caption.weight(.bold))
                     .textCase(.uppercase)
                     .tracking(0.6)
                     .foregroundStyle(Brand.muted)
                 ForEach(rows, id: \.blockId) { row in
                     VStack(alignment: .leading, spacing: 6) {
-                        if rows.count > 1 || blockName(row.blockId) != nil {
+                        if rows.count + amounts.count > 1 || blockName(row.blockId) != nil {
                             Text(blockName(row.blockId) ?? "Block").font(.subheadline.weight(.bold)).foregroundStyle(Brand.ink)
                         }
                         FlowRow(spacing: 6) {
                             ForEach(Array(row.times.enumerated()), id: \.offset) { i, t in tile(row, i, t) }
+                        }
+                    }
+                }
+                ForEach(amounts, id: \.self) { row in
+                    VStack(alignment: .leading, spacing: 6) {
+                        Text(title(row, among: amounts)).font(.subheadline.weight(.bold)).foregroundStyle(Brand.ink)
+                        FlowRow(spacing: 6) {
+                            ForEach(Array(row.values.enumerated()), id: \.offset) { i, v in amountTile(row, i, v) }
                         }
                     }
                 }
@@ -37,6 +49,30 @@ struct RoundTimesCard: View {
             .accessibilityElement(children: .contain)
             .accessibilityIdentifier("round-times")
         }
+    }
+
+    /// The block's name, and the exercise's when more than one step in it logs an amount.
+    private func title(_ row: Rounds.AmountRow, among all: [Rounds.AmountRow]) -> String {
+        let block = blockName(row.blockId) ?? "Block"
+        return all.filter { $0.blockId == row.blockId }.count > 1 ? "\(block) · \(Library.shared.name(row.exerciseKey))" : block
+    }
+
+    private func amountTile(_ row: Rounds.AmountRow, _ i: Int, _ v: Double?) -> some View {
+        let best = row.best == i
+        return VStack(spacing: 1) {
+            Text("R\(i + 1)").font(.caption2.weight(.bold)).foregroundStyle(Brand.muted)
+            Text(v.map { Rounds.amount($0, row.field) } ?? "–").font(.subheadline.weight(.heavy)).monospacedDigit().foregroundStyle(Brand.ink)
+            if best {
+                Text("best").font(.system(size: 10, weight: .bold)).foregroundStyle(Brand.coralInk)
+            }
+        }
+        .frame(minWidth: 58)
+        .padding(.horizontal, 6)
+        .padding(.vertical, 5)
+        .background(best ? Brand.coralSoft : Brand.canvas, in: RoundedRectangle(cornerRadius: 10, style: .continuous))
+        .overlay(RoundedRectangle(cornerRadius: 10, style: .continuous).strokeBorder(best ? Brand.coral : Brand.lineSoft))
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("Round \(i + 1)\(v.map { " \(Rounds.amount($0, row.field))" } ?? "")\(best ? ", best" : "")")
     }
 
     private func tile(_ row: Rounds.Row, _ i: Int, _ t: Double?) -> some View {
@@ -86,15 +122,21 @@ struct LoggedSetsCard: View {
 
     enum Field: String, CaseIterable { case load, reps, meters, calories, seconds }
 
-    /// The numbers a row's sets are edited in: what any set has, plus what the exercise counts in.
-    static func fields(_ sets: [SetResult], unit: String) -> [Field] {
+    /// The numbers a row's sets are edited in: what any set has, plus what the step asks to log (given
+    /// the step it ran) or else what the exercise counts in.
+    static func fields(_ sets: [SetResult], unit: String, step: ExerciseStep? = nil) -> [Field] {
         let measure = Measure.of(unit)
+        let amount: Field? = if let step {
+            step.amountLog == .meters ? .meters : step.amountLog == .calories ? .calories : nil
+        } else {
+            measure == .meters ? .meters : measure == .calories ? .calories : nil
+        }
         var out: [Field] = []
         let has = { (f: Field) in sets.contains { value($0, f) != nil } }
         if has(.load) || (!unit.isEmpty && unit != "reps" && measure == nil) { out.append(.load) }
-        if has(.reps) || !(has(.seconds) || has(.meters) || has(.calories) || measure != nil) { out.append(.reps) }
-        if has(.meters) || measure == .meters { out.append(.meters) }
-        if has(.calories) || measure == .calories { out.append(.calories) }
+        if has(.reps) || step?.countsReps == true || !(has(.seconds) || has(.meters) || has(.calories) || measure != nil || amount != nil) { out.append(.reps) }
+        if has(.meters) || amount == .meters { out.append(.meters) }
+        if has(.calories) || amount == .calories { out.append(.calories) }
         if has(.seconds) || measure != nil { out.append(.seconds) }
         return out
     }
@@ -136,7 +178,7 @@ struct LoggedSetsCard: View {
                 Spacer()
                 Button(editing ? "Done" : "Edit sets") {
                     if !editing {
-                        frozen = Dictionary(uniqueKeysWithValues: session.steps.map { ($0.id, Self.fields(Logbook.sets(of: $0), unit: Library.shared.exercise($0.exerciseKey)?.unit ?? "")) })
+                        frozen = Dictionary(uniqueKeysWithValues: session.steps.map { ($0.id, Self.fields(Logbook.sets(of: $0), unit: Library.shared.exercise($0.exerciseKey)?.unit ?? "", step: planned($0))) })
                     }
                     editing.toggle()
                 }
@@ -172,6 +214,11 @@ struct LoggedSetsCard: View {
         .cardSurface()
     }
 
+    /// The step a logged row ran, while it is still in the workout.
+    private func planned(_ row: StepResult) -> ExerciseStep? {
+        runsheet?.exerciseSteps.first { $0.id == row.stepId }
+    }
+
     private func unit(_ key: String) -> String {
         (Library.shared.exercise(key)?.unit ?? "").replacingOccurrences(of: " per arm", with: "").replacingOccurrences(of: " per side", with: "").trimmingCharacters(in: .whitespaces)
     }
@@ -199,7 +246,7 @@ struct LoggedSetsCard: View {
     private func editor(_ step: StepResult) -> some View {
         let sets = Logbook.sets(of: step)
         let marks = SetType.marks(sets.map(\.type))
-        let fields = frozen[step.id] ?? Self.fields(sets, unit: Library.shared.exercise(step.exerciseKey)?.unit ?? "")
+        let fields = frozen[step.id] ?? Self.fields(sets, unit: Library.shared.exercise(step.exerciseKey)?.unit ?? "", step: planned(step))
         let u = unit(step.exerciseKey)
         return VStack(alignment: .leading, spacing: 4) {
             HStack(spacing: 6) {

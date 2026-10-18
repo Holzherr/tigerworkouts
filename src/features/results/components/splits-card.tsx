@@ -1,13 +1,19 @@
 import { Medal } from 'lucide-react';
 import { cn } from '@/shared/utils/ui-utils';
+import type { Runsheet } from '@/features/runsheet/model';
 import type { SessionResult } from '@/features/runsheet/progression';
 import { fmtDur } from '../logbook';
-import { roundRows, type RoundPR } from '../rounds';
+import { amountRows, fmtAmount, roundRows, type RoundPR } from '../rounds';
 
 export interface SplitsCardProps {
   result: SessionResult;
   /** The last session of the same workout: each round is compared with the same round then. */
   last?: SessionResult;
+  /** The workout it ran: a block whose round time the timer fixed shows what each round logged
+   * instead, or nothing. */
+  runsheet?: Runsheet;
+  /** An exercise's name, for a block with more than one step logging an amount. */
+  exerciseName?: (key: string) => string | undefined;
   /** A block's name from the workout; "Block" when it is gone. */
   blockName?: (blockId: string) => string | undefined;
   /** Rounds that were the workout's fastest ever when done: a medal on the tile. */
@@ -21,18 +27,21 @@ export const fmtDelta = (d: number) => (d === 0 ? 'same' : `${d < 0 ? '−' : '+
 /**
  * Round times per circuit, AMRAP or for-time block: a heading per block, then a wrapping row of
  * small tiles — "R3", the round's time, and against last time under it (faster in brand ink,
- * slower muted). The fastest round has a brand outline and "fastest", the slowest says "slowest".
- * Renders nothing for a session with no splits.
+ * slower muted). The fastest round has a brand outline and "fastest", the slowest says "slowest",
+ * only when they are really apart. A fixed-time block shows what each round logged, the most
+ * marked "best". Renders nothing when no block has either.
  */
-export const SplitsCard = ({ result, last, blockName, records = [], className }: SplitsCardProps) => {
-  const rows = roundRows(result, last).filter(r => r.times.some(t => t !== undefined));
-  if (!rows.length) return null;
+export const SplitsCard = ({ result, last, runsheet, exerciseName, blockName, records = [], className }: SplitsCardProps) => {
+  const rows = roundRows(result, last, runsheet).filter(r => r.times.some(t => t !== undefined));
+  const amounts = amountRows(result, runsheet);
+  if (!rows.length && !amounts.length) return null;
+  const titled = rows.length + amounts.length > 1;
   return (
     <section aria-label="Round times" className={cn('rounded-card border border-line bg-surface px-3 py-2.5', className)}>
-      <div className="text-[11px] font-bold tracking-widest text-muted uppercase">Round times{last ? ' · vs last time' : ''}</div>
+      <div className="text-[11px] font-bold tracking-widest text-muted uppercase">{rows.length ? `Round times${last ? ' · vs last time' : ''}` : 'Per round'}</div>
       {rows.map(row => (
         <div key={row.blockId} className="mt-2">
-          {rows.length > 1 || blockName?.(row.blockId) ? <div className="text-[13px] font-bold">{blockName?.(row.blockId) ?? 'Block'}</div> : null}
+          {titled || blockName?.(row.blockId) ? <div className="text-[13px] font-bold">{blockName?.(row.blockId) ?? 'Block'}</div> : null}
           <div className="mt-1 flex flex-wrap gap-1.5">
             {row.times.map((t, i) => {
               const d = row.vsLast[i];
@@ -54,6 +63,27 @@ export const SplitsCard = ({ result, last, blockName, records = [], className }:
           </div>
         </div>
       ))}
+      {amounts.map(row => {
+        const many = amounts.filter(a => a.blockId === row.blockId).length > 1;
+        const title = [blockName?.(row.blockId) ?? 'Block', many ? exerciseName?.(row.exerciseKey) : undefined].filter(Boolean).join(' · ');
+        return (
+          <div key={`${row.blockId}|${row.stepId}`} className="mt-2">
+            <div className="text-[13px] font-bold">{title}</div>
+            <div className="mt-1 flex flex-wrap gap-1.5">
+              {row.values.map((v, i) => {
+                const best = row.best === i;
+                return (
+                  <div key={i} className={cn('min-w-15 rounded-lg border px-2 py-1 text-center', best ? 'border-brand bg-brand-soft' : 'border-line-soft bg-canvas')} aria-label={`Round ${i + 1}${v !== undefined ? ` ${fmtAmount(v, row.field)}` : ''}${best ? ', best' : ''}`}>
+                    <div className="text-[10px] font-bold text-muted">R{i + 1}</div>
+                    <div className="text-[15px] font-extrabold tabular-nums">{v !== undefined ? fmtAmount(v, row.field) : '–'}</div>
+                    {best && <div className="text-[10px] font-bold text-brand-ink">best</div>}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        );
+      })}
     </section>
   );
 };

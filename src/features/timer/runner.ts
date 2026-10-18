@@ -3,7 +3,7 @@
  * transition takes `now` in ms so it can be tested without a clock. The React hook adds the
  * interval, sounds, wake lock and persistence.
  */
-import { measureOf, plannedSet, rungSteps, scoreType, type Block, type ExerciseRef, type ExerciseStep, type ItemRole, type Runsheet, type SetPlan, type SetType, type Step } from '@/features/runsheet/model';
+import { amountOf, countsReps, measureOf, plannedSet, rungSteps, scoreType, type Block, type ExerciseRef, type ExerciseStep, type ItemRole, type Runsheet, type SetPlan, type SetType, type Step } from '@/features/runsheet/model';
 import type { RoundSplit, SessionResult, SetResult, StepResult } from '@/features/runsheet/progression';
 
 export interface Slot {
@@ -510,15 +510,11 @@ export const setAmount = (s: RunState, value: number): RunState => {
   const c = current(s);
   return c ? setAmountAt(s, c.id, value) : s;
 };
-/** Which field a step's amount goes in: metres or calories for a step done for either, or for a
- * rower, ski erg or bike on the clock (the machine counts what you did); none for other work. */
-export const amountField = (sl: Slot | undefined): 'meters' | 'calories' | undefined => {
-  if (sl?.kind !== 'work' || sl.step.kind !== 'exercise') return undefined;
-  const { forMode, exercise } = sl.step;
-  if (forMode === 'meters' || forMode === 'calories') return forMode;
-  const m = measureOf(exercise.unit);
-  return m === 'meters' || m === 'calories' ? m : undefined;
-};
+/** Which field a step's amount goes in: metres or calories for a step done for either, or for one
+ * whose `log` asks for them (`amountOf`); none for other work. */
+export const amountField = (sl: Slot | undefined): 'meters' | 'calories' | undefined => (sl?.kind === 'work' && sl.step.kind === 'exercise' ? amountOf(sl.step) : undefined);
+/** Whether a set asks for the reps done: see `countsReps`. */
+export const repsField = (sl: Slot | undefined) => sl?.kind === 'work' && sl.step.kind === 'exercise' && countsReps(sl.step);
 /** What a distance or calorie set did: changed on the card or the grid, else the plan's distance or
  * calories. A timed piece on a machine has no plan for it, so only what was entered. */
 export const amountAt = (s: RunState, sl: Slot): number | undefined => {

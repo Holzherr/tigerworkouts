@@ -13,6 +13,12 @@ import { plural } from '@/shared/utils/ui-utils';
  */
 export type ForMode = 'seconds' | 'reps' | 'minutes' | 'meters' | 'calories' | 'max' | 'amrap' | 'segment';
 
+/** What a step records beyond its target: the reps done in a timed piece, the metres or calories a
+ * machine counted. Unset logs nothing extra; finishing the step is the result. */
+export type StepLog = 'reps' | 'meters' | 'calories';
+export const STEP_LOGS: StepLog[] = ['reps', 'meters', 'calories'];
+export const STEP_LOG_LABEL: Record<StepLog, string> = { reps: 'Reps', meters: 'Metres', calories: 'Calories' };
+
 /** What a workout (or block) is scored on. time = for time; rounds = AMRAP rounds + reps; reps = total reps; load = heaviest lift; distance = metres covered. */
 export type ScoreType = 'time' | 'rounds' | 'reps' | 'load' | 'distance' | 'none';
 
@@ -92,6 +98,8 @@ export interface ExerciseStep {
    * reps. A value left out carries the one before it, and the first set falls back to target /
    * forValue. Only read in a rounds block. */
   sets?: SetPlan[];
+  /** What to record after the step, beyond its target. Unset: nothing extra. */
+  log?: StepLog;
   role?: ItemRole;
   note?: string;
 }
@@ -395,6 +403,19 @@ export const showsLoad = (s: ExerciseStep) => !!s.exercise.unit && (s.target !==
 /** An exercise whose unit is the measure of the work — a rower in metres, a plank in seconds, a bike
  * in calories — rather than a load. Its `target` is not a weight in hand. */
 export const measureOf = (unit: string | undefined): 'meters' | 'seconds' | 'calories' | undefined => (unit === 'm' ? 'meters' : unit === 's' ? 'seconds' : unit === 'cal' ? 'calories' : undefined);
+
+/** The step asks for the reps done: it is done to a count (reps, reps-plus, max), or set to log them. */
+export const countsReps = (s: ExerciseStep) => s.forMode === 'reps' || s.forMode === 'amrap' || s.forMode === 'max' || s.log === 'reps';
+
+/** The amount a step records: metres or calories for a step done for either (the plan, changed if it
+ * went otherwise), or for one set to log them. Never from the exercise alone: a rower on the clock
+ * asks for metres only when the step says so. */
+export const amountOf = (s: ExerciseStep): 'meters' | 'calories' | undefined =>
+  s.forMode === 'meters' || s.forMode === 'calories' ? s.forMode : s.log === 'meters' || s.log === 'calories' ? s.log : undefined;
+
+/** The measures a step can be set to log: not one its target records already. */
+export const logChoices = (s: ExerciseStep): StepLog[] =>
+  STEP_LOGS.filter(c => (c === 'reps' ? !['reps', 'amrap', 'max', 'segment'].includes(s.forMode) : !['meters', 'calories', 'segment'].includes(s.forMode)));
 
 /** Column heading for the per-set count; undefined for modes with nothing to count per set. */
 export const countLabel = (m: ForMode): string | undefined =>

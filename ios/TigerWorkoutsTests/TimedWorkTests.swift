@@ -48,9 +48,11 @@ struct TimedWorkTests {
         #expect(set?.meters == 480 && set?.seconds == 99 && set?.load == nil)
     }
 
-    @Test("a rower on the clock logs metres only when entered")
+    @Test("a rower on the clock set to log metres logs them only when entered")
     func rowerOnTheClock() {
-        let sheet = Runsheet(id: "t", title: "T", items: [.step(.exercise(ExerciseStep(id: "x", exercise: Self.rower, forMode: .minutes, forValue: 2)))])
+        var step = ExerciseStep(id: "x", exercise: Self.rower, forMode: .minutes, forValue: 2)
+        step.log = .meters
+        let sheet = Runsheet(id: "t", title: "T", items: [.step(.exercise(step))])
         var s = Runner.tick(Runner.start(sheet, now: 0), now: 5000)
         #expect(Runner.amountField(s.slots[0]) == .meters)
         #expect(Runner.amountAt(s, s.slots[0]) == nil)
@@ -94,5 +96,162 @@ struct TimedWorkTests {
         var s = Runner.tick(Runner.start(sheet, now: 0), now: 5000)
         for t in [20.0, 40, 70, 95, 130, 150] { s = Runner.advance(s, now: t * 1000) }
         #expect(Runner.toResult(s, sheet, now: 150_000).splits == [RoundSplit(blockId: "b", at: [40, 95, 150], from: 5, starts: [5, 40, 95])])
+    }
+}
+
+/// Ported from "what a step logs" in `src/features/timer/runner.test.ts`.
+@Suite("what a step logs")
+struct StepLogTests {
+    static let row = ExerciseRef(key: "db_row", name: "Chest-supported rows", unit: "kg per arm", step: 2)
+
+    static func one(_ ex: ExerciseRef, _ mode: ForMode, _ value: Double, target: Double? = nil, log: StepLog? = nil) -> Runsheet {
+        var step = ExerciseStep(id: "x", exercise: ex, target: target, forMode: mode, forValue: value)
+        step.log = log
+        return Runsheet(id: "w", title: "W", items: [.step(.exercise(step))])
+    }
+
+    static func slot(_ r: Runsheet) -> Slot { Runner.tick(Runner.start(r, now: 0), now: 5000).slots[0] }
+
+    @Test("a timed rower asks for nothing, and logs only its time")
+    func timedRower() {
+        let r = Self.one(TimedWorkTests.rower, .seconds, 30)
+        #expect(Runner.amountField(Self.slot(r)) == nil)
+        #expect(Self.slot(r).exercise?.countsReps == false)
+        let s = Runner.tick(Runner.tick(Runner.start(r, now: 0), now: 5000), now: 35000)
+        let set = Runner.toResult(s, r, now: 40000).steps[0].sets?[0]
+        #expect(set?.seconds == 30 && set?.meters == nil && set?.reps == nil && set?.load == nil)
+    }
+
+    @Test("a timed rower set to log metres asks for metres")
+    func timedRowerLogsMetres() {
+        let r = Self.one(TimedWorkTests.rower, .seconds, 30, log: .meters)
+        var s = Runner.tick(Runner.start(r, now: 0), now: 5000)
+        #expect(Runner.amountField(s.slots[0]) == .meters)
+        s = Runner.setAmount(s, value: 142)
+        s = Runner.tick(s, now: 35000)
+        let set = Runner.toResult(s, r, now: 40000).steps[0].sets?[0]
+        #expect(set?.meters == 142 && set?.seconds == 30)
+    }
+
+    @Test("a distance rower keeps its metres, the plan unless changed")
+    func distanceRower() {
+        let r = Self.one(TimedWorkTests.rower, .meters, 500)
+        let s = Runner.tick(Runner.start(r, now: 0), now: 5000)
+        #expect(Runner.amountField(s.slots[0]) == .meters)
+        #expect(Runner.amountAt(s, s.slots[0]) == 500)
+    }
+
+    @Test("timed kettlebell swings ask for reps only when set to log them")
+    func timedSwings() {
+        #expect(Self.slot(Self.one(Fixtures.swing, .seconds, 30, target: 24)).exercise?.countsReps == false)
+        let r = Self.one(Fixtures.swing, .seconds, 30, target: 24, log: .reps)
+        var s = Runner.tick(Runner.start(r, now: 0), now: 5000)
+        #expect(s.slots[0].exercise?.countsReps == true)
+        #expect(Runner.amountField(s.slots[0]) == nil)
+        s = Runner.setReps(s, reps: 21)
+        s = Runner.tick(s, now: 35000)
+        let set = Runner.toResult(s, r, now: 40000).steps[0].sets?[0]
+        #expect(set?.reps == 21 && set?.load == 24 && set?.seconds == 30)
+    }
+
+    @Test("chest-supported rows ask for reps and keep their load; a plank asks for nothing")
+    func rowsAndPlank() {
+        let rows = Self.slot(Self.one(Self.row, .reps, 10, target: 20))
+        #expect(rows.exercise?.countsReps == true && Runner.amountField(rows) == nil)
+        let plank = Self.slot(Self.one(TimedWorkTests.plankEx, .seconds, 45))
+        #expect(plank.exercise?.countsReps == false && Runner.amountField(plank) == nil)
+    }
+
+    @Test("the editor offers only what the target does not record already")
+    func choices() {
+        #expect(StepEditorView.logChoices(ExerciseStep(id: "a", exercise: TimedWorkTests.rower, forMode: .seconds, forValue: 30)) == [.reps, .meters, .calories])
+        #expect(StepEditorView.logChoices(ExerciseStep(id: "a", exercise: TimedWorkTests.rower, forMode: .meters, forValue: 500)) == [.reps])
+        #expect(StepEditorView.logChoices(ExerciseStep(id: "a", exercise: Self.row, forMode: .reps, forValue: 10)) == [.meters, .calories])
+    }
+
+    @Test("log survives a save and an unknown one reads as nothing")
+    func codable() throws {
+        var step = ExerciseStep(id: "a", exercise: TimedWorkTests.rower, forMode: .seconds, forValue: 30)
+        step.log = .meters
+        let data = try JSONEncoder().encode(step)
+        #expect(String(data: data, encoding: .utf8)?.contains("\"log\":\"meters\"") == true)
+        #expect(try JSONDecoder().decode(ExerciseStep.self, from: data).log == .meters)
+        let odd = #"{"id":"a","exercise":{"key":"k","name":"K","unit":"","step":1},"forMode":"seconds","forValue":30,"log":"watts"}"#
+        #expect(try JSONDecoder().decode(ExerciseStep.self, from: Data(odd.utf8)).log == nil)
+    }
+}
+
+/// Ported from "round times only when they say something" in `src/features/results/rounds.test.ts`.
+@Suite("round times only when they say something")
+struct RoundRulesTests {
+    static func ex(_ id: String, _ e: ExerciseRef, _ mode: ForMode, _ value: Double, target: Double? = nil, log: StepLog? = nil) -> Step {
+        var s = ExerciseStep(id: id, exercise: e, target: target, forMode: mode, forValue: value)
+        s.log = log
+        return .exercise(s)
+    }
+
+    static func sheet() -> Runsheet {
+        Runsheet(id: "w", title: "W", items: [
+            .block(Block(id: "rows", name: "rows", repeatCount: 3, steps: [ex("cs", StepLogTests.row, .reps, 10, target: 20), ex("sw", Fixtures.swing, .reps, 15, target: 24)])),
+            .block(Block(id: "sprints", name: "sprints", repeatCount: 3, steps: [ex("rw", TimedWorkTests.rower, .seconds, 30, log: .meters), Fixtures.rest("r", 30)])),
+            .block(Block(id: "abs", name: "abs", repeatCount: 3, steps: [ex("pl", TimedWorkTests.plankEx, .seconds, 30), ex("sw2", Fixtures.swing, .seconds, 30, target: 16)])),
+        ])
+    }
+
+    static func session(_ splits: [RoundSplit], steps: [StepResult] = []) -> SessionResult {
+        var r = SessionResult(runsheetId: "w", title: nil, startedAt: "2026-10-18", steps: steps)
+        r.splits = splits
+        return r
+    }
+
+    @Test("a block is fixed-time when every exercise in it runs on the clock")
+    func fixed() {
+        let blocks = Self.sheet().items.compactMap(\.asBlock)
+        #expect(blocks.map(Rounds.fixedTime) == [false, true, true])
+        var abs = blocks[2]
+        abs.mode = .emom
+        #expect(Rounds.fixedTime(abs))
+        abs.mode = .fortime
+        #expect(!Rounds.fixedTime(abs))
+        abs.mode = .amrap
+        #expect(!Rounds.fixedTime(abs))
+    }
+
+    @Test("an all-timed workout has no round times")
+    func allTimed() {
+        let r = Self.session([RoundSplit(blockId: "abs", at: [121, 241, 362], starts: [0, 121, 241])])
+        #expect(Rounds.rows(r, runsheet: Self.sheet()).isEmpty)
+        let row = Rounds.rows(r)[0]
+        #expect(row.times == [121, 120, 121] && row.fastest == nil && row.slowest == nil)
+        #expect(Rounds.prs(r, all: [Self.session([RoundSplit(blockId: "abs", at: [130], starts: [0])]), r], runsheet: Self.sheet()).isEmpty)
+    }
+
+    @Test("a rep-based for-time workout badges rounds really apart")
+    func repBased() {
+        let row = Rounds.rows(Self.session([RoundSplit(blockId: "rows", at: [95, 205, 290], starts: [0, 100, 210])]), runsheet: Self.sheet())[0]
+        #expect(row.times == [95, 105, 80] && row.fastest == 2 && row.slowest == 1)
+        #expect(Rounds.rows(Self.session([RoundSplit(blockId: "rows", at: [80, 164], starts: [0, 80])]))[0].fastest == nil)
+        #expect(Rounds.rows(Self.session([RoundSplit(blockId: "rows", at: [200, 406], starts: [0, 200])]))[0].fastest == nil)
+    }
+
+    @Test("a mixed workout: round times for the rep block, metres per round for the sprints, nothing for abs")
+    func mixed() {
+        let sets = [142.0, 138, 145].map { SetResult(reps: nil, load: nil, seconds: 30, meters: $0) }
+        let r = Self.session(
+            [RoundSplit(blockId: "rows", at: [95, 205, 290], starts: [0, 100, 210]), RoundSplit(blockId: "abs", at: [600, 720, 841], starts: [480, 600, 720])],
+            steps: [StepResult(stepId: "rw", exerciseKey: "cardio_rower", sets: sets)]
+        )
+        #expect(Rounds.rows(r, runsheet: Self.sheet()).map(\.blockId) == ["rows"])
+        #expect(Rounds.amountRows(r, runsheet: Self.sheet()) == [Rounds.AmountRow(blockId: "sprints", stepId: "rw", exerciseKey: "cardio_rower", field: .meters, values: [142, 138, 145], best: 2)])
+    }
+
+    @Test("logged amounts: any difference is a best, none when all match or under two rounds")
+    func amounts() {
+        func steps(_ m: [Double?]) -> [StepResult] { [StepResult(stepId: "rw", exerciseKey: "cardio_rower", sets: m.map { SetResult(reps: nil, load: nil, seconds: 30, meters: $0) })] }
+        #expect(Rounds.amountRows(Self.session([], steps: steps([140, 141])), runsheet: Self.sheet())[0].best == 1)
+        #expect(Rounds.amountRows(Self.session([], steps: steps([140, 140])), runsheet: Self.sheet())[0].best == nil)
+        #expect(Rounds.amountRows(Self.session([], steps: steps([140, nil])), runsheet: Self.sheet()).isEmpty)
+        #expect(Rounds.amountRows(Self.session([], steps: steps([140, 141])), runsheet: nil).isEmpty)
+        #expect(Rounds.amount(142, .meters) == "142 m" && Rounds.amount(1, .reps) == "1 rep")
     }
 }

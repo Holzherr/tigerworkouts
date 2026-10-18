@@ -86,7 +86,7 @@ export const ResultSheet = ({ runsheet, history = [], allResults = history, trai
   const capped = !!initial?.capped && score === initial.score;
   const result: SessionResult = { ...initial, runsheetId: runsheet.id ?? runsheet.title, title: runsheet.title, startedAt: initial?.startedAt ?? startedAt ?? new Date().toISOString(), endedAt: initial?.endedAt ?? new Date().toISOString(), score, scoreText: capped ? initial?.scoreText : score !== undefined ? fmtScore(type, score) : undefined, capped: capped || undefined, capReps: capped ? initial?.capReps : undefined, steps: [...Object.values(rows), ...extra], notes: notes || undefined, rpe, startedFrom };
   const exerciseName = (k: string) => ({ name: LIB[k]?.name ?? k, unit: LIB[k]?.unit });
-  const celebration = celebrate(result, allResults, undefined, k => exerciseSteps(runsheet).find(s => s.exercise.key === k)?.exercise.unit ?? LIB[k]?.unit);
+  const celebration = celebrate(result, allResults, undefined, k => exerciseSteps(runsheet).find(s => s.exercise.key === k)?.exercise.unit ?? LIB[k]?.unit, runsheet);
   const next = useMemo(() => nextLoads(runsheet, result, history, trainingMaxes, equipment), [runsheet, result, history, trainingMaxes, equipment]);
   // Targets from history for what the programme rules do not move: the score, loads, reps.
   const targets = useMemo(() => nextTime(runsheet, result, history, intent, next.map(n => n.exerciseKey), equipment), [runsheet, result, history, intent, next, equipment]);
@@ -106,7 +106,7 @@ export const ResultSheet = ({ runsheet, history = [], allResults = history, trai
       </header>
       <div className="min-h-0 flex-1 space-y-2 overflow-y-auto px-3 py-3">
         <CelebrationCard celebration={celebration} scoreType={type} exercise={exerciseName} blockName={blockName} onShare={() => setSharing(true)} />
-        <SplitsCard result={result} last={celebration.last} blockName={blockName} records={celebration.rounds} />
+        <SplitsCard result={result} last={celebration.last} runsheet={runsheet} exerciseName={k => steps.find(s => s.exercise.key === k)?.exercise.name} blockName={blockName} records={celebration.rounds} />
         <EffortRow value={rpe} onChange={setRpe} />
         <SessionStats result={result} worked={workedFrom(result, runsheet, k => ({ name: LIB[k]?.name ?? k, group: LIB[k]?.group }))} history={history} bodyweightKg={bodyweightKg} />
         {onBodyweight && bodyweightKg === undefined && <BodyweightPrompt onSave={kg => onBodyweight(kg)} onSkip={() => onBodyweight(undefined)} />}

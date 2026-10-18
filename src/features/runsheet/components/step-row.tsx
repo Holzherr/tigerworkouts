@@ -1,12 +1,12 @@
-import { ChevronRight, ChevronUp, X } from 'lucide-react';
-import { forwardRef } from 'react';
+import { ChevronRight, ChevronUp, Plus, X } from 'lucide-react';
+import { forwardRef, useState } from 'react';
 import { Button } from '@/shared/components/ui/button';
 import { Chip } from '@/shared/components/ui/chip';
 import { ClipThumb } from '@/shared/components/ui/clip-thumb';
 import { Dropdown } from '@/shared/components/ui/dropdown';
 import { Stepper } from '@/shared/components/ui/stepper';
 import { cn } from '@/shared/utils/ui-utils';
-import { forLabel, loadLabel, type ExerciseStep, type ForMode, type RestStep, type Step } from '../model';
+import { forLabel, loadLabel, logChoices, STEP_LOG_LABEL, type ExerciseStep, type ForMode, type RestStep, type Step } from '../model';
 
 const FOR_OPTIONS = [
   { value: 'seconds', label: 'seconds' },
@@ -148,11 +148,76 @@ const ExerciseBody = ({ step, onChange }: { step: ExerciseStep; onChange: (s: St
       <Label>For</Label>
       <div className="flex items-center gap-1.5">
         <Stepper aria-label="Duration" value={step.forValue} step={step.forMode === 'seconds' ? 5 : step.forMode === 'meters' ? 50 : 1} min={1} max={step.forMode === 'seconds' ? 600 : step.forMode === 'meters' ? 42195 : 200} onChange={forValue => onChange({ ...step, forValue })} />
-        <Dropdown aria-label="Duration unit" value={step.forMode} options={FOR_OPTIONS} onValueChange={forMode => onChange({ ...step, forMode, forValue: defaultFor(forMode) })} />
+        <Dropdown aria-label="Duration unit" value={step.forMode} options={FOR_OPTIONS} onValueChange={forMode => onChange(withMode(step, forMode))} />
       </div>
     </div>
+    <LogRow step={step} onChange={onChange} />
   </>
 );
+/** A new target drops a log it records itself: reps counted twice is one too many. */
+const withMode = (step: ExerciseStep, forMode: ForMode): ExerciseStep => {
+  const next: ExerciseStep = { ...step, forMode, forValue: defaultFor(forMode) };
+  if (next.log && !logChoices(next).includes(next.log)) delete next.log;
+  return next;
+};
+
+/** What to record after the step, beyond its target. Nothing by default: Add to log offers what the
+ * target does not record already, and the row it adds comes off with its ✕. */
+const LogRow = ({ step, onChange }: { step: ExerciseStep; onChange: (s: Step) => void }) => {
+  const [picking, setPicking] = useState(false);
+  const choices = logChoices(step);
+  if (step.log) {
+    return (
+      <div className="flex items-center justify-between gap-3">
+        <Label>Log</Label>
+        <div className="flex items-center gap-1">
+          <span className="text-[14px] font-semibold">{STEP_LOG_LABEL[step.log]}</span>
+          <Button
+            variant="quiet"
+            size="icon-sm"
+            aria-label={`Stop logging ${STEP_LOG_LABEL[step.log].toLowerCase()}`}
+            onClick={() => {
+              const next = { ...step };
+              delete next.log;
+              onChange(next);
+            }}
+            className="text-faint"
+          >
+            <X />
+          </Button>
+        </div>
+      </div>
+    );
+  }
+  if (!choices.length) return null;
+  if (!picking) {
+    return (
+      <button type="button" onClick={() => setPicking(true)} className="flex min-h-9 items-center gap-1 text-[14px] font-semibold text-brand-ink">
+        <Plus className="size-4" /> Add to log
+      </button>
+    );
+  }
+  return (
+    <div className="flex flex-wrap items-center gap-1.5" role="group" aria-label="Add to log">
+      <span className="text-[12px] text-muted">Log</span>
+      {choices.map(c => (
+        <Chip
+          key={c}
+          variant="outline"
+          onClick={() => {
+            setPicking(false);
+            onChange({ ...step, log: c });
+          }}
+        >
+          {STEP_LOG_LABEL[c]}
+        </Chip>
+      ))}
+      <Button variant="quiet" size="icon-sm" aria-label="Cancel" onClick={() => setPicking(false)} className="text-faint">
+        <X />
+      </Button>
+    </div>
+  );
+};
 const defaultFor = (m: ForMode) => (m === 'seconds' ? 30 : m === 'reps' || m === 'amrap' ? 10 : m === 'meters' ? 400 : m === 'calories' ? 15 : m === 'max' || m === 'segment' ? 0 : 5);
 
 const RestBody = ({ step, onChange }: { step: RestStep; onChange: (s: Step) => void }) => {

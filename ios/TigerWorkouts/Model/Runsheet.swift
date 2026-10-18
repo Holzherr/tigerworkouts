@@ -8,6 +8,20 @@ enum ForMode: String, Codable, Sendable {
     case seconds, reps, minutes, meters, calories, max, amrap, segment
 }
 
+/// What a step records beyond its target (`StepLog` in model.ts): the reps done in a timed piece,
+/// the metres or calories a machine counted. Nil logs nothing extra; finishing the step is the result.
+enum StepLog: String, Codable, Sendable, CaseIterable {
+    case reps, meters, calories
+
+    var label: String {
+        switch self {
+        case .reps: "Reps"
+        case .meters: "Metres"
+        case .calories: "Calories"
+        }
+    }
+}
+
 enum ScoreType: String, Codable, Sendable {
     case time, rounds, reps, load, distance, none
 }
@@ -127,12 +141,14 @@ struct ExerciseStep: Codable, Hashable, Sendable, Identifiable {
     /// or reps. A value left out carries the one before it; the first set falls back to target /
     /// forValue. Only read in a rounds block.
     var sets: [SetPlan]?
+    /// What to record after the step, beyond its target. Nil: nothing extra.
+    var log: StepLog?
     var role: ItemRole?
     var note: String?
 
     private enum CodingKeys: String, CodingKey {
         case id, exercise, target, forMode, forValue, forMax, perSide, loadFactor, targetPct
-        case incline, rx, startSeconds, endSeconds, ladderFactor, ladderFixed, sets, role, note
+        case incline, rx, startSeconds, endSeconds, ladderFactor, ladderFixed, sets, log, role, note
     }
 
     init(id: String, exercise: ExerciseRef, target: Double? = nil, forMode: ForMode = .seconds, forValue: Double = 30, incline: Double? = nil, perSide: Bool? = nil) {
@@ -168,6 +184,8 @@ struct ExerciseStep: Codable, Hashable, Sendable, Identifiable {
         ladderFactor = try c.decodeIfPresent(Double.self, forKey: .ladderFactor)
         ladderFixed = try c.decodeIfPresent(Bool.self, forKey: .ladderFixed)
         sets = try c.decodeIfPresent([SetPlan].self, forKey: .sets)
+        // An unknown value from a newer app reads as nothing to log rather than failing the workout.
+        log = (try? c.decodeIfPresent(StepLog.self, forKey: .log)) ?? nil
         role = try c.decodeIfPresent(ItemRole.self, forKey: .role)
         note = try c.decodeIfPresent(String.self, forKey: .note)
     }
@@ -190,6 +208,7 @@ struct ExerciseStep: Codable, Hashable, Sendable, Identifiable {
         try c.encodeIfPresent(ladderFactor, forKey: .ladderFactor)
         try c.encodeIfPresent(ladderFixed, forKey: .ladderFixed)
         try c.encodeIfPresent(sets, forKey: .sets)
+        try c.encodeIfPresent(log, forKey: .log)
         try c.encodeIfPresent(role, forKey: .role)
         try c.encodeIfPresent(note, forKey: .note)
     }

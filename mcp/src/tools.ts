@@ -8,7 +8,7 @@ import type { LibraryExercise } from '@/features/exercises/library';
 import { forLabel, loadLabel, modeLabel, ROLE_LABEL, runsheetMinutes, type ExerciseStep, type Item, type Runsheet, type Step } from '@/features/runsheet/model';
 import { parsePlan } from '@/features/runsheet/parse-text';
 import type { ExerciseRef } from '@/features/runsheet/model';
-import type { SessionResult, StepResult } from '@/features/runsheet/progression';
+import type { SessionResult, SetResult, StepResult } from '@/features/runsheet/progression';
 import { shareUrlAt } from '@/features/share/link';
 import { catalogue, FULL_LIBRARY, libraryRef } from './catalogue';
 import { keepUnknownFields, normalise, type RunsheetInput } from './runsheet';
@@ -48,7 +48,7 @@ const SESSION_COLS = 'id,workout_id,type,title,started_at,ended_at,duration_min,
 
 // ── readable forms ──
 const exerciseName = (key: string, own: Record<string, LibraryExercise> = {}) => own[key]?.name ?? FULL_LIBRARY[key]?.name ?? key;
-const stepLine = (s: Step) => (s.kind === 'rest' ? `Rest ${s.seconds}s` : [s.exercise.name, forLabel(s), loadLabel(s), s.incline ? `${s.incline}% incline` : ''].filter(Boolean).join(' · '));
+const stepLine = (s: Step) => (s.kind === 'rest' ? `Rest ${s.seconds}s` : [s.exercise.name, forLabel(s), loadLabel(s), s.incline ? `${s.incline}% incline` : '', s.log ? `log ${s.log}` : ''].filter(Boolean).join(' · '));
 /** One line per step, blocks indented, parts headed — what a person would read off the screen. */
 export const outline = (r: Runsheet): string => {
   const lines: string[] = [];
@@ -101,8 +101,11 @@ const sessionView = (s: SessionResult, row: SessionRow, own: Record<string, Libr
   scoreText: s.scoreText,
   notes: s.notes,
   device: s.device,
-  exercises: s.steps.map(x => ({ exerciseKey: x.exerciseKey, name: exerciseName(x.exerciseKey, own), load: x.target, incline: x.incline, reps: x.reps, success: x.success })),
+  exercises: s.steps.map(x => ({ exerciseKey: x.exerciseKey, name: exerciseName(x.exerciseKey, own), load: x.target, incline: x.incline, reps: x.reps, success: x.success, ...(x.sets?.length ? { sets: x.sets.map(setOut) } : {}) })),
 });
+
+/** One logged set as an agent reads it: only what was recorded. */
+const setOut = (x: SetResult) => Object.fromEntries((['type', 'reps', 'load', 'seconds', 'meters', 'calories', 'at'] as const).flatMap(k => (x[k] !== undefined ? [[k, x[k]]] : [])));
 
 const ownExercises = async (db: Db): Promise<Record<string, LibraryExercise>> => {
   const rows = await db.get<{ key: string; data: Omit<LibraryExercise, 'key'> }[]>(`exercises?owner=eq.${db.userId}&select=key,data`);

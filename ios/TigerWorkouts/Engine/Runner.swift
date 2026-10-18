@@ -692,13 +692,11 @@ enum Runner {
 
     enum Amount: String, Sendable { case meters, calories }
 
-    /// Which field a step's amount goes in: metres or calories for a step done for either, or for a
-    /// rower, ski erg or bike on the clock (the machine counts what you did); nil for other work.
+    /// Which field a step's amount goes in: metres or calories for a step done for either, or for one
+    /// whose `log` asks for them (`ExerciseStep.amountLog`); nil for other work.
     static func amountField(_ sl: Slot?) -> Amount? {
         guard let sl, sl.kind == .work, let e = sl.exercise else { return nil }
-        if e.forMode == .meters { return .meters }
-        if e.forMode == .calories { return .calories }
-        switch Measure.of(e.exercise.unit) {
+        switch e.amountLog {
         case .meters: return .meters
         case .calories: return .calories
         default: return nil

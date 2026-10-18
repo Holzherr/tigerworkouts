@@ -317,6 +317,23 @@ describe('plans, timer and logging', () => {
     const back = await T.listSessions(db, { workoutId: 'u-mine' });
     expect(back.sessions[0]).toMatchObject({ id: 's-abc-run', exercises: [{ exerciseKey: 'bb_back_squat', load: 100, reps: [5, 5, 5] }] });
   });
+
+  it('per-set detail goes in through log_session and comes back from list_sessions, only what was recorded', async () => {
+    const sets = [{ seconds: 30, meters: 142, at: 40 }, { seconds: 30, meters: 138 }, { type: 'warmup' as const, reps: 10, load: 20 }];
+    await T.logSession(db, { id: 's-rower', workoutId: 'u-mine', startedAt: '2026-10-18T07:00:00Z', steps: [{ stepId: 'rw', exerciseKey: 'cardio_rower', sets }] });
+    const back = await T.listSessions(db, { workoutId: 'u-mine' });
+    expect(back.sessions[0].exercises[0].sets).toEqual(sets);
+    // A row without per-set detail has no sets key.
+    expect('sets' in back.sessions.find(s => s.id === 's-2')!.exercises[0]).toBe(false);
+  });
+
+  it('create_workout takes what a step logs, and drops nothing when it does', async () => {
+    const w = draft({ items: [{ kind: 'block', repeat: 3, steps: [{ kind: 'exercise', exercise: 'cardio_rower', forMode: 'seconds', forValue: 30, log: 'meters' }, { kind: 'rest', seconds: 30 }] }] } as Partial<RunsheetInput>);
+    const out = await T.createWorkout(db, { workout: w });
+    const row = tables.workouts.find(x => x.id === out.id)!;
+    expect((row.data as { items: { steps: { log?: string }[] }[] }).items[0].steps[0].log).toBe('meters');
+    expect(() => runsheetInput.parse({ title: 'x', items: [{ kind: 'exercise', exercise: 'cardio_rower', forMode: 'seconds', forValue: 30, log: 'watts' }] })).toThrow();
+  });
 });
 
 describe('claim', () => {

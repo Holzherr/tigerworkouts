@@ -4,7 +4,7 @@
  * `SessionResult[]`; ported one for one to `ios/TigerWorkouts/Results/Celebrate.swift`.
  */
 import { fmtClock } from '@/shared/utils/ui-utils';
-import type { ScoreType } from '@/features/runsheet/model';
+import type { Runsheet, ScoreType } from '@/features/runsheet/model';
 import { fmtScore, type SessionResult } from '@/features/runsheet/progression';
 import { streak, type Streak } from './effort';
 import { roundPRs, type RoundPR } from './rounds';
@@ -34,8 +34,9 @@ export const totalVolume = (r: SessionResult, unitOf: (key: string) => string | 
 };
 
 /** `all` is every session logged, with or without this one in it. `unitOf` gives an exercise's
- * unit, for rows that logged metres, seconds or calories as a load. */
-export const celebrate = (result: SessionResult, all: SessionResult[], today = new Date(result.startedAt), unitOf: (key: string) => string | undefined = () => undefined): Celebration => {
+ * unit, for rows that logged metres, seconds or calories as a load. `runsheet`, the workout it ran,
+ * keeps the blocks whose round time the timer fixed out of the round records. */
+export const celebrate = (result: SessionResult, all: SessionResult[], today = new Date(result.startedAt), unitOf: (key: string) => string | undefined = () => undefined, runsheet?: Runsheet): Celebration => {
   const others = all.filter(r => !same(r, result));
   const before = others.filter(r => r.startedAt < result.startedAt);
   const last = result.activity ? undefined : before.filter(r => r.runsheetId === result.runsheetId && !r.activity).sort((a, b) => b.startedAt.localeCompare(a.startedAt))[0];
@@ -54,7 +55,7 @@ export const celebrate = (result: SessionResult, all: SessionResult[], today = n
     ordinal: before.length + 1,
     streak: streak([...others.filter(r => r.startedAt <= result.startedAt), result], today),
     prs: sessionPRs(result, all, unitOf),
-    rounds: roundPRs(result, all),
+    rounds: roundPRs(result, all, runsheet),
     ...(volume !== undefined ? { volume } : {}),
     ...(last ? { last } : {}),
     deltas,
