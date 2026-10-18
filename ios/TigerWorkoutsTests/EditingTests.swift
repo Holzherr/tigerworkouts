@@ -68,6 +68,16 @@ struct EditingTests {
         #expect(Edit.duplicate(copy, creator: "Nick").copyOf == original.key)
     }
 
+    @Test("one copy per original: the original's page finds the copy you already made")
+    func copyOfOriginal() {
+        let (original, _) = sheetWithOneBlock()
+        let copy = Edit.duplicate(original, creator: "Nick")
+        let other = Edit.duplicate(Runsheet(id: "w-other", title: "Other"), creator: "Nick")
+        #expect(Edit.copy(of: original, in: [other, copy])?.key == copy.key)
+        #expect(Edit.copy(of: copy, in: [other, copy]) == nil, "a copy is its own page")
+        #expect(Edit.copy(of: original, in: [other]) == nil)
+    }
+
     @Test("removing and reordering")
     func removeAndMove() {
         var (r, blockId) = sheetWithOneBlock()

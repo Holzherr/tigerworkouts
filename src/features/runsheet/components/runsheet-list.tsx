@@ -66,7 +66,6 @@ const underPointer: CollisionDetection = args => {
 const GROUP_DWELL_MS = 250;
 const GROUP_BAND = 0.6; // middle share of the target row that means "onto"
 const LIFT_MS = 350;
-const TIP_KEY = 'tiger:tip-block-drag';
 
 /**
  * A straight-set block with sets alike in a row folded into one (`8×  − 20 +  − 30 +`); a stepper
@@ -149,7 +148,6 @@ export const RunsheetList = ({ items, onChange, onPickExercise, onSwapExercise, 
   const [activeId, setActiveId] = useState<string | null>(null);
   const [varying, setVarying] = useState<string | null>(null);
   const [reordering, setReordering] = useState(false);
-  const [tipSeen, setTipSeen] = useState(() => localStorage.getItem(TIP_KEY) === '1');
   const [groupTarget, setGroupTarget] = useState<string | null>(null);
   const [insertion, setInsertion] = useState<{ id: string; where: 'before' | 'after' } | null>(null);
   const dwell = useRef<{ id: string; since: number } | null>(null);
@@ -437,15 +435,6 @@ export const RunsheetList = ({ items, onChange, onPickExercise, onSwapExercise, 
     <DndContext sensors={sensors} collisionDetection={underPointer} onDragStart={onDragStart} onDragMove={onDragMove} onDragEnd={onDragEnd} onDragCancel={() => (setActiveId(null), setGroupTarget(null), setInsertion(null))}>
       <SortableContext items={ids} strategy={verticalListSortingStrategy}>
         <div className={cn('space-y-2', className)}>
-          {!tipSeen && items.some(it => it.kind === 'block') && (
-            <div className="flex items-center gap-2.5 rounded-card bg-brand-soft py-1 pr-1 pl-3 text-[14px] font-semibold text-ink">
-              <Menu className="size-4 shrink-0 text-brand-ink" />
-              <span className="flex-1">Hold a block's header to move it</span>
-              <Button variant="quiet" className="text-brand-ink" onClick={() => (localStorage.setItem(TIP_KEY, '1'), setTipSeen(true))}>
-                OK
-              </Button>
-            </div>
-          )}
           {blocks}
           {items.some(it => (it.kind === 'exercise' || it.kind === 'rest') && (it.role ?? 'main') === 'main') && (
             <button

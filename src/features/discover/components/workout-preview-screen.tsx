@@ -4,8 +4,8 @@ import { Fragment, useState } from 'react';
 import { Button } from '@/shared/components/ui/button';
 import { Chip } from '@/shared/components/ui/chip';
 import { ClipThumb } from '@/shared/components/ui/clip-thumb';
-import { fmtClock, fmtNum, plural } from '@/shared/utils/ui-utils';
-import { addBlock, blockSeconds, countLabel, forLabel, loadLabel, modeLabel, plannedSet, removeItem, ROLE_LABEL, runsheetMinutes, scoreType, shortUnit, straightSetStep, type Block, type ExerciseStep, type Item, type Runsheet } from '@/features/runsheet/model';
+import { cn, fmtClock, fmtNum } from '@/shared/utils/ui-utils';
+import { addBlock, blockSeconds, countLabel, forLabel, loadLabel, modeLabel, removeItem, replaceStep, ROLE_LABEL, runsheetMinutes, scoreType, setRuns, shortUnit, straightSetStep, type Block, type ExerciseStep, type Item, type Runsheet } from '@/features/runsheet/model';
 import { ExerciseSheet } from '@/features/runsheet/components/exercise-sheet';
 import type { SessionResult } from '@/features/runsheet/progression';
 import { fmtScore } from '@/features/runsheet/progression';
@@ -74,26 +74,31 @@ export interface WorkoutPreviewScreenProps {
   onDismissStall?: () => void;
   /** Given for your own workouts: deletes it, after asking. */
   onDelete?: () => void;
-  /** Given, the page is the editor (as on the phone): the same rows as the editor, a block's header
-   * opens its sheet, Add block and Add a one-off exercise under the list. Every change comes here. */
+  /** Given, the page is also the editor (as on the phone): it reads plain until Edit at the top
+   * right, which shows the editor's rows (steppers, add, drag, a block header's sheet and grip) with
+   * Add block and Add a one-off exercise under them, until Done (Nick, 18 Oct 2026). Every change
+   * comes here, and saves as it is made. */
+  /** Opens in edit mode (stories, screenshots). */
+  initialEditing?: boolean;
   editor?: Omit<RunsheetListProps, 'items' | 'onChange' | 'expandedId' | 'onExpandedChange' | 'onRemoved'> & { onChange: (r: Runsheet) => void };
 }
 
-/** A straight-set block read as the gym writes it: set, load, reps — one line each. */
+/** A straight-set block whose sets differ, read as the gym writes it: one line per run of sets
+ * alike ("Set 1  40 kg × 12", "Sets 2–5  60 kg × 8"). Sets all alike need no list: the block's
+ * ×N says it. */
 const SetList = ({ block, step }: { block: Block; step: ExerciseStep }) => {
   const unit = shortUnit(step.exercise.unit);
   const count = countLabel(step.forMode)?.toLowerCase();
+  const runs = setRuns(block);
+  if (runs.length < 2) return null;
   return (
     <div className="px-3 pt-0.5 pb-1.5" aria-label="Sets">
-      {Array.from({ length: block.repeat }, (_, i) => {
-        const p = plannedSet(step, i);
-        return (
-          <div key={i} className="flex items-center gap-3 py-0.5 text-[13px] tabular-nums">
-            <span className="w-12 font-bold text-muted">Set {i + 1}</span>
-            <span className="flex-1 font-semibold">{[p.load !== undefined && unit ? `${fmtNum(p.load)} ${unit}` : '', count ? `${fmtNum(p.reps)} ${count}` : forLabel(step)].filter(Boolean).join(' × ')}</span>
-          </div>
-        );
-      })}
+      {runs.map(run => (
+        <div key={run.from} className="flex items-center gap-3 py-0.5 text-[13px] tabular-nums">
+          <span className="w-16 font-bold text-muted">{run.count > 1 ? `Sets ${run.from + 1}–${run.from + run.count}` : `Set ${run.from + 1}`}</span>
+          <span className="flex-1 font-semibold">{[run.load !== undefined && unit ? `${fmtNum(run.load)} ${unit}` : '', count ? `${fmtNum(run.reps)} ${count}` : forLabel(step)].filter(Boolean).join(' × ')}</span>
+        </div>
+      ))}
     </div>
   );
 };
@@ -106,8 +111,19 @@ const SCORE_TEXT: Record<string, string> = { time: 'For time', rounds: 'AMRAP: r
  * Edit & start, Follow along for videos, Save. Tapping any exercise opens it — the clip, the cue,
  * and its numbers as steppers when the host can save them.
  */
-export const WorkoutPreviewScreen = ({ runsheet: r, history = [], lastTime, onBack, onStart, onEditAndStart, onFollowAlong, onLogOnly, onSave, saved, onShare, onStepChange, onCreator, onTogglePublic, appHref, onExerciseHistory, hasHistory, today, stall, onDismissStall, onDelete, editor }: WorkoutPreviewScreenProps) => {
+export const WorkoutPreviewScreen = ({ runsheet: r, history = [], lastTime, onBack, onStart, onEditAndStart, onFollowAlong, onLogOnly, onSave, saved, onShare, onStepChange, onCreator, onTogglePublic, appHref, onExerciseHistory, hasHistory, today, stall, onDismissStall, onDelete, editor, initialEditing }: WorkoutPreviewScreenProps) => {
   const [open, setOpen] = useState<ExerciseStep | null>(null);
+  // A workout with nothing in it yet has nothing to read: it opens in edit mode.
+  const [editing, setEditing] = useState(() => !!editor && (initialEditing || r.items.length === 0));
+  // In the read view an exercise's sheet still changes its numbers, through the editor when there is one.
+  const stepChange =
+    onStepChange ??
+    (editor &&
+      ((id: string, patch: { target?: number; incline?: number }) => {
+        const found = r.items.flatMap(i => (i.kind === 'block' ? i.steps : i.kind === 'ref' ? [] : [i])).find((s): s is ExerciseStep => s.id === id && s.kind === 'exercise');
+        if (found) editor.onChange({ ...r, items: replaceStep(r.items, id, { ...found, ...patch }) });
+      }));
+  const historyOf = (s: ExerciseStep) => (onExerciseHistory ? ((hasHistory?.(s) ?? true) ? () => onExerciseHistory(s) : undefined) : editor?.historyFor?.(s));
   const kind = r.source?.kind ?? 'user';
   const score = scoreType(r);
   // A for-time that was stopped or capped has no finish time to be best at.
@@ -117,9 +133,16 @@ export const WorkoutPreviewScreen = ({ runsheet: r, history = [], lastTime, onBa
   return (
     <div className="flex h-full min-h-0 flex-col bg-canvas">
       <header className="safe-top shrink-0 bg-surface px-4 pt-2 pb-3">
-        <Button variant="quiet" size="inline" onClick={onBack} className="-ml-1 text-muted">
-          <ChevronLeft /> Back
-        </Button>
+        <div className="flex items-center justify-between gap-2">
+          <Button variant="quiet" size="inline" onClick={onBack} className="-ml-1 text-muted">
+            <ChevronLeft /> Back
+          </Button>
+          {editor && (
+            <Button variant="quiet" size="inline" onClick={() => setEditing(e => !e)} className={cn('-mr-1 text-brand', editing && 'font-extrabold')}>
+              {editing ? 'Done' : 'Edit'}
+            </Button>
+          )}
+        </div>
         <h1 className="mt-1 text-[22px] leading-tight font-extrabold">{r.title}</h1>
         <div className="mt-1 flex flex-wrap items-center gap-x-1 text-[13px] text-muted">
           <span>{(kind === 'user' && r.ownerId ? 'Creator' : KIND_LABEL[kind])}</span>
@@ -189,7 +212,7 @@ export const WorkoutPreviewScreen = ({ runsheet: r, history = [], lastTime, onBa
             )}
           </div>
         )}
-        {editor ? <EditableList runsheet={r} editor={editor} /> : r.items.map((it, i) => {
+        {editor && editing ? <EditableList runsheet={r} editor={editor} /> : r.items.map((it, i) => {
           if (it.kind === 'ref') return null;
           const role = it.role && it.role !== 'main' ? ROLE_LABEL[it.role] : null;
           if (it.kind === 'block') {
@@ -227,7 +250,7 @@ export const WorkoutPreviewScreen = ({ runsheet: r, history = [], lastTime, onBa
                           <div className="truncate text-[14px]">{s.exercise.name}</div>
                           {lastTime?.(s) && <div className="truncate text-[12px] text-muted">{lastTime(s)}</div>}
                         </div>
-                        <span className="text-[13px] font-semibold tabular-nums">{straight ? plural(it.repeat, 'set') : [loadLabel(s), forLabel(s)].filter(Boolean).join(' · ')}</span>
+                        <span className="text-[13px] font-semibold tabular-nums">{[loadLabel(s), forLabel(s)].filter(Boolean).join(' · ')}</span>
                         <ChevronRight className="size-4 shrink-0 text-faint" />
                       </button>
                       {straight && <SetList block={it} step={straight} />}
@@ -267,10 +290,10 @@ export const WorkoutPreviewScreen = ({ runsheet: r, history = [], lastTime, onBa
         <ExerciseSheet
           step={open}
           onOpenChange={o => !o && setOpen(null)}
-          onTarget={onStepChange && open ? t => (onStepChange(open.id, { target: t }), setOpen({ ...open, target: t })) : undefined}
-          onIncline={onStepChange && open ? v => (onStepChange(open.id, { incline: v }), setOpen({ ...open, incline: v })) : undefined}
-          note={onStepChange ? 'Saved to this workout.' : undefined}
-          onHistory={onExerciseHistory && open && (hasHistory?.(open) ?? true) ? () => onExerciseHistory(open) : undefined}
+          onTarget={stepChange && open ? t => (stepChange(open.id, { target: t }), setOpen({ ...open, target: t })) : undefined}
+          onIncline={stepChange && open ? v => (stepChange(open.id, { incline: v }), setOpen({ ...open, incline: v })) : undefined}
+          note={stepChange ? 'Saved to this workout.' : undefined}
+          onHistory={open ? historyOf(open) : undefined}
         />
       </div>
       <div className="safe-bottom shrink-0 border-t border-line bg-surface p-3">

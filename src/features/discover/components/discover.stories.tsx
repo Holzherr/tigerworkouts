@@ -61,3 +61,26 @@ export const Cards: Story = {
   ),
 };
 export const Preview: Story = { render: () => <WorkoutPreviewScreen runsheet={ALL.find(r => r.title === 'Fran') ?? ALL[1]} onStart={() => {}} onEditAndStart={() => {}} onSave={() => {}} history={[{ runsheetId: 'cf-girls-fran', startedAt: '2026-08-20T18:00:00Z', score: 402, scoreText: '6:42', steps: [] }, { runsheetId: 'cf-girls-fran', startedAt: '2026-07-02T18:00:00Z', score: 455, scoreText: '7:35', steps: [] }]} /> };
+
+/** Nick's Mine on 18 Oct: a workout the AI coach just made pinned on top as Up next, its why under the title, then the two done. */
+const MADE_FOR_YOU: Runsheet = {
+  ...priyanka(),
+  id: 'u-rows-lunges',
+  title: 'Rows, lunges, rower sprints & abs',
+  creator: 'AI Coach',
+  level: 'Medium',
+  description: 'Pull, legs and abs to balance the swings / incline press / sprints session. Same 30 on / 30 off rhythm.',
+  createdAt: '2026-10-18T07:46:00Z',
+  source: { title: 'Rows, lunges, rower sprints & abs', author: 'AI Coach', kind: 'user' },
+};
+export const MineNewMadeForYou: Story = {
+  args: {
+    workouts: [MADE_FOR_YOU, priyanka(), ...IMPORTED.map(w => w.runsheet)],
+    ownIds: [priyanka().id!, MADE_FOR_YOU.id!],
+    savedIds: ['cf-girls-fran'],
+    results: [
+      { runsheetId: priyanka().id!, startedAt: '2026-10-12T18:00:00Z', steps: [] },
+      { runsheetId: 'cf-girls-fran', startedAt: '2026-09-27T18:00:00Z', score: 402, scoreText: '6:42', steps: [] },
+    ],
+  },
+};

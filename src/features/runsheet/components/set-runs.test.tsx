@@ -30,14 +30,11 @@ describe('sets in the editor', () => {
     expect(screen.getAllByRole('button', { name: /^Set \d/ })).toHaveLength(5);
   });
 
-  it('puts a grip on every block header, and the tip goes once OK is tapped', () => {
+  it('puts a grip on every block header and no drag tip (Nick, 18 Oct 2026)', () => {
     const other = eight();
-    const { unmount } = list([eight(), { ...other, id: 'b2', name: 'Rows', steps: other.steps.map(s => ({ ...s, id: `${s.id}2` })) }]);
+    list([eight(), { ...other, id: 'b2', name: 'Rows', steps: other.steps.map(s => ({ ...s, id: `${s.id}2` })) }]);
     expect(screen.getAllByTestId('block-grip').map(g => g.className.includes('size-11'))).toEqual([true, true]);
-    fireEvent.click(screen.getByRole('button', { name: 'OK' }));
-    expect(screen.queryByText("Hold a block's header to move it")).toBeNull();
-    unmount();
-    list([eight()]);
-    expect(screen.queryByText("Hold a block's header to move it")).toBeNull();
+    expect(screen.queryByText(/Hold a block's header/)).toBeNull();
+    expect(screen.queryByRole('button', { name: 'OK' })).toBeNull();
   });
 });

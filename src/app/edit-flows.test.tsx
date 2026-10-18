@@ -11,7 +11,10 @@ const rounds = (i: Item): i is Block => i.kind === 'block' && i.steps.length > 1
 const original = IMPORTED.map(w => w.runsheet).find(r => r.items.some(rounds))!;
 const block = original.items.find(rounds)!;
 const mine = (): Runsheet[] => JSON.parse(localStorage.getItem('workout-hub-next:v1') || '{}').workouts ?? [];
+/** Into edit mode (the page reads plain until Edit), then one more round on the block. */
 const moreRounds = () => {
+  const edit = screen.queryByRole('button', { name: 'Edit' });
+  if (edit) fireEvent.click(edit);
   fireEvent.click(screen.getAllByRole('button', { name: (n: string) => n.startsWith(block.name), expanded: false })[0]);
   fireEvent.click(within(screen.getByRole('group', { name: 'Rounds' })).getByLabelText('Increase'));
   fireEvent.click(screen.getByRole('button', { name: 'Close' }));
@@ -28,6 +31,8 @@ describe('editing a catalogue workout on its page', () => {
     expect(copy).toMatchObject({ copyOf: original.id, title: `${original.title} (mine)`, source: { kind: 'user' } });
     expect(copy.items.find(i => i.id === block.id)).toMatchObject({ repeat: block.repeat + 1 });
     expect(await screen.findByRole('heading', { name: `${original.title} (mine)` })).toBeTruthy();
+    // The switch to the copy keeps the page in edit mode.
+    expect(screen.getByRole('button', { name: 'Done' })).toBeTruthy();
     // Between sessions the copy is renamed and made public; the next edit must keep both.
     act(() => setState({ workouts: [{ ...copy, title: 'Squat day', public: true }] }));
     location.hash = `#/w/${encodeURIComponent(original.id!)}`;
@@ -40,14 +45,14 @@ describe('editing a catalogue workout on its page', () => {
 });
 
 describe('an exercise on the workout page', () => {
-  it('opens its History from the expanded row when it has been logged', async () => {
+  it('opens its History from its sheet in the read view when it has been logged', async () => {
     const step = block.steps.find(s => s.kind === 'exercise')!;
     const key = step.kind === 'exercise' ? step.exercise.key : '';
     const logged: SessionResult = { id: 'r1', runsheetId: 'other', startedAt: '2026-10-01T08:00:00Z', steps: [{ stepId: 'x', exerciseKey: key, success: true }] };
     setState({ signedIn: true, results: [logged], workouts: [], saved: [] });
     location.hash = `#/w/${encodeURIComponent(original.id!)}`;
     render(<App />);
-    fireEvent.click(screen.getAllByRole('button', { name: (n: string) => n.startsWith(step.kind === 'exercise' ? step.exercise.name : ''), expanded: false })[0]);
+    fireEvent.click(screen.getAllByRole('button', { name: (n: string) => n.startsWith(step.kind === 'exercise' ? step.exercise.name : '') })[0]);
     fireEvent.click(await screen.findByRole('button', { name: /^History/ }));
     await waitFor(() => expect(location.hash).toBe(`#/x/${encodeURIComponent(key)}`));
   });

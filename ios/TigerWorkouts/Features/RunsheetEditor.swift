@@ -4,9 +4,12 @@ import SwiftUI
 /// session and the timer's Session sheet during one. One flat list: hold and drag a step within a
 /// block, into another block or out on its own; hold a block's header (or tap its grip) to reorder
 /// the blocks, each as one card. Tap a header for its rounds and rest, a step for its sheet; swipe a
-/// step to remove it.
+/// step to remove it. With `editing` off it only reads: headers, exercise and rest rows, and a tap
+/// on an exercise for its sheet (the workout screen until Edit, Nick 18 Oct 2026).
 struct RunsheetEditor<Header: View>: View {
     var runsheet: Runsheet
+    /// Off, the list reads: no set grid, add rows, grips, drags or swipes.
+    var editing = true
     /// Items done or running in a live session: shown, never moved or changed.
     var locked: Set<String> = []
     /// The step running now, marked on its row.
@@ -28,9 +31,6 @@ struct RunsheetEditor<Header: View>: View {
 
     /// Settings → Default rest: what an added rest starts at.
     @AppStorage(Switches.defaultRest) private var defaultRest = 30.0
-    /// "Hold a block's header to reorder blocks", shown until OK is tapped. A new key, so it shows
-    /// once more where the old "move it" tip was dismissed.
-    @AppStorage("tip.blockReorder") private var blockTipSeen = false
     @State private var editingRest: RestStep?
     @State private var editingBlock: Block?
     @State private var picking: PickTarget?
@@ -61,21 +61,11 @@ struct RunsheetEditor<Header: View>: View {
     }
 
     var body: some View {
-        let rows = Edit.rows(runsheet)
+        // Reading, the add rows (and the set grid on them) are not there at all.
+        let rows = editing ? Edit.rows(runsheet) : Edit.rows(runsheet).filter { !isAdd($0) }
         let frozen = lockedSteps
         List {
             header()
-
-            if !blockTipSeen, runsheet.items.contains(where: { $0.asBlock != nil }) {
-                HStack(spacing: 12) {
-                    Image(systemName: "line.3.horizontal").foregroundStyle(Brand.coralInk)
-                    Text("Hold a block's header to reorder blocks").font(.subheadline).foregroundStyle(Brand.ink)
-                    Spacer()
-                    Button("OK") { blockTipSeen = true }.font(.subheadline.weight(.bold)).foregroundStyle(Brand.coralInk)
-                }
-                .buttonStyle(.borderless)
-                .listRowBackground(Brand.coralSoft)
-            }
 
             Section {
                 // Headers are not drag sources: a header lifted alone left its steps behind, so
@@ -85,8 +75,8 @@ struct RunsheetEditor<Header: View>: View {
                 // clamps it below them or keeps them in place.
                 ForEach(rows) { row in
                     rowView(row, frozen: frozen)
-                        .moveDisabled(isAdd(row) || isHeader(row))
-                        .deleteDisabled(!isStep(row) || isFrozen(row, frozen))
+                        .moveDisabled(!editing || isAdd(row) || isHeader(row))
+                        .deleteDisabled(!editing || !isStep(row) || isFrozen(row, frozen))
                 }
                 .onMove { from, to in
                     guard let from = from.first else { return }
@@ -106,16 +96,18 @@ struct RunsheetEditor<Header: View>: View {
                 }
             }
 
-            Section {
-                Button { apply(Edit.addBlock(runsheet)) } label: {
-                    Label("Add block", systemImage: "square.stack.3d.up")
+            if editing {
+                Section {
+                    Button { apply(Edit.addBlock(runsheet)) } label: {
+                        Label("Add block", systemImage: "square.stack.3d.up")
+                    }
+                    Button { picking = PickTarget(blockId: nil) } label: {
+                        Label("Add a one-off exercise", systemImage: "figure.run")
+                    }
                 }
-                Button { picking = PickTarget(blockId: nil) } label: {
-                    Label("Add a one-off exercise", systemImage: "figure.run")
-                }
+                .foregroundStyle(Brand.coralInk)
+                .listRowBackground(Brand.surface)
             }
-            .foregroundStyle(Brand.coralInk)
-            .listRowBackground(Brand.surface)
         }
         .listStyle(.insetGrouped)
         .scrollContentBackground(.hidden)
@@ -203,7 +195,7 @@ struct RunsheetEditor<Header: View>: View {
             }
         case .step(let id, _):
             if let step = Edit.findStep(runsheet, id) {
-                stepRow(step, done: frozen.contains(id))
+                stepRow(step, done: frozen.contains(id), fixed: !editing)
                     .listRowInsets(EdgeInsets(top: 0, leading: 0, bottom: 0, trailing: 0))
                     .listRowBackground(Brand.surface)
             }
@@ -247,9 +239,11 @@ struct RunsheetEditor<Header: View>: View {
     /// The header is a row of its own that never drags: holding it, or tapping its grip, opens the
     /// reorder view, every block as one card (TW-026, TW-042).
     private func blockHeader(_ b: Block, done: Bool) -> some View {
-        HStack(spacing: 0) {
+        // Reading, a header is only its name, time and runs: nothing to tap, hold or grip.
+        let fixed = done || !editing
+        return HStack(spacing: 0) {
             // A hold has already opened the reorder view by the time the finger lifts.
-            Button { if !done, !reordering { editingBlock = b } } label: {
+            Button { if !fixed, !reordering { editingBlock = b } } label: {
                 HStack(spacing: 8) {
                     Text(b.name.isEmpty ? "Block" : b.name).font(.headline).foregroundStyle(done ? Brand.muted : Brand.ink)
                     Text(Format.duration(b.estimatedSeconds)).font(.footnote).foregroundStyle(Brand.muted)
@@ -264,10 +258,10 @@ struct RunsheetEditor<Header: View>: View {
                 .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
-            .simultaneousGesture(LongPressGesture(minimumDuration: 0.5).onEnded { _ in if !done { reordering = true } })
+            .simultaneousGesture(LongPressGesture(minimumDuration: 0.5).onEnded { _ in if !fixed { reordering = true } })
             .accessibilityLabel("\(b.name), \(b.modeLabel)")
-            .accessibilityHint(done ? "" : "Tap for rounds and rest. Hold to reorder blocks.")
-            if !done {
+            .accessibilityHint(fixed ? "" : "Tap for rounds and rest. Hold to reorder blocks.")
+            if !fixed {
                 Button { reordering = true } label: {
                     Image(systemName: "line.3.horizontal")
                         .font(.body.weight(.semibold))
@@ -287,10 +281,10 @@ struct RunsheetEditor<Header: View>: View {
     }
 
     @ViewBuilder
-    private func stepRow(_ step: Step, done: Bool) -> some View {
+    private func stepRow(_ step: Step, done: Bool, fixed: Bool = false) -> some View {
         switch step {
         case .rest(let r):
-            Button { if !done { editingRest = r } } label: {
+            Button { if !done, !fixed { editingRest = r } } label: {
                 HStack(spacing: 14) {
                     Image(systemName: "pause.fill")
                         .font(.system(size: 16, weight: .bold))

@@ -1,7 +1,9 @@
 import SwiftUI
 
-/// A workout before you start it, and the one place it is edited (specs/unified-editing.md): hold
-/// and drag a step or a whole block, swipe to remove, tap to change — no edit mode to find.
+/// A workout before you start it, and the one place it is edited (specs/unified-editing.md). It
+/// reads plain — block headers, exercise and rest rows — until Edit at the top right shows the set
+/// steppers, add rows, grips, drags and swipes; Done saves and goes back to reading (Nick, 18 Oct
+/// 2026). A workout still being written opens in edit mode.
 struct WorkoutDetailView: View {
     @Environment(Store.self) private var store
     @Environment(\.dismiss) private var dismiss
@@ -17,6 +19,8 @@ struct WorkoutDetailView: View {
     @State private var naming = false
     @State private var confirmDelete = false
     @State private var seeded = false
+    /// Edit mode: the editing controls show.
+    @State private var isEditing = false
     @State private var pendingSave: Task<Void, Never>?
     @AppStorage(Intent.storageKey) private var intent = Intent.maintain.rawValue
     @State private var dismissedStalls = StallDismissals.all()
@@ -45,6 +49,7 @@ struct WorkoutDetailView: View {
     var body: some View {
         RunsheetEditor(
             runsheet: runsheet,
+            editing: isEditing,
             setHint: { step, round in
                 let sets = LastTime.sets(store.results, for: step, in: runsheet) ?? []
                 return sets.indices.contains(round) ? LastTime.setLabel(sets[round]) : nil
@@ -78,10 +83,6 @@ struct WorkoutDetailView: View {
                     Text("Add an exercise to get going. Start shows up once there is something to run.")
                         .font(.footnote)
                         .foregroundStyle(Brand.muted)
-                } else {
-                    Text("Hold and drag to move a step or a whole block · swipe to remove · tap to change")
-                        .font(.footnote)
-                        .foregroundStyle(Brand.faint)
                 }
             }
             .listRowBackground(Color.clear)
@@ -96,12 +97,23 @@ struct WorkoutDetailView: View {
             // time's numbers back over what had just been set here.
             guard !seeded else { return }
             seeded = true
+            // One copy per original: once you have a copy, the original's page is your copy's.
+            if !editable, let copy = Edit.copy(of: runsheet, in: store.myWorkouts) { runsheet = copy }
             runsheet = store.seeded(runsheet)
+            if isNew || !runnable { isEditing = true }
             if isNew && runsheet.title.isEmpty { naming = true }
         }
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
-                Menu("Edit") {
+                Button(isEditing ? "Done" : "Edit") {
+                    if isEditing { flushSave() }
+                    withAnimation { isEditing.toggle() }
+                }
+                .fontWeight(isEditing ? .bold : .regular)
+                .accessibilityIdentifier("edit-toggle")
+            }
+            ToolbarItem(placement: .topBarTrailing) {
+                Menu {
                     Button { naming = true } label: {
                         Label("Name and creator", systemImage: "character.cursor.ibeam")
                     }
@@ -123,7 +135,10 @@ struct WorkoutDetailView: View {
                             Label("Delete workout", systemImage: "trash")
                         }
                     }
+                } label: {
+                    Image(systemName: "ellipsis")
                 }
+                .accessibilityLabel("More")
             }
         }
         .safeAreaInset(edge: .bottom) {

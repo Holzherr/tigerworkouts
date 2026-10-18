@@ -21,6 +21,14 @@ enum Edit {
         Block(id: id("b"), name: "Block \(number)", repeatCount: 8, mode: .rounds, steps: [])
     }
 
+    /// Your copy of a workout you do not own, if you made one: one copy per original. Its page is
+    /// the original's page from then on, so a later edit lands on the copy instead of making another.
+    /// `copyIn` in model.ts.
+    static func copy(of original: Runsheet, in mine: [Runsheet]) -> Runsheet? {
+        let root = original.copyOf ?? original.key
+        return mine.first { $0.copyOf == root && $0.key != original.key }
+    }
+
     /// A copy under a new id, so editing a catalogue workout never writes over the original. It
     /// keeps the program day and every step id, and remembers what it was copied from, so the
     /// sessions logged against the original stay its history (Up next, last time, pace, stalls).
