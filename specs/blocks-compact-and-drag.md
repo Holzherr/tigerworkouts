@@ -41,7 +41,7 @@ Mockup: https://claude.ai/artifact/K2JvQ2mxAhFrpeNhTsnMNC (now, then 1–3 below
   (three lines) at the right of each block header, 44 pt target (Nick approved the mockup 2026-09-29, which reverses DESIGN.md "no drag handles" for blocks); press-and-drag on the whole header
   still works.
 - A one-time tip on the workout screen: "Hold a block's header to move it". Dismissed with OK, and
-  not shown again.
+  not shown again. Removed 18 Oct 2026 (Nick): no tip; the grips show in edit mode only.
 - Accessibility: keep the hint; add Move up / Move down as accessibility actions on the header.
 
 ### 3. The whole block moves as one — the reorder view

@@ -161,15 +161,22 @@ struct DiscoverView: View {
             }
             .padding(.top, 40)
         } else {
+            // One card to do next: what a coach sent and is not done, else Mine's own pick.
+            let coachNext = assigned.first { !Coaching.isDone($0.0, results: store.results) }?.0.id
+            let next = coachNext == nil ? Home.upNext(sheets, own: own, last: last) : nil
             ForEach(assigned, id: \.0.id) { pair in
                 let (a, sheet) = pair
                 let coach = Coaching.name(of: a.coach, in: store.coaching)
                 let done = Coaching.isDone(a, results: store.results)
-                row(sheet, meta: "\(sheet.minutes) min · from \(coach)\(done ? " · done" : "")", tint: Brand.coralInk, from: .coach, play: true)
+                row(sheet, meta: "\(sheet.minutes) min · from \(coach)\(done ? " · done" : "")", tint: Brand.coralInk, from: .coach, play: true,
+                    card: Card(badge: done ? nil : "New · made for you", why: done ? nil : Home.why(sheet), contents: Home.contents(sheet), upNext: a.id == coachNext))
             }
             ForEach(sheets, id: \.key) { sheet in
                 let mine = own.contains(sheet.key)
-                row(sheet, meta: Home.line(minutes: sheet.minutes, lastDone: Home.lastDone(of: sheet, in: last), isNew: mine), from: mine ? .mine : .saved, play: true)
+                let done = Home.lastDone(of: sheet, in: last)
+                let fresh = mine && done == nil
+                row(sheet, meta: Home.line(minutes: sheet.minutes, level: sheet.level, lastDone: done), from: mine ? .mine : .saved, play: true,
+                    card: Card(badge: fresh ? Home.badge(sheet) : nil, why: fresh ? Home.why(sheet) : nil, contents: Home.contents(sheet), upNext: sheet.key == next))
             }
         }
     }
@@ -244,18 +251,49 @@ struct DiscoverView: View {
             .padding(.top, 6)
     }
 
+    /// What a Mine card says beyond its name and meta (Nick, 18 Oct 2026), a line each: a New badge
+    /// until it is first done, the description's first sentence, what is in it; `upNext` gives the
+    /// one card to do next a light coral edge and an "Up next" label.
+    struct Card {
+        var badge: String?
+        var why: String?
+        var contents: String?
+        var upNext = false
+    }
+
     /// One workout as a card: its name and one meta line open its page; with `play`, a coral play
     /// button on the right starts it straight away, last time's numbers carried over.
-    private func row(_ sheet: Runsheet, meta: String, tint: Color = Brand.muted, from: SessionOrigin, play: Bool = false) -> some View {
+    private func row(_ sheet: Runsheet, meta: String, tint: Color = Brand.muted, from: SessionOrigin, play: Bool = false, card: Card = Card()) -> some View {
         HStack(spacing: 12) {
             NavigationLink(value: Opened(key: sheet.key, from: from)) {
                 HStack(spacing: 8) {
                     VStack(alignment: .leading, spacing: 3) {
+                        if card.badge != nil || card.upNext {
+                            // Drawn above the title, read after it: the card is named by its title.
+                            HStack(spacing: 6) {
+                                if card.upNext { Text("Up next").foregroundStyle(Brand.coralInk) }
+                                if let badge = card.badge {
+                                    Text(badge)
+                                        .padding(.horizontal, 8).padding(.vertical, 1)
+                                        .background(Brand.coralSoft, in: Capsule())
+                                        .foregroundStyle(Brand.coralInk)
+                                }
+                            }
+                            .font(.caption.weight(.bold))
+                            .padding(.bottom, 1)
+                        }
                         Text(sheet.title)
                             .font(.body.weight(.semibold))
                             .foregroundStyle(Brand.ink)
                             .lineLimit(2)
                             .multilineTextAlignment(.leading)
+                            .accessibilitySortPriority(1)
+                        if let why = card.why {
+                            Text(why).font(.footnote).foregroundStyle(Brand.body).lineLimit(1)
+                        }
+                        if let contents = card.contents, !contents.isEmpty {
+                            Text(contents).font(.footnote).foregroundStyle(Brand.body).lineLimit(1)
+                        }
                         Text(meta)
                             .font(.footnote)
                             .foregroundStyle(tint)
@@ -289,7 +327,7 @@ struct DiscoverView: View {
         .padding(.trailing, play ? 10 : 14)
         .padding(.vertical, 10)
         .background(Brand.surface, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
-        .overlay(RoundedRectangle(cornerRadius: 16, style: .continuous).strokeBorder(Brand.line))
+        .overlay(RoundedRectangle(cornerRadius: 16, style: .continuous).strokeBorder(card.upNext ? Brand.coral.opacity(0.45) : Brand.line, lineWidth: card.upNext ? 1.5 : 1))
         .padding(.horizontal, 16)
     }
 
