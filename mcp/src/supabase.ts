@@ -106,6 +106,7 @@ export interface Db {
   get<T>(path: string): Promise<T>;
   post<T>(path: string, body: unknown): Promise<T>;
   patch<T>(path: string, body: unknown): Promise<T>;
+  del<T>(path: string): Promise<T>;
 }
 
 export const RETRY_401_MS = 1000;
@@ -134,6 +135,7 @@ export const db = (session: Pick<SupabaseSession, 'userId' | 'accessToken'>, f: 
     get: p => call('GET', p),
     post: (p, b) => call('POST', p, b),
     patch: (p, b) => call('PATCH', p, b),
+    del: p => call('DELETE', p),
   };
 };
 
