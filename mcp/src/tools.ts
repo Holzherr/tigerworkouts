@@ -9,6 +9,7 @@ import { forLabel, loadLabel, modeLabel, ROLE_LABEL, runsheetMinutes, type Exerc
 import { parsePlan } from '@/features/runsheet/parse-text';
 import type { ExerciseRef } from '@/features/runsheet/model';
 import type { SessionResult, SetResult, StepResult } from '@/features/runsheet/progression';
+import { changesFrom, versionsOf, type SessionVersion } from '@/features/runsheet/versions';
 import { shareUrlAt } from '@/features/share/link';
 import { catalogue, FULL_LIBRARY, libraryRef } from './catalogue';
 import { keepUnknownFields, normalise, type RunsheetInput } from './runsheet';
@@ -86,7 +87,10 @@ const summary = (r: Runsheet, owner: Owner, extra: { public?: boolean; source?: 
   updatedAt: extra.updatedAt,
 });
 
-const sessionView = (s: SessionResult, row: SessionRow, own: Record<string, LibraryExercise>) => ({
+/** A session's version as an agent reads it: what it changed from the workout, and the outline it ran. */
+const versionView = (v: SessionVersion, base?: Runsheet) => ({ changes: base ? changesFrom(base.items, v.items) : undefined, outline: outline({ title: '', items: v.items }) });
+
+const sessionView = (s: SessionResult, row: SessionRow, own: Record<string, LibraryExercise>, base?: Runsheet) => ({
   id: s.id ?? row.id,
   workoutId: row.workout_id ?? s.runsheetId,
   title: s.title ?? row.title,
@@ -102,6 +106,7 @@ const sessionView = (s: SessionResult, row: SessionRow, own: Record<string, Libr
   notes: s.notes,
   device: s.device,
   exercises: s.steps.map(x => ({ exerciseKey: x.exerciseKey, name: exerciseName(x.exerciseKey, own), load: x.target, incline: x.incline, reps: x.reps, success: x.success, ...(x.sets?.length ? { sets: x.sets.map(setOut) } : {}) })),
+  ...(s.version?.items?.length ? { version: versionView(s.version, base) } : {}),
 });
 
 /** One logged set as an agent reads it: only what was recorded. */
@@ -146,7 +151,11 @@ export const listSessions = async (db: Db, a: { limit?: number; since?: string; 
   if (a.until) q.append('started_at', `lt.${a.until}`);
   if (a.workoutId) q.set('workout_id', `eq.${a.workoutId}`);
   const [rows, own] = await Promise.all([db.get<SessionRow[]>(`sessions?${q}`), ownExercises(db)]);
-  return { sessions: (rows ?? []).map(r => sessionView(fromRow(r), r, own)) };
+  const results = (rows ?? []).map(r => ({ row: r, s: fromRow(r) }));
+  // The workouts behind sessions that ran a version, to say what each changed.
+  const ids = [...new Set(results.filter(x => x.s.version).map(x => x.row.workout_id ?? x.s.runsheetId))];
+  const bases = new Map(await Promise.all(ids.map(async id => [id, (await findWorkout(db, id).catch(() => null))?.runsheet] as const)));
+  return { sessions: results.map(({ row, s }) => sessionView(s, row, own, bases.get(row.workout_id ?? s.runsheetId))) };
 };
 
 export const getSession = async (db: Db, id: string) => {
@@ -156,7 +165,7 @@ export const getSession = async (db: Db, id: string) => {
   const s = fromRow(row);
   const own = await ownExercises(db);
   const workout = s.activity ? null : await findWorkout(db, row.workout_id ?? s.runsheetId).catch(() => null);
-  return { ...sessionView(s, row, own), workout: workout ? { id: workout.runsheet.id, title: workout.runsheet.title, outline: outline(workout.runsheet) } : undefined };
+  return { ...sessionView(s, row, own, workout?.runsheet), workout: workout ? { id: workout.runsheet.id, title: workout.runsheet.title, outline: outline(workout.runsheet) } : undefined };
 };
 
 const findWorkout = async (db: Db, id: string): Promise<{ runsheet: Runsheet; owner: Owner; row?: WorkoutRow; source?: string } | null> => {
@@ -207,9 +216,16 @@ export const listWorkouts = async (db: Db, a: ListWorkoutsArgs) => {
   return { total: hit.length, offset, workouts: hit.slice(offset, offset + limit), sources: [...new Set(catalogue().map(w => w.source))] };
 };
 
+/** This user's sessions of a workout, newest first. */
+const sessionsOf = async (db: Db, workoutId: string) => {
+  const rows = await db.get<SessionRow[]>(`sessions?owner=eq.${db.userId}&workout_id=eq.${enc(workoutId)}&select=${SESSION_COLS}&order=started_at.desc&limit=200`);
+  return (rows ?? []).map(fromRow);
+};
+
 export const getWorkout = async (db: Db, id: string) => {
   const w = await findWorkout(db, id);
   if (!w) throw new ToolError(`No workout ${id} that you can see. list_workouts shows the ids.`);
+  const versions = versionsOf(await sessionsOf(db, id), w.runsheet).map(v => ({ sessionId: v.sessionId, changes: v.changes, sessions: v.sessions, lastDone: v.lastDone, outline: outline({ title: '', items: v.items }) }));
   return {
     ...summary(w.runsheet, w.owner, { public: w.row?.public, source: w.source }),
     canEdit: w.owner === 'me',
@@ -218,6 +234,7 @@ export const getWorkout = async (db: Db, id: string) => {
     appUrl: appUrl(id),
     shareUrl: shareUrl(w.runsheet, w.owner === 'catalogue' || !!w.row?.public),
     runsheet: w.runsheet,
+    ...(versions.length ? { versions } : {}),
   };
 };
 
@@ -335,12 +352,26 @@ const safeRunsheet = (r: Runsheet): Runsheet =>
   numbersOnly({ ...r, items: r.items.map(it => (it.kind === 'block' ? numbersOnly({ ...it, steps: it.steps.map(st => numbersOnly(st)) }) : numbersOnly(it))) });
 
 /** start_workout: the runsheet for the timer view, plus the links out of the chat. */
-export const startWorkout = async (db: Db, a: DraftArgs & { id?: string }) => {
+export const startWorkout = async (db: Db, a: DraftArgs & { id?: string; sessionId?: string }) => {
   let runsheet: Runsheet;
   let assumptions: string[] | undefined;
   let saved = false;
   let open = false;
-  if (a.id) {
+  let version: SessionVersion | undefined;
+  if (a.sessionId) {
+    // A version run again: the workout with the items that session ran, logged as that version.
+    if (a.workout || a.plan) throw new ToolError('Pass sessionId (a version you ran) or a draft, not both.');
+    const rows = await db.get<SessionRow[]>(`sessions?id=eq.${enc(a.sessionId)}&owner=eq.${db.userId}&select=${SESSION_COLS}`);
+    const row = rows?.[0];
+    const s = row && fromRow(row);
+    if (!row || !s?.version?.items?.length) throw new ToolError(`No version in session ${a.sessionId}. get_workout lists versions with their sessionId.`);
+    const w = await findWorkout(db, a.id ?? row.workout_id ?? s.runsheetId);
+    if (!w) throw new ToolError(`The workout behind session ${a.sessionId} is gone.`);
+    version = { items: s.version.items };
+    runsheet = safeRunsheet({ ...w.runsheet, items: version.items });
+    saved = true;
+    open = w.owner === 'catalogue' || !!w.row?.public;
+  } else if (a.id) {
     if (a.workout || a.plan) throw new ToolError('Pass id (a saved workout) or a draft, not both.');
     const w = await findWorkout(db, a.id);
     if (!w) throw new ToolError(`No workout ${a.id} that you can see. list_workouts shows the ids.`);
@@ -360,6 +391,7 @@ export const startWorkout = async (db: Db, a: DraftArgs & { id?: string }) => {
     appDownloadUrl: APP_DOWNLOAD_URL,
     assumptions,
     runsheet,
+    ...(version ? { version } : {}),
   };
 };
 
@@ -376,13 +408,27 @@ export interface LogSessionArgs {
   score?: number;
   scoreText?: string;
   steps?: StepResult[];
+  /** What the session ran, when it was not the workout as saved: kept privately with it, as sent
+   * (the apps read it leniently; a version they cannot read is just not listed). */
+  version?: { items: unknown[] };
 }
+
+/** A step or item in the runsheet shape the apps read (start_workout's version), not the input shape. */
+const isStep = (x: unknown): boolean => {
+  const o = x as { kind?: unknown; exercise?: { key?: unknown }; seconds?: unknown };
+  return (o?.kind === 'exercise' && typeof o.exercise?.key === 'string') || (o?.kind === 'rest' && typeof o.seconds === 'number');
+};
+const isItem = (x: unknown): boolean => {
+  const o = x as { kind?: unknown; steps?: unknown; runsheetId?: unknown };
+  return (o?.kind === 'block' && Array.isArray(o.steps) && o.steps.every(isStep)) || (o?.kind === 'ref' && typeof o.runsheetId === 'string') || isStep(x);
+};
 
 /** One finished session into the sessions table, in the row shape the web app's sync writes for v2
  * results (toRow in src/features/cloud/sync.ts), so it shows in the app's history. */
 export const logSession = async (db: Db, a: LogSessionArgs) => {
   const started = Date.parse(a.startedAt);
   if (Number.isNaN(started)) throw new ToolError('startedAt must be an ISO date/time.');
+  if (a.version && !a.version.items.every(isItem)) throw new ToolError('version.items must be runsheet items as start_workout returned them (runsheet.items, or version.items).');
   const id = a.id ?? `s-${started.toString(36)}${Math.random().toString(36).slice(2, 6)}`;
   const result: SessionResult = {
     id,
@@ -397,6 +443,7 @@ export const logSession = async (db: Db, a: LogSessionArgs) => {
     score: a.score,
     scoreText: a.scoreText,
     steps: a.steps ?? [],
+    ...(a.version?.items?.length ? { version: a.version as SessionVersion } : {}),
   };
   const row = {
     id,

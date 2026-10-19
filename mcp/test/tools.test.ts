@@ -327,6 +327,29 @@ describe('plans, timer and logging', () => {
     expect('sets' in back.sessions.find(s => s.id === 's-2')!.exercises[0]).toBe(false);
   });
 
+  it('versions: a session that ran something else says what it changed, get_workout lists it, start_workout runs it again and logs it as that version', async () => {
+    const mine = (tables.workouts[0].data as { items: unknown[] }).items;
+    const plus = [...mine, { kind: 'exercise', id: 'e2', exercise: { key: 'bb_rdl', name: 'Romanian deadlift', unit: 'kg', step: 2.5 }, forMode: 'reps', forValue: 8, target: 80 }];
+    await T.logSession(db, { id: 's-v1', workoutId: 'u-mine', startedAt: '2026-10-01T07:00:00Z', version: { items: plus } });
+    await expect(T.logSession(db, { id: 's-bad', workoutId: 'u-mine', startedAt: '2026-10-01T07:00:00Z', version: { items: [{ kind: 'exercise', exercise: 'bb_rdl' }] } })).rejects.toThrow(/version.items/);
+
+    const { sessions } = await T.listSessions(db, { workoutId: 'u-mine' });
+    expect(sessions.find(x => x.id === 's-v1')?.version).toMatchObject({ changes: '+ Romanian deadlift' });
+    expect(sessions.find(x => x.id === 's-1')?.version).toBeUndefined();
+    expect((await T.getSession(db, 's-v1')).version?.outline).toMatch(/Romanian deadlift/);
+
+    const w = await T.getWorkout(db, 'u-mine');
+    expect(w.versions).toEqual([expect.objectContaining({ sessionId: 's-v1', changes: '+ Romanian deadlift', sessions: 1 })]);
+
+    const before = JSON.stringify(tables.workouts);
+    const run = await T.startWorkout(db, { sessionId: 's-v1' });
+    expect(run).toMatchObject({ saved: true, workoutId: 'u-mine', version: { items: plus } });
+    expect(run.outline).toMatch(/Romanian deadlift/);
+    expect(JSON.stringify(tables.workouts)).toBe(before);
+    await expect(T.startWorkout(db, { sessionId: 's-1' })).rejects.toThrow(/No version/);
+    await expect(T.startWorkout(db, { sessionId: 's-other' })).rejects.toThrow(/No version/);
+  });
+
   it('create_workout takes what a step logs, and drops nothing when it does', async () => {
     const w = draft({ items: [{ kind: 'block', repeat: 3, steps: [{ kind: 'exercise', exercise: 'cardio_rower', forMode: 'seconds', forValue: 30, log: 'meters' }, { kind: 'rest', seconds: 30 }] }] } as Partial<RunsheetInput>);
     const out = await T.createWorkout(db, { workout: w });

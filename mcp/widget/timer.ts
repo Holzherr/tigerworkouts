@@ -13,6 +13,8 @@ interface StartOutput {
   title: string;
   runsheet: Runsheet;
   workoutId?: string;
+  /** Set when a version is run again: logged with the session. */
+  version?: { items: unknown[] };
   previewUrl?: string;
   appUrl?: string;
   appDownloadUrl?: string;
@@ -199,6 +201,7 @@ const save = async () => {
       score: r.score,
       scoreText: r.scoreText,
       steps: r.steps,
+      ...(out.version ? { version: out.version } : {}),
     })) as { isError?: boolean } | undefined;
     logged = res?.isError ? 'failed' : 'yes';
   } catch {
