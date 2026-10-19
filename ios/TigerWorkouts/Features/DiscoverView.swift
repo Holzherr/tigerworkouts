@@ -72,6 +72,10 @@ struct DiscoverView: View {
                         if tab == .mine { mine } else { discover }
                     }
                 }
+                // Search, Mine and Discover key their rows by workout, and a lazy stack keeps a built
+                // row by its key: without a fresh stack per list, Mine drew a saved workout with the
+                // search row's chevron instead of its play button.
+                .id(searching ? "search" : tab.rawValue)
                 .padding(.vertical, 8)
                 // Room under the last row so it clears the floating tab bar.
                 .padding(.bottom, 40)
