@@ -92,6 +92,7 @@ final class Store {
         seedProgressIfAsked()
         seedLoadsIfAsked()
         seedTimedIfAsked()
+        seedVersionsIfAsked()
         #endif
         loaded = true
         shareUpNext()
@@ -564,6 +565,13 @@ final class Store {
     /// private) sends it. Any other edit leaves the column alone: the screen's copy may be older
     /// than a change made on the web, and sending it unpublished the workout.
     func saveWorkout(_ r: Runsheet, visibility: Bool = false) async {
+        stage(r, visibility: visibility)
+        await pushWorkouts()
+    }
+
+    /// The local half of `saveWorkout`, done before it returns: a session started straight after
+    /// an edit reads the edited workout as the base, so the edit is not taken for a version.
+    func stage(_ r: Runsheet, visibility: Bool = false) {
         var sheet = r
         if sheet.id == nil { sheet.id = Edit.id("w") }
         if sheet.creator == nil { sheet.creator = user?.email }
@@ -578,7 +586,6 @@ final class Store {
         pendingWorkouts.removeAll { $0.key == sheet.key }
         pendingWorkouts.append(sheet)
         writeCache()
-        await pushWorkouts()
     }
 
     func deleteWorkout(_ r: Runsheet) async {
@@ -600,7 +607,7 @@ final class Store {
         myWorkouts.contains { $0.key == r.key }
     }
 
-    private func pushWorkouts() async {
+    func pushWorkouts() async {
         do {
             try await flushWorkouts()
             syncError = nil

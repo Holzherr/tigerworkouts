@@ -26,11 +26,26 @@ struct WorkoutDetailView: View {
     @State private var dismissedStalls = StallDismissals.all()
     /// The last removal, for five seconds: Undo puts the workout back as it was.
     @State private var undo: (label: String, before: Runsheet)?
+    /// Asked once per visit, at the first change on a workout that has been done: this session
+    /// only, or the workout itself (Versions.swift).
+    @State private var scope: EditScope?
+    /// What waits for that answer: going into edit mode, or a change already made.
+    @State private var asking: Asking?
+    /// The page before its "Just this time" change: Undo goes back to it.
+    @State private var onceFrom: Runsheet?
+
+    private enum EditScope { case once, base }
+    private enum Asking { case edit, change(Runsheet) }
 
     private var saved: Bool { store.saved.contains(runsheet.key) }
     private var editable: Bool { isNew || store.isMine(runsheet) }
     /// Something to run: a new workout has no Start, length or icon until it has an exercise.
     private var runnable: Bool { !store.prepared(runsheet).exerciseSteps.isEmpty }
+    private var mustAsk: Bool { !isNew && scope == nil && store.doneCount(runsheet.key) > 0 }
+    /// The versions your sessions ran of the workout as stored.
+    private var versions: [Versions.Row] {
+        store.workout(id: runsheet.key).map { Versions.rows(store.results, base: $0) } ?? []
+    }
 
     /// Other workouts embedded in this one (a shared warm-up), with what each holds. Resolved into
     /// the session at Start; listed here so they are not a surprise.
@@ -76,6 +91,8 @@ struct WorkoutDetailView: View {
                         .foregroundStyle(Brand.body)
                         .lineSpacing(3)
                 }
+                if onceFrom != nil { onceBanner }
+                if !isEditing, !versions.isEmpty { versionsCard }
                 if let assignment = store.assignment(forWorkout: runsheet.key) {
                     CoachNotesCard(assignment: assignment)
                 }
@@ -106,6 +123,7 @@ struct WorkoutDetailView: View {
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
                 Button(isEditing ? "Done" : "Edit") {
+                    if !isEditing, mustAsk { return asking = .edit }
                     if isEditing { flushSave() }
                     withAnimation { isEditing.toggle() }
                 }
@@ -167,6 +185,9 @@ struct WorkoutDetailView: View {
                 onAmount: { changingAmount = find(step.id) ?? step }
             )
             .presentationDetents([.medium, .large])
+            .confirmationDialog("Change it for…", isPresented: Binding(get: { asking != nil && editing != nil && changingAmount == nil }, set: { if !$0 { asking = nil } }), titleVisibility: .visible) {
+                scopeButtons
+            }
             .sheet(item: $changingAmount) { step in
                 StepEditorView(step: step) { updated in
                     apply(Edit.updateStep(runsheet, id: step.id) { $0 = updated })
@@ -194,7 +215,125 @@ struct WorkoutDetailView: View {
         } message: {
             Text("Sessions you already logged against it stay in History.")
         }
+        .confirmationDialog("Change it for…", isPresented: Binding(get: { asking != nil && editing == nil }, set: { if !$0 { asking = nil } }), titleVisibility: .visible) {
+            scopeButtons
+        } message: {
+            Text("Just this time: the next session runs it changed and keeps it as your version. Update workout: changes it for every session from now on.")
+        }
         .onDisappear { flushSave() }
+    }
+
+    @ViewBuilder
+    private var scopeButtons: some View {
+        Button("Just this time") { answer(.once) }
+            .accessibilityIdentifier("scope-once")
+        Button("Update workout") { answer(.base) }
+            .accessibilityIdentifier("scope-base")
+        Button("Cancel", role: .cancel) { asking = nil }
+    }
+
+    private func answer(_ to: EditScope) {
+        let held = asking
+        asking = nil
+        scope = to
+        switch held {
+        case .edit: withAnimation { isEditing = true }
+        case .change(let next): apply(next)
+        case nil: break
+        }
+    }
+
+    // MARK: - Versions
+
+    /// While the page holds a "Just this time" change: what it means and the two ways out.
+    private var onceBanner: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text("Just this time").font(.subheadline.weight(.bold)).foregroundStyle(Brand.ink)
+            Text("Start runs it as changed; it is kept with that session as your version, not on the workout.")
+                .font(.caption)
+                .foregroundStyle(Brand.body)
+            HStack(spacing: 16) {
+                Button("Update workout instead") {
+                    scope = .base
+                    onceFrom = nil
+                    commit(runsheet)
+                }
+                .accessibilityIdentifier("once-keep")
+                Button("Undo changes") {
+                    if let before = onceFrom { runsheet = before }
+                    onceFrom = nil
+                    scope = nil
+                }
+                .foregroundStyle(Brand.muted)
+                .accessibilityIdentifier("once-undo")
+            }
+            .font(.subheadline.weight(.semibold))
+            .buttonStyle(.borderless)
+            .padding(.top, 2)
+        }
+        .padding(12)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(Brand.coralSoft, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+        .accessibilityElement(children: .contain)
+        .accessibilityIdentifier("once-banner")
+    }
+
+    /// One row per version a session ran — what is different, how often and when last — with Run
+    /// and Make base. Private: only the person who ran them sees it.
+    private var versionsCard: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack(spacing: 6) {
+                Image(systemName: "arrow.triangle.branch").foregroundStyle(Brand.coralInk)
+                Text("Your versions").font(.subheadline.weight(.bold)).foregroundStyle(Brand.ink)
+                Spacer()
+                Text("only you see these").font(.caption).foregroundStyle(Brand.muted)
+            }
+            ForEach(versions) { v in
+                HStack(spacing: 10) {
+                    VStack(alignment: .leading, spacing: 1) {
+                        Text(v.changes).font(.subheadline.weight(.semibold)).foregroundStyle(Brand.ink).lineLimit(1)
+                        Text("\(v.sessions)× · last \(ISO8601.date(v.lastDone)?.formatted(date: .abbreviated, time: .omitted) ?? "")")
+                            .font(.caption)
+                            .foregroundStyle(Brand.muted)
+                    }
+                    Spacer(minLength: 4)
+                    Button("Make base") { makeBase(v) }
+                        .font(.subheadline)
+                        .accessibilityIdentifier("version-make-base")
+                    Button { runVersion(v) } label: { Label("Run", systemImage: "play.fill") }
+                        .font(.subheadline.weight(.semibold))
+                        .accessibilityLabel("Run this version: \(v.changes)")
+                        .accessibilityIdentifier("version-run")
+                }
+                .buttonStyle(.borderless)
+            }
+        }
+        .padding(12)
+        .background(Brand.surface, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+        .overlay(RoundedRectangle(cornerRadius: 14, style: .continuous).strokeBorder(Brand.line))
+        .accessibilityElement(children: .contain)
+        .accessibilityIdentifier("versions-card")
+    }
+
+    /// The workout with the version's items, seeded as the page seeds: its session keeps it as its version.
+    private func runVersion(_ v: Versions.Row) {
+        guard var sheet = store.workout(id: runsheet.key) else { return }
+        sheet.items = v.items
+        onStart(store.seeded(sheet), startedFrom)
+    }
+
+    /// The version becomes the workout, items as the session kept them (not seeded), so it no
+    /// longer shows as a version.
+    private func makeBase(_ v: Versions.Row) {
+        var next = store.workout(id: runsheet.key) ?? runsheet
+        next.items = v.items
+        scope = .base
+        onceFrom = nil
+        guard editable else { return commit(store.seeded(next)) }
+        pendingSave?.cancel()
+        store.stage(next)
+        Task { await store.pushWorkouts() }
+        runsheet = store.seeded(next)
     }
 
     // MARK: - Editing in place
@@ -205,10 +344,23 @@ struct WorkoutDetailView: View {
         undo = ("Removed \(step.exercise.name)", before)
     }
 
-    /// Every change goes through here, and saves itself a moment after the last one. A catalogue
-    /// workout is never written over: its first edit silently makes it yours, as a copy, and this
-    /// screen carries on with the copy.
+    /// Every change goes through here. On a workout that has been done, the first one asks whether
+    /// it is for this session only; a "Just this time" change stays on the page, unsaved, until
+    /// Start runs it.
     private func apply(_ next: Runsheet) {
+        if mustAsk { return asking = .change(next) }
+        guard scope != .once else {
+            if onceFrom == nil { onceFrom = runsheet }
+            runsheet = next
+            if let id = editing?.id { editing = find(id) }
+            return
+        }
+        commit(next)
+    }
+
+    /// Saves itself a moment after the last change. A catalogue workout is never written over: its
+    /// first edit silently makes it yours, as a copy, and this screen carries on with the copy.
+    private func commit(_ next: Runsheet) {
         guard !editable else {
             runsheet = next
             if let id = editing?.id { editing = find(id) }
@@ -221,8 +373,9 @@ struct WorkoutDetailView: View {
         let wasSaved = saved
         runsheet = copy
         if let id = editing?.id { editing = renamed[id].flatMap(find) }
+        store.stage(copy)
         Task {
-            await store.saveWorkout(copy)
+            await store.pushWorkouts()
             if wasSaved { await store.toggleSaved(copy.key) }
         }
     }
@@ -236,6 +389,8 @@ struct WorkoutDetailView: View {
         copy.copyOf = nil
         copy.program = nil
         runsheet = copy
+        scope = nil
+        onceFrom = nil
         Task { await store.saveWorkout(copy) }
     }
 
@@ -245,9 +400,10 @@ struct WorkoutDetailView: View {
     /// The one edit that sends `public`; saved at once with whatever else is waiting.
     private func setPublic(_ on: Bool) {
         pendingSave?.cancel()
-        var next = runsheet
+        // A "Just this time" change is not the workout's: the workout as it was goes up.
+        var next = onceFrom ?? runsheet
         next.isPublic = on
-        runsheet = next
+        if onceFrom != nil { onceFrom = next } else { runsheet = next }
         Task { await store.saveWorkout(next, visibility: true) }
     }
 
@@ -271,15 +427,17 @@ struct WorkoutDetailView: View {
         guard store.workout(id: runsheet.key) == nil else { return flushSave() }
         pendingSave?.cancel()
         runsheet = Edit.namedForStart(runsheet)
-        let sheet = runsheet
-        Task { await store.saveWorkout(sheet) }
+        store.stage(runsheet)
+        Task { await store.pushWorkouts() }
     }
 
+    /// In the store before it returns, so a session started next reads the edit as the workout,
+    /// not as a version of it; the upload follows.
     private func flushSave() {
         guard let task = pendingSave, !task.isCancelled, Edit.problem(with: runsheet) == nil else { return }
         task.cancel()
-        let sheet = runsheet
-        Task { await store.saveWorkout(sheet) }
+        store.stage(runsheet)
+        Task { await store.pushWorkouts() }
     }
 
     private var header: some View {

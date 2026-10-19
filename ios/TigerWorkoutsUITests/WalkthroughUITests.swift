@@ -1195,6 +1195,57 @@ final class WalkthroughUITests: XCTestCase {
         app.launchEnvironment["UITEST_NO_PROMPTS"] = "1"
     }
 
+    /// Your versions: a workout done with changes shows them, Edit asks whether a change is for
+    /// this time only, and running a version again counts it once more.
+    func testWorkoutVersions() {
+        app.terminate()
+        app.launchArguments = ["-seedVersions"]
+        app.launch()
+        let discard = app.alerts.buttons["Discard"]
+        if discard.waitForExistence(timeout: 3) { discard.tap() }
+
+        open("Cindy")
+        let card = app.descendants(matching: .any)["versions-card"]
+        XCTAssertTrue(card.waitForExistence(timeout: 5), "a workout run with changes should list them as versions")
+        snap("120 Your versions on the workout page")
+
+        tap(app.buttons["edit-toggle"])
+        XCTAssertTrue(app.buttons["scope-once"].firstMatch.waitForExistence(timeout: 5), "Edit on a workout that has been done should ask what the change is for")
+        snap("121 Edit asks: just this time or the workout")
+        // The popover's buttons are in the tree twice.
+        tap(app.buttons["scope-once"].firstMatch)
+        // A row removed just this time: the banner says so, and Undo puts it back.
+        let row = app.buttons.matching(NSPredicate(format: "label BEGINSWITH 'Pull-up'")).firstMatch
+        if row.waitForExistence(timeout: 3) {
+            row.swipeLeft()
+            let delete = app.buttons["Delete"]
+            if delete.waitForExistence(timeout: 2) {
+                delete.tap()
+                XCTAssertTrue(app.descendants(matching: .any)["once-banner"].waitForExistence(timeout: 5), "a change made just this time should say so")
+                snap("122 Just this time banner")
+                tap(app.buttons["once-undo"])
+            }
+        }
+        // Out of edit mode; a tap while the popover is still going away can be lost.
+        let toggle = app.buttons["edit-toggle"]
+        for _ in 0..<3 where toggle.label != "Edit" {
+            sleep(1)
+            toggle.tap()
+        }
+
+        let before = app.staticTexts.matching(NSPredicate(format: "label BEGINSWITH '2×'")).firstMatch
+        XCTAssertTrue(before.waitForExistence(timeout: 5), "the seeded version was run twice")
+        tap(app.buttons["version-run"])
+        XCTAssertTrue(app.buttons["End session"].waitForExistence(timeout: 5))
+        sleep(7)
+        tap(app.buttons["End session"])
+        tap(app.buttons["Finish and save"])
+        tap(app.buttons["Done"])
+        let after = app.staticTexts.matching(NSPredicate(format: "label BEGINSWITH '3×'")).firstMatch
+        XCTAssertTrue(after.waitForExistence(timeout: 8), "running a version again should keep it as that version")
+        snap("123 The version run again")
+    }
+
     private func open(_ title: String) {
         XCTAssertTrue(app.navigationBars["Workouts"].waitForExistence(timeout: 10))
         let search = app.searchFields.firstMatch

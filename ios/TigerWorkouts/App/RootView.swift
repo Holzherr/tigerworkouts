@@ -134,9 +134,16 @@ struct RootView: View {
 
     /// The workout is logged when it finishes, not when Done is tapped: the finished screen says
     /// "Workout saved", and a phone that dies on it must not make that untrue.
+    ///
+    /// A session that ran something other than the workout as saved (a "Just this time" change, a
+    /// version run again, a change mid-session) keeps what it ran as its version (Versions.swift).
     private func logOnFinish(_ runner: SessionRunner) -> SessionRunner {
         let startedAt = runner.state.startedAt
-        runner.onFinished = { [store] result in
+        let base = store.workout(id: runner.runsheet.key)
+        let auto = base.map { store.prepared(store.seeded($0)) }
+        runner.onFinished = { [store, weak runner] result in
+            var result = result
+            if let base, let auto, let run = runner?.runsheet { result.version = Versions.of(run: run, auto: auto, base: base) }
             Task { await store.save(result) { SessionRunner.clearSaved(startedAt: startedAt) } }
         }
         return runner

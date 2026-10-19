@@ -29,6 +29,7 @@
 		2A6C2DD0A0F51FEDD7B70319 /* Muscles.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8FA46D7EF60541FEC8764F65 /* Muscles.swift */; };
 		2B60AB7BAD0FA3BD84166265 /* RunnerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 38611D00C12C8D5497FC0713 /* RunnerTests.swift */; };
 		3105627F1ECD6D350F9AC6BD /* TimedWorkTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3A715E4572332DEEEC4108C6 /* TimedWorkTests.swift */; };
+		33035C8F3399C9BACC8A6459 /* VersionsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 343141B3CD43DC7DFA0B0A5B /* VersionsTests.swift */; };
 		336F75C7C99366986A2B3EE4 /* EngineCorrectnessTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = FF1037B86A23BEA3B9FCC0CA /* EngineCorrectnessTests.swift */; };
 		36C3F06105915FAA4D145D1E /* AppIcon.svg in Resources */ = {isa = PBXBuildFile; fileRef = FCF7BF4830AD9ACF61791DA9 /* AppIcon.svg */; };
 		36DCCDF6A5E45F3B7DA316BA /* TargetViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = 75787AFCCADC17A96827F19A /* TargetViews.swift */; };
@@ -126,6 +127,7 @@
 		E8FF9F709DAB7BE226BC46D1 /* SetGrid.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1E38F7FA144B053254278A46 /* SetGrid.swift */; };
 		EB9FAD39D8876DE07D18AB3E /* LiveActivityTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = DF2925A193B28392EB5F9746 /* LiveActivityTests.swift */; };
 		EE8875B0E48F5CC48E920658 /* Rounds.swift in Sources */ = {isa = PBXBuildFile; fileRef = F918E3A8F3C4BC67B44AE756 /* Rounds.swift */; };
+		EFF9F33577A7AC658103782E /* Versions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 808EFC375B0CD2062A770126 /* Versions.swift */; };
 		F06A699989CEBDCE07E7DD4B /* StallTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4091AAF4AF7AB0D132C03B29 /* StallTests.swift */; };
 		F1601363AD9670CECC3A037E /* CustomExerciseTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 24872D5F44F6A349D7AD9995 /* CustomExerciseTests.swift */; };
 		F4756435DC2DA572B027CF59 /* MeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 39DFAF6D4A3365D7D78C8D6C /* MeView.swift */; };
@@ -194,6 +196,7 @@
 		2CFD343754E38E4130A23DAC /* LiveRecordTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LiveRecordTests.swift; sourceTree = "<group>"; };
 		32C06182F780EF3B0331CF01 /* StripesShapeTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StripesShapeTests.swift; sourceTree = "<group>"; };
 		33DC0A785FEFE7AD8644F909 /* CoachViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CoachViews.swift; sourceTree = "<group>"; };
+		343141B3CD43DC7DFA0B0A5B /* VersionsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VersionsTests.swift; sourceTree = "<group>"; };
 		3475C99F5B8C3770A79FA6EB /* Supabase+Coaching.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Supabase+Coaching.swift"; sourceTree = "<group>"; };
 		35CB9F49E1C6B8CD622ED57D /* EditSets.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EditSets.swift; sourceTree = "<group>"; };
 		36B599742F16E34DF89CB346 /* Runner.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Runner.swift; sourceTree = "<group>"; };
@@ -234,6 +237,7 @@
 		781B4703341F053F08AE0613 /* Keychain.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Keychain.swift; sourceTree = "<group>"; };
 		7D1E28AFABED678775260BB0 /* TigerWorkoutsWidgets-Personal.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = "TigerWorkoutsWidgets-Personal.entitlements"; sourceTree = "<group>"; };
 		7F61B8CF21E007E3998D9D46 /* TigerWorkouts-Personal.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = "TigerWorkouts-Personal.entitlements"; sourceTree = "<group>"; };
+		808EFC375B0CD2062A770126 /* Versions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Versions.swift; sourceTree = "<group>"; };
 		8122D3D1580C9A49525A0BBD /* Home.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Home.swift; sourceTree = "<group>"; };
 		8164E6FD277B34BAB1DE24C7 /* GymFloorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GymFloorTests.swift; sourceTree = "<group>"; };
 		87A0379EA6B428BEE7F68638 /* SessionLiveActivity.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionLiveActivity.swift; sourceTree = "<group>"; };
@@ -456,6 +460,7 @@
 				DE66D2C56C04D57BFB270F0F /* TargetsTests.swift */,
 				38D739C137365162C9F1D895 /* TimedRecordsTests.swift */,
 				3A715E4572332DEEEC4108C6 /* TimedWorkTests.swift */,
+				343141B3CD43DC7DFA0B0A5B /* VersionsTests.swift */,
 				F5CF9DC0EA5841510B9D13F6 /* WorkoutIconTests.swift */,
 			);
 			path = TigerWorkoutsTests;
@@ -486,6 +491,7 @@
 				01638E9D3E013E1503E8A675 /* RunsheetMath.swift */,
 				B3B6B0782F16CEA9ECD79A1E /* SessionResult.swift */,
 				3F35DA991E47AC04C5CF1094 /* Targets.swift */,
+				808EFC375B0CD2062A770126 /* Versions.swift */,
 			);
 			path = Model;
 			sourceTree = "<group>";
@@ -755,6 +761,7 @@
 				A605B92316A505E8591952CC /* TargetsTests.swift in Sources */,
 				57EE87847B9CB5C0244D25CF /* TimedRecordsTests.swift in Sources */,
 				3105627F1ECD6D350F9AC6BD /* TimedWorkTests.swift in Sources */,
+				33035C8F3399C9BACC8A6459 /* VersionsTests.swift in Sources */,
 				A6DFA29A5C8E113653F132FF /* WorkoutIconTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -832,6 +839,7 @@
 				DB3F588AA2E58E33D6EBA2CE /* Toasts.swift in Sources */,
 				BA853E045B5C7CC5959852FE /* UpNextShare.swift in Sources */,
 				221231360FDDF2B3D468A8F1 /* UpNextWidgetView.swift in Sources */,
+				EFF9F33577A7AC658103782E /* Versions.swift in Sources */,
 				3D397F79C87164A71BD55C60 /* WorkoutDetailView.swift in Sources */,
 				A87AA59065D1D1141DD2940E /* WorkoutIcon.swift in Sources */,
 			);

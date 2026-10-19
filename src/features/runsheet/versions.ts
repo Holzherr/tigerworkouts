@@ -3,7 +3,8 @@
  * people to make edits and have those workouts saved as variants the user has done - but these are
  * not published"). The workout is the base; a session run with changes keeps what it ran as
  * `version` on its own row, which only its owner (and their coach) can read. A version is never a
- * workout of its own. Ported one for one to ios/TigerWorkouts/Model/Versions.swift.
+ * workout of its own. Ported one for one to ios/TigerWorkouts/Model/Versions.swift, all but
+ * `mergeSessions`, which only the web offers.
  */
 import type { ExerciseStep, Item, Runsheet, Step } from './model';
 import type { SessionResult } from './progression';
