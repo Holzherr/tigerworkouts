@@ -189,7 +189,7 @@ final class WalkthroughUITests: XCTestCase {
         // The set grid is an editing control: it shows after Edit (Nick, 18 Oct 2026).
         let grid = app.descendants(matching: .any)["set-grid"].firstMatch
         XCTAssertFalse(grid.exists, "the page reads plain until Edit")
-        tap(app.buttons["edit-toggle"])
+        editWorkout(app.buttons["edit-toggle"])
         for _ in 0..<6 where !(grid.exists && grid.isHittable) {
             app.swipeUp(velocity: .slow)
         }
@@ -408,7 +408,7 @@ final class WalkthroughUITests: XCTestCase {
         XCTAssertFalse(app.buttons["block-grip"].exists, "no grips until Edit")
         XCTAssertFalse(app.staticTexts["Hold and drag to move a step or a whole block · swipe to remove · tap to change"].exists, "the drag hint is gone")
         snap("21 Workout page, reading")
-        tap(app.navigationBars["Tabata This"].buttons["Edit"])
+        editWorkout(app.navigationBars["Tabata This"].buttons["Edit"])
         XCTAssertTrue(app.buttons["block-grip"].firstMatch.waitForExistence(timeout: 5), "Edit shows the grips")
         XCTAssertTrue(app.navigationBars["Tabata This"].buttons["Done"].exists, "Edit turns into Done")
         snap("21b Workout page, editing")
@@ -463,7 +463,7 @@ final class WalkthroughUITests: XCTestCase {
         open("Tabata This")
         let tip = app.staticTexts["Hold a block's header to reorder blocks"]
         XCTAssertFalse(tip.waitForExistence(timeout: 2), "there is no drag tip (Nick, 18 Oct 2026)")
-        tap(app.navigationBars["Tabata This"].buttons["Edit"])
+        editWorkout(app.navigationBars["Tabata This"].buttons["Edit"])
         XCTAssertFalse(tip.exists, "nor one in edit mode")
 
         let squat = app.buttons.matching(NSPredicate(format: "label BEGINSWITH[c] 'Tabata Squat'")).firstMatch
@@ -518,7 +518,7 @@ final class WalkthroughUITests: XCTestCase {
     func testBlockReorderView() {
         open("Tabata This")
         XCTAssertFalse(app.buttons["block-grip"].firstMatch.waitForExistence(timeout: 2), "the grip is an edit-mode control")
-        tap(app.navigationBars["Tabata This"].buttons["Edit"])
+        editWorkout(app.navigationBars["Tabata This"].buttons["Edit"])
         tap(app.buttons["block-grip"].firstMatch)
         XCTAssertTrue(app.navigationBars["Reorder blocks"].waitForExistence(timeout: 5))
         let squatCard = card("Tabata Squat")
@@ -1072,7 +1072,7 @@ final class WalkthroughUITests: XCTestCase {
         open("Tabata This")
         let rower = app.buttons.matching(NSPredicate(format: "label BEGINSWITH[c] 'Rowing machine'")).firstMatch
         XCTAssertTrue(rower.waitForExistence(timeout: 5))
-        tap(app.navigationBars["Tabata This"].buttons["Edit"])
+        editWorkout(app.navigationBars["Tabata This"].buttons["Edit"])
         centre([rower])
         rower.swipeLeft()
         tap(app.buttons["Delete"])
@@ -1193,6 +1193,68 @@ final class WalkthroughUITests: XCTestCase {
         tap(app.buttons["End session"])
         tap(app.buttons["Discard"])
         app.launchEnvironment["UITEST_NO_PROMPTS"] = "1"
+    }
+
+    /// Your versions: a workout done with changes shows them, Edit asks whether a change is for
+    /// this time only, and running a version again counts it once more.
+    func testWorkoutVersions() {
+        app.terminate()
+        app.launchArguments = ["-seedVersions"]
+        app.launch()
+        let discard = app.alerts.buttons["Discard"]
+        if discard.waitForExistence(timeout: 3) { discard.tap() }
+
+        open("Cindy")
+        let card = app.descendants(matching: .any)["versions-card"]
+        XCTAssertTrue(card.waitForExistence(timeout: 5), "a workout run with changes should list them as versions")
+        snap("120 Your versions on the workout page")
+
+        tap(app.buttons["edit-toggle"])
+        XCTAssertTrue(app.buttons["scope-once"].firstMatch.waitForExistence(timeout: 5), "Edit on a workout that has been done should ask what the change is for")
+        snap("121 Edit asks: just this time or the workout")
+        // The popover's buttons are in the tree twice.
+        tap(app.buttons["scope-once"].firstMatch)
+        // A row removed just this time: the banner says so, and Undo puts it back.
+        let row = app.buttons.matching(NSPredicate(format: "label BEGINSWITH 'Pull-up'")).firstMatch
+        if row.waitForExistence(timeout: 3) {
+            row.swipeLeft()
+            let delete = app.buttons["Delete"]
+            if delete.waitForExistence(timeout: 2) {
+                delete.tap()
+                XCTAssertTrue(app.descendants(matching: .any)["once-banner"].waitForExistence(timeout: 5), "a change made just this time should say so")
+                snap("122 Just this time banner")
+                tap(app.buttons["once-undo"])
+            }
+        }
+        // Out of edit mode; a tap while the popover is still going away can be lost.
+        let toggle = app.buttons["edit-toggle"]
+        for _ in 0..<3 where toggle.label != "Edit" {
+            sleep(1)
+            toggle.tap()
+        }
+
+        // Earlier runs on this simulator may have run it too: count from what the card says now.
+        let count = app.staticTexts.matching(NSPredicate(format: "label MATCHES '[0-9]+× · last .*'")).firstMatch
+        XCTAssertTrue(count.waitForExistence(timeout: 5), "the version should say how often it was run")
+        let times = Int(count.label.prefix { $0.isNumber }) ?? 0
+        XCTAssertGreaterThanOrEqual(times, 2, "the seeded version was run twice")
+        tap(app.buttons["version-run"])
+        XCTAssertTrue(app.buttons["End session"].waitForExistence(timeout: 5))
+        sleep(7)
+        tap(app.buttons["End session"])
+        tap(app.buttons["Finish and save"])
+        tap(app.buttons["Done"])
+        let after = app.staticTexts.matching(NSPredicate(format: "label BEGINSWITH %@", "\(times + 1)×")).firstMatch
+        XCTAssertTrue(after.waitForExistence(timeout: 8), "running a version again should keep it as that version")
+        snap("123 The version run again")
+    }
+
+    /// Edit on the workout page. A workout already done asks what the change is for; these walks
+    /// change the workout itself.
+    private func editWorkout(_ edit: XCUIElement, file: StaticString = #filePath, line: UInt = #line) {
+        tap(edit, file: file, line: line)
+        let base = app.buttons["scope-base"].firstMatch
+        if base.waitForExistence(timeout: 2) { base.tap() }
     }
 
     private func open(_ title: String) {
@@ -1358,7 +1420,7 @@ final class WalkthroughUITests: XCTestCase {
         open("Loads check")
         XCTAssertTrue(app.descendants(matching: .any)["ref-row"].waitForExistence(timeout: 5), "the embedded warm-up should be listed")
         snap("70 Workout page, shared warm-up and training maxes")
-        tap(app.buttons["edit-toggle"])
+        editWorkout(app.buttons["edit-toggle"])
         let grid = app.descendants(matching: .any)["set-grid"].firstMatch
         for _ in 0..<6 where !(grid.exists && grid.isHittable) { app.swipeUp(velocity: .slow) }
         XCTAssertTrue(app.buttons["Set 1: Warm-up"].waitForExistence(timeout: 5), "the plan's warm-up shows as W")

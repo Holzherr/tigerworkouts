@@ -10,6 +10,7 @@ import type { Avatar, Favorite } from '@/features/cloud/sync';
 import type { LibraryExercise } from '@/features/exercises/library';
 import { fromLegacySession, legacyWorkoutToRunsheet, readLegacyLocal } from '@/features/cloud/legacy';
 import { stamp, type PrefField, type PrefStamps } from '@/features/cloud/prefs';
+import { mergeSessions } from '@/features/runsheet/versions';
 
 export interface AppState {
   workouts: Runsheet[];
@@ -109,6 +110,15 @@ export const clearDevice = () => setState({ ...EMPTY, migratedLegacy: true, pref
 const ACTIONS = {
   saveWorkout: (r: Runsheet) => setState(s => ({ workouts: [r, ...s.workouts.filter(w => w.id !== r.id)] })),
   deleteWorkout: (id: string) => setState(s => ({ workouts: s.workouts.filter(w => w.id !== id) })),
+  /** A duplicate folded into another workout as a version: its sessions move to that workout, each
+   * keeping what it ran, and the duplicate goes (versions.ts). Bookmarked, the base takes its place. */
+  mergeWorkout: (fromId: string, intoId: string) => {
+    const from = state.workouts.find(w => w.id === fromId);
+    const into = state.workouts.find(w => w.id === intoId);
+    if (!from || !into || fromId === intoId) return;
+    setState(s => ({ results: mergeSessions(s.results, from, into), workouts: s.workouts.filter(w => w.id !== fromId) }));
+    if (state.saved.includes(fromId)) setPrefs({ saved: [...new Set(state.saved.map(x => (x === fromId ? intoId : x)))] });
+  },
   /** Adds, or replaces the result with the same id: a timed session is logged when it ends and
    * again, with the score and notes, when its result sheet is saved. */
   addResult: (res: SessionResult) => setState(s => {

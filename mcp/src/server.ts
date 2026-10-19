@@ -105,7 +105,7 @@ export const buildServer = (db: Db, account: Account = {}) => {
     'list_sessions',
     {
       title: 'Training history',
-      description: 'Recent sessions, newest first, with what was actually done per exercise: load used (kg or the exercise unit), incline, reps per set, whether every set hit its reps, and `sets`: each set in order with only what was recorded (type, reps, load, seconds worked, meters, calories, at = session second it was ticked). Use it to judge progress and pick next loads.',
+      description: 'Recent sessions, newest first, with what was actually done per exercise: load used (kg or the exercise unit), incline, reps per set, whether every set hit its reps, and `sets`: each set in order with only what was recorded (type, reps, load, seconds worked, meters, calories, at = session second it was ticked). A session that ran something other than the workout as saved has `version`: what it changed and the outline it ran (private to the user, never a workout of its own). Use it to judge progress and pick next loads.',
       inputSchema: {
         limit: z.number().int().min(1).max(100).optional().describe('Default 20'),
         since: z.string().optional().describe('ISO date/time, inclusive'),
@@ -117,7 +117,7 @@ export const buildServer = (db: Db, account: Account = {}) => {
     a => run(() => T.listSessions(db, a)),
   );
 
-  s.registerTool('get_session', { title: 'Session', description: 'One session in full, with the outline of the workout it ran.', inputSchema: { id: z.string() }, annotations: readOnly }, a => run(() => T.getSession(db, a.id)));
+  s.registerTool('get_session', { title: 'Session', description: 'One session in full, with the outline of the workout it ran, and `version` (what it changed and the outline it actually ran) when it was not the workout as saved.', inputSchema: { id: z.string() }, annotations: readOnly }, a => run(() => T.getSession(db, a.id)));
 
   s.registerTool(
     'list_workouts',
@@ -140,7 +140,7 @@ export const buildServer = (db: Db, account: Account = {}) => {
     a => run(() => T.listWorkouts(db, a)),
   );
 
-  s.registerTool('get_workout', { title: 'Workout', description: `One workout: a readable outline, the full runsheet (the same shape create_workout takes), whether the user can edit it, and its links. ${LINKS}`, inputSchema: { id: z.string() }, annotations: readOnly }, a => run(() => T.getWorkout(db, a.id)));
+  s.registerTool('get_workout', { title: 'Workout', description: `One workout: a readable outline, the full runsheet (the same shape create_workout takes), whether the user can edit it, and its links. \`versions\`: the variations the user's own sessions ran (what changed, how often, last done, and a sessionId; start_workout with that sessionId runs one again). Versions are private and never workouts of their own; the workout itself is the base. To make a version the base, update_workout with its outline. ${LINKS}`, inputSchema: { id: z.string() }, annotations: readOnly }, a => run(() => T.getWorkout(db, a.id)));
 
   s.registerTool('search_exercises', { title: 'Exercise library', description: 'Find exercise keys for create_workout: key, name, unit of the load ("kg", "kg per arm", "kph", "" = bodyweight), stepper increment and a coaching cue. Includes the user\'s own custom exercises.', inputSchema: { query: z.string().optional().describe('e.g. "bench", "kettlebell swing", "row"'), group: z.string().optional().describe('kettlebell, dumbbell, barbell, body, core, band, treadmill, walk, run, rower, bike, swim, gym'), limit: z.number().int().min(1).max(200).optional() }, annotations: readOnly }, a => run(() => T.searchExercises(db, a)));
 
@@ -183,8 +183,8 @@ export const buildServer = (db: Db, account: Account = {}) => {
     'start_workout',
     {
       title: 'Start workout',
-      description: `Run a workout now with a timer shown in the chat (countdowns, rests, rounds, beeps; the finished session is logged to the user's history). Pass id (a saved, public or catalogue workout), or a draft: workout (structured) or plan (plain text). A draft is not saved; create_workout first to keep it. Returns the outline, previewUrl (opens on tigerworkouts.com with no sign-in) and appDownloadUrl (the iPhone app: lock-screen timer and notifications) to offer where the chat cannot show the timer. ${LINKS}\n\n${PLAN_HELP}`,
-      inputSchema: { id: z.string().optional(), workout: runsheetInput.optional(), plan: z.string().max(4000).optional(), title: z.string().max(120).optional() },
+      description: `Run a workout now with a timer shown in the chat (countdowns, rests, rounds, beeps; the finished session is logged to the user's history). Pass id (a saved, public or catalogue workout), sessionId (run again a version get_workout lists; logged as that version), or a draft: workout (structured) or plan (plain text). A draft is not saved; create_workout first to keep it. Returns the outline, previewUrl (opens on tigerworkouts.com with no sign-in) and appDownloadUrl (the iPhone app: lock-screen timer and notifications) to offer where the chat cannot show the timer. ${LINKS}\n\n${PLAN_HELP}`,
+      inputSchema: { id: z.string().optional(), sessionId: z.string().optional().describe("A session whose version to run again (get_workout's versions)"), workout: runsheetInput.optional(), plan: z.string().max(4000).optional(), title: z.string().max(120).optional() },
       annotations: readOnly,
       _meta: ui,
     },
@@ -234,6 +234,10 @@ export const buildServer = (db: Db, account: Account = {}) => {
           .max(200)
           .optional()
           .describe('Per exercise: load used (target), reps per set, and sets for per-set detail (a timed rower sprint is { seconds: 30, meters: 142 })'),
+        version: z
+          .looseObject({ items: z.array(z.looseObject({ kind: z.string() })).min(1).max(200) })
+          .optional()
+          .describe("What the session ran when it was not the workout as saved: the runsheet's items as done (start_workout returns it for a version). Kept privately with the session; never a workout of its own."),
       },
       annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: false },
     },

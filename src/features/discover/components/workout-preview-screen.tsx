@@ -1,4 +1,4 @@
-import { ChevronLeft, ChevronRight, ExternalLink, Globe, Layers, Lock, Pencil, Play, Plus, Share2, Smartphone, Trash2, Video } from 'lucide-react';
+import { ChevronLeft, ChevronRight, ExternalLink, GitMerge, Globe, Layers, Lock, Pencil, Play, Plus, Share2, Smartphone, Trash2, Video } from 'lucide-react';
 import { localDate } from '@/shared/utils/dates';
 import { Fragment, useState } from 'react';
 import { Button } from '@/shared/components/ui/button';
@@ -16,6 +16,8 @@ import { StallCard, TodayLine } from '@/features/results/components/targets';
 import { RunsheetList, type RunsheetListProps } from '@/features/runsheet/components/runsheet-list';
 import { BlockSheet } from '@/features/runsheet/components/block-sheet';
 import { useUndo } from '@/shared/components/ui/undo-toast';
+import type { VersionRow } from '@/features/runsheet/versions';
+import { EditScopeSheet, MergeSheet, VariantBanner, VersionsCard } from './workout-versions';
 
 /** The workout's rows, editable in place: the editor's list, block settings in a sheet. */
 const EditableList = ({ runsheet: r, editor: { onChange, ...list } }: { runsheet: Runsheet; editor: NonNullable<WorkoutPreviewScreenProps['editor']> }) => {
@@ -81,6 +83,18 @@ export interface WorkoutPreviewScreenProps {
   /** Opens in edit mode (stories, screenshots). */
   initialEditing?: boolean;
   editor?: Omit<RunsheetListProps, 'items' | 'onChange' | 'expandedId' | 'onExpandedChange' | 'onRemoved'> & { onChange: (r: Runsheet) => void };
+  /** Given (a workout that has been done), the first change asks once: "Just this time" sends it
+   * here, as a change for the next session only; "Update workout" to `editor.onChange`. */
+  onChangeOnce?: (r: Runsheet) => void;
+  /** The page shows a "Just this time" change: a banner with Update workout instead and Undo. */
+  variant?: { onKeep: () => void; onDiscard: () => void };
+  /** Versions of this workout your sessions ran (versions.ts), with Run and Make base. */
+  versions?: VersionRow[];
+  onRunVersion?: (v: VersionRow) => void;
+  onMakeBase?: (v: VersionRow) => void;
+  /** Your other workouts, for folding this one into one of them as a version. */
+  mergeTargets?: { id: string; title: string; minutes?: number }[];
+  onMergeInto?: (id: string) => void;
 }
 
 /** A straight-set block whose sets differ, read as the gym writes it: one line per run of sets
@@ -111,8 +125,26 @@ const SCORE_TEXT: Record<string, string> = { time: 'For time', rounds: 'AMRAP: r
  * Edit & start, Follow along for videos, Save. Tapping any exercise opens it — the clip, the cue,
  * and its numbers as steppers when the host can save them.
  */
-export const WorkoutPreviewScreen = ({ runsheet: r, history = [], lastTime, onBack, onStart, onEditAndStart, onFollowAlong, onLogOnly, onSave, saved, onShare, onStepChange, onCreator, onTogglePublic, appHref, onExerciseHistory, hasHistory, today, stall, onDismissStall, onDelete, editor, initialEditing }: WorkoutPreviewScreenProps) => {
+export const WorkoutPreviewScreen = ({ runsheet: r, history = [], lastTime, onBack, onStart, onEditAndStart, onFollowAlong, onLogOnly, onSave, saved, onShare, onStepChange, onCreator, onTogglePublic, appHref, onExerciseHistory, hasHistory, today, stall, onDismissStall, onDelete, editor: given, initialEditing, onChangeOnce, variant, versions = [], onRunVersion, onMakeBase, mergeTargets, onMergeInto }: WorkoutPreviewScreenProps) => {
   const [open, setOpen] = useState<ExerciseStep | null>(null);
+  const [merging, setMerging] = useState(false);
+  // Asked once per visit: a change for this session only, or for the workout.
+  const [scope, setScope] = useState<'once' | 'base' | null>(null);
+  // What waits for the answer: a change made from an exercise's sheet, or going into edit mode.
+  const [asking, setAsking] = useState<Runsheet | 'edit' | null>(null);
+  const mustAsk = !!onChangeOnce && !scope && !variant;
+  const change = (next: Runsheet) => {
+    if (!onChangeOnce || scope === 'base' || !given) return given?.onChange(next);
+    if (scope === 'once' || variant) return onChangeOnce(next);
+    setAsking(next);
+  };
+  const answer = (to: 'once' | 'base') => {
+    setScope(to);
+    if (asking === 'edit') setEditing(true);
+    else if (asking) (to === 'once' ? onChangeOnce?.(asking) : given?.onChange(asking));
+    setAsking(null);
+  };
+  const editor = given && { ...given, onChange: change };
   // A workout with nothing in it yet has nothing to read: it opens in edit mode.
   const [editing, setEditing] = useState(() => !!editor && (initialEditing || r.items.length === 0));
   // In the read view an exercise's sheet still changes its numbers, through the editor when there is one.
@@ -138,7 +170,7 @@ export const WorkoutPreviewScreen = ({ runsheet: r, history = [], lastTime, onBa
             <ChevronLeft /> Back
           </Button>
           {editor && (
-            <Button variant="quiet" size="inline" onClick={() => setEditing(e => !e)} className={cn('-mr-1 text-brand', editing && 'font-extrabold')}>
+            <Button variant="quiet" size="inline" onClick={() => (!editing && mustAsk ? setAsking('edit') : setEditing(e => !e))} className={cn('-mr-1 text-brand', editing && 'font-extrabold')}>
               {editing ? 'Done' : 'Edit'}
             </Button>
           )}
@@ -195,6 +227,7 @@ export const WorkoutPreviewScreen = ({ runsheet: r, history = [], lastTime, onBa
           </div>
         )}
         {stall && onDismissStall && <StallCard stall={stall} onDismiss={onDismissStall} />}
+        {variant && <VariantBanner onKeep={() => (setScope('base'), variant.onKeep())} onDiscard={() => (setScope(null), variant.onDiscard())} />}
         {r.description && <p className="px-1 text-[14px] leading-relaxed text-body">{r.description}</p>}
         {(best || last) && (
           <div className="flex gap-2">
@@ -281,18 +314,33 @@ export const WorkoutPreviewScreen = ({ runsheet: r, history = [], lastTime, onBa
             </button>
           );
         })}
+        {!editing && onRunVersion && <VersionsCard versions={versions} onRun={onRunVersion} onMakeBase={onMakeBase} />}
         {r.source?.license && <p className="px-1 text-[11px] text-faint">{r.source.license}</p>}
         {onDelete && (
           <Button variant="danger" block onClick={() => confirm(`Delete ${r.title || 'this workout'}? Sessions you logged with it stay in History.`) && onDelete()}>
             <Trash2 /> Delete workout
           </Button>
         )}
+        {onMergeInto && !!mergeTargets?.length && (
+          <>
+            <Button variant="quiet" block onClick={() => setMerging(true)}>
+              <GitMerge /> Make it a version of another workout
+            </Button>
+            <MergeSheet open={merging} onOpenChange={setMerging} title={r.title} targets={mergeTargets} onMerge={id => (setMerging(false), onMergeInto(id))} />
+          </>
+        )}
+        <EditScopeSheet
+          open={!!asking}
+          onCancel={() => setAsking(null)}
+          onOnce={() => answer('once')}
+          onBase={() => answer('base')}
+        />
         <ExerciseSheet
           step={open}
           onOpenChange={o => !o && setOpen(null)}
           onTarget={stepChange && open ? t => (stepChange(open.id, { target: t }), setOpen({ ...open, target: t })) : undefined}
           onIncline={stepChange && open ? v => (stepChange(open.id, { incline: v }), setOpen({ ...open, incline: v })) : undefined}
-          note={stepChange ? 'Saved to this workout.' : undefined}
+          note={stepChange ? (variant || scope === 'once' ? 'Just this time.' : 'Saved to this workout.') : undefined}
           onHistory={open ? historyOf(open) : undefined}
         />
       </div>
