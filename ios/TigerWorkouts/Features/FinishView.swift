@@ -90,7 +90,7 @@ struct FinishView: View {
 
                 notesField
 
-                if result.startedFrom == SessionOrigin.coach.rawValue, let assignment = store.assignment(forWorkout: result.runsheetId) {
+                if result.startedFrom == SessionOrigin.coach.rawValue, let assignment = store.assignment(forWorkout: result.runsheetId), !assignment.isAI {
                     FinishCoachNote(assignment: assignment, sessionId: result.rowId)
                 }
 

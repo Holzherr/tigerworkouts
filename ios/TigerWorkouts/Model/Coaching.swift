@@ -54,6 +54,18 @@ struct Assignment: Codable, Hashable, Sendable, Identifiable {
     }
 
     var createdDate: Date { ISO8601.date(createdAt) ?? .distantPast }
+
+    /// Sent by your AI coach (migration 0011): your own row, coach = client = you. A PT's never is.
+    var isAI: Bool { coach == client }
+}
+
+/// `ai_coaches` (migration 0011): the AI assistant connected to your account (Claude through the
+/// TigerWorkouts connector) acting as your coach, under the name you give it. You rename or remove it.
+struct AICoach: Codable, Hashable, Sendable {
+    var name: String
+    var status: String
+
+    var isActive: Bool { status == "active" }
 }
 
 /// `coach_notes`: a short note on an assignment or a session, written by either side.
@@ -94,14 +106,18 @@ struct CoachingState: Codable, Hashable, Sendable {
     var notes: [CoachNote] = []
     /// Coach id → name from `profiles`.
     var names: [String: String] = [:]
+    /// Your AI coach; nil when you never had one, or before migration 0011.
+    var aiCoach: AICoach?
 }
 
 enum Coaching {
     /// What the home section lists: not archived, from a coach whose link is still active, newest first.
+    /// Your AI coach's count while it is on.
     static func active(_ s: CoachingState) -> [Assignment] {
         let coaches = Set(s.links.filter(\.isActive).map(\.coach))
+        let ai = s.aiCoach?.isActive == true
         return s.assignments
-            .filter { !$0.archived && coaches.contains($0.coach) }
+            .filter { !$0.archived && ($0.isAI ? ai : coaches.contains($0.coach)) }
             .sorted { $0.createdDate > $1.createdDate }
     }
 
@@ -115,6 +131,11 @@ enum Coaching {
     /// The newest active assignment of a workout, for its page and its finish screen.
     static func assignment(forWorkout id: String, in s: CoachingState) -> Assignment? {
         active(s).first { $0.workoutId == id }
+    }
+
+    /// Who sent it: your AI coach's name for its own, else the PT's.
+    static func name(for a: Assignment, in s: CoachingState) -> String {
+        a.isAI ? (s.aiCoach?.name ?? "AI Coach") : name(of: a.coach, in: s)
     }
 
     static func name(of coach: String, in s: CoachingState) -> String {

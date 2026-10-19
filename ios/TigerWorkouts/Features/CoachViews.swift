@@ -8,9 +8,29 @@ struct CoachNotesCard: View {
     @State private var sending = false
     @State private var failed = false
 
-    private var coachName: String { Coaching.name(of: assignment.coach, in: store.coaching) }
+    private var coachName: String { Coaching.name(for: assignment, in: store.coaching) }
 
     var body: some View {
+        if assignment.isAI {
+            // An AI coach writes its why in the note; there is no one to reply to.
+            VStack(alignment: .leading, spacing: 10) {
+                Label("From \(coachName)", systemImage: "sparkles")
+                    .font(.footnote.weight(.bold))
+                    .foregroundStyle(Brand.coralInk)
+                if let note = assignment.note, !note.isEmpty {
+                    Text(note).font(.callout).foregroundStyle(Brand.ink)
+                }
+            }
+            .padding(14)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .cardSurface()
+            .accessibilityIdentifier("coach-notes")
+        } else {
+            thread
+        }
+    }
+
+    private var thread: some View {
         VStack(alignment: .leading, spacing: 10) {
             Label("From \(coachName)", systemImage: "person.badge.clock")
                 .font(.footnote.weight(.bold))
@@ -172,6 +192,65 @@ struct JoinCoachView: View {
             dismiss()
         } catch {
             self.error = error.localizedDescription
+        }
+    }
+}
+
+/// Me → AI coach: the name your AI assistant coaches you under, Rename, and Remove / Bring back.
+struct AICoachSection: View {
+    @Environment(Store.self) private var store
+    @State private var renaming = false
+    @State private var draft = ""
+    @State private var confirmRemove = false
+    @State private var failed = false
+
+    var body: some View {
+        if let ai = store.coaching.aiCoach {
+            Section("AI coach") {
+                if ai.isActive {
+                    HStack(spacing: 12) {
+                        Image(systemName: "sparkles").foregroundStyle(Brand.coral)
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text(ai.name).foregroundStyle(Brand.ink)
+                            Text("Your AI assistant sends you workouts as your coach").font(.footnote).foregroundStyle(Brand.muted)
+                        }
+                    }
+                    Button("Rename") {
+                        draft = ai.name
+                        renaming = true
+                    }
+                    .accessibilityIdentifier("rename-ai-coach")
+                    Button("Remove \(ai.name)", role: .destructive) { confirmRemove = true }
+                        .accessibilityIdentifier("remove-ai-coach")
+                } else {
+                    Text("Removed. Workouts your AI assistant makes save as your own.").font(.footnote).foregroundStyle(Brand.muted)
+                    Button("Bring back \(ai.name)") {
+                        Task { failed = !(await store.setAICoachActive(true)) }
+                    }
+                    .accessibilityIdentifier("bring-back-ai-coach")
+                }
+                if failed {
+                    Text("Could not reach the server. Try again in a moment.").font(.footnote).foregroundStyle(Brand.muted)
+                }
+            }
+            .alert("Name your AI coach", isPresented: $renaming) {
+                TextField("AI Coach", text: $draft)
+                    .accessibilityIdentifier("ai-coach-name")
+                Button("Save") {
+                    Task { failed = !(await store.renameAICoach(draft)) }
+                }
+                Button("Cancel", role: .cancel) {}
+            } message: {
+                Text("Shown wherever a coach's name shows. 1 to 40 characters.")
+            }
+            .confirmationDialog("Remove \(ai.name)?", isPresented: $confirmRemove, titleVisibility: .visible) {
+                Button("Remove AI coach", role: .destructive) {
+                    Task { failed = !(await store.setAICoachActive(false)) }
+                }
+                Button("Keep", role: .cancel) {}
+            } message: {
+                Text("What it sent stays in your workouts. New ones from your AI assistant save as your own.")
+            }
         }
     }
 }

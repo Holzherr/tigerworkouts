@@ -91,6 +91,8 @@ struct MeView: View {
                     }
                 }
 
+                AICoachSection()
+
                 CoachSection()
 
                 Section {
