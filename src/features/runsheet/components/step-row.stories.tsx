@@ -11,7 +11,7 @@ const meta = {
     docs: {
       description: {
         component:
-          'One line of the runsheet, 348px wide on a phone. Collapsed: 48px clip thumbnail, name with duration under it, grey value pill ("28 kg"), caret, ✕. Expanded (white, controls on a grey well so the row still reads as part of its block): 72px clip, the name is the swap target ("tap name to change ›"), then Weight (unit in the label) with a stepper and For with a stepper plus a seconds / reps / minutes dropdown. Rest rows swap the clip for a grey pause square and show quick-pick chips when open.',
+          'One line of the runsheet, 348px wide on a phone. Collapsed: 48px clip thumbnail, name with duration under it, grey value pill ("28 kg"), caret, ✕. Expanded (white, controls on a grey well so the row still reads as part of its block): 72px clip, the name is the swap target ("tap name to change ›"), then Load, Speed or Distance (unit in the label) with a stepper when the step has a setting to dial in, and For with a stepper plus a seconds / reps / minutes dropdown. Rest rows swap the clip for a grey pause square and show quick-pick chips when open.',
       },
     },
   },
@@ -44,5 +44,11 @@ export const GroupTarget: Story = { args: { step: press, groupTarget: true } };
 export const WithHint: Story = { args: { step: press, hint: 'last time 17.5 kg' } };
 /** A timed rower logs nothing extra until Add to log is tapped: Reps, Metres or Calories. */
 export const TimedRowerNoLog: Story = { render: () => <Live step={rower} expanded /> };
+/** A rower made as the picker makes it: no target, so no Load or Distance stepper, only For and Log. */
+export const RowerNoSetting: Story = { render: () => <Live step={{ ...makeExercise(EX.cardio_rower), id: 'rw' }} expanded /> };
+/** A treadmill dials in Speed (kph) and Incline. */
+export const TreadmillSpeed: Story = { render: () => <Live step={{ ...makeExercise(EX.sprint), id: 'tm' }} expanded /> };
+/** A barbell dials in Load (kg). */
+export const BarbellLoad: Story = { render: () => <Live step={{ ...makeExercise(EX.bb_back_squat, { forMode: 'reps', forValue: 5 }), id: 'bb' }} expanded /> };
 /** The same rower set to log metres: the timer asks for them after each set. The ✕ takes the row off. */
 export const TimedRowerLogsMetres: Story = { render: () => <Live step={{ ...rower, log: 'meters' }} expanded /> };

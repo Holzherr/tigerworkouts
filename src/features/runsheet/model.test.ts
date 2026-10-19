@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { addSet, roundsLabel, editSet, plannedSet, removeSet, straightSetStep, flatten, fromLegacy, groupOnto, insertAfter, makeExercise, makeRest, moveRow, moveRowTo, moveToTopLevel, rebuild, removeStep, isEmptyMain, repeatAsRounds, startBlock, runsheetSeconds, editedCopy, ofWorkout, type Block, type ExerciseRef, type Item, type Runsheet } from './model';
+import { addSet, roundsLabel, editSet, plannedSet, removeSet, straightSetStep, flatten, fromLegacy, groupOnto, insertAfter, makeExercise, makeRest, moveRow, moveRowTo, moveToTopLevel, rebuild, removeStep, isEmptyMain, repeatAsRounds, startBlock, runsheetSeconds, editedCopy, ofWorkout, hasSetting, settingLabel, type Block, type ExerciseRef, type Item, type Runsheet } from './model';
 import { EX, priyanka, withStarter } from './fixtures';
 
 const KB: ExerciseRef = { key: 'kb_swing', name: 'Kettlebell swings', unit: 'kg', step: 4 };
@@ -261,5 +261,27 @@ describe('how many rounds a block runs, in words', () => {
     expect(roundsLabel(b({ mode: 'emom', repeat: 1 }))).toBe('EMOM · 1 minute');
     expect(roundsLabel(b({ mode: 'emom', repeat: 8, everySec: 30 }))).toBe('EMOM · 8 × 30 s');
     expect(roundsLabel(b({ mode: 'ladder', ladder: [21, 15, 9] }))).toBe('21-15-9');
+  });
+});
+
+describe('hasSetting / settingLabel (iOS RunsheetMath)', () => {
+  it('a new rower or calorie bike has no target and nothing to dial in', () => {
+    for (const ex of [EX.cardio_rower, EX.cardio_assault_bike]) {
+      const s = makeExercise(ex);
+      expect(s.target).toBeUndefined();
+      expect(hasSetting(s)).toBe(false);
+    }
+  });
+  it('a new barbell gets a default load, a new treadmill a speed', () => {
+    const bar = makeExercise(EX.bb_back_squat);
+    expect([bar.target, hasSetting(bar), settingLabel(bar)]).toEqual([10, true, 'Load']);
+    const tread = makeExercise(SPRINT);
+    expect([tread.target, hasSetting(tread), settingLabel(tread)]).toEqual([10, true, 'Speed']);
+  });
+  it('a step with a target names its setting by unit', () => {
+    expect(settingLabel(makeExercise(EX.cardio_rower, { target: 500 }))).toBe('Distance');
+    expect(hasSetting(makeExercise(EX.cardio_rower, { target: 500 }))).toBe(true);
+    expect(settingLabel(makeExercise(EX.cardio_assault_bike, { target: 20 }))).toBe('Calories');
+    expect(settingLabel(press())).toBe('Load');
   });
 });

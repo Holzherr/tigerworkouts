@@ -6,7 +6,7 @@ import { ClipThumb } from '@/shared/components/ui/clip-thumb';
 import { Dropdown } from '@/shared/components/ui/dropdown';
 import { Stepper } from '@/shared/components/ui/stepper';
 import { cn } from '@/shared/utils/ui-utils';
-import { forLabel, loadLabel, logChoices, STEP_LOG_LABEL, type ExerciseStep, type ForMode, type RestStep, type Step } from '../model';
+import { forLabel, hasSetting, loadLabel, logChoices, settingLabel, STEP_LOG_LABEL, type ExerciseStep, type ForMode, type RestStep, type Step } from '../model';
 
 const FOR_OPTIONS = [
   { value: 'seconds', label: 'seconds' },
@@ -51,7 +51,8 @@ const stop = (e: React.SyntheticEvent) => e.stopPropagation();
  * One line of the runsheet. Collapsed: thumb, name, duration, value pill, caret, ✕ — the whole
  * row toggles. Expanded (stays white so it reads as part of its block; the controls sit on a grey
  * well): bigger clip, the name becomes the swap target, then two
- * settings rows: Weight (unit in the label) with a stepper, and For with a stepper plus a
+ * settings rows: Load, Speed or Distance (unit in the label) with a stepper, shown only for a step
+ * with a setting to dial in (not a rower with no target), and For with a stepper plus a
  * seconds / reps / minutes dropdown. Rest steps show quick-pick chips instead of a weight row.
  * Pure: every change is handed back through onChange.
  */
@@ -130,12 +131,12 @@ const Label = ({ children }: { children: React.ReactNode }) => <div className="t
 
 const ExerciseBody = ({ step, onChange }: { step: ExerciseStep; onChange: (s: Step) => void }) => (
   <>
-    {step.exercise.unit && step.exercise.unit !== 'reps' && (
+    {hasSetting(step) && (
       <div className="flex items-center justify-between gap-3">
         <Label>
-          Weight <span className="text-muted">({step.exercise.unit})</span>
+          {settingLabel(step)} <span className="text-muted">({step.exercise.unit})</span>
         </Label>
-        <Stepper aria-label="Weight" value={step.target ?? 0} step={step.exercise.step} onChange={target => onChange({ ...step, target })} />
+        <Stepper aria-label={`${settingLabel(step)} (${step.exercise.unit})`} value={step.target ?? 0} step={step.exercise.step} onChange={target => onChange({ ...step, target })} />
       </div>
     )}
     {step.exercise.unit === 'kph' && (
