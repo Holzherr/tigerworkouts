@@ -32,6 +32,8 @@ export interface FromCoachRow {
   id: string;
   runsheet: Runsheet;
   coachName: string;
+  /** The coach's note with it; shown as the why line in place of the description's. */
+  note?: string;
   done: boolean;
 }
 
@@ -212,7 +214,7 @@ export const DiscoverScreen = ({ workouts, results = [], savedIds = [], ownIds =
         {!searching && tab === 'mine' && (
           <>
             {coachRows.map(c => (
-              <Row key={c.id} runsheet={c.runsheet} coach badge={c.done ? undefined : 'New · made for you'} why={c.done ? undefined : whyLine(c.runsheet)} contents={contentsLine(c.runsheet)} upNext={c.id === upNext} meta={`${runsheetMinutes(c.runsheet)} min · from ${c.coachName}${c.done ? ' · done' : ''}`} onOpen={() => onOpen(c.runsheet, 'coach')} onStart={onStart && (() => onStart(c.runsheet, 'coach'))} />
+              <Row key={c.id} runsheet={c.runsheet} coach badge={c.done ? undefined : 'New · made for you'} why={c.done ? undefined : c.note?.trim() || whyLine(c.runsheet)} contents={contentsLine(c.runsheet)} upNext={c.id === upNext} meta={`${runsheetMinutes(c.runsheet)} min · from ${c.coachName}${c.done ? ' · done' : ''}`} onOpen={() => onOpen(c.runsheet, 'coach')} onStart={onStart && (() => onStart(c.runsheet, 'coach'))} />
             ))}
             {mine.map(r => {
               const done = lastDoneOf(r, last);
