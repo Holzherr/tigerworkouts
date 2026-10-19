@@ -10,7 +10,8 @@ import { FULL_LIBRARY } from '@/features/workouts/imported';
 import { WorkoutPreviewScreen } from '@/features/discover/components/workout-preview-screen';
 import { EditorScreen } from '@/features/runsheet/components/editor-screen';
 import { EX, withStarter } from '@/features/runsheet/fixtures';
-import { copyIn, copyOnEdit, forLabel, lineage, makeExercise, measureOf, ofWorkout, resolveRefs, scoreType, shortUnit, type ExerciseStep, type Runsheet } from '@/features/runsheet/model';
+import { copyIn, copyOnEdit, forLabel, lineage, makeExercise, measureOf, ofWorkout, resolveRefs, runsheetMinutes, scoreType, shortUnit, type ExerciseStep, type Runsheet } from '@/features/runsheet/model';
+import { versionOf, versionsOf } from '@/features/runsheet/versions';
 import { lastSet, lastSetLabel, lastSets, lastTimeLabel, withLastUsed } from '@/features/runsheet/last-used';
 import { applyCommands, parsePlan } from '@/features/runsheet/parse-text';
 import { isImage, readImport } from '@/features/runsheet/import-file';
@@ -290,14 +291,20 @@ export default function App() {
     if (!found) return shell('discover', <Missing />);
     const foundOwn = st.workouts.some(w => w.id === wid(found));
     // One copy per original: once you have a copy, the original's page is your copy's page.
-    const r = (!foundOwn && copyIn(st.workouts, found)) || found;
-    const id = wid(r);
+    const base = (!foundOwn && copyIn(st.workouts, found)) || found;
+    const id = wid(base);
+    // A "Just this time" change is held here until the session that runs it (or Undo).
+    const once = draftOf(id);
+    const r = once ?? base;
+    const versions = versionsOf(st.results, base);
+    const done = st.results.some(x => x.runsheetId === id);
     const stall = live(workoutStall(r, st.results, new Date()));
     const own = st.workouts.some(w => w.id === id);
     // The page is the one editor: yours saves in place, anyone else's first edit makes your copy.
     const edit = (next: Runsheet) => {
+      setDrafted(null);
       if (own) return act.saveWorkout(next);
-      const copy = copyOnEdit(next, r, `u-${Date.now().toString(36)}`, st.name);
+      const copy = copyOnEdit(next, base, `u-${Date.now().toString(36)}`, st.name);
       act.saveWorkout({ ...copy, icon: copy.icon ?? defaultIcon(copy.id!) });
       goReplace(`/w/${encodeURIComponent(copy.id!)}`);
     };
@@ -310,15 +317,22 @@ export default function App() {
           history={st.results.filter(ofWorkout(r))}
           lastTime={lastTime(r)}
           editor={{ onChange: edit, onPickExercise: pick, onSwapExercise: pick, resolveTarget: resolve, hintFor: lastTime(r), setHintFor: lastSetHint(r), equipment: st.equipment, refTitle, autoRest: defaultRest, historyFor: s => (st.results.some(x => x.steps.some(y => y.exerciseKey === s.exercise.key)) ? () => go(exerciseLink(s.exercise.key)) : undefined) }}
-          onBack={() => go('/discover')}
-          onStart={() => (unlockAudio(), setDrafted(null), go(`/do/${encodeURIComponent(id)}`))}
+          onChangeOnce={done ? draftFor(id) : undefined}
+          variant={once ? { onKeep: () => edit(once), onDiscard: () => setDrafted(null) } : undefined}
+          versions={versions}
+          onRunVersion={v => (unlockAudio(), setDrafted({ for: id, r: { ...base, items: v.items } }), go(`/do/${encodeURIComponent(id)}`))}
+          onMakeBase={v => (edit({ ...base, items: v.items }), say('This version is the workout now'))}
+          mergeTargets={own ? st.workouts.filter(w => w.id !== id).sort((a, b) => Number(b.title === base.title) - Number(a.title === base.title)).map(w => ({ id: w.id!, title: w.title, minutes: runsheetMinutes(w) })) : undefined}
+          onMergeInto={own ? into => (act.mergeWorkout(id, into), say('Merged: kept as your version'), goReplace(`/w/${encodeURIComponent(into)}`)) : undefined}
+          onBack={() => (setDrafted(null), go('/discover'))}
+          onStart={() => (unlockAudio(), drafted?.for !== id && setDrafted(null), go(`/do/${encodeURIComponent(id)}`))}
           onFollowAlong={r.video ? () => go(`/follow/${encodeURIComponent(id)}`) : undefined}
           onLogOnly={() => go(`/result/${encodeURIComponent(id)}`)}
           onSave={() => act.toggleSaved(id)}
           saved={st.saved.includes(id)}
-          onShare={async () => { const out = await shareLink(r.title, shareUrl(r)); say(out === 'copied' ? 'Link copied' : out === 'shared' ? 'Shared' : 'Could not share'); }}
+          onShare={async () => { const out = await shareLink(base.title, shareUrl(base)); say(out === 'copied' ? 'Link copied' : out === 'shared' ? 'Shared' : 'Could not share'); }}
           onCreator={r.ownerId || (cloud.user && st.workouts.some(w => w.id === wid(r))) ? () => go(`/c/${r.ownerId ?? cloud.user!.id}`) : undefined}
-          onTogglePublic={cloud.user && st.workouts.some(w => w.id === wid(r)) ? () => { act.saveWorkout({ ...r, public: !r.public }); say(r.public ? 'Private now' : 'On your public page'); } : undefined}
+          onTogglePublic={cloud.user && st.workouts.some(w => w.id === wid(r)) ? () => { act.saveWorkout({ ...base, public: !base.public }); say(base.public ? 'Private now' : 'On your public page'); } : undefined}
           appHref={appLink(`w/${encodeURIComponent(wid(r))}`)}
           onDelete={st.workouts.some(w => w.id === wid(r)) ? () => { act.deleteWorkout(wid(r)); if (st.saved.includes(wid(r))) act.toggleSaved(wid(r)); say('Workout deleted'); go('/discover/saved'); } : undefined}
         />
@@ -400,8 +414,13 @@ export default function App() {
     // Refs inlined, last time's loads carried in, a program's rules applied to them (+2.5 kg after
     // a clean session, the deload after repeated misses), then % of a training max and × bodyweight
     // worked out, so the timer shows and logs a weight for every loaded set.
-    const run = resolveLoads(progressed(withLastUsed(resolveRefs(r, lookup), st.results), st.results, st.trainingMaxes, st.equipment), st.trainingMaxes, st.bodyweightKg, st.equipment);
-    return <RunRoute key={route.id} runsheet={run} results={st.results} intent={intent} equipment={st.equipment} library={library} resume={resumeFor === route.id} origin={from} lookup={lookup} onLogKept={act.addResult} onResumeKept={id => (setDrafted(null), setResumeFor(id), goReplace(`/do/${encodeURIComponent(id)}`))} onLog={res => act.addResult({ ...res, runsheetId: wid(r) })} onFinish={res => (setResumeFor(null), setPending({ ...res, runsheetId: wid(r) }), goReplace(`/result/${encodeURIComponent(route.id)}`))} onExit={() => (setResumeFor(null), Runner.clearPersisted(), go(`/w/${encodeURIComponent(route.id)}`))} />;
+    const prepare = (x: Runsheet) => resolveLoads(progressed(withLastUsed(resolveRefs(x, lookup), st.results), st.results, st.trainingMaxes, st.equipment), st.trainingMaxes, st.bodyweightKg, st.equipment);
+    const run = prepare(r);
+    // Run with a "Just this time" change or a version: what it ran is kept with the session.
+    const saved = byId.get(route.id);
+    const version = saved && r !== saved ? versionOf(run, prepare(saved), saved) : undefined;
+    const tag = (res: SessionResult): SessionResult => ({ ...res, runsheetId: wid(r), ...(version ? { version } : {}) });
+    return <RunRoute key={route.id} runsheet={run} results={st.results} intent={intent} equipment={st.equipment} library={library} resume={resumeFor === route.id} origin={from} lookup={lookup} onLogKept={act.addResult} onResumeKept={id => (setDrafted(null), setResumeFor(id), goReplace(`/do/${encodeURIComponent(id)}`))} onLog={res => act.addResult(tag(res))} onFinish={res => (setResumeFor(null), setPending(tag(res)), goReplace(`/result/${encodeURIComponent(route.id)}`))} onExit={() => (setResumeFor(null), Runner.clearPersisted(), go(`/w/${encodeURIComponent(route.id)}`))} />;
   }
   if (route.name === 'session') {
     const res = st.results.find(x => x.id === route.id);

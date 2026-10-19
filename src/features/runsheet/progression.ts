@@ -4,6 +4,7 @@
  */
 import type { Block, ExerciseStep, Item, Progression, Runsheet, SetType } from './model';
 import { nextLoadUp, snapToKit, type Equipment } from './plates';
+import type { SessionVersion } from './versions';
 
 /** kg per exercise key: a training max (5/3/1, nSuns) or last working weight (StrongLifts). */
 export type TrainingMaxes = Record<string, number>;
@@ -119,6 +120,9 @@ export interface SessionResult {
   notes?: string;
   /** How hard the session felt, 1–10, tapped on the finish screen. Apple Health's workout effort scale. */
   rpe?: number;
+  /** What this session ran when it was not the workout as saved ("Just this time", a change mid-
+   * session): its items. Private to the session's owner; never a workout of its own (versions.ts). */
+  version?: SessionVersion;
 }
 
 const exerciseSteps = (items: Item[]): ExerciseStep[] => items.flatMap(it => (it.kind === 'block' ? it.steps : it.kind === 'ref' ? [] : [it])).filter((s): s is ExerciseStep => s.kind === 'exercise');
