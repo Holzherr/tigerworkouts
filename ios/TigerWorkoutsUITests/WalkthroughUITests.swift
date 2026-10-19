@@ -1223,12 +1223,17 @@ final class WalkthroughUITests: XCTestCase {
             app.navigationBars.buttons.element(boundBy: 0).tap()
         }
         // The search that found the workout is still filled in; Mine only shows without one.
-        let clear = app.navigationBars["Workouts"].buttons["Clear text"]
+        // The clear button belongs to the field, wherever the field sits.
+        let search = app.searchFields.firstMatch
+        let clear = search.buttons["Clear text"]
         if clear.exists { clear.tap() }
         for label in ["Close", "Cancel"] where app.navigationBars["Workouts"].buttons[label].exists {
             app.navigationBars["Workouts"].buttons[label].tap()
         }
         XCTAssertTrue(app.navigationBars["Workouts"].waitForExistence(timeout: 5))
+        // An empty field reads back its placeholder.
+        let text = search.value as? String ?? ""
+        XCTAssertTrue(text.isEmpty || text == search.placeholderValue, "search still filled: \(text)")
     }
 
     /// The Session sheet is in the timer's ⋯ menu.
