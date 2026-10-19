@@ -72,6 +72,24 @@ Smallest build that makes pt_client_runs trustworthy and gets runs to happen:
 Push notifications stay out of this round: they need APNs set up and a server to send, and the
 three items above make the metric readable first.
 
+**AI as coach (Nick, 19 Oct 2026).** "Anything claude makes should use the PT/coach feature we
+have - and the coach should be logged as AI coach (the AI can register as whatever name they want -
+let the user decide.. but ultimately the AI should use the coach feature like a PT would but as AI."
+Built on `feat/ai-coach`, behind migration `0011_ai_coach.sql` (not applied until Nick says go):
+- No separate AI account. An AI assignment is a normal `assignments` row with coach = client = the
+  person, on a workout they own. A PT's row can never look like that (`coach_clients` forbids coach
+  = client), so coach = client is the marker.
+- `ai_coaches`, one row per person: `name` (default "AI Coach", 1–40 characters) and `status`
+  active | ended. The person may update only those two columns.
+- `create_workout` adds the AI coach the first time and sends the workout from it, with an optional
+  note; `update_workout` with `assign` sends again. A removed AI coach stays removed: new workouts
+  save as the person's own and its earlier sends leave "from your coach".
+- Web and iOS: Me shows the AI coach with Rename and Remove / Bring back; its workouts top Mine
+  "from <name>" with its note as the why line (a PT's note shows there too). An AI send has no
+  reply thread and no finish-screen note.
+- `agent_snapshot`: `pt_client_runs` counts PTs only (coach ≠ client); `ai_coach_runs`,
+  `ai_coaches` and `ai_assignments` count the AI coach separately, so G-13 stays a PT metric.
+
 ## 3. The screens
 
 **Profile.**
