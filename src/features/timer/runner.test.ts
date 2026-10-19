@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { EX } from '@/features/runsheet/fixtures';
-import { makeExercise, makeRest, type Block, type Runsheet } from '@/features/runsheet/model';
+import { makeExercise, makeRest, type Block, type ExerciseStep, type Runsheet } from '@/features/runsheet/model';
 import { adjust, advance, drop, elapsed, expand, pause, replan, resume, start, swap, tick, toResult } from './runner';
 import * as R from './runner';
 
@@ -917,7 +917,7 @@ describe('timed and distance work', () => {
 });
 
 describe('what a step logs', () => {
-  const one = (step: Parameters<typeof makeExercise>[1] & { log?: 'reps' | 'meters' | 'calories' }, ex = EX.cardio_rower): Runsheet => {
+  const one = (step: Parameters<typeof makeExercise>[1] & { log?: ExerciseStep['log'] }, ex = EX.cardio_rower): Runsheet => {
     const { log, ...rest } = step;
     return { id: 'w', title: 'W', items: [{ ...makeExercise(ex, rest), ...(log ? { log } : {}), id: 'x' }] };
   };
@@ -960,5 +960,29 @@ describe('what a step logs', () => {
     const plank = slot(one({ forMode: 'seconds', forValue: 45 }, EX.bw_plank));
     expect(R.repsField(plank)).toBe(false);
     expect(R.amountField(plank)).toBeUndefined();
+  });
+  it('a timed rower set to log metres and calories asks for both and logs both', () => {
+    const r = one({ forMode: 'seconds', forValue: 30, log: ['meters', 'calories'] });
+    let s = tick(start(r, 0), 5000);
+    expect(R.amountFields(s.slots[0])).toEqual(['meters', 'calories']);
+    s = R.setAmount(s, 142, 'meters');
+    s = R.setAmount(s, 9, 'calories');
+    s = tick(s, 5000 + 30000);
+    expect(toResult(s, r, 40000).steps[0].sets?.[0]).toEqual({ meters: 142, calories: 9, seconds: 30, at: 35 });
+  });
+  it('a 500 m row set to log calories keeps the plan as its metres and asks for calories', () => {
+    const r = one({ forMode: 'meters', forValue: 500, log: 'calories' });
+    let s = tick(start(r, 0), 5000);
+    expect(R.amountFields(s.slots[0])).toEqual(['meters', 'calories']);
+    expect(R.amountAt(s, s.slots[0])).toBe(500);
+    expect(R.amountAt(s, s.slots[0], 'calories')).toBeUndefined();
+    s = R.setAmount(s, 31, 'calories');
+    s = advance(s, 105000);
+    expect(toResult(s, r, 110000).steps[0].sets?.[0]).toMatchObject({ meters: 500, calories: 31 });
+  });
+  it('an amount the step does not record is refused', () => {
+    const r = one({ forMode: 'seconds', forValue: 30, log: 'meters' });
+    const s = tick(start(r, 0), 5000);
+    expect(R.setAmount(s, 9, 'calories')).toBe(s);
   });
 });

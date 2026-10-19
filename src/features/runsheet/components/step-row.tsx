@@ -6,7 +6,7 @@ import { ClipThumb } from '@/shared/components/ui/clip-thumb';
 import { Dropdown } from '@/shared/components/ui/dropdown';
 import { Stepper } from '@/shared/components/ui/stepper';
 import { cn } from '@/shared/utils/ui-utils';
-import { forLabel, loadLabel, logChoices, STEP_LOG_LABEL, type ExerciseStep, type ForMode, type RestStep, type Step } from '../model';
+import { extraLogs, forLabel, hasLoad, loadLabel, logChoices, STEP_LOG_LABEL, stepLogs, withLogs, type ExerciseStep, type ForMode, type RestStep, type Step } from '../model';
 
 const FOR_OPTIONS = [
   { value: 'seconds', label: 'seconds' },
@@ -51,8 +51,9 @@ const stop = (e: React.SyntheticEvent) => e.stopPropagation();
  * One line of the runsheet. Collapsed: thumb, name, duration, value pill, caret, ✕ — the whole
  * row toggles. Expanded (stays white so it reads as part of its block; the controls sit on a grey
  * well): bigger clip, the name becomes the swap target, then two
- * settings rows: Weight (unit in the label) with a stepper, and For with a stepper plus a
- * seconds / reps / minutes dropdown. Rest steps show quick-pick chips instead of a weight row.
+ * settings rows: Weight or Speed (unit in the label) with a stepper, only for an exercise set to a
+ * load or a speed, and For with a stepper plus a seconds / reps / minutes dropdown; then what the
+ * step logs. Rest steps show quick-pick chips instead of a weight row.
  * Pure: every change is handed back through onChange.
  */
 export const StepRow = forwardRef<HTMLDivElement, StepRowProps>(({ step, expanded, onToggle, onChange, onRemove, onSwap, lifted, groupTarget, hint, resolvedTarget, onHistory, className, ...rest }, ref) => {
@@ -130,12 +131,12 @@ const Label = ({ children }: { children: React.ReactNode }) => <div className="t
 
 const ExerciseBody = ({ step, onChange }: { step: ExerciseStep; onChange: (s: Step) => void }) => (
   <>
-    {step.exercise.unit && step.exercise.unit !== 'reps' && (
+    {hasLoad(step.exercise) && (
       <div className="flex items-center justify-between gap-3">
         <Label>
-          Weight <span className="text-muted">({step.exercise.unit})</span>
+          {step.exercise.unit === 'kph' ? 'Speed' : 'Weight'} <span className="text-muted">({step.exercise.unit})</span>
         </Label>
-        <Stepper aria-label="Weight" value={step.target ?? 0} step={step.exercise.step} onChange={target => onChange({ ...step, target })} />
+        <Stepper aria-label={step.exercise.unit === 'kph' ? 'Speed' : 'Weight'} value={step.target ?? 0} step={step.exercise.step} onChange={target => onChange({ ...step, target })} />
       </div>
     )}
     {step.exercise.unit === 'kph' && (
@@ -157,65 +158,55 @@ const ExerciseBody = ({ step, onChange }: { step: ExerciseStep; onChange: (s: St
 /** A new target drops a log it records itself: reps counted twice is one too many. */
 const withMode = (step: ExerciseStep, forMode: ForMode): ExerciseStep => {
   const next: ExerciseStep = { ...step, forMode, forValue: defaultFor(forMode) };
-  if (next.log && !logChoices(next).includes(next.log)) delete next.log;
-  return next;
+  return withLogs(next, extraLogs(next));
 };
 
 /** What to record after the step, beyond its target. Nothing by default: Add to log offers what the
- * target does not record already, and the row it adds comes off with its ✕. */
+ * exercise can log and the target does not record already, one at a time; each row it adds comes
+ * off with its ✕. */
 const LogRow = ({ step, onChange }: { step: ExerciseStep; onChange: (s: Step) => void }) => {
   const [picking, setPicking] = useState(false);
-  const choices = logChoices(step);
-  if (step.log) {
-    return (
-      <div className="flex items-center justify-between gap-3">
-        <Label>Log</Label>
-        <div className="flex items-center gap-1">
-          <span className="text-[14px] font-semibold">{STEP_LOG_LABEL[step.log]}</span>
-          <Button
-            variant="quiet"
-            size="icon-sm"
-            aria-label={`Stop logging ${STEP_LOG_LABEL[step.log].toLowerCase()}`}
-            onClick={() => {
-              const next = { ...step };
-              delete next.log;
-              onChange(next);
-            }}
-            className="text-faint"
-          >
-            <X />
-          </Button>
-        </div>
-      </div>
-    );
-  }
-  if (!choices.length) return null;
-  if (!picking) {
-    return (
-      <button type="button" onClick={() => setPicking(true)} className="flex min-h-9 items-center gap-1 text-[14px] font-semibold text-brand-ink">
-        <Plus className="size-4" /> Add to log
-      </button>
-    );
-  }
+  const logs = stepLogs(step);
+  const choices = logChoices(step).filter(c => !logs.includes(c));
   return (
-    <div className="flex flex-wrap items-center gap-1.5" role="group" aria-label="Add to log">
-      <span className="text-[12px] text-muted">Log</span>
-      {choices.map(c => (
-        <Chip
-          key={c}
-          variant="outline"
-          onClick={() => {
-            setPicking(false);
-            onChange({ ...step, log: c });
-          }}
-        >
-          {STEP_LOG_LABEL[c]}
-        </Chip>
+    <>
+      {logs.map(l => (
+        <div key={l} className="flex items-center justify-between gap-3">
+          <Label>Log</Label>
+          <div className="flex items-center gap-1">
+            <span className="text-[14px] font-semibold">{STEP_LOG_LABEL[l]}</span>
+            <Button variant="quiet" size="icon-sm" aria-label={`Stop logging ${STEP_LOG_LABEL[l].toLowerCase()}`} onClick={() => onChange(withLogs(step, logs.filter(x => x !== l)))} className="text-faint">
+              <X />
+            </Button>
+          </div>
+        </div>
       ))}
-      <Button variant="quiet" size="icon-sm" aria-label="Cancel" onClick={() => setPicking(false)} className="text-faint">
-        <X />
-      </Button>
-    </div>
+      {choices.length > 0 &&
+        (!picking ? (
+          <button type="button" onClick={() => setPicking(true)} className="flex min-h-9 items-center gap-1 text-[14px] font-semibold text-brand-ink">
+            <Plus className="size-4" /> Add to log
+          </button>
+        ) : (
+          <div className="flex flex-wrap items-center gap-1.5" role="group" aria-label="Add to log">
+            <span className="text-[12px] text-muted">Log</span>
+            {choices.map(c => (
+              <Chip
+                key={c}
+                variant="outline"
+                onClick={() => {
+                  setPicking(false);
+                  onChange(withLogs(step, [...logs, c]));
+                }}
+              >
+                {STEP_LOG_LABEL[c]}
+              </Chip>
+            ))}
+            <Button variant="quiet" size="icon-sm" aria-label="Cancel" onClick={() => setPicking(false)} className="text-faint">
+              <X />
+            </Button>
+          </div>
+        ))}
+    </>
   );
 };
 const defaultFor = (m: ForMode) => (m === 'seconds' ? 30 : m === 'reps' || m === 'amrap' ? 10 : m === 'meters' ? 400 : m === 'calories' ? 15 : m === 'max' || m === 'segment' ? 0 : 5);

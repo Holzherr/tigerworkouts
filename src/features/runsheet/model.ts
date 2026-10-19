@@ -14,7 +14,8 @@ import { plural } from '@/shared/utils/ui-utils';
 export type ForMode = 'seconds' | 'reps' | 'minutes' | 'meters' | 'calories' | 'max' | 'amrap' | 'segment';
 
 /** What a step records beyond its target: the reps done in a timed piece, the metres or calories a
- * machine counted. Unset logs nothing extra; finishing the step is the result. */
+ * machine counted. Unset logs nothing extra; finishing the step is the result. A step can log
+ * several (a rower: metres and calories); `log` is one value or a list, read through `stepLogs`. */
 export type StepLog = 'reps' | 'meters' | 'calories';
 export const STEP_LOGS: StepLog[] = ['reps', 'meters', 'calories'];
 export const STEP_LOG_LABEL: Record<StepLog, string> = { reps: 'Reps', meters: 'Metres', calories: 'Calories' };
@@ -98,8 +99,9 @@ export interface ExerciseStep {
    * reps. A value left out carries the one before it, and the first set falls back to target /
    * forValue. Only read in a rounds block. */
   sets?: SetPlan[];
-  /** What to record after the step, beyond its target. Unset: nothing extra. */
-  log?: StepLog;
+  /** What to record after the step, beyond its target. Unset: nothing extra. One value (as before
+   * 19 Oct 2026, and still written when only one is set) or a list. Read it with `stepLogs`. */
+  log?: StepLog | StepLog[];
   role?: ItemRole;
   note?: string;
 }
@@ -396,26 +398,63 @@ export const removeSet = (b: Block): Block => {
   return { ...b, repeat, steps: b.steps.map(s => (s.id === step.id ? next : s)) };
 };
 
-/** The set grid has a load column: a unit to count it in, and either an absolute load or a relative
- * one (% of a training max, × bodyweight) already resolved into `target` by `resolveLoads`. */
-export const showsLoad = (s: ExerciseStep) => !!s.exercise.unit && (s.target !== undefined || (s.loadFactor === undefined && s.targetPct === undefined));
-
 /** An exercise whose unit is the measure of the work — a rower in metres, a plank in seconds, a bike
  * in calories — rather than a load. Its `target` is not a weight in hand. */
 export const measureOf = (unit: string | undefined): 'meters' | 'seconds' | 'calories' | undefined => (unit === 'm' ? 'meters' : unit === 's' ? 'seconds' : unit === 'cal' ? 'calories' : undefined);
 
+/** The exercise is set to a load or a speed (kg, kg per arm, kph): its unit is not bodyweight and
+ * not the measure of the work. Only these have a Weight / Speed row. */
+export const hasLoad = (ex: Pick<ExerciseRef, 'unit'>) => !!ex.unit && ex.unit !== 'reps' && !measureOf(ex.unit);
+
+/** The set grid has a load column: a load to count it in, and either an absolute load or a relative
+ * one (% of a training max, × bodyweight) already resolved into `target` by `resolveLoads`. */
+export const showsLoad = (s: ExerciseStep) => hasLoad(s.exercise) && (s.target !== undefined || (s.loadFactor === undefined && s.targetPct === undefined));
+
+/** What an exercise can log, from its unit: a machine or a run (metres, calories or speed) the metres
+ * and calories it counts; a hold (seconds) nothing beyond its time; a lift or bodyweight move the reps. */
+export const exerciseLogs = (ex: Pick<ExerciseRef, 'unit'>): StepLog[] => {
+  const m = measureOf(ex.unit);
+  return m === 'seconds' ? [] : m || ex.unit === 'kph' ? ['meters', 'calories'] : ['reps'];
+};
+
+/** A step's `log` as a list, in the order STEP_LOGS gives them: a single value (steps saved before
+ * 19 Oct 2026) reads as a list of one, unknown values and repeats drop out. */
+export const stepLogs = (s: Pick<ExerciseStep, 'log'>): StepLog[] => {
+  const raw: unknown[] = Array.isArray(s.log) ? s.log : s.log !== undefined ? [s.log] : [];
+  return STEP_LOGS.filter(c => raw.includes(c));
+};
+/** The step with `log` set to these: removed when none, one value when one (what apps from before
+ * 19 Oct 2026 read), a list otherwise. */
+export const withLogs = <S extends ExerciseStep>(s: S, logs: StepLog[]): S => {
+  const list = STEP_LOGS.filter(c => logs.includes(c));
+  const next = { ...s };
+  if (!list.length) delete next.log;
+  else next.log = list.length === 1 ? list[0] : list;
+  return next;
+};
+
+/** The target records it already: reps for a step done to a count, metres or calories for one done
+ * for either. A video segment records nothing. */
+const targetRecords = (s: Pick<ExerciseStep, 'forMode'>, c: StepLog) =>
+  s.forMode === 'segment' || (c === 'reps' ? s.forMode === 'reps' || s.forMode === 'amrap' || s.forMode === 'max' : s.forMode === c);
+
+/** What the step logs beyond its target: its `log`, less what the target records itself. Whatever
+ * is set is asked for, even one the exercise would not offer (an agent may set it). */
+export const extraLogs = (s: ExerciseStep): StepLog[] => stepLogs(s).filter(c => !targetRecords(s, c));
+
 /** The step asks for the reps done: it is done to a count (reps, reps-plus, max), or set to log them. */
-export const countsReps = (s: ExerciseStep) => s.forMode === 'reps' || s.forMode === 'amrap' || s.forMode === 'max' || s.log === 'reps';
+export const countsReps = (s: ExerciseStep) => s.forMode === 'reps' || s.forMode === 'amrap' || s.forMode === 'max' || stepLogs(s).includes('reps');
 
-/** The amount a step records: metres or calories for a step done for either (the plan, changed if it
- * went otherwise), or for one set to log them. Never from the exercise alone: a rower on the clock
- * asks for metres only when the step says so. */
-export const amountOf = (s: ExerciseStep): 'meters' | 'calories' | undefined =>
-  s.forMode === 'meters' || s.forMode === 'calories' ? s.forMode : s.log === 'meters' || s.log === 'calories' ? s.log : undefined;
+/** The amounts a step records: first the one it is done for (the plan, changed if it went
+ * otherwise), then those it is set to log, metres before calories. Never from the exercise alone: a
+ * rower on the clock asks for metres only when the step says so. */
+export const amountsOf = (s: ExerciseStep): ('meters' | 'calories')[] => {
+  const own = s.forMode === 'meters' || s.forMode === 'calories' ? [s.forMode] : [];
+  return [...own, ...(['meters', 'calories'] as const).filter(c => c !== s.forMode && stepLogs(s).includes(c))];
+};
 
-/** The measures a step can be set to log: not one its target records already. */
-export const logChoices = (s: ExerciseStep): StepLog[] =>
-  STEP_LOGS.filter(c => (c === 'reps' ? !['reps', 'amrap', 'max', 'segment'].includes(s.forMode) : !['meters', 'calories', 'segment'].includes(s.forMode)));
+/** The measures the editor offers to log: what the exercise can log, less what the target records. */
+export const logChoices = (s: ExerciseStep): StepLog[] => exerciseLogs(s.exercise).filter(c => !targetRecords(s, c));
 
 /** Column heading for the per-set count; undefined for modes with nothing to count per set. */
 export const countLabel = (m: ForMode): string | undefined =>

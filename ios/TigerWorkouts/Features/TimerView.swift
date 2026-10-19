@@ -508,7 +508,7 @@ struct TimerView: View {
             if open {
                 // On the running set, a tap puts last time's weight and reps in.
                 if live, let lastSet, last != nil, runner.state.phase == .running || runner.state.phase == .paused, let slot = runner.slot {
-                    Button { runner.fill(slot.id, with: SetResult(reps: runner.countsReps ? lastSet.reps : nil, load: ex.hasSetting ? lastSet.load : nil)) } label: {
+                    Button { runner.fill(slot.id, with: SetResult(reps: runner.countsReps ? lastSet.reps : nil, load: ex.hasSetting ? lastSet.load : nil, meters: runner.amountFields.contains(.meters) ? lastSet.meters : nil, calories: runner.amountFields.contains(.calories) ? lastSet.calories : nil)) } label: {
                         Text("Use last time")
                             .font(.subheadline.weight(.semibold))
                             .underline(pattern: .dot)
@@ -537,8 +537,10 @@ struct TimerView: View {
         if hasLoad, let load = live ? runner.target : runner.plannedTarget(ex.id) ?? ex.target {
             parts.append([Format.number(load), ex.shortUnit].filter { !$0.isEmpty }.joined(separator: " "))
         }
-        if live, let field = runner.amountField {
-            parts.append("\(runner.amount.map(Format.number) ?? "—") \(field == .meters ? "m" : "cal")")
+        if live {
+            for field in runner.amountFields {
+                parts.append("\(runner.amount(field).map(Format.number) ?? "—") \(field == .meters ? "m" : "cal")")
+            }
         }
         if live, runner.countsReps {
             let reps = runner.reps ?? ex.forValue
@@ -607,20 +609,23 @@ struct TimerView: View {
                 }
             }
 
-            // Metres rowed or calories on the counter, when not what the plan said.
-            if live, let field = runner.amountField {
-                Divider()
-                HStack(spacing: 10) {
-                    Text(field == .meters ? "Metres done" : "Calories done").font(.subheadline.weight(.semibold)).foregroundStyle(Brand.body)
-                    Spacer()
-                    nudge("minus", label: field == .meters ? "Fewer metres" : "Fewer calories") { runner.nudgeAmount(-$0) }
-                    Text(runner.amount.map(Format.number) ?? "—")
-                        .font(.system(size: 26, weight: .bold, design: .rounded))
-                        .monospacedDigit()
-                        .foregroundStyle(Brand.ink)
-                        .frame(minWidth: 64)
-                        .accessibilityIdentifier("amount-done")
-                    nudge("plus", label: field == .meters ? "More metres" : "More calories") { runner.nudgeAmount($0) }
+            // Metres rowed and/or calories on the counter, when not what the plan said: each the step
+            // records gets its own row.
+            if live {
+                ForEach(Array(runner.amountFields.enumerated()), id: \.element) { i, field in
+                    Divider()
+                    HStack(spacing: 10) {
+                        Text(field == .meters ? "Metres done" : "Calories done").font(.subheadline.weight(.semibold)).foregroundStyle(Brand.body)
+                        Spacer()
+                        nudge("minus", label: field == .meters ? "Fewer metres" : "Fewer calories") { runner.nudgeAmount(-$0, field: field) }
+                        Text(runner.amount(field).map(Format.number) ?? "—")
+                            .font(.system(size: 26, weight: .bold, design: .rounded))
+                            .monospacedDigit()
+                            .foregroundStyle(Brand.ink)
+                            .frame(minWidth: 64)
+                            .accessibilityIdentifier(i == 0 ? "amount-done" : "\(field.rawValue)-done")
+                        nudge("plus", label: field == .meters ? "More metres" : "More calories") { runner.nudgeAmount($0, field: field) }
+                    }
                 }
             }
 
@@ -705,8 +710,10 @@ struct TimerView: View {
             parts.append(count == "Reps" ? n : "\(n) \(count.lowercased())")
         }
         var line = parts.joined(separator: " × ")
-        if let extra = ex.extraLog, let v = Self.loggedShown(row, extra) {
-            line = [line, Rounds.amount(v, extra)].filter { !$0.isEmpty }.joined(separator: " · ")
+        for extra in ex.extraLogs {
+            if let v = Self.loggedShown(row, extra) {
+                line = [line, Rounds.amount(v, extra)].filter { !$0.isEmpty }.joined(separator: " · ")
+            }
         }
         return row.incline.map { "\(line) · \(Format.number($0))%" } ?? line
     }
@@ -781,9 +788,13 @@ struct TimerView: View {
         }
     }
 
-    /// What a set logged beyond its count (`ExerciseStep.extraLog`); nil until entered.
+    /// What a set logged beyond its count (`ExerciseStep.extraLogs`); nil until entered.
     nonisolated static func loggedShown(_ row: SessionRunner.SetRow, _ log: StepLog) -> Double? {
-        log == .reps ? row.counted : row.amount
+        switch log {
+        case .reps: row.counted
+        case .meters: row.amounts[.meters]
+        case .calories: row.amounts[.calories]
+        }
     }
 
     /// The set table's columns after SET, as its header writes them. INCL shows when a set has an
@@ -791,7 +802,7 @@ struct TimerView: View {
     nonisolated static func setColumns(_ step: ExerciseStep, inclines: [Double?]) -> [String] {
         let treadmill = Library.shared.group(step.exercise.key).map { [.treadmill, .walk, .run].contains($0) } ?? false
         let incline = treadmill || inclines.contains { $0 != nil }
-        let extra = step.extraLog.map { [$0 == .reps ? "Reps" : $0 == .meters ? "m" : "Cal"] } ?? []
+        let extra = step.extraLogs.map { $0 == .reps ? "Reps" : $0 == .meters ? "m" : "Cal" }
         return ((step.hasSetLoad ? [step.shortUnit] : []) + (incline ? ["Incl"] : []) + (step.countLabel.map { [$0] } ?? []) + extra)
             .map { $0.uppercased() }
     }
@@ -852,13 +863,14 @@ struct TimerView: View {
                     .frame(maxWidth: Self.countWidth(ex, incline: incline))
                     .overlay(alignment: .bottom) { if editable { unitCaption(count.lowercased()) } }
                 }
-                if let extra = ex.extraLog {
-                    // What the step is set to log beyond its count: reps in a timed set, metres on a timed row.
+                ForEach(ex.extraLogs, id: \.self) { extra in
+                    // What the step is set to log beyond its count, a column each: reps in a timed
+                    // set, metres and calories on a timed row.
                     let unit = extra == .reps ? "reps" : extra == .meters ? "m" : "cal"
                     Group {
                         if editable {
                             MiniStepper(value: Self.loggedShown(row, extra) ?? 0, label: "Set \(row.number) \(extra.label.lowercased()) done", onTint: row.current) {
-                                if extra == .reps { runner.nudgeSetCounted(row.slotId, $0) } else { runner.nudgeSetAmount(row.slotId, $0) }
+                                if extra == .reps { runner.nudgeSetCounted(row.slotId, $0) } else { runner.nudgeSetAmount(row.slotId, $0, field: extra == .meters ? .meters : .calories) }
                             }
                         } else {
                             Text(Self.loggedShown(row, extra).map(Format.number) ?? "—").font(.system(size: 18, weight: .bold, design: .rounded)).lineLimit(1).minimumScaleFactor(0.6)
@@ -902,7 +914,7 @@ struct TimerView: View {
                 // Tap to copy last time's set into this row.
                 Button {
                     openSet = row.slotId
-                    runner.fill(row.slotId, with: SetResult(reps: ex.countLabel == nil && ex.extraLog != .reps ? nil : last.reps, load: ex.hasSetLoad ? last.load : nil, meters: ex.amountLog == .meters ? last.meters : nil, calories: ex.amountLog == .calories ? last.calories : nil))
+                    runner.fill(row.slotId, with: SetResult(reps: ex.countLabel == nil && !ex.extraLogs.contains(.reps) ? nil : last.reps, load: ex.hasSetLoad ? last.load : nil, meters: ex.amountLogs.contains(.meters) ? last.meters : nil, calories: ex.amountLogs.contains(.calories) ? last.calories : nil))
                 } label: {
                     Text(hint)
                         .font(.caption.weight(.semibold))

@@ -334,6 +334,17 @@ describe('plans, timer and logging', () => {
     expect((row.data as { items: { steps: { log?: string }[] }[] }).items[0].steps[0].log).toBe('meters');
     expect(() => runsheetInput.parse({ title: 'x', items: [{ kind: 'exercise', exercise: 'cardio_rower', forMode: 'seconds', forValue: 30, log: 'watts' }] })).toThrow();
   });
+
+  it('a step logs several measures, only ones its exercise can; search_exercises says which', async () => {
+    const w = draft({ items: [{ kind: 'exercise', exercise: 'cardio_rower', forMode: 'seconds', forValue: 30, log: ['calories', 'meters'] }] } as Partial<RunsheetInput>);
+    const out = await T.createWorkout(db, { workout: w });
+    const row = tables.workouts.find(x => x.id === out.id)!;
+    expect((row.data as { items: { log?: unknown }[] }).items[0].log).toEqual(['meters', 'calories']);
+    const bad = draft({ items: [{ kind: 'exercise', exercise: 'bw_plank', forMode: 'seconds', forValue: 30, log: 'meters' }, { kind: 'exercise', exercise: 'kb_swing', forMode: 'seconds', forValue: 30, target: 24, log: ['reps', 'calories'] }] } as Partial<RunsheetInput>);
+    await expect(T.createWorkout(db, { workout: bad })).rejects.toThrow(/"Plank" cannot log meters — it logs only its time[\s\S]*"Kettlebell swings" cannot log calories — it logs reps/);
+    const found = await T.searchExercises(db, { query: 'rowing machine' });
+    expect(found.exercises.find(e => e.key === 'cardio_rower')?.logs).toEqual(['meters', 'calories']);
+  });
 });
 
 describe('claim', () => {

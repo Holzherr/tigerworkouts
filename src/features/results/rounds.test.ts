@@ -85,4 +85,11 @@ describe('round times only when they say something', () => {
     expect(amountRows(session([], steps([140, undefined])), sheet())).toEqual([]);
     expect(amountRows(session([], steps([140, 141])))).toEqual([]); // no workout, no way to tell
   });
+  it('a rower logging metres and calories gets a row for each', () => {
+    const both = sheet();
+    const b = both.items.find(i => i.kind === 'block' && i.id === 'sprints') as Block;
+    b.steps = b.steps.map(st => (st.kind === 'exercise' ? { ...st, log: ['meters', 'calories'] } : st));
+    const r = session([], [{ stepId: 'rw', exerciseKey: 'cardio_rower', sets: [{ meters: 142, calories: 9, seconds: 30 }, { meters: 138, calories: 10, seconds: 30 }] }]);
+    expect(amountRows(r, both).map(x => [x.field, x.values, x.best])).toEqual([['meters', [142, 138], 0], ['calories', [9, 10], 1]]);
+  });
 });

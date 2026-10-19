@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { addSet, roundsLabel, editSet, plannedSet, removeSet, straightSetStep, flatten, fromLegacy, groupOnto, insertAfter, makeExercise, makeRest, moveRow, moveRowTo, moveToTopLevel, rebuild, removeStep, isEmptyMain, repeatAsRounds, startBlock, runsheetSeconds, editedCopy, ofWorkout, type Block, type ExerciseRef, type Item, type Runsheet } from './model';
+import { addSet, amountsOf, exerciseLogs, extraLogs, hasLoad, logChoices, stepLogs, withLogs, roundsLabel, editSet, plannedSet, removeSet, straightSetStep, flatten, fromLegacy, groupOnto, insertAfter, makeExercise, makeRest, moveRow, moveRowTo, moveToTopLevel, rebuild, removeStep, isEmptyMain, repeatAsRounds, startBlock, runsheetSeconds, editedCopy, ofWorkout, type Block, type ExerciseRef, type Item, type Runsheet } from './model';
 import { EX, priyanka, withStarter } from './fixtures';
 
 const KB: ExerciseRef = { key: 'kb_swing', name: 'Kettlebell swings', unit: 'kg', step: 4 };
@@ -261,5 +261,35 @@ describe('how many rounds a block runs, in words', () => {
     expect(roundsLabel(b({ mode: 'emom', repeat: 1 }))).toBe('EMOM · 1 minute');
     expect(roundsLabel(b({ mode: 'emom', repeat: 8, everySec: 30 }))).toBe('EMOM · 8 × 30 s');
     expect(roundsLabel(b({ mode: 'ladder', ladder: [21, 15, 9] }))).toBe('21-15-9');
+  });
+});
+
+describe('what an exercise and a step log', () => {
+  const rower = makeExercise(EX.cardio_rower, { forMode: 'seconds', forValue: 30 });
+  it('an exercise offers what its unit counts', () => {
+    expect([EX.cardio_rower, EX.kb_swing, EX.bw_plank, EX.bw_pushup, EX.sprint, EX.cardio_assault_bike].map(e => exerciseLogs(e))).toEqual([['meters', 'calories'], ['reps'], [], ['reps'], ['meters', 'calories'], ['meters', 'calories']]);
+    expect([EX.cardio_rower, EX.kb_swing, EX.bw_plank, EX.bw_pushup, EX.sprint].map(e => hasLoad(e))).toEqual([false, true, false, false, true]);
+  });
+  it('reads a single value as before, a list, and drops junk and repeats', () => {
+    expect(stepLogs({ log: 'meters' })).toEqual(['meters']);
+    expect(stepLogs({ log: ['calories', 'meters', 'calories'] })).toEqual(['meters', 'calories']);
+    expect(stepLogs({ log: ['watts' as never, 'reps'] })).toEqual(['reps']);
+    expect(stepLogs({ log: 'watts' as never })).toEqual([]);
+    expect(stepLogs({})).toEqual([]);
+  });
+  it('writes none as no field, one as a single value, several as a list', () => {
+    expect(withLogs({ ...rower, log: 'meters' }, [])).not.toHaveProperty('log');
+    expect(withLogs(rower, ['meters']).log).toBe('meters');
+    expect(withLogs(rower, ['calories', 'meters']).log).toEqual(['meters', 'calories']);
+  });
+  it('the amounts a step records: its target first, then what it logs', () => {
+    expect(amountsOf({ ...rower, log: ['meters', 'calories'] })).toEqual(['meters', 'calories']);
+    expect(amountsOf({ ...rower, forMode: 'calories', forValue: 20, log: 'meters' })).toEqual(['calories', 'meters']);
+    expect(amountsOf(rower)).toEqual([]);
+  });
+  it('the editor offers what the exercise logs, less what the target records', () => {
+    expect(logChoices({ ...rower, forMode: 'meters', forValue: 500 })).toEqual(['calories']);
+    expect(logChoices(makeExercise(EX.kb_swing, { forMode: 'reps', forValue: 10 }))).toEqual([]);
+    expect(extraLogs({ ...rower, forMode: 'meters', forValue: 500, log: ['meters', 'calories'] })).toEqual(['calories']);
   });
 });

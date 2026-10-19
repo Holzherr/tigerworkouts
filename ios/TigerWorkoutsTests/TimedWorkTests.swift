@@ -51,7 +51,7 @@ struct TimedWorkTests {
     @Test("a rower on the clock set to log metres logs them only when entered")
     func rowerOnTheClock() {
         var step = ExerciseStep(id: "x", exercise: Self.rower, forMode: .minutes, forValue: 2)
-        step.log = .meters
+        step.log = [.meters]
         let sheet = Runsheet(id: "t", title: "T", items: [.step(.exercise(step))])
         var s = Runner.tick(Runner.start(sheet, now: 0), now: 5000)
         #expect(Runner.amountField(s.slots[0]) == .meters)
@@ -104,7 +104,7 @@ struct TimedWorkTests {
 struct StepLogTests {
     static let row = ExerciseRef(key: "db_row", name: "Chest-supported rows", unit: "kg per arm", step: 2)
 
-    static func one(_ ex: ExerciseRef, _ mode: ForMode, _ value: Double, target: Double? = nil, log: StepLog? = nil) -> Runsheet {
+    static func one(_ ex: ExerciseRef, _ mode: ForMode, _ value: Double, target: Double? = nil, log: [StepLog] = []) -> Runsheet {
         var step = ExerciseStep(id: "x", exercise: ex, target: target, forMode: mode, forValue: value)
         step.log = log
         return Runsheet(id: "w", title: "W", items: [.step(.exercise(step))])
@@ -124,7 +124,7 @@ struct StepLogTests {
 
     @Test("a timed rower set to log metres asks for metres")
     func timedRowerLogsMetres() {
-        let r = Self.one(TimedWorkTests.rower, .seconds, 30, log: .meters)
+        let r = Self.one(TimedWorkTests.rower, .seconds, 30, log: [.meters])
         var s = Runner.tick(Runner.start(r, now: 0), now: 5000)
         #expect(Runner.amountField(s.slots[0]) == .meters)
         s = Runner.setAmount(s, value: 142)
@@ -144,7 +144,7 @@ struct StepLogTests {
     @Test("timed kettlebell swings ask for reps only when set to log them")
     func timedSwings() {
         #expect(Self.slot(Self.one(Fixtures.swing, .seconds, 30, target: 24)).exercise?.countsReps == false)
-        let r = Self.one(Fixtures.swing, .seconds, 30, target: 24, log: .reps)
+        let r = Self.one(Fixtures.swing, .seconds, 30, target: 24, log: [.reps])
         var s = Runner.tick(Runner.start(r, now: 0), now: 5000)
         #expect(s.slots[0].exercise?.countsReps == true)
         #expect(Runner.amountField(s.slots[0]) == nil)
@@ -162,23 +162,59 @@ struct StepLogTests {
         #expect(plank.exercise?.countsReps == false && Runner.amountField(plank) == nil)
     }
 
-    @Test("the editor offers only what the target does not record already")
+    @Test("the editor offers what the exercise logs, less what the target records")
     func choices() {
-        #expect(StepEditorView.logChoices(ExerciseStep(id: "a", exercise: TimedWorkTests.rower, forMode: .seconds, forValue: 30)) == [.reps, .meters, .calories])
-        #expect(StepEditorView.logChoices(ExerciseStep(id: "a", exercise: TimedWorkTests.rower, forMode: .meters, forValue: 500)) == [.reps])
-        #expect(StepEditorView.logChoices(ExerciseStep(id: "a", exercise: Self.row, forMode: .reps, forValue: 10)) == [.meters, .calories])
+        #expect(StepEditorView.logChoices(ExerciseStep(id: "a", exercise: TimedWorkTests.rower, forMode: .seconds, forValue: 30)) == [.meters, .calories])
+        #expect(StepEditorView.logChoices(ExerciseStep(id: "a", exercise: TimedWorkTests.rower, forMode: .meters, forValue: 500)) == [.calories])
+        #expect(StepEditorView.logChoices(ExerciseStep(id: "a", exercise: Self.row, forMode: .reps, forValue: 10)) == [])
+        #expect(StepEditorView.logChoices(ExerciseStep(id: "a", exercise: Fixtures.swing, forMode: .seconds, forValue: 30)) == [.reps])
+        #expect(StepEditorView.logChoices(ExerciseStep(id: "a", exercise: TimedWorkTests.plankEx, forMode: .seconds, forValue: 30)) == [])
+    }
+
+    @Test("a rower has no setting to dial, even with a target from the editor; a kettlebell has its load")
+    func settings() {
+        #expect(ExerciseStep(id: "a", exercise: TimedWorkTests.rower, target: 400, forMode: .seconds, forValue: 30).hasSetting == false)
+        #expect(ExerciseStep(id: "a", exercise: Fixtures.swing, target: 24, forMode: .seconds, forValue: 30).hasSetting == true)
+    }
+
+    @Test("a timed rower set to log metres and calories asks for both and logs both")
+    func timedRowerLogsBoth() {
+        let r = Self.one(TimedWorkTests.rower, .seconds, 30, log: [.meters, .calories])
+        var s = Runner.tick(Runner.start(r, now: 0), now: 5000)
+        #expect(Runner.amountFields(s.slots[0]) == [.meters, .calories])
+        s = Runner.setAmount(s, value: 142, field: .meters)
+        s = Runner.setAmount(s, value: 9, field: .calories)
+        s = Runner.tick(s, now: 35000)
+        let set = Runner.toResult(s, r, now: 40000).steps[0].sets?[0]
+        #expect(set?.meters == 142 && set?.calories == 9 && set?.seconds == 30)
+    }
+
+    @Test("a 500 m row set to log calories keeps the plan as its metres; an amount it does not record is refused")
+    func distanceLogsCalories() {
+        let r = Self.one(TimedWorkTests.rower, .meters, 500, log: [.calories])
+        var s = Runner.tick(Runner.start(r, now: 0), now: 5000)
+        #expect(Runner.amountFields(s.slots[0]) == [.meters, .calories])
+        #expect(Runner.amountAt(s, s.slots[0]) == 500 && Runner.amountAt(s, s.slots[0], field: .calories) == nil)
+        s = Runner.setAmount(s, value: 31, field: .calories)
+        let set = Runner.toResult(Runner.advance(s, now: 105_000), r, now: 110_000).steps[0].sets?[0]
+        #expect(set?.meters == 500 && set?.calories == 31)
+        let timed = Runner.tick(Runner.start(Self.one(TimedWorkTests.rower, .seconds, 30, log: [.meters]), now: 0), now: 5000)
+        #expect(Runner.setAmount(timed, value: 9, field: .calories).actuals == timed.actuals)
     }
 
     @Test("the set grid gives a timed row set to log metres its own column; the count stays the time")
     func grid() {
         var step = ExerciseStep(id: "rw", exercise: TimedWorkTests.rower, forMode: .seconds, forValue: 30)
         #expect(TimerView.setColumns(step, inclines: []) == ["SEC"])
-        step.log = .meters
+        step.log = [.meters]
         #expect(TimerView.setColumns(step, inclines: []) == ["SEC", "M"])
-        let before = SessionRunner.SetRow(slotId: "a", number: 1, reps: 30, amount: 140, plan: 30, done: false, current: true, tickable: true)
+        step.log = [.meters, .calories]
+        #expect(TimerView.setColumns(step, inclines: []) == ["SEC", "M", "CAL"])
+        step.log = [.meters]
+        let before = SessionRunner.SetRow(slotId: "a", number: 1, reps: 30, amount: 140, amounts: [.meters: 140], plan: 30, done: false, current: true, tickable: true)
         #expect(TimerView.countShown(before, step) == 30 && TimerView.loggedShown(before, .meters) == 140)
         var swings = ExerciseStep(id: "sw", exercise: Fixtures.swing, target: 24, forMode: .seconds, forValue: 30)
-        swings.log = .reps
+        swings.log = [.reps]
         // Reps counted on a timed set never show in its seconds column.
         let counted = SessionRunner.SetRow(slotId: "b", number: 1, reps: 21, counted: 21, plan: 30, done: false, current: true, tickable: true)
         #expect(TimerView.countShown(counted, swings) == 30 && TimerView.loggedShown(counted, .reps) == 21)
@@ -188,7 +224,7 @@ struct StepLogTests {
     func editColumns() {
         var rower = ExerciseStep(id: "rw", exercise: TimedWorkTests.rower, forMode: .seconds, forValue: 30)
         #expect(LoggedSetsCard.fields([SetResult(reps: nil, load: nil, seconds: 30)], unit: "m", step: rower) == [.seconds])
-        rower.log = .meters
+        rower.log = [.meters]
         #expect(LoggedSetsCard.fields([SetResult(reps: nil, load: nil, seconds: 30)], unit: "m", step: rower) == [.meters, .seconds])
         #expect(LoggedSetsCard.fields([SetResult(reps: nil, load: nil, seconds: 30)], unit: "m") == [.meters, .seconds])
     }
@@ -196,19 +232,28 @@ struct StepLogTests {
     @Test("log survives a save and an unknown one reads as nothing")
     func codable() throws {
         var step = ExerciseStep(id: "a", exercise: TimedWorkTests.rower, forMode: .seconds, forValue: 30)
-        step.log = .meters
+        step.log = [.meters]
         let data = try JSONEncoder().encode(step)
         #expect(String(data: data, encoding: .utf8)?.contains("\"log\":\"meters\"") == true)
-        #expect(try JSONDecoder().decode(ExerciseStep.self, from: data).log == .meters)
+        #expect(try JSONDecoder().decode(ExerciseStep.self, from: data).log == [.meters])
         let odd = #"{"id":"a","exercise":{"key":"k","name":"K","unit":"","step":1},"forMode":"seconds","forValue":30,"log":"watts"}"#
-        #expect(try JSONDecoder().decode(ExerciseStep.self, from: Data(odd.utf8)).log == nil)
+        #expect(try JSONDecoder().decode(ExerciseStep.self, from: Data(odd.utf8)).log == [])
+        // Several are a list, read back in order; junk in a list drops out.
+        step.log = [.meters, .calories]
+        let both = try JSONEncoder().encode(step)
+        #expect(String(data: both, encoding: .utf8)?.contains(#""log":["meters","calories"]"#) == true)
+        #expect(try JSONDecoder().decode(ExerciseStep.self, from: both).log == [.meters, .calories])
+        let mixed = #"{"id":"a","exercise":{"key":"k","name":"K","unit":"","step":1},"forMode":"seconds","forValue":30,"log":["calories","watts","meters"]}"#
+        #expect(try JSONDecoder().decode(ExerciseStep.self, from: Data(mixed.utf8)).log == [.meters, .calories])
+        step.log = []
+        #expect(String(data: try JSONEncoder().encode(step), encoding: .utf8)?.contains("log") == false)
     }
 }
 
 /// Ported from "round times only when they say something" in `src/features/results/rounds.test.ts`.
 @Suite("round times only when they say something")
 struct RoundRulesTests {
-    static func ex(_ id: String, _ e: ExerciseRef, _ mode: ForMode, _ value: Double, target: Double? = nil, log: StepLog? = nil) -> Step {
+    static func ex(_ id: String, _ e: ExerciseRef, _ mode: ForMode, _ value: Double, target: Double? = nil, log: [StepLog] = []) -> Step {
         var s = ExerciseStep(id: id, exercise: e, target: target, forMode: mode, forValue: value)
         s.log = log
         return .exercise(s)
@@ -217,7 +262,7 @@ struct RoundRulesTests {
     static func sheet() -> Runsheet {
         Runsheet(id: "w", title: "W", items: [
             .block(Block(id: "rows", name: "rows", repeatCount: 3, steps: [ex("cs", StepLogTests.row, .reps, 10, target: 20), ex("sw", Fixtures.swing, .reps, 15, target: 24)])),
-            .block(Block(id: "sprints", name: "sprints", repeatCount: 3, steps: [ex("rw", TimedWorkTests.rower, .seconds, 30, log: .meters), Fixtures.rest("r", 30)])),
+            .block(Block(id: "sprints", name: "sprints", repeatCount: 3, steps: [ex("rw", TimedWorkTests.rower, .seconds, 30, log: [.meters]), Fixtures.rest("r", 30)])),
             .block(Block(id: "abs", name: "abs", repeatCount: 3, steps: [ex("pl", TimedWorkTests.plankEx, .seconds, 30), ex("sw2", Fixtures.swing, .seconds, 30, target: 16)])),
         ])
     }
