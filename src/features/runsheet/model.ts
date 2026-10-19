@@ -252,7 +252,7 @@ export const makeExercise = (exercise: ExerciseRef, init: Partial<Omit<ExerciseS
   kind: 'exercise',
   id: uid('e'),
   exercise,
-  target: exercise.unit ? (init.target ?? defaultTarget(exercise)) : undefined,
+  target: exercise.unit ? (init.target ?? (settingUnit(exercise.unit) ? defaultTarget(exercise) : undefined)) : undefined,
   forMode: init.forMode ?? 'seconds',
   forValue: init.forValue ?? 30,
   incline: init.incline,
@@ -423,6 +423,19 @@ export const countLabel = (m: ForMode): string | undefined =>
 
 // ── labels ──
 export const shortUnit = (unit: string) => unit.replace(' per arm', '').replace(' per side', '').trim();
+/** A unit you dial in before the step: a weight, or a machine's speed. Metres and calories are not. */
+const settingUnit = (unit: string) => {
+  const u = shortUnit(unit).toLowerCase();
+  return u.startsWith('kg') || u.startsWith('lb') || u === 'kph' || u === 'mph';
+};
+/** Whether the step carries a setting you dial in: a target, or a weight or speed unit. A rower in
+ * metres with no target has nothing to adjust (iOS `hasSetting`). */
+export const hasSetting = (s: ExerciseStep) => s.target !== undefined || settingUnit(s.exercise.unit ?? '');
+/** What the setting is called: speed on a treadmill, load on a bar (iOS `settingLabel`). */
+export const settingLabel = (s: ExerciseStep) => {
+  const u = shortUnit(s.exercise.unit ?? '').toLowerCase();
+  return u === 'kph' || u === 'mph' ? 'Speed' : u === 'm' || u === 'km' ? 'Distance' : u === 'cal' || u === 'kcal' ? 'Calories' : 'Load';
+};
 export const forLabel = (s: ExerciseStep) => {
   const n = s.forMax ? `${s.forValue}–${s.forMax}` : `${s.forValue}`;
   const base = s.forMode === 'max' ? 'max' : s.forMode === 'amrap' ? `${s.forValue}+ reps` : s.forMode === 'segment' ? (s.startSeconds !== undefined ? `from ${fmtClockLocal(s.startSeconds)}` : 'follow along') : s.forMode === 'seconds' ? `${n}s` : s.forMode === 'minutes' ? `${n} min` : s.forMode === 'meters' ? `${n} m` : s.forMode === 'calories' ? `${n} cal` : `${n} reps`;
