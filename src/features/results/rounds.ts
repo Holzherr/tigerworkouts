@@ -4,7 +4,7 @@
  * has ever had. Pure functions over `SessionResult[]`; ported one for one to
  * `ios/TigerWorkouts/Results/Rounds.swift`.
  */
-import type { Block, Runsheet, StepLog } from '@/features/runsheet/model';
+import { stepLogs, type Block, type Runsheet, type StepLog } from '@/features/runsheet/model';
 import type { RoundSplit, SessionResult } from '@/features/runsheet/progression';
 
 /** A block whose rounds the timer fixed: rounds or EMOM where every exercise is done for seconds or
@@ -77,7 +77,8 @@ export interface AmountRow {
 }
 
 /**
- * What each round of a fixed-time block logged, for the steps set to log reps, metres or calories:
+ * What each round of a fixed-time block logged, for the steps set to log reps, metres or calories (a
+ * row per measure: a rower logging both has two):
  * "Rower sprints: R1 142 m · R2 138 m · R3 145 m". A round is a working set of the step, in order.
  * Any difference earns "best" — the amount is what varied.
  */
@@ -87,16 +88,17 @@ export const amountRows = (result: SessionResult, runsheet?: Runsheet): AmountRo
   for (const b of runsheet.items) {
     if (b.kind !== 'block' || !fixedTime(b)) continue;
     for (const st of b.steps) {
-      if (st.kind !== 'exercise' || !st.log) continue;
-      const field = st.log;
+      if (st.kind !== 'exercise') continue;
       const sets = result.steps.filter(r => r.stepId === st.id).flatMap(r => r.sets ?? []).filter(x => x.type !== 'warmup');
-      const values = sets.map(x => x[field]);
-      const given = values.flatMap((v, i) => (v === undefined ? [] : [{ v, i }]));
-      if (given.length < 2) continue;
-      const row: AmountRow = { blockId: b.id, stepId: st.id, exerciseKey: st.exercise.key, field, values };
-      const top = given.reduce((a, c) => (c.v > a.v ? c : a));
-      if (given.some(x => x.v !== top.v)) row.best = top.i;
-      out.push(row);
+      for (const field of stepLogs(st)) {
+        const values = sets.map(x => x[field]);
+        const given = values.flatMap((v, i) => (v === undefined ? [] : [{ v, i }]));
+        if (given.length < 2) continue;
+        const row: AmountRow = { blockId: b.id, stepId: st.id, exerciseKey: st.exercise.key, field, values };
+        const top = given.reduce((a, c) => (c.v > a.v ? c : a));
+        if (given.some(x => x.v !== top.v)) row.best = top.i;
+        out.push(row);
+      }
     }
   }
   return out;

@@ -67,7 +67,7 @@ export const SplitsCard = ({ result, last, runsheet, exerciseName, blockName, re
         const many = amounts.filter(a => a.blockId === row.blockId).length > 1;
         const title = [blockName?.(row.blockId) ?? 'Block', many ? exerciseName?.(row.exerciseKey) : undefined].filter(Boolean).join(' · ');
         return (
-          <div key={`${row.blockId}|${row.stepId}`} className="mt-2">
+          <div key={`${row.blockId}|${row.stepId}|${row.field}`} className="mt-2">
             <div className="text-[13px] font-bold">{title}</div>
             <div className="mt-1 flex flex-wrap gap-1.5">
               {row.values.map((v, i) => {

@@ -93,44 +93,46 @@ struct StepEditorView: View {
                 guard old != new else { return }
                 step.forValue = defaultValue(for: new)
                 // A log the new target records itself is dropped: reps counted twice is one too many.
-                if let log = step.log, !Self.logChoices(step).contains(log) { step.log = nil }
+                step.log = step.extraLogs
             }
         }
     }
 
     /// What to record after the step, beyond its target. Nothing by default; Add to log offers what
-    /// the target does not already record, and the row it adds can be taken off again.
+    /// the exercise can log and the target does not record already, one at a time, and each row it
+    /// adds can be taken off again.
     @ViewBuilder private var logSection: some View {
-        let choices = Self.logChoices(step)
-        if let log = step.log {
+        let choices = Self.logChoices(step).filter { !step.log.contains($0) }
+        if !step.log.isEmpty || !choices.isEmpty {
             Section {
-                HStack {
-                    LabeledContent("Log", value: log.label)
-                    Button { step.log = nil } label: {
-                        Image(systemName: "minus.circle.fill").foregroundStyle(Brand.faint)
+                ForEach(step.log, id: \.self) { log in
+                    HStack {
+                        LabeledContent("Log", value: log.label)
+                        Button { step.log.removeAll { $0 == log } } label: {
+                            Image(systemName: "minus.circle.fill").foregroundStyle(Brand.faint)
+                        }
+                        .buttonStyle(.plain)
+                        .accessibilityLabel("Stop logging \(log.label.lowercased())")
+                        .accessibilityIdentifier("remove-log-\(log.rawValue)")
                     }
-                    .buttonStyle(.plain)
-                    .accessibilityLabel("Stop logging \(log.label.lowercased())")
-                    .accessibilityIdentifier("remove-log")
+                }
+                if !choices.isEmpty {
+                    Menu {
+                        ForEach(choices, id: \.self) { c in
+                            Button(c.label) { step.log = StepLog.normalised(step.log + [c]) }
+                        }
+                    } label: {
+                        Label("Add to log", systemImage: "plus")
+                    }
+                    .accessibilityIdentifier("add-log")
                 }
             } footer: {
-                Text("Asked for after each set.")
-            }
-        } else if !choices.isEmpty {
-            Section {
-                Menu {
-                    ForEach(choices, id: \.self) { c in
-                        Button(c.label) { step.log = c }
-                    }
-                } label: {
-                    Label("Add to log", systemImage: "plus")
-                }
-                .accessibilityIdentifier("add-log")
+                if !step.log.isEmpty { Text("Asked for after each set.") }
             }
         }
     }
 
-    /// The measures a step can be set to log: not one its target records already.
+    /// The measures the editor offers to log: what the exercise can log, less what the target records.
     nonisolated static func logChoices(_ step: ExerciseStep) -> [StepLog] { step.logChoices }
 
     private var stepSize: Double {

@@ -126,17 +126,17 @@ struct LoggedSetsCard: View {
     /// the step it ran) or else what the exercise counts in.
     static func fields(_ sets: [SetResult], unit: String, step: ExerciseStep? = nil) -> [Field] {
         let measure = Measure.of(unit)
-        let amount: Field? = if let step {
-            step.amountLog == .meters ? .meters : step.amountLog == .calories ? .calories : nil
+        let amounts: [Field] = if let step {
+            step.amountLogs.map { $0 == .meters ? .meters : .calories }
         } else {
-            measure == .meters ? .meters : measure == .calories ? .calories : nil
+            measure == .meters ? [.meters] : measure == .calories ? [.calories] : []
         }
         var out: [Field] = []
         let has = { (f: Field) in sets.contains { value($0, f) != nil } }
         if has(.load) || (!unit.isEmpty && unit != "reps" && measure == nil) { out.append(.load) }
-        if has(.reps) || step?.countsReps == true || !(has(.seconds) || has(.meters) || has(.calories) || measure != nil || amount != nil) { out.append(.reps) }
-        if has(.meters) || amount == .meters { out.append(.meters) }
-        if has(.calories) || amount == .calories { out.append(.calories) }
+        if has(.reps) || step?.countsReps == true || !(has(.seconds) || has(.meters) || has(.calories) || measure != nil || !amounts.isEmpty) { out.append(.reps) }
+        if has(.meters) || amounts.contains(.meters) { out.append(.meters) }
+        if has(.calories) || amounts.contains(.calories) { out.append(.calories) }
         if has(.seconds) || measure != nil { out.append(.seconds) }
         return out
     }

@@ -160,10 +160,12 @@ extension ExerciseStep {
         return unit.isEmpty ? Format.number(t) : "\(Format.number(t)) \(unit)"
     }
 
-    /// Whether the step carries a setting you dial in: a weight, or a machine's speed. A rower
-    /// logged in metres with no target, or a bodyweight move, has nothing to adjust — showing a
-    /// stepper for it offered "Load: — m" on a rowing machine.
+    /// Whether the step carries a setting you dial in: a weight, or a machine's speed. An exercise
+    /// whose unit is the measure of the work (a rower in metres, a plank in seconds, a bike in
+    /// calories) or a bodyweight move has nothing to adjust — showing a stepper for it offered
+    /// "Distance (m)" on a rowing machine. `hasLoad` in model.ts.
     var hasSetting: Bool {
+        if Measure.of(exercise.unit) != nil { return false }
         if target != nil { return true }
         let u = shortUnit.lowercased()
         return u.hasPrefix("kg") || u.hasPrefix("lb") || u == "kph" || u == "mph"
@@ -173,39 +175,40 @@ extension ExerciseStep {
     var settingLabel: String {
         switch shortUnit.lowercased() {
         case "kph", "mph": "Speed"
-        case "m", "km": "Distance"
-        case "cal", "kcal": "Calories"
         default: "Load"
         }
     }
 
     /// Asks for the reps done: done to a count (reps, reps-plus, max), or set to log them.
-    var countsReps: Bool { forMode == .reps || forMode == .amrap || forMode == .max || log == .reps }
+    var countsReps: Bool { forMode == .reps || forMode == .amrap || forMode == .max || log.contains(.reps) }
 
-    /// The amount the step records: metres or calories for a step done for either (the plan, changed
-    /// if it went otherwise), or for one whose `log` asks for them. Never from the exercise alone: a
-    /// rower on the clock asks for metres only when the step says so. `amountOf` in model.ts.
-    var amountLog: StepLog? {
-        switch forMode {
-        case .meters: .meters
-        case .calories: .calories
-        default: log == .meters || log == .calories ? log : nil
+    /// The amounts the step records: first the one it is done for (the plan, changed if it went
+    /// otherwise), then those its `log` asks for, metres before calories. Never from the exercise
+    /// alone: a rower on the clock asks for metres only when the step says so. `amountsOf` in model.ts.
+    var amountLogs: [StepLog] {
+        let own: [StepLog] = forMode == .meters ? [.meters] : forMode == .calories ? [.calories] : []
+        return own + [StepLog.meters, .calories].filter { !own.contains($0) && log.contains($0) }
+    }
+    /// The first of `amountLogs`: the one the step is done for, when it is.
+    var amountLog: StepLog? { amountLogs.first }
+
+    /// The target records it already: reps for a step done to a count, metres or calories for one
+    /// done for either. A video segment records nothing.
+    func targetRecords(_ c: StepLog) -> Bool {
+        if forMode == .segment { return true }
+        switch c {
+        case .reps: return [.reps, .amrap, .max].contains(forMode)
+        case .meters: return forMode == .meters
+        case .calories: return forMode == .calories
         }
     }
 
-    /// The measures the step can be set to log: not one its target records already.
-    var logChoices: [StepLog] {
-        StepLog.allCases.filter { c in
-            switch c {
-            case .reps: ![.reps, .amrap, .max, .segment].contains(forMode)
-            case .meters, .calories: ![.meters, .calories, .segment].contains(forMode)
-            }
-        }
-    }
+    /// The measures the editor offers to log: what the exercise can log, less what the target records.
+    var logChoices: [StepLog] { exercise.logs.filter { !targetRecords($0) } }
 
-    /// What the step logs beyond its count, for a column of its own: reps on a timed set, metres
-    /// on a timed row. Nil when it logs nothing extra.
-    var extraLog: StepLog? { log.flatMap { logChoices.contains($0) ? $0 : nil } }
+    /// What the step logs beyond its count, a column each: reps on a timed set, metres and calories
+    /// on a timed row. Whatever is set is asked for, even one the exercise would not offer.
+    var extraLogs: [StepLog] { log.filter { !targetRecords($0) } }
 
     /// The set grid's column for the per-set count; nil for modes with nothing to count per set.
     var countLabel: String? {
@@ -249,5 +252,18 @@ enum Format {
         if seconds < 60 { return "\(max(0, Int(seconds.rounded())))s" }
         let m = Int((seconds / 60).rounded())
         return m < 60 ? "\(m) min" : String(format: "%dh %02d", m / 60, m % 60)
+    }
+}
+
+extension ExerciseRef {
+    /// What the exercise can log, from its unit: a machine or a run (metres, calories or speed) the
+    /// metres and calories it counts; a hold (seconds) nothing beyond its time; a lift or a bodyweight
+    /// move the reps. `exerciseLogs` in model.ts.
+    var logs: [StepLog] {
+        switch Measure.of(unit) {
+        case .seconds: []
+        case .meters, .calories: [.meters, .calories]
+        case nil: unit == "kph" ? [.meters, .calories] : [.reps]
+        }
     }
 }

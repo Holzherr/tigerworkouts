@@ -684,29 +684,29 @@ enum Runner {
         return s
     }
 
-    /// The metres or calories done on the running distance or calorie step, when not what the plan said.
-    static func setAmount(_ s: RunState, value: Double) -> RunState {
+    /// The metres or calories done on the running step, when not what the plan said. `field` picks
+    /// one when the step records both; the first it records otherwise.
+    static func setAmount(_ s: RunState, value: Double, field: Amount? = nil) -> RunState {
         guard let c = current(s) else { return s }
-        return setAmountAt(s, slotId: c.id, value: value)
+        return setAmountAt(s, slotId: c.id, value: value, field: field)
     }
 
     enum Amount: String, Sendable { case meters, calories }
 
-    /// Which field a step's amount goes in: metres or calories for a step done for either, or for one
-    /// whose `log` asks for them (`ExerciseStep.amountLog`); nil for other work.
-    static func amountField(_ sl: Slot?) -> Amount? {
-        guard let sl, sl.kind == .work, let e = sl.exercise else { return nil }
-        switch e.amountLog {
-        case .meters: return .meters
-        case .calories: return .calories
-        default: return nil
-        }
+    /// The fields a step's amounts go in: metres and/or calories for a step done for either, or set
+    /// to log them (`ExerciseStep.amountLogs`); none for other work.
+    static func amountFields(_ sl: Slot?) -> [Amount] {
+        guard let sl, sl.kind == .work, let e = sl.exercise else { return [] }
+        return e.amountLogs.compactMap { Amount(rawValue: $0.rawValue) }
     }
+    /// The first of `amountFields`.
+    static func amountField(_ sl: Slot?) -> Amount? { amountFields(sl).first }
 
-    /// What a distance or calorie set did: changed on the card or the grid, else the plan's distance
-    /// or calories. A timed piece on a machine has no plan for it, so only what was entered.
-    static func amountAt(_ s: RunState, _ sl: Slot) -> Double? {
-        guard let f = amountField(sl), let e = sl.exercise else { return nil }
+    /// What a set did in metres or calories (`field`, else the first it records): changed on the card
+    /// or the grid, else the plan's distance or calories. A timed piece on a machine has no plan for
+    /// it, so only what was entered.
+    static func amountAt(_ s: RunState, _ sl: Slot, field: Amount? = nil) -> Double? {
+        guard let f = field ?? amountField(sl), amountFields(sl).contains(f), let e = sl.exercise else { return nil }
         let a = s.actuals[sl.id]
         let set = f == .meters ? a?.meters : a?.calories
         let planned = (f == .meters && e.forMode == .meters) || (f == .calories && e.forMode == .calories)
@@ -715,10 +715,11 @@ enum Runner {
 
     // MARK: - The set grid
 
-    /// Metres or calories for one set from its row. A done set is locked like its reps.
-    static func setAmountAt(_ s: RunState, slotId: String, value: Double) -> RunState {
-        guard let idx = s.slots.firstIndex(where: { $0.id == slotId }), let f = amountField(s.slots[idx]),
-              s.actuals[slotId]?.doneAt == nil else { return s }
+    /// Metres or calories (`field`, else the first the step records) for one set from its row. A done
+    /// set is locked like its reps.
+    static func setAmountAt(_ s: RunState, slotId: String, value: Double, field: Amount? = nil) -> RunState {
+        guard let idx = s.slots.firstIndex(where: { $0.id == slotId }), let f = field ?? amountField(s.slots[idx]),
+              amountFields(s.slots[idx]).contains(f), s.actuals[slotId]?.doneAt == nil else { return s }
         var s = s
         var a = s.actuals[slotId] ?? Actual()
         if f == .meters { a.meters = value } else { a.calories = value }
@@ -792,7 +793,8 @@ enum Runner {
         var st = s
         if let load = set.load { st = adjustAt(st, now: now, slotId: slotId, target: load) }
         if let reps = set.reps { st = setRepsAt(st, slotId: slotId, reps: reps) }
-        if let amount = set.meters ?? set.calories { st = setAmountAt(st, slotId: slotId, value: amount) }
+        if let m = set.meters { st = setAmountAt(st, slotId: slotId, value: m, field: .meters) }
+        if let c = set.calories { st = setAmountAt(st, slotId: slotId, value: c, field: .calories) }
         return st
     }
 
@@ -1075,11 +1077,11 @@ enum Runner {
             if let done, !warm { reps.append(done) }
             // An exercise counted in metres, seconds or calories has no load: its unit is the measure.
             let target = Measure.of(ex.exercise.unit) != nil ? nil : effectiveTarget(s, idx)
-            let f = amountField(slot)
-            let amount = amountAt(s, slot)
             var set = SetResult(reps: done, load: target, at: doneAtSec(s, a), type: type == .normal ? nil : type)
             set.seconds = a.seconds
-            if f == .meters { set.meters = amount } else if f == .calories { set.calories = amount }
+            for f in amountFields(slot) {
+                if f == .meters { set.meters = amountAt(s, slot, field: f) } else { set.calories = amountAt(s, slot, field: f) }
+            }
             // A working set short of its prescribed reps is a miss. A drop set is not: it inherits
             // the step's reps, and fewer at the lighter load is the point of it.
             let short = !warm && type != .drop && ex.forMode == .reps && (done.map { $0 < ex.forValue } ?? false)

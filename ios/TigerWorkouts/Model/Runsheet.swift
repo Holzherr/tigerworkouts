@@ -9,7 +9,8 @@ enum ForMode: String, Codable, Sendable {
 }
 
 /// What a step records beyond its target (`StepLog` in model.ts): the reps done in a timed piece,
-/// the metres or calories a machine counted. Nil logs nothing extra; finishing the step is the result.
+/// the metres or calories a machine counted. A step can log several (a rower: metres and calories);
+/// none logs nothing extra, finishing the step is the result.
 enum StepLog: String, Codable, Sendable, CaseIterable {
     case reps, meters, calories
 
@@ -20,6 +21,9 @@ enum StepLog: String, Codable, Sendable, CaseIterable {
         case .calories: "Calories"
         }
     }
+
+    /// In `allCases` order, each once.
+    static func normalised(_ logs: [StepLog]) -> [StepLog] { allCases.filter(logs.contains) }
 }
 
 enum ScoreType: String, Codable, Sendable {
@@ -141,8 +145,9 @@ struct ExerciseStep: Codable, Hashable, Sendable, Identifiable {
     /// or reps. A value left out carries the one before it; the first set falls back to target /
     /// forValue. Only read in a rounds block.
     var sets: [SetPlan]?
-    /// What to record after the step, beyond its target. Nil: nothing extra.
-    var log: StepLog?
+    /// What to record after the step, beyond its target, in `StepLog.allCases` order. Empty: nothing
+    /// extra. Stored as one value when one (what builds before 19 Oct 2026 read), a list when several.
+    var log: [StepLog] = []
     var role: ItemRole?
     var note: String?
 
@@ -184,8 +189,11 @@ struct ExerciseStep: Codable, Hashable, Sendable, Identifiable {
         ladderFactor = try c.decodeIfPresent(Double.self, forKey: .ladderFactor)
         ladderFixed = try c.decodeIfPresent(Bool.self, forKey: .ladderFixed)
         sets = try c.decodeIfPresent([SetPlan].self, forKey: .sets)
-        // An unknown value from a newer app reads as nothing to log rather than failing the workout.
-        log = (try? c.decodeIfPresent(StepLog.self, forKey: .log)) ?? nil
+        // One value (saved before 19 Oct 2026) or a list; an unknown value from a newer app drops out
+        // rather than failing the workout.
+        var raw: [String] = []
+        if let one = try? c.decodeIfPresent(String.self, forKey: .log) { raw = [one] } else if let many = try? c.decodeIfPresent([String].self, forKey: .log) { raw = many }
+        log = StepLog.normalised(raw.compactMap(StepLog.init(rawValue:)))
         role = try c.decodeIfPresent(ItemRole.self, forKey: .role)
         note = try c.decodeIfPresent(String.self, forKey: .note)
     }
@@ -208,7 +216,7 @@ struct ExerciseStep: Codable, Hashable, Sendable, Identifiable {
         try c.encodeIfPresent(ladderFactor, forKey: .ladderFactor)
         try c.encodeIfPresent(ladderFixed, forKey: .ladderFixed)
         try c.encodeIfPresent(sets, forKey: .sets)
-        try c.encodeIfPresent(log, forKey: .log)
+        if log.count == 1 { try c.encode(log[0], forKey: .log) } else if !log.isEmpty { try c.encode(log, forKey: .log) }
         try c.encodeIfPresent(role, forKey: .role)
         try c.encodeIfPresent(note, forKey: .note)
     }
