@@ -54,12 +54,48 @@ enum Versions {
         }
     }
 
+    /// A shared section (ref) the run inlined, put back as the ref: its steps carry `<ref id>:` ids
+    /// (`Relative.resolveRefs`), and the ref goes where the first of them is. A version keeps the
+    /// link, so Make base does not freeze somebody's warm-up into the workout.
+    static func foldRefs(_ items: [Item], base: Runsheet) -> [Item] {
+        let refs = base.items.compactMap { item -> RefItem? in
+            if case .ref(let r) = item { return r }
+            return nil
+        }
+        guard !refs.isEmpty else { return items }
+        var seen = Set<String>()
+        return items.compactMap { item in
+            guard let ref = refs.first(where: { item.id.hasPrefix("\($0.id):") }) else { return item }
+            guard seen.insert(ref.id).inserted else { return nil }
+            return .ref(ref)
+        }
+    }
+
     /// What a session ran, when it was not the workout: `run` is the sheet the timer ended on,
     /// `auto` the same workout as the app would have started it untouched (refs inlined, loads
     /// filled in), `base` the workout as saved. Nil when only the app's own fill-ins differ.
     static func of(run: Runsheet, auto: Runsheet, base: Runsheet) -> SessionVersion? {
-        let items = unseeded(run.items, auto: auto, base: base)
-        return fingerprint(items) == fingerprint(unseeded(auto.items, auto: auto, base: base)) ? nil : SessionVersion(items: items)
+        let items = unseeded(foldRefs(run.items, base: base), auto: auto, base: base)
+        return fingerprint(items) == fingerprint(unseeded(foldRefs(auto.items, base: base), auto: auto, base: base)) ? nil : SessionVersion(items: items)
+    }
+
+    /// What the workout page planned for the session it starts: the version it runs ("Just this
+    /// time", a version run again), nil for the workout as it is. RootView takes it at Start.
+    struct StartPlan: Equatable, Sendable {
+        var key: String
+        var version: SessionVersion?
+    }
+
+    /// The version a finished session keeps (iOS only). Run as started, it is what the page planned:
+    /// never worked out from loads the app filled in, which move between the page opening and Start.
+    /// Changed mid-session, or resumed (no plan), the run is compared with the plan as started, and a
+    /// run that comes out as the workout itself has none.
+    static func ofSession(run: Runsheet, started: Runsheet, auto: Runsheet, planned: SessionVersion?, base: Runsheet, resumed: Bool) -> SessionVersion? {
+        if !resumed && run == started { return planned }
+        var plan = base
+        if let planned { plan.items = planned.items }
+        guard let v = of(run: run, auto: auto, base: plan) else { return planned }
+        return fingerprint(v.items) == fingerprint(base.items) ? nil : v
     }
 
     /// One version on the workout page: the newest session that ran it stands for it.

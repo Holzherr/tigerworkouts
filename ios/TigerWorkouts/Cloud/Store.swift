@@ -485,6 +485,9 @@ final class Store {
         prefsUpdatedAt = m.updatedAt.filter { ["saved", "trainingMaxes", "bodyweightKg", "equipment"].contains($0.key) }
     }
 
+    /// Set by the workout page as it starts a session, taken by RootView (Versions.swift).
+    var startPlan: Versions.StartPlan?
+
     /// What a session starts on: last time's loads carried over, then a program's rules applied to
     /// them (+2.5 kg after a clean session, the deload after repeated misses). The workout page
     /// seeds with this before it shows the numbers; so do Up next and Do it again.

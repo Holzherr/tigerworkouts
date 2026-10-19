@@ -297,7 +297,7 @@ export default function App() {
     const once = draftOf(id);
     const r = once ?? base;
     const versions = versionsOf(st.results, base);
-    const done = st.results.some(x => x.runsheetId === id);
+    const done = st.results.some(ofWorkout(base));
     const stall = live(workoutStall(r, st.results, new Date()));
     const own = st.workouts.some(w => w.id === id);
     // The page is the one editor: yours saves in place, anyone else's first edit makes your copy.
@@ -310,6 +310,9 @@ export default function App() {
     };
     return full(
         <WorkoutPreviewScreen
+          // A page per workout, so the Edit question does not carry over to the next one; your copy
+          // keys as its original, so the first edit (which makes it) keeps the page and its sheet open.
+          key={base.copyOf ?? id}
           runsheet={r}
           today={todayFor(resolveRefs(r, lookup), st.results, intent, st.equipment)}
           stall={stall}
@@ -416,9 +419,10 @@ export default function App() {
     // worked out, so the timer shows and logs a weight for every loaded set.
     const prepare = (x: Runsheet) => resolveLoads(progressed(withLastUsed(resolveRefs(x, lookup), st.results), st.results, st.trainingMaxes, st.equipment), st.trainingMaxes, st.bodyweightKg, st.equipment);
     const run = prepare(r);
-    // Run with a "Just this time" change or a version: what it ran is kept with the session.
+    // Run with a "Just this time" change or a version: what it ran is kept with the session. Both
+    // sides as written, before last time's loads go in, so a version never holds the app's fill-ins.
     const saved = byId.get(route.id);
-    const version = saved && r !== saved ? versionOf(run, prepare(saved), saved) : undefined;
+    const version = saved && r !== saved ? versionOf(r, saved, saved) : undefined;
     const tag = (res: SessionResult): SessionResult => ({ ...res, runsheetId: wid(r), ...(version ? { version } : {}) });
     return <RunRoute key={route.id} runsheet={run} results={st.results} intent={intent} equipment={st.equipment} library={library} resume={resumeFor === route.id} origin={from} lookup={lookup} onLogKept={act.addResult} onResumeKept={id => (setDrafted(null), setResumeFor(id), goReplace(`/do/${encodeURIComponent(id)}`))} onLog={res => act.addResult(tag(res))} onFinish={res => (setResumeFor(null), setPending(tag(res)), goReplace(`/result/${encodeURIComponent(route.id)}`))} onExit={() => (setResumeFor(null), Runner.clearPersisted(), go(`/w/${encodeURIComponent(route.id)}`))} />;
   }

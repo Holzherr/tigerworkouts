@@ -287,7 +287,8 @@ enum SessionRow {
         /// Keys this app owns: cleared first, so a field emptied on the phone (notes, effort) goes.
         func laid(over base: [String: Any]) -> [String: Any] {
             var d = base
-            for key in SessionResult.CodingKeys.allCases.map(\.stringValue) { d.removeValue(forKey: key) }
+            // A version this app could not read stays: the phone never clears one.
+            for key in SessionResult.CodingKeys.allCases.map(\.stringValue) where key != "version" || obj["version"] != nil { d.removeValue(forKey: key) }
             d.merge(obj) { _, new in new }
             return d
         }

@@ -2,7 +2,8 @@ import { describe, expect, it } from 'vitest';
 import { EX, priyanka } from './fixtures';
 import { makeExercise, type Block, type Runsheet } from './model';
 import type { SessionResult } from './progression';
-import { changesFrom, fingerprint, mergeSessions, unseeded, versionOf, versionsOf } from './versions';
+import { changesFrom, fingerprint, foldRefs, mergeSessions, unseeded, versionOf, versionsOf } from './versions';
+import { resolveRefs } from './model';
 
 const base = priyanka();
 const blocks = (r: Runsheet) => r.items.filter((i): i is Block => i.kind === 'block');
@@ -35,6 +36,26 @@ describe('versionOf', () => {
   it('ignores ids: a list rebuilt with fresh ids is the same list', () => {
     const fresh = { ...base, items: base.items.map(it => ({ ...it, id: `${it.id}-new` })) };
     expect(fingerprint(fresh.items)).toBe(fingerprint(base.items));
+  });
+});
+
+describe('foldRefs', () => {
+  const warm: Runsheet = { id: 'warm', title: 'Warm-up', items: [{ ...makeExercise(EX.kb_swing, { target: 16 }), id: 'w1' }, { ...makeExercise(EX.db_rdl, { target: 12 }), id: 'w2' }] };
+  const withRef: Runsheet = { ...base, items: [{ kind: 'ref', id: 'ref1', runsheetId: 'warm', role: 'warmup' }, ...base.items] };
+  const inlined = (r: Runsheet) => resolveRefs(r, id => (id === 'warm' ? warm : undefined));
+
+  it('puts a shared section the run inlined back as its ref', () => {
+    expect(foldRefs(inlined(withRef).items, withRef)).toEqual(withRef.items);
+  });
+
+  it('keeps the link in a version: a reorder around a warm-up has the ref, not its steps', () => {
+    const auto = inlined(withRef);
+    const run = { ...auto, items: [auto.items[0], auto.items[1], auto.items[3], auto.items[2], ...auto.items.slice(4)] };
+    const v = versionOf(run, auto, withRef)!;
+    expect(v.items[0]).toEqual(withRef.items[0]);
+    expect(v.items).toHaveLength(withRef.items.length);
+    expect(changesFrom(withRef.items, v.items)).not.toMatch(/\+/);
+    expect(versionOf(auto, auto, withRef)).toBeUndefined();
   });
 });
 

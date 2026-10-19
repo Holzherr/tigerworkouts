@@ -72,7 +72,7 @@ struct RootView: View {
         ) { pending in
             if pending.canResume {
                 Button("Resume") {
-                    running = SessionRunner(resuming: store.prepared(pending.sheet), history: store.results).map(logOnFinish)
+                    running = SessionRunner(resuming: store.prepared(pending.sheet), history: store.results).map { logOnFinish($0, resumed: true) }
                     interrupted = nil
                 }
             }
@@ -128,8 +128,11 @@ struct RootView: View {
 
     private func start(_ sheet: Runsheet, from origin: SessionOrigin?) {
         guard running == nil else { return }
+        // What the workout page planned for this session, if it started it.
+        let plan = store.startPlan?.key == sheet.key ? store.startPlan : nil
+        store.startPlan = nil
         // Refs inlined and % TM / × bodyweight loads worked out, so every loaded set shows a weight.
-        running = logOnFinish(SessionRunner(runsheet: store.prepared(sheet), startedFrom: origin, history: store.results))
+        running = logOnFinish(SessionRunner(runsheet: store.prepared(sheet), startedFrom: origin, history: store.results), planned: plan?.version)
     }
 
     /// The workout is logged when it finishes, not when Done is tapped: the finished screen says
@@ -137,13 +140,17 @@ struct RootView: View {
     ///
     /// A session that ran something other than the workout as saved (a "Just this time" change, a
     /// version run again, a change mid-session) keeps what it ran as its version (Versions.swift).
-    private func logOnFinish(_ runner: SessionRunner) -> SessionRunner {
+    private func logOnFinish(_ runner: SessionRunner, planned: SessionVersion? = nil, resumed: Bool = false) -> SessionRunner {
         let startedAt = runner.state.startedAt
-        let base = store.workout(id: runner.runsheet.key)
-        let auto = base.map { store.prepared(store.seeded($0)) }
+        let started = runner.runsheet
+        let base = store.workout(id: started.key)
+        // Resumed, there is no plan: the run is compared with the workout as the app starts it now.
+        let auto = resumed ? base.map { store.prepared(store.seeded($0)) } : started
         runner.onFinished = { [store, weak runner] result in
             var result = result
-            if let base, let auto, let run = runner?.runsheet { result.version = Versions.of(run: run, auto: auto, base: base) }
+            if let base, let auto, let run = runner?.runsheet {
+                result.version = Versions.ofSession(run: run, started: started, auto: auto, planned: planned, base: base, resumed: resumed)
+            }
             Task { await store.save(result) { SessionRunner.clearSaved(startedAt: startedAt) } }
         }
         return runner

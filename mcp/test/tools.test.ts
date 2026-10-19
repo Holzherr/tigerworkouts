@@ -346,6 +346,8 @@ describe('plans, timer and logging', () => {
     expect(run).toMatchObject({ saved: true, workoutId: 'u-mine', version: { items: plus } });
     expect(run.outline).toMatch(/Romanian deadlift/);
     expect(JSON.stringify(tables.workouts)).toBe(before);
+    await expect(T.startWorkout(db, { sessionId: 's-v1', id: 'coach-circuit-15' })).rejects.toThrow(/version of u-mine/);
+    await expect(T.logSession(db, { id: 's-bad2', workoutId: 'u-mine', startedAt: '2026-10-01T07:00:00Z', version: { items: [{ ...plus[1] as object, target: '80' }] } })).rejects.toThrow(/version.items/);
     await expect(T.startWorkout(db, { sessionId: 's-1' })).rejects.toThrow(/No version/);
     await expect(T.startWorkout(db, { sessionId: 's-other' })).rejects.toThrow(/No version/);
   });

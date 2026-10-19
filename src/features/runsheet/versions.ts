@@ -6,7 +6,7 @@
  * workout of its own. Ported one for one to ios/TigerWorkouts/Model/Versions.swift, all but
  * `mergeSessions`, which only the web offers.
  */
-import type { ExerciseStep, Item, Runsheet, Step } from './model';
+import type { ExerciseStep, Item, RefItem, Runsheet, Step } from './model';
 import type { SessionResult } from './progression';
 
 /** What a session ran when it was not the workout as saved: its items, nothing else. */
@@ -55,13 +55,31 @@ export const unseeded = (items: Item[], auto: Runsheet, base: Runsheet): Item[] 
 };
 
 /**
+ * A shared section (ref) the run inlined, put back as the ref: its steps carry `<ref id>:` ids
+ * (resolveRefs), and the ref goes where the first of them is. A version keeps the link, so Make base
+ * does not freeze somebody's warm-up into the workout.
+ */
+export const foldRefs = (items: Item[], base: Runsheet): Item[] => {
+  const refs = base.items.filter((i): i is RefItem => i.kind === 'ref');
+  if (!refs.length) return items;
+  const seen = new Set<string>();
+  return items.flatMap(it => {
+    const ref = refs.find(r => it.id?.startsWith(`${r.id}:`));
+    if (!ref) return [it];
+    if (seen.has(ref.id)) return [];
+    seen.add(ref.id);
+    return [ref];
+  });
+};
+
+/**
  * What a session ran, when it was not the workout: `run` is the sheet the timer ended on, `auto` the
  * same workout as the app would have started it untouched (refs inlined, loads filled in), `base`
  * the workout as saved. Undefined when only the app's own fill-ins differ.
  */
 export const versionOf = (run: Runsheet, auto: Runsheet, base: Runsheet): SessionVersion | undefined => {
-  const items = unseeded(run.items, auto, base);
-  return fingerprint(items) === fingerprint(unseeded(auto.items, auto, base)) ? undefined : { items };
+  const items = unseeded(foldRefs(run.items, base), auto, base);
+  return fingerprint(items) === fingerprint(unseeded(foldRefs(auto.items, base), auto, base)) ? undefined : { items };
 };
 
 /** One version on the workout page: the newest session that ran it stands for it. */

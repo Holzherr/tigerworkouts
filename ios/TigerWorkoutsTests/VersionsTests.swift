@@ -79,6 +79,21 @@ struct VersionsTests {
         #expect(Versions.fingerprint(fresh.items) == Versions.fingerprint(base.items))
     }
 
+    @Test("a shared section the run inlined goes back as its ref, and a version keeps the link")
+    func refs() throws {
+        let warm = Runsheet(id: "warm", title: "Warm-up", items: [.step(Self.ex("w1", Self.swing, 16)), .step(Self.ex("w2", Self.rdl, 12))])
+        var withRef = base
+        withRef.items = [.ref(RefItem(id: "ref1", runsheetId: "warm", role: .warmup))] + base.items
+        let auto = Relative.resolveRefs(withRef, lookup: { $0 == "warm" ? warm : nil })
+        #expect(Versions.foldRefs(auto.items, base: withRef) == withRef.items)
+        #expect(Versions.of(run: auto, auto: auto, base: withRef) == nil)
+        var run = auto
+        run.items = [auto.items[0], auto.items[1], auto.items[3], auto.items[2]]
+        let v = try #require(Versions.of(run: run, auto: auto, base: withRef))
+        #expect(v.items.first == withRef.items.first)
+        #expect(v.items.count == withRef.items.count)
+    }
+
     @Test("a step the base does not have is left as it is")
     func unseededExtra() {
         let items = Versions.unseeded(base.items + [extra], auto: base, base: base)
@@ -107,6 +122,34 @@ struct VersionsTests {
         #expect(Versions.changes(from: base.items, to: swingsLast(base).items + [extra]) == "Treadmill sprints first · + Dumbbell Romanian deadlift")
         #expect(Versions.changes(from: base.items, to: Array(base.items.dropFirst())).contains("− "))
         #expect(Versions.changes(from: base.items, to: seeded(base, kg: 40).items) == "Other sets, reps or loads")
+    }
+
+    @Test("a session run as started keeps what the page planned, whatever loads the page filled in")
+    func plannedSession() {
+        let stale = seeded(base, kg: 30)
+        // The page seeded 30 kg when it opened; progression moved it to 32 by Start: no version.
+        #expect(Versions.ofSession(run: stale, started: stale, auto: stale, planned: nil, base: base, resumed: false) == nil)
+        let v = SessionVersion(items: swingsLast(base).items)
+        let run = seeded(swingsLast(base), kg: 30)
+        #expect(Versions.ofSession(run: run, started: run, auto: run, planned: v, base: base, resumed: false) == v)
+    }
+
+    @Test("a change mid-session is the version; one that undoes the plan is none")
+    func midSession() throws {
+        let started = seeded(base)
+        let moved = try #require(Versions.ofSession(run: swingsLast(started), started: started, auto: started, planned: nil, base: base, resumed: false))
+        #expect(Versions.fingerprint(moved.items) == Versions.fingerprint(swingsLast(base).items))
+        let planned = SessionVersion(items: swingsLast(base).items)
+        let fromPlan = seeded(swingsLast(base))
+        #expect(Versions.ofSession(run: seeded(base), started: fromPlan, auto: fromPlan, planned: planned, base: base, resumed: false) == nil)
+    }
+
+    @Test("a version the phone cannot read stays on the row through an edit")
+    func unreadVersionKept() {
+        let r = session("2026-10-01")
+        let existing: [String: Any] = ["format": "v2", "startedAt": "2026-10-01", "version": ["items": [["kind": "exercise", "target": "24"]]]]
+        let data = SessionRow.encode(r, owner: "me", existing: existing)["data"] as? [String: Any]
+        #expect(data?["version"] != nil)
     }
 
     @Test("a session's version goes up and comes back with it")

@@ -319,7 +319,15 @@ struct WorkoutDetailView: View {
     private func runVersion(_ v: Versions.Row) {
         guard var sheet = store.workout(id: runsheet.key) else { return }
         sheet.items = v.items
+        store.startPlan = Versions.StartPlan(key: sheet.key, version: SessionVersion(items: v.items))
         onStart(store.seeded(sheet), startedFrom)
+    }
+
+    /// The session keeps a "Just this time" change as its version: the page against itself before
+    /// the change, so the loads it filled in on opening go back to the workout's own.
+    private func planStart() {
+        let base = store.workout(id: runsheet.key) ?? runsheet
+        store.startPlan = Versions.StartPlan(key: runsheet.key, version: onceFrom.flatMap { Versions.of(run: runsheet, auto: $0, base: base) })
     }
 
     /// The version becomes the workout, items as the session kept them (not seeded), so it no
@@ -383,7 +391,8 @@ struct WorkoutDetailView: View {
     /// A copy of your own to vary, next to the original. The screen carries on with the copy.
     private func duplicate() {
         flushSave()
-        var copy = Edit.duplicate(runsheet, creator: store.user?.email)
+        // A "Just this time" change is never a workout of its own: the workout is what is copied.
+        var copy = Edit.duplicate(onceFrom ?? runsheet, creator: store.user?.email)
         if store.isMine(runsheet) { copy.title = "\(runsheet.title) (copy)" }
         // A workout of its own beside the original, not the original edited: its own history.
         copy.copyOf = nil
@@ -547,6 +556,7 @@ struct WorkoutDetailView: View {
         HStack(spacing: 10) {
             Button {
                 keepBeforeStart()
+                planStart()
                 onStart(runsheet, startedFrom)
             } label: {
                 Label("Start workout", systemImage: "play.fill")

@@ -365,7 +365,9 @@ export const startWorkout = async (db: Db, a: DraftArgs & { id?: string; session
     const row = rows?.[0];
     const s = row && fromRow(row);
     if (!row || !s?.version?.items?.length) throw new ToolError(`No version in session ${a.sessionId}. get_workout lists versions with their sessionId.`);
-    const w = await findWorkout(db, a.id ?? row.workout_id ?? s.runsheetId);
+    const of = row.workout_id ?? s.runsheetId;
+    if (a.id && a.id !== of) throw new ToolError(`Session ${a.sessionId} is a version of ${of}, not ${a.id}. Pass sessionId alone.`);
+    const w = await findWorkout(db, of);
     if (!w) throw new ToolError(`The workout behind session ${a.sessionId} is gone.`);
     version = { items: s.version.items };
     runsheet = safeRunsheet({ ...w.runsheet, items: version.items });
@@ -414,13 +416,16 @@ export interface LogSessionArgs {
 }
 
 /** A step or item in the runsheet shape the apps read (start_workout's version), not the input shape. */
+/** Every number field present is a finite number: the apps decode the shape strictly. */
+const numbersOk = (o: object) => NUMERIC.every(k => !(k in o) || (typeof (o as Record<string, unknown>)[k] === 'number' && Number.isFinite((o as Record<string, unknown>)[k])));
 const isStep = (x: unknown): boolean => {
   const o = x as { kind?: unknown; exercise?: { key?: unknown }; seconds?: unknown };
-  return (o?.kind === 'exercise' && typeof o.exercise?.key === 'string') || (o?.kind === 'rest' && typeof o.seconds === 'number');
+  return !!o && typeof o === 'object' && numbersOk(o) && ((o.kind === 'exercise' && typeof o.exercise?.key === 'string') || (o.kind === 'rest' && typeof o.seconds === 'number'));
 };
 const isItem = (x: unknown): boolean => {
   const o = x as { kind?: unknown; steps?: unknown; runsheetId?: unknown };
-  return (o?.kind === 'block' && Array.isArray(o.steps) && o.steps.every(isStep)) || (o?.kind === 'ref' && typeof o.runsheetId === 'string') || isStep(x);
+  if (o?.kind === 'block') return numbersOk(o) && Array.isArray(o.steps) && o.steps.every(isStep);
+  return (o?.kind === 'ref' && typeof o.runsheetId === 'string') || isStep(x);
 };
 
 /** One finished session into the sessions table, in the row shape the web app's sync writes for v2
