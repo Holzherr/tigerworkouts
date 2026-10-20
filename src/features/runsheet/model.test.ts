@@ -265,23 +265,17 @@ describe('how many rounds a block runs, in words', () => {
 });
 
 describe('hasSetting / settingLabel (iOS RunsheetMath)', () => {
-  it('a new rower or calorie bike has no target and nothing to dial in', () => {
-    for (const ex of [EX.cardio_rower, EX.cardio_assault_bike]) {
-      const s = makeExercise(ex);
-      expect(s.target).toBeUndefined();
-      expect(hasSetting(s)).toBe(false);
-    }
+  it('names a new step\'s setting by its unit: Load on a bar, Speed on a treadmill, Distance on a rower', () => {
+    expect(settingLabel(makeExercise(EX.bb_back_squat))).toBe('Load');
+    expect(settingLabel(makeExercise(SPRINT))).toBe('Speed');
+    expect(settingLabel(makeExercise(EX.cardio_rower))).toBe('Distance');
+    expect(settingLabel(makeExercise(EX.cardio_assault_bike))).toBe('Calories');
+    expect(settingLabel(makeExercise(PRESS))).toBe('Load');
   });
-  it('a new barbell gets a default load, a new treadmill a speed', () => {
-    const bar = makeExercise(EX.bb_back_squat);
-    expect([bar.target, hasSetting(bar), settingLabel(bar)]).toEqual([10, true, 'Load']);
-    const tread = makeExercise(SPRINT);
-    expect([tread.target, hasSetting(tread), settingLabel(tread)]).toEqual([10, true, 'Speed']);
-  });
-  it('a step with a target names its setting by unit', () => {
-    expect(settingLabel(makeExercise(EX.cardio_rower, { target: 500 }))).toBe('Distance');
-    expect(hasSetting(makeExercise(EX.cardio_rower, { target: 500 }))).toBe(true);
-    expect(settingLabel(makeExercise(EX.cardio_assault_bike, { target: 20 }))).toBe('Calories');
-    expect(settingLabel(press())).toBe('Load');
+  it('a step with no target has a setting only for a weight or speed unit', () => {
+    const noTarget = (unit: string) => ({ ...makeExercise({ ...KB, unit }), target: undefined });
+    expect(hasSetting(noTarget('m'))).toBe(false);
+    expect(hasSetting(noTarget('kg'))).toBe(true);
+    expect(hasSetting(makeExercise(EX.cardio_rower))).toBe(true);
   });
 });
