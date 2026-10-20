@@ -51,8 +51,8 @@ const stop = (e: React.SyntheticEvent) => e.stopPropagation();
  * One line of the runsheet. Collapsed: thumb, name, duration, value pill, caret, ✕ — the whole
  * row toggles. Expanded (stays white so it reads as part of its block; the controls sit on a grey
  * well): bigger clip, the name becomes the swap target, then two
- * settings rows: Load, Speed or Distance (unit in the label) with a stepper, shown only for a step
- * with a setting to dial in (not a rower with no target), and For with a stepper plus a
+ * settings rows: Load, Speed, Distance or Calories (unit in the label) with a stepper, shown only for a step
+ * with a setting to dial in, and For with a stepper plus a
  * seconds / reps / minutes dropdown. Rest steps show quick-pick chips instead of a weight row.
  * Pure: every change is handed back through onChange.
  */
