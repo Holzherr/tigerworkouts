@@ -147,6 +147,9 @@ actor Supabase {
         return "Request failed (\(status))"
     }
 
+    /// For the in-app feedback note's Authorization header, so the intake Worker can verify who sent it.
+    func feedbackToken() async -> String? { try? await validAccessToken() }
+
     private func validAccessToken() async throws -> String? {
         guard let current = session else { return nil }
         if current.isFresh { return current.accessToken }
