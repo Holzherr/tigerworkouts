@@ -32,6 +32,8 @@ A workout is a "runsheet": an ordered list of items. Each item is a step (an exe
 
 Coaching flow that works: get_profile → list_sessions (what they did, with loads and reps actually used) → list_workouts / get_workout for ideas → search_exercises for keys → create_workout (private by default) → give the user appUrl, and anyone else shareUrl.
 
+You are the person's AI coach, and you coach through the app's coaching feature the way a personal trainer does. Every workout you create (create_workout), or change and hand back (update_workout with assign: true), is sent to them from their coach: it tops their home screen as "New · made for you", signed "from <coach name>", with your note. The coach name is theirs to choose (default "AI Coach"; get_profile shows aiCoach). If they want to call you something else, call set_ai_coach with that name. They can rename or remove you in the app under Me; if they removed you (aiCoach.active false), workouts save as their own and you do not turn yourself back on unless they ask.
+
 To train now: start_workout (a saved id, a structured workout, or a plain-text plan) shows a timer in the chat; the finished session is logged to their history. Mention that the iPhone app gives a lock-screen timer and notifications (appDownloadUrl).
 
 Accounts started without an email ("Start now, no account needed" on the sign-in page). get_profile then says anonymous: true. Everything saves as usual, with two limits: nothing can be made public, and the account is deleted 7 days after it started, with everything in it, unless the person keeps it. Results of get_profile and the write tools carry keepAccount while that is the case.
@@ -92,7 +94,7 @@ export const buildServer = (db: Db, account: Account = {}) => {
   };
   const s = new McpServer({ name: 'tigerworkouts', title: 'TigerWorkouts', version: '0.1.0', websiteUrl: 'https://tigerworkouts.com' }, { instructions: INSTRUCTIONS });
 
-  s.registerTool('get_profile', { title: 'Profile', description: "The signed-in user's name, units, bodyweight, training maxes (kg, by exercise key), saved workout ids and a count of recent sessions, and whether the account is still anonymous. Start here.", inputSchema: {}, annotations: readOnly }, () =>
+  s.registerTool('get_profile', { title: 'Profile', description: "The signed-in user's name, units, bodyweight, training maxes (kg, by exercise key), saved workout ids, a count of recent sessions, their AI coach (aiCoach: the name you go by and whether it is on; null before your first workout for them) and whether the account is still anonymous. Start here.", inputSchema: {}, annotations: readOnly }, () =>
     run(async () => {
       const p = await T.getProfile(db, email);
       const st = await status();
@@ -148,8 +150,14 @@ export const buildServer = (db: Db, account: Account = {}) => {
     'create_workout',
     {
       title: 'Create workout',
-      description: `Save a new workout to the user's account. Private unless public is true (public = it shows in everyone's Discover; an anonymous account's workouts stay private until it is kept). It appears in the app under Me once it syncs. Returns appUrl, shareUrl and a no-sign-in previewUrl. ${LINKS} Pass workout (structured) or plan (plain text).\n\n${RUNSHEET_HELP}`,
-      inputSchema: { workout: runsheetInput.optional(), plan: z.string().max(4000).optional().describe(PLAN_HELP), title: z.string().max(120).optional().describe('Title for a plan'), public: z.boolean().optional().describe('Default false') },
+      description: `Write the user a new workout as their AI coach: it is saved to their account and sent to them from their coach, like a personal trainer's assignment ("New · made for you · from <coach name>" at the top of their home screen, with note). The first one adds the AI coach, named "AI Coach" unless set_ai_coach named it. If they removed their AI coach it saves as their own workout instead (the result says so). Private unless public is true (public = it shows in everyone's Discover; an anonymous account's workouts stay private until it is kept). Returns fromCoach, appUrl, shareUrl and a no-sign-in previewUrl. ${LINKS} Pass workout (structured) or plan (plain text).\n\n${RUNSHEET_HELP}`,
+      inputSchema: {
+        workout: runsheetInput.optional(),
+        plan: z.string().max(4000).optional().describe(PLAN_HELP),
+        title: z.string().max(120).optional().describe('Title for a plan'),
+        note: z.string().max(1000).optional().describe("Your note as their coach, shown with the workout: why this one, what changed, what to aim for (e.g. \"Squat up 2.5 kg: you hit every rep last week.\")"),
+        public: z.boolean().optional().describe('Default false'),
+      },
       annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: false },
     },
     a => run(async () => keep(await T.createWorkout(db, a))),
@@ -159,11 +167,28 @@ export const buildServer = (db: Db, account: Account = {}) => {
     'update_workout',
     {
       title: 'Update workout',
-      description: `Change one of the user's own workouts (owner "me"). workout replaces the whole runsheet (get_workout first, edit, send it back); public alone flips visibility. Catalogue and other people's workouts cannot be changed — copy them with create_workout. ${LINKS}`,
-      inputSchema: { id: z.string(), workout: runsheetInput.optional(), public: z.boolean().optional() },
+      description: `Change one of the user's own workouts (owner "me"). workout replaces the whole runsheet (get_workout first, edit, send it back); public alone flips visibility. When you adapt a workout for them as their coach, pass assign: true (with a note) so it arrives again as "New · made for you" from their AI coach. Catalogue and other people's workouts cannot be changed — copy them with create_workout. ${LINKS}`,
+      inputSchema: {
+        id: z.string(),
+        workout: runsheetInput.optional(),
+        public: z.boolean().optional(),
+        assign: z.boolean().optional().describe('Send it to them again from their AI coach, as a new assignment'),
+        note: z.string().max(1000).optional().describe('Your note as their coach, with assign'),
+      },
       annotations: { readOnlyHint: false, destructiveHint: true, idempotentHint: true, openWorldHint: false },
     },
     a => run(async () => keep(await T.updateWorkout(db, a))),
+  );
+
+  s.registerTool(
+    'set_ai_coach',
+    {
+      title: 'AI coach',
+      description: 'The name you go by as the user\'s AI coach, shown wherever a coach\'s name shows ("from <name>"). Let them choose it; the default is "AI Coach". active: false removes you as their coach (they can also do that in the app under Me); pass active: true only when they ask to have you back. Adds the AI coach when there is none.',
+      inputSchema: { name: z.string().min(1).max(40).optional().describe('e.g. "AI Coach", "Coach Claude"'), active: z.boolean().optional() },
+      annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: false },
+    },
+    a => run(() => T.setAiCoach(db, a)),
   );
 
   s.registerTool(

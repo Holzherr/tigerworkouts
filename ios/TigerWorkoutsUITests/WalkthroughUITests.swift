@@ -1475,6 +1475,30 @@ final class WalkthroughUITests: XCTestCase {
         tap(app.buttons["Done"])
     }
 
+    /// The AI coach, from a seeded send: its workout tops Mine "from Coach Claude" with its note,
+    /// the workout page shows the note with no reply, and Me names it with Rename and Remove.
+    func testAICoach() {
+        app.terminate()
+        app.launchArguments = ["-seedAICoach"]
+        app.launch()
+        let discard = app.alerts.buttons["Discard"]
+        if discard.waitForExistence(timeout: 3) { discard.tap() }
+
+        XCTAssertTrue(app.staticTexts.matching(NSPredicate(format: "label CONTAINS 'from Coach Claude'")).firstMatch.waitForExistence(timeout: 5),
+                      "the AI coach's workout should say who sent it")
+        snap("95 Mine, from the AI coach")
+        open("Lower body, heavier")
+        XCTAssertTrue(app.descendants(matching: .any)["coach-notes"].waitForExistence(timeout: 5), "the AI coach's note should show")
+        XCTAssertFalse(app.descendants(matching: .any).matching(NSPredicate(format: "placeholderValue BEGINSWITH 'Reply'")).firstMatch.exists, "there is no one to reply to")
+        snap("96 Workout page, AI coach's note")
+
+        tap(app.tabBars.buttons["Me"])
+        let rename = app.buttons["rename-ai-coach"]
+        for _ in 0..<6 where !(rename.exists && rename.isHittable) { app.swipeUp() }
+        XCTAssertTrue(app.buttons["remove-ai-coach"].exists, "Me should offer to remove the AI coach")
+        snap("97 Me, AI coach")
+    }
+
     /// Pause is big on the lead-in, "Set 1 of 10 done" on the burpees; Finish is in the ⋯ menu.
     func testTimerControls() {
         open("EMOM 10: 5 burpees")

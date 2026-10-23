@@ -45,6 +45,14 @@ const FROM_COACH = myAssignmentsFixture().flatMap(a => (a.workout ? [{ id: a.id,
 
 export const Mine: Story = { render: () => <Flow /> };
 export const MineFromCoach: Story = { args: { results: HISTORY, savedIds: SAVED, fromCoach: FROM_COACH } };
+/** Your AI coach's workout tops Mine like a PT's, under the name you gave it, with its note as the why line. */
+export const MineFromAiCoach: Story = {
+  args: {
+    results: HISTORY,
+    savedIds: SAVED,
+    fromCoach: [{ id: 'ai-1', runsheet: { ...FROM_COACH[1].runsheet, id: 'u-ai-1', title: 'Lower body, heavier', creator: 'Coach Claude' }, coachName: 'Coach Claude', note: 'Squat up 2.5 kg: you hit every rep last week.', done: false }, ...FROM_COACH],
+  },
+};
 export const MineEmpty: Story = { args: { savedIds: [], ownIds: [], workouts: IMPORTED.map(w => w.runsheet) } };
 export const Discover: Story = { args: { initialTab: 'discover', results: HISTORY, savedIds: SAVED } };
 export const DiscoverColdStart: Story = { args: { initialTab: 'discover', results: [], savedIds: [] } };

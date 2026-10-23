@@ -67,7 +67,7 @@ import { alternatives } from '@/features/exercises/alternatives';
 import { myAssignments, type MyAssignment } from '@/features/cloud/coaching';
 import { doneBy } from '@/features/coaching/rollup';
 import { CoachesPage } from '@/features/coaching/components/coaches-page';
-import { ClientRoute, CoachRoute, JoinRoute, MyCoaches } from '@/features/coaching/components/coaching-routes';
+import { ClientRoute, CoachRoute, JoinRoute, MyAiCoach, MyCoaches } from '@/features/coaching/components/coaching-routes';
 
 
 const TABS = [
@@ -128,7 +128,8 @@ export default function App() {
   const [coachTick, setCoachTick] = useState(0);
   useEffect(() => {
     if (cloud.user) myAssignments().then(setAssigned).catch(() => setAssigned([]));
-  }, [cloud.user, coachTick]);
+    // After each sync too: a workout your AI coach just made arrives with one.
+  }, [cloud.user, coachTick, st.lastSync]);
   const assigned = useMemo(() => (cloud.user ? fetched : []), [cloud.user, fetched]);
   const [route, setRoute] = useState<Route>(() => parse(location.hash));
   // The list the current workout was opened from. Set by every path into /w/:id, cleared whenever a
@@ -575,6 +576,7 @@ export default function App() {
               </Button>
             </div>
           )}
+          {cloud.user && <MyAiCoach onChanged={() => setCoachTick(t => t + 1)} say={say} />}
           {cloud.user && <MyCoaches me={cloud.user.id} about={n => (n.assignmentId ? assigned.find(a => a.id === n.assignmentId)?.workout?.title : undefined)} onLeft={() => (setCoachTick(t => t + 1), say('Coaching ended'))} />}
           {cloud.user && <CreatorPageCard publicCount={st.workouts.filter(w => w.public).length} onOpenPage={key => go(`/c/${encodeURIComponent(key)}`)} onCoach={() => go('/coach')} />}
           <Button variant="ghost" block onClick={() => setSettingsOpen(true)}>
@@ -645,7 +647,11 @@ export default function App() {
       )}
     </>
   );
-  const fromCoach = assigned.flatMap(a => (a.workout ? [{ id: a.id, runsheet: a.workout, coachName: a.coachName, done: !!doneBy(a, st.results) }] : []));
+  // An AI coach's workout is your own: show your copy, which has your latest edits.
+  const fromCoach = assigned.flatMap(a => {
+    const runsheet = (a.ai && st.workouts.find(w => w.id === a.workoutId)) || a.workout;
+    return runsheet ? [{ id: a.id, runsheet, coachName: a.coachName, note: a.note, done: !!doneBy(a, st.results) }] : [];
+  });
   return shell(
     'discover',
     <DiscoverScreen

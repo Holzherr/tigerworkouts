@@ -36,7 +36,7 @@ describe('plugin', () => {
     const names = new Set(skills.map(s => s.name));
     for (const s of skills) {
       expect(s.text, s.name).toMatch(new RegExp(`^---\\nname: ${s.name}\\ndescription: .+\\n---\\n`));
-      for (const [, word] of s.text.matchAll(/`([a-z]+(?:_[a-z]+)+)`/g)) if (/^(get|list|search|create|update|preview|start|log|claim)_/.test(word)) expect(tools, `${s.name} names ${word}`).toContain(word);
+      for (const [, word] of s.text.matchAll(/`([a-z]+(?:_[a-z]+)+)`/g)) if (/^(get|list|search|create|update|preview|start|log|claim|set)_/.test(word)) expect(tools, `${s.name} names ${word}`).toContain(word);
       for (const [, other] of s.text.matchAll(/the ([a-z-]+) skill/g)) expect(names, `${s.name} points at ${other}`).toContain(other);
     }
   });

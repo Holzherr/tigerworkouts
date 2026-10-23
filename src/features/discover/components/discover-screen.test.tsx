@@ -42,6 +42,14 @@ describe('DiscoverScreen Mine', () => {
     fireEvent.click(screen.getByText('Fran'));
     expect(onOpen).toHaveBeenCalledWith(expect.objectContaining({ id: 'cf-girls-fran' }), 'saved');
   });
+  it('shows a coach row from the AI coach by its name, with the coach note as the why line', () => {
+    const w: Runsheet = { id: 'u-ai', title: 'Heavier legs', creator: 'Coach Claude', description: 'Squats and lunges.', items: [] };
+    render(<DiscoverScreen workouts={[w]} ownIds={['u-ai']} fromCoach={[{ id: 'a-ai', runsheet: w, coachName: 'Coach Claude', note: 'Squat up 2.5 kg.', done: false }]} onOpen={() => {}} />);
+    expect(screen.getAllByText('Heavier legs')).toHaveLength(1);
+    expect(screen.getByText('New · made for you')).toBeInTheDocument();
+    expect(screen.getByText('Squat up 2.5 kg.')).toBeInTheDocument();
+    expect(screen.getByText(/from Coach Claude/)).toBeInTheDocument();
+  });
   it('pins a new workout made for you on top as Up next, with its why, and clears the badge once done', () => {
     // Made before the last session, and still on top: not done yet.
     const fresh: Runsheet = { id: 'u-fresh', title: 'Fresh one', creator: 'AI Coach', description: 'Balances the swings day. Same rhythm.', createdAt: '2026-09-01T09:00:00Z', source: { title: 'Fresh one', author: 'AI Coach', kind: 'user' }, items: [] };

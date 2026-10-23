@@ -166,19 +166,59 @@ export const assignmentsForClient = async (client: string): Promise<Assignment[]
 
 export interface MyAssignment extends Assignment {
   coachName: string;
+  /** Sent by your AI coach (coach = client = you), not a PT. */
+  ai?: boolean;
   /** The coach's workout; missing if they deleted it. */
   workout?: Runsheet;
 }
-/** Client side: workouts your coaches sent you, newest first, with the workout and the coach's name. */
+/** An AI coach's assignment is your own row: coach = client = you (migration 0011). */
+export const isAiAssignment = (a: Pick<Assignment, 'coach' | 'client'>) => a.coach === a.client;
+
+/**
+ * Client side: workouts your coaches sent you, newest first, with the workout and the coach's name.
+ * Your AI coach's count while it is on, under the name you gave it.
+ */
 export const myAssignments = async (): Promise<MyAssignment[]> => {
-  const rows = ((ok(await sb.from('assignments').select(ASSIGNMENT).eq('client', me()).eq('archived', false).order('created_at', { ascending: false })) ?? []) as AssignmentRow[]).map(assignment);
+  const all = ((ok(await sb.from('assignments').select(ASSIGNMENT).eq('client', me()).eq('archived', false).order('created_at', { ascending: false })) ?? []) as AssignmentRow[]).map(assignment);
+  const ai = all.some(isAiAssignment) ? await myAiCoach() : null;
+  const rows = all.filter(r => !isAiAssignment(r) || ai?.active);
   if (!rows.length) return [];
   const [wrows, coaches] = await Promise.all([
     sb.from('workouts').select('id,data,creator,title,public,owner').in('id', [...new Set(rows.map(r => r.workoutId))]).then(ok),
-    names([...new Set(rows.map(r => r.coach))]),
+    names([...new Set(rows.filter(r => !isAiAssignment(r)).map(r => r.coach))]),
   ]);
   const workouts = new Map(((wrows ?? []) as WorkoutRow[]).map(w => [w.id, workoutFromRow(w)]));
-  return rows.map(r => ({ ...r, coachName: coaches.get(r.coach)?.name || 'Your coach', workout: workouts.get(r.workoutId) }));
+  return rows.map(r => (isAiAssignment(r) ? { ...r, ai: true, coachName: ai!.name, workout: workouts.get(r.workoutId) } : { ...r, coachName: coaches.get(r.coach)?.name || 'Your coach', workout: workouts.get(r.workoutId) }));
+};
+
+/**
+ * Your AI coach (migration 0011): the assistant connected to your account (Claude through the MCP
+ * connector) acting as your coach. It sends you workouts the way a PT does, under a name you choose.
+ */
+export interface AiCoach {
+  name: string;
+  active: boolean;
+  since: string;
+}
+/** Null when you have none, or before 0011 is on the server. */
+export const myAiCoach = async (): Promise<AiCoach | null> => {
+  const { data, error } = await sb.from('ai_coaches').select('name,status,created_at').eq('client', me()).maybeSingle();
+  if (error) return isMissing(error) ? null : fail(error);
+  const r = data as { name: string; status: string; created_at: string } | null;
+  return r ? { name: r.name, active: r.status === 'active', since: r.created_at } : null;
+};
+
+/** Rename your AI coach (1 to 40 characters), or remove it / take it back (active). */
+export const updateAiCoach = async (change: { name?: string; active?: boolean }): Promise<AiCoach> => {
+  const patch: Record<string, string> = {};
+  if (change.name !== undefined) {
+    const name = change.name.trim().replace(/\s+/g, ' ');
+    if (!name || name.length > 40) throw new CoachingError('A name of 1 to 40 characters.');
+    patch.name = name;
+  }
+  if (change.active !== undefined) patch.status = change.active ? 'active' : 'ended';
+  const r = ok(await sb.from('ai_coaches').update(patch).eq('client', me()).select('name,status,created_at').single()) as { name: string; status: string; created_at: string };
+  return { name: r.name, active: r.status === 'active', since: r.created_at };
 };
 
 /** Coach side: a client's sessions from the last `days` days, newest first. */

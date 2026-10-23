@@ -170,10 +170,11 @@ struct DiscoverView: View {
             let next = coachNext == nil ? Home.upNext(sheets, own: own, last: last) : nil
             ForEach(assigned, id: \.0.id) { pair in
                 let (a, sheet) = pair
-                let coach = Coaching.name(of: a.coach, in: store.coaching)
+                let coach = Coaching.name(for: a, in: store.coaching)
                 let done = Coaching.isDone(a, results: store.results)
+                let note = a.note?.trimmingCharacters(in: .whitespacesAndNewlines)
                 row(sheet, meta: "\(sheet.minutes) min · from \(coach)\(done ? " · done" : "")", tint: Brand.coralInk, from: .coach, play: true,
-                    card: Card(badge: done ? nil : "New · made for you", why: done ? nil : Home.why(sheet), contents: Home.contents(sheet), upNext: a.id == coachNext))
+                    card: Card(badge: done ? nil : "New · made for you", why: done ? nil : (note?.isEmpty == false ? note : Home.why(sheet)), contents: Home.contents(sheet), upNext: a.id == coachNext))
             }
             ForEach(sheets, id: \.key) { sheet in
                 let mine = own.contains(sheet.key)

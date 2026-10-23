@@ -46,6 +46,29 @@ struct CoachingTests {
         #expect(sheets.first?.key == "w-coach-1")
     }
 
+    @Test("an AI coach's assignments (coach = client) list while it is on, under the name you gave it")
+    func aiCoachAssignments() throws {
+        var s = CoachingState()
+        s.links = [CoachLink(coach: "c", client: "u", status: "active")]
+        s.assignments = [
+            Assignment(id: "pt", coach: "c", client: "u", workoutId: "w1", createdAt: "2026-10-01T00:00:00Z"),
+            Assignment(id: "ai", coach: "u", client: "u", workoutId: "w2", note: "Up 2.5 kg", createdAt: "2026-10-03T00:00:00Z"),
+        ]
+        s.names = ["c": "Sam"]
+        #expect(Coaching.active(s).map(\.id) == ["pt"])
+        s.aiCoach = try JSONDecoder().decode([AICoach].self, from: data(#"[{"name":"Coach Claude","status":"active"}]"#)).first
+        #expect(Coaching.active(s).map(\.id) == ["ai", "pt"])
+        #expect(Coaching.active(s).map { Coaching.name(for: $0, in: s) } == ["Coach Claude", "Sam"])
+        s.aiCoach?.status = "ended"
+        #expect(Coaching.active(s).map(\.id) == ["pt"])
+    }
+
+    @Test("a coaching cache written before the AI coach still reads")
+    func oldCache() throws {
+        let old = try JSONDecoder().decode(CoachingState.self, from: data(#"{"links":[],"assignments":[],"workouts":[],"notes":[],"names":{}}"#))
+        #expect(old.aiCoach == nil)
+    }
+
     @Test("the home section lists active links' unarchived assignments, newest first")
     func activeAssignments() {
         var s = CoachingState()
