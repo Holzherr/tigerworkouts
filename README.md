@@ -126,7 +126,8 @@ or phase change, never on a tick. The landing page's looping hero demo renders t
 Each session records where it was started (`startedFrom`: the home list it was in, the Me tab, Repeat, a
 share link) so the share started from a home recommendation can be measured. The iOS app writes the
 same field from its Workouts tab (Mine: own → mine, saved → saved, a coach's → coach; For you →
-recommended; the catalogue or a search result → search) and from a `tigerworkouts://w/` link (link). The origin
+recommended; the catalogue or a search result → search) and from a `tigerworkouts://w/` link (link). Mine's Up next
+card sits first on both apps and records `up_next`, which is not `home` and not in home_reco_used. The origin
 rides in the crash-safe copy on both, so a resumed or recovered session keeps it.
 Sign out pushes first, then empties the device for the next account (sessions, workouts, favourites,
 saved, exercises, training maxes and the `tiger:synced` snapshot); while the push fails or a session

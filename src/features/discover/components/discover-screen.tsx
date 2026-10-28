@@ -6,11 +6,11 @@ import { cn } from '@/shared/utils/ui-utils';
 import { runsheetMinutes, type Runsheet } from '@/features/runsheet/model';
 import type { SessionResult } from '@/features/runsheet/progression';
 import { recommend } from '../recommend';
-import { contentsLine, lastDoneById, lastDoneOf, mineLine, mineList, newBadge, upNextOf, whyLine } from '../mine';
+import { contentsLine, lastDoneById, lastDoneOf, mineLine, mineList, newBadge, upNextFirst, upNextOf, whyLine } from '../mine';
 
 export type DiscoverTab = 'mine' | 'discover';
 /** The list a workout was tapped in, recorded on the session it starts. */
-export type DiscoverOrigin = 'saved' | 'recommended' | 'search' | 'coach';
+export type DiscoverOrigin = 'saved' | 'recommended' | 'search' | 'coach' | 'up_next';
 export type DiscoverFilter = 'all' | 'coach' | 'benchmark' | 'program' | 'video' | 'article' | 'protocol';
 
 const TABS: { id: DiscoverTab; label: string }[] = [
@@ -127,6 +127,9 @@ export const DiscoverScreen = ({ workouts, results = [], savedIds = [], ownIds =
   const own = useMemo(() => new Set(ownIds), [ownIds]);
   // One card to do next: what a coach sent and is not done, else Mine's own pick.
   const upNext = coachRows.find(c => !c.done)?.id ?? upNextOf(mine, ownIds, last);
+  // Mine's Up next leads, above what a coach sent (all done then).
+  const ordered = upNextFirst(mine, r => wid(r) === upNext);
+  const lead = ordered.length > 0 && wid(ordered[0]) === upNext ? 1 : 0;
 
   const { programs, singles } = useMemo(() => {
     const ql = q.trim().toLowerCase();
@@ -147,6 +150,14 @@ export const DiscoverScreen = ({ workouts, results = [], savedIds = [], ownIds =
     for (const list of programs.values()) list.sort((a, b) => (a.program?.order ?? 0) - (b.program?.order ?? 0));
     return { programs, singles };
   }, [workouts, q, filter]);
+
+  /** A Mine card; the Up next card's play records `up_next`, so its starts read apart from the rest. */
+  const mineRow = (r: Runsheet) => {
+    const done = lastDoneOf(r, last);
+    const fresh = !done && own.has(wid(r));
+    const next = wid(r) === upNext;
+    return <Row key={wid(r)} runsheet={r} badge={fresh ? newBadge(r) : undefined} why={fresh ? whyLine(r) : undefined} contents={contentsLine(r)} upNext={next} meta={mineLine(r, done)} onOpen={() => onOpen(r, 'saved')} onStart={onStart && (() => onStart(r, next ? 'up_next' : 'saved'))} />;
+  };
 
   const shown = singles.slice(0, limit);
   const catalogue = (
@@ -211,14 +222,11 @@ export const DiscoverScreen = ({ workouts, results = [], savedIds = [], ownIds =
 
         {!searching && tab === 'mine' && (
           <>
+            {ordered.slice(0, lead).map(mineRow)}
             {coachRows.map(c => (
               <Row key={c.id} runsheet={c.runsheet} coach badge={c.done ? undefined : 'New · made for you'} why={c.done ? undefined : whyLine(c.runsheet)} contents={contentsLine(c.runsheet)} upNext={c.id === upNext} meta={`${runsheetMinutes(c.runsheet)} min · from ${c.coachName}${c.done ? ' · done' : ''}`} onOpen={() => onOpen(c.runsheet, 'coach')} onStart={onStart && (() => onStart(c.runsheet, 'coach'))} />
             ))}
-            {mine.map(r => {
-              const done = lastDoneOf(r, last);
-              const fresh = !done && own.has(wid(r));
-              return <Row key={wid(r)} runsheet={r} badge={fresh ? newBadge(r) : undefined} why={fresh ? whyLine(r) : undefined} contents={contentsLine(r)} upNext={wid(r) === upNext} meta={mineLine(r, done)} onOpen={() => onOpen(r, 'saved')} onStart={onStart && (() => onStart(r, 'saved'))} />;
-            })}
+            {ordered.slice(lead).map(mineRow)}
             {coachRows.length === 0 && mine.length === 0 && <EmptyState icon={<Bookmark />} title="No workouts yet" body="Write your own with +, or save one from Discover." action={{ label: 'Discover workouts', onClick: () => setTab('discover') }} />}
           </>
         )}
