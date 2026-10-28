@@ -81,3 +81,9 @@ export const upNextOf = (list: Runsheet[], ownIds: string[], last: Map<string, s
   }
   return oldest?.id;
 };
+
+/** The Up next card first, the rest in their order (Nick, 27 Oct 2026). Ported to iOS as `Home.upNextFirst`. */
+export const upNextFirst = <T>(list: T[], isNext: (t: T) => boolean) => {
+  const i = list.findIndex(isNext);
+  return i < 0 ? list : [list[i], ...list.slice(0, i), ...list.slice(i + 1)];
+};

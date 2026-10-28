@@ -168,21 +168,27 @@ struct DiscoverView: View {
             // One card to do next: what a coach sent and is not done, else Mine's own pick.
             let coachNext = assigned.first { !Coaching.isDone($0.0, results: store.results) }?.0.id
             let next = coachNext == nil ? Home.upNext(sheets, own: own, last: last) : nil
-            ForEach(assigned, id: \.0.id) { pair in
+            // Up next leads: Mine's above what a coach sent (all done then), a coach's atop theirs.
+            let ordered = Home.upNextFirst(sheets) { $0.key == next }
+            let lead = ordered.first.map { $0.key == next } == true ? 1 : 0
+            ForEach(Array(ordered.prefix(lead)), id: \.key) { mineRow($0, own: own, last: last, next: next) }
+            ForEach(Home.upNextFirst(assigned) { $0.0.id == coachNext }, id: \.0.id) { pair in
                 let (a, sheet) = pair
                 let coach = Coaching.name(of: a.coach, in: store.coaching)
                 let done = Coaching.isDone(a, results: store.results)
                 row(sheet, meta: "\(sheet.minutes) min · from \(coach)\(done ? " · done" : "")", tint: Brand.coralInk, from: .coach, play: true,
                     card: Card(badge: done ? nil : "New · made for you", why: done ? nil : Home.why(sheet), contents: Home.contents(sheet), upNext: a.id == coachNext))
             }
-            ForEach(sheets, id: \.key) { sheet in
-                let mine = own.contains(sheet.key)
-                let done = Home.lastDone(of: sheet, in: last)
-                let fresh = mine && done == nil
-                row(sheet, meta: Home.line(minutes: sheet.minutes, level: sheet.level, lastDone: done), from: mine ? .mine : .saved, play: true,
-                    card: Card(badge: fresh ? Home.badge(sheet) : nil, why: fresh ? Home.why(sheet) : nil, contents: Home.contents(sheet), upNext: sheet.key == next))
-            }
+            ForEach(Array(ordered.dropFirst(lead)), id: \.key) { mineRow($0, own: own, last: last, next: next) }
         }
+    }
+
+    /// A Mine card: its play records `Home.origin`, its page `mine` or `saved`.
+    private func mineRow(_ sheet: Runsheet, own: Set<String>, last: [String: Date], next: String?) -> some View {
+        let done = Home.lastDone(of: sheet, in: last)
+        let fresh = own.contains(sheet.key) && done == nil
+        return row(sheet, meta: Home.line(minutes: sheet.minutes, level: sheet.level, lastDone: done), from: own.contains(sheet.key) ? .mine : .saved,
+                   start: Home.origin(of: sheet, own: own, next: next), play: true, card: Card(badge: fresh ? Home.badge(sheet) : nil, why: fresh ? Home.why(sheet) : nil, contents: Home.contents(sheet), upNext: sheet.key == next))
     }
 
     // MARK: - Discover
@@ -266,8 +272,8 @@ struct DiscoverView: View {
     }
 
     /// One workout as a card: its name and one meta line open its page; with `play`, a coral play
-    /// button on the right starts it straight away, last time's numbers carried over.
-    private func row(_ sheet: Runsheet, meta: String, tint: Color = Brand.muted, from: SessionOrigin, play: Bool = false, card: Card = Card()) -> some View {
+    /// button on the right starts it straight away (as `start` if given), last time's numbers carried over.
+    private func row(_ sheet: Runsheet, meta: String, tint: Color = Brand.muted, from: SessionOrigin, start: SessionOrigin? = nil, play: Bool = false, card: Card = Card()) -> some View {
         HStack(spacing: 12) {
             NavigationLink(value: Opened(key: sheet.key, from: from)) {
                 HStack(spacing: 8) {
@@ -315,7 +321,7 @@ struct DiscoverView: View {
             .buttonStyle(.plain)
             if play {
                 Button {
-                    onStart(store.seeded(sheet), from)
+                    onStart(store.seeded(sheet), start ?? from)
                 } label: {
                     Image(systemName: "play.fill")
                         .font(.system(size: 17, weight: .bold))

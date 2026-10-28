@@ -58,6 +58,19 @@ describe('DiscoverScreen Mine', () => {
     expect(screen.queryByText('New · made for you')).not.toBeInTheDocument();
     expect(within(container.querySelector('[data-up-next]') as HTMLElement).getByText(priyanka().title)).toBeInTheDocument();
   });
+  it('puts Up next first with every workout done, above what a coach sent, and starts it as up_next', () => {
+    const onStart = vi.fn();
+    const own = ['u-a', 'u-b', 'u-c', 'u-d'];
+    const results = own.map((runsheetId, i): SessionResult => ({ runsheetId, startedAt: `2026-10-${[22, 24, 25, 26][i]}T10:00:00Z`, steps: [] }));
+    const { container } = render(<DiscoverScreen workouts={[...own.map((id): Runsheet => ({ id, title: id, items: [] })), fran]} ownIds={own} results={results} fromCoach={[{ id: 'a1', runsheet: fran, coachName: 'Sam', done: true }]} onOpen={() => {}} onStart={onStart} />);
+    const starts = screen.getAllByRole('button', { name: /^Start / }).map(b => b.getAttribute('aria-label'));
+    expect(starts).toEqual(['Start u-a', 'Start Fran', 'Start u-d', 'Start u-c', 'Start u-b']);
+    expect(container.querySelector('[data-up-next]')).toBe(container.querySelector('.space-y-2 > div'));
+    fireEvent.click(screen.getByRole('button', { name: 'Start u-a' }));
+    expect(onStart).toHaveBeenLastCalledWith(expect.objectContaining({ id: 'u-a' }), 'up_next');
+    fireEvent.click(screen.getByRole('button', { name: 'Start u-d' }));
+    expect(onStart).toHaveBeenLastCalledWith(expect.objectContaining({ id: 'u-d' }), 'saved');
+  });
   it('shows what is in each workout by block name', () => {
     render(<DiscoverScreen workouts={ALL} ownIds={OWN} results={ONE_SESSION} onOpen={() => {}} />);
     const blocks = priyanka().items.flatMap(i => (i.kind === 'block' ? [i.name] : []));
