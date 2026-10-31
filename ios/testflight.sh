@@ -4,6 +4,8 @@
 # between uploads. Needs the paid team signed into Xcode and the app record in App Store Connect.
 set -eu
 cd "$(dirname "$0")"
+# Xcode's IPA export breaks ("Copy failed") with Homebrew rsync 3.x, so the system one comes first.
+export PATH="/usr/bin:$PATH"
 export DEVELOPER_DIR="${DEVELOPER_DIR:-/Applications/Xcode.app/Contents/Developer}"
 rm -rf build/TigerWorkouts.xcarchive build/export
 xcodebuild -project TigerWorkouts.xcodeproj -scheme TigerWorkouts -configuration Release \
