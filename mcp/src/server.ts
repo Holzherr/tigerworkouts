@@ -34,14 +34,14 @@ Coaching flow that works: get_profile → list_sessions (what they did, with loa
 
 You are the person's AI coach, and you coach through the app's coaching feature the way a personal trainer does. Every workout you create (create_workout), or change and hand back (update_workout with assign: true), is sent to them from their coach: it tops their home screen as "New · made for you", signed "from <coach name>", with your note. The coach name is theirs to choose (default "AI Coach"; get_profile shows aiCoach). If they want to call you something else, call set_ai_coach with that name. They can rename or remove you in the app under Me; if they removed you (aiCoach.active false), workouts save as their own and you do not turn yourself back on unless they ask.
 
-To train now: start_workout (a saved id, a structured workout, or a plain-text plan) shows a timer in the chat; the finished session is logged to their history. Mention that the iPhone app gives a lock-screen timer and notifications (appDownloadUrl).
+To train now: start_workout (a saved id, a structured workout, or a plain-text plan) shows a timer in the chat; the finished session is logged to their history. Where the chat cannot show the timer, or they ask about their phone, appDownloadUrl is the iPhone app (lock-screen timer and notifications).
 
 Accounts started without an email ("Start now, no account needed" on the sign-in page). get_profile then says anonymous: true. Everything saves as usual, with two limits: nothing can be made public, and the account is deleted 7 days after it started, with everything in it, unless the person keeps it. Results of get_profile and the write tools carry keepAccount while that is the case.
-Keeping it is your job, not theirs to discover:
+So that nothing is lost without warning:
 1. Once they have something worth keeping (their first saved workout or finished session), or they ask about the app, their phone or their history, say the account is temporary and offer to keep it. Once per conversation is enough unless keepAccount changes.
 2. Ask for their email and call claim_account with it. If they would rather not type it into the chat, call claim_account with no email and give them claimUrl (it works for up to an hour).
 3. Read the result's next to them. Usually status is "confirm": a confirmation email went out, and the account is kept only once they click its link (check spam). The link opens tigerworkouts.com signed in.
-4. Then point them to the iPhone app (appDownloadUrl from start_workout, or https://testflight.apple.com/join/r8uFaWKY) and tell them to sign in there with the same email (email code). Same workouts, same history.
+4. If they want the iPhone app (appDownloadUrl from start_workout, or https://testflight.apple.com/join/r8uFaWKY), they sign in there with the same email (email code). Same workouts, same history.
 If claim_account says the email already has an account: the two cannot be merged yet. They can keep this connection as it is, or remove the connector, add it again and sign in with that email (what was made here stays behind).
 A person who already uses TigerWorkouts should not start anonymously: tell them to reconnect and sign in with their email instead.`;
 
@@ -67,15 +67,27 @@ const fail = (msg: string): Result => ({ content: [{ type: 'text', text: msg }],
 const PLAN_HELP = 'Plain text instead of workout: one block per line, read by the app\'s own parser, e.g. "row 5 min" / "kb swings 24 + push ups x5 40/20" (5 rounds, 40 s on, 20 s off) / "plank x3 rest 30". Lines it cannot read are listed back; then send a structured workout.';
 const LINKS = 'Send shareUrl to anyone else (a client, a friend): it opens for them, signed in or not. appUrl opens only for the owner, signed in, unless the workout is public.';
 
-/** Expected failures become readable tool errors; anything else is rethrown. */
+export const UNAVAILABLE = 'TigerWorkouts could not be reached just now. Try again in a minute; if it keeps failing, write to brambruesch@nickholzherr.com.';
+
+/** Supabase's own message for a 4xx (row-level security, a bad filter); never a gateway page or a stack. */
+const supabaseMessage = (e: SupabaseError) => {
+  if (e.status === 401) return 'Your TigerWorkouts sign-in has expired. Reconnect the TigerWorkouts connector.';
+  if (e.status === 403) return 'TigerWorkouts did not allow that for this account.';
+  if (e.status >= 500 || /<html|<!doctype/i.test(e.message)) return UNAVAILABLE;
+  const m = e.message.replace(/\s+/g, ' ').trim().slice(0, 300);
+  return `TigerWorkouts could not do that (${e.status})${m ? `: ${m}` : '.'}`;
+};
+
+/** Every failure becomes a readable tool error; unexpected ones are logged and reported plainly. */
 const run = async (f: () => Promise<unknown>): Promise<Result> => {
   try {
     return ok(await f());
   } catch (e) {
     if (e instanceof T.ToolError) return fail(e.message);
     if (e instanceof RunsheetError) return fail(`The workout needs fixing:\n${e.message}`);
-    if (e instanceof SupabaseError) return fail(e.status === 401 ? 'Your TigerWorkouts sign-in has expired. Reconnect the TigerWorkouts connector.' : `TigerWorkouts could not do that (${e.status}): ${e.message}`);
-    throw e;
+    if (e instanceof SupabaseError) return fail(supabaseMessage(e));
+    console.error('tool failed', e);
+    return fail(UNAVAILABLE);
   }
 };
 
@@ -92,7 +104,7 @@ export const buildServer = (db: Db, account: Account = {}) => {
     const note = keepNote(await status());
     return note ? { ...r, keepAccount: note } : r;
   };
-  const s = new McpServer({ name: 'tigerworkouts', title: 'TigerWorkouts', version: '0.1.0', websiteUrl: 'https://tigerworkouts.com' }, { instructions: INSTRUCTIONS });
+  const s = new McpServer({ name: 'tigerworkouts', title: 'TigerWorkouts', version: '1.2.0', websiteUrl: 'https://tigerworkouts.com' }, { instructions: INSTRUCTIONS });
 
   s.registerTool('get_profile', { title: 'Profile', description: "The signed-in user's name, units, bodyweight, training maxes (kg, by exercise key), saved workout ids, a count of recent sessions, their AI coach (aiCoach: the name you go by and whether it is on; null before your first workout for them) and whether the account is still anonymous. Start here.", inputSchema: {}, annotations: readOnly }, () =>
     run(async () => {
