@@ -3,8 +3,8 @@ import SwiftUI
 /// A straight-set block (one exercise, rounds) in the editor: sets alike in a row fold into one row
 /// (`8×`) whose steppers change them all; Vary sets gives each set its own load and
 /// reps, so a pyramid or ramping sets are written as they are done. The set number is a button
-/// that steps the set through warm-up (W), normal, drop set (D) and to failure (F). Add set copies the last row;
-/// Remove set drops it. Both change how many times the block repeats.
+/// that steps the set through warm-up (W), normal, drop set (D) and to failure (F). The Sets stepper
+/// under the grid copies the last row or drops it, changing how many times the block repeats.
 struct SetPlanGrid: View {
     var block: Block
     var step: ExerciseStep
@@ -117,20 +117,27 @@ struct SetPlanGrid: View {
 
             if !locked {
                 Divider()
-                HStack(spacing: 20) {
-                    Button { apply { Edit.addSet($0, block: block.id) } } label: {
-                        Label("Add set", systemImage: "plus")
+                // How many sets is one stepper, not an Add set and a Remove set that wrapped onto
+                // two lines each (Nick, 1 Nov 2026).
+                HStack(spacing: 10) {
+                    Text("Sets").font(.subheadline.weight(.semibold)).foregroundStyle(Brand.body)
+                    MiniStepper(value: Double(block.repeatCount), label: "Sets") { direction in
+                        apply { r in
+                            let now = r.items.compactMap(\.asBlock).first { $0.id == block.id }?.repeatCount ?? block.repeatCount
+                            let steps = Int(abs(direction))
+                            if direction > 0 { return (0..<steps).reduce(r) { r, _ in Edit.addSet(r, block: block.id) } }
+                            return (0..<min(steps, now - 1)).reduce(r) { r, _ in Edit.removeSet(r, block: block.id) }
+                        }
                     }
-                    Button { apply { Edit.removeSet($0, block: block.id) } } label: {
-                        Label("Remove set", systemImage: "minus")
-                    }
-                    .disabled(block.repeatCount <= 1)
-                    Spacer()
+                    .fixedSize()
+                    Spacer(minLength: 8)
                     if !varying, block.repeatCount > 1 {
                         Button("Vary sets") { varying = true }
+                            .font(.subheadline.weight(.semibold))
+                            .lineLimit(1)
                     }
                 }
-                .padding(.top, 10)
+                .padding(.vertical, 8)
             }
         }
         // Back to folded rows once an edit leaves every set alike.
