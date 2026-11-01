@@ -83,8 +83,8 @@ Not done (Nick): the directory submissions themselves, the reviewer account and 
 | `get_session` | read | one session plus the outline of its workout |
 | `list_workouts` | read | own (`owner: me`, with `public`), others' public, catalogue (484 from `imports/`); filters: scope, query, source, tag, exercise, minutes |
 | `get_workout` | read | outline + full runsheet + `canEdit` + app link |
-| `search_exercises` | read | library + the user's custom exercises; keys for `create_workout` |
-| `create_workout` | write | **private by default** (`workouts.public = false`); sent to the person from their AI coach with optional `note` (adds the AI coach the first time; a removed one stays removed); returns `fromCoach`, `appUrl` and `previewUrl` |
+| `search_exercises` | read | library + the user's custom exercises; keys for `create_workout` and `logs`, what a step of each may log |
+| `create_workout` | write | **private by default** (`workouts.public = false`); sent to the person from their AI coach with optional `note` (adds the AI coach the first time; a removed one stays removed); returns `fromCoach`, `appUrl` and `previewUrl`; a step's `log` is one of reps, meters, calories or a list of them, refused when the exercise cannot count it |
 | `update_workout` | write | own only; full runsheet replacement and/or `public` flip, and/or `assign` (+ `note`) to send it again from the AI coach; catalogue/others' → "copy it with create_workout" |
 | `set_ai_coach` | write | the AI coach's `name` (1–40) and/or `active`; adds it if there is none. See pt-publishing.md, AI as coach |
 | `preview_workout_url` | read | no-sign-in link for a saved workout or an unsaved draft |

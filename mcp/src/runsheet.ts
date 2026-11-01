@@ -5,7 +5,7 @@
  */
 import { z } from 'zod';
 import type { Block, BlockMode, ExerciseRef, ExerciseStep, ForMode, Item, ItemRole, RestStep, Runsheet, ScoreType, SetType, Step, StepLog } from '@/features/runsheet/model';
-import { runsheetMinutes, uid } from '@/features/runsheet/model';
+import { exerciseLogs, runsheetMinutes, stepLogs, uid, withLogs } from '@/features/runsheet/model';
 
 const FOR_MODE: Record<ForMode, string> = {
   reps: 'forValue reps',
@@ -66,7 +66,7 @@ export const exerciseStepInput = z.object({
   ladderFixed: z.boolean().optional(),
   sets: z.array(z.object({ reps: pos.optional(), load: pos.optional(), type: z.enum(keys(SET_TYPE)).optional().describe(Object.entries(SET_TYPE).map(([k, v]) => `${k}: ${v}`).join('; ')) }))
     .max(30).optional().describe('Per-set prescription inside a rounds block, one entry per round: a pyramid, ramping sets, warm-up or drop sets. A reps or load left out carries the one before it'),
-  log: z.enum(keys(STEP_LOG)).optional().describe(`What to record after the step, beyond its target; omit to log nothing extra (finishing is the result). ${Object.entries(STEP_LOG).map(([k, v]) => `${k}: ${v}`).join('; ')}. Reps are already counted for forMode reps/amrap/max, and metres/calories for forMode meters/calories`),
+  log: z.union([z.enum(keys(STEP_LOG)), z.array(z.enum(keys(STEP_LOG))).min(1).max(3)]).optional().describe(`What to record after the step, beyond its target: one value or a list (a rower can log ["meters","calories"]). Omit to log nothing extra (finishing is the result). ${Object.entries(STEP_LOG).map(([k, v]) => `${k}: ${v}`).join('; ')}. Only what the exercise can log (search_exercises gives each exercise's \`logs\`: metres and calories for machines and runs, reps for lifts and bodyweight, nothing for holds). Reps are already counted for forMode reps/amrap/max, and metres/calories for forMode meters/calories`),
   role: role.optional(),
   note: z.string().max(300).optional(),
 });
@@ -132,7 +132,12 @@ export const normalise = (input: RunsheetInput, library: (key: string) => Exerci
     if (s.forMax !== undefined && s.forMax < s.forValue) problems.push(`${where}: forMax (${s.forMax}) is below forValue (${s.forValue})`);
     if (s.target !== undefined && exercise && exercise.unit === '') problems.push(`${where}: "${exercise.name}" is bodyweight, so it takes no target`);
     const out: ExerciseStep = { ...s, id: id(s.id, 'e'), exercise: exercise ?? { key: String(s.exercise), name: String(s.exercise), unit: '', step: 1 } };
-    return out;
+    if (exercise) {
+      const can = exerciseLogs(exercise);
+      const not = stepLogs(out).filter(l => !can.includes(l));
+      if (not.length) problems.push(`${where}: "${exercise.name}" cannot log ${not.join(', ')}${can.length ? ` — it logs ${can.join(', ')}` : ' — it logs only its time'}`);
+    }
+    return withLogs(out, stepLogs(out));
   };
   const items: Item[] = input.items.map((it, i) => {
     const where = `items[${i}]`;
