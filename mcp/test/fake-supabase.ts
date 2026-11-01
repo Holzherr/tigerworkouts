@@ -12,6 +12,9 @@ export interface Tables {
   workouts: Row[];
   sessions: Row[];
   exercises: Row[];
+  /** Migration 0011; left out, the table is missing as it is before 0011 is applied. */
+  ai_coaches?: Row[];
+  assignments?: Row[];
 }
 
 /** Tokens are "token-<userId>". */
@@ -20,9 +23,19 @@ export const tokenFor = (userId: string) => `token-${userId}`;
 const visible = (table: keyof Tables, row: Row, uid: string) => {
   if (table === 'profiles') return true;
   if (table === 'workouts' || table === 'exercises') return row.public === true || row.owner === uid;
+  if (table === 'ai_coaches') return row.client === uid;
+  if (table === 'assignments') return row.coach === uid || row.client === uid;
   return row.owner === uid;
 };
-const writable = (table: keyof Tables, row: Row, uid: string) => (table === 'profiles' ? row.id === uid : row.owner === uid);
+const writable = (tables: Tables, table: keyof Tables, row: Row, uid: string) => {
+  if (table === 'profiles') return row.id === uid;
+  if (table === 'ai_coaches') return row.client === uid;
+  // 0011's "assignments: AI coach writes": to yourself, while your AI coach is on, a workout you own.
+  if (table === 'assignments')
+    return row.coach === uid && row.client === uid && !!tables.ai_coaches?.some(c => c.client === uid && c.status === 'active') && tables.workouts.some(w => w.id === row.workout_id && w.owner === uid);
+  return row.owner === uid;
+};
+const KEY: Partial<Record<keyof Tables, string>> = { ai_coaches: 'client' };
 
 export const fakeSupabase = (tables: Tables) => {
   const calls: { method: string; url: string; auth: string | null }[] = [];
@@ -60,6 +73,12 @@ export const fakeSupabase = (tables: Tables) => {
     }
     const match = (r: Row) => visible(table, r, uid) && filters.every(f => f(r));
 
+    if (method === 'DELETE') {
+      const keep = rows.filter(r => !(match(r) && (table === 'assignments' ? r.coach === uid : writable(tables, table, r, uid))));
+      const gone = rows.filter(r => !keep.includes(r));
+      rows.splice(0, rows.length, ...keep);
+      return Response.json(gone);
+    }
     if (method === 'GET') {
       let out = rows.filter(match);
       if (order) {
@@ -70,14 +89,18 @@ export const fakeSupabase = (tables: Tables) => {
     }
     const body = JSON.parse(String(init.body)) as Row;
     if (method === 'POST') {
-      if (!writable(table, body, uid)) return Response.json({ message: 'new row violates row-level security policy' }, { status: 403 });
-      if (rows.some(r => r.id === body.id)) return Response.json({ message: 'duplicate key' }, { status: 409 });
-      const row = { public: false, ...body, updated_at: new Date().toISOString() };
+      const defaults: Row =
+        table === 'ai_coaches' ? { name: 'AI Coach', status: 'active' } : table === 'assignments' ? { id: crypto.randomUUID(), created_at: new Date().toISOString() } : { public: false };
+      const full = { ...defaults, ...body };
+      if (!writable(tables, table, full, uid)) return Response.json({ message: 'new row violates row-level security policy' }, { status: 403 });
+      const key = KEY[table] ?? 'id';
+      if (rows.some(r => r[key] === full[key])) return Response.json({ message: 'duplicate key' }, { status: 409 });
+      const row = { ...full, updated_at: new Date().toISOString() };
       rows.push(row);
       return Response.json([row], { status: 201 });
     }
     if (method === 'PATCH') {
-      const hit = rows.filter(r => match(r) && writable(table, r, uid));
+      const hit = rows.filter(r => match(r) && writable(tables, table, r, uid));
       for (const r of hit) Object.assign(r, body, { updated_at: new Date().toISOString() });
       return Response.json(hit);
     }

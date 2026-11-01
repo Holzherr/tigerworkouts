@@ -21,10 +21,15 @@ extension Store {
         // No links table, no network: keep what the cache had (nothing, before 0008) and say nothing.
         guard let links = try? await Supabase.shared.coachLinks() else { return }
         var next = CoachingState(links: links)
-        if links.contains(where: \.isActive) {
+        // Before 0011 there is no ai_coaches table: no AI coach, nothing said.
+        next.aiCoach = try? await Supabase.shared.aiCoach()
+        let human = links.contains(where: \.isActive)
+        if human || next.aiCoach?.isActive == true {
             next.assignments = (try? await Supabase.shared.assignments()) ?? coaching.assignments
             let ids = next.assignments.map(\.workoutId)
             next.workouts = (try? await Supabase.shared.assignedWorkouts(ids: ids)) ?? coaching.workouts
+        }
+        if human {
             next.names = (try? await Supabase.shared.profileNames(ids: links.map(\.coach))) ?? coaching.names
             next.notes = (try? await Supabase.shared.coachNotes()) ?? coaching.notes
         }
@@ -65,6 +70,30 @@ extension Store {
         next.assignments.removeAll { $0.coach == link.coach }
         next.notes.removeAll { $0.coach == link.coach }
         setCoaching(next)
+        return true
+    }
+
+    /// Renames your AI coach (1 to 40 characters). True once it is on the server.
+    @discardableResult
+    func renameAICoach(_ name: String) async -> Bool {
+        let clean = name.split(whereSeparator: \.isWhitespace).joined(separator: " ")
+        guard (1...40).contains(clean.count) else { return false }
+        return await changeAICoach(["name": clean])
+    }
+
+    /// Removes your AI coach, or takes it back. What it sent leaves the home section while it is off.
+    @discardableResult
+    func setAICoachActive(_ on: Bool) async -> Bool {
+        await changeAICoach(["status": on ? "active" : "ended"])
+    }
+
+    private func changeAICoach(_ change: [String: String]) async -> Bool {
+        guard let row = try? await Supabase.shared.updateAICoach(change) else { return false }
+        var next = coaching
+        next.aiCoach = row
+        setCoaching(next)
+        // Turned back on: fetch what it sent.
+        if row.isActive { await refreshCoaching() }
         return true
     }
 
