@@ -19,18 +19,33 @@ splits are saved but shown nowhere").
   the measure. The timer hides its load stepper.
 - Timed work ends with Done early on the timer; Skip is in the ⋯ menu (web).
 
-## What a step logs (18 Oct 2026)
+## What a step logs (18 Oct 2026, several metrics 19 Oct 2026)
 
-- A step has a target (`forMode` + `forValue`, a load) and an optional `log`: reps, meters or
-  calories, recorded after each set. Unset logs nothing beyond the target; finishing is the result.
+- A step has a target (`forMode` + `forValue`, a load) and an optional `log`: one or more of reps,
+  meters, calories, recorded after each set. Unset logs nothing beyond the target; finishing is the
+  result. `log` is one value or a list; one is written as a single value so builds from before
+  19 Oct 2026 still read it, and unknown values or repeats drop out (`stepLogs` / `withLogs` in
+  model.ts, `[StepLog]` in Runsheet.swift).
+- What a step may log comes from its exercise's unit (`exerciseLogs`): a machine or a run (m, cal,
+  kph) metres and calories, either or both; a hold (s) nothing beyond its time; a lift or a
+  bodyweight move reps. A rower can log metres and calories at once.
 - The timer asks for reps when the step is done to a count (reps, reps-plus, max) or logs reps; for
   metres or calories when it is done for a distance or calories (the plan, changed if need be) or
-  logs them. Never from the exercise alone: a 30 s rower step asks for nothing unless set to log
-  metres. `countsReps` / `amountOf` in model.ts, `countsReps` / `amountLog` in RunsheetMath.swift.
-- The editor has no log row by default. Add to log offers what the target does not record already
-  (no reps on a reps step, no metres on a distance step); the row it adds comes off with its ✕.
-- The set grid gives a logged measure its own column next to the count; Edit sets on a session offers
-  the columns the step logs. MCP: create/update_workout take `log`; list_sessions returns `sets`.
+  logs them — one stepper per amount, the summary reads "0 m × 0 cal". Never from the exercise
+  alone: a 30 s rower step asks for nothing unless set to log something. `countsReps` / `amountsOf`
+  in model.ts, `countsReps` / `amountLogs` in RunsheetMath.swift.
+- The editor has no log row by default. Add to log, on click, offers what the exercise can log less
+  what the target records already (no reps on a reps step, no metres on a distance step); each metric
+  gets its own row that comes off with its ✕. Logs already set are asked and removable even if the
+  exercise would not offer them (an agent may set them). Changing the step's mode drops a log the new
+  target records itself.
+- Weight / Speed row only for an exercise set to a load or a speed (kg, kg per arm, kph; `hasLoad`):
+  none for bodyweight or a measured exercise (m, s, cal), which used to show "Weight (m)" and, on iOS,
+  "Distance (m)". Load and speed stay part of the target, not something logged.
+- The set grid gives each logged measure its own column next to the count; Edit sets on a session
+  offers the columns the step logs. Results show one column per amount in logged sets and one round
+  row per field. MCP: create/update_workout take `log` as a string or a list and refuse a log the
+  exercise cannot count; search_exercises returns each exercise's `logs`; list_sessions returns `sets`.
 
 ## Records and the logbook
 

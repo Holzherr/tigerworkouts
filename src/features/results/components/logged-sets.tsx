@@ -1,6 +1,6 @@
 import { Plus, X } from 'lucide-react';
 import { useState } from 'react';
-import { amountOf, countsReps, measureOf, nextSetType, setMarks, shortUnit, type ExerciseRef, type ExerciseStep } from '@/features/runsheet/model';
+import { amountsOf, countsReps, hasLoad, measureOf, nextSetType, setMarks, shortUnit, type ExerciseRef, type ExerciseStep } from '@/features/runsheet/model';
 import type { SetResult, StepResult } from '@/features/runsheet/progression';
 import { SetMark } from '@/features/runsheet/components/set-grid';
 import { cn, fmtClock } from '@/shared/utils/ui-utils';
@@ -14,12 +14,12 @@ type Field = 'load' | 'reps' | 'seconds' | 'meters' | 'calories';
 export const fieldsFor = (sets: SetResult[], unit: string, step?: ExerciseStep): Field[] => {
   const has = (f: Field) => sets.some(x => x[f] !== undefined);
   const measure = measureOf(unit);
-  const amount = step ? amountOf(step) : measure === 'meters' || measure === 'calories' ? measure : undefined;
+  const amounts: string[] = step ? amountsOf(step) : measure === 'meters' || measure === 'calories' ? [measure] : [];
   const out: Field[] = [];
-  if (has('load') || (unit && unit !== 'reps' && !measure)) out.push('load');
-  if (has('reps') || (step && countsReps(step)) || !(has('seconds') || has('meters') || has('calories') || measure || amount)) out.push('reps');
-  if (has('meters') || amount === 'meters') out.push('meters');
-  if (has('calories') || amount === 'calories') out.push('calories');
+  if (has('load') || hasLoad({ unit })) out.push('load');
+  if (has('reps') || (step && countsReps(step)) || !(has('seconds') || has('meters') || has('calories') || measure || amounts.length)) out.push('reps');
+  if (has('meters') || amounts.includes('meters')) out.push('meters');
+  if (has('calories') || amounts.includes('calories')) out.push('calories');
   if (has('seconds') || measure) out.push('seconds');
   return out;
 };

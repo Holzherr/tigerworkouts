@@ -5,7 +5,7 @@ import { ClipThumb } from '@/shared/components/ui/clip-thumb';
 import { Sheet } from '@/shared/components/ui/sheet';
 import { Stepper } from '@/shared/components/ui/stepper';
 import { cn, fmtClock, fmtNum } from '@/shared/utils/ui-utils';
-import { countLabel, forLabel, logChoices, measureOf, roundsLabel, nextSetType, setMarks, shortUnit, showsLoad, straightSetStep, type Block, type ExerciseRef, type ExerciseStep, type Item, type Runsheet, type SetType } from '@/features/runsheet/model';
+import { countLabel, extraLogs, forLabel, hasLoad, roundsLabel, nextSetType, setMarks, shortUnit, showsLoad, straightSetStep, type Block, type ExerciseRef, type ExerciseStep, type Item, type Runsheet, type SetType, type StepLog } from '@/features/runsheet/model';
 import { kitOf, type Equipment } from '@/features/runsheet/plates';
 import { PlatesButton } from '@/features/runsheet/components/plate-sheet';
 import { SetMark } from '@/features/runsheet/components/set-grid';
@@ -30,7 +30,7 @@ export interface TimerScreenProps {
   onAdjustIncline?: (incline: number) => void;
   onSetReps: (reps: number) => void;
   /** Metres or calories done on a distance or calorie step, when not the plan's. */
-  onSetAmount?: (value: number) => void;
+  onSetAmount?: (value: number, field?: R.Amount) => void;
   onDrop: (stepId: string) => void;
   onStartBlock?: () => void;
   /** Change a step from the overview, before it comes round. Applies to the rest of the session. */
@@ -68,8 +68,8 @@ export interface TimerScreenProps {
 export interface SetActions {
   adjust: (slotId: string, target: number) => void;
   setReps: (slotId: string, reps: number) => void;
-  /** Metres or calories for a distance or calorie set. */
-  setAmount?: (slotId: string, value: number) => void;
+  /** Metres or calories for a set that records them; `field` picks which. */
+  setAmount?: (slotId: string, value: number, field?: R.Amount) => void;
   /** The tick: Done on the running set, a late log on one passed without a tick. */
   complete: (slotId: string) => void;
   /** Un-tick a done set so its weight can be put right. */
@@ -96,8 +96,8 @@ const TimerSetGrid = ({ state, step, blockId, actions, equipment, prs = [], onHo
   const [allOpen, setAllOpen] = useState(false);
   const editing = open ?? on;
   // A load given as a % of a training max or × bodyweight shows once it is resolved into target.
-  const hasLoad = showsLoad(step) && !measureOf(step.exercise.unit);
-  const barbell = hasLoad && kitOf(step.exercise) === 'barbell';
+  const loadCol = showsLoad(step);
+  const barbell = loadCol && kitOf(step.exercise) === 'barbell';
   const types = rows.map(x => R.typeAt(state, x.idx));
   const marks = setMarks(types);
   const count = countLabel(step.forMode);
@@ -105,9 +105,10 @@ const TimerSetGrid = ({ state, step, blockId, actions, equipment, prs = [], onHo
   // A distance or calorie set counts its metres or calories; a timed one shows the time it ran once done.
   const amount = step.forMode === 'meters' || step.forMode === 'calories';
   const clocked = step.forMode === 'seconds' || step.forMode === 'minutes';
-  // What the step is set to log beyond its count: reps in a timed set, metres on a timed row.
-  const logged = step.log && logChoices(step).includes(step.log) ? step.log : undefined;
-  const loggedUnit = logged === 'meters' ? 'm' : logged === 'calories' ? 'cal' : 'reps';
+  // What the step is set to log beyond its count, each in a column of its own: reps in a timed set,
+  // metres and calories on a timed row.
+  const logged = extraLogs(step).filter(l => l === 'reps' || actions.setAmount);
+  const loggedUnit = (l: StepLog) => (l === 'meters' ? 'm' : l === 'calories' ? 'cal' : 'reps');
   const live = state.phase === 'running' || state.phase === 'paused';
   const view = rows.map(({ sl, idx }, n) => {
     const a = state.actuals[sl.id];
@@ -117,9 +118,9 @@ const TimerSetGrid = ({ state, step, blockId, actions, equipment, prs = [], onHo
     // A timed set's count is its time: what it ran once done, the plan before (reps it logs go in their own column).
     const reps = amount ? (R.amountAt(state, sl) ?? 0) : clocked ? (done && a?.seconds !== undefined ? (step.forMode === 'minutes' ? a.seconds / 60 : a.seconds) : plan) : (a?.reps ?? plan);
     const n10 = fmtNum(Math.round(reps * 10) / 10);
-    const extra = logged === 'reps' ? a?.reps : logged ? R.amountAt(state, sl) : undefined;
-    const base = hasLoad && count ? `${load !== undefined ? fmtNum(load) : '—'} ${unit} × ${n10}`.replace(/ {2}/, ' ') : hasLoad ? `${load !== undefined ? fmtNum(load) : '—'} ${unit}`.trim() : count ? `${n10} ${count.toLowerCase()}` : '';
-    const what = logged && extra !== undefined ? [base, `${fmtNum(extra)} ${loggedUnit}`].filter(Boolean).join(' · ') : base;
+    const extra = logged.map(l => (l === 'reps' ? a?.reps : R.amountAt(state, sl, l)));
+    const base = loadCol && count ? `${load !== undefined ? fmtNum(load) : '—'} ${unit} × ${n10}`.replace(/ {2}/, ' ') : loadCol ? `${load !== undefined ? fmtNum(load) : '—'} ${unit}`.trim() : count ? `${n10} ${count.toLowerCase()}` : '';
+    const what = [base, ...logged.flatMap((l, k) => (extra[k] !== undefined ? [`${fmtNum(extra[k]!)} ${loggedUnit(l)}`] : []))].filter(Boolean).join(' · ');
     const canTick = done || idx < state.i || (live && (idx === state.i || (sl.id === on && state.slots.slice(state.i, idx).every(x => x.kind === 'rest'))));
     return { sl, idx, n, done, load, reps, extra, what, canTick, edit: !done && sl.id === editing, name: /^\d+$/.test(marks[n]) ? `Set ${marks[n]}` : `Set ${n + 1} (${marks[n]})` };
   });
@@ -188,7 +189,7 @@ const TimerSetGrid = ({ state, step, blockId, actions, equipment, prs = [], onHo
         const prior = actions.lastFor?.(step, v.n);
         const last = prior && (prior.type ?? 'normal') === types[v.n] ? prior : undefined;
         const hint = last ? lastSetLabel(last)?.replace(/^last /, 'last time ') : actions.hintFor?.(step, v.n);
-        const copy = last && actions.fill ? { ...(hasLoad && last.load !== undefined ? { load: last.load } : {}), ...((count || logged === 'reps') && last.reps !== undefined ? { reps: last.reps } : {}), ...(logged === 'meters' && last.meters !== undefined ? { meters: last.meters } : {}), ...(logged === 'calories' && last.calories !== undefined ? { calories: last.calories } : {}) } : undefined;
+        const copy = last && actions.fill ? { ...(loadCol && last.load !== undefined ? { load: last.load } : {}), ...((count || logged.includes('reps')) && last.reps !== undefined ? { reps: last.reps } : {}), ...(logged.includes('meters') && last.meters !== undefined ? { meters: last.meters } : {}), ...(logged.includes('calories') && last.calories !== undefined ? { calories: last.calories } : {}) } : undefined;
         const when = v.sl.id === on ? (v.idx === state.i && live ? 'now' : 'next') : undefined;
         return (
           <div key={v.sl.id} className="border-b border-line-soft py-2 last:border-0">
@@ -207,7 +208,7 @@ const TimerSetGrid = ({ state, step, blockId, actions, equipment, prs = [], onHo
               )}
             </div>
             <div className="mt-1 flex items-center gap-2">
-              {hasLoad && (
+              {loadCol && (
                 <div className="flex flex-1 flex-col items-center">
                   <Stepper size="sm" aria-label={`Set ${v.n + 1} load`} value={v.load ?? 0} step={step.exercise.step || 1} max={1000} onChange={t => actions.adjust(v.sl.id, t)} />
                   <span className="text-[11px] text-muted">{unit}</span>
@@ -223,12 +224,12 @@ const TimerSetGrid = ({ state, step, blockId, actions, equipment, prs = [], onHo
                   <span className="text-[11px] text-muted">{count.toLowerCase()}</span>
                 </div>
               )}
-              {logged && (logged === 'reps' || actions.setAmount) && (
-                <div className="flex flex-1 flex-col items-center">
-                  <Stepper size="sm" aria-label={`Set ${v.n + 1} ${logged === 'reps' ? 'reps' : logged === 'meters' ? 'metres' : 'calories'} done`} value={v.extra ?? 0} min={0} max={logged === 'reps' ? 999 : 99999} step={logged === 'meters' ? Math.max(10, step.exercise.step) : 1} onChange={x => (logged === 'reps' ? actions.setReps(v.sl.id, x) : actions.setAmount!(v.sl.id, x))} />
-                  <span className="text-[11px] text-muted">{loggedUnit} done</span>
+              {logged.map((l, k) => (
+                <div key={l} className="flex flex-1 flex-col items-center">
+                  <Stepper size="sm" aria-label={`Set ${v.n + 1} ${l === 'reps' ? 'reps' : l === 'meters' ? 'metres' : 'calories'} done`} value={v.extra[k] ?? 0} min={0} max={l === 'reps' ? 999 : 99999} step={l === 'meters' ? Math.max(10, step.exercise.step) : 1} onChange={x => (l === 'reps' ? actions.setReps(v.sl.id, x) : actions.setAmount!(v.sl.id, x, l))} />
+                  <span className="text-[11px] text-muted">{loggedUnit(l)} done</span>
                 </div>
-              )}
+              ))}
               {tick(v)}
             </div>
           </div>
@@ -289,8 +290,9 @@ export const TimerScreen = ({ runsheet, state, now, onDone, onSkip, onBack, onPa
   // A countdown ends by itself: its big button is Pause. A set's says which set it logs.
   const countdown = (timed && !emomWork) || lead;
   const setDone = slot?.kind !== 'work' ? 'Done' : slot.mode === 'amrap' ? `Set ${slot.round + 1} done` : slot.rounds > 1 ? `Set ${slot.round + 1} of ${slot.rounds} done` : 'Done';
-  const amountField = slot ? R.amountField(slot) : undefined;
-  const amount = slot && amountField ? R.amountAt(state, slot) : undefined;
+  // The metres and/or calories the step records: what it is done for, then what it is set to log.
+  const amountFields = slot && onSetAmount ? R.amountFields(slot) : [];
+  const amountOf = (f: R.Amount) => (slot ? R.amountAt(state, slot, f) : undefined);
   const bigNumber = done ? fmtClock(total) : lead ? String(Math.ceil(clock.left ?? 0)) : timed ? fmtClock(clock.left ?? 0) : fmtClock(clock.spent);
   const progress = slot?.seconds && clock.left !== undefined ? 1 - clock.left / slot.seconds : 0;
   const all = R.overall(state, now);
@@ -318,15 +320,15 @@ export const TimerScreen = ({ runsheet, state, now, onDone, onSkip, onBack, onPa
   const lastLabel = last && stepOf?.kind === 'exercise' ? lastTimeLabel(last, stepOf) : undefined;
   const race = raceLine(goal, ghost);
   // The numbers a set logs, folded into one line ("24 kg × 10 reps") until Change opens them.
-  const dials: ('load' | 'incline' | 'reps' | 'amount')[] = stepOf?.kind !== 'exercise' ? [] : [
-    ...(stepOf.exercise.unit && stepOf.exercise.unit !== 'reps' && !measureOf(stepOf.exercise.unit) ? ['load' as const] : []),
+  const dials: ('load' | 'incline' | 'reps' | R.Amount)[] = stepOf?.kind !== 'exercise' ? [] : [
+    ...(hasLoad(stepOf.exercise) ? ['load' as const] : []),
     ...(isTreadmill(stepOf) && onAdjustIncline ? ['incline' as const] : []),
     ...(R.repsField(slot) ? ['reps' as const] : []),
-    ...(amountField && onSetAmount ? ['amount' as const] : []),
+    ...amountFields,
   ];
   const changeOpen = !!slot && changing === slot.id;
   const summary = stepOf?.kind !== 'exercise' ? '' : [
-    [dials.includes('load') ? `${target !== undefined ? fmtNum(target) : '—'} ${shortUnit(stepOf.exercise.unit)}` : '', dials.includes('reps') ? `${fmtNum(reps)} reps` : '', dials.includes('amount') ? `${fmtNum(amount ?? 0)} ${amountField === 'meters' ? 'm' : 'cal'}` : ''].filter(Boolean).join(' × '),
+    [dials.includes('load') ? `${target !== undefined ? fmtNum(target) : '—'} ${shortUnit(stepOf.exercise.unit)}` : '', dials.includes('reps') ? `${fmtNum(reps)} reps` : '', ...amountFields.map(f => `${fmtNum(amountOf(f) ?? 0)} ${f === 'meters' ? 'm' : 'cal'}`)].filter(Boolean).join(' × '),
     dials.includes('incline') ? `${fmtNum(incline ?? 0)}% incline` : '',
   ].filter(Boolean).join(' · ');
   const partLabel = slot ? `${slot.parts > 1 ? `Block ${slot.part + 1} of ${slot.parts}` : ''}${slot.mode !== 'loose' ? `${slot.parts > 1 ? ' · ' : ''}${modeLabelOf(slot)} ${slot.round + 1}${slot.mode === 'amrap' ? '' : ` of ${slot.rounds}`}` : ''}` : runsheet.title;
@@ -490,12 +492,12 @@ export const TimerScreen = ({ runsheet, state, now, onDone, onSkip, onBack, onPa
                               <Stepper aria-label="Reps" value={reps} min={0} max={500} onChange={onSetReps} />
                             </div>
                           )}
-                          {dials.includes('amount') && (
-                            <div className="flex items-center justify-between gap-3">
-                              <span className="text-[14px]">{amountField === 'meters' ? 'Metres done' : 'Calories done'}</span>
-                              <Stepper aria-label={amountField === 'meters' ? 'Metres' : 'Calories'} value={amount ?? 0} min={0} max={99999} step={amountField === 'meters' ? (stepOf.forMode === 'meters' ? 10 : Math.max(10, stepOf.exercise.step)) : 1} onChange={onSetAmount!} />
+                          {amountFields.map(f => (
+                            <div key={f} className="flex items-center justify-between gap-3">
+                              <span className="text-[14px]">{f === 'meters' ? 'Metres done' : 'Calories done'}</span>
+                              <Stepper aria-label={f === 'meters' ? 'Metres' : 'Calories'} value={amountOf(f) ?? 0} min={0} max={99999} step={f === 'meters' ? (stepOf.forMode === 'meters' ? 10 : Math.max(10, stepOf.exercise.step)) : 1} onChange={v => onSetAmount!(v, f)} />
                             </div>
-                          )}
+                          ))}
                           {lastLabel && onFill && (
                             <button type="button" aria-label="Use last time" onClick={() => onFill(slot.id, last!)} className="min-h-11 text-left text-[13px] font-semibold text-brand-ink underline decoration-dotted underline-offset-2">
                               Use last time ({lastLabel.replace(/^last time /, '')})

@@ -1,7 +1,7 @@
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import { EX } from '@/features/runsheet/fixtures';
-import { makeExercise, type Runsheet } from '@/features/runsheet/model';
+import { makeExercise, type ExerciseStep, type Runsheet } from '@/features/runsheet/model';
 import * as R from '../runner';
 import { composeStories } from '@storybook/react-vite';
 import { TimerScreen } from './timer-screen';
@@ -105,7 +105,7 @@ it('the RestBetweenSets story rests after set 1 with set 3 folded', () => {
 });
 
 describe('what the card asks to log', () => {
-  const rowerSheet = (log?: 'meters'): Runsheet => ({ id: 'rs', title: 'Rower sprints', items: [{ ...makeExercise(EX.cardio_rower, { forMode: 'seconds', forValue: 30 }), ...(log ? { log } : {}), id: 'rw' }, { ...makeExercise(EX.kb_swing, { forMode: 'seconds', forValue: 30, target: 24 }), log: 'reps', id: 'sw' }] });
+  const rowerSheet = (log?: ExerciseStep['log']): Runsheet => ({ id: 'rs', title: 'Rower sprints', items: [{ ...makeExercise(EX.cardio_rower, { forMode: 'seconds', forValue: 30 }), ...(log ? { log } : {}), id: 'rw' }, { ...makeExercise(EX.kb_swing, { forMode: 'seconds', forValue: 30, target: 24 }), log: 'reps', id: 'sw' }] });
   const card = (r: Runsheet, state = R.advance(R.start(r, 0), 0, { skipped: true })) =>
     render(<TimerScreen runsheet={r} state={state} now={0} onDone={noop} onSkip={noop} onBack={noop} onPause={noop} onResume={noop} onAdjust={noop} onSetReps={noop} onSetAmount={noop} onDrop={noop} onFinish={noop} onExit={noop} />);
   it('a timed rower asks for no metres', () => {
@@ -117,6 +117,14 @@ describe('what the card asks to log', () => {
     card(rowerSheet('meters'));
     fireEvent.click(screen.getByRole('button', { name: /^0 m\. Change$/ }));
     expect(screen.getByText('Metres done')).toBeTruthy();
+  });
+  it('a timed rower set to log metres and calories asks for both, nothing else', () => {
+    card(rowerSheet(['meters', 'calories']));
+    fireEvent.click(screen.getByRole('button', { name: /^0 m × 0 cal\. Change$/ }));
+    expect(screen.getByText('Metres done')).toBeTruthy();
+    expect(screen.getByText('Calories done')).toBeTruthy();
+    expect(screen.queryByText('Reps done')).toBeNull();
+    expect(screen.queryByLabelText('Target')).toBeNull();
   });
   it('timed swings set to log reps ask for reps next to the load', () => {
     const r = rowerSheet();
@@ -134,4 +142,15 @@ it('the set grid gives a timed row set to log metres a metres column, and shows 
   render(<TimerScreen runsheet={r} state={s} now={30000} onDone={noop} onSkip={noop} onBack={noop} onPause={noop} onResume={noop} onAdjust={noop} onSetReps={noop} onDrop={noop} onFinish={noop} onExit={noop} sets={{ ...grid, setAmount: noop }} />);
   expect(screen.getByText('30 sec · 142 m')).toBeTruthy();
   expect(screen.getByLabelText('Set 2 metres done')).toBeTruthy();
+});
+
+it('the set grid gives a rower logging metres and calories a column each', () => {
+  const r: Runsheet = { id: 'g', title: 'G', items: [{ kind: 'block', id: 'b', name: 'Rower sprints', repeat: 3, steps: [{ ...makeExercise(EX.cardio_rower, { forMode: 'seconds', forValue: 30 }), log: ['meters', 'calories'], id: 'rw' }, { kind: 'rest', id: 'r', seconds: 30 }] }] };
+  let s = R.advance(R.startBlock(R.start(r, 0), 0), 0, { skipped: true });
+  s = R.setAmountAt(s, s.slots[s.i].id, 142, 'meters');
+  s = R.setAmountAt(s, s.slots[s.i].id, 9, 'calories');
+  s = R.tick(s, 30000);
+  render(<TimerScreen runsheet={r} state={s} now={30000} onDone={noop} onSkip={noop} onBack={noop} onPause={noop} onResume={noop} onAdjust={noop} onSetReps={noop} onDrop={noop} onFinish={noop} onExit={noop} sets={{ ...grid, setAmount: noop }} />);
+  expect(screen.getByText('30 sec · 142 m · 9 cal')).toBeTruthy();
+  expect([!!screen.getByLabelText('Set 2 metres done'), !!screen.getByLabelText('Set 2 calories done'), screen.queryByLabelText('Set 2 load')]).toEqual([true, true, null]);
 });

@@ -18,7 +18,7 @@ description: Coach with TigerWorkouts. Use when the person asks what to train ne
 ## Write a workout
 
 - Get exercise keys from `search_exercises`; never guess them.
-- Build the runsheet as `create_workout` describes: warmup, main, cooldown roles; blocks for rounds, AMRAP, EMOM, for time or ladders; loads in the exercise's unit. A timed step logs only its time; set `log` (reps, meters, calories) when the person should record more, e.g. metres on a 30 s rower sprint.
+- Build the runsheet as `create_workout` describes: warmup, main, cooldown roles; blocks for rounds, AMRAP, EMOM, for time or ladders; loads in the exercise's unit. A timed step logs only its time; set `log` when the person should record more, one value or a list of what the exercise can log (`logs` in search_exercises), e.g. `["meters","calories"]` on a 30 s rower sprint, `"reps"` on 30 s of kettlebell swings.
 - A plain-text `plan` is fine for simple sessions ("row 5 min" / "kb swings 24 + push ups x5 40/20").
 - Saved workouts are private. Make one public only when asked.
 - Reply with the title, length, a short outline, and `previewUrl` or `appUrl`. Don't paste the JSON.
