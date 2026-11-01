@@ -6,6 +6,7 @@ import { ClientDetailScreen } from './client-detail-screen';
 import { CoachDashboardScreen } from './coach-dashboard-screen';
 import { CoachesPage } from './coaches-page';
 import { JoinScreen } from './join-screen';
+import { AiCoachCard } from './ai-coach-card';
 import { MyCoachCard } from './my-coach-card';
 
 const phone = (S: React.ComponentType) => (
@@ -71,6 +72,23 @@ export const MeCoachCard: Story = {
   render: () => (
     <div className="p-3">
       <MyCoachCard coach={{ coach: COACH_ID, name: 'Nick Holzherr', since: '' }} me={CLIENT_ID} notes={notesFixture()} onReply={ok} onLeave={noop} />
+    </div>
+  ),
+};
+
+/** Me tab: your AI coach, with Rename and Remove. */
+export const MeAiCoachCard: Story = {
+  render: () => (
+    <div className="p-3">
+      <AiCoachCard coach={{ name: 'Coach Claude', active: true, since: '' }} onRename={ok} onActive={noop} />
+    </div>
+  ),
+};
+/** Me tab: removed, with the way back. */
+export const MeAiCoachRemoved: Story = {
+  render: () => (
+    <div className="p-3">
+      <AiCoachCard coach={{ name: 'Coach Claude', active: false, since: '' }} onRename={ok} onActive={noop} />
     </div>
   ),
 };

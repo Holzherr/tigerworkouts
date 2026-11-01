@@ -11,6 +11,7 @@ import type { ClientSummary } from '../rollup';
 import { ClientDetailScreen } from './client-detail-screen';
 import { CoachDashboardScreen } from './coach-dashboard-screen';
 import { JoinScreen } from './join-screen';
+import { AiCoachCard } from './ai-coach-card';
 import { MyCoachCard } from './my-coach-card';
 
 const err = (e: unknown) => C.coachingMessage(e);
@@ -216,5 +217,41 @@ export const MyCoaches = ({ me, about, onLeft }: { me: string; about?: (n: C.Coa
         />
       ))}
     </>
+  );
+};
+
+/** Me tab: your AI coach (migration 0011), when your AI assistant has ever coached you. `onChanged` refreshes what it sent. */
+export const MyAiCoach = ({ onChanged, say }: { onChanged: () => void; say: (m: string) => void }) => {
+  const [coach, setCoach] = useState<C.AiCoach | null>(null);
+  useEffect(() => {
+    let alive = true;
+    C.myAiCoach()
+      .then(c => alive && setCoach(c))
+      .catch(() => {});
+    return () => {
+      alive = false;
+    };
+  }, []);
+  if (!coach) return null;
+  return (
+    <AiCoachCard
+      key={coach.name}
+      coach={coach}
+      onRename={async name => {
+        try {
+          setCoach(await C.updateAiCoach({ name }));
+          onChanged();
+          return null;
+        } catch (e) {
+          return err(e);
+        }
+      }}
+      onActive={active =>
+        void C.updateAiCoach({ active }).then(
+          c => (setCoach(c), onChanged(), say(active ? `${c.name} is back` : `${c.name} removed`)),
+          e => say(err(e)),
+        )
+      }
+    />
   );
 };

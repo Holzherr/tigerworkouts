@@ -174,10 +174,11 @@ struct DiscoverView: View {
             ForEach(Array(ordered.prefix(lead)), id: \.key) { mineRow($0, own: own, last: last, next: next) }
             ForEach(Home.upNextFirst(assigned) { $0.0.id == coachNext }, id: \.0.id) { pair in
                 let (a, sheet) = pair
-                let coach = Coaching.name(of: a.coach, in: store.coaching)
+                let coach = Coaching.name(for: a, in: store.coaching)
                 let done = Coaching.isDone(a, results: store.results)
+                let note = a.note?.trimmingCharacters(in: .whitespacesAndNewlines)
                 row(sheet, meta: "\(sheet.minutes) min · from \(coach)\(done ? " · done" : "")", tint: Brand.coralInk, from: .coach, play: true,
-                    card: Card(badge: done ? nil : "New · made for you", why: done ? nil : Home.why(sheet), contents: Home.contents(sheet), upNext: a.id == coachNext))
+                    card: Card(badge: done ? nil : "New · made for you", why: done ? nil : (note?.isEmpty == false ? note : Home.why(sheet)), contents: Home.contents(sheet), upNext: a.id == coachNext))
             }
             ForEach(Array(ordered.dropFirst(lead)), id: \.key) { mineRow($0, own: own, last: last, next: next) }
         }

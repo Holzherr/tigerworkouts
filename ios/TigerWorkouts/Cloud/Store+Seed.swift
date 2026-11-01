@@ -110,6 +110,28 @@ extension Store {
         trainingMaxes["bb_ohp"] = 61
         equipment = Equipment(barKg: 20, plates: [PlateCount(kg: 20, count: 2), PlateCount(kg: 10, count: 2), PlateCount(kg: 5, count: 2), PlateCount(kg: 2.5, count: 2), PlateCount(kg: 1.25, count: 2)], kettlebells: [12, 16, 24])
     }
+    /// `-seedAICoach` on launch: an AI coach named "Coach Claude" that sent you "Lower body,
+    /// heavier", one of your own workouts, with its note — so Mine shows it on top, from Coach
+    /// Claude, and Me shows the AI coach. Fixed ids: launching with it again replaces them.
+    func seedAICoachIfAsked(_ arguments: [String] = ProcessInfo.processInfo.arguments) {
+        guard arguments.contains("-seedAICoach") else { return }
+        let squat = Library.shared.exercise("bb_back_squat")?.ref ?? ExerciseRef(key: "bb_back_squat", name: "Back squat", unit: "kg", step: 2.5)
+        var sheet = Runsheet(id: "seed-ai", title: "Lower body, heavier", items: [
+            .block(Block(id: "seed-ai-b1", name: "Squat", repeatCount: 5, steps: [
+                .exercise(ExerciseStep(id: "seed-ai-squat", exercise: squat, target: 82.5, forMode: .reps, forValue: 5)),
+                .rest(RestStep(id: "seed-ai-r1", seconds: 120)),
+            ])),
+        ])
+        sheet.creator = "Coach Claude"
+        myWorkouts = [sheet] + myWorkouts.filter { $0.key != "seed-ai" }
+        var next = coaching
+        next.aiCoach = AICoach(name: "Coach Claude", status: "active")
+        next.assignments = [Assignment(id: "seed-ai-a", coach: "seed-me", client: "seed-me", workoutId: "seed-ai",
+                                       note: "Squat up 2.5 kg: you hit every rep last week.", createdAt: ISO8601.string(Date()))]
+            + next.assignments.filter { $0.id != "seed-ai-a" }
+        setCoaching(next)
+    }
+
     /// `-seedTimed` on launch: a workout of your own, "Row intervals" — three rounds of a 250 m row
     /// and a 30 s plank — done twice before (a week back and two minutes back, so it tops History), with round times, rows timed and a plank
     /// cut short once; so session detail has round splits against last time, the rower's logbook a

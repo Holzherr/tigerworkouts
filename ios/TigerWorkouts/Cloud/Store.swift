@@ -92,6 +92,7 @@ final class Store {
         seedProgressIfAsked()
         seedLoadsIfAsked()
         seedTimedIfAsked()
+        seedAICoachIfAsked()
         #endif
         loaded = true
         shareUpNext()

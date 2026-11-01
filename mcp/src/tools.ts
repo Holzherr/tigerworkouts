@@ -124,6 +124,7 @@ export const getProfile = async (db: Db, email?: string) => {
     db.get<{ id: string }[]>(`sessions?owner=eq.${db.userId}&started_at=gte.${enc(since)}&select=id`),
     db.get<{ id: string }[]>(`workouts?owner=eq.${db.userId}&select=id`),
   ]);
+  const coach = await aiCoach(db);
   const p = profiles?.[0];
   const prefs = (states?.[0]?.prefs ?? {}) as { name?: string; units?: string; bodyweightKg?: number; trainingMaxes?: Record<string, number>; saved?: string[] };
   return {
@@ -136,6 +137,7 @@ export const getProfile = async (db: Db, email?: string) => {
     savedWorkoutIds: prefs.saved ?? [],
     sessionsLast30Days: recent?.length ?? 0,
     ownWorkouts: own?.length ?? 0,
+    ...(coach !== undefined ? { aiCoach: coach } : {}),
     note: 'Loads are kg unless units is imperial (display only; stored values are still kg). trainingMaxes are kg, keyed by exercise key.',
   };
 };
@@ -228,8 +230,95 @@ const resolver = async (db: Db) => {
   return (key: string) => libraryRef(key) ?? own[key];
 };
 
-/** Shown as the author of workouts made through the connector (Nick, 15 Oct 2026). */
+/** Shown as the author of workouts made through the connector (Nick, 15 Oct 2026), and the AI
+ * coach's name until the person picks another. */
 export const AI_COACH = 'AI Coach';
+
+// ── the AI coach (migration 0011) ──
+// The assistant coaches through the app's own coaching feature, as a PT would: it assigns the person
+// a workout, which shows on their home as "New · made for you · from <name>". It has no account of
+// its own, so an assignment it makes is the person's row with coach = client = them. The person
+// names it, renames it and removes it in the app (Me) or by asking here (set_ai_coach).
+
+export interface AiCoach {
+  name: string;
+  active: boolean;
+}
+/** The person's AI coach: null when they never had one, undefined where migration 0011 is not on the server yet. */
+export const aiCoach = async (db: Db): Promise<AiCoach | null | undefined> => {
+  try {
+    const rows = await db.get<{ name: string; status: string }[]>(`ai_coaches?client=eq.${db.userId}&select=name,status`);
+    const r = rows?.[0];
+    return r ? { name: r.name, active: r.status === 'active' } : null;
+  } catch (e) {
+    if (missing(e)) return undefined;
+    throw e;
+  }
+};
+/** PostgREST's answer for a table or column it does not have (404 PGRST205, 400 42703 / PGRST204). */
+const missing = (e: unknown) => {
+  const { status, message } = e as { status?: number; message?: string };
+  return status === 404 || /does not exist|could not find the (table|.*column)/i.test(message ?? '');
+};
+
+const coachName = (name: string | undefined) => {
+  const n = (name ?? '').trim().replace(/\s+/g, ' ');
+  if (n.length > 40) throw new ToolError('A coach name is at most 40 characters.');
+  return n;
+};
+
+/** set_ai_coach: name the AI coach, or turn it on or off. Adds it when there is none. */
+export const setAiCoach = async (db: Db, a: { name?: string; active?: boolean }) => {
+  const name = coachName(a.name);
+  if (!name && a.active === undefined) throw new ToolError('Pass name, active, or both.');
+  const now = await aiCoach(db);
+  if (now === undefined) throw new ToolError('The AI coach is not switched on for TigerWorkouts yet. Workouts you make still save to their account.');
+  const patch: Record<string, unknown> = {};
+  if (name) patch.name = name;
+  if (a.active !== undefined) patch.status = a.active ? 'active' : 'ended';
+  if (now === null) await db.post('ai_coaches', { client: db.userId, ...patch });
+  else await db.patch(`ai_coaches?client=eq.${db.userId}`, patch);
+  const after = (await aiCoach(db))!;
+  return {
+    aiCoach: after,
+    note: after.active
+      ? `Workouts you make for them arrive in the app as their coach's would: "New · made for you · from ${after.name}". They can rename or remove you under Me.`
+      : 'Removed: workouts you make now save as their own, with no "from" line. Turn it back on only when they ask.',
+  };
+};
+
+/** Make sure there is an AI coach to send from: adds one named AI Coach the first time; leaves a removed one removed. */
+const coachToSend = async (db: Db): Promise<AiCoach | null | undefined> => {
+  const now = await aiCoach(db);
+  if (now !== null) return now;
+  try {
+    await db.post('ai_coaches', { client: db.userId });
+  } catch (e) {
+    // Two calls at once: the other one added it.
+    if ((e as { status?: number }).status !== 409) throw e;
+  }
+  return aiCoach(db);
+};
+
+/** Sends one of the person's workouts to them from their AI coach, replacing an earlier send of the same workout. */
+const sendFromCoach = async (db: Db, workoutId: string, note?: string) => {
+  const me = db.userId;
+  await db.del(`assignments?coach=eq.${me}&client=eq.${me}&workout_id=eq.${enc(workoutId)}`);
+  await db.post('assignments', { coach: me, client: me, workout_id: workoutId, note: note?.trim().slice(0, 1000) || null });
+};
+
+/** What a write says about the AI coach: who it came from, or why it did not go through the coach. */
+const coachOutcome = async (db: Db, workoutId: string, coach: AiCoach | null | undefined, note?: string) => {
+  if (!coach) return {};
+  if (!coach.active) return { aiCoach: 'The person removed their AI coach, so this saved as their own workout. Turn it back on (set_ai_coach) only if they ask.' };
+  try {
+    await sendFromCoach(db, workoutId, note);
+    return { fromCoach: coach.name };
+  } catch (e) {
+    if (missing(e)) return {};
+    throw e;
+  }
+};
 
 /** What create_workout and start_workout take: a structured runsheet, or a plain-text plan. */
 export interface DraftArgs {
@@ -256,18 +345,20 @@ const draftToRunsheet = async (db: Db, a: DraftArgs): Promise<{ runsheet: Runshe
   throw new ToolError('Pass workout (structured) or plan (plain text).');
 };
 
-export const createWorkout = async (db: Db, a: DraftArgs & { public?: boolean }) => {
+export const createWorkout = async (db: Db, a: DraftArgs & { public?: boolean; note?: string }) => {
   const { runsheet: r, assumptions } = await draftToRunsheet(db, a);
   const id = newId();
-  // Workouts an assistant writes say so; the person can still pass their own name as creator.
-  const creator = r.creator ?? AI_COACH;
+  const coach = await coachToSend(db);
+  // Workouts an assistant writes say so, by its coach name; the person can still pass their own name as creator.
+  const creator = r.creator ?? coach?.name ?? AI_COACH;
   const runsheet: Runsheet = { ...r, id, creator, createdAt: new Date().toISOString(), source: { title: r.title, kind: 'user', author: creator } };
   await db.post('workouts', { id, owner: db.userId, creator: creator ?? null, title: r.title, public: a.public ?? false, data: runsheet });
-  return { id, title: r.title, public: a.public ?? false, minutes: runsheetMinutes(runsheet), outline: outline(runsheet), appUrl: appUrl(id), previewUrl: previewUrl(runsheet), shareUrl: shareUrl(runsheet, a.public ?? false), assumptions };
+  const sent = await coachOutcome(db, id, coach, a.note);
+  return { id, title: r.title, public: a.public ?? false, minutes: runsheetMinutes(runsheet), outline: outline(runsheet), ...sent, appUrl: appUrl(id), previewUrl: previewUrl(runsheet), shareUrl: shareUrl(runsheet, a.public ?? false), assumptions };
 };
 
-export const updateWorkout = async (db: Db, a: { id: string; workout?: RunsheetInput; public?: boolean }) => {
-  if (!a.workout && a.public === undefined) throw new ToolError('Nothing to change: pass workout, public, or both.');
+export const updateWorkout = async (db: Db, a: { id: string; workout?: RunsheetInput; public?: boolean; assign?: boolean; note?: string }) => {
+  if (!a.workout && a.public === undefined && !a.assign) throw new ToolError('Nothing to change: pass workout, public, assign, or a mix.');
   const rows = await db.get<WorkoutRow[]>(`workouts?id=eq.${enc(a.id)}&owner=eq.${db.userId}&select=${WORKOUT_COLS}`);
   const row = rows?.[0];
   if (!row) {
@@ -289,9 +380,10 @@ export const updateWorkout = async (db: Db, a: { id: string; workout?: RunsheetI
     Object.assign(patch, { title: runsheet.title, creator: runsheet.creator ?? null, data: { ...data, public: a.public ?? row.public } });
   }
   if (a.public !== undefined) patch.public = a.public;
-  const updated = await db.patch<WorkoutRow[]>(`workouts?id=eq.${enc(a.id)}&owner=eq.${db.userId}`, patch);
+  const updated = Object.keys(patch).length ? await db.patch<WorkoutRow[]>(`workouts?id=eq.${enc(a.id)}&owner=eq.${db.userId}`, patch) : [row];
   if (!updated?.length) throw new ToolError(`Could not update ${a.id}.`);
-  return { id: a.id, title: runsheet.title, public: updated[0].public, minutes: runsheetMinutes(runsheet), outline: outline(runsheet), appUrl: appUrl(a.id), previewUrl: previewUrl(runsheet), shareUrl: shareUrl(runsheet, updated[0].public) };
+  const sent = a.assign ? await coachOutcome(db, a.id, await coachToSend(db), a.note) : {};
+  return { id: a.id, title: runsheet.title, public: updated[0].public, minutes: runsheetMinutes(runsheet), outline: outline(runsheet), ...sent, appUrl: appUrl(a.id), previewUrl: previewUrl(runsheet), shareUrl: shareUrl(runsheet, updated[0].public) };
 };
 
 /** The web app's own share link: the runsheet travels in the URL, so it opens with no sign-in. */

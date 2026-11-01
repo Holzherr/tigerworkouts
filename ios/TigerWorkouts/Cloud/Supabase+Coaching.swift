@@ -54,6 +54,23 @@ extension Supabase {
         return note
     }
 
+    /// Your AI coach (migration 0011). Throws before 0011 is applied; nil when you have none.
+    func aiCoach() async throws -> AICoach? {
+        guard let uid = user?.id else { return nil }
+        let (data, _) = try await request("rest/v1/ai_coaches?select=name,status&client=eq.\(uid)")
+        return try JSONDecoder().decode([AICoach].self, from: data).first
+    }
+
+    /// Rename (name) or remove / take back (status) your AI coach; returns the row as stored.
+    func updateAICoach(_ change: [String: String]) async throws -> AICoach {
+        guard let uid = user?.id else { throw SupabaseError(message: "Not signed in") }
+        let (data, _) = try await request("rest/v1/ai_coaches?client=eq.\(uid)", method: "PATCH", body: change, headers: ["Prefer": "return=representation"])
+        guard let row = try JSONDecoder().decode([AICoach].self, from: data).first else {
+            throw SupabaseError(message: "AI coach not saved")
+        }
+        return row
+    }
+
     /// Anyone with the link may ask, signed in or not. Nil for a code that does not exist.
     func coachInviteInfo(code: String) async throws -> CoachInvite? {
         let (data, _) = try await request("rest/v1/rpc/coach_invite_info", method: "POST", body: ["p_code": code])

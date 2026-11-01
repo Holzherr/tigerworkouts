@@ -198,6 +198,64 @@ describe('writes', () => {
   });
 });
 
+describe('AI coach (migration 0011)', () => {
+  beforeEach(() => {
+    tables.ai_coaches = [];
+    tables.assignments = [];
+  });
+
+  it('create_workout adds the AI coach the first time and sends the workout from it, with the note', async () => {
+    expect((await T.getProfile(db)).aiCoach).toBeNull();
+    const out = await T.createWorkout(db, { workout: draft(), note: 'Bench up 2.5 kg' });
+    expect(out.fromCoach).toBe('AI Coach');
+    expect(tables.ai_coaches).toMatchObject([{ client: NICK, name: 'AI Coach', status: 'active' }]);
+    expect(tables.assignments).toMatchObject([{ coach: NICK, client: NICK, workout_id: out.id, note: 'Bench up 2.5 kg' }]);
+    expect(tables.workouts.find(w => w.id === out.id)).toMatchObject({ owner: NICK, creator: 'AI Coach' });
+    expect((await T.getProfile(db)).aiCoach).toEqual({ name: 'AI Coach', active: true });
+  });
+
+  it('the name the person picks signs the workout and the assignment', async () => {
+    await T.setAiCoach(db, { name: '  Coach   Claude ' });
+    const out = await T.createWorkout(db, { workout: draft() });
+    expect(out.fromCoach).toBe('Coach Claude');
+    expect(tables.workouts.find(w => w.id === out.id)!.creator).toBe('Coach Claude');
+  });
+
+  it('a removed AI coach stays removed: the workout saves as their own, and the result says why', async () => {
+    await T.setAiCoach(db, { active: false });
+    const out = await T.createWorkout(db, { workout: draft() });
+    expect(out.fromCoach).toBeUndefined();
+    expect(out.aiCoach).toMatch(/removed their AI coach/);
+    expect(tables.assignments).toEqual([]);
+    expect(tables.ai_coaches![0].status).toBe('ended');
+  });
+
+  it('update_workout with assign sends it again, replacing the earlier send', async () => {
+    const out = await T.createWorkout(db, { workout: draft() });
+    await T.updateWorkout(db, { id: out.id, workout: draft({ title: 'Upper push v2' }), assign: true, note: 'Shorter rests' });
+    expect(tables.assignments).toHaveLength(1);
+    expect(tables.assignments![0]).toMatchObject({ workout_id: out.id, note: 'Shorter rests' });
+    const plain = await T.updateWorkout(db, { id: 'u-mine', assign: true });
+    expect(plain.fromCoach).toBe('AI Coach');
+    expect(tables.assignments).toHaveLength(2);
+  });
+
+  it('set_ai_coach checks the name and needs something to change', async () => {
+    await expect(T.setAiCoach(db, { name: 'x'.repeat(41) })).rejects.toThrow(/40 characters/);
+    await expect(T.setAiCoach(db, {})).rejects.toThrow(/Pass name/);
+  });
+
+  it('before 0011 is on the server, create_workout saves as before and get_profile leaves aiCoach out', async () => {
+    delete tables.ai_coaches;
+    delete tables.assignments;
+    const out = await T.createWorkout(db, { workout: draft() });
+    expect(out).not.toHaveProperty('fromCoach');
+    expect(tables.workouts.find(w => w.id === out.id)!.creator).toBe('AI Coach');
+    expect(await T.getProfile(db)).not.toHaveProperty('aiCoach');
+    await expect(T.setAiCoach(db, { name: 'Tiger' })).rejects.toThrow(/not switched on/);
+  });
+});
+
 describe('access', () => {
   it('the allowlist admits listed ids, and an empty list admits everyone', () => {
     expect(allowed({ ALLOWED_USER_IDS: NICK }, { userId: NICK })).toBe(true);
@@ -228,9 +286,10 @@ describe('over MCP', () => {
     const init = await rpc({ jsonrpc: '2.0', id: 1, method: 'initialize', params: { protocolVersion: '2025-06-18', capabilities: {}, clientInfo: { name: 'test', version: '1' } } });
     expect(init.result.serverInfo.name).toBe('tigerworkouts');
     expect(init.result.instructions).toContain('runsheet');
+    expect(init.result.instructions).toContain('set_ai_coach');
 
     const list = await rpc({ jsonrpc: '2.0', id: 2, method: 'tools/list' });
-    expect(list.result.tools.map((t: { name: string }) => t.name).sort()).toEqual(['create_workout', 'get_profile', 'get_session', 'get_workout', 'list_sessions', 'list_workouts', 'log_session', 'preview_workout_url', 'search_exercises', 'start_workout', 'update_workout']);
+    expect(list.result.tools.map((t: { name: string }) => t.name).sort()).toEqual(['create_workout', 'get_profile', 'get_session', 'get_workout', 'list_sessions', 'list_workouts', 'log_session', 'preview_workout_url', 'search_exercises', 'set_ai_coach', 'start_workout', 'update_workout']);
 
     const call = await rpc({ jsonrpc: '2.0', id: 3, method: 'tools/call', params: { name: 'create_workout', arguments: { workout: draft() } } });
     expect(call.result.isError).toBeFalsy();
