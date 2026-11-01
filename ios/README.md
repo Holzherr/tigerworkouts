@@ -98,6 +98,13 @@ the public TestFlight link (https://testflight.apple.com/join/r8uFaWKY) on bramb
 That page's source is `site/`; it deploys into the `brambruesch-dev` Pages project alongside Sloth's
 `/sloth/` (a Pages deploy replaces every file, so assemble both before `wrangler pages deploy`).
 
+## App Store
+
+Listing text, review notes and screenshots are in `fastlane/` (fastlane `deliver` layout);
+`specs/app-store-submission.md` lists every App Store Connect field and what is left to do.
+`./screenshots.sh` erases the iPhone 17 Pro Max simulator, sets a 9:41 status bar, runs
+`AppStoreScreenshotsUITests` on seeded history and writes the PNGs to `fastlane/screenshots/en-GB/`.
+
 ## Tests
 
 46 unit tests: the engine ported one for one from `runner.test.ts`, the muscle and effort models,

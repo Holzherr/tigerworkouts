@@ -694,6 +694,11 @@ final class WalkthroughUITests: XCTestCase {
             XCTAssertFalse(app.staticTexts.matching(NSPredicate(format: "label CONTAINS[c] 'entitlement'")).firstMatch.exists,
                            "HealthKit refused for want of the entitlement")
         }
+        // App Review looks for these inside the app.
+        let privacy = app.buttons["privacy-link"]
+        for _ in 0..<4 where !(privacy.exists && privacy.isHittable) { app.swipeUp() }
+        XCTAssertTrue(privacy.exists)
+        XCTAssertTrue(app.buttons["support-link"].exists)
     }
 
     func testLockScreen() {

@@ -76,6 +76,7 @@
 		8E5013531B6B4CE2A1DD5C76 /* Editing.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A7C84C7FDDB4BA9A91FFEDD /* Editing.swift */; };
 		8FB3458EC505D3A9500EBF12 /* InAppFeedback.swift in Sources */ = {isa = PBXBuildFile; fileRef = 365F760D0D51550AB5E9D2AA /* InAppFeedback.swift */; };
 		8FD2EA6E40590A95AF5BABC5 /* SessionIntents.swift in Sources */ = {isa = PBXBuildFile; fileRef = A3B9FAF9851A557E6EF67A33 /* SessionIntents.swift */; };
+		9055327BE02E6855E0F45B2F /* AppStoreScreenshotsUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = EEF72A211EB60F5953B2196B /* AppStoreScreenshotsUITests.swift */; };
 		91DC24981E172C0AF854AA9A /* Stall.swift in Sources */ = {isa = PBXBuildFile; fileRef = 92412812FEBAA08CD322ABA0 /* Stall.swift */; };
 		9B8A7823988AF5778174C44D /* Effort.swift in Sources */ = {isa = PBXBuildFile; fileRef = 624618DA7F3194F1EB9B1818 /* Effort.swift */; };
 		9BCF69C9560146E675BE5C19 /* Keychain.swift in Sources */ = {isa = PBXBuildFile; fileRef = 781B4703341F053F08AE0613 /* Keychain.swift */; };
@@ -299,6 +300,7 @@
 		EAC092179B72B4037F1F892C /* TigerWorkoutsWidgets.appex */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = "wrapper.app-extension"; path = TigerWorkoutsWidgets.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		EB44DFADFF676E278E9CE784 /* TigerWorkoutsWidgetsBundle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TigerWorkoutsWidgetsBundle.swift; sourceTree = "<group>"; };
 		EDC796C4D99ADE360B9D3367 /* SessionActivityController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionActivityController.swift; sourceTree = "<group>"; };
+		EEF72A211EB60F5953B2196B /* AppStoreScreenshotsUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppStoreScreenshotsUITests.swift; sourceTree = "<group>"; };
 		F2AA064A47C47085251E0515 /* Coaching.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Coaching.swift; sourceTree = "<group>"; };
 		F3553A92F9E0608BC81CAEAA /* Store.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Store.swift; sourceTree = "<group>"; };
 		F5CF9DC0EA5841510B9D13F6 /* WorkoutIconTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkoutIconTests.swift; sourceTree = "<group>"; };
@@ -482,6 +484,7 @@
 		BF12B91B310D3B2B9E59AF61 /* TigerWorkoutsUITests */ = {
 			isa = PBXGroup;
 			children = (
+				EEF72A211EB60F5953B2196B /* AppStoreScreenshotsUITests.swift */,
 				C1CA40FB23F26CFD0D7CB467 /* WalkthroughUITests.swift */,
 			);
 			path = TigerWorkoutsUITests;
@@ -879,6 +882,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				9055327BE02E6855E0F45B2F /* AppStoreScreenshotsUITests.swift in Sources */,
 				CF109BE9085D2D36932E37E3 /* WalkthroughUITests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
