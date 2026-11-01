@@ -11,6 +11,8 @@ struct RootView: View {
     @State private var widgetStart: String?
     /// A coach's invite link that opened the app.
     @State private var joining: JoinCode?
+    /// Where the person has been, for an in-app feedback note (Support/InAppFeedback.swift).
+    @State private var screens: [String] = ["workouts"]
 
     struct JoinCode: Identifiable { var id: String }
 
@@ -113,6 +115,29 @@ struct RootView: View {
         .onChange(of: store.loaded) { _, _ in startFromWidget() }
         .sheet(item: $joining) { join in
             JoinCoachView(code: join.id)
+        }
+        .background(ThreeFingerHold { openFeedback() })
+        .onChange(of: tab) { _, t in remember("\(t)") }
+        .onChange(of: running == nil) { _, idle in remember(idle ? "\(tab)" : "timer") }
+        #if DEBUG
+        // Simulators can't hold three fingers: launch with -TWFeedback to open the sheet.
+        .task { if ProcessInfo.processInfo.arguments.contains("-TWFeedback") { try? await Task.sleep(for: .seconds(4)); openFeedback() } }
+        #endif
+    }
+
+    private func remember(_ screen: String) {
+        screens.append(screen)
+        if screens.count > 6 { screens.removeFirst() }
+    }
+
+    /// The screen, account and run as they are at the moment of the gesture.
+    private func openFeedback() {
+        let screen = running != nil ? "timer" : "\(tab)"
+        let run = running?.state ?? SessionRunner.readSaved()?.state
+        let recent = screens
+        Task {
+            let user = await Supabase.shared.user
+            InAppFeedback.present(context: InAppFeedback.context(user: user, screen: screen, recentScreens: recent, run: run))
         }
     }
 

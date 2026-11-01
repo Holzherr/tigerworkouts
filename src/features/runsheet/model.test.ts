@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { addSet, roundsLabel, editSet, plannedSet, removeSet, straightSetStep, flatten, fromLegacy, groupOnto, insertAfter, makeExercise, makeRest, moveRow, moveRowTo, moveToTopLevel, rebuild, removeStep, isEmptyMain, repeatAsRounds, startBlock, runsheetSeconds, editedCopy, ofWorkout, type Block, type ExerciseRef, type Item, type Runsheet } from './model';
+import { addSet, roundsLabel, editSet, plannedSet, removeSet, straightSetStep, flatten, fromLegacy, groupOnto, insertAfter, makeExercise, makeRest, moveRow, moveRowTo, moveToTopLevel, rebuild, removeStep, isEmptyMain, repeatAsRounds, startBlock, runsheetSeconds, editedCopy, ofWorkout, hasSetting, settingLabel, type Block, type ExerciseRef, type Item, type Runsheet } from './model';
 import { EX, priyanka, withStarter } from './fixtures';
 
 const KB: ExerciseRef = { key: 'kb_swing', name: 'Kettlebell swings', unit: 'kg', step: 4 };
@@ -261,5 +261,21 @@ describe('how many rounds a block runs, in words', () => {
     expect(roundsLabel(b({ mode: 'emom', repeat: 1 }))).toBe('EMOM · 1 minute');
     expect(roundsLabel(b({ mode: 'emom', repeat: 8, everySec: 30 }))).toBe('EMOM · 8 × 30 s');
     expect(roundsLabel(b({ mode: 'ladder', ladder: [21, 15, 9] }))).toBe('21-15-9');
+  });
+});
+
+describe('hasSetting / settingLabel (iOS RunsheetMath)', () => {
+  it('names a new step\'s setting by its unit: Load on a bar, Speed on a treadmill, Distance on a rower', () => {
+    expect(settingLabel(makeExercise(EX.bb_back_squat))).toBe('Load');
+    expect(settingLabel(makeExercise(SPRINT))).toBe('Speed');
+    expect(settingLabel(makeExercise(EX.cardio_rower))).toBe('Distance');
+    expect(settingLabel(makeExercise(EX.cardio_assault_bike))).toBe('Calories');
+    expect(settingLabel(makeExercise(PRESS))).toBe('Load');
+  });
+  it('a step with no target has a setting only for a weight or speed unit', () => {
+    const noTarget = (unit: string) => ({ ...makeExercise({ ...KB, unit }), target: undefined });
+    expect(hasSetting(noTarget('m'))).toBe(false);
+    expect(hasSetting(noTarget('kg'))).toBe(true);
+    expect(hasSetting(makeExercise(EX.cardio_rower))).toBe(true);
   });
 });

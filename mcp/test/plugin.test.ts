@@ -28,6 +28,8 @@ describe('plugin', () => {
       expect(t.title, t.name).toBeTruthy();
       expect(t.name.length, t.name).toBeLessThanOrEqual(64);
       for (const hint of ['readOnlyHint', 'destructiveHint', 'openWorldHint']) expect(typeof t.annotations?.[hint], `${t.name}.${hint}`).toBe('boolean');
+      // Claude directory: readOnlyHint true for reads, destructiveHint true for anything that changes data.
+      expect(t.annotations?.readOnlyHint !== t.annotations?.destructiveHint, `${t.name} is read-only xor destructive`).toBe(true);
     }
   });
 

@@ -158,7 +158,7 @@ export const buildServer = (db: Db, account: Account = {}) => {
         note: z.string().max(1000).optional().describe("Your note as their coach, shown with the workout: why this one, what changed, what to aim for (e.g. \"Squat up 2.5 kg: you hit every rep last week.\")"),
         public: z.boolean().optional().describe('Default false'),
       },
-      annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: false },
+      annotations: { readOnlyHint: false, destructiveHint: true, idempotentHint: false, openWorldHint: false },
     },
     a => run(async () => keep(await T.createWorkout(db, a))),
   );
@@ -186,7 +186,7 @@ export const buildServer = (db: Db, account: Account = {}) => {
       title: 'AI coach',
       description: 'The name you go by as the user\'s AI coach, shown wherever a coach\'s name shows ("from <name>"). Let them choose it; the default is "AI Coach". active: false removes you as their coach (they can also do that in the app under Me); pass active: true only when they ask to have you back. Adds the AI coach when there is none.',
       inputSchema: { name: z.string().min(1).max(40).optional().describe('e.g. "AI Coach", "Coach Claude"'), active: z.boolean().optional() },
-      annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: false },
+      annotations: { readOnlyHint: false, destructiveHint: true, idempotentHint: true, openWorldHint: false },
     },
     a => run(() => T.setAiCoach(db, a)),
   );
@@ -260,7 +260,7 @@ export const buildServer = (db: Db, account: Account = {}) => {
           .optional()
           .describe('Per exercise: load used (target), reps per set, and sets for per-set detail (a timed rower sprint is { seconds: 30, meters: 142 })'),
       },
-      annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: false },
+      annotations: { readOnlyHint: false, destructiveHint: true, idempotentHint: true, openWorldHint: false },
     },
     a => run(async () => keep(await T.logSession(db, a))),
   );
@@ -273,7 +273,7 @@ export const buildServer = (db: Db, account: Account = {}) => {
         title: 'Keep this account',
         description: 'Keep an account that started without an email (otherwise deleted 7 days after it started). Adds the email to the same account, so workouts and history stay put and the person can sign in to the TigerWorkouts app (web and iPhone) with it. With email: done here; usually a confirmation email goes out and the claim completes when they click its link (status "confirm"). Without: returns claimUrl, a page where they type the email themselves; it works for up to an hour. Always pass on next to the person.',
         inputSchema: { email: z.string().max(200).optional() },
-        annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: true },
+        annotations: { readOnlyHint: false, destructiveHint: true, idempotentHint: true, openWorldHint: true },
       },
       a => run(() => claim(a)),
     );

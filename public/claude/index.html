@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TigerWorkouts for Claude</title>
+<meta name="description" content="Connect Claude to TigerWorkouts: coaching from your training history, new workouts written into the app, and a guided timer in the chat.">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<style>
+  :root { color-scheme: light dark; }
+  body { margin: 0; font: 17px/1.55 -apple-system, system-ui, sans-serif; background: #f8fafc; color: #0f172a; }
+  main { max-width: 680px; margin: 0 auto; padding: 40px 16px 64px; }
+  h1 { font-size: 28px; margin: 0 0 4px; }
+  h2 { font-size: 19px; margin: 32px 0 8px; }
+  .muted { color: #64748b; }
+  a { color: #ff4d2e; }
+  ul, ol { padding-left: 20px; }
+  li { margin: 4px 0; }
+  code { font: 14px ui-monospace, SFMono-Regular, Menlo, monospace; background: #eef2f7; border-radius: 6px; padding: 2px 5px; word-break: break-all; }
+  .mark { width: 40px; height: 40px; margin-bottom: 12px; }
+  footer { margin-top: 40px; font-size: 15px; }
+  @media (prefers-color-scheme: dark) { body { background: #0b1019; color: #f1f5f9; } .muted { color: #94a3b8; } code { background: #1e293b; } }
+</style>
+</head>
+<body>
+<main>
+<img class="mark" src="/icons/icon-192.png" alt="">
+<h1>TigerWorkouts for Claude</h1>
+<p class="muted">Coaching from your real training history, new workouts written straight into the app, and a guided timer in the chat.</p>
+
+<h2>What Claude can do with it</h2>
+<ul>
+<li>Read your profile and training history: the loads, reps and times you did.</li>
+<li>Search your workouts, public workouts and a catalogue of about 480 (benchmarks, lifting programmes, NHS plans, follow-along videos).</li>
+<li>Write new workouts into your account, or change your own. New workouts are private unless you ask for them to be public.</li>
+<li>Run a workout now with a timer in the chat, and log the session when you finish.</li>
+<li>Give you a link that opens a workout on tigerworkouts.com with no sign-in.</li>
+</ul>
+
+<h2>Connect</h2>
+<ol>
+<li>In Claude, open Settings → Connectors and add TigerWorkouts. Before the directory listing is live, use Add custom connector with <code>https://mcp.tigerworkouts.com/mcp</code>.</li>
+<li>Sign in with your TigerWorkouts email (we send a 6-digit code), or tap "Start now, no account needed".</li>
+<li>Ask away. Claude asks before any tool that writes to your account.</li>
+</ol>
+<p>Claude Code: <code>claude mcp add --transport http tigerworkouts https://mcp.tigerworkouts.com/mcp</code>, or the plugin, which adds coaching skills: <code>/plugin marketplace add Holzherr/tigerworkouts</code> then <code>/plugin install tigerworkouts@tigerworkouts</code>. More clients: <a href="https://mcp.tigerworkouts.com">mcp.tigerworkouts.com</a>.</p>
+
+<h2>No account needed to start</h2>
+<p>"Start now" makes an account with no email. Anything made with it stays private, and it is deleted with everything in it 7 days after it was created. To keep it, ask Claude to "keep my TigerWorkouts account", give your email and click the link we send. Then sign in with that email on tigerworkouts.com or in the iPhone app and the same workouts are there.</p>
+
+<h2>Try asking</h2>
+<ul>
+<li>"Look at my last month in TigerWorkouts and tell me what to change."</li>
+<li>"Write me a 30-minute upper-body session for tomorrow using my last loads."</li>
+<li>"Find a 20-minute kettlebell workout and start it."</li>
+<li>"How did this week compare with last week?"</li>
+</ul>
+
+<h2>Your data</h2>
+<p>Claude acts as you: it sees your own workouts and history plus public workouts, nothing of anyone else's. We do not receive your conversations. Disconnect any time from Claude's connector settings, and delete your account in the app (Me → Delete account). Details in the <a href="/privacy/">Privacy Policy</a>.</p>
+
+<p>Workouts and suggestions are not medical advice. Use your own judgement on loads and exercises, and stop if something hurts.</p>
+
+<footer class="muted">
+<a href="/">TigerWorkouts</a> · <a href="/privacy/">Privacy Policy</a> · <a href="/terms/">Terms of Service</a> · <a href="/support/">Support</a> · <a href="mailto:brambruesch@nickholzherr.com">brambruesch@nickholzherr.com</a>
+</footer>
+</main>
+</body>
+</html>
