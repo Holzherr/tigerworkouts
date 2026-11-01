@@ -5,7 +5,7 @@
  */
 import { fromRow, workoutFromRow } from '@/features/cloud/rows';
 import type { LibraryExercise } from '@/features/exercises/library';
-import { forLabel, loadLabel, modeLabel, ROLE_LABEL, runsheetMinutes, type ExerciseStep, type Item, type Runsheet, type Step } from '@/features/runsheet/model';
+import { exerciseLogs, forLabel, loadLabel, modeLabel, ROLE_LABEL, runsheetMinutes, stepLogs, type ExerciseStep, type Item, type Runsheet, type Step } from '@/features/runsheet/model';
 import { parsePlan } from '@/features/runsheet/parse-text';
 import type { ExerciseRef } from '@/features/runsheet/model';
 import type { SessionResult, SetResult, StepResult } from '@/features/runsheet/progression';
@@ -48,7 +48,7 @@ const SESSION_COLS = 'id,workout_id,type,title,started_at,ended_at,duration_min,
 
 // ── readable forms ──
 const exerciseName = (key: string, own: Record<string, LibraryExercise> = {}) => own[key]?.name ?? FULL_LIBRARY[key]?.name ?? key;
-const stepLine = (s: Step) => (s.kind === 'rest' ? `Rest ${s.seconds}s` : [s.exercise.name, forLabel(s), loadLabel(s), s.incline ? `${s.incline}% incline` : '', s.log ? `log ${s.log}` : ''].filter(Boolean).join(' · '));
+const stepLine = (s: Step) => (s.kind === 'rest' ? `Rest ${s.seconds}s` : [s.exercise.name, forLabel(s), loadLabel(s), s.incline ? `${s.incline}% incline` : '', stepLogs(s).length ? `log ${stepLogs(s).join(' + ')}` : ''].filter(Boolean).join(' · '));
 /** One line per step, blocks indented, parts headed — what a person would read off the screen. */
 export const outline = (r: Runsheet): string => {
   const lines: string[] = [];
@@ -318,7 +318,7 @@ export const searchExercises = async (db: Db, a: { query?: string; group?: strin
   const hits = all.filter(e => (!a.group || e.group === a.group) && words.every(w => `${e.key} ${e.name} ${e.group}`.toLowerCase().includes(w)));
   const seen = new Set<string>();
   const unique = hits.filter(e => !seen.has(e.key) && seen.add(e.key));
-  return { total: unique.length, exercises: unique.slice(0, clampLimit(a.limit, 30, 200)).map(e => ({ key: e.key, name: e.name, unit: e.unit, step: e.step, group: e.group, cue: e.cue, mine: e.mine || undefined })) };
+  return { total: unique.length, exercises: unique.slice(0, clampLimit(a.limit, 30, 200)).map(e => ({ key: e.key, name: e.name, unit: e.unit, step: e.step, group: e.group, cue: e.cue, logs: exerciseLogs(e), mine: e.mine || undefined })) };
 };
 
 // ── start a workout in the chat ──

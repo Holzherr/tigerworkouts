@@ -3,7 +3,7 @@
  * transition takes `now` in ms so it can be tested without a clock. The React hook adds the
  * interval, sounds, wake lock and persistence.
  */
-import { amountOf, countsReps, measureOf, plannedSet, rungSteps, scoreType, type Block, type ExerciseRef, type ExerciseStep, type ItemRole, type Runsheet, type SetPlan, type SetType, type Step } from '@/features/runsheet/model';
+import { amountsOf, countsReps, measureOf, plannedSet, rungSteps, scoreType, type Block, type ExerciseRef, type ExerciseStep, type ItemRole, type Runsheet, type SetPlan, type SetType, type Step } from '@/features/runsheet/model';
 import type { RoundSplit, SessionResult, SetResult, StepResult } from '@/features/runsheet/progression';
 
 export interface Slot {
@@ -505,21 +505,26 @@ export const setReps = (s: RunState, reps: number): RunState => {
   return { ...s, actuals: { ...s.actuals, [c.id]: { ...(s.actuals[c.id] ?? { changes: [] }), reps } } };
 };
 
-/** The metres or calories done on the running distance or calorie step, when not what the plan said. */
-export const setAmount = (s: RunState, value: number): RunState => {
+export type Amount = 'meters' | 'calories';
+/** The metres or calories done on the running step, when not what the plan said. `field` picks one
+ * when the step records both; the first it records otherwise. */
+export const setAmount = (s: RunState, value: number, field?: Amount): RunState => {
   const c = current(s);
-  return c ? setAmountAt(s, c.id, value) : s;
+  return c ? setAmountAt(s, c.id, value, field) : s;
 };
-/** Which field a step's amount goes in: metres or calories for a step done for either, or for one
- * whose `log` asks for them (`amountOf`); none for other work. */
-export const amountField = (sl: Slot | undefined): 'meters' | 'calories' | undefined => (sl?.kind === 'work' && sl.step.kind === 'exercise' ? amountOf(sl.step) : undefined);
+/** The fields a step's amounts go in: metres and/or calories for a step done for either, or set to
+ * log them (`amountsOf`); none for other work. */
+export const amountFields = (sl: Slot | undefined): Amount[] => (sl?.kind === 'work' && sl.step.kind === 'exercise' ? amountsOf(sl.step) : []);
+/** The first of `amountFields`. */
+export const amountField = (sl: Slot | undefined): Amount | undefined => amountFields(sl)[0];
 /** Whether a set asks for the reps done: see `countsReps`. */
 export const repsField = (sl: Slot | undefined) => sl?.kind === 'work' && sl.step.kind === 'exercise' && countsReps(sl.step);
-/** What a distance or calorie set did: changed on the card or the grid, else the plan's distance or
- * calories. A timed piece on a machine has no plan for it, so only what was entered. */
-export const amountAt = (s: RunState, sl: Slot): number | undefined => {
-  const f = amountField(sl);
-  if (!f || sl.step.kind !== 'exercise') return undefined;
+/** What a set did in metres or calories (`field`, else the first it records): changed on the card or
+ * the grid, else the plan's distance or calories. A timed piece on a machine has no plan for it, so
+ * only what was entered. */
+export const amountAt = (s: RunState, sl: Slot, field?: Amount): number | undefined => {
+  const f = field ?? amountField(sl);
+  if (!f || !amountFields(sl).includes(f) || sl.step.kind !== 'exercise') return undefined;
   return s.actuals[sl.id]?.[f] ?? (sl.step.forMode === f ? sl.step.forValue : undefined);
 };
 
@@ -541,11 +546,12 @@ export const setRepsAt = (s: RunState, slotId: string, reps: number): RunState =
   if (!sl || sl.kind !== 'work' || s.actuals[slotId]?.doneAt !== undefined) return s;
   return { ...s, actuals: { ...s.actuals, [slotId]: { ...(s.actuals[slotId] ?? { changes: [] }), reps } } };
 };
-/** Metres or calories for one set from its row. A done set is locked like its reps. */
-export const setAmountAt = (s: RunState, slotId: string, value: number): RunState => {
+/** Metres or calories (`field`, else the first the step records) for one set from its row. A done
+ * set is locked like its reps. */
+export const setAmountAt = (s: RunState, slotId: string, value: number, field?: Amount): RunState => {
   const sl = s.slots[slotIndex(s, slotId)];
-  const f = amountField(sl);
-  if (!f || s.actuals[slotId]?.doneAt !== undefined) return s;
+  const f = field ?? amountField(sl);
+  if (!f || !amountFields(sl).includes(f) || s.actuals[slotId]?.doneAt !== undefined) return s;
   return { ...s, actuals: { ...s.actuals, [slotId]: { ...(s.actuals[slotId] ?? { changes: [] }), [f]: value } } };
 };
 /** Only rest stands between the cursor and slot idx, inside one block: the set after the rest. */
@@ -586,8 +592,8 @@ export const fillSet = (s: RunState, now: number, slotId: string, set: SetResult
   let st = s;
   if (set.load !== undefined) st = adjustAt(st, now, slotId, set.load);
   if (set.reps !== undefined) st = setRepsAt(st, slotId, set.reps);
-  const amount = set.meters ?? set.calories;
-  if (amount !== undefined) st = setAmountAt(st, slotId, amount);
+  if (set.meters !== undefined) st = setAmountAt(st, slotId, set.meters, 'meters');
+  if (set.calories !== undefined) st = setAmountAt(st, slotId, set.calories, 'calories');
   return st;
 };
 
@@ -808,9 +814,11 @@ export const toResult = (s: RunState, r: Runsheet, now: number): SessionResult =
     const reps = a.reps !== undefined ? a.reps : slot.step.forMode === 'reps' ? slot.step.forValue : undefined;
     const at = doneAtSec(s, a);
     const type = typeAt(s, idx);
-    const f = amountField(slot);
-    const amount = amountAt(s, slot);
-    const set: SetResult = { ...(reps !== undefined ? { reps } : {}), ...(target !== undefined ? { load: target } : {}), ...(at !== undefined ? { at } : {}), ...(type !== 'normal' ? { type } : {}), ...(a.seconds !== undefined ? { seconds: a.seconds } : {}), ...(f && amount !== undefined ? { [f]: amount } : {}) };
+    const amounts = Object.fromEntries(amountFields(slot).flatMap(f => {
+      const v = amountAt(s, slot, f);
+      return v === undefined ? [] : [[f, v]];
+    }));
+    const set: SetResult = { ...(reps !== undefined ? { reps } : {}), ...(target !== undefined ? { load: target } : {}), ...(at !== undefined ? { at } : {}), ...(type !== 'normal' ? { type } : {}), ...(a.seconds !== undefined ? { seconds: a.seconds } : {}), ...amounts };
     // `target` and `reps` are for readers from before per-set rows: a warm-up is not the load
     // worked at and its reps are not work, so they stay out of both.
     const warm = type === 'warmup';

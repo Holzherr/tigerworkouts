@@ -84,21 +84,22 @@ enum Rounds {
     }
 
     /// What each round of a fixed-time block logged, for the steps set to log reps, metres or
-    /// calories: "Rower sprints: R1 142 m · R2 138 m · R3 145 m". A round is a working set of the
+    /// calories, a row per measure: "Rower sprints: R1 142 m · R2 138 m · R3 145 m". A round is a working set of the
     /// step, in order. Any difference earns "best" — the amount is what varied.
     static func amountRows(_ result: SessionResult, runsheet: Runsheet?) -> [AmountRow] {
         guard let runsheet else { return [] }
         var out: [AmountRow] = []
         for b in runsheet.items.compactMap(\.asBlock) where fixedTime(b) {
             for st in b.steps.compactMap(\.asExercise) {
-                guard let field = st.log else { continue }
                 let sets = result.steps.filter { $0.stepId == st.id }.flatMap { $0.sets ?? [] }.filter { $0.type != .warmup }
-                let values: [Double?] = sets.map { x in
-                    switch field {
-                    case .reps: x.reps
-                    case .meters: x.meters
-                    case .calories: x.calories
-                    }
+                // A row per measure: a rower logging metres and calories has two.
+                for field in st.log {
+                    let values: [Double?] = sets.map { x in
+                        switch field {
+                        case .reps: x.reps
+                        case .meters: x.meters
+                        case .calories: x.calories
+                        }
                 }
                 let given = values.enumerated().compactMap { i, v in v.map { (i: i, v: $0) } }
                 guard given.count > 1 else { continue }
@@ -107,6 +108,7 @@ enum Rounds {
                 let top = given.reduce(given[0]) { $1.v > $0.v ? $1 : $0 }
                 if given.contains(where: { $0.v != top.v }) { row.best = top.i }
                 out.append(row)
+                }
             }
         }
         return out

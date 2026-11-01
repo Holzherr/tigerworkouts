@@ -52,3 +52,7 @@ export const TreadmillSpeed: Story = { render: () => <Live step={{ ...makeExerci
 export const BarbellLoad: Story = { render: () => <Live step={{ ...makeExercise(EX.bb_back_squat, { forMode: 'reps', forValue: 5 }), id: 'bb' }} expanded /> };
 /** The same rower set to log metres: the timer asks for them after each set. The ✕ takes the row off. */
 export const TimedRowerLogsMetres: Story = { render: () => <Live step={{ ...rower, log: 'meters' }} expanded /> };
+/** A rower logs metres and calories at once: one row each, Add to log has nothing left to offer. */
+export const TimedRowerLogsBoth: Story = { render: () => <Live step={{ ...rower, log: ['meters', 'calories'] }} expanded /> };
+/** A kettlebell swing keeps its Weight row; Add to log offers Reps. */
+export const KettlebellExpanded: Story = { render: () => <Live step={{ ...swings, forMode: 'seconds', forValue: 30 }} expanded /> };
