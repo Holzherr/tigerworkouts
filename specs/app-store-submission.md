@@ -47,7 +47,7 @@ Metadata follows fastlane `deliver`'s layout in `ios/fastlane/`, so it can be up
 | What's New | not shown for a first version; `en-GB/release_notes.txt` for later |
 | Copyright | 2026 Brambruesch Ltd (`copyright.txt`) |
 | Version | 1.0 (`MARKETING_VERSION` in `ios/project.yml`); build numbers are set by App Store Connect on upload |
-| Screenshots, 6.9" iPhone | `ios/fastlane/screenshots/en-GB/`, 8 PNGs at 1320 × 2868. Smaller iPhone sizes are scaled from these by App Store Connect. No iPad: the app is iPhone-only (`TARGETED_DEVICE_FAMILY: "1"`). Retake with `ios/screenshots.sh`. |
+| Screenshots, iPhone | App Store Connect now asks for the 6.1"/6.3" slot (1206 × 2622). Uploaded 1 Nov 2026: `ios/fastlane/screenshots-framed/en-GB/`, 8 PNGs with the coral tiger-stripe background and a headline each, made from the plain shots in `ios/fastlane/screenshots/en-GB/` by `ios/framed-screenshots.py` (headless Chrome). No iPad: the app is iPhone-only (`TARGETED_DEVICE_FAMILY: "1"`). Retake with `ios/screenshots.sh`, then `ios/framed-screenshots.py`. |
 | App Review contact | `review_information/`: first and last name, email; phone left blank for Nick |
 | Review notes | `review_information/notes.txt` |
 | Sign-in information | `review-apple@tigerworkouts.com` / password from Keychain (`review_information/demo_user.txt`, `demo_password.txt` is a placeholder). The app itself needs no account; the notes give the signed-out path first. |
