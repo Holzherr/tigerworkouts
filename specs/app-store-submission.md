@@ -10,7 +10,7 @@ Metadata follows fastlane `deliver`'s layout in `ios/fastlane/`, so it can be up
 
 1. **Agreements:** App Store Connect → Business → accept the Paid Apps / Free Apps agreement if a banner asks (a free app needs only the free one; tax and banking only for paid).
 2. **Primary language:** App Information → check it is English (U.K.). The metadata is in `ios/fastlane/metadata/en-GB/`. If the app record was made as English (U.S.), either paste the same text there or rename the folder to `en-US`.
-3. **Demo account** (optional, recommended): App Review usually checks sign-in and account deletion. The reviewer account from `specs/store-submission.md` (password login) works here too. Put its email and password in App Review Information, or in `review_information/demo_user.txt` and `demo_password.txt` (do not commit them: the repo is public). Also add a phone number there.
+3. **Demo account:** App Review Information → Sign-in required: on. User name `review-apple@tigerworkouts.com` (profile "Sam", 5 workouts, 22 sessions to 31 Oct 2026), password from Nick's Keychain item "TigerWorkouts reviewer (Apple)". `review_information/demo_password.txt` holds only that placeholder: replace it locally before any `fastlane deliver` run and never commit the real one (the repo is public). Add a contact phone number too.
 4. **Pricing and availability:** Free, or a price; which countries.
 5. **Age rating questionnaire:** answers below. Two of them are Nick's call (coach notes and coach-sent workouts).
 6. **App Privacy:** enter the answers under "App Privacy" below (Data Types → Get Started). Then Publish.
@@ -50,7 +50,7 @@ Metadata follows fastlane `deliver`'s layout in `ios/fastlane/`, so it can be up
 | Screenshots, 6.9" iPhone | `ios/fastlane/screenshots/en-GB/`, 8 PNGs at 1320 × 2868. Smaller iPhone sizes are scaled from these by App Store Connect. No iPad: the app is iPhone-only (`TARGETED_DEVICE_FAMILY: "1"`). Retake with `ios/screenshots.sh`. |
 | App Review contact | `review_information/`: first and last name, email; phone left blank for Nick |
 | Review notes | `review_information/notes.txt` |
-| Sign-in required | No. Demo account optional (see "Left for Nick"). |
+| Sign-in information | `review-apple@tigerworkouts.com` / password from Keychain (`review_information/demo_user.txt`, `demo_password.txt` is a placeholder). The app itself needs no account; the notes give the signed-out path first. |
 
 ### Age rating answers
 

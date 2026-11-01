@@ -6,7 +6,13 @@ To try it:
 3. Workouts tab > + creates your own workout.
 4. Me > Settings > Apple Health turns on HealthKit: finished workouts are saved to Health; bodyweight and heart rate are read to work out calories.
 
-Sign-in is optional and only syncs data with our website (tigerworkouts.com). It offers Sign in with Apple, Google and an email code. To test signing in and account deletion without email, use the demo account below with "Use a password instead" on the sign-in screen. Account deletion: Me > Settings > Delete account.
+Sign-in is optional and only syncs data with our website (tigerworkouts.com). It offers Sign in with Apple, Google and an email code.
+
+Demo account, to see a signed-in account with history (5 workouts, 22 sessions):
+- Me > Sign in to sync > "Use a password instead"
+- Email: review-apple@tigerworkouts.com
+- Password: in the Sign-in Information fields
+After signing in, History and Me show the account's sessions. Please use Sign out rather than Delete account on the demo account, so it keeps its data for later reviews. To test deletion, sign in with Apple or an email code to make a new account, then Me > Settings > Delete account.
 
 Background audio: the app keeps an audio session open only while a workout is running, so the interval timer can play tones and keep time with the screen locked.
 
