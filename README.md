@@ -83,6 +83,11 @@ v0.9 `legacy/data.js` workouts. The iPhone app runs the same model, ported: the 
 `ios/TigerWorkouts/Engine/Runner.swift` is `src/features/timer/runner.ts` line for line, and has to
 follow it when it changes. Mid-session, `replan` takes an edited runsheet and rebuilds every slot
 after the running block, keeping what is done (`specs/unified-editing.md`).
+A session run with changes keeps what it ran as `version` on its own row — private, never a
+workout of its own; the workout page lists them as "Your versions" with Run and Make base, and Edit
+on a workout that has been done asks "Just this time" or "Update workout"
+(`src/features/runsheet/versions.ts`, ported to `ios/TigerWorkouts/Model/Versions.swift`;
+`specs/workout-versions.md`).
 
 ## Imported workouts
 

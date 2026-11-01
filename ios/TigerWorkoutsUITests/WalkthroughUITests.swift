@@ -440,6 +440,7 @@ final class WalkthroughUITests: XCTestCase {
         // to the middle first.
         centre([rower, rest])
         drag(rest, onto: rower)
+        updateIfAsked()
         // The first edit swaps the catalogue workout for a copy with fresh ids, so every row is
         // replaced and animates in; read the order once that settles rather than after a fixed wait.
         waitFor("dragging should reorder in place") { rest.frame.minY < rower.frame.minY }
@@ -1094,6 +1095,7 @@ final class WalkthroughUITests: XCTestCase {
         centre([rower])
         rower.swipeLeft()
         tap(app.buttons["Delete"])
+        updateIfAsked()
         let undo = app.buttons["undo"]
         XCTAssertTrue(undo.waitForExistence(timeout: 3), "a removed step should offer Undo")
         usleep(600_000) // let the toast finish sliding in
@@ -1211,6 +1213,68 @@ final class WalkthroughUITests: XCTestCase {
         tap(app.buttons["End session"])
         tap(app.buttons["Discard"])
         app.launchEnvironment["UITEST_NO_PROMPTS"] = "1"
+    }
+
+    /// Your versions: a workout done with changes shows them, Edit asks whether a change is for
+    /// this time only, and running a version again counts it once more.
+    func testWorkoutVersions() {
+        app.terminate()
+        app.launchArguments = ["-seedVersions"]
+        app.launch()
+        let discard = app.alerts.buttons["Discard"]
+        if discard.waitForExistence(timeout: 3) { discard.tap() }
+
+        open("Cindy")
+        let card = app.descendants(matching: .any)["versions-card"]
+        XCTAssertTrue(card.waitForExistence(timeout: 5), "a workout run with changes should list them as versions")
+        snap("120 Your versions on the workout page")
+
+        // No page-wide Edit (Nick, 1 Nov 2026): open the block, and the first change asks.
+        tap(app.buttons["block-header"].firstMatch)
+        let row = app.buttons.matching(NSPredicate(format: "label BEGINSWITH 'Pull-up'")).firstMatch
+        if row.waitForExistence(timeout: 3) {
+            row.swipeLeft()
+            let delete = app.buttons["Delete"]
+            if delete.waitForExistence(timeout: 2) {
+                delete.tap()
+                XCTAssertTrue(app.buttons["scope-once"].firstMatch.waitForExistence(timeout: 5), "a change on a workout that has been done should ask what it is for")
+                snap("121 The first change asks: just this time or the workout")
+                // The popover's buttons are in the tree twice.
+                tap(app.buttons["scope-once"].firstMatch)
+                // A row removed just this time: the banner says so, and Undo puts it back.
+                XCTAssertTrue(app.descendants(matching: .any)["once-banner"].waitForExistence(timeout: 5), "a change made just this time should say so")
+                snap("122 Just this time banner")
+                tap(app.buttons["once-undo"])
+            }
+        }
+        // Close the block; a tap while the popover is still going away can be lost.
+        let done = app.buttons["block-done"]
+        for _ in 0..<3 where done.exists {
+            sleep(1)
+            done.tap()
+        }
+
+        // Earlier runs on this simulator may have run it too: count from what the card says now.
+        let count = app.staticTexts.matching(NSPredicate(format: "label MATCHES '[0-9]+× · last .*'")).firstMatch
+        XCTAssertTrue(count.waitForExistence(timeout: 5), "the version should say how often it was run")
+        let times = Int(count.label.prefix { $0.isNumber }) ?? 0
+        XCTAssertGreaterThanOrEqual(times, 2, "the seeded version was run twice")
+        tap(app.buttons["version-run"])
+        XCTAssertTrue(app.buttons["End session"].waitForExistence(timeout: 5))
+        sleep(7)
+        tap(app.buttons["End session"])
+        tap(app.buttons["Finish and save"])
+        tap(app.buttons["Done"])
+        let after = app.staticTexts.matching(NSPredicate(format: "label BEGINSWITH %@", "\(times + 1)×")).firstMatch
+        XCTAssertTrue(after.waitForExistence(timeout: 8), "running a version again should keep it as that version")
+        snap("123 The version run again")
+    }
+
+    /// On a workout already done the first change asks what it is for; these walks change the
+    /// workout itself.
+    private func updateIfAsked() {
+        let base = app.buttons["scope-base"].firstMatch
+        if base.waitForExistence(timeout: 2) { base.tap() }
     }
 
     private func open(_ title: String) {

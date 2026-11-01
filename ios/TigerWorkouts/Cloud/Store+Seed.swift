@@ -63,6 +63,25 @@ extension Store {
         results = (results.filter { !ids.contains($0.rowId) } + seed).sorted { $0.startedAt > $1.startedAt }
     }
 
+    /// `-seedVersions` on launch: two Cindys run squats first, an hour and a day back, so the
+    /// workout page has a version to show, run again and make the base. Fixed ids, so launching
+    /// with it again replaces them.
+    func seedVersionsIfAsked(_ arguments: [String] = ProcessInfo.processInfo.arguments) {
+        guard arguments.contains("-seedVersions"), let cindy = catalogue.first(where: { $0.key == "cf-girls-cindy" }) else { return }
+        let items = cindy.items.map { item -> Item in
+            guard case .block(var b) = item else { return item }
+            b.steps = Array(b.steps.reversed())
+            return .block(b)
+        }
+        let seed = [3_600.0, 86_400].enumerated().map { i, ago in
+            var r = SessionResult(runsheetId: cindy.key, title: cindy.title, startedAt: ISO8601.string(Date().addingTimeInterval(-ago)), durationSec: 1_200, completed: true, id: "seed-version-\(i)")
+            r.version = SessionVersion(items: items)
+            return r
+        }
+        let ids = Set(seed.compactMap(\.id))
+        results = (results.filter { !ids.contains($0.rowId) } + seed).sorted { $0.startedAt > $1.startedAt }
+    }
+
     /// `-seedProgress` on launch: Jack (a 20-minute AMRAP) three times at 7, 7 and 8 rounds, the
     /// newest a minute back so Up next picks it with a Today target, and kettlebell swings stuck at
     /// 24 kg × 10 for five weeks — three sessions of their own plus the swings inside each Jack — so

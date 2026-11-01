@@ -79,7 +79,7 @@ enum SessionOrigin: String, CaseIterable, Codable, Sendable {
 /// apps read each other's history without a migration.
 struct SessionResult: Codable, Hashable, Sendable, Identifiable {
     enum CodingKeys: String, CodingKey, CaseIterable {
-        case id, runsheetId, startedFrom, title, startedAt, endedAt, durationSec, completed, activity, device, score, scoreText, capped, capReps, steps, splits, notes, rpe
+        case id, runsheetId, startedFrom, title, startedAt, endedAt, durationSec, completed, activity, device, score, scoreText, capped, capReps, steps, splits, notes, rpe, version
     }
 
     var id: String?
@@ -107,6 +107,9 @@ struct SessionResult: Codable, Hashable, Sendable, Identifiable {
     /// How hard the session felt, 1–10, tapped on the finish screen. Apple Health's workout effort
     /// scale; the web writes the same field.
     var rpe: Double?
+    /// What this session ran when it was not the workout as saved ("Just this time", a change mid-
+    /// session): its items. Nil when it ran the workout as it is (Versions.swift).
+    var version: SessionVersion?
 
     var rowId: String { id ?? "\(runsheetId)@\(startedAt)" }
     var startedDate: Date { ISO8601.date(startedAt) ?? .distantPast }
@@ -146,6 +149,7 @@ struct SessionResult: Codable, Hashable, Sendable, Identifiable {
         splits = try c.decodeIfPresent([RoundSplit].self, forKey: .splits)
         notes = try c.decodeIfPresent(String.self, forKey: .notes)
         rpe = try c.decodeIfPresent(Double.self, forKey: .rpe)
+        version = try? c.decodeIfPresent(SessionVersion.self, forKey: .version)
     }
 }
 
@@ -284,7 +288,8 @@ enum SessionRow {
         /// Keys this app owns: cleared first, so a field emptied on the phone (notes, effort) goes.
         func laid(over base: [String: Any]) -> [String: Any] {
             var d = base
-            for key in SessionResult.CodingKeys.allCases.map(\.stringValue) { d.removeValue(forKey: key) }
+            // A version this app could not read stays: the phone never clears one.
+            for key in SessionResult.CodingKeys.allCases.map(\.stringValue) where key != "version" || obj["version"] != nil { d.removeValue(forKey: key) }
             d.merge(obj) { _, new in new }
             return d
         }
