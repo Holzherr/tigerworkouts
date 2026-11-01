@@ -1,5 +1,5 @@
 import { Minus, Plus } from 'lucide-react';
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { cn, fmtNum } from '@/shared/utils/ui-utils';
 
 export interface StepperProps {
@@ -11,6 +11,8 @@ export interface StepperProps {
   /** Override how the number is shown, e.g. seconds → "1:30". */
   format?: (value: number) => string;
   size?: 'md' | 'sm';
+  /** Tap the number to type one: for amounts a fixed step can't reach, like a 15 m sled push. */
+  typeable?: boolean;
   'aria-label'?: string;
   className?: string;
 }
@@ -52,7 +54,7 @@ const useHold = (fire: () => boolean) => {
  * Minus / value / plus control. One row, 44px tall, value in bold with no unit suffix; the unit
  * belongs in the row label next to it. `sm` is narrower, not shorter. Hold a button to repeat.
  */
-export const Stepper = ({ value, onChange, step = 1, min = 0, max = 999, format = fmtNum, size = 'md', className, 'aria-label': ariaLabel }: StepperProps) => {
+export const Stepper = ({ value, onChange, step = 1, min = 0, max = 999, format = fmtNum, size = 'md', typeable, className, 'aria-label': ariaLabel }: StepperProps) => {
   // The value as last sent: a held button steps from it before the parent's re-render lands.
   const cur = useRef(value);
   cur.current = value;
@@ -63,6 +65,15 @@ export const Stepper = ({ value, onChange, step = 1, min = 0, max = 999, format 
     onChange(next);
     return true;
   };
+  const [typing, setTyping] = useState<string | null>(null);
+  const commit = () => {
+    const n = Number(typing);
+    if (typing !== null && typing.trim() !== '' && Number.isFinite(n)) {
+      const next = clamp(n, min, max);
+      if (next !== cur.current) onChange(next);
+    }
+    setTyping(null);
+  };
   const down = useHold(by(-step));
   const up = useHold(by(step));
   const w = size === 'sm' ? 'w-9' : 'w-11';
@@ -72,7 +83,23 @@ export const Stepper = ({ value, onChange, step = 1, min = 0, max = 999, format 
       <button type="button" className={btn} aria-label="Decrease" disabled={value <= min} {...down}>
         <Minus />
       </button>
-      <output className={cn('grid h-11 place-items-center px-1 font-bold tabular-nums', size === 'sm' ? 'min-w-12 text-[14px]' : 'min-w-14 text-[17px]')}>{format(value)}</output>
+      {typeable ? (
+        <input
+          aria-label={ariaLabel ? `${ariaLabel} value` : 'Value'}
+          inputMode="decimal"
+          className={cn('h-11 bg-transparent px-1 text-center font-bold tabular-nums outline-none focus:bg-canvas', size === 'sm' ? 'w-12 text-[14px]' : 'w-16 text-[17px]')}
+          value={typing ?? format(value)}
+          onFocus={e => {
+            setTyping(String(value));
+            requestAnimationFrame(() => e.target.select());
+          }}
+          onChange={e => setTyping(e.target.value)}
+          onBlur={commit}
+          onKeyDown={e => e.key === 'Enter' && e.currentTarget.blur()}
+        />
+      ) : (
+        <output className={cn('grid h-11 place-items-center px-1 font-bold tabular-nums', size === 'sm' ? 'min-w-12 text-[14px]' : 'min-w-14 text-[17px]')}>{format(value)}</output>
+      )}
       <button type="button" className={btn} aria-label="Increase" disabled={value >= max} {...up}>
         <Plus />
       </button>

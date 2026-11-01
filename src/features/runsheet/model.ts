@@ -462,6 +462,20 @@ export const countLabel = (m: ForMode): string | undefined =>
 
 // ── labels ──
 export const shortUnit = (unit: string) => unit.replace(' per arm', '').replace(' per side', '').trim();
+/** Whether the step carries a setting you dial in: a weight, or a machine's speed. An exercise whose
+ * unit is the measure of the work (a rower in metres, a plank in seconds, a bike in calories) or a
+ * bodyweight move has nothing to adjust (iOS `hasSetting`). */
+export const hasSetting = (s: ExerciseStep) => {
+  if (measureOf(s.exercise.unit)) return false;
+  if (s.target !== undefined) return true;
+  const u = shortUnit(s.exercise.unit ?? '').toLowerCase();
+  return u.startsWith('kg') || u.startsWith('lb') || u === 'kph' || u === 'mph';
+};
+/** What the setting is called: speed on a treadmill, load on a bar (iOS `settingLabel`). */
+export const settingLabel = (s: ExerciseStep) => {
+  const u = shortUnit(s.exercise.unit ?? '').toLowerCase();
+  return u === 'kph' || u === 'mph' ? 'Speed' : 'Load';
+};
 export const forLabel = (s: ExerciseStep) => {
   const n = s.forMax ? `${s.forValue}–${s.forMax}` : `${s.forValue}`;
   const base = s.forMode === 'max' ? 'max' : s.forMode === 'amrap' ? `${s.forValue}+ reps` : s.forMode === 'segment' ? (s.startSeconds !== undefined ? `from ${fmtClockLocal(s.startSeconds)}` : 'follow along') : s.forMode === 'seconds' ? `${n}s` : s.forMode === 'minutes' ? `${n} min` : s.forMode === 'meters' ? `${n} m` : s.forMode === 'calories' ? `${n} cal` : `${n} reps`;

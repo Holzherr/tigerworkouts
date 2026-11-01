@@ -84,3 +84,13 @@ export const MineNewMadeForYou: Story = {
     ],
   },
 };
+
+/** Nick's Mine on 27 Oct: four workouts, all done, so Up next is the one done longest ago, on top; the rest newest first. */
+export const MineAllDone: Story = {
+  args: {
+    workouts: [MADE_FOR_YOU, priyanka(), ...IMPORTED.map(w => w.runsheet)],
+    ownIds: [priyanka().id!, MADE_FOR_YOU.id!],
+    savedIds: ['cf-girls-fran', 'cf-girls-cindy'],
+    results: [[MADE_FOR_YOU.id!, 26], ['cf-girls-cindy', 25], ['cf-girls-fran', 24], [priyanka().id!, 22]].map(([runsheetId, day]) => ({ runsheetId: `${runsheetId}`, startedAt: `2026-10-${day}T18:00:00Z`, steps: [] })),
+  },
+};

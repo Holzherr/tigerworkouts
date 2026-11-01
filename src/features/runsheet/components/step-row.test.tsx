@@ -32,17 +32,17 @@ describe('StepRow: what a step logs', () => {
     fireEvent.click(screen.getByLabelText('Stop logging metres'));
     expect(onChange).toHaveBeenCalledWith({ ...rower, log: 'calories' });
   });
-  it('a rower has no weight row; a kettlebell has one, a treadmill a speed row', () => {
+  it('a rower has no load row; a kettlebell has one, a treadmill a speed row', () => {
     row(rower);
-    expect(screen.queryByLabelText('Weight')).toBeNull();
+    expect(screen.queryByLabelText(/^Load/)).toBeNull();
     expect(screen.queryByText(/\(m\)/)).toBeNull();
     row({ ...makeExercise(EX.kb_swing, { forMode: 'seconds', forValue: 30 }), id: 'kb' });
-    expect(screen.getByLabelText('Weight')).toBeTruthy();
+    expect(screen.getByLabelText(/^Load \(kg/)).toBeTruthy();
   });
   it('a treadmill sprint has a speed row', () => {
     row({ ...makeExercise(EX.sprint, { target: 14.5 }), id: 'sp' });
-    expect(screen.getByLabelText('Speed')).toBeTruthy();
-    expect(screen.queryByLabelText('Weight')).toBeNull();
+    expect(screen.getByLabelText('Speed (kph)')).toBeTruthy();
+    expect(screen.queryByLabelText(/^Load/)).toBeNull();
   });
   it('a timed kettlebell can log reps only', () => {
     row({ ...makeExercise(EX.kb_swing, { forMode: 'seconds', forValue: 30 }), id: 'kb' });
@@ -59,5 +59,24 @@ describe('StepRow: what a step logs', () => {
   it('a reps step of a lift has nothing more to log, so no Add to log', () => {
     row({ ...makeExercise(EX.db_row, { forMode: 'reps', forValue: 10, target: 20 }), id: 'cs' });
     expect(screen.queryByText('Add to log')).toBeNull();
+  });
+});
+
+describe('StepRow: any distance', () => {
+  it('a distance can be typed, so a 15 m sled push is not stuck on the 50 m steps', () => {
+    const onChange = row({ ...rower, forMode: 'meters', forValue: 400 });
+    const field = screen.getByLabelText('Duration value');
+    fireEvent.focus(field);
+    fireEvent.change(field, { target: { value: '15' } });
+    fireEvent.blur(field);
+    expect(onChange).toHaveBeenCalledWith({ ...rower, forMode: 'meters', forValue: 15 });
+  });
+  it('a blank or junk entry leaves the distance as it was', () => {
+    const onChange = row({ ...rower, forMode: 'meters', forValue: 400 });
+    const field = screen.getByLabelText('Duration value');
+    fireEvent.focus(field);
+    fireEvent.change(field, { target: { value: '' } });
+    fireEvent.blur(field);
+    expect(onChange).not.toHaveBeenCalled();
   });
 });

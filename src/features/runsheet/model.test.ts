@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { addSet, amountsOf, exerciseLogs, extraLogs, hasLoad, logChoices, stepLogs, withLogs, roundsLabel, editSet, plannedSet, removeSet, straightSetStep, flatten, fromLegacy, groupOnto, insertAfter, makeExercise, makeRest, moveRow, moveRowTo, moveToTopLevel, rebuild, removeStep, isEmptyMain, repeatAsRounds, startBlock, runsheetSeconds, editedCopy, ofWorkout, type Block, type ExerciseRef, type Item, type Runsheet } from './model';
+import { addSet, amountsOf, exerciseLogs, extraLogs, hasLoad, logChoices, stepLogs, withLogs, roundsLabel, editSet, plannedSet, removeSet, straightSetStep, flatten, fromLegacy, groupOnto, insertAfter, makeExercise, makeRest, moveRow, moveRowTo, moveToTopLevel, rebuild, removeStep, isEmptyMain, repeatAsRounds, startBlock, runsheetSeconds, editedCopy, ofWorkout, hasSetting, settingLabel, type Block, type ExerciseRef, type Item, type Runsheet } from './model';
 import { EX, priyanka, withStarter } from './fixtures';
 
 const KB: ExerciseRef = { key: 'kb_swing', name: 'Kettlebell swings', unit: 'kg', step: 4 };
@@ -291,5 +291,20 @@ describe('what an exercise and a step log', () => {
     expect(logChoices({ ...rower, forMode: 'meters', forValue: 500 })).toEqual(['calories']);
     expect(logChoices(makeExercise(EX.kb_swing, { forMode: 'reps', forValue: 10 }))).toEqual([]);
     expect(extraLogs({ ...rower, forMode: 'meters', forValue: 500, log: ['meters', 'calories'] })).toEqual(['calories']);
+  });
+});
+
+describe('hasSetting / settingLabel (iOS RunsheetMath)', () => {
+  it('names a step\'s setting by its unit: Load on a bar, Speed on a treadmill', () => {
+    expect(settingLabel(makeExercise(EX.bb_back_squat))).toBe('Load');
+    expect(settingLabel(makeExercise(SPRINT))).toBe('Speed');
+    expect(settingLabel(makeExercise(PRESS))).toBe('Load');
+  });
+  it('a measured exercise (rower, bike) has no setting; a weight or speed unit has one even with no target', () => {
+    const noTarget = (unit: string) => ({ ...makeExercise({ ...KB, unit }), target: undefined });
+    expect(hasSetting(noTarget('m'))).toBe(false);
+    expect(hasSetting(noTarget('kg'))).toBe(true);
+    expect(hasSetting(makeExercise(EX.cardio_rower))).toBe(false);
+    expect(hasSetting(makeExercise(EX.cardio_assault_bike))).toBe(false);
   });
 });

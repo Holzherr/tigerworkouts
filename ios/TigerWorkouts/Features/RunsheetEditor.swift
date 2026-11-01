@@ -4,11 +4,12 @@ import SwiftUI
 /// session and the timer's Session sheet during one. One flat list: hold and drag a step within a
 /// block, into another block or out on its own; hold a block's header (or tap its grip) to reorder
 /// the blocks, each as one card. Tap a header for its rounds and rest, a step for its sheet; swipe a
-/// step to remove it. With `editing` off it only reads: headers, exercise and rest rows, and a tap
-/// on an exercise for its sheet (the workout screen until Edit, Nick 18 Oct 2026).
+/// step to remove it. With `editing` off it reads: headers, exercise and rest rows, a tap on an
+/// exercise for its sheet, and a tap on a block's header opens that block alone for editing until
+/// its Done (the workout screen, Nick 1 Nov 2026). The grip shows either way.
 struct RunsheetEditor<Header: View>: View {
     var runsheet: Runsheet
-    /// Off, the list reads: no set grid, add rows, grips, drags or swipes.
+    /// Off, the list reads except for the one block opened by a tap on its header.
     var editing = true
     /// Items done or running in a live session: shown, never moved or changed.
     var locked: Set<String> = []
@@ -36,6 +37,8 @@ struct RunsheetEditor<Header: View>: View {
     @State private var picking: PickTarget?
     /// The reorder view, opened by holding a block's header or tapping its grip.
     @State private var reordering = false
+    /// With `editing` off, the block a tap on its header opened for editing.
+    @State private var focused: String?
     /// A short line after a drop that did not land where it was dropped.
     @State private var note: String?
 
@@ -61,8 +64,8 @@ struct RunsheetEditor<Header: View>: View {
     }
 
     var body: some View {
-        // Reading, the add rows (and the set grid on them) are not there at all.
-        let rows = editing ? Edit.rows(runsheet) : Edit.rows(runsheet).filter { !isAdd($0) }
+        // Reading, the add rows (and the set grid on them) show only under the block being edited.
+        let rows = Edit.rows(runsheet).filter { !isAdd($0) || live(blockOf($0)) }
         let frozen = lockedSteps
         List {
             header()
@@ -75,8 +78,8 @@ struct RunsheetEditor<Header: View>: View {
                 // clamps it below them or keeps them in place.
                 ForEach(rows) { row in
                     rowView(row, frozen: frozen)
-                        .moveDisabled(!editing || isAdd(row) || isHeader(row))
-                        .deleteDisabled(!editing || !isStep(row) || isFrozen(row, frozen))
+                        .moveDisabled(!live(blockOf(row)) || isAdd(row) || isHeader(row))
+                        .deleteDisabled(!live(blockOf(row)) || !isStep(row) || isFrozen(row, frozen))
                 }
                 .onMove { from, to in
                     guard let from = from.first else { return }
@@ -96,18 +99,21 @@ struct RunsheetEditor<Header: View>: View {
                 }
             }
 
-            if editing {
-                Section {
-                    Button { apply(Edit.addBlock(runsheet)) } label: {
-                        Label("Add block", systemImage: "square.stack.3d.up")
-                    }
-                    Button { picking = PickTarget(blockId: nil) } label: {
-                        Label("Add a one-off exercise", systemImage: "figure.run")
-                    }
+            // Adding is always there: reading, a new block opens for editing straight away.
+            Section {
+                Button {
+                    let added = Edit.addBlock(runsheet)
+                    apply(added)
+                    if !editing { withAnimation { focused = added.items.last?.id } }
+                } label: {
+                    Label("Add block", systemImage: "square.stack.3d.up")
                 }
-                .foregroundStyle(Brand.coralInk)
-                .listRowBackground(Brand.surface)
+                Button { picking = PickTarget(blockId: nil) } label: {
+                    Label("Add a one-off exercise", systemImage: "figure.run")
+                }
             }
+            .foregroundStyle(Brand.coralInk)
+            .listRowBackground(Brand.surface)
         }
         .listStyle(.insetGrouped)
         .scrollContentBackground(.hidden)
@@ -166,6 +172,18 @@ struct RunsheetEditor<Header: View>: View {
         return false
     }
 
+    /// Whether a row's block takes edits: everything in edit mode, else the block opened by a tap.
+    private func live(_ blockId: String?) -> Bool {
+        editing || (blockId != nil && blockId == focused)
+    }
+
+    private func blockOf(_ row: Edit.Row) -> String? {
+        switch row {
+        case .block(let b), .add(let b): b
+        case .step(_, let b): b
+        }
+    }
+
     private func isHeader(_ row: Edit.Row) -> Bool {
         if case .block = row { return true }
         return false
@@ -193,9 +211,9 @@ struct RunsheetEditor<Header: View>: View {
             if let b = runsheet.items.compactMap(\.asBlock).first(where: { $0.id == id }) {
                 blockHeader(b, done: locked.contains(id))
             }
-        case .step(let id, _):
+        case .step(let id, let blockId):
             if let step = Edit.findStep(runsheet, id) {
-                stepRow(step, done: frozen.contains(id), fixed: !editing)
+                stepRow(step, done: frozen.contains(id), fixed: !live(blockId))
                     .listRowInsets(EdgeInsets(top: 0, leading: 0, bottom: 0, trailing: 0))
                     .listRowBackground(Brand.surface)
             }
@@ -224,26 +242,34 @@ struct RunsheetEditor<Header: View>: View {
         }
     }
 
+    /// Two chips on one line: "Add exercise" and "Add rest" wrapped onto two lines each beside the
+    /// set grid's controls (Nick, 1 Nov 2026). VoiceOver still hears the full names.
     private func addButtons(_ blockId: String) -> some View {
-        HStack(spacing: 20) {
+        HStack(spacing: 8) {
             Button { picking = PickTarget(blockId: blockId) } label: {
-                Label("Add exercise", systemImage: "plus")
+                Label("Exercise", systemImage: "plus").addChip()
             }
+            .accessibilityLabel("Add exercise")
             Button { apply(Edit.addRest(runsheet, to: blockId, seconds: defaultRest)) } label: {
-                Label("Add rest", systemImage: "pause")
+                Label("Rest", systemImage: "plus").addChip()
             }
+            .accessibilityLabel("Add rest")
             Spacer()
         }
     }
 
+
     /// The header is a row of its own that never drags: holding it, or tapping its grip, opens the
-    /// reorder view, every block as one card (TW-026, TW-042).
+    /// reorder view, every block as one card (TW-026, TW-042). Reading, a tap opens the block for
+    /// editing and Done closes it; editing, a tap opens its rounds and rest.
     private func blockHeader(_ b: Block, done: Bool) -> some View {
-        // Reading, a header is only its name, time and runs: nothing to tap, hold or grip.
-        let fixed = done || !editing
+        let open = live(b.id)
         return HStack(spacing: 0) {
             // A hold has already opened the reorder view by the time the finger lifts.
-            Button { if !fixed, !reordering { editingBlock = b } } label: {
+            Button {
+                guard !done, !reordering else { return }
+                if open { editingBlock = b } else { withAnimation { focused = b.id } }
+            } label: {
                 HStack(spacing: 8) {
                     Text(b.name.isEmpty ? "Block" : b.name).font(.headline).foregroundStyle(done ? Brand.muted : Brand.ink)
                     Text(Format.duration(b.estimatedSeconds)).font(.footnote).foregroundStyle(Brand.muted)
@@ -258,10 +284,23 @@ struct RunsheetEditor<Header: View>: View {
                 .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
-            .simultaneousGesture(LongPressGesture(minimumDuration: 0.5).onEnded { _ in if !fixed { reordering = true } })
+            .simultaneousGesture(LongPressGesture(minimumDuration: 0.5).onEnded { _ in if !done { reordering = true } })
             .accessibilityLabel("\(b.name), \(b.modeLabel)")
-            .accessibilityHint(fixed ? "" : "Tap for rounds and rest. Hold to reorder blocks.")
-            if !fixed {
+            .accessibilityHint(done ? "" : open ? "Tap for rounds and rest. Hold to reorder blocks." : "Tap to edit this block. Hold to reorder blocks.")
+            .accessibilityIdentifier(open && !editing ? "block-header-open" : "block-header")
+            if !editing, focused == b.id {
+                Button { withAnimation { focused = nil } } label: {
+                    Text("Done")
+                        .font(.footnote.weight(.bold))
+                        .padding(.horizontal, 12).frame(height: 28)
+                        .background(Brand.coral, in: Capsule())
+                        .foregroundStyle(.white)
+                }
+                .buttonStyle(.plain)
+                .padding(.leading, 8)
+                .accessibilityIdentifier("block-done")
+            }
+            if !done {
                 Button { reordering = true } label: {
                     Image(systemName: "line.3.horizontal")
                         .font(.body.weight(.semibold))
@@ -535,5 +574,14 @@ struct NameSheet: View {
             }
         }
         .presentationDetents([.medium])
+    }
+}
+
+private extension View {
+    func addChip() -> some View {
+        lineLimit(1)
+            .padding(.horizontal, 12)
+            .frame(height: 34)
+            .background(Brand.coralSoft, in: Capsule())
     }
 }

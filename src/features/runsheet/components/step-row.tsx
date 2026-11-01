@@ -6,7 +6,7 @@ import { ClipThumb } from '@/shared/components/ui/clip-thumb';
 import { Dropdown } from '@/shared/components/ui/dropdown';
 import { Stepper } from '@/shared/components/ui/stepper';
 import { cn } from '@/shared/utils/ui-utils';
-import { extraLogs, forLabel, hasLoad, loadLabel, logChoices, STEP_LOG_LABEL, stepLogs, withLogs, type ExerciseStep, type ForMode, type RestStep, type Step } from '../model';
+import { extraLogs, forLabel, hasSetting, loadLabel, logChoices, settingLabel, STEP_LOG_LABEL, stepLogs, withLogs, type ExerciseStep, type ForMode, type RestStep, type Step } from '../model';
 
 const FOR_OPTIONS = [
   { value: 'seconds', label: 'seconds' },
@@ -51,7 +51,7 @@ const stop = (e: React.SyntheticEvent) => e.stopPropagation();
  * One line of the runsheet. Collapsed: thumb, name, duration, value pill, caret, ✕ — the whole
  * row toggles. Expanded (stays white so it reads as part of its block; the controls sit on a grey
  * well): bigger clip, the name becomes the swap target, then two
- * settings rows: Weight or Speed (unit in the label) with a stepper, only for an exercise set to a
+ * settings rows: Load or Speed (unit in the label) with a stepper, only for an exercise set to a
  * load or a speed, and For with a stepper plus a seconds / reps / minutes dropdown; then what the
  * step logs. Rest steps show quick-pick chips instead of a weight row.
  * Pure: every change is handed back through onChange.
@@ -131,12 +131,12 @@ const Label = ({ children }: { children: React.ReactNode }) => <div className="t
 
 const ExerciseBody = ({ step, onChange }: { step: ExerciseStep; onChange: (s: Step) => void }) => (
   <>
-    {hasLoad(step.exercise) && (
+    {hasSetting(step) && (
       <div className="flex items-center justify-between gap-3">
         <Label>
-          {step.exercise.unit === 'kph' ? 'Speed' : 'Weight'} <span className="text-muted">({step.exercise.unit})</span>
+          {settingLabel(step)} <span className="text-muted">({step.exercise.unit})</span>
         </Label>
-        <Stepper aria-label={step.exercise.unit === 'kph' ? 'Speed' : 'Weight'} value={step.target ?? 0} step={step.exercise.step} onChange={target => onChange({ ...step, target })} />
+        <Stepper aria-label={`${settingLabel(step)} (${step.exercise.unit})`} value={step.target ?? 0} step={step.exercise.step} onChange={target => onChange({ ...step, target })} />
       </div>
     )}
     {step.exercise.unit === 'kph' && (
@@ -148,7 +148,7 @@ const ExerciseBody = ({ step, onChange }: { step: ExerciseStep; onChange: (s: St
     <div className="flex items-center justify-between gap-3">
       <Label>For</Label>
       <div className="flex items-center gap-1.5">
-        <Stepper aria-label="Duration" value={step.forValue} step={step.forMode === 'seconds' ? 5 : step.forMode === 'meters' ? 50 : 1} min={1} max={step.forMode === 'seconds' ? 600 : step.forMode === 'meters' ? 42195 : 200} onChange={forValue => onChange({ ...step, forValue })} />
+        <Stepper aria-label="Duration" typeable value={step.forValue} step={step.forMode === 'seconds' ? 5 : step.forMode === 'meters' ? 10 : 1} min={1} max={step.forMode === 'seconds' ? 600 : step.forMode === 'meters' ? 42195 : 200} onChange={forValue => onChange({ ...step, forValue })} />
         <Dropdown aria-label="Duration unit" value={step.forMode} options={FOR_OPTIONS} onValueChange={forMode => onChange(withMode(step, forMode))} />
       </div>
     </div>

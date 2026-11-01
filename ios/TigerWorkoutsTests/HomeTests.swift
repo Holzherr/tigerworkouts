@@ -86,4 +86,32 @@ struct HomeTests {
         #expect(Home.upNext(Array(list.dropFirst()), own: ["a"], last: last) == "b")
         #expect(Home.upNext([w("c")], own: [], last: last) == nil)
     }
+
+    private func lead(_ own: [Runsheet], _ results: [SessionResult]) -> (next: String?, keys: [String]) {
+        let list = Home.mine(own: own, all: [], saved: [], results: results)
+        let next = Home.upNext(list, own: Set(own.map(\.key)), last: Home.lastDone(results))
+        return (next, Home.upNextFirst(list) { $0.key == next }.map(\.key))
+    }
+
+    @Test("all done: the one done longest ago is first as Up next, the rest newest first")
+    func upNextFirstAllDone() {
+        let (next, keys) = lead([w("u-a"), w("u-b"), w("u-c"), w("u-d")], [did("u-a", day: 22), did("u-b", day: 24), did("u-c", day: 25), did("u-d", day: 26)])
+        #expect(next == "u-a" && keys == ["u-a", "u-d", "u-c", "u-b"])
+    }
+
+    @Test("your own not yet done stays first as Up next (18 Oct order)")
+    func upNextFirstFresh() {
+        let (next, keys) = lead([w("u-a"), w("u-b"), w("u-new", createdAt: "2026-10-01T09:00:00Z")], [did("u-a", day: 22), did("u-b", day: 24)])
+        #expect(next == "u-new" && keys == ["u-new", "u-b", "u-a"])
+    }
+
+    @Test("starting the Up next card saves up_next; another Mine card still saves mine or saved")
+    @MainActor
+    func upNextOrigin() throws {
+        let started = { SessionRunner(runsheet: Fixtures.interval(), startedFrom: Home.origin(of: self.w($0), own: ["u-a", "u-b"], next: "u-a")).result().startedFrom }
+        #expect(["u-a", "u-b", "fran"].map(started) == ["up_next", "mine", "saved"])
+        let saved = SessionResult(runsheetId: "u-a", title: "u-a", startedAt: "2026-10-28T10:00:00Z", startedFrom: "up_next")
+        let back = try JSONDecoder().decode(SessionResult.self, from: JSONEncoder().encode(saved))
+        #expect(back.startedFrom.flatMap(SessionOrigin.init(rawValue:)) == .upNext)
+    }
 }
