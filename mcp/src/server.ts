@@ -150,7 +150,7 @@ export const buildServer = (db: Db, account: Account = {}) => {
       title: 'Create workout',
       description: `Save a new workout to the user's account. Private unless public is true (public = it shows in everyone's Discover; an anonymous account's workouts stay private until it is kept). It appears in the app under Me once it syncs. Returns appUrl, shareUrl and a no-sign-in previewUrl. ${LINKS} Pass workout (structured) or plan (plain text).\n\n${RUNSHEET_HELP}`,
       inputSchema: { workout: runsheetInput.optional(), plan: z.string().max(4000).optional().describe(PLAN_HELP), title: z.string().max(120).optional().describe('Title for a plan'), public: z.boolean().optional().describe('Default false') },
-      annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: false },
+      annotations: { readOnlyHint: false, destructiveHint: true, idempotentHint: false, openWorldHint: false },
     },
     a => run(async () => keep(await T.createWorkout(db, a))),
   );
@@ -239,7 +239,7 @@ export const buildServer = (db: Db, account: Account = {}) => {
           .optional()
           .describe("What the session ran when it was not the workout as saved: the runsheet's items as done (start_workout returns it for a version). Kept privately with the session; never a workout of its own."),
       },
-      annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: false },
+      annotations: { readOnlyHint: false, destructiveHint: true, idempotentHint: true, openWorldHint: false },
     },
     a => run(async () => keep(await T.logSession(db, a))),
   );
@@ -252,7 +252,7 @@ export const buildServer = (db: Db, account: Account = {}) => {
         title: 'Keep this account',
         description: 'Keep an account that started without an email (otherwise deleted 7 days after it started). Adds the email to the same account, so workouts and history stay put and the person can sign in to the TigerWorkouts app (web and iPhone) with it. With email: done here; usually a confirmation email goes out and the claim completes when they click its link (status "confirm"). Without: returns claimUrl, a page where they type the email themselves; it works for up to an hour. Always pass on next to the person.',
         inputSchema: { email: z.string().max(200).optional() },
-        annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: true },
+        annotations: { readOnlyHint: false, destructiveHint: true, idempotentHint: true, openWorldHint: true },
       },
       a => run(() => claim(a)),
     );

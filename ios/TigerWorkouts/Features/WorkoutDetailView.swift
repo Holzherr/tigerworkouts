@@ -1,9 +1,9 @@
 import SwiftUI
 
 /// A workout before you start it, and the one place it is edited (specs/unified-editing.md). It
-/// reads plain — block headers, exercise and rest rows — until Edit at the top right shows the set
-/// steppers, add rows, grips, drags and swipes; Done saves and goes back to reading (Nick, 18 Oct
-/// 2026). A workout still being written opens in edit mode.
+/// reads plain — block headers, exercise and rest rows — and a tap on a block's header opens that
+/// block alone for editing (set steppers, add rows, drags and swipes) until its Done; the grip that
+/// reorders blocks always shows (Nick, 1 Nov 2026, replacing the Edit button of 18 Oct).
 struct WorkoutDetailView: View {
     @Environment(Store.self) private var store
     @Environment(\.dismiss) private var dismiss
@@ -19,8 +19,6 @@ struct WorkoutDetailView: View {
     @State private var naming = false
     @State private var confirmDelete = false
     @State private var seeded = false
-    /// Edit mode: the editing controls show.
-    @State private var isEditing = false
     @State private var pendingSave: Task<Void, Never>?
     @AppStorage(Intent.storageKey) private var intent = Intent.maintain.rawValue
     @State private var dismissedStalls = StallDismissals.all()
@@ -29,13 +27,14 @@ struct WorkoutDetailView: View {
     /// Asked once per visit, at the first change on a workout that has been done: this session
     /// only, or the workout itself (Versions.swift).
     @State private var scope: EditScope?
-    /// What waits for that answer: going into edit mode, or a change already made.
+    /// What waits for that answer: a change already made. With no page-wide Edit (Nick, 1 Nov
+    /// 2026) the question comes at the first change.
     @State private var asking: Asking?
     /// The page before its "Just this time" change: Undo goes back to it.
     @State private var onceFrom: Runsheet?
 
     private enum EditScope { case once, base }
-    private enum Asking { case edit, change(Runsheet) }
+    private enum Asking { case change(Runsheet) }
 
     private var saved: Bool { store.saved.contains(runsheet.key) }
     private var editable: Bool { isNew || store.isMine(runsheet) }
@@ -64,7 +63,7 @@ struct WorkoutDetailView: View {
     var body: some View {
         RunsheetEditor(
             runsheet: runsheet,
-            editing: isEditing,
+            editing: false,
             setHint: { step, round in
                 let sets = LastTime.sets(store.results, for: step, in: runsheet) ?? []
                 return sets.indices.contains(round) ? LastTime.setLabel(sets[round]) : nil
@@ -92,7 +91,7 @@ struct WorkoutDetailView: View {
                         .lineSpacing(3)
                 }
                 if onceFrom != nil { onceBanner }
-                if !isEditing, !versions.isEmpty { versionsCard }
+                if !versions.isEmpty { versionsCard }
                 if let assignment = store.assignment(forWorkout: runsheet.key) {
                     CoachNotesCard(assignment: assignment)
                 }
@@ -117,19 +116,9 @@ struct WorkoutDetailView: View {
             // One copy per original: once you have a copy, the original's page is your copy's.
             if !editable, let copy = Edit.copy(of: runsheet, in: store.myWorkouts) { runsheet = copy }
             runsheet = store.seeded(runsheet)
-            if isNew || !runnable { isEditing = true }
             if isNew && runsheet.title.isEmpty { naming = true }
         }
         .toolbar {
-            ToolbarItem(placement: .topBarTrailing) {
-                Button(isEditing ? "Done" : "Edit") {
-                    if !isEditing, mustAsk { return asking = .edit }
-                    if isEditing { flushSave() }
-                    withAnimation { isEditing.toggle() }
-                }
-                .fontWeight(isEditing ? .bold : .regular)
-                .accessibilityIdentifier("edit-toggle")
-            }
             ToolbarItem(placement: .topBarTrailing) {
                 Menu {
                     Button { naming = true } label: {
@@ -237,7 +226,6 @@ struct WorkoutDetailView: View {
         asking = nil
         scope = to
         switch held {
-        case .edit: withAnimation { isEditing = true }
         case .change(let next): apply(next)
         case nil: break
         }

@@ -32,6 +32,8 @@ import { SwipeToRemove } from './swipe-to-remove';
 export interface RunsheetListProps {
   items: Item[];
   onChange: (items: Item[]) => void;
+  /** Given, a block header's grip asks the host to reorder (the list shows only part of the workout). */
+  onReorder?: () => void;
   /** Ask the host to pick an exercise; resolve with the step to insert, or null to cancel. */
   onPickExercise: () => Promise<ExerciseStep | null>;
   /** Ask the host to pick a replacement exercise for an existing step. */
@@ -136,7 +138,7 @@ export const SetRuns = ({ block, onChange, onVary, hintFor, equipment }: SetGrid
  * BlockReorder, every block as one card. Tap a row to expand it,
  * swipe or ✕ to remove, ＋ on a seam to insert there.
  */
-export const RunsheetList = ({ items, onChange, onPickExercise, onSwapExercise, expandedId: expandedProp, onExpandedChange, autoRest = 30, resolveTarget, hintFor, setHintFor, equipment, refTitle, onRemoved, historyFor, className }: RunsheetListProps) => {
+export const RunsheetList = ({ items, onChange, onPickExercise, onSwapExercise, expandedId: expandedProp, onExpandedChange, autoRest = 30, resolveTarget, hintFor, setHintFor, equipment, refTitle, onRemoved, historyFor, onReorder, className }: RunsheetListProps) => {
   const [expandedLocal, setExpandedLocal] = useState<string | null>(null);
   const expandedId = expandedProp === undefined ? expandedLocal : expandedProp;
   const setExpanded = (id: string | null) => (onExpandedChange ? onExpandedChange(id) : setExpandedLocal(id));
@@ -413,7 +415,7 @@ export const RunsheetList = ({ items, onChange, onPickExercise, onSwapExercise, 
                 // The grip says the header moves the block; press-and-drag works anywhere on it.
                 <div {...p} className={cn('flex items-start', activeId === block.id && 'rounded-card bg-surface shadow-lift')}>
                   <BlockHeader block={block} expanded={expandedId === block.id} onToggle={() => toggle(block.id)} onChange={patch => onChange(updateBlock(items, block.id, patch))} onRemove={() => removeBlock(block.id)} dissolving={dissolvingBlockId === block.id} className="min-w-0 flex-1" />
-                  <button type="button" aria-label="Reorder blocks" onClick={() => setReordering(true)} className="grid size-11 shrink-0 place-items-center rounded-control text-faint active:bg-brand-line/40" data-testid="block-grip">
+                  <button type="button" aria-label="Reorder blocks" onClick={() => (onReorder ? onReorder() : setReordering(true))} className="grid size-11 shrink-0 place-items-center rounded-control text-faint active:bg-brand-line/40" data-testid="block-grip">
                     <Menu className="size-5" />
                   </button>
                 </div>

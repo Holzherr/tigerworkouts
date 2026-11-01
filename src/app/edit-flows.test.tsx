@@ -11,9 +11,9 @@ const rounds = (i: Item): i is Block => i.kind === 'block' && i.steps.length > 1
 const original = IMPORTED.map(w => w.runsheet).find(r => r.items.some(rounds))!;
 const block = original.items.find(rounds)!;
 const mine = (): Runsheet[] => JSON.parse(localStorage.getItem('workout-hub-next:v1') || '{}').workouts ?? [];
-/** Into edit mode (the page reads plain until Edit), then one more round on the block. */
+/** Open the block (a tap on its header), then one more round on it from its sheet. */
 const moreRounds = () => {
-  const edit = screen.queryByRole('button', { name: 'Edit' });
+  const edit = screen.queryAllByRole('button', { name: `Edit ${block.name}` })[0];
   if (edit) fireEvent.click(edit);
   fireEvent.click(screen.getAllByRole('button', { name: (n: string) => n.startsWith(block.name), expanded: false })[0]);
   fireEvent.click(within(screen.getByRole('group', { name: 'Rounds' })).getByLabelText('Increase'));
@@ -31,8 +31,8 @@ describe('editing a catalogue workout on its page', () => {
     expect(copy).toMatchObject({ copyOf: original.id, title: `${original.title} (mine)`, source: { kind: 'user' } });
     expect(copy.items.find(i => i.id === block.id)).toMatchObject({ repeat: block.repeat + 1 });
     expect(await screen.findByRole('heading', { name: `${original.title} (mine)` })).toBeTruthy();
-    // The switch to the copy keeps the page in edit mode.
-    expect(screen.getByRole('button', { name: 'Done' })).toBeTruthy();
+    // The switch to the copy keeps the block open.
+    expect(screen.getByTestId('block-done')).toBeTruthy();
     // Between sessions the copy is renamed and made public; the next edit must keep both.
     act(() => setState({ workouts: [{ ...copy, title: 'Squat day', public: true }] }));
     location.hash = `#/w/${encodeURIComponent(original.id!)}`;

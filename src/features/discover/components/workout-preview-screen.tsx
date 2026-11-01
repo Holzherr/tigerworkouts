@@ -1,4 +1,4 @@
-import { ChevronLeft, ChevronRight, ExternalLink, GitMerge, Globe, Layers, Lock, Pencil, Play, Plus, Share2, Smartphone, Trash2, Video } from 'lucide-react';
+import { ChevronLeft, ChevronRight, ExternalLink, GitMerge, Globe, Layers, Lock, Menu, Pencil, Play, Plus, Share2, Smartphone, Trash2, Video } from 'lucide-react';
 import { localDate } from '@/shared/utils/dates';
 import { Fragment, useState } from 'react';
 import { Button } from '@/shared/components/ui/button';
@@ -14,33 +14,31 @@ import type { Today } from '@/features/runsheet/targets';
 import type { Stall } from '@/features/results/stall';
 import { StallCard, TodayLine } from '@/features/results/components/targets';
 import { RunsheetList, type RunsheetListProps } from '@/features/runsheet/components/runsheet-list';
+import { BlockReorder } from '@/features/runsheet/components/block-reorder';
 import { BlockSheet } from '@/features/runsheet/components/block-sheet';
 import { useUndo } from '@/shared/components/ui/undo-toast';
 import type { VersionRow } from '@/features/runsheet/versions';
 import { EditScopeSheet, MergeSheet, VariantBanner, VersionsCard } from './workout-versions';
 
-/** The workout's rows, editable in place: the editor's list, block settings in a sheet. */
-const EditableList = ({ runsheet: r, editor: { onChange, ...list } }: { runsheet: Runsheet; editor: NonNullable<WorkoutPreviewScreenProps['editor']> }) => {
+/** One block open for editing in place (a tap on its header): the editor's list over just that
+ * block, its settings in a sheet, Done to read again. A step dragged out lands beside it. */
+const EditableBlock = ({ runsheet: r, block, editor: { onChange, ...list }, sheetOpen, onSheet, onDone, onReorder }: { runsheet: Runsheet; block: Block; editor: NonNullable<WorkoutPreviewScreenProps['editor']>; sheetOpen: boolean; onSheet: (open: boolean) => void; onDone: () => void; onReorder: () => void }) => {
   const [expanded, setExpanded] = useState<string | null>(null);
   const undo = useUndo();
-  const block = r.items.find((i): i is Block => i.kind === 'block' && i.id === expanded) ?? null;
+  const at = r.items.indexOf(block);
   const setItems = (items: Item[]) => onChange({ ...r, items });
-  const add = (items: Item[], open: string) => (setItems(items), setExpanded(open));
-  const oneOff = () => list.onPickExercise().then(step => step && add([...r.items, step], step.id));
+  const splice = (next: Item[]) => setItems([...r.items.slice(0, at), ...next, ...r.items.slice(at + 1)]);
   return (
-    <>
-      <RunsheetList {...list} items={r.items} onChange={setItems} expandedId={block ? null : expanded} onExpandedChange={setExpanded} onRemoved={(before, what) => undo.offer(what, () => setItems(before))} />
-      <div className="flex gap-2">
-        <Button variant="ghost" block onClick={() => { const next = addBlock(r.items); add(next.items, next.blockId); }}>
-          <Layers /> Add block
-        </Button>
-        <Button variant="ghost" block onClick={oneOff}>
-          <Plus /> Add a one-off exercise
+    <section className="rounded-card ring-2 ring-brand">
+      <div className="flex justify-end px-1 pt-1">
+        <Button variant="quiet" size="inline" className="font-extrabold text-brand" onClick={onDone} data-testid="block-done">
+          Done
         </Button>
       </div>
-      <BlockSheet block={block} onOpenChange={o => !o && setExpanded(null)} onChange={b => setItems(r.items.map(i => (i.id === b.id ? b : i)))} onRemove={() => block && (setItems(removeItem(r.items, block.id)), undo.offer(`Removed ${block.name || 'block'}`, () => setItems(r.items)))} />
+      <RunsheetList {...list} onReorder={onReorder} items={[block]} onChange={splice} expandedId={expanded === block.id ? null : expanded} onExpandedChange={id => (id === block.id ? onSheet(true) : setExpanded(id))} onRemoved={(before, what) => undo.offer(what, () => splice(before))} />
+      <BlockSheet block={sheetOpen ? block : null} onOpenChange={o => onSheet(o)} onChange={b => splice([b])} onRemove={() => (setItems(removeItem(r.items, block.id)), undo.offer(`Removed ${block.name || 'block'}`, () => setItems(r.items)))} />
       {undo.toast}
-    </>
+    </section>
   );
 };
 
@@ -76,12 +74,13 @@ export interface WorkoutPreviewScreenProps {
   onDismissStall?: () => void;
   /** Given for your own workouts: deletes it, after asking. */
   onDelete?: () => void;
-  /** Given, the page is also the editor (as on the phone): it reads plain until Edit at the top
-   * right, which shows the editor's rows (steppers, add, drag, a block header's sheet and grip) with
+  /** Given, the page is also the editor (as on the phone): it reads plain, a tap on a block's
+   * header opens that block alone for editing (steppers, add, drag, its sheet) until its Done, and
+   * the grip that reorders blocks always shows (Nick, 1 Nov 2026). Formerly: until Edit, with
    * Add block and Add a one-off exercise under them, until Done (Nick, 18 Oct 2026). Every change
    * comes here, and saves as it is made. */
-  /** Opens in edit mode (stories, screenshots). */
-  initialEditing?: boolean;
+  /** Opens with this block open for editing (stories, screenshots). */
+  initialEditing?: string;
   editor?: Omit<RunsheetListProps, 'items' | 'onChange' | 'expandedId' | 'onExpandedChange' | 'onRemoved'> & { onChange: (r: Runsheet) => void };
   /** Given (a workout that has been done), the first change asks once: "Just this time" sends it
    * here, as a change for the next session only; "Update workout" to `editor.onChange`. */
@@ -130,23 +129,27 @@ export const WorkoutPreviewScreen = ({ runsheet: r, history = [], lastTime, onBa
   const [merging, setMerging] = useState(false);
   // Asked once per visit: a change for this session only, or for the workout.
   const [scope, setScope] = useState<'once' | 'base' | null>(null);
-  // What waits for the answer: a change made from an exercise's sheet, or going into edit mode.
-  const [asking, setAsking] = useState<Runsheet | 'edit' | null>(null);
-  const mustAsk = !!onChangeOnce && !scope && !variant;
+  // A change waiting for the answer. With no page-wide Edit (Nick, 1 Nov 2026), the question comes
+  // at the first change, from a block opened for editing or an exercise's sheet.
+  const [asking, setAsking] = useState<Runsheet | null>(null);
   const change = (next: Runsheet) => {
     if (!onChangeOnce || scope === 'base' || !given) return given?.onChange(next);
     if (scope === 'once' || variant) return onChangeOnce(next);
     setAsking(next);
   };
+  // The block a tap on its header opened for editing, and whether its settings sheet is up.
+  const [focus, setFocus] = useState<string | undefined>(initialEditing);
+  const [blockSheet, setBlockSheet] = useState(false);
+  const [reordering, setReordering] = useState(false);
+  const openBlock = (id: string, sheet = false) => (setFocus(id), setBlockSheet(sheet));
   const answer = (to: 'once' | 'base') => {
     setScope(to);
-    if (asking === 'edit') setEditing(true);
-    else if (asking) (to === 'once' ? onChangeOnce?.(asking) : given?.onChange(asking));
+    if (asking) (to === 'once' ? onChangeOnce?.(asking) : given?.onChange(asking));
     setAsking(null);
   };
   const editor = given && { ...given, onChange: change };
-  // A workout with nothing in it yet has nothing to read: it opens in edit mode.
-  const [editing, setEditing] = useState(() => !!editor && (initialEditing || r.items.length === 0));
+  const focused = r.items.find((i): i is Block => i.kind === 'block' && i.id === focus);
+  const setItems = (items: Item[]) => editor?.onChange({ ...r, items });
   // In the read view an exercise's sheet still changes its numbers, through the editor when there is one.
   const stepChange =
     onStepChange ??
@@ -169,11 +172,6 @@ export const WorkoutPreviewScreen = ({ runsheet: r, history = [], lastTime, onBa
           <Button variant="quiet" size="inline" onClick={onBack} className="-ml-1 text-muted">
             <ChevronLeft /> Back
           </Button>
-          {editor && (
-            <Button variant="quiet" size="inline" onClick={() => (!editing && mustAsk ? setAsking('edit') : setEditing(e => !e))} className={cn('-mr-1 text-brand', editing && 'font-extrabold')}>
-              {editing ? 'Done' : 'Edit'}
-            </Button>
-          )}
         </div>
         <h1 className="mt-1 text-[22px] leading-tight font-extrabold">{r.title}</h1>
         <div className="mt-1 flex flex-wrap items-center gap-x-1 text-[13px] text-muted">
@@ -245,15 +243,19 @@ export const WorkoutPreviewScreen = ({ runsheet: r, history = [], lastTime, onBa
             )}
           </div>
         )}
-        {editor && editing ? <EditableList runsheet={r} editor={editor} /> : r.items.map((it, i) => {
+        {r.items.map((it, i) => {
           if (it.kind === 'ref') return null;
           const role = it.role && it.role !== 'main' ? ROLE_LABEL[it.role] : null;
           if (it.kind === 'block') {
+            if (editor && it === focused) return <EditableBlock key={it.id} runsheet={r} block={it} editor={editor} sheetOpen={blockSheet} onSheet={setBlockSheet} onDone={() => setFocus(undefined)} onReorder={() => setReordering(true)} />;
             const straight = straightSetStep(it);
             return (
               <section key={it.id} className="rounded-card border border-line bg-surface">
                 <div className="flex items-center gap-2 px-3 pt-2.5 pb-1.5">
-                  <div className="min-w-0 flex-1">
+                  <div
+                    className={cn('min-w-0 flex-1', editor && 'cursor-pointer')}
+                    {...(editor ? { role: 'button', tabIndex: 0, 'aria-label': `Edit ${it.name || 'block'}`, onClick: () => openBlock(it.id), onKeyDown: (e: React.KeyboardEvent) => (e.key === 'Enter' || e.key === ' ') && (e.preventDefault(), openBlock(it.id)) } : {})}
+                  >
                     <div className="truncate text-[14px] font-bold">
                       {role ? `${role} · ` : ''}
                       {it.name}
@@ -266,6 +268,11 @@ export const WorkoutPreviewScreen = ({ runsheet: r, history = [], lastTime, onBa
                   <Chip variant="brand" size="md" className="font-extrabold">
                     {modeLabel(it)}
                   </Chip>
+                  {editor && (
+                    <button type="button" aria-label="Reorder blocks" data-testid="block-grip" onClick={() => setReordering(true)} className="-mr-1 grid size-9 shrink-0 place-items-center text-muted active:text-ink">
+                      <Menu className="size-5" />
+                    </button>
+                  )}
                 </div>
                 <div className="[&>*+*]:border-t [&>*+*]:border-line-soft">
                   {it.steps.map(s =>
@@ -314,7 +321,18 @@ export const WorkoutPreviewScreen = ({ runsheet: r, history = [], lastTime, onBa
             </button>
           );
         })}
-        {!editing && onRunVersion && <VersionsCard versions={versions} onRun={onRunVersion} onMakeBase={onMakeBase} />}
+        {!focused && onRunVersion && <VersionsCard versions={versions} onRun={onRunVersion} onMakeBase={onMakeBase} />}
+        {editor && (
+          <div className="flex gap-2">
+            <Button variant="ghost" block onClick={() => { const next = addBlock(r.items); setItems(next.items); openBlock(next.blockId, true); }}>
+              <Layers /> Add block
+            </Button>
+            <Button variant="ghost" block onClick={() => editor.onPickExercise().then(step => step && setItems([...r.items, step]))}>
+              <Plus /> Add a one-off exercise
+            </Button>
+          </div>
+        )}
+        {reordering && <BlockReorder open items={r.items} refTitle={editor?.refTitle} onCancel={() => setReordering(false)} onDone={next => (setReordering(false), next.some((it, k) => it !== r.items[k]) && setItems(next))} />}
         {r.source?.license && <p className="px-1 text-[11px] text-faint">{r.source.license}</p>}
         {onDelete && (
           <Button variant="danger" block onClick={() => confirm(`Delete ${r.title || 'this workout'}? Sessions you logged with it stay in History.`) && onDelete()}>

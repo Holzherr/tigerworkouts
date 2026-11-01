@@ -105,7 +105,7 @@ muscles, difficulty, cues, mistakes, easier/harder swaps and default sets, reps 
 ## Status
 
 Live since 6 Sep 2026. Timer (rounds, for time, AMRAP, EMOM, ladders, resume after reload; big
-button Pause on a countdown, "Set 2 of 4 done" on a set; Finish and Discard in a ⋯ top right;
+button Pause on a countdown, "Set 2 of 4 done" on a set, EMOM reps included; Finish and Discard in a ⋯ top right;
 on iOS a straight-set block's table keeps the current set centred and fades at an edge with more
 rows behind it, and on a treadmill has an INCL column with −/+ by 0.5 % on the set being set;
 parked before a block, its card has a − / + for every dial, speed or load and a treadmill's
@@ -120,7 +120,8 @@ with your history, saved-not-done, and the next day of a program in progress; a 
 outranks any exercise overlap),
 settings, share links, quick log, post-workout stats with a body map, a finish screen that leads with the workout count, streak, records set and deltas vs last time plus a share card (PNG), a 1–10 session effort on every result (written to Apple Health as the workout effort score on iOS 18+), offline via a service worker.
 In the editor, on web and iOS, sets alike in a row fold into one row (`8×`; its stepper changes every set, Vary sets
-gives each its own; `setRuns` in model.ts, `Edit.setRuns` on iOS), and block headers carry a grip and a one-time
+gives each its own; `setRuns` in model.ts, `Edit.setRuns` on iOS), an exercise's setting is named by its unit
+(Load, Speed, Distance or Calories; `settingLabel`/`hasSetting` in model.ts, RunsheetMath.swift on iOS), and block headers carry a grip and a one-time
 tip. On iOS holding a header (or tapping its grip) opens "Reorder blocks", where each block moves as
 one card; a header row is never dragged alone. Not yet: blocks folding to one line while one is dragged.
 The web timer announces each step to a screen reader through one hidden polite live region ("Rest,
@@ -130,7 +131,8 @@ or phase change, never on a tick. The landing page's looping hero demo renders t
 Each session records where it was started (`startedFrom`: the home list it was in, the Me tab, Repeat, a
 share link) so the share started from a home recommendation can be measured. The iOS app writes the
 same field from its Workouts tab (Mine: own → mine, saved → saved, a coach's → coach; For you →
-recommended; the catalogue or a search result → search) and from a `tigerworkouts://w/` link (link). The origin
+recommended; the catalogue or a search result → search) and from a `tigerworkouts://w/` link (link). Mine's Up next
+card sits first on both apps and records `up_next`, which is not `home` and not in home_reco_used. The origin
 rides in the crash-safe copy on both, so a resumed or recovered session keeps it.
 Sign out pushes first, then empties the device for the next account (sessions, workouts, favourites,
 saved, exercises, training maxes and the `tiger:synced` snapshot); while the push fails or a session

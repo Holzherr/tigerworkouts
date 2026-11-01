@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { EX } from '@/features/runsheet/fixtures';
 import { makeExercise, type Runsheet } from '@/features/runsheet/model';
 import type { SessionResult } from '@/features/runsheet/progression';
-import { contentsLine, lastDoneById, lastDoneOf, mineLine, mineList, newBadge, upNextOf, whyLine } from './mine';
+import { contentsLine, lastDoneById, lastDoneOf, mineLine, mineList, newBadge, upNextFirst, upNextOf, whyLine } from './mine';
 
 const w = (id: string, extra: Partial<Runsheet> = {}): Runsheet => ({ id, title: id, items: [], source: { title: id, kind: 'benchmark' }, ...extra });
 const did = (runsheetId: string, day: number): SessionResult => ({ runsheetId, startedAt: `2026-10-${String(day).padStart(2, '0')}T10:00:00Z`, steps: [] });
@@ -71,5 +71,26 @@ describe('upNextOf', () => {
     expect(upNextOf(list, ['u-new', 'a'], last)).toBe('u-new');
     expect(upNextOf(list.slice(1), ['a'], last)).toBe('b');
     expect(upNextOf([w('c')], [], last)).toBeUndefined();
+  });
+});
+
+describe('upNextFirst', () => {
+  const lead = (list: Runsheet[], own: string[], results: SessionResult[]) => {
+    const next = upNextOf(list, own, lastDoneById(results));
+    return { next, ids: upNextFirst(list, r => r.id === next).map(r => r.id) };
+  };
+  it('puts the one done longest ago first when all are done, the rest newest first', () => {
+    const own = ['u-a', 'u-b', 'u-c', 'u-d'];
+    const results = [did('u-a', 22), did('u-b', 24), did('u-c', 25), did('u-d', 26)];
+    const { next, ids } = lead(mineList(own.map(id => w(id)), own, [], results), own, results);
+    expect(next).toBe('u-a');
+    expect(ids).toEqual(['u-a', 'u-d', 'u-c', 'u-b']);
+  });
+  it('keeps your own not yet done first as Up next (18 Oct order)', () => {
+    const own = ['u-a', 'u-b', 'u-new'];
+    const results = [did('u-a', 22), did('u-b', 24)];
+    const { next, ids } = lead(mineList([w('u-a'), w('u-b'), w('u-new', { createdAt: '2026-10-01T09:00:00Z' })], own, [], results), own, results);
+    expect(next).toBe('u-new');
+    expect(ids).toEqual(['u-new', 'u-b', 'u-a']);
   });
 });

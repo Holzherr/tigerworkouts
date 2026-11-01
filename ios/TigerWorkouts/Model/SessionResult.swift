@@ -72,6 +72,7 @@ struct ActivityLog: Codable, Hashable, Sendable {
 /// coach assigned (`coach`, G-13).
 enum SessionOrigin: String, CaseIterable, Codable, Sendable {
     case recommended, saved, search, mine, history, link, home, coach
+    case upNext = "up_next"
 }
 
 /// One finished session. The shape the web app writes as `data` on a `sessions` row, so both

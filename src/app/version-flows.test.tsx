@@ -22,14 +22,16 @@ const workout = (id: string) => stored().workouts.find(w => w.id === id)!;
 const repeatOf = (r: { items: Runsheet['items'] }, id: string) => (r.items.find(i => i.id === id) as Block).repeat;
 const click = (name: string | RegExp) => fireEvent.click(screen.getByRole('button', { name }));
 const findClick = async (name: string | RegExp) => fireEvent.click(await screen.findByRole('button', { name }));
-/** Edit, one more round on block One, close its sheet. */
-const moreRounds = () => {
-  const edit = screen.queryByRole('button', { name: 'Edit' });
+/** Open block One (a tap on its header) if it is not open, one more round on it from its sheet. */
+const oneMore = () => {
+  const edit = screen.queryByRole('button', { name: 'Edit One' });
   if (edit) fireEvent.click(edit);
   fireEvent.click(screen.getAllByRole('button', { name: (n: string) => n.startsWith('One'), expanded: false })[0]);
   fireEvent.click(within(screen.getByRole('group', { name: 'Rounds' })).getByLabelText('Increase'));
-  fireEvent.click(screen.getByRole('button', { name: 'Close' }));
 };
+const closeSheet = () => fireEvent.click(screen.getByRole('button', { name: 'Close' }));
+/** One more round on block One, its sheet closed again. */
+const moreRounds = () => (oneMore(), closeSheet());
 const open = (id: string) => {
   location.hash = `#/w/${id}`;
   render(<App />);
@@ -45,15 +47,16 @@ beforeEach(() => {
 describe('a change to a workout that has been done', () => {
   it('asks once; Just this time runs it changed, keeps it with the session and leaves the workout alone', async () => {
     open('two');
-    click('Edit');
+    oneMore();
+    // The first change asks.
     await findClick('Just this time');
-    moreRounds();
+    closeSheet();
     expect(repeatOf(workout('two'), 'b1')).toBe(1);
-    // Asked once: back in edit mode, the next change goes the same way without asking.
-    click('Done');
+    // Asked once: the next change goes the same way without asking.
+    fireEvent.click(screen.getByTestId('block-done'));
     moreRounds();
     expect(screen.queryByRole('button', { name: 'Just this time' })).toBeNull();
-    click('Done');
+    fireEvent.click(screen.getByTestId('block-done'));
     expect(screen.getByRole('status')).toHaveTextContent('Just this time');
     click(/^Start$/);
     await findClick(/^Skip$/);
@@ -69,10 +72,11 @@ describe('a change to a workout that has been done', () => {
 
   it('Update workout changes the workout and asks no more', async () => {
     open('two');
-    click('Edit');
+    oneMore();
     await findClick('Update workout');
-    moreRounds();
+    closeSheet();
     await waitFor(() => expect(repeatOf(workout('two'), 'b1')).toBe(2));
+    fireEvent.click(screen.getByTestId('block-done'));
     moreRounds();
     await waitFor(() => expect(repeatOf(workout('two'), 'b1')).toBe(3));
     expect(screen.queryByRole('button', { name: 'Just this time' })).toBeNull();

@@ -177,6 +177,12 @@ export const SettingsSheet = ({ open, onOpenChange, name, avatar, email, onChang
             </div>
           </div>
         )}
+        <nav aria-label="About" className="flex flex-wrap justify-center gap-x-4 pt-2 text-[13px] text-muted">
+          <a href="/claude/" className="py-3 underline-offset-2 hover:underline">Use with Claude</a>
+          <a href="/privacy/" className="py-3 underline-offset-2 hover:underline">Privacy</a>
+          <a href="/terms/" className="py-3 underline-offset-2 hover:underline">Terms</a>
+          <a href="/support/" className="py-3 underline-offset-2 hover:underline">Support</a>
+        </nav>
       </div>
     </Sheet>
   );

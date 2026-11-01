@@ -84,6 +84,17 @@ enum Home {
         return list.compactMap { r in lastDone(of: r, in: last).map { (r.key, $0) } }.min { $0.1 < $1.1 }?.0
     }
 
+    /// The Up next card first, the rest in their order (Nick, 27 Oct 2026). `upNextFirst` in mine.ts.
+    static func upNextFirst<T>(_ list: [T], isNext: (T) -> Bool) -> [T] {
+        guard let i = list.firstIndex(where: isNext) else { return list }
+        return [list[i]] + list[..<i] + list[(i + 1)...]
+    }
+
+    /// What starting a Mine card records: `up_next` for the Up next card, else `mine` or `saved`.
+    static func origin(of r: Runsheet, own: Set<String>, next: String?) -> SessionOrigin {
+        r.key == next ? .upNext : own.contains(r.key) ? .mine : .saved
+    }
+
     /// "today", "yesterday", "3 days ago", "2 weeks ago": `daysAgo` in rollup.ts.
     static func daysAgo(_ date: Date, now: Date = Date(), calendar: Calendar = .current) -> String {
         let d = calendar.dateComponents([.day], from: calendar.startOfDay(for: date), to: calendar.startOfDay(for: now)).day ?? 0

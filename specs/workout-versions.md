@@ -26,7 +26,8 @@ good or, by duplicating it, left two near-identical workouts in the list (Nick's
    three parts), how often, when last — with **Run** (runs it again; that session keeps it as its
    version) and **Make base** (the version becomes the workout). A version that matches the base is
    not listed. Only the person who ran them sees them.
-4. **Edit asks once** per visit, on a workout that has been done at least once: **Just this time**
+4. **Edit asks once** per visit, on a workout that has been done at least once (with no page-wide
+   Edit since 1 Nov 2026, the question comes at the first change): **Just this time**
    (the change stays on the page, unsaved; Start runs it; a banner offers "Update workout instead" and
    "Undo changes") or **Update workout** (changes the base, as before). Never asked on a workout not
    yet done.

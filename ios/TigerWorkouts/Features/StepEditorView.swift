@@ -39,8 +39,19 @@ struct StepEditorView: View {
                         Text("Calories").tag(ForMode.calories)
                     }
                     if !countLabel.isEmpty {
-                        Stepper(value: $step.forValue, in: 1...3_600, step: stepSize) {
-                            LabeledContent(countLabel, value: Format.number(step.forValue))
+                        // The number is a field too: a fixed step cannot reach every distance (a
+                        // 15 m sled push), and a 5 km row is too many taps away.
+                        Stepper(value: $step.forValue, in: range, step: stepSize) {
+                            HStack {
+                                Text(countLabel)
+                                Spacer()
+                                TextField(countLabel, value: Binding(get: { step.forValue }, set: { step.forValue = min(max($0, range.lowerBound), range.upperBound) }), format: .number)
+                                    .keyboardType(.numberPad)
+                                    .multilineTextAlignment(.trailing)
+                                    .monospacedDigit()
+                                    .frame(maxWidth: 90)
+                                    .accessibilityIdentifier("for-value")
+                            }
                         }
                     }
                     Toggle("Each side", isOn: Binding(get: { step.perSide ?? false }, set: { step.perSide = $0 ? true : nil }))
@@ -136,10 +147,13 @@ struct StepEditorView: View {
     private var stepSize: Double {
         switch step.forMode {
         case .seconds: 5
-        case .meters: 50
+        case .meters: 10
         default: 1
         }
     }
+
+    /// A marathon is the longest distance; an hour the longest anything else.
+    private var range: ClosedRange<Double> { step.forMode == .meters ? 1...42_195 : 1...3_600 }
 
     private func defaultValue(for mode: ForMode) -> Double {
         switch mode {
