@@ -8,7 +8,7 @@ Nick, 1 Nov 2026: get the TigerWorkouts MCP server and Claude plugin ready to su
 
 1. **Deploy the worker** with this PR's server changes: `cd mcp && npm run deploy`. Check `initialize` on `https://mcp.tigerworkouts.com/mcp` reports `version: "1.2.0"`.
 2. **Decide access** ("Access control" below). For review alone, option B is enough.
-3. **Reviewer account** ("Reviewer test account" below): create it, fill it, allow it, deploy.
+3. **Reviewer account**: created and filled 1 Nov 2026 ("Reviewer test accounts" below); deploy so the allowlist change is live.
 4. **Test as a custom connector** in Claude: call every tool once (the portal's Test & launch step asks you to confirm this).
 5. **Submit the connector**: https://claude.ai/directory/manage → Submit new → **MCP connector**, fields below.
 6. **Submit the plugin**: same portal → Submit new → **Plugin bundle**, repo `Holzherr/tigerworkouts`, path `plugin`, branch `main`. Connect GitHub first (an account that can push to the repo). Validate, then submit.
@@ -56,19 +56,22 @@ What that means now:
 
 Recommendation: B for submission, A before the listing goes live. After the automatic scan the connector is listed as Community by default, possibly with no human step, so A may be needed soon after submitting.
 
-## Reviewer test account (Nick)
+## Reviewer test accounts
 
-Reviewers cannot receive email codes, so the account uses a password.
+Created 1 Nov 2026 (password sign-in, email confirmed). Passwords are in Nick's macOS Keychain ("TigerWorkouts reviewer (Claude)" / "(Apple)"), never in this repo.
 
-1. Create an account with an email Nick controls (e.g. `review@tigerworkouts.com`), set a password in Supabase → Authentication → Users, and confirm the email.
-2. Fill it: profile name and bodyweight; 4–6 own workouts (one private); 8–10 sessions over the last three weeks with loads and reps, so `list_sessions`, the weekly review and the coaching prompts have something to read. Quickest: connect Claude as that account and ask it to write and log them.
-3. Allow it (option B or A) and deploy.
+| Account | For | Supabase user id | Data |
+|---|---|---|---|
+| `review-claude@tigerworkouts.com` (profile "Alex") | Claude directory review | `b9e712ac-0107-4865-8290-5f645c99fa46` | 5 private workouts, 22 sessions ending 31 Oct 2026, copied from Nick's with notes removed |
+| `review-apple@tigerworkouts.com` (profile "Sam") | App Store review | `81991f45-472c-4631-95be-7e5564e3fea9` | same |
+
+The Claude account is in `ALLOWED_USER_IDS` (option B); it takes effect after `cd mcp && npm run deploy`. The sessions age; before a later review, re-run the seed so the last session is recent.
 
 **Test & launch → access instructions (paste):**
 
 > 1. In Claude, add the TigerWorkouts connector and click Connect.
 > 2. On the TigerWorkouts sign-in page, open "Use a password instead".
-> 3. Email `<review email>`, password `<password>`. The account has three weeks of training history and saved workouts.
+> 3. Email `review-claude@tigerworkouts.com`, password `<from Keychain>`. The account has three weeks of training history and saved workouts.
 > 4. Try: "Look at my last month in TigerWorkouts and tell me what to change", then "Find a 20-minute kettlebell workout and start it" (timer view in the chat; End logs the session).
 > 5. Anonymous path: on the same sign-in page, "Start now, no account needed" creates a temporary account with no sign-in (deleted after 7 days unless kept with an email via `claim_account`).
 >
