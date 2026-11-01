@@ -183,19 +183,38 @@ final class WalkthroughUITests: XCTestCase {
         tap(app.buttons["Done"])
     }
 
+    /// Taps blocks open one at a time, scrolling down, until one shows its set grid.
+    private func openBlockWithSetGrid() -> XCUIElement {
+        let grid = app.descendants(matching: .any)["set-grid"].firstMatch
+        for _ in 0..<6 where !grid.exists {
+            let headers = app.buttons.matching(identifier: "block-header")
+            for i in 0..<headers.count where !grid.exists {
+                let h = headers.element(boundBy: i)
+                if h.isHittable { h.tap(); _ = grid.waitForExistence(timeout: 1) }
+            }
+            if !grid.exists { app.swipeUp(velocity: .slow) }
+        }
+        for _ in 0..<6 where !(grid.exists && grid.isHittable) { app.swipeUp(velocity: .slow) }
+        return grid
+    }
+
     /// One exercise for sets is a grid: on the workout page a row per set, on the timer a tick per set.
     func testStraightSets() {
         open("Iron Base · Whole Body A")
-        // The set grid is an editing control: it shows after Edit (Nick, 18 Oct 2026).
-        let grid = app.descendants(matching: .any)["set-grid"].firstMatch
-        XCTAssertFalse(grid.exists, "the page reads plain until Edit")
-        tap(app.buttons["edit-toggle"])
-        for _ in 0..<6 where !(grid.exists && grid.isHittable) {
-            app.swipeUp(velocity: .slow)
-        }
+        // The set grid is an editing control: it shows once its block is tapped open (Nick, 1 Nov 2026).
+        XCTAssertFalse(app.descendants(matching: .any)["set-grid"].exists, "the page reads plain until a block is opened")
+        XCTAssertTrue(app.buttons["block-grip"].firstMatch.exists, "the reorder grip shows while reading")
+        let grid = openBlockWithSetGrid()
         XCTAssertTrue(grid.waitForExistence(timeout: 5), "a one-exercise block should show its sets")
         snap("31 Set grid on the workout page")
-        tap(app.buttons["edit-toggle"]) // Done
+        let sets = app.buttons["Sets, more"]
+        for _ in 0..<4 where !(sets.exists && sets.isHittable) { app.swipeUp(velocity: .slow) }
+        XCTAssertTrue(sets.exists, "the set count is a stepper under the grid")
+        snap("31b Sets stepper and add chips")
+        for _ in 0..<6 where !app.buttons["block-done"].isHittable { app.swipeDown(velocity: .slow) }
+        tap(app.buttons["block-done"])
+        XCTAssertFalse(grid.exists, "Done closes the block again")
+        for _ in 0..<6 where !app.buttons["Start workout"].isHittable { app.swipeDown(velocity: .slow) }
 
         tap(app.buttons["Start workout"])
         XCTAssertTrue(app.buttons["End session"].waitForExistence(timeout: 5))
@@ -404,14 +423,15 @@ final class WalkthroughUITests: XCTestCase {
         let rest = app.buttons.matching(NSPredicate(format: "label BEGINSWITH[c] 'Rest'")).firstMatch
         XCTAssertTrue(rower.waitForExistence(timeout: 5))
         XCTAssertLessThan(rower.frame.minY, rest.frame.minY)
-        XCTAssertFalse(app.buttons["Add exercise"].exists, "no editing controls until Edit")
-        XCTAssertFalse(app.buttons["block-grip"].exists, "no grips until Edit")
+        XCTAssertFalse(app.buttons["Add exercise"].exists, "no editing controls until a block is opened")
+        XCTAssertFalse(app.navigationBars["Tabata This"].buttons["Edit"].exists, "there is no page-wide Edit (Nick, 1 Nov 2026)")
+        XCTAssertTrue(app.buttons["block-grip"].firstMatch.exists, "the reorder grip shows while reading")
         XCTAssertFalse(app.staticTexts["Hold and drag to move a step or a whole block · swipe to remove · tap to change"].exists, "the drag hint is gone")
         snap("21 Workout page, reading")
-        tap(app.navigationBars["Tabata This"].buttons["Edit"])
-        XCTAssertTrue(app.buttons["block-grip"].firstMatch.waitForExistence(timeout: 5), "Edit shows the grips")
-        XCTAssertTrue(app.navigationBars["Tabata This"].buttons["Done"].exists, "Edit turns into Done")
-        snap("21b Workout page, editing")
+        tap(app.buttons.matching(NSPredicate(format: "label BEGINSWITH[c] 'Tabata Row'")).firstMatch)
+        XCTAssertTrue(app.buttons["block-done"].waitForExistence(timeout: 5), "a tap on a header opens that block, with a Done")
+        XCTAssertEqual(app.buttons.matching(identifier: "block-done").count, 1, "only that block opens")
+        snap("21b Workout page, one block open")
 
         // Hold and drag the rest above the rower.
         // The page opens with these rows at the bottom, right above the Start bar. A drag that
@@ -444,9 +464,8 @@ final class WalkthroughUITests: XCTestCase {
         snap("23 My copy, edited")
 
         // Done goes back to reading.
-        tap(app.navigationBars["Tabata This (mine)"].buttons["Done"])
-        XCTAssertTrue(app.navigationBars["Tabata This (mine)"].buttons["Edit"].waitForExistence(timeout: 5))
-        XCTAssertFalse(app.buttons["block-grip"].exists, "Done puts the editing controls away")
+        tap(app.buttons["block-done"])
+        XCTAssertFalse(app.buttons["Add exercise"].waitForExistence(timeout: 2), "Done puts the editing controls away")
 
         // Every run made another "Tabata This (mine)", and once enough of them filled the search
         // results, open("Tabata This") in a later test landed on one with its rest moved first.
@@ -463,8 +482,6 @@ final class WalkthroughUITests: XCTestCase {
         open("Tabata This")
         let tip = app.staticTexts["Hold a block's header to reorder blocks"]
         XCTAssertFalse(tip.waitForExistence(timeout: 2), "there is no drag tip (Nick, 18 Oct 2026)")
-        tap(app.navigationBars["Tabata This"].buttons["Edit"])
-        XCTAssertFalse(tip.exists, "nor one in edit mode")
 
         let squat = app.buttons.matching(NSPredicate(format: "label BEGINSWITH[c] 'Tabata Squat'")).firstMatch
         let pullup = app.buttons.matching(NSPredicate(format: "label BEGINSWITH[c] 'Tabata Pull-up'")).firstMatch
@@ -474,9 +491,11 @@ final class WalkthroughUITests: XCTestCase {
         centre([squat, pullup])
         snap("24b Block headers with grips")
 
-        // A tap is still rounds and rest.
+        // A tap opens the block; a tap on the open block's header is its rounds and rest.
         tap(pullup)
-        XCTAssertTrue(app.navigationBars["Block"].waitForExistence(timeout: 5), "a tap on a header opens its rounds and rest")
+        XCTAssertTrue(app.buttons["block-done"].waitForExistence(timeout: 5), "a first tap opens the block for editing")
+        tap(pullup)
+        XCTAssertTrue(app.navigationBars["Block"].waitForExistence(timeout: 5), "a tap on an open block's header opens its rounds and rest")
         tap(app.navigationBars["Block"].buttons["Done"])
         XCTAssertFalse(app.navigationBars["Block"].waitForExistence(timeout: 2))
 
@@ -517,8 +536,7 @@ final class WalkthroughUITests: XCTestCase {
     /// and a card dropped above it lands right after it, with a line that says so (TW-034).
     func testBlockReorderView() {
         open("Tabata This")
-        XCTAssertFalse(app.buttons["block-grip"].firstMatch.waitForExistence(timeout: 2), "the grip is an edit-mode control")
-        tap(app.navigationBars["Tabata This"].buttons["Edit"])
+        XCTAssertTrue(app.buttons["block-grip"].firstMatch.waitForExistence(timeout: 5), "the grip shows while reading")
         tap(app.buttons["block-grip"].firstMatch)
         XCTAssertTrue(app.navigationBars["Reorder blocks"].waitForExistence(timeout: 5))
         let squatCard = card("Tabata Squat")
@@ -1072,7 +1090,7 @@ final class WalkthroughUITests: XCTestCase {
         open("Tabata This")
         let rower = app.buttons.matching(NSPredicate(format: "label BEGINSWITH[c] 'Rowing machine'")).firstMatch
         XCTAssertTrue(rower.waitForExistence(timeout: 5))
-        tap(app.navigationBars["Tabata This"].buttons["Edit"])
+        tap(app.buttons.matching(NSPredicate(format: "label BEGINSWITH[c] 'Tabata Row'")).firstMatch)
         centre([rower])
         rower.swipeLeft()
         tap(app.buttons["Delete"])
@@ -1363,12 +1381,10 @@ final class WalkthroughUITests: XCTestCase {
         open("Loads check")
         XCTAssertTrue(app.descendants(matching: .any)["ref-row"].waitForExistence(timeout: 5), "the embedded warm-up should be listed")
         snap("70 Workout page, shared warm-up and training maxes")
-        tap(app.buttons["edit-toggle"])
-        let grid = app.descendants(matching: .any)["set-grid"].firstMatch
-        for _ in 0..<6 where !(grid.exists && grid.isHittable) { app.swipeUp(velocity: .slow) }
+        _ = openBlockWithSetGrid()
         XCTAssertTrue(app.buttons["Set 1: Warm-up"].waitForExistence(timeout: 5), "the plan's warm-up shows as W")
         snap("71 Set types in the editor")
-        tap(app.buttons["edit-toggle"]) // Done
+        tap(app.buttons["block-done"])
 
         tap(app.buttons["Start workout"])
         XCTAssertTrue(app.buttons["End session"].waitForExistence(timeout: 5))

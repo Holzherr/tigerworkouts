@@ -14,37 +14,50 @@ const Page = ({ from = start }: { from?: Runsheet }) => {
 };
 const blocks = () => last.items.filter((i): i is Block => i.kind === 'block');
 const more = (group: string) => fireEvent.click(within(screen.getByRole('group', { name: group })).getByLabelText('Increase'));
-const edit = () => fireEvent.click(screen.getByRole('button', { name: 'Edit' }));
+const edit = () => fireEvent.click(screen.getByRole('button', { name: 'Edit Squats' }));
 
-describe('the workout page reads plain until Edit (Nick, 18 Oct 2026)', () => {
-  it('shows no editing controls until Edit, and Done puts them away again', () => {
+describe('the workout page reads plain; a tap on a block opens it for editing (Nick, 1 Nov 2026)', () => {
+  it('has no page-wide Edit; a tap on a block header opens that block, and Done closes it', () => {
     render(<Page />);
     expect(screen.getByText('Squats')).toBeTruthy();
-    expect(screen.queryByTestId('block-grip')).toBeNull();
-    expect(screen.queryByRole('button', { name: /Add block/ })).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Edit' })).toBeNull();
     expect(screen.queryByRole('button', { name: /^Squats/, expanded: false })).toBeNull();
     edit();
-    expect(screen.getByTestId('block-grip')).toBeTruthy();
-    expect(screen.getByRole('button', { name: /Add block/ })).toBeTruthy();
-    fireEvent.click(screen.getByRole('button', { name: 'Done' }));
-    expect(screen.queryByTestId('block-grip')).toBeNull();
-    expect(screen.getByRole('button', { name: 'Edit' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: /^Squats/, expanded: false })).toBeTruthy();
+    fireEvent.click(screen.getByTestId('block-done'));
+    expect(screen.queryByRole('button', { name: /^Squats/, expanded: false })).toBeNull();
+    expect(screen.getByRole('button', { name: 'Edit Squats' })).toBeTruthy();
+  });
+  it('only the tapped block opens', () => {
+    const two: Runsheet = { ...start, items: [...start.items, { kind: 'block', id: 'b2', name: 'Push', repeat: 2, steps: [ex('bw_pushup', 'e3')] }] };
+    render(<Page from={two} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Edit Push' }));
+    expect(screen.getByRole('button', { name: 'Edit Squats' })).toBeTruthy();
+    expect(screen.queryByRole('button', { name: 'Edit Push' })).toBeNull();
+    expect(screen.getAllByTestId('block-done')).toHaveLength(1);
   });
   it('a tap on an exercise still opens it', () => {
     render(<Page />);
     fireEvent.click(screen.getByRole('button', { name: new RegExp(`^${EX.bw_squat.name}`) }));
     expect(screen.getByRole('dialog', { name: EX.bw_squat.name })).toBeTruthy();
   });
-  it('the reorder view is there in edit mode, from a block header grip', () => {
+  it('the reorder grip shows while reading and opens the reorder view', () => {
     render(<Page />);
-    edit();
     fireEvent.click(screen.getByTestId('block-grip'));
     expect(screen.getByRole('dialog', { name: 'Reorder blocks' })).toBeTruthy();
   });
-  it('an empty workout opens in edit mode', () => {
+  it("an open block's grip reorders the whole workout, not the one block", () => {
+    const two: Runsheet = { ...start, items: [...start.items, { kind: 'block', id: 'b2', name: 'Push', repeat: 2, steps: [ex('bw_pushup', 'e3')] }] };
+    render(<Page from={two} />);
+    edit();
+    fireEvent.click(screen.getAllByTestId('block-grip')[0]);
+    const dialog = screen.getByRole('dialog', { name: 'Reorder blocks' });
+    expect(within(dialog).getByText('Push')).toBeTruthy();
+  });
+  it('Add block and Add a one-off exercise show while reading, on an empty workout too', () => {
     render(<Page from={{ id: 'u-2', title: 'New', items: [] }} />);
-    expect(screen.getByRole('button', { name: 'Done' })).toBeTruthy();
     expect(screen.getByRole('button', { name: /Add block/ })).toBeTruthy();
+    expect(screen.getByRole('button', { name: /Add a one-off exercise/ })).toBeTruthy();
   });
 });
 
@@ -63,7 +76,6 @@ describe('the workout page as the editor', () => {
   });
   it('Add block and Add a one-off exercise sit under the list', async () => {
     render(<Page />);
-    edit();
     fireEvent.click(screen.getByRole('button', { name: /Add block/ }));
     expect(blocks().map(b => b.name)).toEqual(['Squats', 'Block 2']);
     expect(screen.getByLabelText('Block name')).toHaveProperty('value', 'Block 2');

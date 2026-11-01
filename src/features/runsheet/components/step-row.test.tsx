@@ -29,3 +29,22 @@ describe('StepRow: what a step logs', () => {
     expect(screen.getByRole('button', { name: 'Metres' })).toBeTruthy();
   });
 });
+
+describe('StepRow: any distance', () => {
+  it('a distance can be typed, so a 15 m sled push is not stuck on the 50 m steps', () => {
+    const onChange = row({ ...rower, forMode: 'meters', forValue: 400 });
+    const field = screen.getByLabelText('Duration value');
+    fireEvent.focus(field);
+    fireEvent.change(field, { target: { value: '15' } });
+    fireEvent.blur(field);
+    expect(onChange).toHaveBeenCalledWith({ ...rower, forMode: 'meters', forValue: 15 });
+  });
+  it('a blank or junk entry leaves the distance as it was', () => {
+    const onChange = row({ ...rower, forMode: 'meters', forValue: 400 });
+    const field = screen.getByLabelText('Duration value');
+    fireEvent.focus(field);
+    fireEvent.change(field, { target: { value: '' } });
+    fireEvent.blur(field);
+    expect(onChange).not.toHaveBeenCalled();
+  });
+});
