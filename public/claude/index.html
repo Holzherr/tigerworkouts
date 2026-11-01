@@ -33,6 +33,7 @@
 <li>Read your profile and training history: the loads, reps and times you did.</li>
 <li>Search your workouts, public workouts and a catalogue of about 480 (benchmarks, lifting programmes, NHS plans, follow-along videos).</li>
 <li>Write new workouts into your account, or change your own. New workouts are private unless you ask for them to be public.</li>
+<li>Act as your coach: workouts Claude writes for you arrive in the app as "New · made for you", under a coach name you choose. Rename or remove the AI coach any time under Me.</li>
 <li>Run a workout now with a timer in the chat, and log the session when you finish.</li>
 <li>Give you a link that opens a workout on tigerworkouts.com with no sign-in.</li>
 </ul>
@@ -44,6 +45,13 @@
 <li>Ask away. Claude asks before any tool that writes to your account.</li>
 </ol>
 <p>Claude Code: <code>claude mcp add --transport http tigerworkouts https://mcp.tigerworkouts.com/mcp</code>, or the plugin, which adds coaching skills: <code>/plugin marketplace add Holzherr/tigerworkouts</code> then <code>/plugin install tigerworkouts@tigerworkouts</code>. More clients: <a href="https://mcp.tigerworkouts.com">mcp.tigerworkouts.com</a>.</p>
+
+<h2>Tools</h2>
+<p class="muted">Read-only tools run without asking; tools that write ask you first.</p>
+<ul>
+<li><b>Reads:</b> <code>get_profile</code> (name, units, bodyweight, training maxes, AI coach), <code>list_sessions</code> and <code>get_session</code> (your training history), <code>list_workouts</code> and <code>get_workout</code> (yours, public and the catalogue), <code>search_exercises</code>, <code>preview_workout_url</code> (a no-sign-in link), <code>start_workout</code> (the timer in the chat).</li>
+<li><b>Writes:</b> <code>create_workout</code>, <code>update_workout</code>, <code>log_session</code>, <code>set_ai_coach</code> (the coach's name, or switch it off), <code>claim_account</code> (keep a "Start now" account with your email).</li>
+</ul>
 
 <h2>No account needed to start</h2>
 <p>"Start now" makes an account with no email. Anything made with it stays private, and it is deleted with everything in it 7 days after it was created. To keep it, ask Claude to "keep my TigerWorkouts account", give your email and click the link we send. Then sign in with that email on tigerworkouts.com or in the iPhone app and the same workouts are there.</p>

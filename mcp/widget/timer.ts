@@ -114,6 +114,8 @@ const mmss = (sec: number) => {
   return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
 };
 
+const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? '' : 's'}`;
+
 const slotTitle = (sl: R.Slot) => (sl.kind === 'rest' || sl.step.kind === 'rest' ? 'Rest' : sl.step.exercise.name);
 const slotDetail = (s: R.RunState, sl: R.Slot) => {
   if (sl.step.kind !== 'exercise') return sl.blockName ? `${sl.blockName}` : '';
@@ -133,12 +135,12 @@ const render = () => {
   const head = `<div class="head"><b>${esc(out.title)}</b>${s ? `<span class="muted">${mmss(R.elapsed(s, now))}</span>` : ''}</div>`;
   if (!s) {
     const steps = R.expand(out.runsheet).filter(sl => sl.kind === 'work').length;
-    $('main').innerHTML = `${head}<p class="muted">${steps} sets. Keep this chat open while you train; the timer runs here.</p><button id="go" class="big">Start workout</button>`;
+    $('main').innerHTML = `${head}<p class="muted">${plural(steps, 'set')}. Keep this chat open while you train; the timer runs here.</p><button id="go" class="big">Start workout</button>`;
     $('go').onclick = () => ((state = R.start(out!.runsheet, Date.now())), (audio ??= new AudioContext()), render());
     return;
   }
   if (s.phase === 'done') {
-    $('main').innerHTML = `${head}<div class="now"><div class="name">Done</div><div class="muted">${mmss(R.elapsed(s, now))} · ${s.slots.filter(sl => sl.kind === 'work' && s.actuals[sl.id]?.doneAt).length} sets</div></div>
+    $('main').innerHTML = `${head}<div class="now"><div class="name">Done</div><div class="muted">${mmss(R.elapsed(s, now))} · ${plural(s.slots.filter(sl => sl.kind === 'work' && s.actuals[sl.id]?.doneAt).length, 'set')}</div></div>
 <p class="muted" id="log">${logged === 'yes' ? 'Saved to your TigerWorkouts history.' : logged === 'saving' ? 'Saving…' : logged === 'failed' ? 'Could not save this session.' : ''}</p>
 ${logged === 'failed' ? '<button id="retry" class="ghost">Try saving again</button>' : ''}`;
     if (logged === 'failed') $('retry').onclick = save;

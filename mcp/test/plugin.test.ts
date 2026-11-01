@@ -4,8 +4,8 @@
  */
 import { readdirSync, readFileSync } from 'node:fs';
 import path from 'node:path';
-import { describe, expect, it } from 'vitest';
-import { handleMcp } from '../src/server';
+import { describe, expect, it, vi } from 'vitest';
+import { handleMcp, UNAVAILABLE } from '../src/server';
 import { db as makeDb } from '../src/supabase';
 
 const PLUGIN = path.resolve(import.meta.dirname, '../../plugin');
@@ -41,6 +41,24 @@ describe('plugin', () => {
       for (const [, word] of s.text.matchAll(/`([a-z]+(?:_[a-z]+)+)`/g)) if (/^(get|list|search|create|update|preview|start|log|claim|set)_/.test(word)) expect(tools, `${s.name} names ${word}`).toContain(word);
       for (const [, other] of s.text.matchAll(/the ([a-z-]+) skill/g)) expect(names, `${s.name} points at ${other}`).toContain(other);
     }
+  });
+
+  it('a failure the tools do not expect reaches the model as a plain sentence, not a stack or a gateway page', async () => {
+    const call = async (fetcher: typeof fetch) => {
+      const db = makeDb({ userId: 'u', accessToken: 't' }, fetcher);
+      const res = await handleMcp(
+        new Request('https://mcp.test/mcp', { method: 'POST', headers: { 'content-type': 'application/json', accept: 'application/json, text/event-stream' }, body: JSON.stringify({ jsonrpc: '2.0', id: 1, method: 'tools/call', params: { name: 'list_sessions', arguments: {} } }) }),
+        db,
+      );
+      return ((await res.json()) as { result: { isError?: boolean; content: { text: string }[] } }).result;
+    };
+    const quiet = vi.spyOn(console, 'error').mockImplementation(() => {});
+    for (const fetcher of [() => Promise.reject(new TypeError('fetch failed')), async () => new Response('<html>502 Bad Gateway</html>', { status: 502 })]) {
+      const r = await call(fetcher as typeof fetch);
+      expect(r.isError).toBe(true);
+      expect(r.content[0].text).toBe(UNAVAILABLE);
+    }
+    quiet.mockRestore();
   });
 
   it('both manifests carry the same version', () => {
