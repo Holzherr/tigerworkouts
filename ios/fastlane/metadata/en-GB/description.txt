@@ -1,0 +1,35 @@
+TigerWorkouts runs your workout for you. Pick one, press Start, and the timer takes you through every exercise, rest and round, with a tone and a buzz at each change so you don't need to watch the screen.
+
+No account and no sign-up. Open the app and train; your history stays on the phone until you choose to sign in.
+
+WORKOUTS
+- 484 workouts built in: benchmark WODs and Hero WODs, strength programmes, NHS plans, interval protocols such as Tabata, and original programmes.
+- Write your own: blocks of rounds, AMRAP, EMOM, for time or ladders, with rests, warm-ups and cool-downs.
+- Set loads in kilos or as a percentage of your training max. The plate calculator works out the bar from the plates you own.
+- Change a workout for today only, or update it for next time.
+
+IN THE GYM
+- Tones and haptics at every change of exercise, rest or block, with a countdown for the last three seconds.
+- Keeps counting with the phone locked, and plays over your music instead of stopping it.
+- A Lock Screen and Dynamic Island card with the exercise, the countdown and buttons for Done, +15 s and Skip rest.
+- Log the weight and reps of each set as you go, or fix them afterwards.
+- If the app closes mid-workout, it offers to pick up where you left off.
+
+PROGRESS
+- History of every session, with a chart, records and estimated one-rep max for each exercise.
+- A target for today based on your last few attempts, and a suggestion for next time.
+- Flags an exercise that has stalled for weeks.
+- A muscle map of what you trained in the last four weeks.
+- Up next widget for the home screen.
+- Export your history as CSV.
+
+APPLE HEALTH
+Turn it on in Settings and each finished workout is saved to Health and counts towards your rings. The app reads your bodyweight and the heart rate recorded during the session, so the calorie figure is measured rather than assumed. Health data is never sold or used for advertising.
+
+SAME ACCOUNT AS THE WEBSITE
+Sign in with Apple, Google or an email code to sync with tigerworkouts.com. Coaches can send you workouts and see how your sessions went, once you accept their invite.
+
+Training is at your own risk. TigerWorkouts gives workouts and suggestions, not medical advice.
+
+Terms: https://tigerworkouts.com/terms/
+Privacy: https://tigerworkouts.com/privacy/

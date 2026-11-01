@@ -201,6 +201,14 @@ struct SettingsView: View {
         return parts.isEmpty ? "Not set" : parts.joined(separator: " · ")
     }
 
+    static let support = URL(string: "https://tigerworkouts.com/support/")!
+    static let privacy = URL(string: "https://tigerworkouts.com/privacy/")!
+    static let terms = URL(string: "https://tigerworkouts.com/terms/")!
+    static var version: String {
+        let info = Bundle.main.infoDictionary ?? [:]
+        return "\(info["CFBundleShortVersionString"] ?? "?") (\(info["CFBundleVersion"] ?? "?"))"
+    }
+
     @Environment(Store.self) private var store
     @AppStorage(Switches.haptics) private var haptics = true
     @AppStorage(Switches.sound) private var sound = true
@@ -302,12 +310,25 @@ struct SettingsView: View {
             } header: {
                 Text("Health")
             } footer: {
-                Text("Workouts count towards your rings, your bodyweight comes from Health, and your heart rate turns the calorie estimate into a measurement.")
+                Text("Workouts count towards your rings, your bodyweight comes from Health, and your heart rate turns the calorie estimate into a measurement. Signed in, the heart rate and bodyweight are kept with your workout history. Health data is never sold or used for advertising.")
             }
 
             Section {
                 LabeledContent("Workouts bundled", value: "\(store.catalogue.count)")
                 LabeledContent("Sessions logged", value: "\(store.results.count)")
+            }
+
+            Section {
+                Link("Support", destination: Self.support)
+                    .accessibilityIdentifier("support-link")
+                Link("Privacy Policy", destination: Self.privacy)
+                    .accessibilityIdentifier("privacy-link")
+                Link("Terms of Service", destination: Self.terms)
+                LabeledContent("Version", value: Self.version)
+            } header: {
+                Text("About")
+            } footer: {
+                Text("Questions or problems: brambruesch@nickholzherr.com")
             }
         }
         .navigationTitle("Settings")

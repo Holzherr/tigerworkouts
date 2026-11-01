@@ -1,0 +1,13 @@
+No account is needed. Every feature except sync works signed out: open the app and use it.
+
+To try it:
+1. Workouts tab > Discover, pick any workout (search for "Tabata This"), tap Start workout. The timer runs through each exercise and rest with tones and haptics. Lock the phone to see the Lock Screen card; the timer keeps running.
+2. End the session with the X, then Finish and save. The session appears under History.
+3. Workouts tab > + creates your own workout.
+4. Me > Settings > Apple Health turns on HealthKit: finished workouts are saved to Health; bodyweight and heart rate are read to work out calories.
+
+Sign-in is optional and only syncs data with our website (tigerworkouts.com). It offers Sign in with Apple, Google and an email code. To test signing in and account deletion without email, use the demo account below with "Use a password instead" on the sign-in screen. Account deletion: Me > Settings > Delete account.
+
+Background audio: the app keeps an audio session open only while a workout is running, so the interval timer can play tones and keep time with the screen locked.
+
+In-app feedback: holding three fingers on the screen for 1.5 seconds opens a feedback box that sends a note to us.

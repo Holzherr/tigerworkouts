@@ -4,7 +4,8 @@
   App Store Connect rejects an upload without this file (since 1 May 2024) when the app calls a
   required-reason API. Ours: the modification date of the crash-safe session file
   (SessionRunner.readSaved) and UserDefaults (the Me switches, @AppStorage, and the App Group suite shared with the widget). Collected data is what
-  syncs to our own Supabase when signed in; nothing is used for tracking.
+  syncs to our own Supabase when signed in, plus a feedback note when one is sent; nothing is used
+  for tracking. specs/app-store-submission.md has the App Privacy answers that match.
 -->
 <plist version="1.0">
 <dict>
@@ -72,6 +73,50 @@
       <!-- The workouts logged: exercises, loads, reps, times. -->
       <key>NSPrivacyCollectedDataType</key>
       <string>NSPrivacyCollectedDataTypeFitness</string>
+      <key>NSPrivacyCollectedDataTypeLinked</key>
+      <true/>
+      <key>NSPrivacyCollectedDataTypeTracking</key>
+      <false/>
+      <key>NSPrivacyCollectedDataTypePurposes</key>
+      <array><string>NSPrivacyCollectedDataTypePurposeAppFunctionality</string></array>
+    </dict>
+    <dict>
+      <!-- The profile name, and the name Sign in with Apple passes on. -->
+      <key>NSPrivacyCollectedDataType</key>
+      <string>NSPrivacyCollectedDataTypeName</string>
+      <key>NSPrivacyCollectedDataTypeLinked</key>
+      <true/>
+      <key>NSPrivacyCollectedDataTypeTracking</key>
+      <false/>
+      <key>NSPrivacyCollectedDataTypePurposes</key>
+      <array><string>NSPrivacyCollectedDataTypePurposeAppFunctionality</string></array>
+    </dict>
+    <dict>
+      <!-- Workouts you write and notes to a coach. -->
+      <key>NSPrivacyCollectedDataType</key>
+      <string>NSPrivacyCollectedDataTypeOtherUserContent</string>
+      <key>NSPrivacyCollectedDataTypeLinked</key>
+      <true/>
+      <key>NSPrivacyCollectedDataTypeTracking</key>
+      <false/>
+      <key>NSPrivacyCollectedDataTypePurposes</key>
+      <array><string>NSPrivacyCollectedDataTypePurposeAppFunctionality</string></array>
+    </dict>
+    <dict>
+      <!-- A note sent from the in-app feedback box (Support/InAppFeedback.swift). -->
+      <key>NSPrivacyCollectedDataType</key>
+      <string>NSPrivacyCollectedDataTypeCustomerSupport</string>
+      <key>NSPrivacyCollectedDataTypeLinked</key>
+      <true/>
+      <key>NSPrivacyCollectedDataTypeTracking</key>
+      <false/>
+      <key>NSPrivacyCollectedDataTypePurposes</key>
+      <array><string>NSPrivacyCollectedDataTypePurposeAppFunctionality</string></array>
+    </dict>
+    <dict>
+      <!-- What travels with a feedback note: screen, device model, OS, app version. -->
+      <key>NSPrivacyCollectedDataType</key>
+      <string>NSPrivacyCollectedDataTypeOtherDiagnosticData</string>
       <key>NSPrivacyCollectedDataTypeLinked</key>
       <true/>
       <key>NSPrivacyCollectedDataTypeTracking</key>
