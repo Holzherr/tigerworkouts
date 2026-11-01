@@ -148,7 +148,7 @@ const ExerciseBody = ({ step, onChange }: { step: ExerciseStep; onChange: (s: St
     <div className="flex items-center justify-between gap-3">
       <Label>For</Label>
       <div className="flex items-center gap-1.5">
-        <Stepper aria-label="Duration" value={step.forValue} step={step.forMode === 'seconds' ? 5 : step.forMode === 'meters' ? 50 : 1} min={1} max={step.forMode === 'seconds' ? 600 : step.forMode === 'meters' ? 42195 : 200} onChange={forValue => onChange({ ...step, forValue })} />
+        <Stepper aria-label="Duration" typeable value={step.forValue} step={step.forMode === 'seconds' ? 5 : step.forMode === 'meters' ? 10 : 1} min={1} max={step.forMode === 'seconds' ? 600 : step.forMode === 'meters' ? 42195 : 200} onChange={forValue => onChange({ ...step, forValue })} />
         <Dropdown aria-label="Duration unit" value={step.forMode} options={FOR_OPTIONS} onValueChange={forMode => onChange(withMode(step, forMode))} />
       </div>
     </div>
