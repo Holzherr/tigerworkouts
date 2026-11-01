@@ -6,7 +6,7 @@
  */
 import type { ExerciseRef } from './model';
 import { plural } from '@/shared/utils/ui-utils';
-import { makeExercise, makeRest, type Block, type ExerciseStep, type Item, type RestStep, type Runsheet, type Step, uid } from './model';
+import { hasLoad, makeExercise, makeRest, measureOf, type Block, type ExerciseStep, type Item, type RestStep, type Runsheet, type Step, uid } from './model';
 
 export interface ParseResult {
   items: Item[];
@@ -40,6 +40,10 @@ export const matchExercise = (name: string, lib: Record<string, ExerciseRef>): {
 };
 
 const numRe = /(\d+(?:\.\d+)?)/;
+/** A number with what it measures: "5 min", "500m", "2 km", "20 cal", "45s". */
+const measureRe = /(\d+(?:\.\d+)?)\s*(mins?|minutes?|km|m|metres?|meters?|k?cals?|calories|secs?|seconds?|s)\b/;
+const MEASURE: Record<string, 'minutes' | 'meters' | 'calories' | 'seconds'> = { min: 'minutes', km: 'meters', m: 'meters', met: 'meters', cal: 'calories', kca: 'calories', sec: 'seconds', s: 'seconds' };
+const measureOfWord = (w: string) => MEASURE[w.slice(0, 3)] ?? MEASURE[w.slice(0, 2)] ?? MEASURE[w[0]];
 
 /** One line = one block (or one loose step). "a 28 + b 20 x8 30/30", "sprints 14.5 x8, rest 15", "incline walk 10 min inc 6", "skip the walk". */
 export const parsePlan = (text: string, lib: Record<string, ExerciseRef>): ParseResult => {
@@ -57,7 +61,6 @@ export const parsePlan = (text: string, lib: Record<string, ExerciseRef>): Parse
     const onOff = line.match(/(\d+)\s*\/\s*(\d+)/);
     const restM = line.match(/rest\s*(\d+)/);
     const halfRest = /half rests?/.test(line);
-    const minutes = line.match(/(\d+)\s*min/);
     const incline = line.match(/(?:inc|incline)\s*(\d+)/);
     const amrap = line.match(/amrap\s*(\d+)/);
     const emom = line.match(/emom\s*(\d+)/);
@@ -75,13 +78,25 @@ export const parsePlan = (text: string, lib: Record<string, ExerciseRef>): Parse
         continue;
       }
       if (!hit.exact) assumptions.push(`"${nameTxt}" → ${hit.ref.name}`);
-      const isCardioMinutes = minutes && parts.length === 1 && !onOff;
-      const step: ExerciseStep = makeExercise(hit.ref, {
-        target: hit.ref.unit ? (value ?? undefined) : undefined,
-        forMode: isCardioMinutes ? 'minutes' : onOff ? 'seconds' : /\breps?\b/.test(p) ? 'reps' : hit.ref.unit && value !== undefined ? 'seconds' : 'reps',
-        forValue: isCardioMinutes ? parseInt(minutes[1], 10) : onOff ? parseInt(onOff[1], 10) : /\breps?\b/.test(p) ? (value ?? 10) : hit.ref.unit && value !== undefined ? 30 : (value ?? 10),
-        incline: incline ? parseInt(incline[1], 10) : undefined,
-      });
+      // A number with a unit is what the step is done for; a bare one is the load (kg, kph), the
+      // exercise's own measure (a rower's metres), or reps. "row 5 min" is five minutes, not 5 m.
+      const mm = p.match(measureRe);
+      const measure = mm ? measureOfWord(mm[2]) : undefined;
+      const amount = mm ? parseFloat(mm[1]) * (mm[2] === 'km' ? 1000 : 1) : undefined;
+      const bare = (mm ? p.replace(mm[0], ' ') : p).match(numRe);
+      const load = hasLoad(hit.ref) && bare ? parseFloat(bare[1]) : undefined;
+      const reps = /\breps?\b/.test(p);
+      const own = measureOf(hit.ref.unit);
+      const [forMode, forValue]: [ExerciseStep['forMode'], number] = measure && amount !== undefined ? [measure, amount]
+        : onOff ? ['seconds', parseInt(onOff[1], 10)]
+        : reps ? ['reps', value ?? 10]
+        : load !== undefined ? ['seconds', 30]
+        : own && value !== undefined ? [own, value]
+        : ['reps', value ?? 10];
+      const step: ExerciseStep = makeExercise(hit.ref, { target: load, forMode, forValue, incline: incline ? parseInt(incline[1], 10) : undefined });
+      // No target unless it is a load: a rower's unit is the work, not a setting, and cardio done
+      // for a time, distance or calories with no speed given gets none invented.
+      if (!hasLoad(hit.ref) || (load === undefined && (forMode === 'minutes' || forMode === 'meters' || forMode === 'calories'))) delete step.target;
       steps.push(step);
       const restSec = restM ? parseInt(restM[1], 10) : onOff ? parseInt(onOff[2], 10) : undefined;
       if (restSec !== undefined && (onOff || restM)) steps.push(makeRest(halfRest ? Math.round(restSec / 2) : restSec));

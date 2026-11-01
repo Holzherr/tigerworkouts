@@ -336,6 +336,12 @@ describe('plans, timer and logging', () => {
     expect(items[1]).toMatchObject({ kind: 'block', repeat: 5 });
   });
 
+  it('a plan line "row 5 min" reads back as five minutes on the rower, not "5 m"', async () => {
+    const out = await T.createWorkout(db, { plan: 'row 5 min' });
+    expect(out.outline).toContain('Rowing machine · 5 min');
+    expect(out.outline).not.toMatch(/5 min · 5 m/);
+  });
+
   it('a plan line it cannot read is listed back, and nothing is saved', async () => {
     const before = tables.workouts.length;
     await expect(T.createWorkout(db, { plan: 'row 5 min\nflibbertigibbet 12' })).rejects.toThrow(/flibbertigibbet/);
