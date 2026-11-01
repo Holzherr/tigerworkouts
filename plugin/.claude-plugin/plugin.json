@@ -1,7 +1,7 @@
 {
   "name": "tigerworkouts",
   "displayName": "TigerWorkouts",
-  "version": "1.1.1",
+  "version": "1.1.2",
   "description": "Coaching from your real training history, new workouts written straight into the TigerWorkouts app, and a guided timer in the chat.",
   "author": {
     "name": "Brambruesch Ltd",
@@ -18,7 +18,7 @@
     "coaching"
   ],
   "icon": "./assets/icon.png",
-  "documentationUrl": "https://mcp.tigerworkouts.com/",
+  "documentationUrl": "https://tigerworkouts.com/claude/",
   "supportUrl": "https://tigerworkouts.com/support/",
   "privacyPolicyUrl": "https://tigerworkouts.com/privacy/",
   "termsOfServiceUrl": "https://tigerworkouts.com/terms/"
