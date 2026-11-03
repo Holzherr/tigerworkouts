@@ -11,7 +11,7 @@ final class AppStoreScreenshotsUITests: XCTestCase {
         continueAfterFailure = false
         app = XCUIApplication()
         app.launchEnvironment["UITEST_NO_PROMPTS"] = "1"
-        app.launchArguments = ["-seedLogbook", "-seedProgress", "-seedLoads"]
+        app.launchArguments = ["-seedLogbook", "-seedProgress", "-seedLoads", "-seedArmsAbs"]
         app.launch()
         let discard = app.alerts.buttons["Discard"]
         if discard.waitForExistence(timeout: 3) { discard.tap() }
@@ -53,6 +53,11 @@ final class AppStoreScreenshotsUITests: XCTestCase {
         sleep(1)
         snap("05-exercise")
         if app.buttons["Done"].exists { app.buttons["Done"].firstMatch.tap() }
+        back()
+
+        open("Arms and abs")
+        sleep(1)
+        snap("09-ai-workout")
         back()
 
         tap(app.tabBars.buttons["History"])

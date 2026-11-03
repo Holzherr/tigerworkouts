@@ -122,6 +122,38 @@ extension Store {
         results = (results.filter { !ids.contains($0.rowId) } + seed).sorted { $0.startedAt > $1.startedAt }
     }
 
+    /// `-seedArmsAbs` on launch: "Arms and abs", the 30-minute workout an AI coach writes when asked
+    /// for arms and abs today — the App Store shot of a chat request landing in the app. Fixed id:
+    /// launching with it again replaces it.
+    func seedArmsAbsIfAsked(_ arguments: [String] = ProcessInfo.processInfo.arguments) {
+        guard arguments.contains("-seedArmsAbs") else { return }
+        func ex(_ key: String, _ name: String, _ unit: String = "kg", _ step: Double = 1) -> ExerciseRef {
+            Library.shared.exercise(key)?.ref ?? ExerciseRef(key: key, name: name, unit: unit, step: step)
+        }
+        func reps(_ id: String, _ e: ExerciseRef, _ n: Double, _ load: Double? = nil) -> Step {
+            .exercise(ExerciseStep(id: id, exercise: e, target: load, forMode: .reps, forValue: n))
+        }
+        let plank = ExerciseStep(id: "seed-aa-plank", exercise: ex("bw_plank", "Plank", "s", 10), forMode: .seconds, forValue: 45)
+        var sheet = Runsheet(id: "seed-armsabs", title: "Arms and abs", items: [
+            .block(Block(id: "seed-aa-b1", name: "Arms", repeatCount: 4, steps: [
+                reps("seed-aa-curl", ex("db_curl", "Dumbbell curl"), 10, 12),
+                reps("seed-aa-push", ex("cable_tricep_pushdown", "Tricep pushdown", "kg", 2.5), 12, 25),
+                reps("seed-aa-hammer", ex("db_hammer_curl", "Hammer curl"), 10, 12),
+                reps("seed-aa-kick", ex("db_tricep_kickback", "Triceps kickback"), 12, 8),
+                .rest(RestStep(id: "seed-aa-r1", seconds: 90)),
+            ])),
+            .block(Block(id: "seed-aa-b2", name: "Abs", repeatCount: 4, steps: [
+                .exercise(plank),
+                reps("seed-aa-crunch", ex("bw_reverse_crunch", "Reverse crunch", "", 1), 15),
+                reps("seed-aa-twist", ex("bw_russian_twist", "Russian twist", "", 1), 20),
+                .rest(RestStep(id: "seed-aa-r2", seconds: 60)),
+            ])),
+        ])
+        sheet.creator = "Your AI coach"
+        sheet.description = "Biceps, triceps and core in about 30 minutes: four rounds of curls and triceps work, then four rounds of planks, crunches and twists."
+        myWorkouts = [sheet] + myWorkouts.filter { $0.key != "seed-armsabs" }
+    }
+
     /// `-seedLoads` on launch: a workout of your own, "Loads check", that embeds the NHS 6-minute
     /// warm-up by reference, runs bench as a warm-up, two working sets and a drop set, and presses
     /// at 65% of a 61 kg training max — with home plates set in My equipment, so the press shows
