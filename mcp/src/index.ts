@@ -241,6 +241,8 @@ const getProvider = (env: Env, origin: string) => {
   if (!p) providers.set(origin, (p = makeProvider(env, origin)));
   return p;
 };
+// No refreshTokenTTL: workers-oauth-provider 0.10.3 defaults it to 30 days, counted from sign-in and
+// not extended by a refresh, so a connection lasts 30 days or until the Supabase session ends.
 const makeProvider = (env: Env, origin: string) =>
   new OAuthProvider<Env>({
     apiRoute: '/mcp',

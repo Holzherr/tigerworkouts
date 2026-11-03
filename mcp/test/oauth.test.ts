@@ -239,3 +239,33 @@ describe('start without an account', () => {
     expect((await call('/mcp', { method: 'POST', headers: { authorization: `Bearer ${tok.access_token}`, 'content-type': 'application/json', accept: 'application/json' }, body: '{}' })).status).toBe(403);
   });
 });
+
+describe('how long a sign-in lasts', () => {
+  afterEach(() => vi.useRealTimers());
+  const DAY = 24 * 3600 * 1000;
+  const refresh = (token: string, clientId: string) => call('/oauth/token', form({ grant_type: 'refresh_token', refresh_token: token, client_id: clientId }));
+
+  it('a connection left alone for 29 days refreshes without reconnecting, and /mcp takes the new token', async () => {
+    vi.useFakeTimers({ toFake: ['Date'] });
+    const a = await openAuthorize();
+    const tok = await tokensFor(await call('/authorize/password', form({ rid: a.rid, email: 'nick@example.com', password: 'right' })), a);
+    vi.setSystemTime(Date.now() + 29 * DAY);
+    const res = await refresh(tok.refresh_token, a.clientId);
+    expect(res.status).toBe(200);
+    const next = await json(res);
+    expect(refreshes).toBe(1);
+    const profile = await rpc(next.access_token, 'tools/call', { name: 'get_profile', arguments: {} });
+    expect(JSON.parse(profile.result.content[0].text)).toMatchObject({ userId: NICK });
+  });
+
+  it('a refresh Supabase refuses (its session has ended) answers invalid_grant, so the client asks to reconnect', async () => {
+    const a = await openAuthorize();
+    const tok = await tokensFor(await call('/authorize/password', form({ rid: a.rid, email: 'nick@example.com', password: 'right' })), a);
+    const live = globalThis.fetch;
+    vi.stubGlobal('fetch', async (input: RequestInfo | URL, init?: RequestInit) =>
+      String(input) === `${SB_URL}/auth/v1/token?grant_type=refresh_token` ? Response.json({ error: 'invalid_grant', error_description: 'Invalid Refresh Token: Refresh Token Not Found' }, { status: 400 }) : live(input, init));
+    const res = await refresh(tok.refresh_token, a.clientId);
+    expect(res.status).toBe(400);
+    expect(await json(res)).toMatchObject({ error: 'invalid_grant' });
+  });
+});
