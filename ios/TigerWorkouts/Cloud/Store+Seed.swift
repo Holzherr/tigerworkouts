@@ -82,11 +82,12 @@ extension Store {
         results = (results.filter { !ids.contains($0.rowId) } + seed).sorted { $0.startedAt > $1.startedAt }
     }
 
-    /// `-seedProgress` on launch: Jack (a 20-minute AMRAP) three times at 7, 7 and 8 rounds, the
-    /// newest a minute back so Up next picks it with a Today target, and kettlebell swings stuck at
-    /// 24 kg × 10 for five weeks — three sessions of their own plus the swings inside each Jack — so
-    /// the card has a stall line and the logbook a stall card. Fixed ids: launching with it again
-    /// replaces them.
+    /// `-seedProgress` on launch: "Engine AMRAP" (a 20-minute AMRAP your AI coach wrote) three times
+    /// at 7, 7 and 8 rounds, the newest a minute back so Up next picks it with a Today target, and
+    /// kettlebell swings stuck at 24 kg × 10 for five weeks — three sessions of their own plus the
+    /// swings inside each AMRAP — so the card has a stall line and the logbook a stall card. Not a
+    /// catalogue workout, so the App Store screenshots carry no third-party names. Fixed ids:
+    /// launching with it again replaces them.
     func seedProgressIfAsked(_ arguments: [String] = ProcessInfo.processInfo.arguments) {
         guard arguments.contains("-seedProgress") else { return }
         let day: TimeInterval = 86_400
@@ -100,9 +101,23 @@ extension Store {
                           steps: [swings(3)], id: "seed-progress-swings-\(Int(d))")
         }
         for (d, rounds) in [(14.0, 7.0), (7.0, 7.0), (60.0 / day, 8.0)] {
-            seed.append(SessionResult(runsheetId: "cf-hero-jack", title: "Jack", startedAt: ago(d), durationSec: 1_200, completed: true,
-                                      score: rounds, steps: [swings(Int(rounds))], id: "seed-progress-jack-\(Int(d))"))
+            seed.append(SessionResult(runsheetId: "seed-amrap", title: "Engine AMRAP", startedAt: ago(d), durationSec: 1_200, completed: true,
+                                      score: rounds, steps: [swings(Int(rounds))], id: "seed-progress-amrap-\(Int(d))"))
         }
+        func ex(_ key: String, _ name: String, _ step: Double) -> ExerciseRef {
+            Library.shared.exercise(key)?.ref ?? ExerciseRef(key: key, name: name, unit: "kg", step: step)
+        }
+        let steps: [Step] = [
+            .exercise(ExerciseStep(id: "s1", exercise: ex("bb_push_press", "Push press", 2.5), target: 52, forMode: .reps, forValue: 10)),
+            .exercise(ExerciseStep(id: "s2", exercise: ex("kb_swing", "Kettlebell swings", 4), target: 24, forMode: .reps, forValue: 10)),
+            .exercise(ExerciseStep(id: "s3", exercise: ex("bw_box_jump", "Box jump", 1), forMode: .reps, forValue: 10)),
+        ]
+        var sheet = Runsheet(id: "seed-amrap", title: "Engine AMRAP", items: [
+            .block(Block(id: "seed-amrap-b1", name: "Engine", mode: .amrap, steps: steps, timeCapSec: 1_200)),
+        ])
+        sheet.creator = "Your AI coach"
+        sheet.description = "As many rounds as you can in 20 minutes: 10 push presses, 10 kettlebell swings and 10 box jumps. Keep the swings unbroken; aim for one more round than last time."
+        myWorkouts = [sheet] + myWorkouts.filter { $0.key != "seed-amrap" }
         let ids = Set(seed.compactMap(\.id))
         results = (results.filter { !ids.contains($0.rowId) } + seed).sorted { $0.startedAt > $1.startedAt }
     }

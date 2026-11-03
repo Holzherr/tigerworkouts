@@ -20,11 +20,13 @@ final class AppStoreScreenshotsUITests: XCTestCase {
     func testAppStoreScreenshots() {
         XCTAssertTrue(app.navigationBars["Workouts"].waitForExistence(timeout: 10))
         tap(app.buttons["Discover"])
+        tap(app.buttons["Coaches"])
         sleep(2)
         snap("01-discover")
+        tap(app.buttons["All"])
         tap(app.buttons["Mine"])
 
-        open("Jack")
+        open("Engine AMRAP")
         XCTAssertTrue(app.descendants(matching: .any)["today-target"].waitForExistence(timeout: 5))
         sleep(1)
         snap("04-today-target")
