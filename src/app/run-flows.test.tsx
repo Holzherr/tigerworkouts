@@ -23,7 +23,7 @@ const stored = (): SessionResult[] => JSON.parse(localStorage.getItem('workout-h
 const click = (name: string | RegExp) => fireEvent.click(screen.getByRole('button', { name }));
 const findClick = async (name: string | RegExp) => fireEvent.click(await screen.findByRole('button', { name }));
 
-/** Open a saved workout from Discover (origin "saved") and start it, past the lead-in. */
+/** Open a Mine card's page (the first, "Mine", is Up next: own and new) and start it, past the lead-in. */
 const startSaved = async (title = 'Mine') => {
   location.hash = '#/';
   render(<App />);
@@ -54,6 +54,14 @@ describe('where a session was started from', () => {
   it('rides on the row the timer logs', async () => {
     await startSaved();
     await endAndSave();
+    expect(stored().map(r => r.startedFrom)).toEqual(['up_next']);
+  });
+  it('is saved for a Mine card that is not Up next', async () => {
+    await startSaved('Two blocks');
+    click('More');
+    click(/End workout/);
+    click(/Finish and save/);
+    await screen.findByText('Save result');
     expect(stored().map(r => r.startedFrom)).toEqual(['saved']);
   });
   it('survives a reload and a resume', async () => {
@@ -61,7 +69,7 @@ describe('where a session was started from', () => {
     reload();
     await findClick('Resume');
     await endAndSave();
-    expect(stored().map(r => r.startedFrom)).toEqual(['saved']);
+    expect(stored().map(r => r.startedFrom)).toEqual(['up_next']);
   });
   it('rides on a kept run saved as it stands', async () => {
     await startSaved();
@@ -69,7 +77,7 @@ describe('where a session was started from', () => {
     reload();
     await findClick('Save what I did');
     await screen.findByText('Save result');
-    expect(stored().map(r => r.startedFrom)).toEqual(['saved']);
+    expect(stored().map(r => r.startedFrom)).toEqual(['up_next']);
   });
 });
 

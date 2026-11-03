@@ -114,4 +114,14 @@ struct HomeTests {
         let back = try JSONDecoder().decode(SessionResult.self, from: JSONEncoder().encode(saved))
         #expect(back.startedFrom.flatMap(SessionOrigin.init(rawValue:)) == .upNext)
     }
+
+    @Test("Start on the Up next card's page saves up_next; on another Mine card's page, mine")
+    @MainActor
+    func upNextPageOrigin() {
+        // What a Mine card pushes, and what its page's Start hands the runner (DiscoverView's destination).
+        let opened = { DiscoverView.Opened(key: $0, from: Home.origin(of: self.w($0), own: ["u-a", "u-b"], next: "u-a")) }
+        let saved = { SessionRunner(runsheet: Fixtures.interval(), startedFrom: opened($0).from).result().startedFrom }
+        #expect(opened("u-a").from == .upNext)
+        #expect(["u-a", "u-b"].map(saved) == ["up_next", "mine"])
+    }
 }

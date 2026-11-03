@@ -132,7 +132,8 @@ Each session records where it was started (`startedFrom`: the home list it was i
 share link) so the share started from a home recommendation can be measured. The iOS app writes the
 same field from its Workouts tab (Mine: own → mine, saved → saved, a coach's → coach; For you →
 recommended; the catalogue or a search result → search) and from a `tigerworkouts://w/` link (link). Mine's Up next
-card sits first on both apps and records `up_next`, which is not `home` and not in home_reco_used. The origin
+card sits first on both apps and records `up_next`, from its play button or from Start on its page. It is
+the home screen's recommendation since #84, so home_reco_used counts `up_next` with `recommended` and `home`. The origin
 rides in the crash-safe copy on both, so a resumed or recovered session keeps it.
 Sign out pushes first, then empties the device for the next account (sessions, workouts, favourites,
 saved, exercises, training maxes and the `tiger:synced` snapshot); while the push fails or a session
