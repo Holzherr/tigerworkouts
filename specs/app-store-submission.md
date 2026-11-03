@@ -18,6 +18,7 @@ Metadata follows fastlane `deliver`'s layout in `ios/fastlane/`, so it can be up
 8. **Build:** pick the newest TestFlight build (uploaded from merged main, see PR) under the 1.0 version.
 9. **Submit for Review.** Release option: manual or automatic after approval.
 10. **Optional, to automate later uploads:** an App Store Connect API key (Users and Access → Integrations → Team Keys, role App Manager), saved outside the repo. Then `fastlane deliver --skip_binary_upload` pushes all of the metadata and screenshots.
+11. **Positioning:** approve [app-store-positioning.md](app-store-positioning.md) (screen 1 "Use ChatGPT or Claude as your trainer"); the screenshots and metadata are redone after.
 
 ## App Store Connect fields
 
