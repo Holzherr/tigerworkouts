@@ -153,12 +153,13 @@ export const DiscoverScreen = ({ workouts, results = [], savedIds = [], ownIds =
     return { programs, singles };
   }, [workouts, q, filter]);
 
-  /** A Mine card; the Up next card's play records `up_next`, so its starts read apart from the rest. */
+  /** A Mine card; the Up next card, played or opened, records `up_next`, so its starts read apart from the rest. */
   const mineRow = (r: Runsheet) => {
     const done = lastDoneOf(r, last);
     const fresh = !done && own.has(wid(r));
     const next = wid(r) === upNext;
-    return <Row key={wid(r)} runsheet={r} badge={fresh ? newBadge(r) : undefined} why={fresh ? whyLine(r) : undefined} contents={contentsLine(r)} upNext={next} meta={mineLine(r, done)} onOpen={() => onOpen(r, 'saved')} onStart={onStart && (() => onStart(r, next ? 'up_next' : 'saved'))} />;
+    const origin = next ? 'up_next' : 'saved';
+    return <Row key={wid(r)} runsheet={r} badge={fresh ? newBadge(r) : undefined} why={fresh ? whyLine(r) : undefined} contents={contentsLine(r)} upNext={next} meta={mineLine(r, done)} onOpen={() => onOpen(r, origin)} onStart={onStart && (() => onStart(r, origin))} />;
   };
 
   const shown = singles.slice(0, limit);

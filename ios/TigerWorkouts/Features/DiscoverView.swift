@@ -184,12 +184,12 @@ struct DiscoverView: View {
         }
     }
 
-    /// A Mine card: its play records `Home.origin`, its page `mine` or `saved`.
+    /// A Mine card: its play and its page both record `Home.origin`, so Up next reads apart.
     private func mineRow(_ sheet: Runsheet, own: Set<String>, last: [String: Date], next: String?) -> some View {
         let done = Home.lastDone(of: sheet, in: last)
         let fresh = own.contains(sheet.key) && done == nil
-        return row(sheet, meta: Home.line(minutes: sheet.minutes, level: sheet.level, lastDone: done), from: own.contains(sheet.key) ? .mine : .saved,
-                   start: Home.origin(of: sheet, own: own, next: next), play: true, card: Card(badge: fresh ? Home.badge(sheet) : nil, why: fresh ? Home.why(sheet) : nil, contents: Home.contents(sheet), upNext: sheet.key == next))
+        return row(sheet, meta: Home.line(minutes: sheet.minutes, level: sheet.level, lastDone: done), from: Home.origin(of: sheet, own: own, next: next),
+                   play: true, card: Card(badge: fresh ? Home.badge(sheet) : nil, why: fresh ? Home.why(sheet) : nil, contents: Home.contents(sheet), upNext: sheet.key == next))
     }
 
     // MARK: - Discover
@@ -273,8 +273,8 @@ struct DiscoverView: View {
     }
 
     /// One workout as a card: its name and one meta line open its page; with `play`, a coral play
-    /// button on the right starts it straight away (as `start` if given), last time's numbers carried over.
-    private func row(_ sheet: Runsheet, meta: String, tint: Color = Brand.muted, from: SessionOrigin, start: SessionOrigin? = nil, play: Bool = false, card: Card = Card()) -> some View {
+    /// button on the right starts it straight away, last time's numbers carried over.
+    private func row(_ sheet: Runsheet, meta: String, tint: Color = Brand.muted, from: SessionOrigin, play: Bool = false, card: Card = Card()) -> some View {
         HStack(spacing: 12) {
             NavigationLink(value: Opened(key: sheet.key, from: from)) {
                 HStack(spacing: 8) {
@@ -322,7 +322,7 @@ struct DiscoverView: View {
             .buttonStyle(.plain)
             if play {
                 Button {
-                    onStart(store.seeded(sheet), start ?? from)
+                    onStart(store.seeded(sheet), from)
                 } label: {
                     Image(systemName: "play.fill")
                         .font(.system(size: 17, weight: .bold))
