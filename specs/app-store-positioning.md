@@ -4,7 +4,7 @@ Status: draft
 
 Nick, 3 Nov 2026: screen 1 says "Use ChatGPT/Claude as your trainer"; the listing says the app is fully functional with or without an AI or human personal trainer. Approve this first; the screenshots and metadata in `ios/fastlane/` are redone after, as a separate item. Nothing here changes the app or the current listing ([app-store-submission.md](app-store-submission.md)).
 
-**The gap, first:** today no new App Store user can reach either assistant. The connector admits only allowlisted accounts, the iPhone app links to neither, and neither directory lists it. Screen 1 ships only after "Before this headline ships" below is done.
+**The gap, first:** today a new App Store user cannot get to either assistant from the app. The iPhone app links to neither and neither directory lists the connector. Someone who finds the setup elsewhere can connect with "Start now, no account needed", a temporary account they keep by email; signing in with an existing TigerWorkouts account, the one the iPhone app uses, still needs the allowlist. Screen 1 ships only after "Before this headline ships" below is done.
 
 ## Positioning
 
@@ -22,16 +22,16 @@ TigerWorkouts is for people who train in a gym and want the session run for them
 
 | Assistant | Reachable today | Read from |
 |---|---|---|
-| Claude | Web only: Settings → "Use with Claude" opens `/claude/`, which says add a custom connector with `https://mcp.tigerworkouts.com/mcp` until the directory listing is live. No link in the iPhone app. Directory listing not done. The connector lets in only allowlisted accounts (Nick and the two reviewer accounts); anyone else gets "Not open yet". | `src/features/profile/components/settings-sheet.tsx:181`, `public/claude/index.html:43`, no match for "claude" in `ios/TigerWorkouts/Features/`, `specs/mcp.md:65`, `mcp/wrangler.jsonc:14` |
-| ChatGPT | Developer mode only: steps on mcp.tigerworkouts.com (Settings → Apps & Connectors → Developer mode → Create). No link in the web app or the iPhone app. Not in the ChatGPT directory. Same allowlist. | `mcp/src/pages.ts:132`, no match for "chatgpt" in `src/` or `ios/TigerWorkouts/`, `specs/mcp.md:65`, `mcp/wrangler.jsonc:14` |
+| Claude | Web only: Settings → "Use with Claude" opens `/claude/`, which says add a custom connector with `https://mcp.tigerworkouts.com/mcp` until the directory listing is live. No link in the iPhone app. Directory listing not done. Sign-in: "Start now, no account needed" admits anyone (a temporary account, deleted after 7 days unless kept by email); email sign-in admits only allowlisted accounts (Nick and the two reviewer accounts), anyone else gets "Not open yet". | `src/features/profile/components/settings-sheet.tsx:181`, `public/claude/index.html:43`, no match for "claude" in `ios/TigerWorkouts/Features/`, `specs/mcp.md:65`, `mcp/wrangler.jsonc:14` and `:19`, `mcp/src/access.ts:18`, `specs/mcp.md:34` |
+| ChatGPT | Developer mode only: steps on mcp.tigerworkouts.com (Settings → Apps & Connectors → Developer mode → Create). No link in the web app or the iPhone app. Not in the ChatGPT directory. Same sign-in: "Start now" open to anyone, email sign-in allowlisted. | `mcp/src/pages.ts:132`, no match for "chatgpt" in `src/` or `ios/TigerWorkouts/`, `specs/mcp.md:65`, `mcp/wrangler.jsonc:14` and `:19`, `mcp/src/access.ts:18` |
 
-So the AI path is live only for allowlisted accounts, and a new user would have to find the setup outside the app.
+So the AI path is open to anyone through "Start now", but a new user has to find the setup outside the app, and someone who already made an account in the app cannot connect it.
 
 ## Before this headline ships
 
 Listed, not filed; the PM files them once Nick approves.
 
-1. Open the connector to everyone: `ALLOWED_USER_IDS` set to `""` and deployed (specs/mcp.md, "Going public"). Who: Nick.
+1. Open email sign-in to every account, so people who signed up in the app can connect it: `ALLOWED_USER_IDS` set to `""` and deployed (specs/mcp.md:73, "Going public"). "Start now" is already open (`ANONYMOUS_SIGNUP` `"true"`). Who: Nick.
 2. Claude directory submission (specs/store-submission.md). Who: Nick.
 3. ChatGPT app submission: org verification, domain token, test cases, demo video (specs/mcp.md). Who: Nick.
 4. A "Use with ChatGPT or Claude" link in the iPhone app (Me → Settings) to a setup page. Who: builder.
@@ -39,7 +39,7 @@ Listed, not filed; the PM files them once Nick approves.
 6. Review notes that tell App Review how to try the AI path with the reviewer account. Who: builder.
 7. New captures for screens 1 and 6, new headlines in `ios/framed-screenshots.py`, the metadata below. Who: builder, after approval.
 
-Until 1 and 3 are done, screen 1 and the promotional text drop "ChatGPT" (Claude only); until 1 and 2 are done, neither ships.
+Until 3 is done, screen 1 and the promotional text drop "ChatGPT" (Claude only); until 1 and 2 are done, neither ships, since the listing speaks to people who already have the app's account.
 
 ## Screenshots
 
@@ -81,5 +81,5 @@ Keywords drop "kettlebell" and "workout" for "trainer" and "personal"; "gym", "c
 | Screenshots, promotional text, description | Yes, as text | Says the app works with them. No ChatGPT or Claude logos and no screenshots of their apps (5.2.1: third-party marks only as a factual statement of compatibility, no implied endorsement) |
 
 - **5.2.1:** every mention is "use ChatGPT or Claude as your trainer" / "connect it to your account", never "official", "by" or "powered by". The description says the assistant account is the user's own.
-- **2.3.1:** a reviewer reads screen 1 and looks for a ChatGPT or Claude path in the app. Today there is none in the iPhone app, and the connector refuses accounts outside the allowlist (Reachable today above). The answer is items 1, 4 and 6 of "Before this headline ships": the connector open, an in-app link, and review notes walking the reviewer account through it. Shipping screen 1 without them invites a 2.3.1 rejection.
+- **2.3.1:** a reviewer reads screen 1 and looks for a ChatGPT or Claude path in the app. Today there is none in the iPhone app. The connector admits anyone through "Start now", but email sign-in, which is how the reviewer's in-app account would connect, is allowlisted; the App Store reviewer account is on that list (`mcp/wrangler.jsonc:14`), other accounts are not (Reachable today above). The answer is items 4 and 6 of "Before this headline ships": an in-app link, and review notes walking the reviewer account through it; and item 1, so every user can do what the reviewer did. Shipping screen 1 without them invites a 2.3.1 rejection.
 - **2.3.3:** screen 1 shows the app in use (the AI coach's workout inside TigerWorkouts), not a chat window.
