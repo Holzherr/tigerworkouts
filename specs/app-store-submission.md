@@ -26,7 +26,7 @@ Metadata follows fastlane `deliver`'s layout in `ios/fastlane/`, so it can be up
 | Field | Value |
 |---|---|
 | Name (≤ 30) | `en-GB/name.txt`: TigerWorkouts: Gym Timer & Log (30). If the record's name is plain "TigerWorkouts", either is fine. |
-| Subtitle (≤ 30) | `en-GB/subtitle.txt`: Guided timer, every set logged (30) |
+| Subtitle (≤ 30) | `en-GB/subtitle.txt`: Train solo, with AI or a PT (27) |
 | Bundle ID | dev.brambruesch.tigerworkouts |
 | SKU | whatever the record already has |
 | Primary category | Health & Fitness (`primary_category.txt`) |
@@ -39,15 +39,15 @@ Metadata follows fastlane `deliver`'s layout in `ios/fastlane/`, so it can be up
 
 | Field | Value |
 |---|---|
-| Promotional text (≤ 170) | `en-GB/promotional_text.txt` (134) |
+| Promotional text (≤ 170) | `en-GB/promotional_text.txt` (162) |
 | Description | `en-GB/description.txt` |
-| Keywords (≤ 100) | `en-GB/keywords.txt` (99). No trademarks (no CrossFit, HYROX): guideline 2.3.7. |
+| Keywords (≤ 100) | `en-GB/keywords.txt` (97). No trademarks (no CrossFit, HYROX): guideline 2.3.7. |
 | Support URL | https://tigerworkouts.com/support/ (`en-GB/support_url.txt`) |
 | Marketing URL | https://tigerworkouts.com/ (`en-GB/marketing_url.txt`) |
 | What's New | not shown for a first version; `en-GB/release_notes.txt` for later |
 | Copyright | 2026 Brambruesch Ltd (`copyright.txt`) |
 | Version | 1.0 (`MARKETING_VERSION` in `ios/project.yml`); build numbers are set by App Store Connect on upload |
-| Screenshots, iPhone | App Store Connect now asks for the 6.1"/6.3" slot (1206 × 2622). Uploaded 1 Nov 2026: `ios/fastlane/screenshots-framed/en-GB/`, 8 PNGs with the coral tiger-stripe background and a headline each, made from the plain shots in `ios/fastlane/screenshots/en-GB/` by `ios/framed-screenshots.py` (headless Chrome). No iPad: the app is iPhone-only (`TARGETED_DEVICE_FAMILY: "1"`). Retake with `ios/screenshots.sh`, then `ios/framed-screenshots.py`. |
+| Screenshots, iPhone | App Store Connect now asks for the 6.1"/6.3" slot (1206 × 2622). 4 Nov 2026: `ios/fastlane/screenshots-framed/en-GB/`, 9 PNGs (order in the file name; screen 1 the workout with "Use ChatGPT, Claude or your PT as your trainer", screen 4 a ChatGPT request over the workout it wrote) with the coral tiger-stripe background and a headline each, made from the plain shots in `ios/fastlane/screenshots/en-GB/` by `ios/framed-screenshots.py` (headless Chrome). No iPad: the app is iPhone-only (`TARGETED_DEVICE_FAMILY: "1"`). Retake with `ios/screenshots.sh`, then `ios/framed-screenshots.py`. |
 | App Review contact | `review_information/`: first and last name, email; phone left blank for Nick |
 | Review notes | `review_information/notes.txt` |
 | Sign-in information | `review-apple@tigerworkouts.com` / password from Keychain (`review_information/demo_user.txt`, `demo_password.txt` is a placeholder). The app itself needs no account; the notes give the signed-out path first. |

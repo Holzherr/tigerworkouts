@@ -1,1 +1,1 @@
-hiit,wod,amrap,emom,tabata,interval,circuit,strength,lifting,weights,kettlebell,tracker,1rm,workout
+ai coach,personal trainer,pt,planner,hiit,wod,amrap,emom,tabata,interval,strength,weights,1rm,log

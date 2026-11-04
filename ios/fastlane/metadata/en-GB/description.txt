@@ -1,6 +1,13 @@
-TigerWorkouts runs your workout for you. Pick one, press Start, and the timer takes you through every exercise, rest and round, with a tone and a buzz at each change so you don't need to watch the screen.
+TigerWorkouts is a complete workout app you can use on your own, with your AI, or with your personal trainer.
 
-No account and no sign-up. Open the app and train; your history stays on the phone until you choose to sign in.
+ON YOUR OWN
+Pick a workout, press Start, and the timer takes you through every exercise, rest and round, with a tone and a buzz at each change so you don't need to watch the screen. Every load and rep is logged. No account needed.
+
+WITH YOUR AI
+Connect TigerWorkouts to Claude or ChatGPT and it becomes your personal trainer. It reads your sessions and stats, plans your next workout with the right loads, and puts it straight into the app, ready to start. Ask it "plan my week", "what should I lift on bench today?" or "how was my training this month?". To connect, add https://mcp.tigerworkouts.com/mcp as a connector and sign in with your TigerWorkouts account.
+
+WITH A PERSONAL TRAINER
+Accept your coach's invite and they can send you workouts, see how your sessions went and leave notes.
 
 WORKOUTS
 - 484 workouts built in: benchmark WODs and Hero WODs, strength programmes, NHS plans, interval protocols such as Tabata, and original programmes.
@@ -26,10 +33,12 @@ PROGRESS
 APPLE HEALTH
 Turn it on in Settings and each finished workout is saved to Health and counts towards your rings. The app reads your bodyweight and the heart rate recorded during the session, so the calorie figure is measured rather than assumed. Health data is never sold or used for advertising.
 
-SAME ACCOUNT AS THE WEBSITE
-Sign in with Apple, Google or an email code to sync with tigerworkouts.com. Coaches can send you workouts and see how your sessions went, once you accept their invite.
+SAME ACCOUNT EVERYWHERE
+Sign in with Apple, Google or an email code to sync with tigerworkouts.com and with your AI.
 
 Training is at your own risk. TigerWorkouts gives workouts and suggestions, not medical advice.
+
+Claude is a trademark of Anthropic. ChatGPT is a trademark of OpenAI. TigerWorkouts is not affiliated with or endorsed by either.
 
 Terms: https://tigerworkouts.com/terms/
 Privacy: https://tigerworkouts.com/privacy/
