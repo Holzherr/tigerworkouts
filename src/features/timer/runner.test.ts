@@ -351,6 +351,25 @@ describe('per-set prescription', () => {
     s = adjust(s, 6000, 65);
     expect(work(s).map(x => R.effectiveTarget(s, x.i))).toEqual([65, 70, 80]);
   });
+  it('a change on one of straight sets planned at one load carries to the sets after it', () => {
+    const sets = [20, 20, 20, 20].map(load => ({ load }));
+    const straight: Runsheet = { id: 'st', title: 'Straight', items: [{ kind: 'block', id: 'b', name: 'Press', repeat: 4, steps: [{ ...makeExercise(EX.db_incline_press, { target: 20, forMode: 'reps', forValue: 8 }), id: 'pr', sets }, { ...makeRest(60), id: 'r' }] }] };
+    let s = tick(start(straight, 0), 5000);
+    s = advance(s, 20000);
+    const w = work(s);
+    s = R.adjustAt(s, 21000, w[1].sl.id, 22.5);
+    expect(w.map(x => R.effectiveTarget(s, x.i))).toEqual([20, 22.5, 22.5, 22.5]);
+    // In the rest before set 3, set 3 is changed from its row: set 4 takes it.
+    s = advance(advance(s, 40000), 60000); // set 2 done, the rest after it running
+    expect(s.slots[s.i].kind).toBe('rest');
+    s = R.adjustAt(s, 61000, w[2].sl.id, 25);
+    expect(w.map(x => R.effectiveTarget(s, x.i))).toEqual([20, 22.5, 25, 25]);
+  });
+  it('a change carries past sets planned at its load, not to a set planned heavier', () => {
+    let s = tick(start(pyramid([{ load: 20 }, { load: 20 }, { load: 25 }]), 0), 5000);
+    s = adjust(s, 6000, 22.5);
+    expect(work(s).map(x => R.effectiveTarget(s, x.i))).toEqual([22.5, 22.5, 25]);
+  });
   it('logs each set at its prescribed load and reps', () => {
     let s = tick(start(pyramid(full), 0), 5000);
     for (let t = 10000; s.phase !== 'done'; t += 10000) s = advance(s, t);

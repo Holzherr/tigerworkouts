@@ -976,20 +976,35 @@ enum Runner {
 
     /// The load in force at slot `idx`: walking back through the rounds of the same step with the
     /// same exercise, the first adjustment or prescribed set load met, else the step's target. So an
-    /// adjustment carries to later rounds until a round that prescribes its own load (a pyramid's
-    /// next step), and that round's load carries on in turn. A swap starts afresh from its target.
-    static func effectiveTarget(_ s: RunState, _ idx: Int) -> Double? {
+    /// adjustment carries to later rounds until a round that prescribes a load of its own (a
+    /// pyramid's next step), and that round's load carries on in turn. A round prescribing the load
+    /// the adjusted round was planned at (straight sets) takes the adjustment. A swap starts afresh
+    /// from its target.
+    static func effectiveTarget(_ s: RunState, _ idx: Int) -> Double? { loadAt(s, idx, adjusted: true) }
+
+    private static func loadAt(_ s: RunState, _ idx: Int, adjusted: Bool) -> Double? {
         guard s.slots.indices.contains(idx) else { return nil }
         let slot = s.slots[idx]
         let type = typeAt(s, idx)
+        // A warm-up's or a drop set's load is its own: the working sets after it keep theirs.
+        func own(_ j: Int) -> Bool {
+            let kind = j == idx ? type : typeAt(s, j)
+            return sameWork(s.slots[j], slot) && (j == idx || !((kind == .warmup || kind == .drop) && kind != type))
+        }
         var j = idx
         while j >= 0 {
+            defer { j -= 1 }
+            guard own(j) else { continue }
             let sl = s.slots[j]
-            // A warm-up's or a drop set's load is its own: the working sets after it keep theirs.
-            let kind = j == idx ? type : typeAt(s, j)
-            let own = j == idx || !((kind == .warmup || kind == .drop) && kind != type)
-            if own, sameWork(sl, slot), let t = s.actuals[sl.id]?.target ?? sl.plan?.load { return t }
-            j -= 1
+            if adjusted, let t = s.actuals[sl.id]?.target { return t }
+            guard let p = sl.plan?.load else { continue }
+            if !adjusted { return p }
+            var k = j - 1
+            while k >= 0 {
+                if own(k), let a = s.actuals[s.slots[k].id]?.target { return loadAt(s, k, adjusted: false) == p ? a : p }
+                k -= 1
+            }
+            return p
         }
         return slot.exercise?.target
     }

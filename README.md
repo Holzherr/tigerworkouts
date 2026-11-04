@@ -110,7 +110,8 @@ on iOS a straight-set block's table keeps the current set centred and fades at a
 rows behind it, and on a treadmill has an INCL column with −/+ by 0.5 % on the set being set;
 parked before a block, its card has a − / + for every dial, speed or load and a treadmill's
 incline, each with last time's setting; the Session sheet's set grid of a treadmill step has an
-Incline − / + above its sets),
+Incline − / + above its sets; a load changed on one set carries to the later sets planned at the
+same load, while a set planned at another load (a pyramid's next step) keeps its own),
 Supabase sign-in (email code and Google) and three-way sync (sessions, own workouts, favourites,
 prefs, custom exercises; v0.9 rows preserved), editor with drag-to-group and text commands, 472
 imported workouts, scores and progression, follow-along videos, a plain home list (Workouts: Mine |
