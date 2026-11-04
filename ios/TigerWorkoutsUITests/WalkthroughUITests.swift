@@ -1390,7 +1390,7 @@ final class WalkthroughUITests: XCTestCase {
         add(shot)
     }
 
-    /// Today's target and a stall, from seeded history: Jack at 7, 7 and 8 rounds, kettlebell swings
+    /// Today's target and a stall, from seeded history: Engine AMRAP at 7, 7 and 8 rounds, kettlebell swings
     /// stuck at 24 kg × 10 for five weeks.
     func testProgress() {
         app.terminate()
@@ -1407,7 +1407,7 @@ final class WalkthroughUITests: XCTestCase {
         snap("61 Exercise logbook with a stall")
         tap(app.tabBars.buttons["Workouts"])
 
-        open("Jack")
+        open("Engine AMRAP")
         XCTAssertTrue(app.descendants(matching: .any)["today-target"].waitForExistence(timeout: 5), "the workout page should carry the Today target")
         snap("62 Workout page with Today")
         tap(app.buttons["Start workout"])

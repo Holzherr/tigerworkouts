@@ -11,7 +11,7 @@ final class AppStoreScreenshotsUITests: XCTestCase {
         continueAfterFailure = false
         app = XCUIApplication()
         app.launchEnvironment["UITEST_NO_PROMPTS"] = "1"
-        app.launchArguments = ["-seedLogbook", "-seedProgress", "-seedLoads"]
+        app.launchArguments = ["-seedLogbook", "-seedProgress", "-seedLoads", "-seedArmsAbs"]
         app.launch()
         let discard = app.alerts.buttons["Discard"]
         if discard.waitForExistence(timeout: 3) { discard.tap() }
@@ -20,11 +20,13 @@ final class AppStoreScreenshotsUITests: XCTestCase {
     func testAppStoreScreenshots() {
         XCTAssertTrue(app.navigationBars["Workouts"].waitForExistence(timeout: 10))
         tap(app.buttons["Discover"])
+        tap(app.buttons["Coaches"])
         sleep(2)
         snap("01-discover")
+        tap(app.buttons["All"])
         tap(app.buttons["Mine"])
 
-        open("Jack")
+        open("Engine AMRAP")
         XCTAssertTrue(app.descendants(matching: .any)["today-target"].waitForExistence(timeout: 5))
         sleep(1)
         snap("04-today-target")
@@ -51,6 +53,11 @@ final class AppStoreScreenshotsUITests: XCTestCase {
         sleep(1)
         snap("05-exercise")
         if app.buttons["Done"].exists { app.buttons["Done"].firstMatch.tap() }
+        back()
+
+        open("Arms and abs")
+        sleep(1)
+        snap("09-ai-workout")
         back()
 
         tap(app.tabBars.buttons["History"])

@@ -14,6 +14,10 @@ Demo account, to see a signed-in account with history (5 workouts, 22 sessions):
 - Password: in the Sign-in Information fields
 After signing in, History and Me show the account's sessions. Please use Sign out rather than Delete account on the demo account, so it keeps its data for later reviews. To test deletion, sign in with Apple or an email code to make a new account, then Me > Settings > Delete account.
 
+AI personal trainer (optional): TigerWorkouts works fully without it. A person who wants an AI coach adds our connector https://mcp.tigerworkouts.com/mcp in Claude (Settings > Connectors > Add custom connector) or ChatGPT, and signs in with their TigerWorkouts account on our "Connect TigerWorkouts" page, which names the assistant asking for access. Nothing reaches Claude or ChatGPT before that. They can remove the connector in the assistant at any time, and Me > AI coach > Remove AI coach stops the assistant sending workouts. To try it, sign in with the demo account, then ask "plan my next workout from my last sessions": the new workout appears at the top of the Workouts tab as "New, made for you".
+
+Personal trainer coaching: a coach invites a client, then can send workouts and see sessions. There are no payments in the app; coaching fees, if any, are agreed outside the app.
+
 Background audio: the app keeps an audio session open only while a workout is running, so the interval timer can play tones and keep time with the screen locked.
 
 In-app feedback: holding three fingers on the screen for 1.5 seconds opens a feedback box that sends a note to us.

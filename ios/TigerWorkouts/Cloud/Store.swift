@@ -91,6 +91,7 @@ final class Store {
         seedPaceIfAsked()
         seedProgressIfAsked()
         seedLoadsIfAsked()
+        seedArmsAbsIfAsked()
         seedTimedIfAsked()
         seedVersionsIfAsked()
         seedAICoachIfAsked()

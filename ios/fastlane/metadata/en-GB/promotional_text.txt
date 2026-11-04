@@ -1,1 +1,1 @@
-Nearly 500 workouts with a timer that talks you through every set, rest and round, and a log of every load and rep. No account needed.
+A complete workout app on its own. Connect Claude or ChatGPT and it becomes your trainer: it reads your sessions and puts your next workout straight into the app.
