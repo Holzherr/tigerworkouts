@@ -735,24 +735,36 @@ export const finish = (st: RunState, now: number): RunState => {
 
 /** The load in force at slot index idx: walking back through the rounds of the same step with the
  * same exercise, the first adjustment or prescribed set load met, else the step's target. So an
- * adjustment carries to later rounds until a round that prescribes its own load (a pyramid's next
- * step), and that round's load carries on in turn. A swap starts afresh from the swap's target. */
+ * adjustment carries to later rounds until a round that prescribes a load of its own (a pyramid's
+ * next step), and that round's load carries on in turn. A round prescribing the load the adjusted
+ * round was planned at (straight sets) takes the adjustment. A swap starts afresh from its target. */
 const sameWork = (a: Slot, b: Slot) => a.step.id === b.step.id && (a.step.kind !== 'exercise' || b.step.kind !== 'exercise' || a.step.exercise.key === b.step.exercise.key);
-export const effectiveTarget = (s: RunState, idx: number): number | undefined => {
+const loadAt = (s: RunState, idx: number, adjusted: boolean): number | undefined => {
   const slot = s.slots[idx];
   if (!slot) return undefined;
   const type = typeAt(s, idx);
-  for (let j = idx; j >= 0; j--) {
-    const sl = s.slots[j];
-    if (!sameWork(sl, slot)) continue;
-    // A warm-up's or a drop set's load is its own: the working sets after it keep theirs.
+  // A warm-up's or a drop set's load is its own: the working sets after it keep theirs.
+  const own = (j: number) => {
     const kind = j === idx ? type : typeAt(s, j);
-    if (j !== idx && (kind === 'warmup' || kind === 'drop') && kind !== type) continue;
-    const t = s.actuals[sl.id]?.target ?? sl.plan?.load;
+    return sameWork(s.slots[j], slot) && (j === idx || !((kind === 'warmup' || kind === 'drop') && kind !== type));
+  };
+  for (let j = idx; j >= 0; j--) {
+    if (!own(j)) continue;
+    const sl = s.slots[j];
+    const t = adjusted ? s.actuals[sl.id]?.target : undefined;
     if (t !== undefined) return t;
+    const p = sl.plan?.load;
+    if (p === undefined) continue;
+    if (!adjusted) return p;
+    for (let k = j - 1; k >= 0; k--) {
+      const a = own(k) ? s.actuals[s.slots[k].id]?.target : undefined;
+      if (a !== undefined) return loadAt(s, k, false) === p ? a : p;
+    }
+    return p;
   }
   return slot.step.kind === 'exercise' ? slot.step.target : undefined;
 };
+export const effectiveTarget = (s: RunState, idx: number): number | undefined => loadAt(s, idx, true);
 export const effectiveIncline = (s: RunState, idx: number): number | undefined => {
   const slot = s.slots[idx];
   if (!slot) return undefined;

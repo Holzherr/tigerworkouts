@@ -267,6 +267,47 @@ struct SetTypeTests {
     }
 }
 
+/// Ported from the straight-set and pyramid cases of 'per-set prescription' in `runner.test.ts`.
+@Suite("a changed load mid-session")
+struct CarriedLoadTests {
+    /// Press for `loads.count` sets, each planned at its load, 60 s rest between them.
+    static func sheet(_ loads: [Double]) -> Runsheet {
+        var step = ExerciseStep(id: "pr", exercise: Fixtures.press, target: 20, forMode: .reps, forValue: 8)
+        step.sets = loads.map { SetPlan(load: $0) }
+        return Runsheet(id: "st", title: "Straight", items: [.block(Block(id: "b", name: "Press", repeatCount: loads.count, steps: [.exercise(step), Fixtures.rest("r", 60)]))])
+    }
+
+    static func loads(_ s: RunState) -> [Double?] { s.slots.indices.filter { s.slots[$0].kind == .work }.map { Runner.effectiveTarget(s, $0) } }
+
+    @Test("a change on one of straight sets planned at one load carries to the sets after it")
+    func straight() {
+        var s = Runner.tick(Runner.start(Self.sheet([20, 20, 20, 20]), now: 0), now: 5_000)
+        s = Runner.advance(s, now: 20_000)
+        s = Runner.adjustAt(s, now: 21_000, slotId: SetTypeTests.work(s)[1], target: 22.5)
+        #expect(Self.loads(s) == [20, 22.5, 22.5, 22.5])
+    }
+
+    @Test("a change carries past sets planned at its load, not to a set planned heavier")
+    func pyramid() {
+        var s = Runner.tick(Runner.start(Self.sheet([20, 20, 25]), now: 0), now: 5_000)
+        s = Runner.adjust(s, now: 6_000, target: 22.5)
+        #expect(Self.loads(s) == [22.5, 22.5, 25])
+    }
+
+    @Test("in the rest after set 2, set 3 changed from its row carries to set 4")
+    @MainActor
+    func inTheRest() {
+        SessionRunner.$savedName.withValue("test-\(UUID().uuidString).json") {
+            let runner = SessionRunner(runsheet: Self.sheet([20, 20, 20, 20]))
+            for _ in 0..<4 { runner.done() } // lead-in, set 1, its rest, set 2
+            #expect(runner.slot?.kind == .rest)
+            runner.nudgeSetLoad(runner.setRows[2].slotId, 1)
+            #expect(runner.setRows.map(\.load) == [20, 20, 22.5, 22.5])
+            SessionRunner.clearSaved()
+        }
+    }
+}
+
 private extension Step {
     var asItem: Item { .step(self) }
 }
