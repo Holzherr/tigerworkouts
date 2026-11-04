@@ -363,7 +363,7 @@ struct WorkoutDetailView: View {
             scheduleSave()
             return
         }
-        let copy = Edit.duplicate(next, creator: store.user?.email)
+        let copy = Edit.duplicate(next, creator: store.profileName)
         // The copy keeps its step ids; an open sheet follows its step across either way.
         let renamed = Dictionary(zip(Edit.ids(next), Edit.ids(copy)), uniquingKeysWith: { a, _ in a })
         let wasSaved = saved
@@ -380,7 +380,7 @@ struct WorkoutDetailView: View {
     private func duplicate() {
         flushSave()
         // A "Just this time" change is never a workout of its own: the workout is what is copied.
-        var copy = Edit.duplicate(onceFrom ?? runsheet, creator: store.user?.email)
+        var copy = Edit.duplicate(onceFrom ?? runsheet, creator: store.profileName)
         if store.isMine(runsheet) { copy.title = "\(runsheet.title) (copy)" }
         // A workout of its own beside the original, not the original edited: its own history.
         copy.copyOf = nil

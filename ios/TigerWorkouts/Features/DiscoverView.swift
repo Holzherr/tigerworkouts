@@ -94,7 +94,7 @@ struct DiscoverView: View {
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
                     Button {
-                        writing = Edit.newRunsheet(creator: store.user?.email)
+                        writing = Edit.newRunsheet(creator: store.profileName)
                     } label: {
                         Image(systemName: "plus")
                             .font(.system(size: 17, weight: .bold))

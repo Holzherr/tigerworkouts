@@ -22,6 +22,9 @@ final class Store {
     var saved: Set<String> = []
     /// When each synced pref was last changed on this phone (PrefsMerge): the newer side wins a sync.
     private(set) var prefsUpdatedAt: [String: String] = [:]
+    /// The account's name (`user_state.prefs.name`, set on the web's Me page), credited as the
+    /// creator of workouts written or copied here. Never the email: a public workout shows it.
+    private(set) var profileName: String?
     /// Exercises this account made, here or on the web. Mirrored into `Library.shared` so lookups
     /// find them; kept here too so a view that lists them redraws when one is added.
     private(set) var customExercises: [String: LibraryExercise] = [:]
@@ -483,6 +486,7 @@ final class Store {
         trainingMaxes = p.trainingMaxes
         bodyweightKg = p.bodyweightKg
         equipment = p.equipment
+        profileName = (m.values["name"] as? String).map { $0.trimmingCharacters(in: .whitespaces) }.flatMap { $0.isEmpty ? nil : $0 }
         prefsUpdatedAt = m.updatedAt.filter { ["saved", "trainingMaxes", "bodyweightKg", "equipment"].contains($0.key) }
     }
 
@@ -578,7 +582,7 @@ final class Store {
     func stage(_ r: Runsheet, visibility: Bool = false) {
         var sheet = r
         if sheet.id == nil { sheet.id = Edit.id("w") }
-        if sheet.creator == nil { sheet.creator = user?.email }
+        if sheet.creator == nil { sheet.creator = profileName }
         if visibility {
             publicSetHere.insert(sheet.key)
         } else if let known = myWorkouts.first(where: { $0.key == sheet.key }) {
