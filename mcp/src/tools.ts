@@ -359,7 +359,7 @@ export interface ToolContext {
 
 export const NOT_ADMIN = 'Only TigerWorkouts admins can import a creator\'s workout with source. Leave source out to save it as this person\'s own workout.';
 
-const creditFrom = (s: CreatorSourceInput, ctx: ToolContext): Source => {
+export const creditFrom = (s: CreatorSourceInput, ctx: ToolContext): Source => {
   if (!ctx.admin) throw new ToolError(NOT_ADMIN);
   const problems: string[] = [];
   let url: URL | undefined;
@@ -424,11 +424,17 @@ const draftToRunsheet = async (db: Db, a: DraftArgs): Promise<{ runsheet: Runshe
 export const createCredited = async (db: Db, a: DraftArgs & { public?: boolean; source: CreatorSourceInput }, ctx: ToolContext = {}) => {
   const credit = creditFrom(a.source, ctx);
   const { runsheet: r, assumptions } = await draftToRunsheet(db, a);
+  return { ...(await insertCredited(db, r, credit, { public: a.public ?? true })), assumptions };
+};
+
+/** A checked runsheet saved as a credited import. `pending` (the Instagram bot's imports) keeps it
+ * private, marked source.review "pending", until an admin approves it (approve_import). */
+export const insertCredited = async (db: Db, r: Runsheet, credit: Source, o: { public: boolean; pending?: boolean }) => {
   const id = newId();
-  const open = a.public ?? true;
-  const runsheet: Runsheet = { ...r, id, creator: credit.author, createdAt: new Date().toISOString(), source: { ...credit, title: credit.title || r.title } };
+  const open = o.pending ? false : o.public;
+  const runsheet: Runsheet = { ...r, id, creator: credit.author, createdAt: new Date().toISOString(), source: { ...credit, title: credit.title || r.title, ...(o.pending ? { review: 'pending' as const } : {}) } };
   await db.post('workouts', { id, owner: db.userId, creator: credit.author, title: r.title, public: open, data: { ...runsheet, public: open } });
-  return { id, title: r.title, public: open, ...creditView(runsheet), minutes: runsheetMinutes(runsheet), outline: outline(runsheet), appUrl: appUrl(id), previewUrl: previewUrl(runsheet), shareUrl: shareUrl(runsheet, open), assumptions };
+  return { id, title: r.title, public: open, ...creditView(runsheet), minutes: runsheetMinutes(runsheet), outline: outline(runsheet), appUrl: appUrl(id), previewUrl: previewUrl(runsheet), shareUrl: shareUrl(runsheet, open) };
 };
 
 export const createWorkout = async (db: Db, a: DraftArgs & { public?: boolean; note?: string }) => {
@@ -478,6 +484,49 @@ export const updateWorkout = async (db: Db, a: { id: string; workout?: RunsheetI
   if (credit) await unsend(db, a.id);
   const sent = a.assign ? await coachOutcome(db, a.id, await coachToSend(db), a.note) : {};
   return { id: a.id, title: runsheet.title, public: updated[0].public, ...(isCredited(runsheet) ? creditView(runsheet) : {}), minutes: runsheetMinutes(runsheet), outline: outline(runsheet), ...sent, appUrl: appUrl(a.id), previewUrl: previewUrl(runsheet), shareUrl: shareUrl(runsheet, updated[0].public) };
+};
+
+// ── the import queue: what the Instagram bot saved, waiting for an admin (Nick, 7 Nov 2026) ──
+// "Instant link, quiet catalogue": the requester got a working link straight away; the workout is a
+// private row (source.review "pending"), so no creator page, Discover or search lists it until approved.
+
+const isPending = (r: Runsheet, row: WorkoutRow) => !row.public && r.source?.kind === 'social' && r.source.review === 'pending';
+
+const pendingRow = async (db: Db, id: string, ctx: ToolContext) => {
+  if (!ctx.admin) throw new ToolError(NOT_ADMIN_QUEUE);
+  const rows = await db.get<WorkoutRow[]>(`workouts?id=eq.${enc(id)}&owner=eq.${db.userId}&select=${WORKOUT_COLS}`);
+  const row = rows?.[0];
+  const r = row && workoutFromRow(row);
+  if (!row || !r || !isPending(r, row)) throw new ToolError(`${id} is not in the import queue. list_pending_imports shows what is.`);
+  return { row, runsheet: r };
+};
+export const NOT_ADMIN_QUEUE = 'Only TigerWorkouts admins can see or change the import queue.';
+
+export const listPendingImports = async (db: Db, ctx: ToolContext = {}) => {
+  if (!ctx.admin) throw new ToolError(NOT_ADMIN_QUEUE);
+  const rows = await db.get<WorkoutRow[]>(`workouts?owner=eq.${db.userId}&public=eq.false&select=${WORKOUT_COLS}&order=updated_at.desc&limit=200`);
+  const pending = (rows ?? []).map(row => ({ row, r: workoutFromRow(row) })).filter(({ row, r }) => isPending(r, row));
+  return {
+    total: pending.length,
+    imports: pending.map(({ r }) => ({ id: r.id!, title: r.title, description: r.description, ...creditView(r), importedAt: r.source?.importedAt, minutes: runsheetMinutes(r), outline: outline(r) })),
+    note: 'approve_import publishes one (creator page, Discover, search); reject_import deletes it. To fix it first, update_workout with the id (it stays pending).',
+  };
+};
+
+export const approveImport = async (db: Db, a: { id: string }, ctx: ToolContext = {}) => {
+  const { runsheet } = await pendingRow(db, a.id, ctx);
+  const { review: _r, ...source } = runsheet.source!;
+  void _r;
+  const { ownerId: _o, ...data } = { ...runsheet, source };
+  void _o;
+  await db.patch(`workouts?id=eq.${enc(a.id)}&owner=eq.${db.userId}`, { public: true, data: { ...data, public: true } });
+  return { id: a.id, title: runsheet.title, public: true, ...creditView({ ...runsheet, source }), appUrl: appUrl(a.id) };
+};
+
+export const rejectImport = async (db: Db, a: { id: string }, ctx: ToolContext = {}) => {
+  const { runsheet } = await pendingRow(db, a.id, ctx);
+  await db.del(`workouts?id=eq.${enc(a.id)}&owner=eq.${db.userId}`);
+  return { id: a.id, title: runsheet.title, deleted: true, note: 'Its link now says the workout is not available; asking the bot about the same post again gets the same answer.' };
 };
 
 /** The web app's own share link: the runsheet travels in the URL, so it opens with no sign-in. */

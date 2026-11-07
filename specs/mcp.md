@@ -93,6 +93,8 @@ Not done (Nick): the directory submissions themselves, the reviewer account and 
 | `start_workout` | read | timer view in the chat (MCP Apps / ChatGPT) for a saved id or a draft (`workout` or text `plan`); returns `previewUrl` and `appDownloadUrl` |
 | `log_session` | write | one finished session into `sessions`, as the apps write it; `steps[].sets` for per-set detail |
 | `claim_account` | write | adds an email to an anonymous account, in the chat or by a claim link |
+| `list_pending_imports` | read | admins only (listed only to them): the Instagram bot's pending imports (instagram-bot.md) |
+| `approve_import` / `reject_import` | write | admins only: publish a pending import, or delete it |
 
 Without migration 0011 on the server the coach parts are skipped and the tools work as before.
 

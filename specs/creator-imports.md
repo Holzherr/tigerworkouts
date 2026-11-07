@@ -18,6 +18,7 @@ Status: built
 - **Storage**: no migration. The credit is the runsheet's `source` in `workouts.data` (jsonb): `kind: "social"`, plus `handle` and `platform` (new optional fields on `Source` in `src/features/runsheet/model.ts`). The row is owned by the admin who imported it.
 - **Web**: credited creator pages at `#/by/<key>` (`src/features/creators/credited.ts`, `credited-creator-screen.tsx`), a route apart from accounts' `#/c/<handle>` so neither can take the other's name. A page groups the catalogue's authors in `imports/` (by `source.author`/`creator`) and public adapted workouts (by handle). Cards and Discover rows read "Adapted from @handle"; the workout page reads "Adapted from @handle · original post ↗", the handle opening the creator page; a catalogue workout's author opens its page too. A search lists matching creators above the workouts. `fetchCreator` leaves adapted workouts off the importing account's page.
 - **iOS**: not built. The app decodes `source` leniently (`kind` is a String; unknown keys are ignored), so imports show there as ordinary public workouts credited to the creator's name, without the "Adapted from" line or a creator page.
+- **Instagram bot**: imports also arrive from Instagram itself, pending until an admin approves them. See instagram-bot.md.
 
 ## Open questions
 

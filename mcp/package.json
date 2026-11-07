@@ -16,6 +16,7 @@
     "assets": "node scripts/catalogue.mjs && node scripts/widget.mjs"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^1.6.0",
     "@cloudflare/workers-oauth-provider": "^0.10.3",
     "@modelcontextprotocol/sdk": "^1.30.0",
     "zod": "^4.6.5"

@@ -60,6 +60,8 @@ export interface Source {
   handle?: string;
   /** Where the original post is: instagram, tiktok, youtube, x, facebook, threads, other (social only). */
   platform?: string;
+  /** `pending`: imported by the Instagram bot, private until an admin approves it (social only). */
+  review?: 'pending';
 }
 
 export interface ExerciseRef {
