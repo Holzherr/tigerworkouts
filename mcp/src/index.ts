@@ -21,8 +21,10 @@ import { allowed, anonymousOn, isAdmin, ttlFor } from './access';
 import { accountStatus, claimAccount, dropClaim, readClaim, sendClaim } from './claim';
 import { ToolError } from './tools';
 import { auth, b64url, db, pkce, SupabaseError, type SupabaseSession } from './supabase';
+import { botFetch, isBotPath, type BotEnv } from './instagram/routes';
 
-export interface Env {
+/** BotEnv: the Instagram bot's vars and secrets (instagram/routes.ts, specs/instagram-bot.md). */
+export interface Env extends BotEnv {
   OAUTH_KV: KVNamespace;
   OAUTH_PROVIDER: OAuthHelpers;
   /** Comma-separated Supabase user ids allowed to connect. Empty = open to every account. */
@@ -275,6 +277,8 @@ const makeProvider = (env: Env, origin: string) =>
 
 export default {
   fetch(request: Request, env: Env, ctx: ExecutionContext) {
+    // The Instagram bot's routes need no OAuth: Meta's webhook, the short links, the bot's sign-in.
+    if (isBotPath(new URL(request.url).pathname)) return botFetch(request, env, ctx);
     return getProvider(env, new URL(request.url).origin).fetch(request, env, ctx);
   },
 } satisfies ExportedHandler<Env>;

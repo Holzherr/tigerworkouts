@@ -210,6 +210,26 @@ export const buildServer = (db: Db, account: Account = {}) => {
     a => run(async () => keep(await T.updateWorkout(db, a, { admin: account.admin }))),
   );
 
+  // The Instagram bot's import queue (specs/instagram-bot.md): listed only to admins.
+  if (account.admin) {
+    const admin = { admin: true };
+    s.registerTool(
+      'list_pending_imports',
+      { title: 'Import queue', description: 'Admins only. Workouts the Instagram bot adapted from reels people sent @tigerworkouts, waiting for approval: private until approved (the person who asked already has a link), so no creator page, Discover or search lists them. Each with id, title, description, the credit (creator, handle, original post) and outline. Fix one with update_workout (it stays pending), then approve_import or reject_import.', inputSchema: {}, annotations: readOnly },
+      () => run(() => T.listPendingImports(db, admin)),
+    );
+    s.registerTool(
+      'approve_import',
+      { title: 'Approve import', description: "Admins only. Publish a pending import: it shows on the creator's page, in Discover and in search, credited \"Adapted from @handle\".", inputSchema: { id: z.string() }, annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: false } },
+      a => run(() => T.approveImport(db, a, admin)),
+    );
+    s.registerTool(
+      'reject_import',
+      { title: 'Reject import', description: 'Admins only. Delete a pending import. Its link stops working, and the bot answers that post with "not available" from then on.', inputSchema: { id: z.string() }, annotations: { readOnlyHint: false, destructiveHint: true, idempotentHint: true, openWorldHint: false } },
+      a => run(() => T.rejectImport(db, a, admin)),
+    );
+  }
+
   s.registerTool(
     'set_ai_coach',
     {
