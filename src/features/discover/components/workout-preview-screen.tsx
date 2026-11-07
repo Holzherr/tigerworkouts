@@ -10,6 +10,7 @@ import { ExerciseSheet } from '@/features/runsheet/components/exercise-sheet';
 import type { SessionResult } from '@/features/runsheet/progression';
 import { fmtScore } from '@/features/runsheet/progression';
 import { KIND_LABEL } from './workout-card';
+import { cleanHandle } from '@/features/creators/credited';
 import type { Today } from '@/features/runsheet/targets';
 import type { Stall } from '@/features/results/stall';
 import { StallCard, TodayLine } from '@/features/results/components/targets';
@@ -41,6 +42,9 @@ const EditableBlock = ({ runsheet: r, block, editor: { onChange, ...list }, shee
     </section>
   );
 };
+
+/** "@apapakle", or the creator's name when no handle is known. */
+const creditName = (r: Runsheet) => (r.source?.handle ? `@${cleanHandle(r.source.handle)}` : (r.source?.author ?? r.creator ?? 'a creator'));
 
 export interface WorkoutPreviewScreenProps {
   runsheet: Runsheet;
@@ -174,6 +178,23 @@ export const WorkoutPreviewScreen = ({ runsheet: r, history = [], lastTime, onBa
           </Button>
         </div>
         <h1 className="mt-1 text-[22px] leading-tight font-extrabold">{r.title}</h1>
+        {kind === 'social' ? (
+          <div className="mt-1 flex flex-wrap items-center gap-x-1 text-[13px] text-muted">
+            <span>Adapted from</span>
+            {onCreator ? (
+              <button type="button" onClick={onCreator} className="font-semibold text-brand">
+                {creditName(r)}
+              </button>
+            ) : (
+              <span>{creditName(r)}</span>
+            )}
+            {r.source?.url && (
+              <a href={r.source.url} target="_blank" rel="noreferrer" className="inline-flex items-center gap-0.5 text-brand">
+                · original post <ExternalLink className="size-3" />
+              </a>
+            )}
+          </div>
+        ) : (
         <div className="mt-1 flex flex-wrap items-center gap-x-1 text-[13px] text-muted">
           <span>{(kind === 'user' && r.ownerId ? 'Creator' : KIND_LABEL[kind])}</span>
           {(r.source?.author ?? r.creator) &&
@@ -195,6 +216,7 @@ export const WorkoutPreviewScreen = ({ runsheet: r, history = [], lastTime, onBa
             </a>
           )}
         </div>
+        )}
         <div className="mt-2 flex flex-wrap gap-1.5">
           <Chip variant="value">{runsheetMinutes(r)} min</Chip>
           {r.timeCapSec && <Chip variant="outline">cap {fmtClock(r.timeCapSec)}</Chip>}

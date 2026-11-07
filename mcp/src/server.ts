@@ -10,6 +10,7 @@ import { SupabaseError, type Db } from './supabase';
 import * as T from './tools';
 import { keepNote, type AccountStatus } from './claim';
 import widget from './generated/widget.json';
+import { PLATFORMS } from '@/features/creators/credited';
 
 /** The timer view. Versioned in the URI so hosts that cache resources pick up a new build. */
 export const TIMER_URI = 'ui://tigerworkouts/timer-v1.html';
@@ -20,6 +21,8 @@ export interface Account {
   email?: string;
   /** Anonymous Supabase user, not claimed yet. */
   anonymous?: boolean;
+  /** In ADMIN_USER_IDS: may import a creator's workout with a credited source. */
+  admin?: boolean;
   /** claim_account; absent where no KV/origin is at hand (tests of the plain tools). */
   claim?: (a: { email?: string }) => Promise<unknown>;
   /** Where an anonymous account stands now (claimed, waiting on the link, deletion date). */
@@ -64,6 +67,19 @@ type Result = { content: { type: 'text'; text: string }[]; isError?: boolean };
 const ok = (v: unknown): Result => ({ content: [{ type: 'text', text: JSON.stringify(v, null, 2) }] });
 const fail = (msg: string): Result => ({ content: [{ type: 'text', text: msg }], isError: true });
 
+/** A creator's post an admin adapts (create_workout / update_workout `source`). */
+const sourceInput = z
+  .object({
+    url: z.string().max(500).describe('The original post, https (the reel, TikTok, video or post the workout comes from)'),
+    author: z.string().min(1).max(80).describe("The creator's display name, shown as the workout's creator"),
+    handle: z.string().min(1).max(61).describe('Their handle on the platform, with or without @'),
+    platform: z.enum(PLATFORMS),
+    title: z.string().max(200).optional().describe("The post's own title, when it has one (never the caption)"),
+  })
+  .describe("Admins only. Credits the workout to a creator whose post you adapted. Anyone else passing it is refused.");
+
+const CREDITED_HELP = `Admins only — a creator's workout someone sent you (an Instagram reel, a TikTok, a YouTube video, a post): pass source {url, author, handle, platform, title?}. It is saved under the creator's name, credited "Adapted from @handle · original post" with a link to the post, listed on their creator page (creatorPageUrl), public to everyone unless public is false, and never sent from the AI coach (note and assign do not apply). Write title and description in your own words: what the workout is and how it runs. Never paste or closely paraphrase the caption, and never word it as if the creator published it on TigerWorkouts or works with it; the original post is credited and linked through source.url. update_workout with public: false unpublishes it.`;
+
 const PLAN_HELP = 'Plain text instead of workout: one block per line, read by the app\'s own parser, e.g. "row 5 min" / "kb swings 24 + push ups x5 40/20" (5 rounds, 40 s on, 20 s off) / "plank x3 rest 30". Lines it cannot read are listed back; then send a structured workout.';
 const LINKS = 'Send shareUrl to anyone else (a client, a friend): it opens for them, signed in or not. appUrl opens only for the owner, signed in, unless the workout is public.';
 
@@ -104,7 +120,7 @@ export const buildServer = (db: Db, account: Account = {}) => {
     const note = keepNote(await status());
     return note ? { ...r, keepAccount: note } : r;
   };
-  const s = new McpServer({ name: 'tigerworkouts', title: 'TigerWorkouts', version: '1.2.0', websiteUrl: 'https://tigerworkouts.com' }, { instructions: INSTRUCTIONS });
+  const s = new McpServer({ name: 'tigerworkouts', title: 'TigerWorkouts', version: '1.3.0', websiteUrl: 'https://tigerworkouts.com' }, { instructions: INSTRUCTIONS });
 
   s.registerTool('get_profile', { title: 'Profile', description: "The signed-in user's name, units, bodyweight, training maxes (kg, by exercise key), saved workout ids, a count of recent sessions, their AI coach (aiCoach: the name you go by and whether it is on; null before your first workout for them) and whether the account is still anonymous. Start here.", inputSchema: {}, annotations: readOnly }, () =>
     run(async () => {
@@ -162,34 +178,36 @@ export const buildServer = (db: Db, account: Account = {}) => {
     'create_workout',
     {
       title: 'Create workout',
-      description: `Write the user a new workout as their AI coach: it is saved to their account and sent to them from their coach, like a personal trainer's assignment ("New · made for you · from <coach name>" at the top of their home screen, with note). The first one adds the AI coach, named "AI Coach" unless set_ai_coach named it. If they removed their AI coach it saves as their own workout instead (the result says so). Private unless public is true (public = it shows in everyone's Discover; an anonymous account's workouts stay private until it is kept). Returns fromCoach, appUrl, shareUrl and a no-sign-in previewUrl. ${LINKS} Pass workout (structured) or plan (plain text).\n\n${RUNSHEET_HELP}`,
+      description: `Write the user a new workout as their AI coach: it is saved to their account and sent to them from their coach, like a personal trainer's assignment ("New · made for you · from <coach name>" at the top of their home screen, with note). The first one adds the AI coach, named "AI Coach" unless set_ai_coach named it. If they removed their AI coach it saves as their own workout instead (the result says so). Private unless public is true (public = it shows in everyone's Discover; an anonymous account's workouts stay private until it is kept). Returns fromCoach, appUrl, shareUrl and a no-sign-in previewUrl. ${LINKS} Pass workout (structured) or plan (plain text).\n\n${CREDITED_HELP}\n\n${RUNSHEET_HELP}`,
       inputSchema: {
         workout: runsheetInput.optional(),
         plan: z.string().max(4000).optional().describe(PLAN_HELP),
         title: z.string().max(120).optional().describe('Title for a plan'),
         note: z.string().max(1000).optional().describe("Your note as their coach, shown with the workout: why this one, what changed, what to aim for (e.g. \"Squat up 2.5 kg: you hit every rep last week.\")"),
-        public: z.boolean().optional().describe('Default false'),
+        public: z.boolean().optional().describe('Default false (true with source)'),
+        source: sourceInput.optional(),
       },
       annotations: { readOnlyHint: false, destructiveHint: true, idempotentHint: false, openWorldHint: false },
     },
-    a => run(async () => keep(await T.createWorkout(db, a))),
+    a => run(async () => keep(await (a.source ? T.createCredited(db, { ...a, source: a.source }, { admin: account.admin }) : T.createWorkout(db, a)))),
   );
 
   s.registerTool(
     'update_workout',
     {
       title: 'Update workout',
-      description: `Change one of the user's own workouts (owner "me"). workout replaces the whole runsheet (get_workout first, edit, send it back); public alone flips visibility. When you adapt a workout for them as their coach, pass assign: true (with a note) so it arrives again as "New · made for you" from their AI coach. Catalogue and other people's workouts cannot be changed — copy them with create_workout. ${LINKS}`,
+      description: `Change one of the user's own workouts (owner "me"). workout replaces the whole runsheet (get_workout first, edit, send it back); public alone flips visibility. When you adapt a workout for them as their coach, pass assign: true (with a note) so it arrives again as "New · made for you" from their AI coach. Catalogue and other people's workouts cannot be changed — copy them with create_workout. ${LINKS}\n\n${CREDITED_HELP} To credit one of their own saved workouts to the creator it came from, pass id and source alone.`,
       inputSchema: {
         id: z.string(),
         workout: runsheetInput.optional(),
         public: z.boolean().optional(),
         assign: z.boolean().optional().describe('Send it to them again from their AI coach, as a new assignment'),
         note: z.string().max(1000).optional().describe('Your note as their coach, with assign'),
+        source: sourceInput.optional(),
       },
       annotations: { readOnlyHint: false, destructiveHint: true, idempotentHint: true, openWorldHint: false },
     },
-    a => run(async () => keep(await T.updateWorkout(db, a))),
+    a => run(async () => keep(await T.updateWorkout(db, a, { admin: account.admin }))),
   );
 
   s.registerTool(

@@ -5,6 +5,7 @@ import { EmptyState } from '@/shared/components/ui/empty-state';
 import { cn } from '@/shared/utils/ui-utils';
 import { runsheetMinutes, type Runsheet } from '@/features/runsheet/model';
 import type { SessionResult } from '@/features/runsheet/progression';
+import { adaptedLine, findCreators, isAdapted } from '@/features/creators/credited';
 import { recommend } from '../recommend';
 import { contentsLine, lastDoneById, lastDoneOf, mineLine, mineList, newBadge, upNextFirst, upNextOf, whyLine } from '../mine';
 
@@ -59,6 +60,8 @@ export interface DiscoverScreenProps {
   title?: string;
   /** Rendered at the top of the list: the Resume banner for a session left running. */
   above?: React.ReactNode;
+  /** Opens a credited creator's page (`#/by/<key>`); with it, a search lists matching creators first. */
+  onOpenCreator?: (key: string) => void;
 }
 
 const wid = (r: Runsheet) => r.id ?? r.title;
@@ -73,7 +76,7 @@ const groupRecs = (recs: ReturnType<typeof recommend>) => {
   return out;
 };
 /** "20 min · CrossFit", "45 min · StrongLifts 5×5 · Workout A". */
-const about = (r: Runsheet) => [`${runsheetMinutes(r)} min`, r.program ? `${r.program.name} · ${r.program.day}` : (r.source?.author ?? r.creator)].filter(Boolean).join(' · ');
+const about = (r: Runsheet) => [`${runsheetMinutes(r)} min`, r.program ? `${r.program.name} · ${r.program.day}` : isAdapted(r) ? adaptedLine(r) : (r.source?.author ?? r.creator)].filter(Boolean).join(' · ');
 
 /**
  * One workout as a card: name and one meta line open its page; with `onStart`, a round coral play
@@ -114,7 +117,7 @@ const Row = ({ runsheet: r, meta, coach, badge, why, contents, upNext, onOpen, o
  * Discover: kind chips, the For you picks under their reasons while no chip is on, then the
  * catalogue (programs collapsed to one row each). A search lists matches from everything.
  */
-export const DiscoverScreen = ({ workouts, results = [], savedIds = [], ownIds = [], fromCoach = [], onOpen, onStart, onOpenProgram, onCreate, initialTab = 'mine', initialFilter = 'all', title = 'Workouts', above }: DiscoverScreenProps) => {
+export const DiscoverScreen = ({ workouts, results = [], savedIds = [], ownIds = [], fromCoach = [], onOpen, onStart, onOpenProgram, onCreate, initialTab = 'mine', initialFilter = 'all', title = 'Workouts', above, onOpenCreator }: DiscoverScreenProps) => {
   const [tab, setTab] = useState<DiscoverTab>(initialTab);
   const [q, setQ] = useState('');
   const [filter, setFilter] = useState<DiscoverFilter>(initialFilter);
@@ -138,7 +141,7 @@ export const DiscoverScreen = ({ workouts, results = [], savedIds = [], ownIds =
     const match = (r: Runsheet) => {
       if (!ql && filter !== 'all' && (r.source?.kind ?? 'user') !== filter) return false;
       if (!ql) return true;
-      const hay = `${r.title} ${r.creator ?? ''} ${r.source?.author ?? ''} ${r.program?.name ?? ''} ${(r.tags ?? []).join(' ')} ${r.description ?? ''}`.toLowerCase();
+      const hay = `${r.title} ${r.creator ?? ''} ${r.source?.author ?? ''} ${r.source?.handle ? `@${r.source.handle}` : ''} ${r.program?.name ?? ''} ${(r.tags ?? []).join(' ')} ${r.description ?? ''}`.toLowerCase();
       return hay.includes(ql);
     };
     const programs = new Map<string, Runsheet[]>();
@@ -162,9 +165,21 @@ export const DiscoverScreen = ({ workouts, results = [], savedIds = [], ownIds =
     return <Row key={wid(r)} runsheet={r} badge={fresh ? newBadge(r) : undefined} why={fresh ? whyLine(r) : undefined} contents={contentsLine(r)} upNext={next} meta={mineLine(r, done)} onOpen={() => onOpen(r, origin)} onStart={onStart && (() => onStart(r, origin))} />;
   };
 
+  const creators = useMemo(() => (onOpenCreator && searching ? findCreators(workouts, q) : []), [onOpenCreator, searching, workouts, q]);
   const shown = singles.slice(0, limit);
   const catalogue = (
     <>
+      {creators.map(c => (
+        <button key={c.key} type="button" onClick={() => onOpenCreator?.(c.key)} className="flex min-h-14 w-full items-center gap-2 rounded-card border border-line bg-surface py-2.5 pr-3 pl-4 text-left active:bg-line-soft">
+          <span className="min-w-0 flex-1">
+            <span className="block truncate text-[15px] font-bold">{c.name}</span>
+            <span className="block truncate text-[12px] text-muted">
+              Creator{c.handle ? ` · @${c.handle}` : ''} · {c.workouts.length} {c.workouts.length === 1 ? 'workout' : 'workouts'}
+            </span>
+          </span>
+          <ChevronRight className="size-4 shrink-0 text-faint" />
+        </button>
+      ))}
       {!searching && (
         <div className="px-1 pt-1 text-[11px] font-bold tracking-widest text-muted uppercase">
           {filter === 'all' ? 'Everything' : FILTERS.find(f => f.id === filter)?.label} · {programs.size + singles.length}
@@ -189,7 +204,7 @@ export const DiscoverScreen = ({ workouts, results = [], savedIds = [], ownIds =
           Show more ({singles.length - shown.length} left)
         </button>
       )}
-      {programs.size === 0 && singles.length === 0 && <EmptyState title={searching ? `Nothing matches “${q}”` : 'Nothing here yet'} body="Try a creator, a program name or an exercise." />}
+      {programs.size === 0 && singles.length === 0 && creators.length === 0 && <EmptyState title={searching ? `Nothing matches “${q}”` : 'Nothing here yet'} body="Try a creator, a program name or an exercise." />}
     </>
   );
 

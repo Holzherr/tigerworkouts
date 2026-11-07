@@ -52,9 +52,14 @@ export interface Source {
   title: string;
   url?: string;
   author?: string;
-  kind: 'benchmark' | 'coach' | 'program' | 'video' | 'article' | 'protocol' | 'user';
+  /** `social`: adapted by an admin from a creator's post (Instagram, TikTok, YouTube…), credited to them. */
+  kind: 'benchmark' | 'coach' | 'program' | 'video' | 'article' | 'protocol' | 'user' | 'social';
   license?: string;
   importedAt?: string;
+  /** The creator's handle on `platform`, without the @ (social only). */
+  handle?: string;
+  /** Where the original post is: instagram, tiktok, youtube, x, facebook, threads, other (social only). */
+  platform?: string;
 }
 
 export interface ExerciseRef {

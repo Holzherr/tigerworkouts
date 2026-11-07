@@ -17,7 +17,7 @@
 import { OAuthError, OAuthProvider, type AuthRequest, type OAuthHelpers } from '@cloudflare/workers-oauth-provider';
 import { claimDonePage, claimPage, codePage, errorPage, landingPage, landingText, notOpenPage, signInPage } from './pages';
 import { handleMcp } from './server';
-import { allowed, anonymousOn, ttlFor } from './access';
+import { allowed, anonymousOn, isAdmin, ttlFor } from './access';
 import { accountStatus, claimAccount, dropClaim, readClaim, sendClaim } from './claim';
 import { ToolError } from './tools';
 import { auth, b64url, db, pkce, SupabaseError, type SupabaseSession } from './supabase';
@@ -27,6 +27,8 @@ export interface Env {
   OAUTH_PROVIDER: OAuthHelpers;
   /** Comma-separated Supabase user ids allowed to connect. Empty = open to every account. */
   ALLOWED_USER_IDS?: string;
+  /** Comma-separated Supabase user ids that may import creators' workouts with a credited source. */
+  ADMIN_USER_IDS?: string;
   /** "true" once https://<host>/callback is in Supabase's redirect URLs; shows the Google button. */
   GOOGLE_SIGNIN?: string;
   /** "true" offers "Start without an account" (needs anonymous sign-ins on in Supabase). */
@@ -43,7 +45,7 @@ const api = {
     if (props.expiresAt <= Date.now() / 1000)
       return Response.json({ error: 'invalid_token', error_description: 'expired' }, { status: 401, headers: { 'www-authenticate': 'Bearer error="invalid_token", error_description="expired"' } });
     const origin = new URL(request.url).origin;
-    return handleMcp(request, db(props), { email: props.email, anonymous: props.anonymous, claim: a => claimAccount({ session: props, origin, kv: env.OAUTH_KV }, a), status: () => accountStatus(props.accessToken) });
+    return handleMcp(request, db(props), { email: props.email, anonymous: props.anonymous, admin: isAdmin(env, props), claim: a => claimAccount({ session: props, origin, kv: env.OAUTH_KV }, a), status: () => accountStatus(props.accessToken) });
   },
 };
 

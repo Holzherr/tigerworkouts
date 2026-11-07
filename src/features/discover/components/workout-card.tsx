@@ -1,9 +1,10 @@
 import { Chip } from '@/shared/components/ui/chip';
 import { WorkoutIcon } from '@/shared/components/ui/workout-icon';
 import { cn } from '@/shared/utils/ui-utils';
+import { adaptedLine } from '@/features/creators/credited';
 import { modeLabel, runsheetMinutes, scoreType, type ExerciseStep, type Runsheet } from '@/features/runsheet/model';
 
-export const KIND_LABEL: Record<string, string> = { benchmark: 'Benchmark', coach: 'Coach', program: 'Program', video: 'Video', article: 'Guide', protocol: 'Protocol', user: 'Mine' };
+export const KIND_LABEL: Record<string, string> = { benchmark: 'Benchmark', coach: 'Coach', program: 'Program', video: 'Video', article: 'Guide', protocol: 'Protocol', user: 'Mine', social: 'Adapted' };
 
 /** First exercise with media, for the card thumb. */
 export const heroExercise = (r: Runsheet): ExerciseStep | undefined => {
@@ -38,8 +39,8 @@ export const WorkoutCard = ({ runsheet: r, onOpen, compact, done = 0, className 
       <div className="min-w-0 flex-1">
         <div className={cn('truncate font-bold', compact ? 'text-[14px]' : 'text-[15px]')}>{r.title}</div>
         <div className="truncate text-[12px] text-muted">
-          {(kind === 'user' && r.ownerId ? 'Creator' : KIND_LABEL[kind])}
-          {who ? ` · ${who}` : ''}
+          {kind === 'social' ? adaptedLine(r) : (kind === 'user' && r.ownerId ? 'Creator' : KIND_LABEL[kind])}
+          {who && kind !== 'social' ? ` · ${who}` : ''}
         </div>
         {!compact && (
           <div className="mt-1.5 flex flex-wrap gap-1">
