@@ -142,3 +142,15 @@ describe('DiscoverScreen search', () => {
     expect(onOpen).toHaveBeenCalledWith(expect.objectContaining({ id: 'cf-girls-fran' }), 'search');
   });
 });
+
+describe('search finds credited creators (Nick, 7 Nov 2026)', () => {
+  it('lists a creator by handle above the workouts and opens their page', async () => {
+    const { adaptedReel } = await import('@/features/creators/fixtures');
+    let key = '';
+    render(<DiscoverScreen workouts={[adaptedReel()]} onOpen={() => {}} onOpenCreator={k => (key = k)} />);
+    fireEvent.change(screen.getByLabelText('Search'), { target: { value: '@samfix' } });
+    fireEvent.click(screen.getByRole('button', { name: /Sam Fixture.*@samfixture/ }));
+    expect(key).toBe('samfixture');
+    expect(screen.getByText(/Adapted from @samfixture/)).toBeTruthy();
+  });
+});

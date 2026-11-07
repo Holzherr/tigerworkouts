@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { decodeShared } from '@/features/share/link';
-import { allowed, ttlFor } from '../src/access';
+import { allowed, isAdmin, ttlFor } from '../src/access';
 import { RunsheetError, runsheetInput, type RunsheetInput } from '../src/runsheet';
 import { handleMcp } from '../src/server';
 import { db as makeDb, type Db } from '../src/supabase';
@@ -253,6 +253,76 @@ describe('AI coach (migration 0011)', () => {
     expect(tables.workouts.find(w => w.id === out.id)!.creator).toBe('AI Coach');
     expect(await T.getProfile(db)).not.toHaveProperty('aiCoach');
     await expect(T.setAiCoach(db, { name: 'Tiger' })).rejects.toThrow(/not switched on/);
+  });
+});
+
+describe('creator imports (admins only)', () => {
+  beforeEach(() => {
+    tables.ai_coaches = [];
+    tables.assignments = [];
+  });
+  const reel = { url: 'https://www.instagram.com/reel/DfaoLldxyeH/', author: 'Apapakle', handle: '@apapakle', platform: 'instagram' as const };
+
+  it('ADMIN_USER_IDS names the admins; empty means nobody, and an anonymous start never is one', () => {
+    expect(isAdmin({ ADMIN_USER_IDS: NICK }, { userId: NICK })).toBe(true);
+    expect(isAdmin({ ADMIN_USER_IDS: NICK }, { userId: OTHER })).toBe(false);
+    expect(isAdmin({ ADMIN_USER_IDS: '' }, { userId: NICK })).toBe(false);
+    expect(isAdmin({}, { userId: NICK })).toBe(false);
+    expect(isAdmin({ ADMIN_USER_IDS: NICK }, { userId: NICK, viaAnonymous: true })).toBe(false);
+  });
+
+  it('an admin import is public, credited to the creator, and never sent from the AI coach', async () => {
+    const out = await T.createCredited(db, { workout: draft({ title: 'Full-body kettlebell complex' }), source: reel }, { admin: true });
+    expect(out).toMatchObject({ public: true, creator: 'Apapakle', adaptedFrom: { handle: 'apapakle', platform: 'instagram', url: reel.url }, creatorPageUrl: 'https://tigerworkouts.com/#/by/apapakle' });
+    const row = tables.workouts.find(w => w.id === out.id)!;
+    expect(row).toMatchObject({ owner: NICK, creator: 'Apapakle', public: true });
+    expect((row.data as { source: unknown }).source).toMatchObject({ kind: 'social', author: 'Apapakle', handle: 'apapakle', platform: 'instagram', url: reel.url, title: 'Full-body kettlebell complex' });
+    expect(tables.assignments).toEqual([]);
+    expect(tables.ai_coaches).toEqual([]);
+  });
+
+  it('anyone else passing source is refused and nothing is written', async () => {
+    const before = tables.workouts.length;
+    await expect(T.createCredited(as(OTHER), { workout: draft(), source: reel }, {})).rejects.toThrow(/Only TigerWorkouts admins/);
+    await expect(T.updateWorkout(db, { id: 'u-mine', source: reel }, { admin: false })).rejects.toThrow(/Only TigerWorkouts admins/);
+    expect(tables.workouts).toHaveLength(before);
+    expect(tables.workouts.find(w => w.id === 'u-mine')!.creator).toBe('Nick');
+  });
+
+  it('refuses a source without an https link or a usable handle', async () => {
+    await expect(T.createCredited(db, { workout: draft(), source: { ...reel, url: 'http://x.test/p', handle: 'no spaces' } }, { admin: true })).rejects.toThrow(/https[\s\S]*handle/);
+  });
+
+  it('update_workout credits a saved workout: takes back the AI coach send, publishes it, and keeps it credited', async () => {
+    const mine = await T.createWorkout(db, { workout: draft() });
+    expect(tables.assignments).toHaveLength(1);
+    const out = await T.updateWorkout(db, { id: mine.id, source: reel }, { admin: true });
+    expect(out).toMatchObject({ public: true, creator: 'Apapakle', creatorPageUrl: 'https://tigerworkouts.com/#/by/apapakle' });
+    expect(tables.assignments).toEqual([]);
+    expect(tables.workouts.find(w => w.id === mine.id)).toMatchObject({ creator: 'Apapakle', public: true });
+    // A later edit keeps the credit, sending it from the coach is refused, and public: false unpublishes.
+    await T.updateWorkout(db, { id: mine.id, workout: draft({ title: 'Complex v2', creator: 'AI Coach' }) });
+    expect(tables.workouts.find(w => w.id === mine.id)).toMatchObject({ creator: 'Apapakle', title: 'Complex v2' });
+    await expect(T.updateWorkout(db, { id: mine.id, assign: true })).rejects.toThrow(/not sent from the AI coach/);
+    expect((await T.updateWorkout(db, { id: mine.id, public: false })).public).toBe(false);
+  });
+
+  it('list_workouts finds an import by the creator’s handle and says where it was adapted from', async () => {
+    await T.createCredited(db, { workout: draft({ title: 'KB complex' }), source: reel }, { admin: true });
+    const found = await T.listWorkouts(as(OTHER), { scope: 'public', query: 'apapakle' });
+    expect(found.workouts).toHaveLength(1);
+    expect(found.workouts[0]).toMatchObject({ title: 'KB complex', creator: 'Apapakle', adaptedFrom: { handle: 'apapakle' } });
+  });
+
+  it('over MCP, source is refused for a non-admin and accepted for an admin', async () => {
+    const send = (admin: boolean) =>
+      handleMcp(new Request('https://mcp.test/mcp', { method: 'POST', headers: { 'content-type': 'application/json', accept: 'application/json, text/event-stream' }, body: JSON.stringify({ jsonrpc: '2.0', id: 1, method: 'tools/call', params: { name: 'create_workout', arguments: { workout: draft(), source: reel } } }) }), db, { admin }).then(r => r.json() as Promise<{ result: { isError?: boolean; content: { text: string }[] } }>);
+    const no = await send(false);
+    expect(no.result.isError).toBe(true);
+    expect(no.result.content[0].text).toMatch(/Only TigerWorkouts admins/);
+    const yes = await send(true);
+    expect(yes.result.isError).toBeFalsy();
+    expect(JSON.parse(yes.result.content[0].text)).toMatchObject({ creator: 'Apapakle', public: true });
   });
 });
 

@@ -17,6 +17,8 @@ import { applyCommands, parsePlan } from '@/features/runsheet/parse-text';
 import { isImage, readImport } from '@/features/runsheet/import-file';
 import { appLink, CreatorScreen } from '@/features/creators/components/creator-screen';
 import { CreatorPageCard } from '@/features/creators/components/creator-page-card';
+import { CreditedCreatorScreen } from '@/features/creators/components/credited-creator-screen';
+import { creatorFor, creatorKey, creatorPath } from '@/features/creators/credited';
 import { cn, plural } from '@/shared/utils/ui-utils';
 import { localDate } from '@/shared/utils/dates';
 import { ExercisePicker } from '@/features/exercises/components/exercise-picker';
@@ -78,7 +80,7 @@ const TABS = [
 ] as const;
 type Tab = (typeof TABS)[number]['id'];
 
-type Route = { name: 'tab'; tab: Tab; sub?: string } | { name: 'new' } | { name: 'coaches' } | { name: 'coach'; id?: string } | { name: 'workout' | 'follow' | 'result' | 'do' | 'session' | 'import' | 'log' | 'creator' | 'exercise' | 'join'; id: string };
+type Route = { name: 'tab'; tab: Tab; sub?: string } | { name: 'new' } | { name: 'coaches' } | { name: 'coach'; id?: string } | { name: 'workout' | 'follow' | 'result' | 'do' | 'session' | 'import' | 'log' | 'creator' | 'credited' | 'exercise' | 'join'; id: string };
 
 const parse = (hash: string): Route => {
   const seg = hash.replace(/^#\/?/, '').split('/');
@@ -93,6 +95,8 @@ const parse = (hash: string): Route => {
   if (seg[0] === 'do' && id) return { name: 'do', id };
   if (seg[0] === 's' && id) return { name: 'session', id };
   if (seg[0] === 'c' && id) return { name: 'creator', id };
+  // A credited creator (no account): its own segment, so no account handle can take its name.
+  if (seg[0] === 'by' && id) return { name: 'credited', id };
   if (seg[0] === 'x' && id) return { name: 'exercise', id };
   if (seg[0] === 'import' && seg[1]) return { name: 'import', id: seg.slice(1).join('/') };
   if (seg[0] === 'log' && seg[1]) return { name: 'log', id: seg.slice(1).join('/') };
@@ -121,8 +125,9 @@ export default function App() {
   const act = useActions();
   const cloud = useCloudSync();
   const [remote, setRemote] = useState<Runsheet[]>([]);
+  const [remoteLoaded, setRemoteLoaded] = useState(false);
   useEffect(() => {
-    fetchPublicWorkouts().then(setRemote).catch(() => {});
+    fetchPublicWorkouts().then(setRemote).catch(() => {}).finally(() => setRemoteLoaded(true));
   }, [cloud.user]);
   // Workouts a coach sent this account (migration 0008); they open and run like any other, never synced as its own.
   const [fetched, setAssigned] = useState<MyAssignment[]>([]);
@@ -335,7 +340,7 @@ export default function App() {
           onSave={() => act.toggleSaved(id)}
           saved={st.saved.includes(id)}
           onShare={async () => { const out = await shareLink(base.title, shareUrl(base)); say(out === 'copied' ? 'Link copied' : out === 'shared' ? 'Shared' : 'Could not share'); }}
-          onCreator={r.ownerId || (cloud.user && st.workouts.some(w => w.id === wid(r))) ? () => go(`/c/${r.ownerId ?? cloud.user!.id}`) : undefined}
+          onCreator={creatorKey(r) ? () => go(creatorPath(creatorKey(r)!)) : r.ownerId || (cloud.user && st.workouts.some(w => w.id === wid(r))) ? () => go(`/c/${r.ownerId ?? cloud.user!.id}`) : undefined}
           onTogglePublic={cloud.user && st.workouts.some(w => w.id === wid(r)) ? () => { act.saveWorkout({ ...base, public: !base.public }); say(base.public ? 'Private now' : 'On your public page'); } : undefined}
           appHref={appLink(`w/${encodeURIComponent(wid(r))}`)}
           onDelete={st.workouts.some(w => w.id === wid(r)) ? () => { act.deleteWorkout(wid(r)); if (st.saved.includes(wid(r))) act.toggleSaved(wid(r)); say('Workout deleted'); go('/discover/saved'); } : undefined}
@@ -344,6 +349,10 @@ export default function App() {
   }
   if (route.name === 'creator') {
     return full(<CreatorRoute key={route.id} id={route.id} onOpen={r => open(r)} onShare={async () => { const out = await shareLink('TigerWorkouts', location.href); say(out === 'copied' ? 'Link copied' : out === 'shared' ? 'Shared' : 'Could not share'); }} />);
+  }
+  if (route.name === 'credited') {
+    const creator = creatorFor(all, route.id) ?? null;
+    return full(<CreditedCreatorScreen key={route.id} creator={creator} loading={!creator && !remoteLoaded} onBack={() => back('/discover')} onOpen={r => open(r)} onShare={async () => { const out = await shareLink(creator?.name ?? 'TigerWorkouts', location.href); say(out === 'copied' ? 'Link copied' : out === 'shared' ? 'Shared' : 'Could not share'); }} />);
   }
   if (route.name === 'new') {
     const r: Runsheet = draftOf('new') ?? { title: '', creator: st.name || undefined, items: [] };
@@ -690,6 +699,7 @@ export default function App() {
       onOpen={open}
       onStart={(r, origin) => (unlockAudio(), setDrafted(null), setFrom(origin), go(`/do/${encodeURIComponent(wid(r))}`))}
       onOpenProgram={(_, days) => open(days[0], 'search')}
+      onOpenCreator={key => go(creatorPath(key))}
     />
   );
 }

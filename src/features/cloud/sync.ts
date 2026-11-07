@@ -7,6 +7,7 @@
  *   missing locally, in snapshot → deleted here, delete there
  * Rows the v0.9 app wrote are converted on the way in and preserved on the way out.
  */
+import { accountPageWorkouts } from '@/features/creators/credited';
 import type { Runsheet } from '@/features/runsheet/model';
 import type { LibraryExercise } from '@/features/exercises/library';
 import type { SessionResult, TrainingMaxes } from '@/features/runsheet/progression';
@@ -317,7 +318,8 @@ export const fetchCreator = async (key: string): Promise<{ profile: CreatorProfi
   const { data: rows } = await sb.from('workouts').select('id,data,creator,title,public,owner').eq('owner', p.id).eq('public', true).order('updated_at', { ascending: false });
   return {
     profile: { id: p.id, name: p.name ?? 'Creator', handle: p.handle ?? undefined, bio: p.bio ?? undefined },
-    workouts: (rows ?? []).map(r => workoutFromRow(r as WorkoutRow)),
+    // What an admin adapted from a creator's post lives on that creator's page (#/by/), not the admin's.
+    workouts: accountPageWorkouts((rows ?? []).map(r => workoutFromRow(r as WorkoutRow))),
   };
 };
 

@@ -12,6 +12,8 @@
     // Nick and the Claude and App Store reviewers (review-claude@ / review-apple@tigerworkouts.com), until it opens.
     // Empty string = every TigerWorkouts account may connect.
     "ALLOWED_USER_IDS": "71ee1910-ef0a-471d-81bb-345ce7b9c2e3,b9e712ac-0107-4865-8290-5f645c99fa46,81991f45-472c-4631-95be-7e5564e3fea9",
+    // Nick: may import a creator's workout with a credited `source` (create_workout / update_workout). specs/creator-imports.md.
+    "ADMIN_USER_IDS": "71ee1910-ef0a-471d-81bb-345ce7b9c2e3",
     // Flip to "true" once https://mcp.tigerworkouts.com/callback is an allowed Supabase redirect URL.
     "GOOGLE_SIGNIN": "false",
     // "true" adds "Start now, no account needed" (Supabase anonymous sign-in). Needs Authentication →

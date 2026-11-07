@@ -7,13 +7,14 @@ import { fromRow, workoutFromRow } from '@/features/cloud/rows';
 import type { LibraryExercise } from '@/features/exercises/library';
 import { exerciseLogs, forLabel, loadLabel, modeLabel, ROLE_LABEL, runsheetMinutes, stepLogs, type ExerciseStep, type Item, type Runsheet, type Step } from '@/features/runsheet/model';
 import { parsePlan } from '@/features/runsheet/parse-text';
-import type { ExerciseRef } from '@/features/runsheet/model';
+import type { ExerciseRef, Source } from '@/features/runsheet/model';
 import type { SessionResult, SetResult, StepResult } from '@/features/runsheet/progression';
 import { changesFrom, versionsOf, type SessionVersion } from '@/features/runsheet/versions';
 import { shareUrlAt } from '@/features/share/link';
 import { catalogue, FULL_LIBRARY, libraryRef } from './catalogue';
 import { keepUnknownFields, normalise, type RunsheetInput } from './runsheet';
 import type { Db } from './supabase';
+import { cleanHandle, creatorKey, creatorPath, HANDLE_RE, type Platform } from '@/features/creators/credited';
 
 export const SITE = 'https://tigerworkouts.com/';
 /** The iPhone app's public TestFlight link: lock-screen timer and notifications. */
@@ -84,6 +85,7 @@ const summary = (r: Runsheet, owner: Owner, extra: { public?: boolean; source?: 
   level: r.level,
   tags: r.tags,
   exercises: exerciseKeys(r).slice(0, 12),
+  ...(r.source?.kind === 'social' ? { adaptedFrom: { handle: r.source.handle, platform: r.source.platform, url: r.source.url } } : {}),
   updatedAt: extra.updatedAt,
 });
 
@@ -204,7 +206,7 @@ export const listWorkouts = async (db: Db, a: ListWorkoutsArgs) => {
 
   const words = (a.query ?? '').toLowerCase().split(/\s+/).filter(Boolean);
   const hit = out.filter(w => {
-    const hay = [w.title, w.creator, w.program, w.source, ...(w.tags ?? []), ...w.exercises].join(' ').toLowerCase();
+    const hay = [w.title, w.creator, w.adaptedFrom?.handle, w.program, w.source, ...(w.tags ?? []), ...w.exercises].join(' ').toLowerCase();
     if (words.some(x => !hay.includes(x))) return false;
     if (a.source && w.source !== a.source) return false;
     if (a.tag && !(w.tags ?? []).some(t => t.toLowerCase() === a.tag!.toLowerCase())) return false;
@@ -337,6 +339,61 @@ const coachOutcome = async (db: Db, workoutId: string, coach: AiCoach | null | u
   }
 };
 
+// ── credited creator imports (admins only, Nick 7 Nov 2026) ──
+// An admin adapts a creator's post (an Instagram reel, a TikTok, a YouTube video) into a workout the
+// whole app can find under the creator's name. No account stands behind it: the workout is the
+// admin's row, credited "Adapted from @handle · original post", and never sent from the AI coach.
+
+/** Where a credited workout came from, as an admin passes it. */
+export interface CreatorSourceInput {
+  url: string;
+  author: string;
+  handle: string;
+  platform: Platform;
+  title?: string;
+}
+/** Who may pass `source`: decided by ADMIN_USER_IDS, handed in by server.ts. */
+export interface ToolContext {
+  admin?: boolean;
+}
+
+export const NOT_ADMIN = 'Only TigerWorkouts admins can import a creator\'s workout with source. Leave source out to save it as this person\'s own workout.';
+
+const creditFrom = (s: CreatorSourceInput, ctx: ToolContext): Source => {
+  if (!ctx.admin) throw new ToolError(NOT_ADMIN);
+  const problems: string[] = [];
+  let url: URL | undefined;
+  try {
+    url = new URL(s.url);
+  } catch {
+    /* listed below */
+  }
+  if (!url || url.protocol !== 'https:') problems.push('source.url must be the https link to the original post.');
+  const handle = cleanHandle(s.handle ?? '');
+  if (!HANDLE_RE.test(handle)) problems.push('source.handle is the creator\'s handle on the platform: letters, numbers, dots, dashes or underscores, with or without @.');
+  const author = (s.author ?? '').trim().replace(/\s+/g, ' ');
+  if (!author) problems.push('source.author is the creator\'s display name.');
+  if (problems.length) throw new ToolError(problems.join('\n'));
+  return { title: s.title?.trim() || '', url: url!.href, author, handle, platform: s.platform, kind: 'social', importedAt: new Date().toISOString().slice(0, 10) };
+};
+
+const isCredited = (r: Runsheet) => r.source?.kind === 'social';
+export const CREDITED_ASSIGN = "A credited creator's workout is not sent from the AI coach. Copy it with create_workout (no source) to make the person a version of their own.";
+
+/** Takes back an AI coach send of a workout that is now credited to a creator. */
+const unsend = async (db: Db, workoutId: string) => {
+  try {
+    await db.del(`assignments?coach=eq.${db.userId}&client=eq.${db.userId}&workout_id=eq.${enc(workoutId)}`);
+  } catch (e) {
+    if (!missing(e)) throw e;
+  }
+};
+
+const creditView = (r: Runsheet) => {
+  const key = creatorKey(r);
+  return { creator: r.creator, adaptedFrom: { handle: r.source?.handle, platform: r.source?.platform, url: r.source?.url }, ...(key ? { creatorPageUrl: `${SITE}#${creatorPath(key)}` } : {}) };
+};
+
 /** What create_workout and start_workout take: a structured runsheet, or a plain-text plan. */
 export interface DraftArgs {
   workout?: RunsheetInput;
@@ -362,6 +419,18 @@ const draftToRunsheet = async (db: Db, a: DraftArgs): Promise<{ runsheet: Runshe
   throw new ToolError('Pass workout (structured) or plan (plain text).');
 };
 
+/** create_workout with source: a creator's post, adapted by an admin. Credited to the creator,
+ * public unless asked otherwise, and kept clear of the AI coach. */
+export const createCredited = async (db: Db, a: DraftArgs & { public?: boolean; source: CreatorSourceInput }, ctx: ToolContext = {}) => {
+  const credit = creditFrom(a.source, ctx);
+  const { runsheet: r, assumptions } = await draftToRunsheet(db, a);
+  const id = newId();
+  const open = a.public ?? true;
+  const runsheet: Runsheet = { ...r, id, creator: credit.author, createdAt: new Date().toISOString(), source: { ...credit, title: credit.title || r.title } };
+  await db.post('workouts', { id, owner: db.userId, creator: credit.author, title: r.title, public: open, data: { ...runsheet, public: open } });
+  return { id, title: r.title, public: open, ...creditView(runsheet), minutes: runsheetMinutes(runsheet), outline: outline(runsheet), appUrl: appUrl(id), previewUrl: previewUrl(runsheet), shareUrl: shareUrl(runsheet, open), assumptions };
+};
+
 export const createWorkout = async (db: Db, a: DraftArgs & { public?: boolean; note?: string }) => {
   const { runsheet: r, assumptions } = await draftToRunsheet(db, a);
   const id = newId();
@@ -374,8 +443,10 @@ export const createWorkout = async (db: Db, a: DraftArgs & { public?: boolean; n
   return { id, title: r.title, public: a.public ?? false, minutes: runsheetMinutes(runsheet), outline: outline(runsheet), ...sent, appUrl: appUrl(id), previewUrl: previewUrl(runsheet), shareUrl: shareUrl(runsheet, a.public ?? false), assumptions };
 };
 
-export const updateWorkout = async (db: Db, a: { id: string; workout?: RunsheetInput; public?: boolean; assign?: boolean; note?: string }) => {
-  if (!a.workout && a.public === undefined && !a.assign) throw new ToolError('Nothing to change: pass workout, public, assign, or a mix.');
+export const updateWorkout = async (db: Db, a: { id: string; workout?: RunsheetInput; public?: boolean; assign?: boolean; note?: string; source?: CreatorSourceInput }, ctx: ToolContext = {}) => {
+  if (!a.workout && a.public === undefined && !a.assign && !a.source) throw new ToolError('Nothing to change: pass workout, public, assign, source, or a mix.');
+  const credit = a.source ? creditFrom(a.source, ctx) : undefined;
+  if (credit && a.assign) throw new ToolError(CREDITED_ASSIGN);
   const rows = await db.get<WorkoutRow[]>(`workouts?id=eq.${enc(a.id)}&owner=eq.${db.userId}&select=${WORKOUT_COLS}`);
   const row = rows?.[0];
   if (!row) {
@@ -383,14 +454,19 @@ export const updateWorkout = async (db: Db, a: { id: string; workout?: RunsheetI
     throw new ToolError(other ? `${a.id} is not yours to edit (${other.owner === 'catalogue' ? 'catalogue' : "someone else's"} workout). Copy it with create_workout instead.` : `No workout ${a.id}. list_workouts scope "mine" shows yours.`);
   }
   const before = workoutFromRow(row);
+  if (a.assign && isCredited(before)) throw new ToolError(CREDITED_ASSIGN);
   let runsheet = before;
   if (a.workout) {
     const r = normalise(a.workout, await resolver(db));
-    const creator = r.creator ?? before.creator;
+    // A credited workout stays credited to its creator whatever creator the new runsheet names.
+    const creator = isCredited(before) ? before.creator : (r.creator ?? before.creator);
     runsheet = keepUnknownFields({ ...r, id: a.id, creator, source: before.source ?? { title: r.title, kind: 'user', author: creator }, icon: before.icon, video: before.video }, before);
   }
+  if (credit) runsheet = { ...runsheet, creator: credit.author, source: { ...credit, title: credit.title || before.source?.title || runsheet.title } };
+  // Credited now and nothing said about visibility: it goes out to everyone, as imports do.
+  if (credit && a.public === undefined) a = { ...a, public: true };
   const patch: Record<string, unknown> = {};
-  if (a.workout) {
+  if (a.workout || credit) {
     // ownerId and public are row columns, not workout data (as the web app's sync stores it).
     const { ownerId: _o, ...data } = runsheet;
     void _o;
@@ -399,8 +475,9 @@ export const updateWorkout = async (db: Db, a: { id: string; workout?: RunsheetI
   if (a.public !== undefined) patch.public = a.public;
   const updated = Object.keys(patch).length ? await db.patch<WorkoutRow[]>(`workouts?id=eq.${enc(a.id)}&owner=eq.${db.userId}`, patch) : [row];
   if (!updated?.length) throw new ToolError(`Could not update ${a.id}.`);
+  if (credit) await unsend(db, a.id);
   const sent = a.assign ? await coachOutcome(db, a.id, await coachToSend(db), a.note) : {};
-  return { id: a.id, title: runsheet.title, public: updated[0].public, minutes: runsheetMinutes(runsheet), outline: outline(runsheet), ...sent, appUrl: appUrl(a.id), previewUrl: previewUrl(runsheet), shareUrl: shareUrl(runsheet, updated[0].public) };
+  return { id: a.id, title: runsheet.title, public: updated[0].public, ...(isCredited(runsheet) ? creditView(runsheet) : {}), minutes: runsheetMinutes(runsheet), outline: outline(runsheet), ...sent, appUrl: appUrl(a.id), previewUrl: previewUrl(runsheet), shareUrl: shareUrl(runsheet, updated[0].public) };
 };
 
 /** The web app's own share link: the runsheet travels in the URL, so it opens with no sign-in. */

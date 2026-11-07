@@ -84,3 +84,15 @@ describe('the workout page as the editor', () => {
     await waitFor(() => expect(last.items.at(-1)).toMatchObject({ kind: 'exercise', exercise: { key: EX.bw_pushup.key } }));
   });
 });
+
+describe('a workout adapted from a creator’s post (Nick, 7 Nov 2026)', () => {
+  it('credits "Adapted from @handle · original post" and the handle opens the creator page', async () => {
+    const { adaptedReel } = await import('@/features/creators/fixtures');
+    let opened = false;
+    render(<WorkoutPreviewScreen runsheet={adaptedReel()} onCreator={() => (opened = true)} />);
+    expect(screen.getByText('Adapted from')).toBeTruthy();
+    expect(screen.getByRole('link', { name: /original post/ }).getAttribute('href')).toBe('https://www.instagram.com/reel/FIXTURE/');
+    fireEvent.click(screen.getByRole('button', { name: '@samfixture' }));
+    expect(opened).toBe(true);
+  });
+});
