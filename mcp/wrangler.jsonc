@@ -21,8 +21,8 @@
     "ANONYMOUS_SIGNUP": "true",
     // Instagram bot (specs/instagram-bot.md). Imports belong to this account; it signs the bot in at /bot/connect.
     "INSTAGRAM_IMPORT_OWNER": "71ee1910-ef0a-471d-81bb-345ce7b9c2e3",
-    "INSTAGRAM_USERNAME": "tigerworkouts",
-    // The @tigerworkouts IG user id, once the account exists. Empty = the bot answers nobody.
+    "INSTAGRAM_USERNAME": "tigerworkoutsdotcom",
+    // The @tigerworkoutsdotcom IG user id, once the account exists. Empty = the bot answers nobody.
     "INSTAGRAM_ACCOUNT_ID": "",
     "INSTAGRAM_GRAPH_BASE": "https://graph.facebook.com/v27.0",
     "INSTAGRAM_MODEL": "claude-haiku-5-5"

@@ -41,7 +41,7 @@ export const REPLIES = {
   found: (handle: string, link: string) => `Here's the workout from @${handle}'s post, ready to run with a timer: ${link}`,
   none: "Sorry, I couldn't find a workout written out in this post's caption, so I didn't save anything.",
   gone: "Sorry, that workout isn't available on TigerWorkouts.",
-  unreadable: "Sorry, I couldn't open that post. Try commenting @tigerworkouts under the reel instead.",
+  unreadable: "Sorry, I couldn't open that post. Try commenting @tigerworkoutsdotcom under the reel instead.",
   busy: "Lots of requests right now. Please try again in a little while.",
   help: 'Share a workout reel with me and I will send back a link to the workout with a timer.',
 };
