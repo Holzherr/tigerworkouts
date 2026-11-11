@@ -101,7 +101,7 @@ Docs base: `https://developers.facebook.com/documentation/instagram-platform/` (
 
 ## Setup checklist for Nick
 
-1. **Instagram account.** Create @tigerworkouts. Settings → Account type → switch to **Professional** (Business). Keep it public.
+1. **Instagram account.** Create @tigerworkoutsdotcom (@tigerworkouts was taken, 11 Nov 2026). Settings → Account type → switch to **Professional** (Business). Keep it public.
 2. **Facebook Page.** Create a "TigerWorkouts" Facebook Page and link it to the Instagram account (Instagram → Settings → Accounts Center, or the Page's Settings → Linked accounts → Instagram).
 3. **Allow messages via API.** In the Instagram app: Settings → Messages and story replies → Message controls → Connected tools → turn on **Allow access to messages**.
 4. **Meta app.** At developers.facebook.com → My Apps → Create app. Pick the business type, use case "Other" (or "Manage messaging & content on Instagram"), and connect it to a business portfolio (Brambruesch or TigerWorkouts). Under the Instagram product choose **API setup with Facebook login**. Add Messenger → Instagram settings if the dashboard offers it.
@@ -143,13 +143,13 @@ Docs base: `https://developers.facebook.com/documentation/instagram-platform/` (
     - Then `npm run deploy`.
 11. **Connect the bot to your account.** Open https://mcp.tigerworkouts.com/bot/connect and sign in with your TigerWorkouts email (code). Only your admin account is accepted.
 12. **Test in dev mode.** Under App roles → Roles, add a second Instagram/Facebook person as Tester, and accept the invite.
-    - From that account, comment "@tigerworkouts" under a public workout reel.
-    - Then DM a reel to @tigerworkouts.
+    - From that account, comment "@tigerworkoutsdotcom" under a public workout reel.
+    - Then DM a reel to @tigerworkoutsdotcom.
     - Check the replies, and the Observability logs (`{"ig":…}` lines).
     - Then, in your Claude app: "list pending imports", and approve one.
 13. **App Review** (to answer everyone, not only testers):
     1. Complete Business Verification for the portfolio.
-    2. Submit `instagram_manage_comments`, `instagram_manage_messages`, `instagram_basic`, `pages_read_engagement`, `pages_show_list` and `pages_manage_metadata` for Advanced Access. For each: a short description and a screencast showing a test account commenting "@tigerworkouts" under a reel, the reply with the link, the link opening the workout, and the DM path.
+    2. Submit `instagram_manage_comments`, `instagram_manage_messages`, `instagram_basic`, `pages_read_engagement`, `pages_show_list` and `pages_manage_metadata` for Advanced Access. For each: a short description and a screencast showing a test account commenting "@tigerworkoutsdotcom" under a reel, the reply with the link, the link opening the workout, and the DM path.
     3. Give reviewer steps (which account to comment from; the bot replies within a minute).
     4. Switch the app to **Live**.
 
@@ -157,7 +157,7 @@ Docs base: `https://developers.facebook.com/documentation/instagram-platform/` (
 
 - **Not checked against the live API** (the account does not exist yet), and the docs leave these open:
   - whether `permalink` and `username` come back inside `mentioned_comment{media{…}}`;
-  - whether an `ig_reel` DM carries `reel_video_id`/`title`, and whether `GET /<media-id>` works on someone else's reel (otherwise a shared reel is answered "couldn't open that post, comment @tigerworkouts under it instead");
+  - whether an `ig_reel` DM carries `reel_video_id`/`title`, and whether `GET /<media-id>` works on someone else's reel (otherwise a shared reel is answered "couldn't open that post, comment @tigerworkoutsdotcom under it instead");
   - whether a private reply to a comment on someone else's reel is allowed (the fallback when the comment reply fails);
   - whether the signature uses the Meta App Secret or the Instagram app secret under Instagram Login.
   - The first real payloads are logged in full (`{"ig":"job",…}`); check them on the first test.
