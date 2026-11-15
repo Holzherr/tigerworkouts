@@ -26,7 +26,7 @@
       "name": "Run 5 miles in 5-min intervals",
       "mode": "rounds",
       "repeat": 8,
-      "note": "Repeat until 5 miles (8,047 m) of running is done; 8 intervals is a placeholder, most athletes need 7-10",
+      "note": "Repeat until 5 miles (8,047 m) of running is done; most athletes need 7 to 10 intervals",
       "steps": [
         {
           "kind": "exercise",

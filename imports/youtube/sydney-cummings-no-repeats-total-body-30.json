@@ -74,7 +74,7 @@
           "forMode": "seconds",
           "forValue": 45,
           "startSeconds": 265,
-          "note": "Single-leg per key moments"
+          "note": "Single-leg"
         },
         {
           "kind": "rest",
@@ -392,8 +392,7 @@
           "startSeconds": 1645,
           "note": "With push-up"
         }
-      ],
-      "note": "Timestamps from YouTube key moments (60 s grid from 2:25)."
+      ]
     },
     {
       "kind": "block",

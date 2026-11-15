@@ -1,3 +1,4 @@
+import { shortDate } from '@/shared/utils/dates';
 import { ChevronLeft } from 'lucide-react';
 import { ClipThumb } from '@/shared/components/ui/clip-thumb';
 import { Button } from '@/shared/components/ui/button';
@@ -26,7 +27,7 @@ export interface ExerciseHistoryScreenProps {
   onExercise?: (key: string) => void;
 }
 
-const date = (iso: string) => new Date(iso).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+const date = shortDate;
 
 /** Pace per 500 m on a rower or ski erg, as their monitors show it; per km for anything else. */
 export const paceOver = (group?: string) => (group === 'rower' ? 500 : 1000);

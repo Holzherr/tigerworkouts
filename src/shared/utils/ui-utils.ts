@@ -16,4 +16,8 @@ export const fmtClock = (seconds: number) => {
 export const fmtNum = (n: number) => (Number.isInteger(n) ? String(n) : String(Math.round(n * 100) / 100));
 
 /** 1 → "1 round", 3 → "3 rounds". */
+/** A rest as every row and editor reads it: whole minutes as minutes ("3 min"), the rest as
+ * seconds ("90s"). The rest editor's stepper switches unit on the same rule. */
+export const restLabel = (seconds: number) => (seconds >= 60 && seconds % 60 === 0 ? `${seconds / 60} min` : `${seconds}s`);
+
 export const plural = (n: number, word: string, many = `${word}s`) => `${n} ${n === 1 ? word : many}`;

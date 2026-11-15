@@ -82,6 +82,8 @@ export const BlockReorder = ({ open, items, locked, onDone, onCancel, refTitle }
       open={open}
       onOpenChange={o => !o && onCancel()}
       title="Reorder blocks"
+      // One way out that keeps the order (Done); a tap outside the sheet leaves it as it was.
+      hideClose
       action={
         <Button variant="quiet" className="font-bold text-brand-ink" onClick={() => onDone(draft)}>
           Done

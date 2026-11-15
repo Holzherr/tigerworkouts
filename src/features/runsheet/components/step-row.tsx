@@ -5,7 +5,7 @@ import { Chip } from '@/shared/components/ui/chip';
 import { ClipThumb } from '@/shared/components/ui/clip-thumb';
 import { Dropdown } from '@/shared/components/ui/dropdown';
 import { Stepper } from '@/shared/components/ui/stepper';
-import { cn } from '@/shared/utils/ui-utils';
+import { restLabel, cn } from '@/shared/utils/ui-utils';
 import { loadStep, metersStep, useStepSizes } from '@/shared/utils/step-sizes';
 import { StepSizes } from './step-sizes';
 import { extraLogs, forLabel, hasSetting, loadLabel, logChoices, settingLabel, STEP_LOG_LABEL, stepLogs, withLogs, type ExerciseStep, type ForMode, type RestStep, type Step } from '../model';
@@ -80,7 +80,7 @@ export const StepRow = forwardRef<HTMLDivElement, StepRowProps>(({ step, expande
           <div className={cn('line-clamp-2 text-[14.5px] leading-tight font-semibold', isRest && 'text-body')}>{isRest ? 'Rest' : step.exercise.name}</div>
           <div className="text-[12px] text-muted">{groupTarget ? <span className="font-bold text-brand-ink">Release to make a block</span> : isRest ? 'step' : (hint ?? `${forLabel(step)}${resolvedTarget !== undefined && step.targetPct !== undefined ? ` · ${step.targetPct}% TM` : resolvedTarget !== undefined && step.loadFactor !== undefined ? ` · ${step.loadFactor}× BW` : ''}${step.perSide ? '' : ''}`)}</div>
         </div>
-        <Chip variant="value">{isRest ? `${step.seconds}s` : resolvedTarget !== undefined && (step.targetPct !== undefined || step.loadFactor !== undefined) ? `${resolvedTarget} kg` : loadLabel(step) || forLabel(step)}</Chip>
+        <Chip variant="value">{isRest ? restLabel(step.seconds) : resolvedTarget !== undefined && (step.targetPct !== undefined || step.loadFactor !== undefined) ? `${resolvedTarget} kg` : loadLabel(step) || forLabel(step)}</Chip>
         {removeBtn}
       </div>
     );

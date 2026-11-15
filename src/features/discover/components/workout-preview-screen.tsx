@@ -1,10 +1,10 @@
 import { ChevronLeft, ChevronRight, ExternalLink, GitMerge, Globe, Layers, Lock, Menu, Pencil, Play, Plus, Share2, Smartphone, Trash2, Video } from 'lucide-react';
-import { localDate } from '@/shared/utils/dates';
+import { shortDate } from '@/shared/utils/dates';
 import { Fragment, useState } from 'react';
 import { Button } from '@/shared/components/ui/button';
 import { Chip } from '@/shared/components/ui/chip';
 import { ClipThumb } from '@/shared/components/ui/clip-thumb';
-import { cn, fmtClock, fmtNum } from '@/shared/utils/ui-utils';
+import { cn, fmtClock, fmtNum, restLabel } from '@/shared/utils/ui-utils';
 import { addBlock, blockSeconds, countLabel, forLabel, loadLabel, modeLabel, removeItem, replaceStep, ROLE_LABEL, runsheetMinutes, scoreType, setRuns, shortUnit, straightSetStep, type Block, type ExerciseStep, type Item, type Runsheet } from '@/features/runsheet/model';
 import { ExerciseSheet } from '@/features/runsheet/components/exercise-sheet';
 import type { SessionResult } from '@/features/runsheet/progression';
@@ -173,13 +173,18 @@ export const WorkoutPreviewScreen = ({ runsheet: r, history = [], lastTime, onBa
   const last = history[0];
   return (
     <div className="flex h-full min-h-0 flex-col bg-canvas">
-      <header className="safe-top shrink-0 bg-surface px-4 pt-2 pb-3">
+      <header className="safe-top shrink-0 bg-surface px-4 pt-2 pb-2">
         <div className="flex items-center justify-between gap-2">
           <Button variant="quiet" size="inline" onClick={onBack} className="-ml-1 text-muted">
             <ChevronLeft /> Back
           </Button>
         </div>
         <h1 className="mt-1 text-[22px] leading-tight font-extrabold">{r.title}</h1>
+      </header>
+      <div className="min-h-0 flex-1 space-y-3 overflow-y-auto px-3 pb-3">
+        {/* Who made it, its chips and the app link scroll away with the blocks: only Back and the
+            title stay pinned (Nick, 15 Nov 2026), which leaves the screen to the workout. */}
+        <div data-testid="workout-about" className="-mx-3 bg-surface px-4 pb-3">
         {kind === 'social' ? (
           <div className="mt-1 flex flex-wrap items-center gap-x-1 text-[13px] text-muted">
             <span>Adapted from</span>
@@ -235,8 +240,7 @@ export const WorkoutPreviewScreen = ({ runsheet: r, history = [], lastTime, onBa
             <Smartphone className="size-4" /> Open in the app
           </a>
         )}
-      </header>
-      <div className="min-h-0 flex-1 space-y-3 overflow-y-auto px-3 py-3">
+        </div>
         {today && (
           <div className="rounded-card border border-brand-line bg-surface px-3 py-2.5">
             <TodayLine text={today.text} detail={today.sets.length > 1 ? today.sets[0].reason : today.detail} />
@@ -261,7 +265,7 @@ export const WorkoutPreviewScreen = ({ runsheet: r, history = [], lastTime, onBa
             )}
             {last && (
               <div className="flex-1 rounded-card border border-line bg-surface px-3 py-2">
-                <div className="text-[11px] font-bold tracking-widest text-muted uppercase">Last · {localDate(last.startedAt)}</div>
+                <div className="text-[11px] font-bold tracking-widest text-muted uppercase">Last · {shortDate(last.startedAt)}</div>
                 <div className="text-[17px] font-extrabold tabular-nums">{last.score !== undefined ? fmtScore(score, last.score, last.scoreText) : 'done'}</div>
               </div>
             )}
@@ -285,7 +289,7 @@ export const WorkoutPreviewScreen = ({ runsheet: r, history = [], lastTime, onBa
                       {it.name}
                     </div>
                     <div className="text-[12px] text-muted">
-                      {Math.round(blockSeconds(it) / 60)} min{it.restBetweenSec ? ` · rest ${it.restBetweenSec}s between` : ''}
+                      {Math.round(blockSeconds(it) / 60)} min{it.restBetweenSec ? ` · rest ${restLabel(it.restBetweenSec)} between` : ''}
                       {it.note ? ` · ${it.note}` : ''}
                     </div>
                   </div>
@@ -304,7 +308,7 @@ export const WorkoutPreviewScreen = ({ runsheet: r, history = [], lastTime, onBa
                       <div key={s.id} className="flex items-center gap-2.5 px-3 py-1.5">
                         <ClipThumb size="sm" variant="rest" />
                         <div className="min-w-0 flex-1 truncate text-[14px] text-body">Rest</div>
-                        <span className="text-[13px] font-semibold tabular-nums">{s.seconds}s</span>
+                        <span className="text-[13px] font-semibold tabular-nums">{restLabel(s.seconds)}</span>
                       </div>
                     ) : (
                       <Fragment key={s.id}>
@@ -330,7 +334,7 @@ export const WorkoutPreviewScreen = ({ runsheet: r, history = [], lastTime, onBa
               <div key={it.id ?? i} className="flex items-center gap-2.5 rounded-card border border-line bg-surface px-3 py-2">
                 <ClipThumb size="sm" variant="rest" />
                 <div className="min-w-0 flex-1 truncate text-[14px] font-semibold">Rest</div>
-                <span className="text-[13px] font-semibold tabular-nums">{it.seconds}s</span>
+                <span className="text-[13px] font-semibold tabular-nums">{restLabel(it.seconds)}</span>
               </div>
             );
           return (

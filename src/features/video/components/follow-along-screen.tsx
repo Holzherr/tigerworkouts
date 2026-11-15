@@ -3,7 +3,7 @@ import { useMemo, useRef, useState } from 'react';
 import { Button } from '@/shared/components/ui/button';
 import { Chip } from '@/shared/components/ui/chip';
 import { ClipThumb } from '@/shared/components/ui/clip-thumb';
-import { cn, fmtClock } from '@/shared/utils/ui-utils';
+import { restLabel, cn, fmtClock } from '@/shared/utils/ui-utils';
 import { forLabel, stepSeconds, type ExerciseStep, type Runsheet, type Step } from '@/features/runsheet/model';
 import { VideoPlayer, type VideoPlayerHandle } from './video-player';
 
@@ -99,7 +99,7 @@ export const FollowAlongScreen = ({ runsheet, onBack, onFinish }: FollowAlongScr
                 <div className="min-w-0 flex-1">
                   <div className={cn('truncate text-[14px] font-semibold', s.kind === 'rest' && 'text-body')}>{s.kind === 'rest' ? 'Rest' : s.exercise.name}</div>
                   <div className="text-[12px] text-muted">
-                    {s.kind === 'rest' ? `${s.seconds}s` : forLabel(s)}
+                    {s.kind === 'rest' ? restLabel(s.seconds) : forLabel(s)}
                     {c.round > 0 ? ` · round ${c.round + 1}` : ''}
                   </div>
                 </div>

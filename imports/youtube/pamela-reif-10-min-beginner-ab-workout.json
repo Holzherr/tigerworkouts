@@ -222,8 +222,7 @@
           "forValue": 30,
           "startSeconds": 565
         }
-      ],
-      "note": "startSeconds derived from the video's fixed interval grid (anchored on YouTube key moments), so may drift a few seconds; workout starts at 0:05"
+      ]
     }
   ],
   "video": {

@@ -83,7 +83,7 @@
           "seconds": 15
         }
       ],
-      "note": "45 s work / 15 s rest, 3 rounds; startSeconds for round 1 from the chapter start."
+      "note": "45 s work / 15 s rest, 3 rounds"
     },
     {
       "kind": "rest",
@@ -139,7 +139,7 @@
           "seconds": 15
         }
       ],
-      "note": "45 s work / 15 s rest, 3 rounds; startSeconds for round 1 from the chapter start."
+      "note": "45 s work / 15 s rest, 3 rounds"
     },
     {
       "kind": "rest",
@@ -195,7 +195,7 @@
           "seconds": 15
         }
       ],
-      "note": "45 s work / 15 s rest, 3 rounds; startSeconds for round 1 from the chapter start."
+      "note": "45 s work / 15 s rest, 3 rounds"
     },
     {
       "kind": "block",

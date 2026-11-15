@@ -95,7 +95,7 @@
           "seconds": 20
         }
       ],
-      "note": "40 s work + 20 s rest, 2 rounds; startSeconds for round 1 from the description."
+      "note": "40 s work + 20 s rest, 2 rounds"
     },
     {
       "kind": "block",
@@ -158,7 +158,7 @@
           "seconds": 20
         }
       ],
-      "note": "40 s work + 20 s rest, 2 rounds; startSeconds for round 1 from the description."
+      "note": "40 s work + 20 s rest, 2 rounds"
     },
     {
       "kind": "rest",
@@ -227,7 +227,7 @@
           "seconds": 20
         }
       ],
-      "note": "40 s work + 20 s rest, 2 rounds; startSeconds for round 1 from the description."
+      "note": "40 s work + 20 s rest, 2 rounds"
     },
     {
       "kind": "block",
@@ -291,7 +291,7 @@
           "seconds": 20
         }
       ],
-      "note": "40 s work + 20 s rest, 2 rounds; startSeconds for round 1 from the description."
+      "note": "40 s work + 20 s rest, 2 rounds"
     },
     {
       "kind": "block",
