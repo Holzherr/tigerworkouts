@@ -11,7 +11,7 @@ const c25k = w('nhs-c25k-1', { title: 'Couch to 5K – Week 1', program: { name:
 const abs = w('nhs-abs', { title: '10-minute abs workout', source: { title: 'Abs', author: 'NHS', kind: 'article' } });
 const hyrox = w('hyrox-emom', { title: 'Hyrox wall ball EMOM 10', source: { title: 'Hyrox', author: 'Greg Williams', kind: 'article' } });
 const tabata = w('tabata', { title: 'Tabata', source: { title: 'Tabata', author: 'Izumi Tabata', kind: 'protocol' } });
-const video = w('yt-abs', { title: '10 MIN AB WORKOUT', video: { youtubeId: 'x' } as Runsheet['video'], source: { title: 'Abs', author: 'Pamela Reif', kind: 'video' } });
+const video = w('yt-abs', { title: '10 MIN AB WORKOUT', source: { title: 'Abs', author: 'Pamela Reif', kind: 'video' } });
 const lifts = w('sl-a', { title: 'StrongLifts 5×5 – A', program: { name: 'StrongLifts 5×5', day: 'Workout A', order: 1 }, source: { title: 'SL', author: 'Mehdi', kind: 'program' } });
 const ALL = [priyanka(), chelsea, cindy, mary, c25k, abs, hyrox, tabata, video, lifts];
 const under = (f: DiscoverFilter) => ALL.filter(r => matchesFilter(r, f)).map(r => r.id);
