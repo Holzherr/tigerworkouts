@@ -348,7 +348,8 @@ struct SettingsView: View {
             } header: {
                 Text("About")
             } footer: {
-                Text("Questions or problems: brambruesch@nickholzherr.com")
+                // A link, so it opens Mail rather than asking for the address to be typed out.
+                Text("Questions or problems: [brambruesch@nickholzherr.com](mailto:brambruesch@nickholzherr.com)")
             }
         }
         .navigationTitle("Settings")

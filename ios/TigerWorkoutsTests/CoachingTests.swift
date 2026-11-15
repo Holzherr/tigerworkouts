@@ -134,3 +134,25 @@ struct CoachingTests {
         #expect(JoinLink.code(from: try #require(URL(string: link))) == nil)
     }
 }
+
+/// What a failed sign-in step says: the web's words (`src/features/auth/errors.test.ts`).
+@Suite("sign-in messages")
+struct SignInMessageTests {
+    @Test("a wrong or old code says so, not the server's words")
+    func wrongCode() {
+        #expect(SignInView.message(for: SupabaseError(message: "Token has expired or is invalid"), verifying: true) == "That code is wrong or has expired. Check it, or send a new one.")
+    }
+
+    @Test("the email limit says to wait")
+    func rateLimit() {
+        #expect(SignInView.message(for: SupabaseError(message: "For security purposes, you can only request this after 37 seconds."), verifying: false) == "Too many tries. Wait a minute, then try again.")
+        #expect(SignInView.message(for: SupabaseError(message: "email rate limit exceeded"), verifying: true) == "Too many tries. Wait a minute, then try again.")
+    }
+
+    @Test("a bad address is named; anything else is kept as it came")
+    func theRest() {
+        #expect(SignInView.message(for: SupabaseError(message: "Unable to validate email address: invalid format"), verifying: false) == "That email address does not look right.")
+        #expect(SignInView.message(for: SupabaseError(message: "Signups not allowed"), verifying: false) == "Signups not allowed")
+        #expect(SignInView.message(for: URLError(.notConnectedToInternet), verifying: true) == URLError(.notConnectedToInternet).localizedDescription)
+    }
+}

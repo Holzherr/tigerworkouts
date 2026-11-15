@@ -10,6 +10,25 @@ struct SignInView: View {
             || ProcessInfo.processInfo.environment["UITEST_APPLE_SIGN_IN"] == "1"
     }
 
+    /// What a failed step says. The server's own words ("Token has expired or is invalid", "For
+    /// security purposes, you can only request this after 37 seconds") become what to do next, in
+    /// the web's words (`src/features/auth/errors.ts`); anything else, a lost connection included,
+    /// is said as iOS says it.
+    nonisolated static func message(for error: any Error, verifying: Bool) -> String {
+        let raw = error.localizedDescription
+        let lower = raw.lowercased()
+        if ["rate limit", "security purposes", "too many"].contains(where: { lower.contains($0) }) {
+            return "Too many tries. Wait a minute, then try again."
+        }
+        if verifying, ["expired", "invalid", "otp"].contains(where: { lower.contains($0) }) {
+            return "That code is wrong or has expired. Check it, or send a new one."
+        }
+        if !verifying, ["invalid", "validate"].contains(where: { lower.contains($0) }) {
+            return "That email address does not look right."
+        }
+        return raw
+    }
+
     var onSignedIn: () async -> Void
 
     @Environment(Store.self) private var store
@@ -90,6 +109,7 @@ struct SignInView: View {
                                 .focused($focus, equals: .email)
                                 .disabled(sent)
                                 .foregroundStyle(sent ? Brand.muted : Brand.ink)
+                                .accessibilityLabel("Email")
                         }
 
                         if usePassword && !sent {
@@ -113,6 +133,7 @@ struct SignInView: View {
                                     .font(.system(size: 24, weight: .bold, design: .rounded))
                                     .monospacedDigit()
                                     .focused($focus, equals: .code)
+                                    .accessibilityLabel("Six-digit code")
                             }
                         }
 
@@ -206,7 +227,7 @@ struct SignInView: View {
             sent = true
             startResendCountdown()
         } catch {
-            self.error = error.localizedDescription
+            self.error = Self.message(for: error, verifying: false)
         }
     }
 
@@ -219,7 +240,7 @@ struct SignInView: View {
             await onSignedIn()
             dismiss()
         } catch {
-            self.error = error.localizedDescription
+            self.error = Self.message(for: error, verifying: true)
         }
     }
 

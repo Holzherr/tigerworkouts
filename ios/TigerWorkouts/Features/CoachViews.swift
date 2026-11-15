@@ -127,8 +127,11 @@ struct JoinCoachView: View {
 
     @State private var invite: CoachInvite?
     @State private var loading = true
+    /// The invite could not be fetched (no signal): not the same as a link that does not work.
+    @State private var unreachable = false
     @State private var signingIn = false
     @State private var accepting = false
+    @State private var accepted = false
     @State private var error: String?
 
     var body: some View {
@@ -137,12 +140,24 @@ struct JoinCoachView: View {
                 Stripes().frame(width: 52, height: 44).padding(.top, 32)
                 if loading {
                     ProgressView()
+                } else if accepted, let invite {
+                    Text("You’re training with \(invite.name)")
+                        .font(.system(size: 26, weight: .heavy))
+                        .foregroundStyle(Brand.ink)
+                        .multilineTextAlignment(.center)
+                    Text("Workouts they send you show first in Workouts, marked New · made for you.")
+                        .font(.callout)
+                        .foregroundStyle(Brand.muted)
+                        .multilineTextAlignment(.center)
+                    Button("See my workouts") { dismiss() }
+                        .buttonStyle(BigButtonStyle())
+                        .accessibilityIdentifier("invite-accepted")
                 } else if let invite {
                     Text("\(invite.name) invited you to train with them")
                         .font(.system(size: 26, weight: .heavy))
                         .foregroundStyle(Brand.ink)
                         .multilineTextAlignment(.center)
-                    Text("They will see the workouts you log and can send you workouts and notes. You can stop any time under Me.")
+                    Text("They will see the sessions you log and can send you workouts and notes. You can stop any time under Me.")
                         .font(.callout)
                         .foregroundStyle(Brand.muted)
                         .multilineTextAlignment(.center)
@@ -155,6 +170,16 @@ struct JoinCoachView: View {
                             .disabled(accepting)
                             .accessibilityIdentifier("accept-invite")
                     }
+                } else if unreachable {
+                    Text("Could not load the invite")
+                        .font(.title2.weight(.bold))
+                        .foregroundStyle(Brand.ink)
+                    Text("Check your connection and try again.")
+                        .font(.callout)
+                        .foregroundStyle(Brand.muted)
+                    Button("Try again") { Task { await load() } }
+                        .buttonStyle(BigButtonStyle(filled: false))
+                        .accessibilityIdentifier("invite-retry")
                 } else {
                     Text("This invite link does not work")
                         .font(.title2.weight(.bold))
@@ -172,24 +197,33 @@ struct JoinCoachView: View {
             .frame(maxWidth: .infinity)
             .background(Brand.canvas)
             .toolbar {
-                ToolbarItem(placement: .cancellationAction) { Button("Not now") { dismiss() } }
+                ToolbarItem(placement: .cancellationAction) { Button(accepted ? "Close" : "Not now") { dismiss() } }
             }
-            .task {
-                invite = try? await Supabase.shared.coachInviteInfo(code: code)
-                loading = false
-            }
+            .task { await load() }
             .sheet(isPresented: $signingIn) {
                 SignInView { await store.sync() }
             }
         }
     }
 
+    private func load() async {
+        loading = true
+        defer { loading = false }
+        do {
+            invite = try await Supabase.shared.coachInviteInfo(code: code)
+            unreachable = false
+        } catch {
+            unreachable = true
+        }
+    }
+
     private func accept() async {
         accepting = true
+        error = nil
         defer { accepting = false }
         do {
             try await store.acceptCoachInvite(code: code)
-            dismiss()
+            accepted = true
         } catch {
             self.error = error.localizedDescription
         }
@@ -268,7 +302,7 @@ struct CoachSection: View {
                     Image(systemName: "person.badge.clock").foregroundStyle(Brand.coral)
                     VStack(alignment: .leading, spacing: 2) {
                         Text(name).foregroundStyle(Brand.ink)
-                        Text("Sees the workouts you log and sends you workouts").font(.footnote).foregroundStyle(Brand.muted)
+                        Text("Sees the sessions you log and sends you workouts").font(.footnote).foregroundStyle(Brand.muted)
                     }
                 }
                 Button("Stop training with \(name)", role: .destructive) { confirmStop = true }
@@ -283,7 +317,7 @@ struct CoachSection: View {
                 }
                 Button("Keep", role: .cancel) {}
             } message: {
-                Text("\(name) stops seeing your workouts and can no longer send you new ones.")
+                Text("\(name) stops seeing your sessions and can no longer send you new ones.")
             }
         }
     }

@@ -111,6 +111,7 @@ struct PlatesButton: View {
 /// make; a section left empty is no constraint, except kettlebells, which fall back to 4 kg steps.
 struct EquipmentView: View {
     @Environment(Store.self) private var store
+    @State private var confirmClear = false
 
     private var e: Equipment { store.equipment ?? Equipment() }
 
@@ -164,10 +165,17 @@ struct EquipmentView: View {
             // Back to a gym's plates and the default steps, on the web too.
             if store.equipment != nil {
                 ToolbarItem(placement: .topBarTrailing) {
-                    Button("Clear", role: .destructive) { Task { await store.setEquipment(nil) } }
+                    Button("Clear", role: .destructive) { confirmClear = true }
                         .accessibilityIdentifier("clear-equipment")
                 }
             }
+        }
+        .confirmationDialog("Clear your equipment?", isPresented: $confirmClear, titleVisibility: .visible) {
+            Button("Clear equipment", role: .destructive) { Task { await store.setEquipment(nil) } }
+                .accessibilityIdentifier("clear-equipment-confirm")
+            Button("Keep", role: .cancel) {}
+        } message: {
+            Text("Your plates, dumbbells and kettlebells go, here and on tigerworkouts.com. Loads go back to a gym's plates.")
         }
     }
 
@@ -200,6 +208,7 @@ struct EquipmentView: View {
 /// `user_state.prefs` fields, so a max set on either side holds on both.
 struct TrainingMaxesView: View {
     @Environment(Store.self) private var store
+    @State private var confirmClear = false
     /// The exercises to list: the relative ones in a workout, or the big four.
     var exercises: [ExerciseRef]
     var needsBodyweight = false
@@ -242,7 +251,7 @@ struct TrainingMaxesView: View {
             }
             if !store.trainingMaxes.isEmpty {
                 Section {
-                    Button("Clear all training maxes", role: .destructive) { Task { await store.clearTrainingMaxes() } }
+                    Button("Clear all training maxes", role: .destructive) { confirmClear = true }
                         .accessibilityIdentifier("clear-training-maxes")
                 }
             }
@@ -258,5 +267,12 @@ struct TrainingMaxesView: View {
         }
         .navigationTitle("Training maxes")
         .navigationBarTitleDisplayMode(.inline)
+        .confirmationDialog("Clear all training maxes?", isPresented: $confirmClear, titleVisibility: .visible) {
+            Button("Clear training maxes", role: .destructive) { Task { await store.clearTrainingMaxes() } }
+                .accessibilityIdentifier("clear-training-maxes-confirm")
+            Button("Keep", role: .cancel) {}
+        } message: {
+            Text("Sets written as a % of a training max show no weight until you set them again.")
+        }
     }
 }
