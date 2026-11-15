@@ -53,6 +53,7 @@ import { TabBar } from '@/shared/components/ui/tab-bar';
 import { WorkoutIcon } from '@/shared/components/ui/workout-icon';
 import { useUndo } from '@/shared/components/ui/undo-toast';
 import { loadPending, savePending } from '@/app/pending';
+import { Contain } from '@/app/recover';
 import { originOf, rememberOrigin, withOrigin } from '@/features/timer/run-origin';
 import { defaultIcon } from '@/features/workouts/icon';
 import { useActions, useAppState } from './app/store';
@@ -922,7 +923,10 @@ const RunSession = ({ runsheet, results, intent, equipment, library, origin: sta
           </div>
         </div>
       )}
-      <TimerScreen runsheet={runsheet} state={state} now={now} onDone={act.done} onSkip={skip} onBack={act.back} onPause={act.pause} onResume={act.resume} onAdjust={act.adjust} onAdjustIncline={act.adjustIncline} onSetReps={act.setReps} onSetAmount={act.setAmount} onDrop={drop} onStartBlock={startBlock} onAdjustStep={act.adjustStep} sets={{ adjust: act.adjustAt, setReps: act.setRepsAt, setAmount: act.setAmountAt, complete: act.completeSet, reopen: act.reopenSet, lastFor: (step, round) => lastSessionSet(results, step, round, runsheet), fill: act.fillSet, setType: act.setTypeAt }} onAdjustRest={act.extendRest} lastFor={step => lastSessionSet(results, step, Runner.current(state)?.round ?? 0, runsheet)} onFill={act.fillSet} ghost={pace?.text} goal={goal} muted={muted} onToggleMute={() => { setMuted(!muted); setMute(!muted); }} equipment={equipment} alternativesFor={(step, target) => alternatives(step.exercise.key, target, library, 6, equipment)} onSwap={act.swap} prs={prs} onEndBlock={endBlock} onFinish={() => { const res = log(state.phase === 'done' ? state : Runner.finish(state, Date.now())); Runner.clearPersisted(); onFinish(res); }} onExit={() => (act.discard(), onExit())} />
+      {/* The run lives here, above the screen: if the screen crashes it is put up again and the run carries on. */}
+      <Contain retry name="timer screen">
+        <TimerScreen runsheet={runsheet} state={state} now={now} onDone={act.done} onSkip={skip} onBack={act.back} onPause={act.pause} onResume={act.resume} onAdjust={act.adjust} onAdjustIncline={act.adjustIncline} onSetReps={act.setReps} onSetAmount={act.setAmount} onDrop={drop} onStartBlock={startBlock} onAdjustStep={act.adjustStep} sets={{ adjust: act.adjustAt, setReps: act.setRepsAt, setAmount: act.setAmountAt, complete: act.completeSet, reopen: act.reopenSet, lastFor: (step, round) => lastSessionSet(results, step, round, runsheet), fill: act.fillSet, setType: act.setTypeAt }} onAdjustRest={act.extendRest} lastFor={step => lastSessionSet(results, step, Runner.current(state)?.round ?? 0, runsheet)} onFill={act.fillSet} ghost={pace?.text} goal={goal} muted={muted} onToggleMute={() => { setMuted(!muted); setMute(!muted); }} equipment={equipment} alternativesFor={(step, target) => alternatives(step.exercise.key, target, library, 6, equipment)} onSwap={act.swap} prs={prs} onEndBlock={endBlock} onFinish={() => { const res = log(state.phase === 'done' ? state : Runner.finish(state, Date.now())); Runner.clearPersisted(); onFinish(res); }} onExit={() => (act.discard(), onExit())} />
+      </Contain>
     </div>
     </div>
   );
