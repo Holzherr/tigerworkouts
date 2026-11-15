@@ -54,7 +54,7 @@ struct SetPlanGrid: View {
                                 .foregroundStyle(Brand.ink)
                         } else {
                             // The binding reads the runner as it is now, so a held button keeps counting up.
-                            MiniStepper(value: incline.wrappedValue ?? 0, label: "Incline") { presses in
+                            MiniStepper(value: incline.wrappedValue ?? 0, label: "Incline", neutral: true) { presses in
                                 incline.wrappedValue = TimerView.inclineStep(incline.wrappedValue, by: presses)
                             }
                         }
@@ -88,7 +88,7 @@ struct SetPlanGrid: View {
                         .frame(width: 36, alignment: .leading)
                         if step.hasSetLoad {
                             if Plates.kit(step.exercise) == .barbell { PlatesButton(load: run.load) }
-                            MiniStepper(value: run.load ?? 0, label: "\(label) load", disabled: locked, onTapValue: locked ? nil : {
+                            MiniStepper(value: run.load ?? 0, label: "\(label) load", disabled: locked, neutral: true, onTapValue: locked ? nil : {
                                 entry = NumberEntryRequest(title: "\(label) \(step.settingLabel.lowercased())", unit: step.shortUnit, current: run.load) { v in
                                     apply { Edit.editRun($0, block: block.id, run: run, load: v) }
                                 }
@@ -104,7 +104,7 @@ struct SetPlanGrid: View {
                             .frame(maxWidth: .infinity)
                         }
                         if let count = step.countLabel {
-                            MiniStepper(value: run.reps, label: "\(label) \(count.lowercased())", disabled: locked, onTapValue: locked ? nil : {
+                            MiniStepper(value: run.reps, label: "\(label) \(count.lowercased())", disabled: locked, neutral: true, onTapValue: locked ? nil : {
                                 entry = NumberEntryRequest(title: "\(label) \(count.lowercased())", unit: step.forMode == .meters ? "m" : count.lowercased(), current: run.reps) { v in
                                     apply { Edit.editRun($0, block: block.id, run: run, reps: max(1, step.forMode == .reps ? v.rounded() : v)) }
                                 }
@@ -130,7 +130,7 @@ struct SetPlanGrid: View {
                 // two lines each (Nick, 1 Nov 2026).
                 HStack(spacing: 10) {
                     Text("Sets").font(.subheadline.weight(.semibold)).foregroundStyle(Brand.body)
-                    MiniStepper(value: Double(block.repeatCount), label: "Sets") { direction in
+                    MiniStepper(value: Double(block.repeatCount), label: "Sets", neutral: true) { direction in
                         apply { r in
                             let now = r.items.compactMap(\.asBlock).first { $0.id == block.id }?.repeatCount ?? block.repeatCount
                             let steps = Int(abs(direction))
@@ -167,6 +167,8 @@ struct MiniStepper: View {
     var disabled = false
     /// On a coral-tinted row the buttons go white, or they vanish into it.
     var onTint = false
+    /// Grey buttons, for the workout page: coral there is Start alone (review D8, 15 Nov 2026).
+    var neutral = false
     /// A tap on the number, to type one in (`NumberEntryRequest`); nil leaves it a label.
     var onTapValue: (() -> Void)? = nil
     var nudge: (Double) -> Void
@@ -220,9 +222,9 @@ struct MiniStepper: View {
             Image(systemName: symbol)
                 .font(.system(size: 14, weight: .bold))
                 .frame(width: 36, height: 38)
-                .background(onTint ? Brand.surface : Brand.coralSoft, in: RoundedRectangle(cornerRadius: 10, style: .continuous))
-                .overlay(RoundedRectangle(cornerRadius: 10, style: .continuous).strokeBorder(onTint ? Brand.brandLine : .clear))
-                .foregroundStyle(Brand.coralInk)
+                .background(neutral ? Brand.well : onTint ? Brand.surface : Brand.coralSoft, in: RoundedRectangle(cornerRadius: 10, style: .continuous))
+                .overlay(RoundedRectangle(cornerRadius: 10, style: .continuous).strokeBorder(onTint && !neutral ? Brand.brandLine : .clear))
+                .foregroundStyle(neutral ? Brand.body : Brand.coralInk)
                 .frame(width: 44, height: 44, alignment: edge)
                 .contentShape(Rectangle())
         }

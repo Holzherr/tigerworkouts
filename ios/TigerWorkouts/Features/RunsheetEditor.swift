@@ -299,8 +299,8 @@ struct RunsheetEditor<Header: View>: View {
                     Text("Done")
                         .font(.footnote.weight(.bold))
                         .padding(.horizontal, 12).frame(height: 28)
-                        .background(Brand.coral, in: Capsule())
-                        .foregroundStyle(.white)
+                        .background(Brand.ink, in: Capsule())
+                        .foregroundStyle(Brand.surface)
                 }
                 .buttonStyle(.plain)
                 .padding(.leading, 8)

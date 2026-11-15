@@ -207,7 +207,9 @@ enum LastTime {
     }
 
     /// "100 × 8, 110 × 4", "100 × 8 (×3)" for three the same in a row, "12, 12, 10 reps" without a
-    /// load, "10 kph" without reps. At most `limit` groups, then "+N more".
+    /// load, "10 kph" without reps. A run of sets with one number each reads "24 kg × 7 sets",
+    /// the unit beside its number ("24 (×7) kg" read as a typo, review D8). At most `limit`
+    /// groups, then "+N more".
     static func compact(_ sets: [SetResult], unit: String = "", limit: Int = 4) -> String? {
         var groups: [(set: SetResult, count: Int)] = []
         for s in sets {
@@ -220,10 +222,15 @@ enum LastTime {
         guard !groups.isEmpty else { return nil }
         let loads = sets.contains { $0.load != nil }
         let reps = sets.contains { $0.reps != nil }
+        // One number a set and a run of them: each group carries its own unit.
+        let spelled = loads != reps && groups.contains { $0.count > 1 }
+        let own = !loads ? " reps" : unit.isEmpty ? "" : " \(unit)"
         func one(_ g: (set: SetResult, count: Int)) -> String {
             let times = g.count > 1 ? " (×\(g.count))" : ""
             switch (g.set.load, g.set.reps) {
             case let (load?, reps?): return "\(Format.number(load)) × \(Format.number(reps))\(times)"
+            case let (value?, nil) where spelled, let (nil, value?) where spelled:
+                return "\(Format.number(value))\(own)" + (g.count > 1 ? " × \(g.count) sets" : "")
             case let (load?, nil): return "\(Format.number(load))\(times)"
             case let (nil, reps?): return loads ? "\(Format.number(reps)) reps\(times)" : "\(Format.number(reps))\(times)"
             default: return ""
@@ -231,8 +238,10 @@ enum LastTime {
         }
         let shown = groups.prefix(limit).map(one).filter { !$0.isEmpty }
         var text = shown.joined(separator: ", ")
-        if !loads && reps { text += " reps" }
-        if loads && !reps && !unit.isEmpty { text += " \(unit)" }
+        if !spelled {
+            if !loads && reps { text += " reps" }
+            if loads && !reps && !unit.isEmpty { text += " \(unit)" }
+        }
         let rest = groups.dropFirst(limit).reduce(0) { $0 + $1.count }
         if rest > 0 { text += " +\(rest) more" }
         return text.isEmpty ? nil : text

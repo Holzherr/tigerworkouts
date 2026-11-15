@@ -154,6 +154,8 @@ struct WorkoutDetailView: View {
                 ToolbarItem(placement: .topBarTrailing) {
                     Button("Save") { keep() }
                         .fontWeight(.bold)
+                        // Ink, not the app's coral tint: coral on this page is Start alone.
+                        .tint(Brand.ink)
                         .disabled(Edit.storable(runsheet) == nil)
                         .accessibilityIdentifier("save-workout")
                 }
