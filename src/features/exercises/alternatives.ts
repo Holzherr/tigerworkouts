@@ -5,6 +5,7 @@
  * web app reads it for the stall options.
  */
 import { GROUP_LABEL, type LibraryExercise } from './library';
+import { uniqueExercises } from './unique';
 import { snapToKit, type Equipment } from '@/features/runsheet/plates';
 
 export type Pattern = 'horizontalPress' | 'verticalPress' | 'horizontalPull' | 'verticalPull' | 'squat' | 'hinge' | 'lunge' | 'carry' | 'core' | 'cardio';
@@ -73,8 +74,10 @@ export const alternatives = (key: string, target: number | undefined, library: R
   const ex = library[key];
   const wanted = ex && patternOf(ex);
   if (!ex || !wanted) return [];
-  return Object.values(library)
-    .filter(e => e.key !== ex.key && patternOf(e) === wanted)
+  // The same exercise under a second key is not an alternative to itself, nor listed twice.
+  const sameName = (a: LibraryExercise, b: LibraryExercise) => a.name.trim().toLowerCase() === b.name.trim().toLowerCase() && a.unit === b.unit;
+  return uniqueExercises(Object.values(library))
+    .filter(e => e.key !== ex.key && !sameName(e, ex) && patternOf(e) === wanted)
     .sort((a, b) => (a.group === ex.group) !== (b.group === ex.group) ? (a.group === ex.group ? 1 : -1) : a.name < b.name ? -1 : a.name > b.name ? 1 : 0)
     .slice(0, limit)
     .map(e => ({ exercise: e, target: convertLoad(target, ex, e, kit), why: GROUP_LABEL[e.group] ?? e.group }));

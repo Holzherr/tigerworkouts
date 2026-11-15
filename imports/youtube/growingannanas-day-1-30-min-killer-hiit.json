@@ -436,8 +436,7 @@
           "id": "r30",
           "seconds": 10
         }
-      ],
-      "note": "startSeconds from the 'UP NEXT' key moments (each appears 10 s before the move) on a 60 s grid"
+      ]
     },
     {
       "kind": "block",

@@ -2,7 +2,7 @@ import { GitBranch, GitMerge, Play } from 'lucide-react';
 import { useState } from 'react';
 import { Button } from '@/shared/components/ui/button';
 import { Sheet } from '@/shared/components/ui/sheet';
-import { localDate } from '@/shared/utils/dates';
+import { shortDate } from '@/shared/utils/dates';
 import type { VersionRow } from '@/features/runsheet/versions';
 
 /**
@@ -24,7 +24,7 @@ export const VersionsCard = ({ versions, onRun, onMakeBase }: { versions: Versio
             <div className="min-w-0 flex-1">
               <div className="truncate text-[14px] font-semibold">{v.changes}</div>
               <div className="text-[12px] text-muted">
-                {v.sessions}× · last {localDate(v.lastDone)}
+                {v.sessions}× · last {shortDate(v.lastDone)}
               </div>
             </div>
             {onMakeBase && (

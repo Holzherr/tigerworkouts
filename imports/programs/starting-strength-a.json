@@ -29,7 +29,7 @@
       "id": "b1",
       "name": "Squat 3×5",
       "repeat": 3,
-      "note": "Source gives no rest time; 3 min used (3–5 min between heavy sets is the norm)",
+      "note": "3–5 min between heavy sets is the norm",
       "steps": [
         {
           "kind": "exercise",
@@ -51,7 +51,7 @@
       "id": "b2",
       "name": "Press 3×5",
       "repeat": 3,
-      "note": "Source gives no rest time; 3 min used (3–5 min between heavy sets is the norm)",
+      "note": "3–5 min between heavy sets is the norm",
       "steps": [
         {
           "kind": "exercise",
@@ -73,7 +73,7 @@
       "id": "b3",
       "name": "Deadlift 1×5",
       "repeat": 1,
-      "note": "Source gives no rest time; 3 min used (3–5 min between heavy sets is the norm)",
+      "note": "3–5 min between heavy sets is the norm",
       "steps": [
         {
           "kind": "exercise",

@@ -11,6 +11,9 @@ export const localDate = (iso: string) => {
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
 };
 
+/** "15 Nov 2026": a date as every list and card shows it, in local time. */
+export const shortDate = (iso: string) => new Date(iso).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+
 /** "2026-07-01T10:00", the value a `datetime-local` input shows, in local time. */
 export const toLocalInput = (iso: string) => {
   const d = new Date(iso);

@@ -22,7 +22,7 @@ import { CreatorPageCard } from '@/features/creators/components/creator-page-car
 import { CreditedCreatorScreen } from '@/features/creators/components/credited-creator-screen';
 import { creatorFor, creatorKey, creatorPath } from '@/features/creators/credited';
 import { cn, plural } from '@/shared/utils/ui-utils';
-import { localDate } from '@/shared/utils/dates';
+import { shortDate } from '@/shared/utils/dates';
 import { ExercisePicker } from '@/features/exercises/components/exercise-picker';
 import type { LibraryExercise } from '@/features/exercises/library';
 import { SettingsSheet } from '@/features/profile/components/settings-sheet';
@@ -602,7 +602,7 @@ export default function App() {
                 {r && <WorkoutIcon runsheet={r} size={36} />}
                 <div className="min-w-0 flex-1">
                   <div className="truncate text-[14px] font-bold">{res.title ?? r?.title ?? res.runsheetId}</div>
-                  <div className="text-[12px] text-muted">{localDate(res.startedAt)}{res.durationSec ? ` · ${Math.round(res.durationSec / 60)} min` : res.activity ? ` · ${res.activity.minutes} min` : ''}{res.completed === false && !res.capped ? ' · stopped early' : ''}{res.rpe ? ` · effort ${res.rpe}` : ''}</div>
+                  <div className="text-[12px] text-muted">{shortDate(res.startedAt)}{res.durationSec ? ` · ${Math.round(res.durationSec / 60)} min` : res.activity ? ` · ${res.activity.minutes} min` : ''}{res.completed === false && !res.capped ? ' · stopped early' : ''}{res.rpe ? ` · effort ${res.rpe}` : ''}</div>
                 </div>
                 <div className="text-[15px] font-extrabold tabular-nums">{r ? fmtScore(scoreType(r), res.score, res.scoreText) : (res.scoreText ?? '')}</div>
               </button>

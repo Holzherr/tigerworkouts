@@ -64,3 +64,14 @@ describe('BlockReorder', () => {
     expect(order[0]).toBe('Swings + lateral raises');
   });
 });
+
+describe('the Reorder sheet', () => {
+  it('has one way out that keeps the order, Done, and no ✕ beside it; it is as tall as its cards', () => {
+    render(<BlockReorder open items={priyanka().items} onDone={() => {}} onCancel={() => {}} />);
+    const sheet = screen.getByRole('dialog');
+    expect(within(sheet).getByRole('button', { name: 'Done' })).toBeTruthy();
+    expect(within(sheet).queryByRole('button', { name: 'Close' })).toBeNull();
+    expect(sheet.style.height).toBe('');
+    expect(sheet.style.maxHeight).toBe('88dvh');
+  });
+});

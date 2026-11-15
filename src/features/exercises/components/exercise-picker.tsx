@@ -6,6 +6,8 @@ import { Dropdown } from '@/shared/components/ui/dropdown';
 import { Sheet } from '@/shared/components/ui/sheet';
 import { customKey } from '@/features/results/csv';
 import { GROUP_LABEL, type ExerciseGroup, type LibraryExercise } from '../library';
+import { uniqueExercises } from '../unique';
+import { plural } from '@/shared/utils/ui-utils';
 
 export interface ExercisePickerProps {
   open: boolean;
@@ -40,7 +42,7 @@ export const ExercisePicker = ({ open, onOpenChange, library, onPick, onCreate, 
   const groups = useMemo(() => {
     const ql = q.trim().toLowerCase();
     const out = new Map<string, LibraryExercise[]>();
-    for (const e of Object.values(library)) {
+    for (const e of uniqueExercises(Object.values(library), usage)) {
       if (ql && !e.name.toLowerCase().includes(ql) && !e.key.includes(ql.replace(/\s+/g, '_'))) continue;
       const g = GROUP_LABEL[e.group] ?? 'Other';
       (out.get(g) ?? out.set(g, []).get(g)!).push(e);
@@ -96,7 +98,7 @@ export const ExercisePicker = ({ open, onOpenChange, library, onPick, onCreate, 
                     <div className="truncate text-[15px]">{e.name}</div>
                     <div className="text-[11px] text-muted">
                       {e.unit || 'bodyweight'}
-                      {usage[e.key] ? ` · in ${usage[e.key]} workouts` : ''}
+                      {usage[e.key] ? ` · in ${plural(usage[e.key], 'workout')}` : ''}
                     </div>
                   </div>
                 </button>

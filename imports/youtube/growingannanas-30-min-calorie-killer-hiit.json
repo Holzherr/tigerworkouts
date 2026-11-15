@@ -437,8 +437,7 @@
           "id": "r30",
           "seconds": 10
         }
-      ],
-      "note": "startSeconds derived from the video's fixed interval grid (anchored on YouTube key moments), so may drift a few seconds; workout starts at 0:00 (FitlyCafe)"
+      ]
     },
     {
       "kind": "block",
