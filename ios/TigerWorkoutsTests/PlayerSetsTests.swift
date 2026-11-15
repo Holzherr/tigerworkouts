@@ -48,8 +48,8 @@ struct PlayerSetsTests {
     func compact() throws {
         let step = try #require(Self.sheet().exerciseSteps.first)
         let odd = [Self.session(12, [Self.row("ht", Self.thrust.key, [SetResult(reps: 8, load: 80, type: .warmup), SetResult(reps: 8, load: 100), SetResult(reps: 1, load: 115)])])]
-        #expect(LastTime.summary(odd, for: step, in: Self.sheet()) == "last time W 80 × 8, 100 × 8, 115 × 1")
-        #expect(LastTime.summary(Self.history(), for: step, in: Self.sheet()) == "last time 100 × 8, 110 × 4, 110 × 4")
+        #expect(LastTime.lastSessionLabel(odd, for: step, in: Self.sheet()) == "last time 80 × 8, 100 × 8, 115 × 1")
+        #expect(LastTime.lastSessionLabel(Self.history(), for: step, in: Self.sheet()) == "last time 100 × 8, 110 × 4 (×2)")
         #expect(LastTime.set(Self.history(), for: step, round: 1, in: Self.sheet()) == SetResult(reps: 4, load: 110))
         #expect(LastTime.set(Self.history(), for: step, round: 7, in: Self.sheet()) == SetResult(reps: 4, load: 110))
         #expect(LastTime.compact([], unit: "kg") == nil)
@@ -216,5 +216,17 @@ struct PlayerSetsTests {
         #expect(StepSizes.load(track, defaults: defaults) == 1)
         StepSizes.set(nil, for: Self.thrust.key, .load, defaults: defaults)
         #expect(StepSizes.load(Self.thrust, defaults: defaults) == 2.5)
+    }
+
+    @Test("Priyanka's seeded week one: the hip thrust starts on 100, 110, 110, 115, not 115 on every set")
+    @MainActor
+    func seededWeekOne() throws {
+        let store = Store()
+        store.seedWeekOneIfAsked(["-seedWeekOne"])
+        let sheet = try #require(store.workout(id: "seed-week1"))
+        let thrust = try #require(store.seeded(sheet).exerciseSteps.first { $0.id == "seed-w1-thrust" })
+        #expect(thrust.sets?.map(\.load) == [100, 110, 110, 115])
+        #expect(thrust.target == 100)
+        #expect(LastTime.lastSessionLabel(store.results, for: thrust, in: sheet) == "last time 100 × 8, 110 × 4 (×2), 115 × 1")
     }
 }

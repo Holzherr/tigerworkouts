@@ -471,7 +471,7 @@ struct TimerView: View {
         // Last time's set for this round (set n against set n), never the heaviest of the session.
         let round = live ? runner.slot?.round ?? 0 : 0
         let lastSet = LastTime.set(store.results, for: ex, round: round, in: runner.runsheet)
-        let last = LastTime.compact(lastSet.map { [$0] }, unit: ex.shortUnit).map { "Last time \($0)" }
+        let last = lastSet.flatMap { LastTime.compact([$0], unit: ex.shortUnit) }.map { "Last time \($0)" }
         return VStack(alignment: .leading, spacing: 14) {
             Button { editing = ex } label: {
                 HStack(alignment: .center, spacing: 14) {

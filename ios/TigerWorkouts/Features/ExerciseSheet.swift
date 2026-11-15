@@ -52,7 +52,7 @@ struct ExerciseSheet: View {
     }
 
     private var lastTime: String? {
-        LastTime.summary(store.results, for: step, in: workout).map { $0.prefix(1).uppercased() + $0.dropFirst() }
+        LastTime.lastSessionLabel(store.results, for: step, in: workout).map { $0.prefix(1).uppercased() + $0.dropFirst() }
     }
 
     private var countsMeters: Bool { step.forMode == .meters || step.amountLogs.contains(.meters) }

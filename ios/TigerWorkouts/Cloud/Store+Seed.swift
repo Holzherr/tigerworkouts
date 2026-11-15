@@ -176,6 +176,47 @@ extension Store {
         trainingMaxes["bb_ohp"] = 61
         equipment = Equipment(barKg: 20, plates: [PlateCount(kg: 20, count: 2), PlateCount(kg: 10, count: 2), PlateCount(kg: 5, count: 2), PlateCount(kg: 2.5, count: 2), PlateCount(kg: 1.25, count: 2)], kettlebells: [12, 16, 24])
     }
+    /// `-seedWeekOne` on launch: Priyanka's "Hip thrust focus week 1" as she tested it (14 Nov 2026):
+    /// three blocks, hip thrusts done 100 × 8, 110 × 4, 110 × 4 and one 115 × 1, shoulder press at
+    /// 25 kg × 12 on every set. For the workout page's last-time labels, today's line, the last block
+    /// above the Start bar, and Duplicate → week 2. Fixed ids: launching with it again replaces them.
+    func seedWeekOneIfAsked(_ arguments: [String] = ProcessInfo.processInfo.arguments) {
+        guard arguments.contains("-seedWeekOne") else { return }
+        func ex(_ key: String, _ name: String, _ unit: String = "kg", _ step: Double = 2.5) -> ExerciseRef {
+            Library.shared.exercise(key)?.ref ?? ExerciseRef(key: key, name: name, unit: unit, step: step)
+        }
+        let thrust = ex("bb_hip_thrust", "Barbell hip thrust", "kg", 5)
+        let press = ex("db_shoulder_press", "Shoulder press")
+        var p = ExerciseStep(id: "seed-w1-press", exercise: press, target: 25, forMode: .reps, forValue: 8)
+        p.forMax = 12
+        var sheet = Runsheet(id: "seed-week1", title: "Hip thrust focus week 1", items: [
+            .block(Block(id: "seed-w1-b1", name: "Block 1", repeatCount: 4, steps: [
+                .exercise(ExerciseStep(id: "seed-w1-thrust", exercise: thrust, target: 100, forMode: .reps, forValue: 8)),
+                .rest(RestStep(id: "seed-w1-r1", seconds: 90)),
+            ])),
+            .block(Block(id: "seed-w1-b2", name: "Block 2", repeatCount: 3, steps: [
+                .exercise(p),
+                .rest(RestStep(id: "seed-w1-r2", seconds: 60)),
+            ])),
+            .block(Block(id: "seed-w1-b3", name: "Block 3", repeatCount: 3, steps: [
+                .exercise(ExerciseStep(id: "seed-w1-bridge", exercise: ex("bw_hip_bridge", "Glute bridge", "", 1), forMode: .reps, forValue: 15)),
+                .exercise(ExerciseStep(id: "seed-w1-lunge", exercise: ex("bw_lunge", "Walking lunge", "", 1), forMode: .reps, forValue: 12)),
+                .exercise(ExerciseStep(id: "seed-w1-plank", exercise: ex("bw_plank", "Plank", "s", 10), forMode: .seconds, forValue: 45)),
+            ])),
+        ])
+        sheet.creator = "You"
+        myWorkouts = [sheet] + myWorkouts.filter { $0.key != "seed-week1" }
+        let sets: [(Double, Double)] = [(100, 8), (110, 4), (110, 4), (115, 1)]
+        let session = SessionResult(runsheetId: "seed-week1", title: sheet.title, startedAt: ISO8601.string(Date().addingTimeInterval(-3 * 86_400)),
+                                    durationSec: 2_400, completed: true, steps: [
+            StepResult(stepId: "seed-w1-thrust", exerciseKey: thrust.key, target: 115, incline: nil, reps: sets.map(\.1), success: true,
+                       sets: sets.map { SetResult(reps: $0.1, load: $0.0) }),
+            StepResult(stepId: "seed-w1-press", exerciseKey: press.key, target: 25, incline: nil, reps: [12, 12, 12], success: true,
+                       sets: [SetResult(reps: 12, load: 25), SetResult(reps: 12, load: 25), SetResult(reps: 12, load: 25)]),
+        ], id: "seed-week1-s1")
+        results = (results.filter { $0.rowId != "seed-week1-s1" } + [session]).sorted { $0.startedAt > $1.startedAt }
+    }
+
     /// `-seedAICoach` on launch: an AI coach named "Coach Claude" that sent you "Lower body,
     /// heavier", one of your own workouts, with its note — so Mine shows it on top, from Coach
     /// Claude, and Me shows the AI coach. Fixed ids: launching with it again replaces them.

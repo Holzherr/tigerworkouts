@@ -111,7 +111,7 @@ final class SessionRunner {
                 }.count
                 reps = t.reps[min(setNo, t.reps.count - 1)]
             } else {
-                if last[e.id] == nil { last[e.id] = LastTime.sets(history, for: e, in: runsheet) ?? [] }
+                if last[e.id] == nil { last[e.id] = LastTime.lastSession(history, for: e, in: runsheet) ?? [] }
                 if let then = last[e.id], then.indices.contains(sl.round), (then[sl.round].type ?? .normal) == type {
                     reps = then[sl.round].reps
                 }

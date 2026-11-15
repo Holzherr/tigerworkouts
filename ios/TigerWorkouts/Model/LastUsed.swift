@@ -54,7 +54,7 @@ enum Settings {
             if let i = hit.incline { s.incline = i }
             guard s.target != nil || s.sets?.contains(where: { $0.load != nil }) == true, s.targetPct == nil, s.loadFactor == nil,
                   Measure.of(s.exercise.unit) == nil, !Targets.ruled(r, s),
-                  let last = LastTime.sets(results, for: s, in: r), !last.isEmpty else { return s }
+                  let last = LastTime.lastSession(results, for: s, in: r), !last.isEmpty else { return s }
             let target = targets.first { $0.stepId == s.id && $0.exerciseKey == s.exercise.key }?.load
             let follow = target != nil && Set(last.filter(isWork).map { $0.load ?? -1 }).count <= 1
             if let rounds {
@@ -183,42 +183,75 @@ enum LastTime {
         let parts = [set.load, set.reps].compactMap { $0 }.map(Format.number)
         return parts.isEmpty ? nil : "last " + parts.joined(separator: " × ")
     }
-}
 
-/// Last time as one line, set by set: the shared rule for every screen (Priyanka, 14 Nov 2026:
-/// "what was actually logged, set by set, shown the same way on every screen"). Never the heaviest
-/// set alone, which made one odd 115 × 1 stand for 100 × 8, 110 × 4.
-extension LastTime {
-    /// "100 × 8, 110 × 4, 110 × 4"; a warm-up reads "W 60 × 10", a drop set "D 80 × 6". Metres,
-    /// seconds or calories stand in for the load on a set that has none. Nil when nothing was logged.
-    static func compact(_ sets: [SetResult]?, unit: String = "") -> String? {
-        let parts = (sets ?? []).compactMap { x -> String? in
-            let amount = x.load.map(Format.number) ?? x.meters.map { "\(Format.number($0)) m" }
-                ?? x.seconds.map { "\(Format.number($0)) s" } ?? x.calories.map { "\(Format.number($0)) cal" }
-            let body: String
-            switch (amount, x.reps) {
-            case let (a?, r?): body = "\(a) × \(Format.number(r))"
-            case let (a?, nil): body = x.load != nil && !unit.isEmpty ? "\(a) \(unit)" : a
-            case let (nil, r?): body = "\(Format.number(r)) reps"
-            default: return nil
-            }
-            switch x.type {
-            case .warmup?: return "W \(body)"
-            case .drop?: return "D \(body)"
-            default: return body
+    // MARK: - Last session, set by set
+
+    /// "last time" everywhere (Priyanka, 14 Nov 2026): the last session's logged sets of this step,
+    /// in order — the same step of this workout first, else the same exercise in any workout. Not
+    /// the heaviest set (`topSet`), not one load for the whole step. A row from before sets were
+    /// kept stands in with its reps at its one load.
+    static func lastSession(_ results: [SessionResult], for step: ExerciseStep, in workout: Runsheet? = nil) -> [SetResult]? {
+        let newest = results.sorted { $0.startedAt > $1.startedAt }
+        for match in stepThenExercise(step, workout) {
+            for r in newest {
+                for row in r.steps where match(r, row) {
+                    let sets = row.sets?.isEmpty == false
+                        ? row.sets!
+                        : (row.reps ?? []).map { SetResult(reps: $0, load: row.target) }
+                    let logged = Logbook.measured(sets, unit: step.exercise.unit).filter { $0.load != nil || $0.reps != nil }
+                    if !logged.isEmpty { return logged }
+                }
             }
         }
-        return parts.isEmpty ? nil : parts.joined(separator: ", ")
+        return nil
     }
 
-    /// "last time 100 × 8, 110 × 4, 110 × 4" for a step: its sets last time (`sets`), in order.
-    static func summary(_ results: [SessionResult], for step: ExerciseStep, in workout: Runsheet? = nil) -> String? {
-        compact(sets(results, for: step, in: workout), unit: step.shortUnit).map { "last time \($0)" }
+    /// "100 × 8, 110 × 4", "100 × 8 (×3)" for three the same in a row, "12, 12, 10 reps" without a
+    /// load, "10 kph" without reps. At most `limit` groups, then "+N more".
+    static func compact(_ sets: [SetResult], unit: String = "", limit: Int = 4) -> String? {
+        var groups: [(set: SetResult, count: Int)] = []
+        for s in sets {
+            if let last = groups.last, last.set.load == s.load, last.set.reps == s.reps {
+                groups[groups.count - 1].count += 1
+            } else {
+                groups.append((s, 1))
+            }
+        }
+        guard !groups.isEmpty else { return nil }
+        let loads = sets.contains { $0.load != nil }
+        let reps = sets.contains { $0.reps != nil }
+        func one(_ g: (set: SetResult, count: Int)) -> String {
+            let times = g.count > 1 ? " (×\(g.count))" : ""
+            switch (g.set.load, g.set.reps) {
+            case let (load?, reps?): return "\(Format.number(load)) × \(Format.number(reps))\(times)"
+            case let (load?, nil): return "\(Format.number(load))\(times)"
+            case let (nil, reps?): return loads ? "\(Format.number(reps)) reps\(times)" : "\(Format.number(reps))\(times)"
+            default: return ""
+            }
+        }
+        let shown = groups.prefix(limit).map(one).filter { !$0.isEmpty }
+        var text = shown.joined(separator: ", ")
+        if !loads && reps { text += " reps" }
+        if loads && !reps && !unit.isEmpty { text += " \(unit)" }
+        let rest = groups.dropFirst(limit).reduce(0) { $0 + $1.count }
+        if rest > 0 { text += " +\(rest) more" }
+        return text.isEmpty ? nil : text
     }
 
+    /// "last time 100 × 8, 110 × 4" under a step's name on the workout page.
+    static func lastSessionLabel(_ results: [SessionResult], for step: ExerciseStep, in workout: Runsheet? = nil) -> String? {
+        lastSession(results, for: step, in: workout)
+            .flatMap { compact($0, unit: step.shortUnit) }
+            .map { "last time " + $0 }
+    }
+}
+
+/// The player's half of last time: one round's set from the same `lastSession` the workout page
+/// and the exercise sheet show, so every screen reads the same sets.
+extension LastTime {
     /// Last time's set for one round of a step: set n against set n, the last set past the end.
     static func set(_ results: [SessionResult], for step: ExerciseStep, round: Int, in workout: Runsheet? = nil) -> SetResult? {
-        guard let all = sets(results, for: step, in: workout), !all.isEmpty else { return nil }
+        guard let all = lastSession(results, for: step, in: workout), !all.isEmpty else { return nil }
         return all[min(max(0, round), all.count - 1)]
     }
 }
