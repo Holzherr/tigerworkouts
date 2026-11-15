@@ -5,9 +5,9 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>TigerWorkouts timer</title>
 <style>
-:root{--brand:#ff4d2e;--ink:#0f172a;--body:#334155;--muted:#64748b;--line:#e2e8f0;--surface:#fff;--well:#f1f5f9;--rest:#0ea5e9}
-@media (prefers-color-scheme:dark){:root:not([data-theme=light]){--ink:#f1f5f9;--body:#cbd5e1;--muted:#94a3b8;--line:#334155;--surface:#0f172a;--well:#1e293b}}
-:root[data-theme=dark]{--ink:#f1f5f9;--body:#cbd5e1;--muted:#94a3b8;--line:#334155;--surface:#0f172a;--well:#1e293b}
+:root{--brand:#ff4d2e;--ink:#0f172a;--body:#334155;--muted:#64748b;--line:#e2e8f0;--surface:#fff;--well:#f1f5f9;--rest:#0369a1;--danger:#b91c1c;--link:#c42a12}
+@media (prefers-color-scheme:dark){:root:not([data-theme=light]){--ink:#f1f5f9;--body:#cbd5e1;--muted:#94a3b8;--line:#334155;--surface:#0f172a;--well:#1e293b;--rest:#38bdf8;--danger:#f87171;--link:#ff6a4f}}
+:root[data-theme=dark]{--ink:#f1f5f9;--body:#cbd5e1;--muted:#94a3b8;--line:#334155;--surface:#0f172a;--well:#1e293b;--rest:#38bdf8;--danger:#f87171;--link:#ff6a4f}
 *{box-sizing:border-box}html,body{margin:0;background:var(--surface);color:var(--body);font:15px/1.45 -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif}
 .wrap{padding:16px;max-width:520px;margin:0 auto}
 .head{display:flex;justify-content:space-between;align-items:baseline;gap:8px;color:var(--ink);margin-bottom:10px}
@@ -17,9 +17,9 @@
 .muted{color:var(--muted);font-size:13px}
 button{font:inherit;cursor:pointer;border-radius:12px;padding:12px;border:1px solid var(--line);background:transparent;color:var(--ink);width:100%}
 .big{background:var(--brand);border:0;color:#fff;font-weight:700;font-size:17px;padding:15px;margin-top:8px}
-.row{display:flex;gap:8px;margin-top:8px}.row button{flex:1;padding:9px}
+.row{display:flex;gap:8px;margin-top:8px}.row button{flex:1;padding:9px;min-height:44px}.row button.armed{border-color:var(--danger);color:var(--danger);font-weight:700}
 .foot{margin-top:16px;padding-top:12px;border-top:1px solid var(--line);display:flex;flex-direction:column;gap:6px}
-.foot a{color:var(--brand);font-weight:600;text-decoration:none}.foot a.sub{color:var(--muted);font-weight:400;font-size:13px}
+.foot a{color:var(--link);font-weight:600;text-decoration:none}.foot a.sub{color:var(--muted);font-weight:400;font-size:13px}
 </style>
 </head>
 <body>
