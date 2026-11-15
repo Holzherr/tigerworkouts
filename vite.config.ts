@@ -18,9 +18,11 @@ export default defineConfig({
       manifest: false, // public/manifest.webmanifest is hand-written
       workbox: {
         globPatterns: ['**/*.{js,css,html,svg,png,woff2}'],
-        // The shell comes off the network whenever the network answers. Serving it from the
-        // precache first meant a worker that had missed an update kept handing out a shell
-        // pointing at assets the deploy had replaced, with no way back in from the phone.
+        // No navigateFallback: only the start URL (`/`, index.html in the precache) is answered
+        // from the precache, for an instant open that updates one launch later (review D13,
+        // 2026-11-15). Every other navigation, `/?r=…` from the self-heal in index.html included,
+        // is network-first below. A precached shell for all navigations meant a worker that had
+        // missed an update kept handing out a shell pointing at assets the deploy had replaced.
         navigateFallback: undefined,
         runtimeCaching: [
           { urlPattern: ({ request }: { request: Request }) => request.mode === 'navigate', handler: 'NetworkFirst', options: { cacheName: 'shell', networkTimeoutSeconds: 4 } },
