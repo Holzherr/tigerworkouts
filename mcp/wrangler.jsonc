@@ -25,8 +25,14 @@
     // The @tigerworkoutsdotcom IG user id, once the account exists. Empty = the bot answers nobody.
     "INSTAGRAM_ACCOUNT_ID": "",
     "INSTAGRAM_GRAPH_BASE": "https://graph.facebook.com/v27.0",
-    "INSTAGRAM_MODEL": "claude-haiku-5-5"
-    // Secrets, never here: INSTAGRAM_ACCESS_TOKEN, INSTAGRAM_APP_SECRET, INSTAGRAM_VERIFY_TOKEN, ANTHROPIC_API_KEY (wrangler secret put).
+    "INSTAGRAM_MODEL": "claude-haiku-5-5",
+    // Sign in with Apple, revoked when an account is deleted (src/apple.ts, POST /apple/revoke). The team id,
+    // the app's bundle id, and the id of a Sign in with Apple key. With APPLE_KEY_ID empty or the
+    // APPLE_PRIVATE_KEY secret missing, the route answers 503 and the app deletes the account without it.
+    "APPLE_TEAM_ID": "2JDH6Z4WZ8",
+    "APPLE_CLIENT_ID": "dev.brambruesch.tigerworkouts",
+    "APPLE_KEY_ID": ""
+    // Secrets, never here: INSTAGRAM_ACCESS_TOKEN, INSTAGRAM_APP_SECRET, INSTAGRAM_VERIFY_TOKEN, ANTHROPIC_API_KEY, APPLE_PRIVATE_KEY (wrangler secret put).
   },
   "routes": [{ "pattern": "mcp.tigerworkouts.com", "custom_domain": true }]
 }
