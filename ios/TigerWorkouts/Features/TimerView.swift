@@ -257,8 +257,82 @@ struct TimerView: View {
                 exerciseCard(first, eyebrow: "First up", adjustable: true)
             }
             addSetToBlockBehind
+            cappedRoundAsk
         }
         .padding(.horizontal, 16)
+    }
+
+    /// The AMRAP before this gate ended on its cap with its rounds ticked whole: the reps into the
+    /// round it cut short, asked once, here.
+    @ViewBuilder
+    private var cappedRoundAsk: some View {
+        if let cut = runner.cappedRound {
+            HStack(spacing: 12) {
+                Text("Time. Reps into round \(cut.round + 1)")
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(Brand.ink)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                let most = max(0, cut.reps - 1)
+                nudge("minus", label: "Fewer reps") { runner.setExtraReps(blockId: cut.blockId, reps: max(0, cut.extra - $0)) }
+                Text(Format.number(cut.extra))
+                    .font(.title2.weight(.bold))
+                    .monospacedDigit()
+                    .foregroundStyle(Brand.ink)
+                    .frame(minWidth: 40)
+                    .accessibilityLabel("Reps into round \(cut.round + 1)")
+                    .accessibilityValue(Format.number(cut.extra))
+                    .accessibilityIdentifier("capped-round-value")
+                nudge("plus", label: "More reps") { runner.setExtraReps(blockId: cut.blockId, reps: min(most, cut.extra + $0)) }
+            }
+            .padding(12)
+            .background(.white, in: RoundedRectangle(cornerRadius: 24, style: .continuous))
+            // White card on the dark timer: its ink has to be the light-appearance ink.
+            .environment(\.colorScheme, .light)
+            .accessibilityIdentifier("capped-round-reps")
+        }
+    }
+
+    /// An AMRAP's or EMOM's round of plain rep work on one card: every exercise with its clip (tap
+    /// for the how-to) and its reps. One button, "Round n done", ticks them all.
+    private func roundCardView(_ rows: [(slot: Slot, exercise: ExerciseStep, done: Bool)], demo: CGFloat) -> some View {
+        VStack(spacing: 0) {
+            ForEach(Array(rows.enumerated()), id: \.element.slot.id) { n, row in
+                Button { editing = row.exercise } label: {
+                    HStack(spacing: 12) {
+                        ExerciseDemo(ref: row.exercise.exercise, size: demo)
+                        Text(row.exercise.exercise.name)
+                            .font(.title3.weight(.heavy))
+                            .foregroundStyle(row.done ? Brand.muted : Brand.ink)
+                            .lineLimit(2)
+                            .minimumScaleFactor(0.7)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                        if row.done {
+                            Image(systemName: "checkmark").font(.subheadline.weight(.bold)).foregroundStyle(Brand.muted)
+                        }
+                        Text(Format.number(row.exercise.forValue))
+                            .font(.title2.weight(.heavy))
+                            .monospacedDigit()
+                            .foregroundStyle(row.done ? Brand.muted : Brand.ink)
+                    }
+                    .padding(.vertical, 8)
+                    .frame(minHeight: 60)
+                    .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+                .accessibilityElement(children: .ignore)
+                .accessibilityLabel("\(row.exercise.exercise.name), \(Format.number(row.exercise.forValue)) reps\(row.done ? ", done" : "")")
+                .accessibilityHint("How to do it")
+                .accessibilityIdentifier("round-row-\(n)")
+                if n < rows.count - 1 { Divider().overlay(Brand.line) }
+            }
+        }
+        .padding(.horizontal, 14)
+        .padding(.vertical, 4)
+        .background(.white, in: RoundedRectangle(cornerRadius: 24, style: .continuous))
+        // White card on the dark timer: its ink has to be the light-appearance ink.
+        .environment(\.colorScheme, .light)
+        .accessibilityElement(children: .contain)
+        .accessibilityIdentifier("round-card")
     }
 
     /// "+ One more set of Hip thrust": the block just finished, while nothing after it is done yet.
@@ -368,6 +442,8 @@ struct TimerView: View {
             countdown(size: clock)
             if isRest {
                 restCard
+            } else if let rows = runner.roundCard {
+                roundCardView(rows, demo: demo >= 72 ? 48 : 40)
             } else if let ex = runner.slot?.exercise {
                 exerciseCard(ex, eyebrow: runner.stepPosition.map { "Exercise \($0.index) of \($0.count)" }, adjustable: true, demo: demo)
             }
@@ -448,7 +524,7 @@ struct TimerView: View {
                     } else if Runner.minuteOnly(runner.slot) {
                         // EMOM reps: the minute running out. Done logs the set; left alone, the minute
                         // logs it and the next one starts.
-                        Text("Tap Done when you finish the set")
+                        Text(runner.roundCard != nil ? "Tap Round done when you finish the round" : "Tap Done when you finish the set")
                             .font(.subheadline)
                             .foregroundStyle(Brand.Night.muted)
                     }
@@ -460,7 +536,7 @@ struct TimerView: View {
                     .foregroundStyle(Brand.Night.text)
                     .minimumScaleFactor(0.6)
                     .lineLimit(1)
-                Text(runner.straightSetStep == nil ? "Tap Done when you finish the set" : "Tick the set when you finish it")
+                Text(runner.straightSetStep != nil ? "Tick the set when you finish it" : runner.roundCard != nil ? "Tap Round done when you finish the round" : "Tap Done when you finish the set")
                     .font(.subheadline).foregroundStyle(Brand.Night.muted)
             }
         }
@@ -1184,7 +1260,7 @@ struct TimerView: View {
                 if countdown {
                     pauseButton.buttonStyle(BigButtonStyle(tint: accent))
                 } else {
-                    Button(setDone) { runner.done() }
+                    Button(setDone) { if runner.roundCard != nil { runner.roundDone() } else { runner.done() } }
                         .buttonStyle(BigButtonStyle(tint: accent))
                         .accessibilityIdentifier("Done")
                 }
@@ -1201,6 +1277,7 @@ struct TimerView: View {
     /// "Set 2 of 4 done". An amrap has no last round to count towards; a one-off step is just Done.
     private var setDone: String {
         guard let s = runner.slot, s.kind == .work, s.mode == .amrap || s.rounds > 1 else { return "Done" }
+        if runner.roundCard != nil { return "Round \(s.round + 1) done" }
         return s.mode == .amrap ? "Set \(s.round + 1) done" : "Set \(s.round + 1) of \(s.rounds) done"
     }
 

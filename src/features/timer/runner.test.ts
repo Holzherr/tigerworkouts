@@ -1146,3 +1146,89 @@ describe('what a step logs', () => {
     expect(R.setAmount(s, 9, 'calories')).toBe(s);
   });
 });
+
+// review D17: an AMRAP's or EMOM's round of plain rep work is ticked whole.
+describe('a round ticked whole', () => {
+  const thenPress = (): Runsheet => ({ ...cindy(), items: [...cindy().items, { kind: 'block', id: 'p', name: 'P', repeat: 1, steps: [press()] }] });
+  it('Cindy: one tap does every exercise of the round, and the round is timed and scored', () => {
+    let s = tick(start(cindy(), 0), 5000);
+    expect(R.roundSlots(s)).toEqual([0, 1]);
+    s = R.advanceRound(s, 20000);
+    expect(s.slots[s.i].round).toBe(1);
+    expect(s.slots[s.i].step.id).toBe('a');
+    expect(s.blockDone.b).toBe(2);
+    s = R.advanceRound(s, 45000);
+    s = R.advanceRound(s, 60000);
+    expect(s.slots[s.i].round).toBe(3); // the amrap grew a round
+    s = tick(s, 65000); // the cap
+    expect(s.phase).toBe('done');
+    const r = toResult(s, cindy(), 65000);
+    expect(r.score).toBe(3);
+    expect(r.steps.map(x => x.reps)).toEqual([[5, 5, 5], [10, 10, 10]]);
+    expect(r.splits).toEqual([{ blockId: 'b', at: [20, 45, 60], from: 5, starts: [5, 20, 45] }]);
+  });
+  it('finishes a round begun a tap at a time, and Back reopens only the last exercise', () => {
+    let s = tick(start(cindy(), 0), 5000);
+    s = advance(s, 10000); // pull-ups ticked on their own
+    expect(R.roundSlots(s)).toEqual([0, 1]);
+    s = R.advanceRound(s, 20000);
+    expect(s.blockDone.b).toBe(2);
+    expect(s.slots[s.i].round).toBe(1);
+    s = R.back(s, 21000);
+    expect(s.blockDone.b).toBe(1);
+    s = R.advanceRound(s, 25000);
+    expect(s.blockDone.b).toBe(2);
+    expect(s.slots[s.i].round).toBe(1);
+  });
+  it('a dropped exercise is not in the round', () => {
+    let s = drop(tick(start(cindy(), 0), 5000), 5000, 'a');
+    expect(R.roundSlots(s)).toEqual([0]);
+    for (const t of [10, 20, 30, 40]) s = R.advanceRound(s, t * 1000);
+    s = tick(s, 65000);
+    expect(toResult(s, cindy(), 65000).score).toBe(4);
+  });
+  it('a round with a load, a clock or a rest in it stays step by step', () => {
+    const amrap = (steps: Block['steps']): Runsheet => ({ id: 'l', title: 'L', items: [{ kind: 'block', id: 'b', name: 'L', mode: 'amrap', timeCapSec: 600, repeat: 1, steps }] });
+    const pull = { ...makeExercise(EX.bw_pullup, { forMode: 'reps', forValue: 5 }), id: 'a' };
+    for (const other of [{ ...makeExercise(EX.kb_swing, { forMode: 'reps', forValue: 10, target: 24 }), id: 'k' }, { ...makeExercise(EX.bw_plank, { forMode: 'seconds', forValue: 30 }), id: 'h' }, { ...makeRest(20), id: 'r' }]) {
+      const s = tick(start(amrap([pull, other]), 0), 5000);
+      expect(R.roundSlots(s)).toBeUndefined();
+      expect(R.advanceRound(s, 9000).i).toBe(1); // Done, one step
+    }
+    expect(R.roundSlots(tick(start(interval(), 0), 5000))).toBeUndefined(); // plain rounds are not an AMRAP
+  });
+  it('an EMOM minute of plain reps is one tap, then the wait', () => {
+    const emom: Runsheet = { id: 'e', title: 'E', items: [{ kind: 'block', id: 'b', name: 'E', mode: 'emom', everySec: 60, repeat: 3, steps: [{ ...makeExercise(EX.bw_pullup, { forMode: 'reps', forValue: 5 }), id: 'a' }, { ...makeExercise(EX.bw_pushup, { forMode: 'reps', forValue: 10 }), id: 'c' }] }] };
+    let s = tick(start(emom, 0), 5000);
+    expect(R.roundSlots(s)).toEqual([0, 1]);
+    s = R.advanceRound(s, 30000);
+    expect(s.slots[s.i].untilBoundary).toBe(true);
+    expect(s.endsAt).toBe(65000);
+    s = tick(s, 65000);
+    expect(s.slots[s.i].round).toBe(1);
+    expect(R.roundSlots(s)).toEqual([3, 4]);
+  });
+  it('the reps into the round the cap cut short are asked once, at the gate after it, and scored', () => {
+    let s = tick(start(thenPress(), 0), 5000);
+    expect(R.cappedRound(s)).toBeUndefined();
+    s = R.advanceRound(s, 20000);
+    s = R.advanceRound(s, 40000);
+    s = tick(s, 65000); // capped, parked at the next block's gate
+    expect(s.phase).toBe('ready');
+    expect(R.cappedRound(s)).toEqual({ blockId: 'b', round: 2, reps: 15, extra: 0 });
+    s = R.setExtraReps(s, 'b', 7);
+    expect(R.cappedRound(s)?.extra).toBe(7);
+    expect(toResult(s, thenPress(), 66000).score).toBe(2.007);
+    s = R.startBlock(s, 70000);
+    expect(R.cappedRound(s)).toBeUndefined();
+    expect(toResult(s, thenPress(), 71000).score).toBe(2.007);
+  });
+  it('an AMRAP run a step at a time is not asked: its part round is in its ticks', () => {
+    const loaded: Runsheet = { id: 'l', title: 'L', items: [{ kind: 'block', id: 'b', name: 'L', mode: 'amrap', timeCapSec: 60, repeat: 1, steps: [{ ...makeExercise(EX.kb_swing, { forMode: 'reps', forValue: 10, target: 24 }), id: 'k' }] }, { kind: 'block', id: 'p', name: 'P', repeat: 1, steps: [press()] }] };
+    let s = tick(start(loaded, 0), 5000);
+    s = advance(s, 20000);
+    s = tick(s, 65000);
+    expect(s.phase).toBe('ready');
+    expect(R.cappedRound(s)).toBeUndefined();
+  });
+});

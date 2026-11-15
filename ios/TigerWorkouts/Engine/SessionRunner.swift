@@ -526,6 +526,25 @@ final class SessionRunner {
         apply { Runner.advance($0, now: $1) }
         if let ticked { checkRecord(ticked) }
     }
+    /// The running round, when it is ticked whole: an AMRAP's or EMOM's round of plain rep work
+    /// (`Runner.roundSlots`). Each exercise with whether it is done already.
+    var roundCard: [(slot: Slot, exercise: ExerciseStep, done: Bool)]? {
+        guard state.phase == .running || state.phase == .paused, let idx = Runner.roundSlots(state) else { return nil }
+        return idx.compactMap { j in
+            let sl = state.slots[j]
+            return sl.exercise.map { (sl, $0, state.actuals[sl.id]?.doneAt != nil) }
+        }
+    }
+    /// "Round n done": every exercise left in the round, in one tap.
+    func roundDone() {
+        let before = state
+        apply { Runner.advanceRound($0, now: $1) }
+        for id in Self.newlyDone(before, state) { checkRecord(id) }
+    }
+    /// The AMRAP just left on its cap with its rounds ticked whole: asked for the reps into the
+    /// round the cap cut short, once, at the gate after it.
+    var cappedRound: Runner.CappedRound? { Runner.cappedRound(state) }
+    func setExtraReps(blockId: String, reps: Double) { apply { s, _ in Runner.setExtraReps(s, blockId: blockId, reps: reps) } }
     func skip() {
         keepForUndo("Skipped")
         apply { Runner.advance($0, now: $1, skipped: true) }
@@ -932,7 +951,8 @@ final class SessionRunner {
     /// the block is one exercise done for sets (its sets are on screen), else the next work slot.
     var upNext: (name: String, detail: String)? {
         let from = state.phase == .ready ? state.i : state.i + 1
-        let block = straightSetStep != nil ? slot?.blockId : nil
+        // A straight-set block and a round ticked whole show every exercise already: next is what follows the block.
+        let block = straightSetStep != nil || roundCard != nil ? slot?.blockId : nil
         guard let idx = state.slots.indices.first(where: { $0 >= from && state.slots[$0].kind == .work && (block == nil || state.slots[$0].blockId != block) && state.actuals[state.slots[$0].id]?.doneAt == nil }),
               let ex = state.slots[idx].exercise else { return nil }
         return (ex.exercise.name, Self.setLine(state, idx) ?? ex.forLabel)
@@ -1096,7 +1116,7 @@ extension SessionRunner: SessionControllable {
         if let token, token != SessionRunner.token(state) { return }
         switch control {
         case .done:
-            if state.phase == .ready { startBlock() } else if state.phase == .running || state.phase == .lead { done() }
+            if state.phase == .ready { startBlock() } else if state.phase == .running, roundCard != nil { roundDone() } else if state.phase == .running || state.phase == .lead { done() }
         case .skipRest:
             if state.phase == .running, isRestSlot { skip() }
         case .extendRest:

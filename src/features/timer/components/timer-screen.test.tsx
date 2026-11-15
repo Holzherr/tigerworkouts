@@ -1,4 +1,4 @@
-import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, within } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import { EX } from '@/features/runsheet/fixtures';
 import { makeExercise, type ExerciseStep, type Runsheet } from '@/features/runsheet/model';
@@ -154,4 +154,33 @@ it('the set grid gives a rower logging metres and calories a column each', () =>
   render(<TimerScreen runsheet={r} state={s} now={30000} onDone={noop} onSkip={noop} onBack={noop} onPause={noop} onResume={noop} onAdjust={noop} onSetReps={noop} onDrop={noop} onFinish={noop} onExit={noop} sets={{ ...grid, setAmount: noop }} />);
   expect(screen.getByText('30 sec · 142 m · 9 cal')).toBeTruthy();
   expect([!!screen.getByLabelText('Set 2 metres done'), !!screen.getByLabelText('Set 2 calories done'), screen.queryByLabelText('Set 2 load')]).toEqual([true, true, null]);
+});
+
+// review D17: Cindy shows the whole round on one card with one button, and the clips stay.
+const cindy: Runsheet = { id: 'cy', title: 'Cindy', items: [{ kind: 'block', id: 'b', name: 'Cindy', mode: 'amrap', timeCapSec: 1200, repeat: 1, steps: [{ ...makeExercise({ ...EX.bw_pullup, clip: 'pullup.mp4', poster: 'pullup.jpg' }, { forMode: 'reps', forValue: 5 }), id: 'a' }, { ...makeExercise(EX.bw_pushup, { forMode: 'reps', forValue: 10 }), id: 'c' }, { ...makeExercise(EX.bw_squat, { forMode: 'reps', forValue: 15 }), id: 'd' }] }, { kind: 'block', id: 'n', name: 'After', repeat: 2, steps: [{ ...makeExercise(EX.bw_pushup, { forMode: 'reps', forValue: 10 }), id: 'after' }] }] };
+const cindyAt = (state: R.RunState, extra: Partial<Parameters<typeof TimerScreen>[0]> = {}) =>
+  render(<TimerScreen runsheet={cindy} state={state} now={state.slotStartedAt} onDone={noop} onSkip={noop} onBack={noop} onPause={noop} onResume={noop} onAdjust={noop} onSetReps={noop} onDrop={noop} onFinish={noop} onExit={noop} onRoundDone={noop} onExtraReps={noop} {...extra} />);
+it('an AMRAP round of plain reps is one card with every exercise and its clip, and one Round n done', () => {
+  cleanup();
+  const done = vi.fn();
+  const one = vi.fn();
+  const round2 = R.advanceRound(R.tick(R.start(cindy, 0), 5000), 20000);
+  const { container } = cindyAt(round2, { onRoundDone: done, onDone: one });
+  const card = screen.getByLabelText('Round 2');
+  expect([...card.querySelectorAll('button')].map(b => b.textContent)).toEqual([`${EX.bw_pullup.name}5`, `${EX.bw_pushup.name}10`, `${EX.bw_squat.name}15`]);
+  expect(card.querySelector('video')?.getAttribute('src')).toBe('pullup.mp4');
+  expect(screen.queryByText(/^Set /)).toBeNull();
+  expect(container.textContent).not.toContain('Swipe the card');
+  fireEvent.click(screen.getByRole('button', { name: 'Round 2 done' }));
+  expect([done.mock.calls.length, one.mock.calls.length]).toEqual([1, 0]);
+});
+it('asks the reps into the round the cap cut short once, at the gate after it', () => {
+  cleanup();
+  const extra = vi.fn();
+  const capped = R.tick(R.advanceRound(R.tick(R.start(cindy, 0), 5000), 20000), 5000 + 1200000);
+  expect(capped.phase).toBe('ready');
+  cindyAt(capped, { onExtraReps: extra });
+  expect(screen.getByText('Time. Reps into round 2')).toBeTruthy();
+  fireEvent.click(within(screen.getByRole('group', { name: 'Reps into round 2' })).getByLabelText('Increase'));
+  expect(extra).toHaveBeenCalledWith('b', 1);
 });

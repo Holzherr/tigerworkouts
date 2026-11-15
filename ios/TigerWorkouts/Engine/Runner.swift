@@ -116,6 +116,9 @@ struct RunState: Hashable, Sendable, Codable {
     /// A countdown passed without running, started from its row (see `completeSet`): the slot it
     /// runs in (`at`) and the slot the timer was on, which it goes back to when the countdown is over.
     var detour: Detour?
+    /// Reps into the round an AMRAP's cap cut short, by block id: asked once, at the cap, when its
+    /// rounds were ticked whole (see `Runner.roundSlots`), and added to the score.
+    var extraReps: [String: Double]?
 
     struct Detour: Hashable, Sendable, Codable {
         var at: String
@@ -519,6 +522,80 @@ enum Runner {
             return enter(s, to, now)
         }
         return enter(s, s.i + 1, now)
+    }
+
+    /// Plain rep work: a count of reps and nothing else to set or log — no load, no clock, no metres.
+    private static func plainReps(_ sl: Slot) -> Bool {
+        guard sl.kind == .work, let ex = sl.exercise else { return false }
+        return ex.forMode == .reps && sl.seconds == nil && !ex.hasSetting && ex.incline == nil && ex.extraLogs.isEmpty
+    }
+
+    /// The round slot `i` is in, when it is ticked whole (review D17): an AMRAP's or an EMOM's
+    /// round of plain rep work — Cindy's 5 pull-ups, 10 push-ups, 15 squats — is one card with one
+    /// button, not a tap per exercise. The indices of the round's work slots; nil for any other
+    /// slot, and for a round with a load, timed work or a rest inside it, which stays step by step.
+    static func roundSlots(_ s: RunState, _ i: Int? = nil) -> [Int]? {
+        let i = i ?? s.i
+        guard s.slots.indices.contains(i) else { return nil }
+        let c = s.slots[i]
+        guard c.kind == .work, let block = c.blockId, c.mode == .amrap || c.mode == .emom else { return nil }
+        var out: [Int] = []
+        for (j, sl) in s.slots.enumerated() where sl.blockId == block && sl.round == c.round {
+            if sl.kind == .rest {
+                if sl.untilBoundary || sl.step.id == "\(block):between" { continue }
+                return nil
+            }
+            guard plainReps(sl) else { return nil }
+            out.append(j)
+        }
+        return out
+    }
+
+    /// "Round n done": every exercise left in the running round is done, in one tap. On any other
+    /// slot, Done.
+    static func advanceRound(_ s: RunState, now: Double) -> RunState {
+        guard let c = current(s), s.phase == .running || s.phase == .paused, roundSlots(s) != nil else { return advance(s, now: now) }
+        var st = s
+        repeat {
+            st = advance(st, now: now)
+        } while st.phase == .running && current(st).map { $0.kind == .work && $0.blockId == c.blockId && $0.round == c.round } == true
+        return st
+    }
+
+    /// Work slots a round of the block has now: the exercises still in the session.
+    private static func perRound(_ s: RunState, _ block: String) -> Int {
+        guard let last = s.slots.last(where: { $0.blockId == block && $0.kind == .work }) else { return 0 }
+        return s.slots.filter { $0.blockId == block && $0.kind == .work && $0.round == last.round }.count
+    }
+
+    struct CappedRound: Hashable, Sendable {
+        var blockId: String
+        /// 0-based.
+        var round: Int
+        /// The reps a whole round has.
+        var reps: Double
+        var extra: Double
+    }
+
+    /// The AMRAP just left on its cap, when its rounds were ticked whole: the round the cap cut
+    /// short and the reps a whole round has, for the one question "reps into round n". Asked at the
+    /// gate that follows; at the end of the session the finish screen asks. Nil otherwise.
+    static func cappedRound(_ s: RunState) -> CappedRound? {
+        guard s.phase == .ready, s.i > 0, s.slots.indices.contains(s.i - 1) else { return nil }
+        let prev = s.slots[s.i - 1]
+        guard prev.mode == .amrap, let block = prev.blockId, s.capped?.contains(block) == true,
+              let last = s.slots.lastIndex(where: { $0.blockId == block && $0.kind == .work }),
+              let round = roundSlots(s, last) else { return nil }
+        let per = max(1, perRound(s, block))
+        let reps = round.reduce(0.0) { $0 + (s.slots[$1].exercise?.forValue ?? 0) }
+        return CappedRound(blockId: block, round: (s.blockDone[block] ?? 0) / per, reps: reps, extra: s.extraReps?[block] ?? 0)
+    }
+
+    /// The reps done into the round an AMRAP's cap cut short.
+    static func setExtraReps(_ s: RunState, blockId: String, reps: Double) -> RunState {
+        var s = s
+        s.extraReps = (s.extraReps ?? [:]).merging([blockId: max(0, reps.rounded())]) { _, new in new }
+        return s
     }
 
     /// The work a set's time says something about: a countdown (a plank, a 40 s interval), a max
@@ -1229,8 +1306,9 @@ enum Runner {
                 let per = max(1, inRound.count)
                 let rounds = done / per
                 let extraSlots = done - rounds * per
+                // Rounds ticked whole leave no part round in the slots: the reps into it were asked at the cap.
                 let extraReps = inRound.prefix(extraSlots)
-                    .reduce(0.0) { $0 + ($1.forMode == .reps ? $1.forValue : 0) }
+                    .reduce(0.0) { $0 + ($1.forMode == .reps ? $1.forValue : 0) } + (s.extraReps?[amrap.id] ?? 0)
                 score = Double(rounds) + min(999, extraReps) / 1000
             }
         case .reps:
