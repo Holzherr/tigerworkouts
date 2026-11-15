@@ -8,7 +8,17 @@ import SwiftUI
 @Observable
 final class SessionRunner {
     private(set) var state: RunState
-    private(set) var now: Double = Date().timeIntervalSince1970 * 1000
+    /// The clock at the last tick, exact. Not observed: at ten ticks a second it redrew the whole
+    /// timer ten times a second, paused and locked included. The screen follows `beat`.
+    @ObservationIgnored private(set) var now: Double = Date().timeIntervalSince1970 * 1000
+    /// Moves when a number on the timer would read differently: a second gone from a clock, a
+    /// percent more done. What the clock's readers (`clock`, `elapsed`, …) are observed through, so
+    /// the screen is drawn once a second while it runs and not at all while paused or off screen.
+    private(set) var beat = 0
+    @ObservationIgnored private var shown: [Int] = []
+    /// Whether anyone can see the timer. Off screen (locked, another app) nothing is published;
+    /// the tick still runs, and the cues with it.
+    @ObservationIgnored var onScreen: () -> Bool = { UIApplication.shared.applicationState == .active }
     private(set) var runsheet: Runsheet
     /// The list the workout was tapped in, written on the result so the web's origins breakdown
     /// counts gym sessions too. Only a path that knows it sets it; it rides in the crash-safe copy,
@@ -189,14 +199,37 @@ final class SessionRunner {
 
     var slot: Slot? { Runner.current(state) }
     var nextSlot: Slot? { Runner.next(state) }
-    var clock: Clock { Runner.clock(state, now: now) }
-    var elapsed: Double { Runner.elapsed(state, now: now) }
-    var overall: Double { Runner.overall(state, now: now) }
-    var blockElapsed: Double { Runner.blockElapsed(state, now: now) }
+    var clock: Clock { _ = beat; return Runner.clock(state, now: now) }
+    var elapsed: Double { _ = beat; return Runner.elapsed(state, now: now) }
+    var overall: Double { _ = beat; return Runner.overall(state, now: now) }
+    var blockElapsed: Double { _ = beat; return Runner.blockElapsed(state, now: now) }
     /// Time left on an amrap's or a capped for-time block's clock; nil for an uncapped block.
-    var capLeft: Double? { Runner.capLeft(state, now: now) }
+    var capLeft: Double? { _ = beat; return Runner.capLeft(state, now: now) }
     /// Time left in an EMOM's minute, on its work.
-    var minuteLeft: Double? { Runner.minuteLeft(state, now: now) }
+    var minuteLeft: Double? { _ = beat; return Runner.minuteLeft(state, now: now) }
+
+    /// Every figure the timer shows off the clock, as it is shown: whole seconds (`Format.clock`
+    /// rounds to the nearest), the percent done, and the two points a clock changes colour at.
+    nonisolated static func shownClock(_ s: RunState, now: Double) -> [Int] {
+        let c = Runner.clock(s, now: now)
+        let cap = Runner.capLeft(s, now: now)
+        let minute = Runner.minuteLeft(s, now: now)
+        func whole(_ x: Double?) -> Int { x.map { Int($0.rounded()) } ?? -1 }
+        return [
+            whole(c.left), whole(c.spent), whole(Runner.elapsed(s, now: now)), whole(cap), whole(minute),
+            Int((Runner.overall(s, now: now) * 100).rounded()),
+            (c.left ?? .infinity) <= 3 ? 1 : 0, (cap ?? minute ?? .infinity) <= 10 ? 1 : 0,
+        ]
+    }
+
+    /// Publish the clock if a figure on screen changed, and someone can see it.
+    private func publishClock() {
+        guard onScreen() else { return }
+        let next = Self.shownClock(state, now: now)
+        guard next != shown else { return }
+        shown = next
+        beat &+= 1
+    }
     var isDone: Bool { state.phase == .done }
     var target: Double? { slot.flatMap { Runner.targetOf(state, $0) } }
     var incline: Double? {
@@ -244,6 +277,10 @@ final class SessionRunner {
             center.addObserver(forName: UIApplication.willEnterForegroundNotification, object: nil, queue: .main) { _ in
                 MainActor.assumeIsolated { RestNotice.cancel() }
             },
+            // Back on screen: the clock is drawn at once, not at the next second.
+            center.addObserver(forName: UIApplication.didBecomeActiveNotification, object: nil, queue: .main) { [weak self] _ in
+                MainActor.assumeIsolated { self?.beat &+= 1 }
+            },
         ]
     }
 
@@ -279,7 +316,9 @@ final class SessionRunner {
     func tick(at now: Double) {
         self.now = now
         let before = state
-        state = Runner.tick(state, now: now)
+        // Set only when it moved: an assignment redraws every reader, changed or not.
+        let next = Runner.tick(state, now: now)
+        if next != before { state = next }
         // A tick changes nothing, so two minutes into a set the copy on disk still said "saved
         // when the set began", and a kill there resumed with those minutes gone from the session
         // and from a for-time score. While the clock runs the copy is refreshed every ten seconds.
@@ -293,7 +332,10 @@ final class SessionRunner {
         }
         deliver()
         fireCues()
-        pushActivity()
+        let was = beat
+        publishClock()
+        // The card is built from the run, not the clock: nothing to push on a tick that moved neither.
+        if state != before || beat != was { pushActivity() }
         release()
     }
 
@@ -507,6 +549,8 @@ final class SessionRunner {
         guard !discarded else { return }
         now = Date().timeIntervalSince1970 * 1000
         state = change(state, now)
+        // The change redraws the timer by itself; the next tick has nothing new to publish.
+        shown = Self.shownClock(state, now: now)
         save()
         refreshGhost()
         syncRestNotice()

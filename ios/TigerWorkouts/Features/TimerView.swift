@@ -27,6 +27,8 @@ struct TimerView: View {
     @State private var entry: NumberEntryRequest?
     /// Everything still to come, opened from the Up next line.
     @State private var showRemaining = false
+    /// Last time's sets and settings, worked out once per step, not on every redraw.
+    @State private var memo = HistoryMemo()
 
     private var isRest: Bool { runner.slot?.kind == .rest }
     private var accent: Color { isRest ? Brand.Night.rest : Brand.coral }
@@ -134,6 +136,9 @@ struct TimerView: View {
             }
             controls
         }
+        // The timer follows the phone's text size up to the second accessibility size: past it a
+        // set row and the clock no longer fit a phone.
+        .dynamicTypeSize(...DynamicTypeSize.accessibility2)
     }
 
     /// Where you are: the block, which part of the session, and how far through the whole thing.
@@ -234,7 +239,7 @@ struct TimerView: View {
         VStack(spacing: 18) {
             Text("Get ready").font(.title3.weight(.semibold)).foregroundStyle(Brand.Night.muted)
             Text(Format.clock(runner.clock.left ?? 0))
-                .font(.system(size: 110, weight: .heavy, design: .rounded))
+                .scaledFont(110, weight: .heavy, design: .rounded, relativeTo: .largeTitle, cap: 1.15)
                 .monospacedDigit()
                 .foregroundStyle(Brand.coral)
                 .contentTransition(.numericText(countsDown: true))
@@ -250,7 +255,7 @@ struct TimerView: View {
         VStack(spacing: 18) {
             Text("Next block").font(.title3.weight(.semibold)).foregroundStyle(Brand.Night.muted)
             Text(runner.slot?.blockName ?? "Block")
-                .font(.system(size: 34, weight: .heavy))
+                .scaledFont(34, weight: .heavy, relativeTo: .largeTitle)
                 .multilineTextAlignment(.center)
                 .foregroundStyle(Brand.Night.text)
             if let first = runner.slot?.exercise {
@@ -499,7 +504,7 @@ struct TimerView: View {
         VStack(spacing: 2) {
             if let left = runner.clock.left {
                 let clock = Text(Format.clock(left))
-                    .font(.system(size: size, weight: .heavy, design: .rounded))
+                    .scaledFont(size, weight: .heavy, design: .rounded, relativeTo: .largeTitle, cap: 1.15)
                     .monospacedDigit()
                     .foregroundStyle(left <= 3 ? Brand.coral : (isRest ? Brand.Night.rest : Brand.Night.text))
                     .contentTransition(.numericText(countsDown: true))
@@ -531,7 +536,7 @@ struct TimerView: View {
                 }
             } else {
                 Text(Format.clock(runner.clock.spent))
-                    .font(.system(size: size, weight: .heavy, design: .rounded))
+                    .scaledFont(size, weight: .heavy, design: .rounded, relativeTo: .largeTitle, cap: 1.15)
                     .monospacedDigit()
                     .foregroundStyle(Brand.Night.text)
                     .minimumScaleFactor(0.6)
@@ -547,7 +552,8 @@ struct TimerView: View {
     private func exerciseCard(_ ex: ExerciseStep, eyebrow: String?, adjustable: Bool, demo: CGFloat = 72) -> some View {
         // Parked before a block: every dial of the next machine, each with last time's setting.
         let parked = adjustable && runner.state.phase == .ready && runner.slot?.exercise?.id == ex.id
-        let settings = parked ? TimerView.blockSettings(ex, target: runner.target, incline: runner.incline, results: store.results, in: runner.runsheet) : []
+        let sheet = runner.runsheet
+        let settings = parked ? memo.value("settings|\(ex.id)|\(ex.exercise.key)|\(runner.target ?? -1)|\(runner.incline ?? -1)", store.results) { TimerView.blockSettings(ex, target: runner.target, incline: runner.incline, results: store.results, in: sheet) } : []
         let live = adjustable && runner.slot?.exercise?.id == ex.id
         let hasLoad = adjustable && ex.hasSetting && Measure.of(ex.exercise.unit) == nil
         let hasDials = hasLoad || !settings.isEmpty || (live && (runner.amountField != nil || runner.countsReps))
@@ -555,7 +561,7 @@ struct TimerView: View {
         let open = hasDials && (parked != amountsFlipped)
         // Last time's set for this round (set n against set n), never the heaviest of the session.
         let round = live ? runner.slot?.round ?? 0 : 0
-        let lastSet = LastTime.set(store.results, for: ex, round: round, in: runner.runsheet)
+        let lastSet = memo.value("set|\(ex.id)|\(ex.exercise.key)|\(round)", store.results) { LastTime.set(store.results, for: ex, round: round, in: sheet) }
         let last = lastSet.flatMap { LastTime.compact([$0], unit: ex.shortUnit) }.map { "Last time \($0)" }
         return VStack(alignment: .leading, spacing: 14) {
             Button { editing = ex } label: {
@@ -570,7 +576,7 @@ struct TimerView: View {
                                 .foregroundStyle(Brand.coralInk)
                         }
                         Text(ex.exercise.name)
-                            .font(.system(size: 24, weight: .heavy))
+                            .scaledFont(24, weight: .heavy, relativeTo: .title2)
                             .foregroundStyle(Brand.ink)
                             .lineLimit(2)
                             .minimumScaleFactor(0.7)
@@ -593,7 +599,7 @@ struct TimerView: View {
                     HStack(spacing: 10) {
                         VStack(alignment: .leading, spacing: 2) {
                             Text(amountsLine(ex, live: live, hasLoad: hasLoad, settings: settings))
-                                .font(.system(size: 22, weight: .heavy))
+                                .scaledFont(22, weight: .heavy, relativeTo: .title2)
                                 .monospacedDigit()
                                 .foregroundStyle(Brand.ink)
                                 .lineLimit(1)
@@ -690,7 +696,7 @@ struct TimerView: View {
                     typed(load, title: ex.settingLabel, unit: ex.shortUnit) { runner.setStepTarget(ex.id, $0) } label: {
                         VStack(spacing: 0) {
                             Text(load.map(Format.number) ?? "—")
-                                .font(.system(size: 26, weight: .bold, design: .rounded))
+                                .scaledFont(26, weight: .bold, design: .rounded, relativeTo: .title2)
                                 .monospacedDigit()
                                 .foregroundStyle(Brand.ink)
                             Text(ex.shortUnit).font(.caption2).foregroundStyle(Brand.muted)
@@ -716,7 +722,7 @@ struct TimerView: View {
                     typed(incline.value, title: "Incline", unit: "%") { runner.setStepIncline(ex.id, $0) } label: {
                         VStack(spacing: 0) {
                             Text(incline.value.map(Format.number) ?? "—")
-                                .font(.system(size: 26, weight: .bold, design: .rounded))
+                                .scaledFont(26, weight: .bold, design: .rounded, relativeTo: .title2)
                                 .monospacedDigit()
                                 .foregroundStyle(Brand.ink)
                                 .accessibilityIdentifier("incline-value")
@@ -739,7 +745,7 @@ struct TimerView: View {
                         nudge("minus", label: field == .meters ? "Fewer metres" : "Fewer calories") { runner.nudgeAmount(-$0, field: field) }
                         typed(runner.amount(field), title: field == .meters ? "Metres done" : "Calories done", unit: field == .meters ? "m" : "cal") { runner.setAmount($0, field: field) } label: {
                             Text(runner.amount(field).map(Format.number) ?? "—")
-                                .font(.system(size: 26, weight: .bold, design: .rounded))
+                                .scaledFont(26, weight: .bold, design: .rounded, relativeTo: .title2)
                                 .monospacedDigit()
                                 .foregroundStyle(Brand.ink)
                                 .frame(minWidth: 64)
@@ -760,7 +766,7 @@ struct TimerView: View {
                     nudge("minus", label: "Fewer reps") { runner.nudgeReps(-$0) }
                     typed(runner.reps, title: "Reps done", unit: "reps") { runner.setReps($0.rounded()) } label: {
                         Text(runner.reps.map(Format.number) ?? "—")
-                            .font(.system(size: 26, weight: .bold, design: .rounded))
+                            .scaledFont(26, weight: .bold, design: .rounded, relativeTo: .title2)
                             .monospacedDigit()
                             .foregroundStyle(Brand.ink)
                             .frame(minWidth: 64)
@@ -779,14 +785,15 @@ struct TimerView: View {
     /// tap on a set already logged.
     private func setGrid(_ ex: ExerciseStep) -> some View {
         let rows = runner.setRows
-        let last = LastTime.sets(store.results, for: ex, in: runner.runsheet) ?? []
+        let sheet = runner.runsheet
+        let last = memo.value("sets|\(ex.id)|\(ex.exercise.key)", store.results) { LastTime.sets(store.results, for: ex, in: sheet) ?? [] }
         let incline = Self.setColumns(ex, inclines: rows.map(\.incline)).contains("INCL")
         return VStack(alignment: .leading, spacing: 4) {
             Button { editing = ex } label: {
                 HStack(spacing: 12) {
                     ExerciseDemo(ref: ex.exercise, size: 56)
                     Text(ex.exercise.name)
-                        .font(.system(size: 22, weight: .heavy))
+                        .scaledFont(22, weight: .heavy, relativeTo: .title2)
                         .foregroundStyle(Brand.ink)
                         .lineLimit(2)
                         .minimumScaleFactor(0.7)
@@ -949,7 +956,7 @@ struct TimerView: View {
                             }) { runner.nudgeSetLoad(row.slotId, $0) }
                         } else {
                             HStack(spacing: 2) {
-                                Text(row.load.map(Format.number) ?? "—").font(.system(size: 18, weight: .bold, design: .rounded)).lineLimit(1).minimumScaleFactor(0.6)
+                                Text(row.load.map(Format.number) ?? "—").scaledFont(18, weight: .bold, design: .rounded, relativeTo: .body).lineLimit(1).minimumScaleFactor(0.6)
                                 if Plates.kit(ex.exercise) == .barbell { PlatesButton(load: row.load) }
                             }
                         }
@@ -974,7 +981,7 @@ struct TimerView: View {
                                 if amount { runner.nudgeSetAmount(row.slotId, $0) } else { runner.nudgeSetReps(row.slotId, $0) }
                             }
                         } else {
-                            Text(Format.number((shown * 10).rounded() / 10)).font(.system(size: 18, weight: .bold, design: .rounded)).lineLimit(1).minimumScaleFactor(0.6)
+                            Text(Format.number((shown * 10).rounded() / 10)).scaledFont(18, weight: .bold, design: .rounded, relativeTo: .body).lineLimit(1).minimumScaleFactor(0.6)
                         }
                     }
                     .frame(maxWidth: Self.countWidth(ex, incline: incline))
@@ -994,7 +1001,7 @@ struct TimerView: View {
                                 if extra == .reps { runner.nudgeSetCounted(row.slotId, $0) } else { runner.nudgeSetAmount(row.slotId, $0, field: extra == .meters ? .meters : .calories) }
                             }
                         } else {
-                            Text(Self.loggedShown(row, extra).map(Format.number) ?? "—").font(.system(size: 18, weight: .bold, design: .rounded)).lineLimit(1).minimumScaleFactor(0.6)
+                            Text(Self.loggedShown(row, extra).map(Format.number) ?? "—").scaledFont(18, weight: .bold, design: .rounded, relativeTo: .body).lineLimit(1).minimumScaleFactor(0.6)
                         }
                     }
                     .frame(maxWidth: .infinity)
@@ -1094,7 +1101,7 @@ struct TimerView: View {
 
     private var restCard: some View {
         VStack(spacing: 14) {
-            Text("Rest").font(.system(size: 36, weight: .heavy)).foregroundStyle(Brand.Night.rest)
+            Text("Rest").scaledFont(36, weight: .heavy, relativeTo: .largeTitle).foregroundStyle(Brand.Night.rest)
             if let next = runner.nextSlot?.exercise {
                 HStack(spacing: 14) {
                     ExerciseThumb(ref: next.exercise, size: 64, radius: 16)
@@ -1378,20 +1385,22 @@ struct SetInclineCell: View, Equatable {
     }
 
     var body: some View {
-        HStack(spacing: 0) {
-            if editable { button("minus", "less") { nudge(-$0) } }
-            Text(incline.map(Format.number) ?? "—").font(.system(size: 18, weight: .bold, design: .rounded)).lineLimit(1).minimumScaleFactor(0.5)
+        // The tap targets are 44 pt wide and reach over the number between them: the cell stays
+        // 88 pt, as wide as it was with 30 pt targets.
+        HStack(spacing: editable ? -14 : 0) {
+            if editable { button("minus", "less", edge: .leading) { nudge(-$0) } }
+            Text(incline.map(Format.number) ?? "—").scaledFont(18, weight: .bold, design: .rounded, relativeTo: .body).lineLimit(1).minimumScaleFactor(0.5)
                 .frame(width: 28).accessibilityLabel("Set \(number) incline").accessibilityValue(incline.map(Format.number) ?? "none")
-            if editable { button("plus", "more") { nudge($0) } }
+            if editable { button("plus", "more", edge: .trailing) { nudge($0) } }
         }
     }
 
-    private func button(_ symbol: String, _ word: String, action: @escaping (Double) -> Void) -> some View {
+    private func button(_ symbol: String, _ word: String, edge: Alignment, action: @escaping (Double) -> Void) -> some View {
         RepeatButton(action: action) {
             Image(systemName: symbol).font(.system(size: 14, weight: .bold)).frame(width: 28, height: 38)
                 .background(onTint ? Brand.surface : Brand.coralSoft, in: RoundedRectangle(cornerRadius: 10, style: .continuous))
                 .overlay(RoundedRectangle(cornerRadius: 10, style: .continuous).strokeBorder(onTint ? Brand.brandLine : .clear))
-                .foregroundStyle(Brand.coralInk).frame(width: 30, height: 44).contentShape(Rectangle())
+                .foregroundStyle(Brand.coralInk).frame(width: 44, height: 44, alignment: edge).contentShape(Rectangle())
         }
         .accessibilityLabel("Set \(number) incline, \(word)")
     }
@@ -1430,5 +1439,63 @@ private struct SessionMenu: View, Equatable {
                 .background(Brand.Night.raised, in: Circle())
         }
         .accessibilityLabel("Session menu")
+    }
+}
+
+/// What the timer reads out of the history, kept per step until the history changes. Each lookup
+/// sorts every session; made on every redraw, that was the whole history re-sorted several times a
+/// second for a number that changes when a session is saved.
+@MainActor
+final class HistoryMemo {
+    private var stamp: [String] = []
+    private var kept: [String: Any] = [:]
+    private(set) var made = 0
+
+    /// The history as far as these lookups care: how many sessions, and which is first and last.
+    static func stamp(_ results: [SessionResult]) -> [String] {
+        ["\(results.count)", results.first?.id ?? "", results.last?.id ?? "", results.first?.startedAt ?? "", results.last?.startedAt ?? ""]
+    }
+
+    func value<T>(_ key: String, _ results: [SessionResult], _ make: () -> T) -> T {
+        let now = Self.stamp(results)
+        if now != stamp {
+            stamp = now
+            kept = [:]
+        }
+        if let hit = kept[key] as? Kept<T> { return hit.value }
+        let value = make()
+        made += 1
+        kept[key] = Kept(value: value)
+        return value
+    }
+
+    private struct Kept<T> { let value: T }
+}
+
+extension View {
+    /// A design size in points that follows the phone's text size (Dynamic Type), up to `cap` times
+    /// itself: at the default size it is the design size.
+    func scaledFont(_ size: CGFloat, weight: Font.Weight = .bold, design: Font.Design = .default, relativeTo style: Font.TextStyle = .body, cap: CGFloat = 1.6) -> some View {
+        modifier(ScaledFont(size: size, weight: weight, design: design, style: style, cap: cap))
+    }
+}
+
+private struct ScaledFont: ViewModifier {
+    @ScaledMetric private var scaled: CGFloat
+    private let size: CGFloat
+    private let weight: Font.Weight
+    private let design: Font.Design
+    private let cap: CGFloat
+
+    init(size: CGFloat, weight: Font.Weight, design: Font.Design, style: Font.TextStyle, cap: CGFloat) {
+        _scaled = ScaledMetric(wrappedValue: size, relativeTo: style)
+        self.size = size
+        self.weight = weight
+        self.design = design
+        self.cap = cap
+    }
+
+    func body(content: Content) -> some View {
+        content.font(.system(size: min(scaled, size * cap), weight: weight, design: design))
     }
 }

@@ -666,3 +666,101 @@ struct ResumedSheetTests {
         }
     }
 }
+
+/// review D14: the timer redrew ten times a second and re-sorted the history each time.
+@Suite("the timer is drawn when a number on it changes")
+@MainActor
+struct TimerRedrawTests {
+    static func runner() -> SessionRunner {
+        let runner = SessionRunner(runsheet: Fixtures.interval())
+        runner.onScreen = { true }
+        return runner
+    }
+
+    /// How often a reader of the clock and the run is told to redraw across `ticks`.
+    static func redraws(_ runner: SessionRunner, _ ticks: [Double]) -> Int {
+        var n = 0
+        for at in ticks {
+            var fired = false
+            withObservationTracking {
+                _ = runner.clock
+                _ = runner.elapsed
+                _ = runner.state
+            } onChange: { fired = true }
+            runner.tick(at: at)
+            if fired { n += 1 }
+        }
+        return n
+    }
+
+    @Test("ten ticks inside one second redraw nothing; the next second redraws once")
+    func oncePerSecond() {
+        SessionRunner.$savedName.withValue("test-\(UUID().uuidString).json") {
+            let runner = Self.runner()
+            let t0 = runner.state.startedAt
+            runner.tick(at: t0 + 5_000) // the lead-in is over: 30 s of swings running
+            runner.tick(at: t0 + 6_600)
+            let beat = runner.beat
+            #expect(Self.redraws(runner, (1...7).map { t0 + 6_600 + Double($0) * 100 }) == 0)
+            #expect(runner.beat == beat)
+            // The clock itself is exact at every tick, drawn or not.
+            #expect(runner.now == t0 + 7_300)
+            #expect(abs((runner.clock.left ?? 0) - 27.7) < 0.001)
+            #expect(Self.redraws(runner, [t0 + 7_600]) == 1)
+            #expect(runner.beat == beat + 1)
+            SessionRunner.clearSaved()
+        }
+    }
+
+    @Test("paused, or off screen, the clock redraws nothing")
+    func pausedOrHidden() {
+        SessionRunner.$savedName.withValue("test-\(UUID().uuidString).json") {
+            let runner = Self.runner()
+            let t0 = runner.state.startedAt
+            runner.tick(at: t0 + 5_000)
+            runner.tick(at: t0 + 6_000)
+            var visible = false
+            runner.onScreen = { visible }
+            // Locked: the run still moves on (the swings end at 35 s), the clock is not published.
+            let beat = runner.beat
+            #expect(Self.redraws(runner, [t0 + 7_000, t0 + 8_000, t0 + 9_000]) == 0)
+            #expect(runner.beat == beat)
+            runner.tick(at: t0 + 36_000)
+            #expect(runner.slot?.kind == .rest)
+            visible = true
+            runner.tick(at: t0 + 36_100)
+            #expect(runner.beat == beat + 1)
+            runner.pauseOrResume()
+            #expect(runner.state.phase == .paused)
+            let paused = runner.beat
+            #expect(Self.redraws(runner, (1...30).map { runner.now + Double($0) * 1_000 }) == 0)
+            #expect(runner.beat == paused)
+            SessionRunner.clearSaved()
+        }
+    }
+
+    @Test("what the history says is worked out once per step, and again when the history changes")
+    func historyMemo() {
+        let memo = HistoryMemo()
+        var r = SessionResult(runsheetId: "w", title: "W", startedAt: "2026-09-20T10:00:00Z")
+        r.id = "one"
+        var lookups = 0
+        func last(_ results: [SessionResult]) -> Int {
+            memo.value("sets|sw", results) { lookups += 1; return results.count }
+        }
+        #expect(last([r]) == 1)
+        #expect(last([r]) == 1)
+        #expect(lookups == 1)
+        #expect(memo.value("sets|pr", [r]) { "other" } == "other")
+        var later = r
+        later.id = "two"
+        later.startedAt = "2026-09-27T10:00:00Z"
+        #expect(last([r, later]) == 2)
+        #expect(lookups == 2)
+        // A lookup that found nothing is kept too.
+        let none: Int? = memo.value("none", [r, later]) { lookups += 1; return nil }
+        let again: Int? = memo.value("none", [r, later]) { lookups += 1; return 7 }
+        #expect(none == nil && again == nil)
+        #expect(lookups == 3)
+    }
+}
