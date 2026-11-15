@@ -1,11 +1,21 @@
 import { useEffect } from 'react';
 import { render } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
-import { setState, subscribe, useActions, useAppState } from './store';
+import { getState, setState, subscribe, useActions, useAppState } from './store';
 
 describe('store', () => {
   it('hands out the same actions object every time, so effects can depend on it', () => {
     expect(useActions()).toBe(useActions());
+  });
+
+  it("takes another tab's write, so an older tab cannot write its copy back over it", () => {
+    setState({ name: 'Nick' });
+    const other = { ...JSON.parse(localStorage.getItem('workout-hub-next:v1')!), name: 'From the other tab' };
+    let beats = 0;
+    const stop = subscribe(() => beats++);
+    window.dispatchEvent(new StorageEvent('storage', { key: 'workout-hub-next:v1', newValue: JSON.stringify(other) }));
+    expect([getState().name, beats]).toEqual(['From the other tab', 1]);
+    stop();
   });
 
   it('ignores a write that changes nothing', () => {

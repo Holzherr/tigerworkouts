@@ -35,7 +35,11 @@ export const INTENTS: { id: Intent; label: string; note: string }[] = [
 ];
 
 const num = (n: number) => (Number.isInteger(n) ? `${n}` : `${Math.round(n * 10) / 10}`);
-export const clock = (sec: number) => `${Math.floor(sec / 60)}:${String(Math.round(sec % 60)).padStart(2, '0')}`;
+// Round the whole, not the seconds: 119.6 s is "2:00", never "1:60".
+export const clock = (sec: number) => {
+  const t = Math.round(sec);
+  return `${Math.floor(t / 60)}:${String(t % 60).padStart(2, '0')}`;
+};
 const median = (xs: number[]) => [...xs].sort((a, b) => a - b)[Math.floor((xs.length - 1) / 2)];
 const id = (r: Runsheet) => r.id ?? r.title;
 

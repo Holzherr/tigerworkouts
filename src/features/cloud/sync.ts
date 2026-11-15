@@ -43,12 +43,24 @@ export interface Favorite {
 export type Avatar = { emoji?: string; color?: string; photo?: string };
 
 const SNAP_KEY = 'tiger:synced';
+const PAGE = 1000;
 let snap: Record<string, string> = {};
 try {
   snap = JSON.parse(localStorage.getItem(SNAP_KEY) || '{}') || {};
 } catch {
   /* fresh */
 }
+// Another tab's sync moved the snapshot on: this tab must reason from the same one, or its next
+// sync reads rows that tab pushed as "seen, and gone from here" and deletes them on the server.
+if (typeof window !== 'undefined')
+  window.addEventListener('storage', e => {
+    if (e.key !== SNAP_KEY) return;
+    try {
+      snap = JSON.parse(e.newValue || '{}') || {};
+    } catch {
+      /* keep what we have */
+    }
+  });
 const saveSnap = () => {
   try {
     localStorage.setItem(SNAP_KEY, JSON.stringify(snap));
@@ -137,10 +149,22 @@ export const pullPush = async (local: SyncTarget): Promise<SyncResult> => {
 
   // ── sessions ──
   let results = local.results.map(ensureId);
-  const { data: rows, error: e1 } = await sb.from('sessions').select('id,data').eq('owner', uid);
+  // Paged: the server caps a select (1000 rows by default), and a row missing from the answer is
+  // read below as deleted on the server.
+  const rows: { id: string; data: unknown }[] = [];
+  let e1: { message: string } | null = null;
+  for (let from = 0; ; from += PAGE) {
+    const { data, error } = await sb.from('sessions').select('id,data').eq('owner', uid).order('id').range(from, from + PAGE - 1);
+    if (error) {
+      e1 = error;
+      break;
+    }
+    rows.push(...((data ?? []) as { id: string; data: unknown }[]));
+    if ((data ?? []).length < PAGE) break;
+  }
   if (e1) errors.push(e1.message);
   else {
-    const remote = new Map((rows ?? []).map(r => [r.id as string, fromRow(r as { id: string; data: unknown })]));
+    const remote = new Map(rows.map(r => [r.id, fromRow(r)]));
     const remoteJ = new Map([...remote].map(([id, r]) => [id, J(r)]));
     remote.forEach((r, id) => {
       const i = results.findIndex(x => resultId(x) === id);
@@ -174,8 +198,17 @@ export const pullPush = async (local: SyncTarget): Promise<SyncResult> => {
     const dirty = results.filter(x => J(x) !== snap[resultId(x)]);
     if (dirty.length) {
       const { error } = await sb.from('sessions').upsert(dirty.map(x => toRow(x, uid)), { onConflict: 'id' });
-      if (error) errors.push(error.message);
-      else dirty.forEach(x => (snap[resultId(x)] = J(x)));
+      if (!error) dirty.forEach(x => (snap[resultId(x)] = J(x)));
+      else if (dirty.length === 1) errors.push(error.message);
+      else {
+        // One row the server refuses fails the whole batch. Sent one by one, the rest still land:
+        // a refused import must not keep every later gym session off the account.
+        for (const x of dirty) {
+          const { error: e } = await sb.from('sessions').upsert([toRow(x, uid)], { onConflict: 'id' });
+          if (e) errors.push(e.message);
+          else snap[resultId(x)] = J(x);
+        }
+      }
     }
     const gone = Object.keys(snap).filter(id => id.startsWith('s-') || /@/.test(id)).filter(id => !results.some(x => resultId(x) === id) && !id.startsWith('w:'));
     if (gone.length) {
@@ -293,7 +326,9 @@ export const fetchPublicWorkouts = async (): Promise<Runsheet[]> => {
 
 /** One workout by id, for a `#/w/` link opened cold; null when RLS hides it (private, not yours) or it does not exist. */
 export const fetchWorkout = async (id: string): Promise<Runsheet | null> => {
-  const { data } = await sb.from('workouts').select('id,owner,creator,title,public,data').eq('id', id).maybeSingle();
+  const { data, error } = await sb.from('workouts').select('id,owner,creator,title,public,data').eq('id', id).maybeSingle();
+  // No answer is not "no row": the caller tells "could not load" from "private".
+  if (error && !data) throw new Error(error.message);
   return data ? workoutFromRow(data as WorkoutRow) : null;
 };
 

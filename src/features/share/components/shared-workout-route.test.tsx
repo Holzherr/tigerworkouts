@@ -36,6 +36,17 @@ describe('a #/w/ link to someone’s workout', () => {
     expect(onBack).toHaveBeenCalled();
   });
 
+  it('says it could not load, not "private", when the server gives no answer, and tries again', async () => {
+    fetchWorkout.mockRejectedValueOnce(new Error('Failed to fetch'));
+    const onFound = vi.fn();
+    render(<SharedWorkoutRoute id="u-mine2" signedIn signIn={null} onFound={onFound} onBack={() => {}} />);
+    expect(await screen.findByText('Could not load this workout. Check your connection.')).toBeTruthy();
+    expect(screen.queryByText(/private/)).toBeNull();
+    fetchWorkout.mockResolvedValueOnce(shared);
+    fireEvent.click(screen.getByRole('button', { name: 'Try again' }));
+    await vi.waitFor(() => expect(onFound).toHaveBeenCalledWith(shared));
+  });
+
   it('asks a signed-out visitor to sign in when the row is hidden: it may be their own', async () => {
     fetchWorkout.mockResolvedValueOnce(null);
     openLink('u-mine1');

@@ -242,7 +242,7 @@ export default function App() {
   const overlay = (
     <>
       {picker}
-      {toast && <div className="pointer-events-none fixed inset-x-0 bottom-20 z-50 flex justify-center"><div className="rounded-full bg-ink px-4 py-2 text-[13px] font-semibold text-white shadow-lift">{toast}</div></div>}
+      {toast && <div role="status" className="pointer-events-none fixed inset-x-0 bottom-20 z-50 flex justify-center"><div className="rounded-full bg-ink px-4 py-2 text-[13px] font-semibold text-white shadow-lift">{toast}</div></div>}
     </>
   );
   // phone-first screens sit in a centred 480px column on larger screens

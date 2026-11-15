@@ -4,19 +4,27 @@ import { Button } from '@/shared/components/ui/button';
 /**
  * Registers the service worker under a per-build URL (?v=<build>), so a CDN-cached sw.js can
  * never hide a deploy, and reloads onto the new build as soon as it takes control. During a
- * workout it shows a bar instead of reloading under the user.
+ * workout, or on a screen with unsaved work, it shows a bar instead of reloading under the user.
  */
+/** Screens holding work that lives only in the page: a session, a workout being written, a
+ * follow-along video, an unsaved result. A reload there loses it, so the bar asks instead. */
+const HOLD = ['#/do/', '#/new', '#/follow/', '#/result'];
+
 export const UpdatePrompt = () => {
   const [ready, setReady] = useState(false);
   useEffect(() => {
     if (!('serviceWorker' in navigator) || location.hostname === 'localhost') return;
     const base = import.meta.env.BASE_URL;
     navigator.serviceWorker.register(`${base}sw.js?v=${__BUILD__}`, { scope: base, updateViaCache: 'none' }).catch(() => {});
+    // No worker before this one: it is a first visit taking control, not an update, and a reload
+    // there only flashed the landing page and fetched the bundle twice.
+    const first = !navigator.serviceWorker.controller;
     let refreshing = false;
     const onChange = () => {
       if (refreshing) return;
       refreshing = true;
-      if (location.hash.startsWith('#/do/')) setReady(true);
+      if (first) return;
+      if (HOLD.some(h => location.hash.startsWith(h))) setReady(true);
       else location.reload();
     };
     navigator.serviceWorker.addEventListener('controllerchange', onChange);

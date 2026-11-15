@@ -33,6 +33,9 @@
         }
         function heal() {
           if (healed) return show();
+          // With no signal the caches are the only copy of the app there is: clearing them
+          // cannot fetch a fresh one, it only deletes the one that works offline.
+          if (navigator.onLine === false) return show();
           healed = true;
           clear(function () { location.replace(location.origin + location.pathname + '?r=' + Date.now()); });
         }

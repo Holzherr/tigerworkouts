@@ -56,7 +56,7 @@ export const ExercisePicker = ({ open, onOpenChange, library, onPick, onCreate, 
   };
   return (
     <Sheet open={open} onOpenChange={onOpenChange} title={title} height="88dvh">
-      <input type="search" value={q} onChange={e => setQ(e.target.value)} placeholder="Search 300+ exercises…" autoFocus autoComplete="off" className="h-11 w-full rounded-control border border-line bg-canvas px-3 text-[16px] outline-none focus:border-hint" />
+      <input type="search" value={q} onChange={e => setQ(e.target.value)} placeholder={`Search ${Object.keys(library).length} exercises…`} aria-label="Search exercises" autoFocus autoComplete="off" className="h-11 w-full rounded-control border border-line bg-canvas px-3 text-[16px] outline-none focus:border-hint" />
       {creating ? (
         <form
           className="mt-3 space-y-2 rounded-card border border-line bg-canvas p-3"

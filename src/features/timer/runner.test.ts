@@ -103,6 +103,17 @@ describe('run', () => {
     const res = toResult(s, cindy(), 70000);
     expect(res.score).toBeCloseTo(2.005, 3);
   });
+  it('an amrap with an exercise dropped at the start scores rounds of what is left', () => {
+    // Pull-ups dropped: a round is the push-ups alone, so four Dones are four rounds, not 2 + reps.
+    let s = drop(tick(start(cindy(), 0), 5000), 5000, 'a');
+    let t = 5000;
+    for (let k = 0; k < 4; k++) {
+      t += 10000;
+      s = advance(s, t);
+    }
+    s = tick(s, 5000 + 61000);
+    expect(toResult(s, cindy(), 70000).score).toBe(4);
+  });
   it('toResult carries adjusted targets', () => {
     let s = tick(start(interval(), 0), 5000);
     s = adjust(s, 6000, 32);

@@ -898,10 +898,13 @@ export const toResult = (s: RunState, r: Runsheet, now: number): SessionResult =
     const amrap = r.items.find((i): i is Block => i.kind === 'block' && i.mode === 'amrap');
     if (amrap) {
       const done = s.blockDone[amrap.id] ?? 0;
-      const per = amrap.steps.filter(x => x.kind === 'exercise').length || 1;
+      // A round is the exercises still in the session: one dropped at the start is not in any
+      // round, and counting it made four rounds of the other two read as "2 rounds + 15 reps".
+      const inRound = amrap.steps.filter(x => x.kind === 'exercise' && !s.dropped.includes(x.id));
+      const per = inRound.length || 1;
       const rounds = Math.floor(done / per);
       const extraSlots = done - rounds * per;
-      const extraReps = amrap.steps.filter(x => x.kind === 'exercise').slice(0, extraSlots).reduce((t, x) => t + (x.kind === 'exercise' && x.forMode === 'reps' ? x.forValue : 0), 0);
+      const extraReps = inRound.slice(0, extraSlots).reduce((t, x) => t + (x.kind === 'exercise' && x.forMode === 'reps' ? x.forValue : 0), 0);
       score = rounds + Math.min(999, extraReps) / 1000;
     }
   } else if (type === 'reps') score = [...steps.values()].reduce((t, x) => t + (x.reps?.reduce((a, b) => a + b, 0) ?? 0), 0);

@@ -29,6 +29,23 @@ export default defineConfig({
       },
     }),
   ],
+  // One chunk meant every deploy (each push to main) made a phone fetch all 480 kB again. The
+  // catalogue and the libraries change far less often than the app, so they keep their hash and
+  // stay cached across deploys.
+  build: {
+    rolldownOptions: {
+      output: {
+        codeSplitting: {
+          groups: [
+            { name: 'catalogue', test: /[\\/]imports[\\/].*\.json$/ },
+            { name: 'vendor-react', test: /[\\/]node_modules[\\/](react|react-dom|scheduler)[\\/]/ },
+            { name: 'vendor-supabase', test: /[\\/]node_modules[\\/]@supabase[\\/]/ },
+            { name: 'vendor-ui', test: /[\\/]node_modules[\\/](@radix-ui|@floating-ui|@dnd-kit|react-remove-scroll[^\\/]*|aria-hidden|tslib)[\\/]/ },
+          ],
+        },
+      },
+    },
+  },
   resolve: { alias: { '@': path.resolve(import.meta.dirname, 'src') } },
   test: { environment: 'jsdom', globals: true, setupFiles: ['./src/test/setup.ts'], include: ['src/**/*.test.@(ts|tsx)'] },
 });

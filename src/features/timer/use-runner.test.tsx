@@ -57,3 +57,38 @@ describe('with the screen off and on again', () => {
     expect(resume).toHaveBeenCalledTimes(2);
   });
 });
+
+describe('the kept run while the clock runs', () => {
+  const savedAt = () => JSON.parse(localStorage.getItem('tiger:run')!).savedAt as number;
+  afterEach(() => vi.useRealTimers());
+
+  it('is refreshed every few seconds, so a reload mid-set loses seconds, not the whole set', () => {
+    vi.useFakeTimers();
+    const { result } = renderHook(() => useRunner(sheet));
+    act(() => void vi.advanceTimersByTime(6000));
+    expect(result.current.state.phase).toBe('running');
+    const before = savedAt();
+    act(() => void vi.advanceTimersByTime(120_000));
+    expect(savedAt() - before).toBeGreaterThan(110_000);
+  });
+
+  it('is written when the page is hidden', () => {
+    vi.useFakeTimers();
+    renderHook(() => useRunner(sheet));
+    act(() => void vi.advanceTimersByTime(6000));
+    const before = savedAt();
+    act(() => void vi.advanceTimersByTime(2000));
+    act(() => setHidden(true));
+    expect(savedAt() - before).toBeGreaterThanOrEqual(2000);
+  });
+
+  it('stays put while paused, so the six-hour rule still counts from the pause', () => {
+    vi.useFakeTimers();
+    const { result } = renderHook(() => useRunner(sheet));
+    act(() => void vi.advanceTimersByTime(6000));
+    act(() => result.current.act.pause());
+    const before = savedAt();
+    act(() => void vi.advanceTimersByTime(60_000));
+    expect(savedAt()).toBe(before);
+  });
+});

@@ -85,6 +85,19 @@ export const setState = (patch: Partial<AppState> | ((s: AppState) => Partial<Ap
   emit();
 };
 
+// Another tab wrote the store. Each tab holds the whole state and writes all of it, so without
+// this a tab opened earlier wrote its older copy back over a session logged in the other one.
+if (typeof window !== 'undefined')
+  window.addEventListener('storage', e => {
+    if (e.key !== KEY || !e.newValue) return;
+    try {
+      state = { ...EMPTY, ...JSON.parse(e.newValue) };
+      emit();
+    } catch {
+      /* keep what we have */
+    }
+  });
+
 export const subscribe = (cb: () => void) => {
   listeners.add(cb);
   return () => void listeners.delete(cb);
@@ -105,7 +118,17 @@ const setPrefs = (patch: Partial<AppState>) =>
   });
 
 /** Everything on this device forgotten: after a sign-out, or an account deleted with "clear this device". */
-export const clearDevice = () => setState({ ...EMPTY, migratedLegacy: true, prefsUpdatedAt: {}, bodyweightKg: undefined, bodyweightAsked: undefined, equipment: undefined, avatar: undefined, lastSync: undefined, syncError: undefined });
+export const clearDevice = () => {
+  // The kept run, its origin and the open result sheet are the last person's too: left behind,
+  // the next account on this browser was offered "Save what I did" for their session.
+  try {
+    for (const k of ['tiger:run', 'tiger:run-from', 'tiger:pending']) localStorage.removeItem(k);
+  } catch {
+    /* ignore */
+  }
+  clearState();
+};
+const clearState = () => setState({ ...EMPTY, migratedLegacy: true, prefsUpdatedAt: {}, bodyweightKg: undefined, bodyweightAsked: undefined, equipment: undefined, avatar: undefined, lastSync: undefined, syncError: undefined });
 
 const ACTIONS = {
   saveWorkout: (r: Runsheet) => setState(s => ({ workouts: [r, ...s.workouts.filter(w => w.id !== r.id)] })),

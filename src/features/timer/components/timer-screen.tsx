@@ -1,5 +1,5 @@
 import { Check, ChevronLeft, ChevronRight, ChevronsRight, List, Medal, MoreHorizontal, Pause, Play, Shuffle, SkipForward, Square, Volume2, VolumeX, X } from 'lucide-react';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Button } from '@/shared/components/ui/button';
 import { ClipThumb } from '@/shared/components/ui/clip-thumb';
 import { Sheet } from '@/shared/components/ui/sheet';
@@ -314,7 +314,11 @@ export const TimerScreen = ({ runsheet, state, now, onDone, onSkip, onBack, onPa
   // The exercise Swap acts on: the one on the card, else the straight-set block's during its rest.
   const swapStep = stepOf?.kind === 'exercise' ? stepOf : straight;
   const swapTarget = swapStep ? (stepOf?.kind === 'exercise' ? target : R.plannedTarget(state, swapStep.id)) : undefined;
-  const options = swapStep && onSwap && alternativesFor && !done ? alternativesFor(swapStep, swapTarget) : [];
+  // Once per exercise, not per tick: the call filters and sorts the whole library, and at five
+  // renders a second it was most of what the timer did while a set was running.
+  const swappable = !!(swapStep && onSwap && alternativesFor && !done);
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- alternativesFor is a fresh arrow each render
+  const options = useMemo(() => (swappable && swapStep && alternativesFor ? alternativesFor(swapStep, swapTarget) : []), [swappable, swapStep?.id, swapStep?.exercise.key, swapTarget]);
   const restAdjustable = !!onAdjustRest && isRest && timed && !slot?.untilBoundary && (state.phase === 'running' || paused);
   const last = slot && stepOf?.kind === 'exercise' && !done && !lead ? lastFor?.(stepOf) : undefined;
   const lastLabel = last && stepOf?.kind === 'exercise' ? lastTimeLabel(last, stepOf) : undefined;
@@ -413,14 +417,14 @@ export const TimerScreen = ({ runsheet, state, now, onDone, onSkip, onBack, onPa
             )}
             {/* An adjustable rest has −15s/+15s beside it instead of "0:02 of 1:30", as in the mockup. */}
             {!lead && !done && timed && slot?.seconds && !restAdjustable ? (
-              <div className="pb-3 text-center text-[13px] tabular-nums text-white/50">
+              <div className="pb-3 text-center text-[13px] tabular-nums text-white/60">
                 {fmtClock(clock.spent)} of {fmtClock(slot.seconds)}
               </div>
             ) : (
               <div className="pb-1" />
             )}
             {lead && <div className="-mt-2 pb-3 text-center text-[13px] text-white/60">Get ready</div>}
-            {lead && <div className="-mt-1 pb-3 text-center text-[12px] text-white/40">The web timer needs the screen on.</div>}
+            {lead && <div className="-mt-1 pb-3 text-center text-[12px] text-white/60">The web timer needs the screen on.</div>}
             {!timed && !lead && !done && slot && <div className="-mt-2 pb-3 text-center text-[13px] text-white/60">{isRest ? 'Rest' : straight ? 'Tick the set when you finish it' : 'Tap Done when finished'}</div>}
             {emomWork && !done && <div className="-mt-2 pb-3 text-center text-[13px] text-white/60">Tap Done when finished</div>}
             {minuteLeft !== undefined && !lead && !done && (
@@ -513,9 +517,9 @@ export const TimerScreen = ({ runsheet, state, now, onDone, onSkip, onBack, onPa
 
             {nxt && !done && (
               <button type="button" onClick={() => setPeek(nxt.part)} className="mt-3 flex min-h-11 w-full items-center gap-2.5 px-1.5 text-left text-[16px]">
-                <span className={cn('shrink-0 text-[13px] font-semibold tracking-wider uppercase', nextIsNewPart ? 'text-brand' : 'text-white/50')}>{nextIsNewPart ? 'Next block' : 'Next'}</span>
+                <span className={cn('shrink-0 text-[13px] font-semibold tracking-wider uppercase', nextIsNewPart ? 'text-brand' : 'text-white/60')}>{nextIsNewPart ? 'Next block' : 'Next'}</span>
                 <span className="min-w-0 flex-1 truncate">{nextIsNewPart ? partTitle(partOf(nxt.part)) : nxt.step.kind === 'exercise' ? nxt.step.exercise.name : 'Rest'}</span>
-                <span className="shrink-0 text-white/50 tabular-nums">{nxt.step.kind === 'exercise' ? forLabel(nxt.step) : fmtClock(nxt.seconds ?? 0)}</span>
+                <span className="shrink-0 text-white/60 tabular-nums">{nxt.step.kind === 'exercise' ? forLabel(nxt.step) : fmtClock(nxt.seconds ?? 0)}</span>
               </button>
             )}
             {done && (
@@ -524,7 +528,7 @@ export const TimerScreen = ({ runsheet, state, now, onDone, onSkip, onBack, onPa
                 <div className="mt-1 text-[13px] text-white/70">{fmtClock(total)}</div>
               </div>
             )}
-            {!isRest && !done && !lead && !straight && <div className="pt-2 text-center text-[11px] text-white/40">Swipe the card left to drop this exercise for tonight</div>}
+            {!isRest && !done && !lead && !straight && <div className="pt-2 text-center text-[11px] text-white/60">Swipe the card left to drop this exercise for tonight</div>}
           </>
         )}
       </div>

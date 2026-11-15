@@ -16,11 +16,15 @@ export const useCloudSync = () => {
   const { user, ready } = useAuth();
   const st = useAppState();
   const busy = useRef(false);
+  const again = useRef(false);
   const timer = useRef<ReturnType<typeof setTimeout>>(undefined);
   const lastLocal = useRef('');
 
   const run = async () => {
-    if (!user || busy.current) return;
+    if (!user) return;
+    // Asked for while one is out: run once more when it ends, or a change made meanwhile waits
+    // for the next edit or foreground.
+    if (busy.current) return void (again.current = true);
     busy.current = true;
     try {
       const local = target(getState());
@@ -32,6 +36,10 @@ export const useCloudSync = () => {
       lastLocal.current = JSON.stringify(target({ ...local, ...out.patch }));
     } finally {
       busy.current = false;
+    }
+    if (again.current) {
+      again.current = false;
+      if (JSON.stringify(target(getState())) !== lastLocal.current) void runRef.current();
     }
   };
   const runRef = useRef(run);
