@@ -7,13 +7,14 @@ import { runsheetMinutes, type Runsheet } from '@/features/runsheet/model';
 import type { SessionResult } from '@/features/runsheet/progression';
 import { adaptedLine, findCreators, isAdapted } from '@/features/creators/credited';
 import { recommend } from '../recommend';
+import { catalogueList, uniqueById, type DiscoverFilter } from '../catalogue';
 import { contentsLine, lastDoneById, lastDoneOf, mineLine, mineList, newBadge, upNextFirst, whyLine } from '../mine';
 import { pickUpNext, upNextBadge, usualLine } from '../next-up';
 
 export type DiscoverTab = 'mine' | 'discover';
 /** The list a workout was tapped in, recorded on the session it starts. */
 export type DiscoverOrigin = 'saved' | 'recommended' | 'search' | 'coach' | 'up_next';
-export type DiscoverFilter = 'all' | 'coach' | 'benchmark' | 'program' | 'video' | 'article' | 'protocol';
+export type { DiscoverFilter };
 
 const TABS: { id: DiscoverTab; label: string }[] = [
   { id: 'mine', label: 'Mine' },
@@ -119,12 +120,14 @@ const Row = ({ runsheet: r, meta, coach, badge, why, contents, upNext, upNextLab
  * Discover: kind chips, the For you picks under their reasons while no chip is on, then the
  * catalogue (programs collapsed to one row each). A search lists matches from everything.
  */
-export const DiscoverScreen = ({ workouts, results = [], savedIds = [], ownIds = [], fromCoach = [], onOpen, onStart, onOpenProgram, onCreate, initialTab = 'mine', initialFilter = 'all', title = 'Workouts', above, onOpenCreator }: DiscoverScreenProps) => {
+export const DiscoverScreen = ({ workouts: given, results = [], savedIds = [], ownIds = [], fromCoach = [], onOpen, onStart, onOpenProgram, onCreate, initialTab = 'mine', initialFilter = 'all', title = 'Workouts', above, onOpenCreator }: DiscoverScreenProps) => {
   const [tab, setTab] = useState<DiscoverTab>(initialTab);
   const [q, setQ] = useState('');
   const [filter, setFilter] = useState<DiscoverFilter>(initialFilter);
   const [limit, setLimit] = useState(60);
   const searching = !!q.trim();
+  // An id met twice (a public copy of one already here) is one workout: one row, one key.
+  const workouts = useMemo(() => uniqueById(given), [given]);
 
   const recs = useMemo(() => recommend(workouts, results, savedIds), [workouts, results, savedIds]);
   const last = useMemo(() => lastDoneById(results), [results]);
@@ -139,25 +142,7 @@ export const DiscoverScreen = ({ workouts, results = [], savedIds = [], ownIds =
   const ordered = upNextFirst(mine, r => wid(r) === upNext);
   const lead = ordered.length > 0 && wid(ordered[0]) === upNext ? 1 : 0;
 
-  const { programs, singles } = useMemo(() => {
-    const ql = q.trim().toLowerCase();
-    const match = (r: Runsheet) => {
-      if (!ql && filter !== 'all' && (r.source?.kind ?? 'user') !== filter) return false;
-      if (!ql) return true;
-      const hay = `${r.title} ${r.creator ?? ''} ${r.source?.author ?? ''} ${r.source?.handle ? `@${r.source.handle}` : ''} ${r.program?.name ?? ''} ${(r.tags ?? []).join(' ')} ${r.description ?? ''}`.toLowerCase();
-      return hay.includes(ql);
-    };
-    const programs = new Map<string, Runsheet[]>();
-    const singles: Runsheet[] = [];
-    for (const r of workouts) {
-      // A copy is a version of something in the catalogue, not new content: the catalogue lists the original.
-      if (r.copyOf || !match(r)) continue;
-      if (r.program && !ql) (programs.get(r.program.name) ?? programs.set(r.program.name, []).get(r.program.name)!).push(r);
-      else singles.push(r);
-    }
-    for (const list of programs.values()) list.sort((a, b) => (a.program?.order ?? 0) - (b.program?.order ?? 0));
-    return { programs, singles };
-  }, [workouts, q, filter]);
+  const { programs, singles } = useMemo(() => catalogueList(workouts, q, filter), [workouts, q, filter]);
 
   /** A Mine card; the Up next card, played or opened, records `up_next`, so its starts read apart from the rest. */
   const mineRow = (r: Runsheet) => {

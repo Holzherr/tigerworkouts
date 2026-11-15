@@ -16,6 +16,16 @@ describe('mineList', () => {
     const list = mineList([fresh, old, done, w('fran'), w('cindy'), w('helen')], ['u-fresh', 'u-old', 'u-done'], ['fran', 'cindy', 'u-old'], [did('fran', 10), did('cindy', 16), did('u-done', 12)]);
     expect(list.map(r => r.id)).toEqual(['u-fresh', 'u-old', 'cindy', 'u-done', 'fran']);
   });
+  it('lists any workout with a session, saved or not, and leaves the never-done catalogue out', () => {
+    const list = mineList([w('u-mine', { createdAt: '2026-09-01T09:00:00Z' }), w('fran'), w('cindy'), w('helen')], ['u-mine'], [], [did('fran', 10), did('fran', 12), did('cindy', 16), did('gone', 17)]);
+    expect(list.map(r => r.id)).toEqual(['u-mine', 'cindy', 'fran']);
+    // Eligible for Up next like the rest: the one done longest ago.
+    expect(upNextOf(list.slice(1), [], lastDoneById([did('fran', 12), did('cindy', 16)]))).toBe('fran');
+  });
+  it('lists your copy, not the original, when the sessions were of the original', () => {
+    const list = mineList([w('u-fran', { copyOf: 'fran' }), w('fran')], ['u-fran'], [], [did('fran', 10)]);
+    expect(list.map(r => r.id)).toEqual(['u-fran']);
+  });
   it('shows a copy in place of its original and leaves out what the coach sent', () => {
     const list = mineList([w('u-fran', { copyOf: 'fran' }), w('fran'), w('cindy')], ['u-fran'], ['fran', 'cindy'], [], ['cindy']);
     expect(list.map(r => r.id)).toEqual(['u-fran']);

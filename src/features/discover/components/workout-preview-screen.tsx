@@ -83,6 +83,8 @@ export interface WorkoutPreviewScreenProps {
    * the grip that reorders blocks always shows (Nick, 1 Nov 2026). Formerly: until Edit, with
    * Add block and Add a one-off exercise under them, until Done (Nick, 18 Oct 2026). Every change
    * comes here, and saves as it is made. */
+  /** A block opened for editing was closed with its Done: the host settles what changed. */
+  onBlockDone?: () => void;
   /** Opens with this block open for editing (stories, screenshots). */
   initialEditing?: string;
   editor?: Omit<RunsheetListProps, 'items' | 'onChange' | 'expandedId' | 'onExpandedChange' | 'onRemoved'> & { onChange: (r: Runsheet) => void };
@@ -128,7 +130,7 @@ const SCORE_TEXT: Record<string, string> = { time: 'For time', rounds: 'AMRAP: r
  * Edit & start, Follow along for videos, Save. Tapping any exercise opens it — the clip, the cue,
  * and its numbers as steppers when the host can save them.
  */
-export const WorkoutPreviewScreen = ({ runsheet: r, history = [], lastTime, onBack, onStart, onEditAndStart, onFollowAlong, onLogOnly, onSave, saved, onShare, onStepChange, onCreator, onTogglePublic, appHref, onExerciseHistory, hasHistory, today, stall, onDismissStall, onDelete, editor: given, initialEditing, onChangeOnce, variant, versions = [], onRunVersion, onMakeBase, mergeTargets, onMergeInto }: WorkoutPreviewScreenProps) => {
+export const WorkoutPreviewScreen = ({ runsheet: r, history = [], lastTime, onBack, onStart, onEditAndStart, onFollowAlong, onLogOnly, onSave, saved, onShare, onStepChange, onCreator, onTogglePublic, appHref, onExerciseHistory, hasHistory, today, stall, onDismissStall, onDelete, editor: given, initialEditing, onBlockDone, onChangeOnce, variant, versions = [], onRunVersion, onMakeBase, mergeTargets, onMergeInto }: WorkoutPreviewScreenProps) => {
   const [open, setOpen] = useState<ExerciseStep | null>(null);
   const [merging, setMerging] = useState(false);
   // Asked once per visit: a change for this session only, or for the workout.
@@ -269,7 +271,7 @@ export const WorkoutPreviewScreen = ({ runsheet: r, history = [], lastTime, onBa
           if (it.kind === 'ref') return null;
           const role = it.role && it.role !== 'main' ? ROLE_LABEL[it.role] : null;
           if (it.kind === 'block') {
-            if (editor && it === focused) return <EditableBlock key={it.id} runsheet={r} block={it} editor={editor} sheetOpen={blockSheet} onSheet={setBlockSheet} onDone={() => setFocus(undefined)} onReorder={() => setReordering(true)} />;
+            if (editor && it === focused) return <EditableBlock key={it.id} runsheet={r} block={it} editor={editor} sheetOpen={blockSheet} onSheet={setBlockSheet} onDone={() => (setFocus(undefined), onBlockDone?.())} onReorder={() => setReordering(true)} />;
             const straight = straightSetStep(it);
             return (
               <section key={it.id} className="rounded-card border border-line bg-surface">
