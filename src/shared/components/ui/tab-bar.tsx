@@ -26,7 +26,7 @@ export const TabBar = <T extends string>({ items, active, onSelect, className }:
         type="button"
         onClick={() => onSelect(t.id)}
         aria-current={t.id === active ? 'page' : undefined}
-        className={cn('flex h-14 flex-col items-center justify-center gap-0.5 text-[11px] font-semibold [&_svg]:size-6', t.id === active ? 'text-brand' : 'text-muted')}
+        className={cn('flex h-14 flex-col items-center justify-center gap-0.5 text-[11px] font-semibold [&_svg]:size-6', t.id === active ? 'text-brand-ink' : 'text-muted')}
       >
         {t.icon}
         {t.label}

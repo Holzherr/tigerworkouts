@@ -14,7 +14,7 @@ export const VersionsCard = ({ versions, onRun, onMakeBase }: { versions: Versio
   versions.length ? (
     <section aria-label="Your versions" className="rounded-card border border-line bg-surface">
       <div className="flex items-center gap-2 px-3 pt-2.5 pb-1">
-        <GitBranch className="size-4 text-brand" />
+        <GitBranch className="size-4 text-brand-ink" />
         <div className="flex-1 text-[14px] font-bold">Your versions</div>
         <span className="text-[12px] text-muted">only you see these</span>
       </div>

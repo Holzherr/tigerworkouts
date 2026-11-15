@@ -85,7 +85,7 @@ export const LandingScreen = ({ onGetStarted, onBrowse, onSignIn, onCoaches, wor
             <h1 className="mt-5 text-[34px] leading-[1.02] font-black tracking-[-0.02em] text-ink sm:text-[46px] lg:text-[64px]">
               Every workout you’ve heard of.
               <br />
-              <span className="text-brand">Edited for tonight in seconds.</span>
+              <span className="text-brand-ink">Edited for tonight in seconds.</span>
             </h1>
             <p className="mt-5 max-w-[46ch] text-[16px] leading-relaxed text-body lg:text-[18px]">One app for the workouts trainers share, the benchmarks everyone knows and the plan you actually have time for, with a demo on every step and a log that does the maths.</p>
             <div className="mt-7 flex flex-wrap gap-2">
@@ -155,7 +155,7 @@ export const LandingScreen = ({ onGetStarted, onBrowse, onSignIn, onCoaches, wor
         <div className="mt-2 grid gap-3 sm:grid-cols-2 lg:mt-6 lg:grid-cols-3 lg:gap-5">
           {POINTS.map(p => (
             <div key={p.title} className="flex gap-3 rounded-card border border-line bg-surface p-4 lg:flex-col lg:gap-4 lg:p-6">
-              <div className="grid size-10 shrink-0 place-items-center rounded-control bg-brand-soft text-brand [&_svg]:size-5 lg:size-12 lg:[&_svg]:size-6">{p.icon}</div>
+              <div className="grid size-10 shrink-0 place-items-center rounded-control bg-brand-soft text-brand-ink [&_svg]:size-5 lg:size-12 lg:[&_svg]:size-6">{p.icon}</div>
               <div className="min-w-0">
                 <div className="text-[15px] font-bold lg:text-[18px]">{p.title}</div>
                 <div className="mt-1 text-[13px] leading-relaxed text-body lg:text-[15px]">{p.body}</div>
@@ -171,7 +171,7 @@ export const LandingScreen = ({ onGetStarted, onBrowse, onSignIn, onCoaches, wor
           <ol className="mt-3 grid gap-3 lg:mt-8 lg:grid-cols-4 lg:gap-8">
             {STEPS.map(([verb, rest], i) => (
               <li key={verb} className="flex gap-3 lg:block">
-                <span className="text-[14px] font-black text-brand lg:text-[40px] lg:leading-none">{i + 1}.</span>
+                <span className="text-[14px] font-black text-brand-ink lg:text-[40px] lg:leading-none">{i + 1}.</span>
                 <span className="text-[14px] lg:mt-3 lg:block lg:text-[18px]">
                   <b>{verb}</b> {rest}
                 </span>
@@ -203,7 +203,7 @@ export const LandingScreen = ({ onGetStarted, onBrowse, onSignIn, onCoaches, wor
         <div className="mx-auto flex max-w-6xl flex-col items-start gap-2 px-5 py-6 text-[12px] text-muted sm:flex-row sm:items-center sm:justify-between lg:px-8">
           <Logo size="sm" />
           {onCoaches && (
-            <button type="button" onClick={onCoaches} className="min-h-11 font-bold text-brand">
+            <button type="button" onClick={onCoaches} className="min-h-11 font-bold text-brand-ink">
               For coaches and PTs
             </button>
           )}

@@ -59,7 +59,7 @@ export const CreatorPageCard = ({ publicCount, onOpenPage, onCoach }: CreatorPag
       </div>
       {onCoach && (
         <button type="button" onClick={onCoach} className="block min-h-11 w-full border-t border-line-soft pt-2 text-left text-[13px] text-muted">
-          Train people one to one? <span className="font-bold text-brand">Coach clients</span>: send a workout to one person and see what they did.
+          Train people one to one? <span className="font-bold text-brand-ink">Coach clients</span>: send a workout to one person and see what they did.
         </button>
       )}
     </div>

@@ -105,7 +105,7 @@ export const ExercisePicker = ({ open, onOpenChange, library, onPick, onCreate, 
           ))}
           {q.trim() && onCreate && (
             <button type="button" onClick={() => setCreating({ name: q.trim(), unit: 'kg', group: 'body' })} className="mt-3 flex w-full items-center gap-3 rounded-card border border-dashed border-hint px-3 py-3 text-left text-[15px] text-body">
-              <Plus className="size-5 text-brand" /> Add “{q.trim()}” as a new exercise
+              <Plus className="size-5 text-brand-ink" /> Add “{q.trim()}” as a new exercise
             </button>
           )}
           {total === 0 && !q.trim() && <div className="py-6 text-center text-[13px] text-muted">No exercises.</div>}

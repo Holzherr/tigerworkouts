@@ -51,7 +51,7 @@ export const CoachesPage = ({ onBack, onStart, shots }: CoachesPageProps) => (
       </div>
 
       <section className="mx-auto max-w-5xl px-5 pt-8 pb-6">
-        <div className="text-[12px] font-bold tracking-widest text-brand uppercase">For coaches</div>
+        <div className="text-[12px] font-bold tracking-widest text-brand-ink uppercase">For coaches</div>
         <h1 className="mt-2 text-[30px] leading-[1.1] font-black lg:text-[44px]">Send clients a workout. See what they did.</h1>
         <p className="mt-3 max-w-[60ch] text-[15px] text-body lg:text-[17px]">You build the session, your client runs it with a guided timer and every set is logged. You see their sets next to what you set, and leave a note. Free.</p>
         <div className="mt-5 flex flex-wrap gap-2">
@@ -70,7 +70,7 @@ export const CoachesPage = ({ onBack, onStart, shots }: CoachesPageProps) => (
           {COACH_STEPS.map((s, i) => (
             <li key={s.title} className="rounded-card border border-line bg-surface p-4">
               <div className="flex items-center gap-2">
-                <span className="grid size-9 place-items-center rounded-control bg-brand-soft text-brand [&_svg]:size-5">{s.icon}</span>
+                <span className="grid size-9 place-items-center rounded-control bg-brand-soft text-brand-ink [&_svg]:size-5">{s.icon}</span>
                 <span className="text-[15px] font-bold">
                   {i + 1}. {s.title}
                 </span>
@@ -104,7 +104,7 @@ export const CoachesPage = ({ onBack, onStart, shots }: CoachesPageProps) => (
           <ol className="mt-3 grid gap-3 lg:grid-cols-3">
             {CLIENT_STEPS.map(([verb, rest], i) => (
               <li key={verb} className="flex gap-3 text-[15px]">
-                <span className="font-black text-brand">{i + 1}.</span>
+                <span className="font-black text-brand-ink">{i + 1}.</span>
                 <span>
                   <b>{verb}</b> {rest}
                 </span>

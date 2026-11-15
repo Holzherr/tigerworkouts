@@ -32,7 +32,7 @@ const EditableBlock = ({ runsheet: r, block, editor: { onChange, ...list }, shee
   return (
     <section className="rounded-card ring-2 ring-brand">
       <div className="flex justify-end px-1 pt-1">
-        <Button variant="quiet" size="inline" className="font-extrabold text-brand" onClick={onDone} data-testid="block-done">
+        <Button variant="quiet" size="inline" className="font-extrabold text-brand-ink" onClick={onDone} data-testid="block-done">
           Done
         </Button>
       </div>
@@ -182,14 +182,14 @@ export const WorkoutPreviewScreen = ({ runsheet: r, history = [], lastTime, onBa
           <div className="mt-1 flex flex-wrap items-center gap-x-1 text-[13px] text-muted">
             <span>Adapted from</span>
             {onCreator ? (
-              <button type="button" onClick={onCreator} className="font-semibold text-brand">
+              <button type="button" onClick={onCreator} className="font-semibold text-brand-ink">
                 {creditName(r)}
               </button>
             ) : (
               <span>{creditName(r)}</span>
             )}
             {r.source?.url && (
-              <a href={r.source.url} target="_blank" rel="noreferrer" className="inline-flex items-center gap-0.5 text-brand">
+              <a href={r.source.url} target="_blank" rel="noreferrer" className="inline-flex items-center gap-0.5 text-brand-ink">
                 · original post <ExternalLink className="size-3" />
               </a>
             )}
@@ -199,7 +199,7 @@ export const WorkoutPreviewScreen = ({ runsheet: r, history = [], lastTime, onBa
           <span>{(kind === 'user' && r.ownerId ? 'Creator' : KIND_LABEL[kind])}</span>
           {(r.source?.author ?? r.creator) &&
             (onCreator ? (
-              <button type="button" onClick={onCreator} className="font-semibold text-brand">
+              <button type="button" onClick={onCreator} className="font-semibold text-brand-ink">
                 · {r.source?.author ?? r.creator}
               </button>
             ) : (
@@ -211,7 +211,7 @@ export const WorkoutPreviewScreen = ({ runsheet: r, history = [], lastTime, onBa
             </span>
           )}
           {r.source?.url && (
-            <a href={r.source.url} target="_blank" rel="noreferrer" className="inline-flex items-center gap-0.5 text-brand">
+            <a href={r.source.url} target="_blank" rel="noreferrer" className="inline-flex items-center gap-0.5 text-brand-ink">
               · source <ExternalLink className="size-3" />
             </a>
           )}
@@ -229,7 +229,7 @@ export const WorkoutPreviewScreen = ({ runsheet: r, history = [], lastTime, onBa
           )}
         </div>
         {appHref && (
-          <a href={appHref} className="mt-2 inline-flex items-center gap-1.5 text-[13px] font-bold text-brand">
+          <a href={appHref} className="mt-2 inline-flex items-center gap-1.5 text-[13px] font-bold text-brand-ink">
             <Smartphone className="size-4" /> Open in the app
           </a>
         )}
@@ -412,7 +412,7 @@ export const WorkoutPreviewScreen = ({ runsheet: r, history = [], lastTime, onBa
           )}
         </div>
         {onLogOnly && (
-          <button type="button" onClick={onLogOnly} className="mt-1 min-h-11 w-full text-center text-[13px] font-bold text-brand">
+          <button type="button" onClick={onLogOnly} className="mt-1 min-h-11 w-full text-center text-[13px] font-bold text-brand-ink">
             Did it already? Log a result
           </button>
         )}

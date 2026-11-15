@@ -101,7 +101,7 @@ export const ClientDetailScreen = ({ client, me, workouts, assignments, sessions
                   <button key={w.id} type="button" role="radio" aria-checked={pick === w.id} onClick={() => setPick(w.id ?? null)} className={cn('flex w-full items-center gap-2.5 rounded-tile border px-2 py-1.5 text-left', pick === w.id ? 'border-brand-line bg-brand-soft' : 'border-transparent active:bg-line-soft')}>
                     <WorkoutIcon runsheet={w} size={36} />
                     <span className="min-w-0 flex-1 truncate text-[14px] font-semibold">{w.title}</span>
-                    {pick === w.id && <Check className="size-4 text-brand" />}
+                    {pick === w.id && <Check className="size-4 text-brand-ink" />}
                   </button>
                 ))}
               </div>

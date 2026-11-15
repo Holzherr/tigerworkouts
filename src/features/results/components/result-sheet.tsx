@@ -181,7 +181,7 @@ export const ResultSheet = ({ runsheet, history = [], allResults = history, trai
         )}
         {previous?.notes && !notes && (
           <button type="button" onClick={() => setNotes(previous.notes ?? '')} className="mb-1 block w-full rounded-card bg-canvas px-3 py-2 text-left text-[12px] text-muted">
-            <span className="font-bold text-ink">Last time:</span> {previous.notes} <span className="text-brand">· tap to reuse</span>
+            <span className="font-bold text-ink">Last time:</span> {previous.notes} <span className="text-brand-ink">· tap to reuse</span>
           </button>
         )}
         <textarea value={notes} onChange={e => setNotes(e.target.value)} placeholder="Notes (how it felt, what to change)" rows={2} className="w-full rounded-card border border-line bg-surface px-3 py-2 text-[16px] outline-none focus:border-hint" />

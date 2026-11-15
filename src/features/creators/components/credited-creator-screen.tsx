@@ -42,12 +42,12 @@ export const CreditedCreatorScreen = ({ creator, loading, onBack, onOpen, onShar
         ) : (
           <>
             <div className="mt-2 flex items-center gap-3">
-              <div className="grid size-16 shrink-0 place-items-center rounded-full bg-brand-soft text-[22px] font-extrabold text-brand">{initials}</div>
+              <div className="grid size-16 shrink-0 place-items-center rounded-full bg-brand-soft text-[22px] font-extrabold text-brand-ink">{initials}</div>
               <div className="min-w-0">
                 <h1 className="truncate text-[22px] leading-tight font-extrabold">{creator.name}</h1>
                 {creator.handle &&
                   (creator.profileUrl ? (
-                    <a href={creator.profileUrl} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-[13px] font-semibold text-brand">
+                    <a href={creator.profileUrl} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-[13px] font-semibold text-brand-ink">
                       @{creator.handle} on {PLATFORM_LABEL[creator.platform ?? 'other'] ?? 'their profile'} <ExternalLink className="size-3" />
                     </a>
                   ) : (

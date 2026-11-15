@@ -96,7 +96,7 @@ export const SessionDetailScreen = ({ result: r, runsheet, exercise, loadDevice,
         <SessionStats result={r} worked={workedFrom(r, runsheet, k => ({ name: exercise(k).name, group: LIB[k]?.group }))} history={history} bodyweightKg={bodyweightKg} />
         {device && device.length > 0 && (
           <div className="flex items-center gap-2 rounded-card border border-line bg-surface px-3 py-2 text-[13px]">
-            <HeartPulse className="size-4 text-brand" />
+            <HeartPulse className="size-4 text-brand-ink" />
             <span className="text-body">
               {device[0].name ?? 'Watch'}: {device[0].avg ? `avg ${device[0].avg}` : ''}
               {device[0].max ? ` · max ${device[0].max}` : ''}

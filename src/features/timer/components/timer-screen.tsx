@@ -428,7 +428,7 @@ export const TimerScreen = ({ runsheet, state, now, onDone, onSkip, onBack, onPa
             {!timed && !lead && !done && slot && <div className="-mt-2 pb-3 text-center text-[13px] text-white/60">{isRest ? 'Rest' : straight ? 'Tick the set when you finish it' : 'Tap Done when finished'}</div>}
             {emomWork && !done && <div className="-mt-2 pb-3 text-center text-[13px] text-white/60">Tap Done when finished</div>}
             {minuteLeft !== undefined && !lead && !done && (
-              <div className={cn('mx-auto mb-3 w-fit rounded-full bg-white/10 px-3 py-1 text-[13px] font-bold tabular-nums', minuteLeft <= 10 && 'text-brand')} aria-label={`Time left in the ${slot?.everySec && slot.everySec !== 60 ? 'interval' : 'minute'}`}>
+              <div className={cn('mx-auto mb-3 w-fit rounded-full bg-white/10 px-3 py-1 text-[13px] font-bold tabular-nums', minuteLeft <= 10 && (isRest ? 'text-brand-line' : 'text-brand'))} aria-label={`Time left in the ${slot?.everySec && slot.everySec !== 60 ? 'interval' : 'minute'}`}>
                 {fmtClock(minuteLeft)} left in the {slot?.everySec && slot.everySec !== 60 ? 'interval' : 'minute'}
               </div>
             )}
@@ -517,7 +517,7 @@ export const TimerScreen = ({ runsheet, state, now, onDone, onSkip, onBack, onPa
 
             {nxt && !done && (
               <button type="button" onClick={() => setPeek(nxt.part)} className="mt-3 flex min-h-11 w-full items-center gap-2.5 px-1.5 text-left text-[16px]">
-                <span className={cn('shrink-0 text-[13px] font-semibold tracking-wider uppercase', nextIsNewPart ? 'text-brand' : 'text-white/60')}>{nextIsNewPart ? 'Next block' : 'Next'}</span>
+                <span className={cn('shrink-0 text-[13px] font-semibold tracking-wider uppercase', nextIsNewPart ? (isRest ? 'text-brand-line' : 'text-brand') : 'text-white/60')}>{nextIsNewPart ? 'Next block' : 'Next'}</span>
                 <span className="min-w-0 flex-1 truncate">{nextIsNewPart ? partTitle(partOf(nxt.part)) : nxt.step.kind === 'exercise' ? nxt.step.exercise.name : 'Rest'}</span>
                 <span className="shrink-0 text-white/60 tabular-nums">{nxt.step.kind === 'exercise' ? forLabel(nxt.step) : fmtClock(nxt.seconds ?? 0)}</span>
               </button>
@@ -650,7 +650,7 @@ export const TimerScreen = ({ runsheet, state, now, onDone, onSkip, onBack, onPa
                     </div>
                     <div className="text-[12px] text-muted">{it.kind === 'block' ? roundsLabel(it as Block) : ''}</div>
                   </div>
-                  <span className={cn('shrink-0 text-[11px] font-bold tracking-widest uppercase', status === 'now' ? 'text-brand' : status === 'done' ? 'text-muted' : 'text-faint')}>{status === 'now' ? 'Now' : status === 'done' ? 'Done' : ''}</span>
+                  <span className={cn('shrink-0 text-[11px] font-bold tracking-widest uppercase', status === 'now' ? 'text-brand-ink' : status === 'done' ? 'text-muted' : 'text-faint')}>{status === 'now' ? 'Now' : status === 'done' ? 'Done' : ''}</span>
                 </div>
                 <div className="mt-1.5 space-y-1">
                   {stepsOf(it).map(es => (

@@ -45,7 +45,7 @@ export const AiCoachCard = ({ coach, onRename, onActive }: AiCoachCardProps) => 
   return (
     <section aria-label="AI coach" className="space-y-2 rounded-card border border-line bg-surface p-3">
       <div className="flex items-start gap-2">
-        <span className="grid size-8 shrink-0 place-items-center rounded-control bg-brand-soft text-brand [&_svg]:size-4">
+        <span className="grid size-8 shrink-0 place-items-center rounded-control bg-brand-soft text-brand-ink [&_svg]:size-4">
           <Sparkles />
         </span>
         <div className="min-w-0">

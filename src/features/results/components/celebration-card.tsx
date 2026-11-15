@@ -46,7 +46,7 @@ export const CelebrationCard = ({ celebration: c, scoreType, exercise, blockName
             const ex = exercise(p.exerciseKey);
             return (
               <div key={p.exerciseKey} className="mt-1.5 flex items-center gap-2 text-[14px]">
-                <Medal className="size-4 shrink-0 text-brand" />
+                <Medal className="size-4 shrink-0 text-brand-ink" />
                 <span className="min-w-0 flex-1 truncate font-semibold">{ex.name}</span>
                 <span className="font-extrabold tabular-nums">{setLabel(p.set, ex.unit?.replace(' per arm', ''))}</span>
               </div>
@@ -54,7 +54,7 @@ export const CelebrationCard = ({ celebration: c, scoreType, exercise, blockName
           })}
           {rounds.map(r => (
             <div key={r.blockId} className="mt-1.5 flex items-center gap-2 text-[14px]">
-              <Medal className="size-4 shrink-0 text-brand" />
+              <Medal className="size-4 shrink-0 text-brand-ink" />
               <span className="min-w-0 flex-1 truncate font-semibold">Fastest round{blockName?.(r.blockId) ? ` · ${blockName(r.blockId)}` : ''}</span>
               <span className="font-extrabold tabular-nums">
                 {fmtDur(r.seconds)} <span className="text-[12px] font-semibold text-muted">was {fmtDur(r.was)}</span>
@@ -70,7 +70,7 @@ export const CelebrationCard = ({ celebration: c, scoreType, exercise, blockName
             <div key={d.label} className="mt-1.5 flex items-center gap-2 text-[14px]">
               <span className="w-16 shrink-0 text-muted">{d.label}</span>
               <span className={cn('flex-1 tabular-nums', d.better ? 'font-bold' : d.better === false ? 'text-body' : '')}>{d.text}</span>
-              {d.better !== undefined && (d.better ? <ArrowUp className="size-4 text-brand" aria-label="better" /> : <ArrowDown className="size-4 text-faint" aria-label="worse" />)}
+              {d.better !== undefined && (d.better ? <ArrowUp className="size-4 text-brand-ink" aria-label="better" /> : <ArrowDown className="size-4 text-faint" aria-label="worse" />)}
             </div>
           ))}
         </div>
