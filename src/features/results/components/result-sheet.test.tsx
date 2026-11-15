@@ -8,7 +8,7 @@ import { ResultSheet } from './result-sheet';
 const save = (startedFrom?: SessionOrigin): SessionResult => {
   const onSave = vi.fn();
   render(<ResultSheet runsheet={priyanka()} startedFrom={startedFrom} onSave={onSave} />);
-  fireEvent.click(screen.getByText('Save result'));
+  fireEvent.click(screen.getByRole('button', { name: /^(Save result|Done)$/ }));
   return onSave.mock.calls[0][0];
 };
 
@@ -32,7 +32,7 @@ describe('ResultSheet keeps what the timer logged', () => {
       ],
     };
     render(<ResultSheet runsheet={priyanka()} initial={initial} onSave={onSave} />);
-    fireEvent.click(screen.getByText('Save result'));
+    fireEvent.click(screen.getByRole('button', { name: 'Done' }));
     const saved: SessionResult = onSave.mock.calls[0][0];
     expect(saved.id).toBe('s-abc-run');
     expect(saved.steps.find(x => x.stepId === 's1' && x.exerciseKey === 'kb_swing')?.sets).toEqual([{ load: 28 }, { load: 32 }]);
@@ -54,7 +54,7 @@ describe('ResultSheet celebration and effort', () => {
     const onSave = vi.fn();
     render(<ResultSheet runsheet={priyanka()} initial={initial} onSave={onSave} />);
     fireEvent.click(screen.getByLabelText('Effort 7'));
-    fireEvent.click(screen.getByText('Save result'));
+    fireEvent.click(screen.getByRole('button', { name: /^(Save result|Done)$/ }));
     expect(onSave.mock.calls[0][0].rpe).toBe(7);
   });
 
@@ -63,7 +63,7 @@ describe('ResultSheet celebration and effort', () => {
     render(<ResultSheet runsheet={priyanka()} initial={initial} onSave={onSave} />);
     fireEvent.click(screen.getByLabelText('Effort 7'));
     fireEvent.click(screen.getByLabelText('Effort 7'));
-    fireEvent.click(screen.getByText('Save result'));
+    fireEvent.click(screen.getByRole('button', { name: /^(Save result|Done)$/ }));
     expect(onSave.mock.calls[0][0].rpe).toBeUndefined();
   });
 });
@@ -82,7 +82,7 @@ describe('ResultSheet made it / missed', () => {
     const onSave = vi.fn();
     render(<ResultSheet runsheet={r} onSave={onSave} />);
     expect(screen.getAllByText('Made it')).toHaveLength(1);
-    fireEvent.click(screen.getByText('Save result'));
+    fireEvent.click(screen.getByRole('button', { name: /^(Save result|Done)$/ }));
     const saved: SessionResult = onSave.mock.calls[0][0];
     expect(saved.steps.find(x => x.stepId === 'sq')?.success).toBe(true);
     expect(saved.steps.find(x => x.stepId === 'row')?.success).toBeUndefined();
@@ -104,7 +104,7 @@ describe('ResultSheet logs only what was done', () => {
     const onSave = vi.fn();
     render(<ResultSheet runsheet={priyanka()} initial={initial} onSave={onSave} />);
     expect(screen.queryByText('Incline chest press')).toBeNull();
-    fireEvent.click(screen.getByText('Save result'));
+    fireEvent.click(screen.getByRole('button', { name: /^(Save result|Done)$/ }));
     const saved: SessionResult = onSave.mock.calls[0][0];
     expect(saved.steps.map(x => x.stepId)).toEqual(['s1']);
   });
@@ -127,7 +127,7 @@ describe('ResultSheet load and round times', () => {
     const initial: SessionResult = { id: 's-l', runsheetId: 'p', startedAt: '2026-09-27T10:00:00Z', steps: [{ stepId: 's1', exerciseKey: 'kb_swing', target: 28, success: true, sets: [{ load: 28 }, { load: 28 }] }] };
     render(<ResultSheet runsheet={priyanka()} initial={initial} onSave={onSave} />);
     fireEvent.click(within(screen.getAllByRole('group', { name: 'Load used' })[0]).getByLabelText('Increase'));
-    fireEvent.click(screen.getByText('Save result'));
+    fireEvent.click(screen.getByRole('button', { name: 'Done' }));
     const row = onSave.mock.calls[0][0].steps.find((x: { stepId: string }) => x.stepId === 's1');
     expect(row.sets.map((x: { load: number }) => x.load)).toEqual([32, 32]);
     expect(row.target).toBe(32);
@@ -138,7 +138,7 @@ describe('ResultSheet load and round times', () => {
     const initial: SessionResult = { id: 's-m', runsheetId: 'm', startedAt: '2026-09-27T10:00:00Z', steps: [{ stepId: 'row', exerciseKey: EX.row_erg.key, sets: [{ meters: 1000, seconds: 240 }] }, { stepId: 'hold', exerciseKey: EX.bw_plank.key, sets: [{ seconds: 60 }] }] };
     render(<ResultSheet runsheet={sheet} initial={initial} onSave={onSave} />);
     expect(screen.queryByRole('group', { name: 'Load used' })).toBeNull();
-    fireEvent.click(screen.getByText('Save result'));
+    fireEvent.click(screen.getByRole('button', { name: 'Done' }));
     const saved: SessionResult = onSave.mock.calls[0][0];
     expect(saved.steps.map(x => x.sets)).toEqual([[{ meters: 1000, seconds: 240 }], [{ seconds: 60 }]]);
   });
@@ -157,5 +157,25 @@ describe('ResultSheet load and round times', () => {
     const initial: SessionResult = { id: 's-r', runsheetId: 'p', startedAt: '2026-09-27T10:00:00Z', steps: [], splits: [{ blockId: 'b1', at: [100, 190], from: 5 }] };
     render(<ResultSheet runsheet={priyanka()} initial={initial} onSave={vi.fn()} />);
     expect(screen.queryByLabelText('Round times')).toBeNull();
+  });
+});
+
+describe('ResultSheet after a timed session', () => {
+  const logged: SessionResult = { id: 's-run', runsheetId: 'p', startedAt: '2026-11-15T10:00:00Z', durationSec: 6, steps: [{ stepId: 's1', exerciseKey: 'kb_swing', target: 28, sets: [{ load: 28, reps: 10 }] }] };
+  it('says the workout is saved and closes with Done, not Log result and Save result', () => {
+    const onSave = vi.fn();
+    render(<ResultSheet runsheet={priyanka()} initial={logged} onSave={onSave} />);
+    expect(screen.getByText('Workout saved')).toBeTruthy();
+    expect([screen.queryByText('Log result'), screen.queryByText('Save result')]).toEqual([null, null]);
+    fireEvent.click(screen.getByRole('button', { name: 'Done' }));
+    expect(onSave.mock.calls[0][0].id).toBe('s-run');
+  });
+  it('shows the time worked, capped at the session, and calls kg moved Volume', () => {
+    render(<ResultSheet runsheet={priyanka()} initial={logged} onSave={() => {}} />);
+    const tile = (label: string) => screen.getByText(label).parentElement!.parentElement!;
+    expect(within(tile('Work')).getByText('0:06')).toBeTruthy();
+    expect(within(tile('Volume')).getByText('280 kg moved')).toBeTruthy();
+    // "Effort" is the 1–10 question only.
+    expect(screen.queryByText('Effort')).toBeNull();
   });
 });

@@ -42,8 +42,25 @@ describe('effort', () => {
     expect(e.estimatedWeight).toBe(false);
   });
 
+  it('never shows more work than the session ran: a 6-second session is 0:06, not three sets of 45 s', () => {
+    const sets = [1, 2, 3].map(() => ({ group: 'barbell' as const, seconds: 45, reps: 5, load: 20 }));
+    const short = effort({ ...res('2026-09-15T17:00:00Z'), durationSec: 6 }, sets, 80);
+    const long = effort({ ...res('2026-09-15T17:00:00Z'), durationSec: 900 }, sets, 80);
+    expect([short.workSec, long.workSec]).toEqual([6, 135]);
+    expect(short.kcal).toBeLessThan(long.kcal);
+    expect(short.reps).toBe(15);
+  });
+
   it('says when bodyweight was a guess', () => {
     expect(effort(res('2026-09-15T17:00:00Z'), [{ group: 'walk', seconds: 600, reps: 0 }]).estimatedWeight).toBe(true);
+  });
+});
+
+describe('workedFrom', () => {
+  it('uses the time kept for a set over the plan\'s', () => {
+    const sheet = { title: 'T', items: [{ kind: 'exercise' as const, id: 'e1', exercise: { key: 'plank', name: 'Plank', unit: '', step: 1 }, forMode: 'seconds' as const, forValue: 60 }] };
+    const w = workedFrom({ ...res('2026-09-15T17:00:00Z'), steps: [{ stepId: 'e1', exerciseKey: 'plank', sets: [{ seconds: 20 }, {}] }] }, sheet, k => ({ name: k }));
+    expect(w.map(x => x.seconds)).toEqual([20, 60]);
   });
 });
 
