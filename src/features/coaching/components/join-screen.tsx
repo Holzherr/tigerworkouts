@@ -42,15 +42,25 @@ export const JoinScreen = ({ info, notice, signedIn, signIn, onAccept, onContinu
       </div>
       <div className="space-y-3 px-4 py-5">
         {notice ? (
-          <div className="rounded-card border border-line bg-surface px-3 py-3 text-[14px] text-muted">{notice}</div>
+          <>
+            <div className="rounded-card border border-line bg-surface px-3 py-3 text-[14px] text-muted">{notice}</div>
+            <Button block variant="ghost" onClick={onContinue}>
+              Go to TigerWorkouts
+            </Button>
+          </>
         ) : info === undefined ? (
           <div className="text-[14px] text-muted">Loading…</div>
         ) : info === null ? (
-          <div className="rounded-card border border-line bg-surface px-3 py-3 text-[14px] text-muted">That invite link does not work. Ask your coach for a new one.</div>
+          <>
+            <div className="rounded-card border border-line bg-surface px-3 py-3 text-[14px] text-muted">That invite link does not work. Ask your coach for a new one.</div>
+            <Button block variant="ghost" onClick={onContinue}>
+              Go to TigerWorkouts
+            </Button>
+          </>
         ) : done ? (
           <div className="space-y-3 rounded-card border border-line bg-surface p-4">
             <h1 className="text-[20px] leading-tight font-extrabold">You’re training with {info.name}</h1>
-            <p className="text-[14px] text-body">Workouts they send you show at the top of Discover, under From your coach.</p>
+            <p className="text-[14px] text-body">Workouts they send you show first in Mine, marked New · made for you.</p>
             <Button block onClick={onContinue}>
               See my workouts
             </Button>

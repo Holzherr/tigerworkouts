@@ -32,7 +32,7 @@ import { SharedWorkoutRoute } from '@/features/share/components/shared-workout-r
 import { LogImportScreen } from '@/features/results/components/log-import-screen';
 import { ImportCsvSheet } from '@/features/results/components/import-csv-sheet';
 import { exportFileName, toCsv } from '@/features/results/csv';
-import { decodeLogged, decodeShared, shareLink, shareUrl } from '@/features/share/share';
+import { decodeLogged, decodeShared, shareLink, shareToast, shareUrl } from '@/features/share/share';
 import { useCallback, useRef } from 'react';
 import { fmtScore, progressed, resolveLoads, resolveTarget } from '@/features/runsheet/progression';
 import type { Equipment } from '@/features/runsheet/plates';
@@ -211,7 +211,8 @@ export default function App() {
   const [pasteOpen, setPasteOpen] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
   const say = (m: string) => { setToast(m); setTimeout(() => setToast(null), 2500); };
-  const invite = async () => { const out = await shareLink('TigerWorkouts', location.origin + location.pathname); say(out === 'copied' ? 'Link copied' : out === 'shared' ? 'Shared' : 'Could not share'); };
+  const told = (m: string | null) => void (m && say(m));
+  const invite = async () => { const out = await shareLink('TigerWorkouts', location.origin + location.pathname); told(shareToast(out)); };
   // A new workout not saved yet, and what the timer recorded for the result sheet. Each
   // belongs to one workout: left over from another, it must not stand in for this one.
   const [drafted, setDrafted] = useState<{ for: string; r: Runsheet } | null>(null);
@@ -339,7 +340,7 @@ export default function App() {
           onLogOnly={() => go(`/result/${encodeURIComponent(id)}`)}
           onSave={() => act.toggleSaved(id)}
           saved={st.saved.includes(id)}
-          onShare={async () => { const out = await shareLink(base.title, shareUrl(base)); say(out === 'copied' ? 'Link copied' : out === 'shared' ? 'Shared' : 'Could not share'); }}
+          onShare={async () => { const out = await shareLink(base.title, shareUrl(base)); told(shareToast(out)); }}
           onCreator={creatorKey(r) ? () => go(creatorPath(creatorKey(r)!)) : r.ownerId || (cloud.user && st.workouts.some(w => w.id === wid(r))) ? () => go(`/c/${r.ownerId ?? cloud.user!.id}`) : undefined}
           onTogglePublic={cloud.user && st.workouts.some(w => w.id === wid(r)) ? () => { act.saveWorkout({ ...base, public: !base.public }); say(base.public ? 'Private now' : 'On your public page'); } : undefined}
           appHref={appLink(`w/${encodeURIComponent(wid(r))}`)}
@@ -348,11 +349,11 @@ export default function App() {
     );
   }
   if (route.name === 'creator') {
-    return full(<CreatorRoute key={route.id} id={route.id} onOpen={r => open(r)} onShare={async () => { const out = await shareLink('TigerWorkouts', location.href); say(out === 'copied' ? 'Link copied' : out === 'shared' ? 'Shared' : 'Could not share'); }} />);
+    return full(<CreatorRoute key={route.id} id={route.id} onOpen={r => open(r)} onShare={async () => { const out = await shareLink('TigerWorkouts', location.href); told(shareToast(out)); }} />);
   }
   if (route.name === 'credited') {
     const creator = creatorFor(all, route.id) ?? null;
-    return full(<CreditedCreatorScreen key={route.id} creator={creator} loading={!creator && !remoteLoaded} onBack={() => back('/discover')} onOpen={r => open(r)} onShare={async () => { const out = await shareLink(creator?.name ?? 'TigerWorkouts', location.href); say(out === 'copied' ? 'Link copied' : out === 'shared' ? 'Shared' : 'Could not share'); }} />);
+    return full(<CreditedCreatorScreen key={route.id} creator={creator} loading={!creator && !remoteLoaded} onBack={() => back('/discover')} onOpen={r => open(r)} onShare={async () => { const out = await shareLink(creator?.name ?? 'TigerWorkouts', location.href); told(shareToast(out)); }} />);
   }
   if (route.name === 'new') {
     const r: Runsheet = draftOf('new') ?? { title: '', creator: st.name || undefined, items: [] };
@@ -599,8 +600,8 @@ export default function App() {
           }}
           onImport={() => setImportOpen(true)}
           onCoach={() => go('/coach')}
+          lead={!cloud.user && <SignInCard title="Sign in to sync" reasons={['Sessions logged here are kept on this device until you do', 'Same account as the iPhone app: one history on both', 'No password: we email you a 6-digit code']} onSendCode={sendCode} onVerify={async (e, c) => { await verifyCode(e, c); act.setSignedIn(true); }} onGoogle={google ? signInGoogle : undefined} />}
         >
-          {!cloud.user && <SignInCard title="Sign in to sync" reasons={['Sessions logged here are kept on this device until you do', 'Same account as the iPhone app: one history on both', 'No password: we email you a 6-digit code']} onSendCode={sendCode} onVerify={async (e, c) => { await verifyCode(e, c); act.setSignedIn(true); }} onGoogle={google ? signInGoogle : undefined} />}
           {cloud.user && (
             <div className="flex items-center justify-between rounded-card border border-line bg-surface px-3 py-2 text-[13px]">
               <span className={st.syncError ? 'text-danger' : 'text-muted'}>{st.syncError ? `Sync error: ${st.syncError}` : st.lastSync ? `Synced ${new Date(st.lastSync).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })} · ${cloud.user.email}` : 'Syncing…'}</span>
@@ -610,7 +611,7 @@ export default function App() {
             </div>
           )}
           {cloud.user && <MyAiCoach onChanged={() => setCoachTick(t => t + 1)} say={say} />}
-          {cloud.user && <MyCoaches me={cloud.user.id} about={n => (n.assignmentId ? assigned.find(a => a.id === n.assignmentId)?.workout?.title : undefined)} onLeft={() => (setCoachTick(t => t + 1), say('Coaching ended'))} />}
+          {cloud.user && <MyCoaches me={cloud.user.id} about={n => (n.assignmentId ? assigned.find(a => a.id === n.assignmentId)?.workout?.title : undefined)} onLeft={() => (setCoachTick(t => t + 1), say('Coaching ended'))} say={say} />}
           {cloud.user && <CreatorPageCard publicCount={st.workouts.filter(w => w.public).length} onOpenPage={key => go(`/c/${encodeURIComponent(key)}`)} onCoach={() => go('/coach')} />}
           <Button variant="ghost" block onClick={() => setSettingsOpen(true)}>
             Name, avatar and app settings

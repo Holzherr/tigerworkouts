@@ -94,7 +94,7 @@ export const CoachDashboardScreen = ({ clients, invites, notice, onInvite, onSha
                   Copy link
                 </Button>
                 {onDeleteInvite && (
-                  <Button variant="quiet" size="icon-sm" aria-label={`Delete invite ${i.label ?? ''}`.trim()} onClick={() => onDeleteInvite(i.code)}>
+                  <Button variant="quiet" size="icon-sm" aria-label={`Delete invite ${i.label ?? ''}`.trim()} onClick={() => confirm(`Delete ${i.label ? `the invite for ${i.label}` : 'this invite'}? The link you sent stops working.`) && onDeleteInvite(i.code)}>
                     <Trash2 />
                   </Button>
                 )}

@@ -5,6 +5,31 @@ import { clearDevice, getState, setState } from '@/app/store';
 import { rebase } from './rebase';
 import { clearSnap, dirtyCount, inTurn, pullPush } from './sync';
 
+const RETURN_KEY = 'tiger:return-to';
+/** The page to go back to after a Google sign-in: the one it was started from, when that was an
+ * invite, a shared workout, the coach dashboard or a creator page, and the sign-in came back to the
+ * bare app within the quarter hour. Otherwise null. */
+export const returnHash = (stored: string | null, hash: string, now: number): string | null => {
+  if (!stored || (hash !== '' && hash !== '#' && hash !== '#/')) return null;
+  try {
+    const { h, t } = JSON.parse(stored) as { h?: unknown; t?: unknown };
+    return typeof h === 'string' && typeof t === 'number' && now - t < 15 * 60_000 && /^#\/(join|w|coach|c|by)(\/|$)/.test(h) ? h : null;
+  } catch {
+    return null;
+  }
+};
+// Google sends the browser back to the app's root, so an invite link opened signed out lost its
+// code on the way. Put back before the client reads the URL and before the router does.
+if (typeof location !== 'undefined')
+  try {
+    const stored = sessionStorage.getItem(RETURN_KEY);
+    sessionStorage.removeItem(RETURN_KEY);
+    const h = returnHash(stored, location.hash, Date.now());
+    if (h) history.replaceState(history.state, '', `${location.pathname}${location.search}${h}`);
+  } catch {
+    /* no session storage */
+  }
+
 export const sb = createClient(SB_URL, SB_KEY, { auth: { persistSession: true, detectSessionInUrl: true, flowType: 'pkce' } });
 
 interface AuthState {
@@ -57,6 +82,11 @@ export const verifyCode = async (email: string, token: string) => {
 };
 export const signInGoogle = async () => {
   // Return to the app root (no hash): Supabase appends ?code=… and the client exchanges it on load.
+  try {
+    sessionStorage.setItem(RETURN_KEY, JSON.stringify({ h: location.hash, t: Date.now() }));
+  } catch {
+    /* no session storage */
+  }
   const { error } = await sb.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: location.origin + location.pathname } });
   if (error) throw error;
 };

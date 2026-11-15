@@ -11,6 +11,7 @@ import { INTENTS, type Intent } from '@/features/runsheet/targets';
 
 const EMOJIS = ['', '💪', '🏋️', '🏃', '🚴', '🧘', '🥊', '🎾', '⚽', '🏊', '🔥', '⚡', '🦁', '🐯', '🦊', '🐻'];
 const COLORS = ['#ff4d2e', '#f59e0b', '#a78bfa', '#38bdf8', '#34d399', '#fb7185', '#4ade80', '#e879f9'];
+const COLOR_NAMES = ['Coral', 'Amber', 'Violet', 'Sky', 'Green', 'Rose', 'Lime', 'Pink'];
 
 export interface SettingsSheetProps {
   open: boolean;
@@ -78,7 +79,7 @@ export const SettingsSheet = ({ open, onOpenChange, name, avatar, email, onChang
       <div className="space-y-4 pb-2">
         <div className="flex items-center gap-3">
           <AvatarView name={name} avatar={avatar} />
-          <input value={name} onChange={e => onChange({ name: e.target.value })} placeholder="Your name" className="h-11 min-w-0 flex-1 rounded-control border border-line bg-surface px-3 text-[16px] outline-none focus:border-hint" />
+          <input value={name} onChange={e => onChange({ name: e.target.value })} placeholder="Your name" aria-label="Your name" className="h-11 min-w-0 flex-1 rounded-control border border-line bg-surface px-3 text-[16px] outline-none focus:border-hint" />
         </div>
         {email && <div className="-mt-2 text-[12px] text-muted">{email}</div>}
         <div>
@@ -94,9 +95,11 @@ export const SettingsSheet = ({ open, onOpenChange, name, avatar, email, onChang
             </Chip>
             <input ref={file} type="file" accept="image/*" hidden onChange={e => e.target.files?.[0] && onPhoto(e.target.files[0])} />
           </div>
-          <div className="mt-2 flex gap-2">
-            {COLORS.map(c => (
-              <button key={c} type="button" aria-label={`Colour ${c}`} onClick={() => onChange({ avatar: { ...avatar, color: c } })} className="size-7 rounded-full" style={{ background: c, outline: (avatar?.color ?? '#ff4d2e') === c ? '2px solid #0f172a' : 'none', outlineOffset: 2 }} />
+          <div className="mt-1 flex flex-wrap">
+            {COLORS.map((c, i) => (
+              <button key={c} type="button" aria-label={`Colour ${COLOR_NAMES[i]}`} aria-pressed={(avatar?.color ?? '#ff4d2e') === c} onClick={() => onChange({ avatar: { ...avatar, color: c } })} className="grid size-11 place-items-center">
+                <span className="size-7 rounded-full" style={{ background: c, outline: (avatar?.color ?? '#ff4d2e') === c ? '2px solid #0f172a' : 'none', outlineOffset: 2 }} />
+              </button>
             ))}
           </div>
         </div>
@@ -131,7 +134,7 @@ export const SettingsSheet = ({ open, onOpenChange, name, avatar, email, onChang
       )}
       {onEquipment && (
         <>
-          <button type="button" onClick={() => setKit(true)} className="flex w-full items-center justify-between gap-3 text-left">
+          <button type="button" onClick={() => setKit(true)} className="flex min-h-11 w-full items-center justify-between gap-3 text-left">
             <span className="min-w-0">
               <span className="block text-[14px]">My equipment</span>
               <span className="block truncate text-[12px] text-muted">{equipmentSummary(equipment)}</span>

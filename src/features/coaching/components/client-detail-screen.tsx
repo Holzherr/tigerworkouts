@@ -137,7 +137,7 @@ export const ClientDetailScreen = ({ client, me, workouts, assignments, sessions
                 <div className="text-[12px] text-muted">Sent {daysAgo(a.createdAt, now)}</div>
                 {a.note && <div className="mt-0.5 text-[13px] text-body">“{a.note}”</div>}
               </div>
-              <Button variant="quiet" size="icon-sm" aria-label={`Take back ${title(a.workoutId)}`} onClick={() => onUnassign(a.id)}>
+              <Button variant="quiet" size="icon-sm" aria-label={`Take back ${title(a.workoutId)}`} onClick={() => confirm(`Take back ${title(a.workoutId)}? It goes from ${client.name.split(' ')[0]}’s workouts. Sessions already logged stay.`) && onUnassign(a.id)}>
                 <Trash2 />
               </Button>
             </div>

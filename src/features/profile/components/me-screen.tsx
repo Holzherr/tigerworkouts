@@ -32,6 +32,8 @@ export interface MeScreenProps {
   onImport?: () => void;
   /** Opens the coach dashboard (#/coach). */
   onCoach?: () => void;
+  /** Shown first, above the numbers: the sign-in card while signed out. */
+  lead?: React.ReactNode;
   /** Account and app settings, rendered under a "Settings" heading at the bottom. */
   children?: React.ReactNode;
 }
@@ -43,7 +45,7 @@ const heading = 'px-1 pt-2 text-[11px] font-bold tracking-widest text-muted uppe
  * Then four tiles two by two (sessions, this week, weeks running, time trained), the streak row, the body map
  * for the last four weeks, the Exercises row, bodyweight, and the settings passed as children last.
  */
-export const MeScreen = ({ name, avatar, status, results, load, bodyweightKg, onBodyweight, onSettings, onOpenHistory, onOpenWeek, onOpenExercises, onExport, onImport, onCoach, children }: MeScreenProps) => {
+export const MeScreen = ({ name, avatar, status, results, load, bodyweightKg, onBodyweight, onSettings, onOpenHistory, onOpenWeek, onOpenExercises, onExport, onImport, onCoach, lead, children }: MeScreenProps) => {
   const s = streak(results);
   return (
     <div className="flex h-full flex-col bg-canvas">
@@ -66,6 +68,7 @@ export const MeScreen = ({ name, avatar, status, results, load, bodyweightKg, on
         </div>
       </header>
       <div className="min-h-0 flex-1 space-y-2 overflow-y-auto px-3 py-3">
+        {lead}
         <StatTiles
           columns={2}
           stats={[

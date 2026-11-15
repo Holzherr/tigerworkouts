@@ -4,7 +4,7 @@
  */
 import { useEffect, useState } from 'react';
 import * as C from '@/features/cloud/coaching';
-import { shareLink } from '@/features/share/share';
+import { shareLink, shareToast } from '@/features/share/share';
 import type { Runsheet } from '@/features/runsheet/model';
 import type { SessionResult } from '@/features/runsheet/progression';
 import type { ClientSummary } from '../rollup';
@@ -47,7 +47,8 @@ export const CoachRoute = ({ signedIn, signIn, onOpenClient, onHowItWorks, onBac
   }, [signedIn]);
   const share = async (code: string) => {
     const out = await shareLink('Train with me on TigerWorkouts', C.inviteUrl(code));
-    say(out === 'copied' ? 'Link copied' : out === 'shared' ? 'Shared' : 'Could not share');
+    const m = shareToast(out);
+    if (m) say(m);
   };
   if (!signedIn) return <CoachDashboardScreen clients={[]} invites={[]} notice="Sign in to invite clients and see their sessions." signIn={signIn} onShareInvite={() => {}} onOpenClient={onOpenClient} onHowItWorks={onHowItWorks} onBack={onBack} />;
   return (
@@ -177,7 +178,7 @@ export const JoinRoute = ({ code, signedIn, signIn, onContinue, onAccepted }: { 
  * Me tab, for a coached client: one card per coach with the notes and a reply box. Renders nothing
  * while loading, with no coach, or before 0008 is applied.
  */
-export const MyCoaches = ({ me, about, onLeft }: { me: string; about?: (n: C.CoachNote) => string | undefined; onLeft: () => void }) => {
+export const MyCoaches = ({ me, about, onLeft, say }: { me: string; about?: (n: C.CoachNote) => string | undefined; onLeft: () => void; say?: (m: string) => void }) => {
   const [coaches, setCoaches] = useState<{ link: C.CoachLink; notes: C.CoachNote[] }[]>([]);
   useEffect(() => {
     let alive = true;
@@ -209,7 +210,7 @@ export const MyCoaches = ({ me, about, onLeft }: { me: string; about?: (n: C.Coa
           }}
           onLeave={() =>
             void attempt(() => C.endLink(link.coach, me)).then(e => {
-              if (e) return;
+              if (e) return say?.(e);
               setCoaches(v => v.filter(x => x.link.coach !== link.coach));
               onLeft();
             })

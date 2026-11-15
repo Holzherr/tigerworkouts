@@ -1,5 +1,6 @@
 import { Check, ChevronLeft, ChevronRight, Copy, HeartPulse, Pencil, Share2, Trash2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
+import { copyText } from '@/features/share/share';
 import { Button } from '@/shared/components/ui/button';
 import { Chip } from '@/shared/components/ui/chip';
 import { ClipThumb } from '@/shared/components/ui/clip-thumb';
@@ -59,6 +60,7 @@ export const SessionDetailScreen = ({ result: r, runsheet, exercise, loadDevice,
   const [device, setDevice] = useState<ReturnType<typeof hr>[] | null>(null);
   const [sharing, setSharing] = useState(false);
   const [editing, setEditing] = useState(false);
+  const [copied, setCopied] = useState(false);
   useEffect(() => {
     let alive = true;
     loadDevice?.().then(rows => alive && setDevice(rows.map(x => hr(x.data)))).catch(() => alive && setDevice([]));
@@ -134,7 +136,7 @@ export const SessionDetailScreen = ({ result: r, runsheet, exercise, loadDevice,
           </section>
         )}
         <EffortRow value={r.rpe} onChange={rpe => onChange({ rpe })} />
-        <textarea value={r.notes ?? ''} onChange={e => onChange({ notes: e.target.value || undefined })} placeholder="Notes" rows={3} className="w-full rounded-card border border-line bg-surface px-3 py-2 text-[16px] outline-none focus:border-hint" />
+        <textarea value={r.notes ?? ''} onChange={e => onChange({ notes: e.target.value || undefined })} placeholder="Notes" aria-label="Notes" rows={3} className="w-full rounded-card border border-line bg-surface px-3 py-2 text-[16px] outline-none focus:border-hint" />
         <div className="flex gap-2">
           {onRepeat && (
             <Button block onClick={onRepeat}>
@@ -144,8 +146,16 @@ export const SessionDetailScreen = ({ result: r, runsheet, exercise, loadDevice,
           <Button variant="ghost" onClick={() => setSharing(true)} aria-label="Share card">
             <Share2 />
           </Button>
-          <Button variant="ghost" onClick={() => navigator.clipboard?.writeText(text)}>
-            <Copy /> Copy
+          <Button
+            variant="ghost"
+            onClick={() =>
+              void copyText(text).then(ok => {
+                setCopied(ok);
+                if (ok) setTimeout(() => setCopied(false), 2000);
+              })
+            }
+          >
+            {copied ? <Check /> : <Copy />} {copied ? 'Copied' : 'Copy'}
           </Button>
         </div>
         {sharing && <ShareCardSheet open={sharing} onOpenChange={setSharing} data={shareCardData(r, celebrate(r, history, undefined, k => exercise(k).unit, runsheet), type, k => exercise(k))} />}

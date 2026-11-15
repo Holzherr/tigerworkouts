@@ -51,7 +51,7 @@ export const CreatorScreen = ({ profile, workouts, loading, onBack, onOpen, onSh
         {profile?.bio && <p className="mt-3 text-[14px] leading-relaxed whitespace-pre-line text-body">{profile.bio}</p>}
         {profile && (
           <a href={appLink(`c/${profile.handle ?? profile.id}`)} className="mt-3 inline-flex items-center gap-1.5 text-[13px] font-bold text-brand-ink">
-            <Smartphone className="size-4" /> Open in the TigerWorkouts app
+            <Smartphone className="size-4" /> Open in the iPhone app
           </a>
         )}
       </header>
