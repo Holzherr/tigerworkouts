@@ -534,7 +534,7 @@ export default function App() {
             const s = streak(st.results);
             return (
               <div aria-label="Week so far" className="flex items-center gap-2 rounded-card border border-line bg-surface px-3 py-2.5 text-[13px]">
-                <TrendingUp className="size-4 shrink-0 text-brand" />
+                <TrendingUp className="size-4 shrink-0 text-brand-ink" />
                 <span className="font-bold">{weekLine(s)}</span>
                 <span className="text-muted">· {s.total} all time</span>
               </div>
@@ -544,7 +544,7 @@ export default function App() {
           {st.results.length === 0 && <div className="py-10 text-center text-[13px] text-muted">No sessions yet. Finish a workout and it lands here.</div>}
           {!cloud.user && st.results.length > 0 && (
             <button type="button" onClick={() => go('/me')} className="block w-full px-1 text-left text-[12px] text-muted">
-              Kept on this device. <span className="font-bold text-brand">Sign in</span> to sync them to your account.
+              Kept on this device. <span className="font-bold text-brand-ink">Sign in</span> to sync them to your account.
             </button>
           )}
           {st.results.filter(r => sub !== 'week' || Date.now() - Date.parse(r.startedAt) < 7 * 864e5).map((res, i) => {
@@ -891,7 +891,7 @@ const PasteSheet = ({ open, onOpenChange, library, onUse }: { open: boolean; onO
   return (
     <Sheet open={open} onOpenChange={onOpenChange} title="Import a workout" height="80dvh">
       <p className="text-[13px] text-muted">Upload a photo or screenshot of a workout, or a text file — or type it. One line per block: “kb swings 28 + incline press 20 x8 30/30”, “sprints 14.5 x8, rest 15”.</p>
-      <label className={cn('mt-2 flex h-11 cursor-pointer items-center justify-center gap-2 rounded-tile border-2 border-dashed border-brand-line bg-brand-soft text-[14px] font-bold text-brand', reading !== null && 'pointer-events-none opacity-60')}>
+      <label className={cn('mt-2 flex h-11 cursor-pointer items-center justify-center gap-2 rounded-tile border-2 border-dashed border-brand-line bg-brand-soft text-[14px] font-bold text-brand-ink', reading !== null && 'pointer-events-none opacity-60')}>
         <ImageUp className="size-4" />
         {reading === null ? 'Upload image or text' : `Reading… ${reading}%`}
         <input type="file" accept="image/*,.txt,.md,text/plain" className="hidden" onChange={e => { void pick(e.target.files?.[0]); e.target.value = ''; }} />
@@ -931,7 +931,7 @@ const CreatorRoute = ({ id, onOpen, onShare }: { id: string; onOpen: (r: Runshee
 const Missing = () => (
   <div className="p-6 text-center text-[13px] text-muted">
     Workout not found.{' '}
-    <button type="button" className="font-bold text-brand" onClick={() => go('/discover')}>
+    <button type="button" className="font-bold text-brand-ink" onClick={() => go('/discover')}>
       Back to Discover
     </button>
   </div>

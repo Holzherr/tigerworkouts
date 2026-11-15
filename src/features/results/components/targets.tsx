@@ -10,7 +10,7 @@ import type { Stall } from '../stall';
  */
 export const TodayLine = ({ text, detail, className }: { text: string; detail?: string; className?: string }) => (
   <div className={cn('flex items-start gap-2', className)} aria-label="Today's target">
-    <Target className="mt-0.5 size-4 shrink-0 text-brand" />
+    <Target className="mt-0.5 size-4 shrink-0 text-brand-ink" />
     <div className="min-w-0 flex-1">
       <div className="text-[13px] leading-snug">
         <span className="mr-1.5 text-[11px] font-bold tracking-widest text-brand-ink uppercase">Today</span>
@@ -29,7 +29,7 @@ export const StallLine = ({ name, stall, onOpen }: { name?: string; stall: Stall
   <button type="button" onClick={onOpen} className="flex w-full items-center gap-2 text-left text-[12px] text-muted" aria-label="Stall">
     <span className="min-w-0 flex-1 truncate">
       {name && <span className="font-semibold text-body">{name} · </span>}
-      {stall.line} · <span className="font-semibold text-brand">two options</span>
+      {stall.line} · <span className="font-semibold text-brand-ink">two options</span>
     </span>
     <ChevronRight className="size-4 shrink-0 text-faint" />
   </button>
@@ -53,7 +53,7 @@ export const StallCard = ({ stall, onDismiss, onExercise }: { stall: Stall; onDi
           <span className="grid size-5 shrink-0 place-items-center rounded-full bg-brand-soft text-[11px] font-black text-brand-ink">{i + 1}</span>
           <div className="min-w-0 flex-1">
             {o.exerciseKey && onExercise ? (
-              <button type="button" className="text-left font-bold text-brand" onClick={() => onExercise(o.exerciseKey!)}>
+              <button type="button" className="text-left font-bold text-brand-ink" onClick={() => onExercise(o.exerciseKey!)}>
                 {o.title}
               </button>
             ) : (

@@ -53,7 +53,7 @@ export const SessionStats = ({ result, worked, history = [], bodyweightKg, class
 /** One white row: trend icon, "2 this week · 3 weeks running" in bold, last week and all time in grey. */
 export const StreakLine = ({ streak: s, className }: { streak: Streak; className?: string }) => (
   <div className={cn('flex items-center gap-2 rounded-card border border-line bg-surface px-3 py-2', className)}>
-    <TrendingUp className="size-4 shrink-0 text-brand" />
+    <TrendingUp className="size-4 shrink-0 text-brand-ink" />
     <div className="text-[13px]">
       <span className="font-bold">
         {s.thisWeek} this week

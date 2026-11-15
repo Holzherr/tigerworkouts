@@ -82,7 +82,7 @@ brand:
   logo: 'src/shared/brand/logo.tsx — mark + TigerWorkouts, Workouts in coral'
   favicon: 'public/favicon.svg, PNGs in public/icons/'
 rules:
-  - One coral fill per screen: the primary action. Everything else is ink, grey, or coral text.
+  - One coral fill per screen: the primary action. Everything else is ink, grey, or `brand-ink` text. Coral is a fill: as text on a light surface it is 3.3:1, so text and icons there use `brand-ink` (5.7:1). Coral text stays on the dark timer ground (5.4:1); on the blue rest ground (3.1:1) small text uses `brand-line`.
   - The mark is always one colour (black, ink, white or coral). Stripes only ever sit behind it, never on it.
   - Units live in labels ("Weight (kg per arm)"), never inside a number control.
   - Every tap target is at least 44px tall. Rows are the tap target, not icons inside them.

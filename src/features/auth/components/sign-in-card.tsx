@@ -79,7 +79,7 @@ export const SignInCard = ({ onSendCode, onVerify, onGoogle, pendingEmail, title
           <button type="button" className="text-muted" onClick={() => (setPhase('email'), setCode(''), setError(null))}>
             Use a different email
           </button>
-          <button type="button" className="font-bold text-brand" onClick={() => send().then(() => setNotice('New code sent'))}>
+          <button type="button" className="font-bold text-brand-ink" onClick={() => send().then(() => setNotice('New code sent'))}>
             Resend code
           </button>
         </div>

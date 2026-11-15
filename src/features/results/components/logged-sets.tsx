@@ -108,7 +108,7 @@ const SetsEditor = ({ sets, marks, exercise, step, onEdit, onAdd, onRemove }: { 
         </div>
       ))}
       {onAdd && (
-        <button type="button" onClick={onAdd} className="mt-0.5 inline-flex h-11 items-center gap-1 rounded-control px-1 text-[13px] font-bold text-brand active:bg-brand-soft">
+        <button type="button" onClick={onAdd} className="mt-0.5 inline-flex h-11 items-center gap-1 rounded-control px-1 text-[13px] font-bold text-brand-ink active:bg-brand-soft">
           <Plus className="size-4" /> Add set
         </button>
       )}

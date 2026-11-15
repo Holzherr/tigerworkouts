@@ -106,7 +106,7 @@ export const FollowAlongScreen = ({ runsheet, onBack, onFinish }: FollowAlongScr
                 <Chip variant={isActive ? 'brand-solid' : 'value'} size="sm" className="tabular-nums">
                   {fmtClock(c.start)}
                 </Chip>
-                {isActive && <Play className="size-4 text-brand" fill="currentColor" />}
+                {isActive && <Play className="size-4 text-brand-ink" fill="currentColor" />}
               </button>
             );
           })}

@@ -58,7 +58,7 @@ export const JoinScreen = ({ info, notice, signedIn, signIn, onAccept, onContinu
         ) : (
           <>
             <div className="space-y-2 rounded-card border border-line bg-surface p-4">
-              <div className="grid size-14 place-items-center rounded-full bg-brand-soft text-[20px] font-extrabold text-brand">{info.name.split(/\s+/).map(w => w[0]).join('').slice(0, 2).toUpperCase()}</div>
+              <div className="grid size-14 place-items-center rounded-full bg-brand-soft text-[20px] font-extrabold text-brand-ink">{info.name.split(/\s+/).map(w => w[0]).join('').slice(0, 2).toUpperCase()}</div>
               <h1 className="text-[20px] leading-tight font-extrabold">{info.name} invited you to train with them on TigerWorkouts</h1>
               <ul className="space-y-0.5 text-[13px] text-muted">
                 <li>· They send you workouts; you run them with the timer</li>
@@ -82,7 +82,7 @@ export const JoinScreen = ({ info, notice, signedIn, signIn, onAccept, onContinu
           </>
         )}
         {appHref && (
-          <a href={appHref} className="inline-flex items-center gap-1.5 px-1 text-[13px] font-bold text-brand">
+          <a href={appHref} className="inline-flex items-center gap-1.5 px-1 text-[13px] font-bold text-brand-ink">
             <Smartphone className="size-4" /> Open in the iPhone app
           </a>
         )}

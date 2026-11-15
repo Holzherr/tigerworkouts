@@ -200,7 +200,7 @@ export const DiscoverScreen = ({ workouts, results = [], savedIds = [], ownIds =
         <Row key={wid(r)} runsheet={r} meta={about(r)} onOpen={() => onOpen(r, 'search')} />
       ))}
       {singles.length > shown.length && (
-        <button type="button" onClick={() => setLimit(l => l + 60)} className="w-full py-3 text-center text-[13px] font-bold text-brand">
+        <button type="button" onClick={() => setLimit(l => l + 60)} className="w-full py-3 text-center text-[13px] font-bold text-brand-ink">
           Show more ({singles.length - shown.length} left)
         </button>
       )}

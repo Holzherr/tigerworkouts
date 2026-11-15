@@ -11,7 +11,7 @@ export const buttonVariants = cva(
         ghost: 'rounded-tile border border-line bg-surface text-ink active:bg-line-soft',
         soft: 'rounded-tile bg-line-soft text-ink active:bg-line',
         dark: 'rounded-tile bg-ink text-white active:bg-body',
-        text: 'rounded-control text-brand active:bg-brand-soft',
+        text: 'rounded-control text-brand-ink active:bg-brand-soft',
         danger: 'rounded-control text-danger active:bg-danger-soft',
         quiet: 'rounded-control text-muted active:bg-line-soft',
       },

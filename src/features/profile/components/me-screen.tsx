@@ -54,7 +54,7 @@ export const MeScreen = ({ name, avatar, status, results, load, bodyweightKg, on
             {name ? (
               <h1 className="truncate text-[22px] font-extrabold">{name}</h1>
             ) : (
-              <button type="button" onClick={onSettings} className="min-h-11 text-left text-[18px] font-extrabold text-brand">
+              <button type="button" onClick={onSettings} className="min-h-11 text-left text-[18px] font-extrabold text-brand-ink">
                 Add your name
               </button>
             )}
@@ -85,10 +85,10 @@ export const MeScreen = ({ name, avatar, status, results, load, bodyweightKg, on
         {results.length === 0 && <div className="px-1 py-2 text-[13px] text-muted">Finish a workout and your weeks, streak and what you worked show up here.</div>}
 
         <div className={heading}>You</div>
-        {onOpenExercises && <Row icon={<Dumbbell className="size-5 text-brand" />} title="Exercises" hint="Every exercise you have logged, and how it is going" onClick={onOpenExercises} />}
-        {onExport && <Row icon={<Download className="size-5 text-brand" />} title="Export history" hint="Every set you have logged, as a CSV file" onClick={onExport} />}
-        {onCoach && <Row icon={<Users className="size-5 text-brand" />} title="Coach clients" hint="Invite clients, send them workouts, see what they did" onClick={onCoach} />}
-        {onImport && <Row icon={<Upload className="size-5 text-brand" />} title="Import from Hevy or Strong" hint="Their CSV export, checked before anything is added" onClick={onImport} />}
+        {onOpenExercises && <Row icon={<Dumbbell className="size-5 text-brand-ink" />} title="Exercises" hint="Every exercise you have logged, and how it is going" onClick={onOpenExercises} />}
+        {onExport && <Row icon={<Download className="size-5 text-brand-ink" />} title="Export history" hint="Every set you have logged, as a CSV file" onClick={onExport} />}
+        {onCoach && <Row icon={<Users className="size-5 text-brand-ink" />} title="Coach clients" hint="Invite clients, send them workouts, see what they did" onClick={onCoach} />}
+        {onImport && <Row icon={<Upload className="size-5 text-brand-ink" />} title="Import from Hevy or Strong" hint="Their CSV export, checked before anything is added" onClick={onImport} />}
         <div className="flex items-center justify-between gap-3 rounded-card border border-line bg-surface px-3 py-2">
           <div className="min-w-0">
             <div className="text-[14px] font-semibold">Bodyweight (kg)</div>

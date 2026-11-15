@@ -446,7 +446,7 @@ export const RunsheetList = ({ items, onChange, onPickExercise, onSwapExercise, 
                 onChange(next.items);
                 if (next.blockId) setExpanded(next.blockId);
               }}
-              className="mt-3 flex h-12 w-full items-center justify-center gap-1.5 rounded-tile bg-brand-soft text-[14px] font-bold text-brand active:bg-brand-line/40"
+              className="mt-3 flex h-12 w-full items-center justify-center gap-1.5 rounded-tile bg-brand-soft text-[14px] font-bold text-brand-ink active:bg-brand-line/40"
             >
               <Repeat className="size-4" /> Repeat as rounds
             </button>

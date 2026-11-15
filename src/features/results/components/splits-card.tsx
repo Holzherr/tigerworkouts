@@ -52,7 +52,7 @@ export const SplitsCard = ({ result, last, runsheet, exerciseName, blockName, re
                 <div key={i} className={cn('min-w-15 rounded-lg border px-2 py-1 text-center', fast ? 'border-brand bg-brand-soft' : 'border-line-soft bg-canvas')} aria-label={`Round ${i + 1}${t !== undefined ? ` ${fmtDur(t)}` : ''}${fast ? ', fastest' : slow ? ', slowest' : ''}`}>
                   <div className="flex items-center justify-center gap-0.5 text-[10px] font-bold text-muted">
                     R{i + 1}
-                    {rec && <Medal className="size-3 text-brand" aria-label="record" />}
+                    {rec && <Medal className="size-3 text-brand-ink" aria-label="record" />}
                   </div>
                   <div className="text-[15px] font-extrabold tabular-nums">{t !== undefined ? fmtDur(t) : '–'}</div>
                   {d !== undefined ? <div className={cn('text-[11px] font-semibold tabular-nums', d < 0 ? 'text-brand-ink' : 'text-muted')}>{fmtDelta(d)}</div> : null}

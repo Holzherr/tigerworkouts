@@ -108,7 +108,7 @@ export const CoachDashboardScreen = ({ clients, invites, notice, onInvite, onSha
             <div className={heading}>Clients</div>
             {clients.map(c => (
               <button key={c.id} type="button" onClick={() => onOpenClient(c.id)} className="flex w-full items-center gap-3 rounded-card border border-line bg-surface px-3 py-2.5 text-left active:bg-line-soft">
-                <span className={cn('grid size-10 shrink-0 place-items-center rounded-full text-[14px] font-extrabold', c.quiet ? 'bg-warn-soft text-warn' : 'bg-brand-soft text-brand')}>{initials(c.name)}</span>
+                <span className={cn('grid size-10 shrink-0 place-items-center rounded-full text-[14px] font-extrabold', c.quiet ? 'bg-warn-soft text-warn' : 'bg-brand-soft text-brand-ink')}>{initials(c.name)}</span>
                 <span className="min-w-0 flex-1">
                   <span className="flex items-center gap-1.5">
                     <span className="truncate text-[15px] font-semibold">{c.name}</span>

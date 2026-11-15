@@ -19,7 +19,7 @@ export interface AddTileProps {
 export const AddTile = ({ onAdd, variant = 'block', className }: AddTileProps) => {
   if (variant === 'block') {
     return (
-      <div className={cn('flex items-center justify-center gap-4 pt-0.5 text-[13px] font-bold text-brand', className)}>
+      <div className={cn('flex items-center justify-center gap-4 pt-0.5 text-[13px] font-bold text-brand-ink', className)}>
         <button type="button" onClick={() => onAdd('exercise')} className="inline-flex h-11 items-center gap-1 rounded-control px-3 active:bg-brand-line/40">
           <Plus className="size-4" /> Exercise
         </button>
@@ -66,7 +66,7 @@ export const SeamInsert = ({ onInsert, className }: SeamInsertProps) => {
             </Chip>
           </>
         ) : (
-          <button type="button" aria-label="Insert here" onClick={() => setOpen(true)} className="relative grid size-[22px] place-items-center rounded-full border border-line bg-surface text-brand shadow-sm after:absolute after:-inset-[11px] after:content-['']">
+          <button type="button" aria-label="Insert here" onClick={() => setOpen(true)} className="relative grid size-[22px] place-items-center rounded-full border border-line bg-surface text-brand-ink shadow-sm after:absolute after:-inset-[11px] after:content-['']">
             <Plus className="size-3.5" strokeWidth={3} />
           </button>
         )}

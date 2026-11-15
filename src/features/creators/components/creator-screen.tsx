@@ -41,7 +41,7 @@ export const CreatorScreen = ({ profile, workouts, loading, onBack, onOpen, onSh
           <div className="mt-4 text-[14px] text-muted">No creator by that name.</div>
         ) : (
           <div className="mt-2 flex items-center gap-3">
-            <div className="grid size-16 shrink-0 place-items-center rounded-full bg-brand-soft text-[22px] font-extrabold text-brand">{initials}</div>
+            <div className="grid size-16 shrink-0 place-items-center rounded-full bg-brand-soft text-[22px] font-extrabold text-brand-ink">{initials}</div>
             <div className="min-w-0">
               <h1 className="truncate text-[22px] leading-tight font-extrabold">{profile.name}</h1>
               {profile.handle && <div className="text-[13px] text-muted">@{profile.handle}</div>}
@@ -50,7 +50,7 @@ export const CreatorScreen = ({ profile, workouts, loading, onBack, onOpen, onSh
         )}
         {profile?.bio && <p className="mt-3 text-[14px] leading-relaxed whitespace-pre-line text-body">{profile.bio}</p>}
         {profile && (
-          <a href={appLink(`c/${profile.handle ?? profile.id}`)} className="mt-3 inline-flex items-center gap-1.5 text-[13px] font-bold text-brand">
+          <a href={appLink(`c/${profile.handle ?? profile.id}`)} className="mt-3 inline-flex items-center gap-1.5 text-[13px] font-bold text-brand-ink">
             <Smartphone className="size-4" /> Open in the TigerWorkouts app
           </a>
         )}
