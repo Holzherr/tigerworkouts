@@ -787,6 +787,42 @@ describe('emom', () => {
     s = tick(s, 185000);
     expect(s.phase).toBe('done');
   });
+  // review D6: the screen was off for minutes, so no tick came.
+  const ten = (): Runsheet => ({ id: 'e', title: 'EMOM', items: [{ kind: 'block', id: 'b', name: 'E', mode: 'emom', everySec: 60, repeat: 10, steps: [{ ...makeExercise(EX.bw_burpee, { forMode: 'reps', forValue: 5 }), id: 'x' }] }] });
+  it('woken after minutes asleep, it is on the minute the clock is in and the missed ones are not logged', () => {
+    let s = tick(start(ten(), 0), 5000); // minute 1 from 5 s
+    s = tick(s, 5000 + 20000);
+    s = tick(s, 5000 + 320000); // 5 min 20 s into the block: minute 6
+    expect(s.phase).toBe('running');
+    expect(s.slots[s.i].kind).toBe('work');
+    expect(s.slots[s.i].round).toBe(5);
+    expect(R.minuteLeft(s, 5000 + 320000)).toBe(40);
+    expect(s.endsAt).toBe(5000 + 360000);
+    // The minute in hand when the screen went off is logged, as a minute that ran out is; 2 to 5 are not.
+    expect(s.slots.filter(sl => sl.kind === 'work' && s.actuals[sl.id]?.doneAt !== undefined).map(sl => sl.round)).toEqual([0]);
+    s = advance(s, 5000 + 330000);
+    expect(toResult(s, ten(), 5000 + 330000).steps[0].sets).toHaveLength(2);
+    // and it runs on from there
+    s = tick(s, 5000 + 360000);
+    expect(s.slots[s.i].round).toBe(6);
+    expect(s.slots[s.i].kind).toBe('work');
+  });
+  it('asleep on the wait, it wakes on the minute the clock is in', () => {
+    let s = tick(start(ten(), 0), 5000);
+    s = advance(s, 5000 + 20000); // set done, waiting out minute 1
+    expect(s.slots[s.i].untilBoundary).toBe(true);
+    s = tick(s, 5000 + 200000); // 3 min 20 s in: minute 4
+    expect(s.slots[s.i].kind).toBe('work');
+    expect(s.slots[s.i].round).toBe(3);
+    expect(s.endsAt).toBe(5000 + 240000);
+    expect(Object.values(s.actuals).filter(a => a.doneAt !== undefined)).toHaveLength(1);
+  });
+  it('asleep past the last minute, the block is over', () => {
+    let s = tick(start(ten(), 0), 5000);
+    s = tick(s, 5000 + 700000);
+    expect(s.phase).toBe('done');
+    expect(toResult(s, ten(), 5000 + 700000).steps[0].sets).toHaveLength(1);
+  });
 });
 
 describe('block gates', () => {
@@ -883,6 +919,24 @@ describe('a run kept on the device', () => {
     expect(R.loadPersisted('i')).toBeNull();
     R.clearPersisted();
   });
+  // review D14: resuming after a reload lost sets added with + Add set and a "Just this time" version.
+  it('a kept run carries its added sets and the workout as the session ran it', () => {
+    const base: Runsheet = { id: 'k', title: 'K', items: [{ kind: 'block', id: 'b', name: 'B', repeat: 2, restBetweenSec: 30, steps: [{ ...swings(), forMode: 'reps', forValue: 8 }] }] };
+    const once: Runsheet = { ...base, items: [...base.items, { ...press(), forMode: 'reps', forValue: 10 }] };
+    let s = tick(start(once, 0), 5000);
+    s = R.addSet(s, 6000, 'b');
+    R.persist(s, once);
+    const kept = R.loadPersisted('k')!;
+    expect(kept.sheet).toEqual(once);
+    expect('sheet' in kept.state).toBe(false);
+    const back = R.restore(kept.state, kept.savedAt);
+    expect(back.slots.filter(sl => sl.blockId === 'b' && sl.kind === 'work')).toHaveLength(3);
+    expect(back.slots.map(sl => sl.id)).toEqual(s.slots.map(sl => sl.id));
+    // The saved workout as it is: no sheet beside the run.
+    R.persist(s);
+    expect(R.loadPersisted('k')!.sheet).toBeUndefined();
+    R.clearPersisted();
+  });
   it('Start asks about a kept run: its own to resume, another workout\'s with work done to save or drop', () => {
     const now = Date.now();
     const kept = { state: oneSetDone(), savedAt: now - 60000 };
@@ -974,6 +1028,45 @@ describe('timed and distance work', () => {
     s = R.completeSet(s, 60000, s.slots[2].id); // ends the rest and ticks set 2 at once
     const r = toResult(s, sheet, 60000);
     expect(r.steps[0].sets?.map(x => x.seconds)).toEqual([45, undefined]);
+  });
+  // review D14: a timed set skipped earlier and ticked later logged with no time.
+  const holds = (): Runsheet => ({ id: 'p', title: 'P', items: [{ kind: 'block', id: 'b', name: 'B', repeat: 3, restBetweenSec: 10, steps: [{ ...makeExercise(EX.bw_plank, { forMode: 'seconds', forValue: 30 }), id: 'h' }] }, { kind: 'block', id: 'c', name: 'C', repeat: 1, steps: [{ ...makeExercise(EX.bw_pushup, { forMode: 'reps', forValue: 10 }), id: 'q' }] }] });
+  it('a countdown skipped earlier and ticked later runs, is logged with its time, and the timer goes back', () => {
+    let s = tick(start(holds(), 0), 5000);
+    const first = s.slots[0].id;
+    s = advance(s, 7000, { skipped: true });
+    s = tick(s, 17000); // the rest ran out: set 2 is running
+    expect(s.i).toBe(2);
+    s = R.completeSet(s, 20000, first);
+    expect(s.i).toBe(0);
+    expect(s.phase).toBe('running');
+    expect(s.endsAt).toBe(50000);
+    expect(s.actuals[first]?.doneAt).toBeUndefined();
+    s = tick(s, 50000);
+    expect(s.i).toBe(2); // back on set 2, from its start
+    expect(s.endsAt).toBe(80000);
+    expect(s.detour).toBeUndefined();
+    expect(toResult(s, holds(), 50000).steps[0].sets).toEqual([{ at: 50, seconds: 30 }]);
+    expect(s.blockDone.b).toBe(1);
+  });
+  it('a countdown un-ticked after it ran is logged with the time it ran', () => {
+    let s = tick(start(holds(), 0), 5000);
+    const first = s.slots[0].id;
+    s = tick(s, 35000);
+    s = R.reopenSet(s, first);
+    expect(toResult(s, holds(), 36000).steps).toEqual([]);
+    s = R.completeSet(s, 37000, first);
+    expect(s.i).toBe(1);
+    expect(toResult(s, holds(), 38000).steps[0].sets).toEqual([{ at: 37, seconds: 30 }]);
+  });
+  it('a countdown that never ran cannot be ticked from another block', () => {
+    let s = tick(start(holds(), 0), 5000);
+    const first = s.slots[0].id;
+    for (let k = 0; k < 5; k++) s = advance(s, 7000 + k * 100, { skipped: true });
+    expect(s.phase).toBe('ready');
+    expect(R.completeSet(s, 9000, first)).toBe(s);
+    s = R.startBlock(s, 9000);
+    expect(R.completeSet(s, 10000, first)).toBe(s);
   });
   it('for-time rounds are split per round', () => {
     const sheet: Runsheet = { id: 'f', title: 'F', items: [{ kind: 'block', id: 'b', name: 'F', mode: 'fortime', repeat: 3, steps: [{ ...makeExercise(EX.bw_pullup, { forMode: 'reps', forValue: 5 }), id: 'a' }, { ...makeExercise(EX.bw_pushup, { forMode: 'reps', forValue: 10 }), id: 'c' }] }] };

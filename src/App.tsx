@@ -436,7 +436,7 @@ export default function App() {
     const saved = byId.get(route.id);
     const version = saved && r !== saved ? versionOf(r, saved, saved) : undefined;
     const tag = (res: SessionResult): SessionResult => ({ ...res, runsheetId: wid(r), ...(version ? { version } : {}) });
-    return <RunRoute key={route.id} runsheet={run} results={st.results} intent={intent} equipment={st.equipment} library={library} resume={resumeFor === route.id} origin={from} lookup={lookup} onLogKept={act.addResult} onResumeKept={id => (setDrafted(null), setResumeFor(id), goReplace(`/do/${encodeURIComponent(id)}`))} onLog={res => act.addResult(tag(res))} onFinish={res => (setResumeFor(null), setPending(tag(res)), goReplace(`/result/${encodeURIComponent(route.id)}`))} onExit={() => (setResumeFor(null), Runner.clearPersisted(), go(`/w/${encodeURIComponent(route.id)}`))} />;
+    return <RunRoute key={route.id} runsheet={run} once={version ? r : undefined} versionFor={sheet => (saved ? versionOf(sheet, saved, saved) : undefined)} onKeptSheet={sheet => setDrafted({ for: route.id, r: sheet })} results={st.results} intent={intent} equipment={st.equipment} library={library} resume={resumeFor === route.id} origin={from} lookup={lookup} onLogKept={act.addResult} onResumeKept={id => (setDrafted(null), setResumeFor(id), goReplace(`/do/${encodeURIComponent(id)}`))} onLog={res => act.addResult(tag(res))} onFinish={res => (setResumeFor(null), setPending(tag(res)), goReplace(`/result/${encodeURIComponent(route.id)}`))} onExit={() => (setResumeFor(null), Runner.clearPersisted(), go(`/w/${encodeURIComponent(route.id)}`))} />;
   }
   if (route.name === 'session') {
     const res = st.results.find(x => x.id === route.id);
@@ -711,7 +711,7 @@ export default function App() {
  * result sheet is saved. Until then it lived only in memory: the persisted run was cleared at done,
  * so a reload or a closed tab on the result sheet lost it. The sheet then edits the logged row.
  */
-type RunRouteProps = { runsheet: Runsheet; results: SessionResult[]; intent: Intent; equipment?: Equipment; library: Record<string, LibraryExercise>; /** Where a fresh run was started from; a resumed run reads its own (`run-origin`). */ origin?: SessionOrigin; onLog: (r: SessionResult) => void; onFinish: (r: SessionResult) => void; onExit: () => void };
+type RunRouteProps = { runsheet: Runsheet; results: SessionResult[]; intent: Intent; equipment?: Equipment; library: Record<string, LibraryExercise>; /** Where a fresh run was started from; a resumed run reads its own (`run-origin`). */ origin?: SessionOrigin; /** The workout as written when this session runs a "Just this time" change or a version: kept with the run, so a reload does not lose it. */ once?: Runsheet; onLog: (r: SessionResult) => void; onFinish: (r: SessionResult) => void; onExit: () => void };
 
 /**
  * A run kept on the device (a reload, a closed tab) is asked about, not picked up silently: Start
@@ -720,15 +720,22 @@ type RunRouteProps = { runsheet: Runsheet; results: SessionResult[]; intent: Int
  * never written over unasked either (iOS asks too): it can be resumed, saved as it stands, or
  * dropped. The Discover card's Resume (`resume`) has asked already.
  */
-type KeptProps = { resume?: boolean; lookup: (id: string) => Runsheet | undefined; onLogKept: (r: SessionResult) => void; onResumeKept: (id: string) => void };
-const RunRoute = ({ resume, lookup, onLogKept, onResumeKept, ...props }: RunRouteProps & KeptProps) => {
+type KeptProps = { resume?: boolean; lookup: (id: string) => Runsheet | undefined; onLogKept: (r: SessionResult) => void; onResumeKept: (id: string) => void; /** A resumed run was of a changed workout: the page holds the change again, so it is logged as its version. */ onKeptSheet: (sheet: Runsheet) => void; versionFor: (sheet: Runsheet) => SessionResult['version'] };
+const RunRoute = ({ resume, lookup, onLogKept, onResumeKept, onKeptSheet, versionFor, ...props }: RunRouteProps & KeptProps) => {
   const [ask] = useState(() => Runner.keptAsk(Runner.loadPersisted(), props.runsheet.id ?? props.runsheet.title, Date.now()));
   const [from, setFrom] = useState<Runner.RunState | 'fresh' | null>(() => (!ask ? 'fresh' : resume && ask.canResume ? Runner.restore(ask.kept.state, ask.kept.savedAt) : null));
+  const resumedSheet = from && from !== 'fresh' && ask?.own ? ask.kept.sheet : undefined;
+  useEffect(() => {
+    if (resumedSheet) onKeptSheet(resumedSheet);
+    // Once, when the kept run is picked up.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [resumedSheet]);
   if (from) return <RunSession {...props} from={from === 'fresh' ? undefined : from} />;
   const { kept, own, canResume, canSave } = ask!;
   const other = own ? undefined : lookup(kept.state.runsheetId);
   const saveWhatWasDone = () => {
-    const res = withOrigin(Runner.keptResult(kept, own ? props.runsheet : keptSheet(kept.state, lookup)), originOf(Runner.sessionId(kept.state)));
+    const version = own && kept.sheet ? versionFor(kept.sheet) : undefined;
+    const res = withOrigin({ ...Runner.keptResult(kept, own ? (kept.sheet ?? props.runsheet) : keptSheet(kept.state, lookup)), ...(version ? { version } : {}) }, originOf(Runner.sessionId(kept.state)));
     Runner.clearPersisted();
     if (!own) return (onLogKept(res), setFrom('fresh'));
     props.onLog(res);
@@ -763,9 +770,9 @@ const RunRoute = ({ resume, lookup, onLogKept, onResumeKept, ...props }: RunRout
   );
 };
 
-const RunSession = ({ runsheet, results, intent, equipment, library, origin: startedFrom, onLog, onFinish, onExit, from }: RunRouteProps & { from?: Runner.RunState }) => {
+const RunSession = ({ runsheet, results, intent, equipment, library, origin: startedFrom, once, onLog, onFinish, onExit, from }: RunRouteProps & { from?: Runner.RunState }) => {
   // Open reps (a range, a max) start on what was done last time, set for set.
-  const { state, now, act } = useRunner(runsheet, { from, seed: s => Runner.prefillReps(s, (step, round) => lastSets(results, step, runsheet)?.[round]?.reps) });
+  const { state, now, act } = useRunner(runsheet, { from, sheet: once, seed: s => Runner.prefillReps(s, (step, round) => lastSets(results, step, runsheet)?.[round]?.reps) });
   // A fresh run keeps its origin beside it on the device; a resumed one reads it back. Writing it
   // again (StrictMode runs this twice) changes nothing.
   const [origin] = useState(() => {

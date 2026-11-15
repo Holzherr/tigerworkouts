@@ -56,6 +56,10 @@ final class SessionRunner {
     /// Sets added this session with "+ Add set", by block id: the finish screen asks whether they
     /// go on the workout.
     private(set) var addedSets: [String: Int] = [:]
+    /// The version the workout page planned for this session ("Just this time", a version run
+    /// again). It rides in the crash-safe copy, so a session resumed after a kill still keeps it.
+    /// Set before the session begins (`RootView.logOnFinish`).
+    @ObservationIgnored var planned: SessionVersion?
 
     struct RecordFlash: Equatable {
         var slotId: String
@@ -130,7 +134,11 @@ final class SessionRunner {
     /// nothing starts counting down before you are ready.
     init?(resuming runsheet: Runsheet, history: [SessionResult] = []) {
         guard let saved = SessionRunner.readSaved(), saved.state.runsheetId == (runsheet.id ?? runsheet.title) else { return nil }
-        self.runsheet = runsheet
+        // The sheet the session was on when it was last saved: sets added with "+ Add set", a
+        // change made mid-session and a "Just this time" version are in it, not in the workout.
+        self.runsheet = saved.sheet ?? runsheet
+        self.addedSets = saved.addedSets
+        self.planned = saved.planned
         self.startedFrom = saved.startedFrom
         self.history = history.filter { $0.id != SessionRunner.rowId(saved.state) }
         self.rival = Pace.lastTimed(history, runsheetIds: runsheet.lineage, excluding: SessionRunner.rowId(saved.state))
@@ -165,9 +173,10 @@ final class SessionRunner {
         var partial: SessionResult?
     }
 
-    static func recovery(of state: RunState, savedAt: Date, startedFrom: SessionOrigin? = nil, lookup: (String) -> Runsheet?, now: Date = Date()) -> Recovery {
+    static func recovery(of state: RunState, savedAt: Date, startedFrom: SessionOrigin? = nil, ran: Runsheet? = nil, lookup: (String) -> Runsheet?, now: Date = Date()) -> Recovery {
         let found = lookup(state.runsheetId)
-        let sheet = found ?? Runsheet(id: state.runsheetId, title: state.title, items: [])
+        // What was done is read against the sheet the session ran (`ran`), when the copy kept it.
+        let sheet = ran ?? found ?? Runsheet(id: state.runsheetId, title: state.title, items: [])
         let fresh = now.timeIntervalSince(savedAt) < 6 * 3600
         return Recovery(sheet: sheet, canResume: found != nil && fresh, partial: partialResult(of: state, savedAt: savedAt, runsheet: sheet, startedFrom: startedFrom))
     }
@@ -831,6 +840,7 @@ final class SessionRunner {
         undoable = undo
         runsheet = Edit.addSet(runsheet, block: blockId)
         addedSets[blockId, default: 0] += 1
+        save()
         Haptics.shared.play(.tick)
     }
 
@@ -1001,35 +1011,61 @@ final class SessionRunner {
     /// A finished session is written too: until the store has it, this file is the only copy.
     private func save() {
         savedAtMs = now
-        try? JSONEncoder().encode(SavedRun(state: state, startedFrom: startedFrom)).write(to: SessionRunner.savedURL, options: .atomic)
+        try? JSONEncoder().encode(SavedRun(state: state, startedFrom: startedFrom, sheet: runsheet, planned: planned, addedSets: addedSets.isEmpty ? nil : addedSets)).write(to: SessionRunner.savedURL, options: .atomic)
     }
 
-    /// The run state with the session's origin beside its fields; a file written before the
-    /// origin was kept reads back with none.
+    /// The run state with, beside its fields, the session's origin, the sheet it is on (added sets
+    /// and changes made for this session are in it), the version planned for it and the sets added.
+    /// A file written before any of these was kept reads back without it.
     private struct SavedRun: Encodable {
         var state: RunState
         var startedFrom: SessionOrigin?
+        var sheet: Runsheet?
+        var planned: SessionVersion?
+        var addedSets: [String: Int]?
         struct Origin: Decodable { var startedFrom: SessionOrigin? }
-        enum Key: String, CodingKey { case startedFrom }
+        struct Session: Decodable {
+            var sheet: Runsheet?
+            var planned: SessionVersion?
+            var addedSets: [String: Int]?
+        }
+        enum Key: String, CodingKey { case startedFrom, sheet, planned, addedSets }
 
         func encode(to encoder: any Encoder) throws {
             try state.encode(to: encoder)
             var c = encoder.container(keyedBy: Key.self)
             try c.encodeIfPresent(startedFrom, forKey: .startedFrom)
+            try c.encodeIfPresent(sheet, forKey: .sheet)
+            try c.encodeIfPresent(planned, forKey: .planned)
+            try c.encodeIfPresent(addedSets, forKey: .addedSets)
         }
+    }
+
+    /// A crash-safe copy read back. `sheet` is the session's own (nil in a copy from before it was
+    /// kept): where it differs from the workout, the session ran a version of it.
+    struct Saved {
+        var state: RunState
+        var savedAt: Date
+        var startedFrom: SessionOrigin?
+        var sheet: Runsheet?
+        var planned: SessionVersion?
+        var addedSets: [String: Int] = [:]
     }
 
     /// A session older than six hours is not one you walked away from for a minute, and one with no
     /// set done is forgotten then. A finished one, or one with work done, is returned whatever its
     /// age: it is a workout the store never confirmed, and it can still be saved.
-    static func readSaved() -> (state: RunState, savedAt: Date, startedFrom: SessionOrigin?)? {
+    static func readSaved() -> Saved? {
         guard let data = try? Data(contentsOf: savedURL),
               let attrs = try? FileManager.default.attributesOfItem(atPath: savedURL.path),
               let modified = attrs[.modificationDate] as? Date,
               let state = try? JSONDecoder().decode(RunState.self, from: data),
               state.phase == .done || didWork(state) || Date().timeIntervalSince(modified) < 6 * 3600 else { return nil }
         let origin = (try? JSONDecoder().decode(SavedRun.Origin.self, from: data))?.startedFrom
-        return (state, modified, origin)
+        // Only a sheet of this run's workout: anything else is not this session's.
+        let session = try? JSONDecoder().decode(SavedRun.Session.self, from: data)
+        let sheet = session?.sheet.flatMap { ($0.id ?? $0.title) == state.runsheetId ? $0 : nil }
+        return Saved(state: state, savedAt: modified, startedFrom: origin, sheet: sheet, planned: session?.planned, addedSets: session?.addedSets ?? [:])
     }
 
     static func clearSaved() {
