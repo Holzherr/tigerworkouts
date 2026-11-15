@@ -246,6 +246,8 @@ export const useRunner = (runsheet: Runsheet, opts: { /** A kept run to carry on
 
   const act = {
     done: useCallback(() => setState(s => R.advance(s, Date.now())), []),
+    roundDone: useCallback(() => setState(s => R.advanceRound(s, Date.now())), []),
+    setExtraReps: useCallback((blockId: string, reps: number) => setState(s => R.setExtraReps(s, blockId, reps)), []),
     skip: useCallback(() => setState(s => R.advance(s, Date.now(), { skipped: true })), []),
     back: useCallback(() => setState(s => R.back(s, Date.now())), []),
     pause: useCallback(() => setState(s => R.pause(s, Date.now())), []),

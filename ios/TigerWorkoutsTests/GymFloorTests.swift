@@ -546,3 +546,135 @@ struct KeptRunTests {
         #expect(Rounds.times(sp) == [20, 20])
     }
 }
+
+/// Ported from 'a round ticked whole' in `runner.test.ts` (review D17).
+@Suite("a round ticked whole")
+struct RoundCardTests {
+    static func thenPress() -> Runsheet {
+        var r = Fixtures.cindy()
+        r.items.append(.block(Block(id: "p", name: "P", repeatCount: 1, steps: [Fixtures.work("pr", Fixtures.press, target: 20)])))
+        return r
+    }
+
+    @Test("Cindy: one tap does every exercise of the round, and the round is timed and scored")
+    func cindy() {
+        var s = Runner.tick(Runner.start(Fixtures.cindy(), now: 0), now: 5_000)
+        #expect(Runner.roundSlots(s) == [0, 1])
+        s = Runner.advanceRound(s, now: 20_000)
+        #expect(Runner.current(s)?.round == 1)
+        #expect(Runner.current(s)?.step.id == "a")
+        #expect(s.blockDone["b"] == 2)
+        s = Runner.advanceRound(s, now: 45_000)
+        s = Runner.advanceRound(s, now: 60_000)
+        #expect(Runner.current(s)?.round == 3) // the amrap grew a round
+        s = Runner.tick(s, now: 65_000) // the cap
+        #expect(s.phase == .done)
+        let r = Runner.toResult(s, Fixtures.cindy(), now: 65_000)
+        #expect(r.score == 3)
+        #expect(r.steps.map(\.reps) == [[5, 5, 5], [10, 10, 10]])
+        #expect(r.splits == [RoundSplit(blockId: "b", at: [20, 45, 60], from: 5, starts: [5, 20, 45])])
+    }
+
+    @Test("finishes a round begun a tap at a time, and Back reopens only the last exercise")
+    func partRound() {
+        var s = Runner.tick(Runner.start(Fixtures.cindy(), now: 0), now: 5_000)
+        s = Runner.advance(s, now: 10_000)
+        #expect(Runner.roundSlots(s) == [0, 1])
+        s = Runner.advanceRound(s, now: 20_000)
+        #expect(s.blockDone["b"] == 2)
+        #expect(Runner.current(s)?.round == 1)
+        s = Runner.back(s, now: 21_000)
+        #expect(s.blockDone["b"] == 1)
+        s = Runner.advanceRound(s, now: 25_000)
+        #expect(s.blockDone["b"] == 2)
+        #expect(Runner.current(s)?.round == 1)
+    }
+
+    @Test("a dropped exercise is not in the round")
+    func dropped() {
+        var s = Runner.drop(Runner.tick(Runner.start(Fixtures.cindy(), now: 0), now: 5_000), now: 5_000, stepId: "a")
+        #expect(Runner.roundSlots(s) == [0])
+        for t in [10.0, 20, 30, 40] { s = Runner.advanceRound(s, now: t * 1000) }
+        s = Runner.tick(s, now: 65_000)
+        #expect(Runner.toResult(s, Fixtures.cindy(), now: 65_000).score == 4)
+    }
+
+    @Test("a round with a load, a clock or a rest in it stays step by step")
+    func stepByStep() {
+        let pull = Fixtures.work("a", Fixtures.pullup, forMode: .reps, forValue: 5)
+        for other in [Fixtures.work("k", Fixtures.swing, target: 24, forMode: .reps, forValue: 10), Fixtures.work("h", Fixtures.squat, forMode: .seconds, forValue: 30), Fixtures.rest("r", 20)] {
+            let sheet = Runsheet(id: "l", title: "L", items: [.block(Block(id: "b", name: "L", repeatCount: 1, mode: .amrap, steps: [pull, other], timeCapSec: 600))])
+            let s = Runner.tick(Runner.start(sheet, now: 0), now: 5_000)
+            #expect(Runner.roundSlots(s) == nil)
+            #expect(Runner.advanceRound(s, now: 9_000).i == 1)
+        }
+        #expect(Runner.roundSlots(Runner.tick(Runner.start(Fixtures.interval(), now: 0), now: 5_000)) == nil)
+    }
+
+    @Test("an EMOM minute of plain reps is one tap, then the wait")
+    func emom() {
+        var s = Runner.tick(Runner.start(EmomMinuteTests.emom(3), now: 0), now: 5_000)
+        #expect(Runner.roundSlots(s) == [0, 1])
+        s = Runner.advanceRound(s, now: 30_000)
+        #expect(Runner.current(s)?.untilBoundary == true)
+        #expect(s.endsAt == 65_000)
+        s = Runner.tick(s, now: 65_000)
+        #expect(Runner.current(s)?.round == 1)
+        #expect(Runner.roundSlots(s) == [3, 4])
+    }
+
+    @Test("the reps into the round the cap cut short are asked once, at the gate after it, and scored")
+    func cappedRound() {
+        var s = Runner.tick(Runner.start(Self.thenPress(), now: 0), now: 5_000)
+        #expect(Runner.cappedRound(s) == nil)
+        s = Runner.advanceRound(s, now: 20_000)
+        s = Runner.advanceRound(s, now: 40_000)
+        s = Runner.tick(s, now: 65_000)
+        #expect(s.phase == .ready)
+        #expect(Runner.cappedRound(s) == Runner.CappedRound(blockId: "b", round: 2, reps: 15, extra: 0))
+        s = Runner.setExtraReps(s, blockId: "b", reps: 7)
+        #expect(Runner.cappedRound(s)?.extra == 7)
+        #expect(Runner.toResult(s, Self.thenPress(), now: 66_000).score == 2.007)
+        s = Runner.startBlock(s, now: 70_000)
+        #expect(Runner.cappedRound(s) == nil)
+        #expect(Runner.toResult(s, Self.thenPress(), now: 71_000).score == 2.007)
+    }
+
+    @Test("an AMRAP run a step at a time is not asked: its part round is in its ticks")
+    func notAsked() {
+        let loaded = Runsheet(id: "l", title: "L", items: [
+            .block(Block(id: "b", name: "L", repeatCount: 1, mode: .amrap, steps: [Fixtures.work("k", Fixtures.swing, target: 24, forMode: .reps, forValue: 10)], timeCapSec: 60)),
+            .block(Block(id: "p", name: "P", repeatCount: 1, steps: [Fixtures.work("pr", Fixtures.press, target: 20)])),
+        ])
+        var s = Runner.tick(Runner.start(loaded, now: 0), now: 5_000)
+        s = Runner.advance(s, now: 20_000)
+        s = Runner.tick(s, now: 65_000)
+        #expect(s.phase == .ready)
+        #expect(Runner.cappedRound(s) == nil)
+    }
+}
+
+@Suite("the round card on the timer")
+@MainActor
+struct RoundCardRunnerTests {
+    @Test("Round n done ticks the round, from the app and from the Lock Screen")
+    func roundDone() {
+        SessionRunner.$savedName.withValue("test-\(UUID().uuidString).json") {
+            let runner = SessionRunner(runsheet: Fixtures.cindy())
+            runner.begin()
+            runner.tick(at: runner.state.startedAt + 5_000)
+            #expect(runner.roundCard?.map(\.exercise.id) == ["a", "b2"])
+            #expect(runner.roundCard?.map(\.done) == [false, false])
+            runner.done()
+            #expect(runner.roundCard?.map(\.done) == [true, false])
+            runner.roundDone()
+            #expect(runner.slot?.round == 1)
+            #expect(runner.state.blockDone["b"] == 2)
+            runner.control(.done, token: nil)
+            #expect(runner.slot?.round == 2)
+            #expect(runner.state.blockDone["b"] == 4)
+            runner.end()
+            SessionRunner.clearSaved()
+        }
+    }
+}

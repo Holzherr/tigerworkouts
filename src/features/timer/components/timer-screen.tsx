@@ -65,6 +65,10 @@ export interface TimerScreenProps {
   announce?: boolean;
   /** End the running block here and go on to the next one, from the ⋯ menu. */
   onEndBlock?: () => void;
+  /** "Round n done": an AMRAP's or EMOM's round of plain rep work is one card and one tap. Without it those rounds run a step at a time. */
+  onRoundDone?: () => void;
+  /** Reps into the round an AMRAP's cap cut short, asked once at the gate after it. */
+  onExtraReps?: (blockId: string, reps: number) => void;
 }
 
 export interface SetActions {
@@ -262,7 +266,7 @@ const stepLine = (s: ExerciseStep) => [forLabel(s), s.target !== undefined ? `${
  * (swap, overview, end workout); Back, Pause or Done early, and Skip small; the big button Pause on
  * a countdown, "Set 2 of 4 done" on a set. Tap Next for the coming block; the overview lists all.
  */
-export const TimerScreen = ({ runsheet, state, now, onDone, onSkip, onBack, onPause, onResume, onAdjust, onAdjustIncline, onSetReps, onSetAmount, onDrop, onStartBlock, onAdjustStep, sets, onAdjustRest, lastFor, onFill, ghost, goal, muted, onToggleMute, equipment, onFinish, onExit, alternativesFor, onSwap, prs, onEndBlock, announce = true }: TimerScreenProps) => {
+export const TimerScreen = ({ runsheet, state, now, onDone, onSkip, onBack, onPause, onResume, onAdjust, onAdjustIncline, onSetReps, onSetAmount, onDrop, onStartBlock, onAdjustStep, sets, onAdjustRest, lastFor, onFill, ghost, goal, muted, onToggleMute, equipment, onFinish, onExit, alternativesFor, onSwap, prs, onEndBlock, onRoundDone, onExtraReps, announce = true }: TimerScreenProps) => {
   const [confirmExit, setConfirmExit] = useState(false);
   const [confirmDiscard, setConfirmDiscard] = useState(false);
   const [menu, setMenu] = useState(false);
@@ -302,7 +306,10 @@ export const TimerScreen = ({ runsheet, state, now, onDone, onSkip, onBack, onPa
   const emomWork = !lead && R.minuteOnly(slot);
   // A countdown ends by itself: its big button is Pause. A set's says which set it logs.
   const countdown = (timed && !emomWork) || lead;
-  const setDone = slot?.kind !== 'work' ? 'Done' : slot.mode === 'amrap' ? `Set ${slot.round + 1} done` : slot.rounds > 1 ? `Set ${slot.round + 1} of ${slot.rounds} done` : 'Done';
+  // A round of plain rep work (Cindy) is one card with one button: see `R.roundSlots`.
+  const round = onRoundDone && slot && !ready && !done ? R.roundSlots(state) : undefined;
+  const cut = onExtraReps ? R.cappedRound(state) : undefined;
+  const setDone = slot?.kind !== 'work' ? 'Done' : round ? `Round ${slot.round + 1} done` : slot.mode === 'amrap' ? `Set ${slot.round + 1} done` : slot.rounds > 1 ? `Set ${slot.round + 1} of ${slot.rounds} done` : 'Done';
   // The metres and/or calories the step records: what it is done for, then what it is set to log.
   const amountFields = slot && onSetAmount ? R.amountFields(slot) : [];
   const amountOf = (f: R.Amount) => (slot ? R.amountAt(state, slot, f) : undefined);
@@ -352,7 +359,7 @@ export const TimerScreen = ({ runsheet, state, now, onDone, onSkip, onBack, onPa
   // What a screen reader hears when the session moves on: the phase, the step and the set, never
   // the countdown. It reads the plan (the lead-in and rest lengths), not the clock, so a tick
   // leaves it as it was and the live region only speaks on a change.
-  const announcement = done ? 'Workout finished' : paused ? 'Paused' : ready && slot ? `Next block: ${partTitle(partOf(slot.part))}, set up then start` : lead ? `Get ready, ${state.leadSec} seconds` : !slot ? '' : isRest ? `Rest, ${Math.round(slot.seconds ?? 0)} seconds` : stepOf?.kind !== 'exercise' ? '' : straight ? `${stepOf.exercise.name}, set ${slot.round + 1} of ${slot.rounds}` : `${stepOf.exercise.name}, ${forLabel(stepOf)}${slot.rounds > 1 ? `, round ${slot.round + 1}${slot.mode === 'amrap' ? '' : ` of ${slot.rounds}`}` : ''}`;
+  const announcement = done ? 'Workout finished' : paused ? 'Paused' : ready && slot ? `Next block: ${partTitle(partOf(slot.part))}, set up then start` : lead ? `Get ready, ${state.leadSec} seconds` : !slot ? '' : isRest ? `Rest, ${Math.round(slot.seconds ?? 0)} seconds` : stepOf?.kind !== 'exercise' ? '' : round ? `${slot.blockName || 'Round'}, round ${slot.round + 1}` : straight ? `${stepOf.exercise.name}, set ${slot.round + 1} of ${slot.rounds}` : `${stepOf.exercise.name}, ${forLabel(stepOf)}${slot.rounds > 1 ? `, round ${slot.round + 1}${slot.mode === 'amrap' ? '' : ` of ${slot.rounds}`}` : ''}`;
 
   return (
     <div inert={confirmExit} className={cn('flex h-full min-h-0 flex-col text-white transition-colors duration-300', isRest && !ready ? 'bg-rest' : 'bg-ink')}>
@@ -396,6 +403,12 @@ export const TimerScreen = ({ runsheet, state, now, onDone, onSkip, onBack, onPa
       <div className="min-h-0 flex-1 overflow-y-auto px-4 max-[359px]:px-2">
         {ready && slot ? (
           <div className="py-4">
+            {cut && (
+              <div className="mb-4 flex items-center justify-between gap-3 rounded-card bg-white px-3.5 py-2.5 text-ink">
+                <span className="text-[15px] font-semibold">Time. Reps into round {cut.round + 1}</span>
+                <Stepper aria-label={`Reps into round ${cut.round + 1}`} value={cut.extra} min={0} max={Math.max(0, cut.reps - 1)} onChange={v => onExtraReps!(cut.blockId, v)} />
+              </div>
+            )}
             <div className="text-[11px] font-bold tracking-widest text-brand uppercase">Next block{slot.parts > 1 ? ` · ${slot.part + 1} of ${slot.parts}` : ''}</div>
             <div className="mt-1 text-[28px] leading-tight font-black">{partTitle(partOf(slot.part))}</div>
             <div className="mt-1 text-[13px] text-white/60">{slot.mode !== 'loose' && partOf(slot.part).kind === 'block' ? roundsLabel(partOf(slot.part) as Block) : forLabel(stepOf as ExerciseStep)}</div>
@@ -445,8 +458,8 @@ export const TimerScreen = ({ runsheet, state, now, onDone, onSkip, onBack, onPa
             )}
             {lead && <div className="-mt-2 pb-3 text-center text-[13px] text-white/60">Get ready</div>}
             {lead && <div className="-mt-1 pb-3 text-center text-[12px] text-white/60">The web timer needs the screen on.</div>}
-            {!timed && !lead && !done && slot && <div className="-mt-2 pb-3 text-center text-[13px] text-white/60">{isRest ? 'Rest' : straight ? 'Tick the set when you finish it' : 'Tap Done when finished'}</div>}
-            {emomWork && !done && <div className="-mt-2 pb-3 text-center text-[13px] text-white/60">Tap Done when finished</div>}
+            {!timed && !lead && !done && slot && !round && <div className="-mt-2 pb-3 text-center text-[13px] text-white/60">{isRest ? 'Rest' : straight ? 'Tick the set when you finish it' : 'Tap Done when finished'}</div>}
+            {emomWork && !done && !round && <div className="-mt-2 pb-3 text-center text-[13px] text-white/60">Tap Done when finished</div>}
             {minuteLeft !== undefined && !lead && !done && (
               <div className={cn('mx-auto mb-3 w-fit rounded-full bg-white/10 px-3 py-1 text-[13px] font-bold tabular-nums', minuteLeft <= 10 && (isRest ? 'text-brand-line' : 'text-brand'))} aria-label={`Time left in the ${slot?.everySec && slot.everySec !== 60 ? 'interval' : 'minute'}`}>
                 {fmtClock(minuteLeft)} left in the {slot?.everySec && slot.everySec !== 60 ? 'interval' : 'minute'}
@@ -460,7 +473,26 @@ export const TimerScreen = ({ runsheet, state, now, onDone, onSkip, onBack, onPa
 
             {straight && slot?.blockId && !done && !lead && <TimerSetGrid key={slot.blockId} state={state} step={straight} blockId={slot.blockId} actions={sets!} equipment={equipment} prs={prs} onHowTo={() => setLook(straight)} />}
 
-            {slot && !done && !(straight && !lead) && (
+            {round && slot && (
+              <div className="rounded-card bg-white px-3 py-1.5 text-ink" aria-label={`Round ${slot.round + 1}`}>
+                {round.map(j => {
+                  const sl = state.slots[j];
+                  if (sl.step.kind !== 'exercise') return null;
+                  const es = sl.step;
+                  const ticked = state.actuals[sl.id]?.doneAt !== undefined;
+                  return (
+                    <button key={sl.id} type="button" onClick={() => setLook(es)} aria-label={`${es.exercise.name}, ${forLabel(es)}${ticked ? ', done' : ''}. How to do it`} className="flex min-h-15 w-full items-center gap-3 border-b border-line-soft py-1.5 text-left last:border-0">
+                      <ClipThumb size="md" clip={es.exercise.clip} poster={es.exercise.poster} icon={es.exercise.icon} />
+                      <span className={cn('min-w-0 flex-1 text-[19px] leading-tight font-extrabold', ticked && 'text-muted')}>{es.exercise.name}</span>
+                      {ticked && <Check className="size-4 shrink-0 text-muted" strokeWidth={3} />}
+                      <span className={cn('shrink-0 text-[22px] font-extrabold tabular-nums', ticked && 'text-muted')}>{fmtNum(es.forValue)}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+
+            {slot && !done && !round && !(straight && !lead) && (
               <SwipeToRemove onRemove={() => onDrop(slot.step.id)} disabled={isRest || paused} className="rounded-card">
                 <div className={cn('rounded-card p-4', isRest ? 'bg-white/10' : 'bg-white text-ink')}>
                   <div className="flex items-center gap-3.5">
@@ -535,7 +567,7 @@ export const TimerScreen = ({ runsheet, state, now, onDone, onSkip, onBack, onPa
               </SwipeToRemove>
             )}
 
-            {nxt && !done && (
+            {nxt && !done && !round && (
               <button type="button" onClick={() => setPeek(nxt.part)} className={cn('sticky bottom-0 mt-3 flex min-h-11 w-full items-center gap-2.5 px-1.5 text-left text-[16px] transition-colors duration-300', isRest ? 'bg-rest' : 'bg-ink')}>
                 <span className={cn('shrink-0 text-[13px] font-semibold tracking-wider uppercase', nextIsNewPart ? (isRest ? 'text-brand-line' : 'text-brand') : 'text-white/60')}>{nextIsNewPart ? 'Next block' : 'Next'}</span>
                 <span className="min-w-0 flex-1 truncate">{nextIsNewPart ? partTitle(partOf(nxt.part)) : nxt.step.kind === 'exercise' ? nxt.step.exercise.name : 'Rest'}</span>
@@ -589,7 +621,7 @@ export const TimerScreen = ({ runsheet, state, now, onDone, onSkip, onBack, onPa
                 {paused ? <Play /> : <Pause />} {paused ? 'Resume' : 'Pause'}
               </Button>
             ) : (
-              <Button block size="xl" variant="brand" onClick={onDone}>
+              <Button block size="xl" variant="brand" onClick={round ? onRoundDone : onDone}>
                 <Check /> {setDone}
               </Button>
             )}

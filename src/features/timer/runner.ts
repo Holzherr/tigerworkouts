@@ -3,7 +3,7 @@
  * transition takes `now` in ms so it can be tested without a clock. The React hook adds the
  * interval, sounds, wake lock and persistence.
  */
-import { amountsOf, countsReps, measureOf, plannedSet, rungSteps, scoreType, type Block, type ExerciseRef, type ExerciseStep, type ItemRole, type Runsheet, type SetPlan, type SetType, type Step } from '@/features/runsheet/model';
+import { amountsOf, countsReps, extraLogs, hasLoad, measureOf, plannedSet, rungSteps, scoreType, type Block, type ExerciseRef, type ExerciseStep, type ItemRole, type Runsheet, type SetPlan, type SetType, type Step } from '@/features/runsheet/model';
 import type { RoundSplit, SessionResult, SetResult, StepResult } from '@/features/runsheet/progression';
 
 export interface Slot {
@@ -93,6 +93,9 @@ export interface RunState {
   /** A countdown passed without running, started from its row (see `completeSet`): the slot it runs
    * in (`at`) and the slot the timer was on, which it goes back to when the countdown is over. */
   detour?: { at: string; to: string };
+  /** Reps into the round an AMRAP's cap cut short, by block id: asked once, at the cap, when its
+   * rounds were ticked whole (see `roundSlots`), and added to the score. */
+  extraReps?: Record<string, number>;
 }
 
 const LEAD_SEC = 5;
@@ -374,6 +377,62 @@ export const advance = (given: RunState, now: number, opts: { skipped?: boolean 
   const to = detour && c && detour.at === c.id ? slotIndex(out, detour.to) : -1;
   return enter(out, to > s.i ? to : s.i + 1, now);
 };
+
+/** Plain rep work: a count of reps and nothing else to set or log — no load, no clock, no metres. */
+const plainReps = (sl: Slot) => sl.kind === 'work' && sl.step.kind === 'exercise' && sl.step.forMode === 'reps' && sl.seconds === undefined && !hasLoad(sl.step.exercise) && sl.step.target === undefined && sl.step.incline === undefined && extraLogs(sl.step).length === 0;
+/**
+ * The round slot `i` is in, when it is ticked whole (review D17): an AMRAP's or an EMOM's round of
+ * plain rep work — Cindy's 5 pull-ups, 10 push-ups, 15 squats — is one card with one button, not a
+ * tap per exercise. The indices of the round's work slots; undefined for any other slot, and for a
+ * round with a load, timed work or a rest inside it, which stays step by step.
+ */
+export const roundSlots = (s: RunState, i = s.i): number[] | undefined => {
+  const c = s.slots[i];
+  if (!c || c.kind !== 'work' || !c.blockId || (c.mode !== 'amrap' && c.mode !== 'emom')) return undefined;
+  const out: number[] = [];
+  for (const [j, sl] of s.slots.entries()) {
+    if (sl.blockId !== c.blockId || sl.round !== c.round) continue;
+    if (sl.kind === 'rest') {
+      if (sl.untilBoundary || sl.step.id === `${c.blockId}:between`) continue;
+      return undefined;
+    }
+    if (!plainReps(sl)) return undefined;
+    out.push(j);
+  }
+  return out;
+};
+/** "Round n done": every exercise left in the running round is done, in one tap. On any other slot, Done. */
+export const advanceRound = (s: RunState, now: number): RunState => {
+  const c = current(s);
+  if (!c || (s.phase !== 'running' && s.phase !== 'paused') || !roundSlots(s)) return advance(s, now);
+  let st = s;
+  do st = advance(st, now);
+  while (st.phase === 'running' && st.slots[st.i]?.kind === 'work' && st.slots[st.i].blockId === c.blockId && st.slots[st.i].round === c.round);
+  return st;
+};
+/** Work slots a round of the block has now: the exercises still in the session. */
+const perRound = (s: RunState, blockId: string) => {
+  const last = s.slots.findLast(sl => sl.blockId === blockId && sl.kind === 'work');
+  return last ? s.slots.filter(sl => sl.blockId === blockId && sl.kind === 'work' && sl.round === last.round).length : 0;
+};
+/**
+ * The AMRAP just left on its cap, when its rounds were ticked whole: the round the cap cut short
+ * (0-based) and the reps a whole round has, for the one question "reps into round n". Asked at the
+ * gate that follows; at the end of the session the result sheet asks. Undefined otherwise.
+ */
+export const cappedRound = (s: RunState): { blockId: string; round: number; reps: number; extra: number } | undefined => {
+  if (s.phase !== 'ready' || s.i <= 0) return undefined;
+  const prev = s.slots[s.i - 1];
+  if (prev.mode !== 'amrap' || !prev.blockId || !s.capped?.includes(prev.blockId)) return undefined;
+  const last = s.slots.findLastIndex(sl => sl.blockId === prev.blockId && sl.kind === 'work');
+  const round = last >= 0 ? roundSlots(s, last) : undefined;
+  if (!round) return undefined;
+  const per = perRound(s, prev.blockId) || 1;
+  const reps = round.reduce((t, j) => t + (s.slots[j].step.kind === 'exercise' ? s.slots[j].step.forValue : 0), 0);
+  return { blockId: prev.blockId, round: Math.floor((s.blockDone[prev.blockId] ?? 0) / per), reps, extra: s.extraReps?.[prev.blockId] ?? 0 };
+};
+/** The reps done into the round an AMRAP's cap cut short. */
+export const setExtraReps = (s: RunState, blockId: string, reps: number): RunState => ({ ...s, extraReps: { ...s.extraReps, [blockId]: Math.max(0, Math.round(reps)) } });
 
 /** The work a set's time says something about: a countdown (a plank, a 40 s interval), a max
  * effort, a distance or a calorie count. A set of reps is left out — its time is mostly the rest
@@ -938,7 +997,8 @@ export const toResult = (s: RunState, r: Runsheet, now: number): SessionResult =
       const per = inRound.length || 1;
       const rounds = Math.floor(done / per);
       const extraSlots = done - rounds * per;
-      const extraReps = inRound.slice(0, extraSlots).reduce((t, x) => t + (x.kind === 'exercise' && x.forMode === 'reps' ? x.forValue : 0), 0);
+      // Rounds ticked whole leave no part round in the slots: the reps into it were asked at the cap.
+      const extraReps = inRound.slice(0, extraSlots).reduce((t, x) => t + (x.kind === 'exercise' && x.forMode === 'reps' ? x.forValue : 0), 0) + (s.extraReps?.[amrap.id] ?? 0);
       score = rounds + Math.min(999, extraReps) / 1000;
     }
   } else if (type === 'reps') score = [...steps.values()].reduce((t, x) => t + (x.reps?.reduce((a, b) => a + b, 0) ?? 0), 0);

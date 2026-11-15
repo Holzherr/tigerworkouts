@@ -381,7 +381,13 @@ final class WalkthroughUITests: XCTestCase {
         tap(app.buttons["Start workout"])
         let cap = app.descendants(matching: .any)["cap-left"].firstMatch
         XCTAssertTrue(cap.waitForExistence(timeout: 12), "a capped block should show the time left on it")
+        // Review D17: the whole round on one card, each exercise with its clip, and one button.
+        XCTAssertTrue(app.descendants(matching: .any)["round-card"].firstMatch.waitForExistence(timeout: 5), "a round of plain reps should be one card")
+        XCTAssertTrue(app.descendants(matching: .any)["round-row-2"].firstMatch.exists, "every exercise of the round should be on the card")
         snap("36 Cap clock on an AMRAP")
+        tap(app.buttons["Round 1 done"])
+        XCTAssertTrue(app.buttons["Round 2 done"].waitForExistence(timeout: 5), "one tap should finish the round")
+        snap("36b Round 2 on the round card")
         tap(app.buttons["End session"])
         tap(app.buttons["Finish and save"])
         tap(app.buttons["Done"])
@@ -396,7 +402,7 @@ final class WalkthroughUITests: XCTestCase {
         XCTAssertTrue(minute.waitForExistence(timeout: 12), "EMOM work should show the time left in the minute")
         XCTAssertTrue(minute.label.contains("left in the minute"))
         snap("37 EMOM minute clock")
-        tap(app.buttons["Set 1 of 10 done"])
+        tap(app.buttons["Round 1 done"])
         XCTAssertTrue(app.staticTexts["Rest"].waitForExistence(timeout: 5))
         tap(app.buttons["Previous step"])
         XCTAssertTrue(minute.waitForExistence(timeout: 5), "Previous step should go back to the set")
