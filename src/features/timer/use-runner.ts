@@ -120,22 +120,39 @@ export const useRunner = (runsheet: Runsheet, opts: { /** A kept run to carry on
   // Set by Discard: nothing is kept after it, even if a rest runs out before the page is left.
   const discarded = useRef(false);
 
+  // The kept run is written on every change, and a tick changes nothing: two minutes into a set
+  // the copy still said "saved when the set began", so a reload there (iOS evicts a tab) resumed
+  // with those two minutes gone from the session and from a for-time score. While the clock runs
+  // the copy is refreshed every few seconds and when the page is hidden or left.
+  const latest = useRef(state);
+  latest.current = state;
+  const keep = useRef(() => {});
+  keep.current = () => {
+    const s = latest.current;
+    if (persist && !discarded.current && (s.phase === 'running' || s.phase === 'lead')) R.persist(s);
+  };
+
   // tick
   useEffect(() => {
+    let ticks = 0;
     const t = setInterval(() => {
       const n = Date.now();
       setNow(n);
       setState(s => R.tick(s, n));
+      if (++ticks % 25 === 0) keep.current();
     }, 200);
     const onVis = () => {
-      if (document.hidden) return;
+      if (document.hidden) return keep.current();
       setState(s => R.tick(s, Date.now()));
       if (actx && actx.state !== 'running') unlockAudio();
     };
+    const onHide = () => keep.current();
     document.addEventListener('visibilitychange', onVis);
+    window.addEventListener('pagehide', onHide);
     return () => {
       clearInterval(t);
       document.removeEventListener('visibilitychange', onVis);
+      window.removeEventListener('pagehide', onHide);
     };
   }, []);
 

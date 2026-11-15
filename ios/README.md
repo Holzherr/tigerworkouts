@@ -163,4 +163,3 @@ private sends the `public` column; any other edit leaves it as the server has it
 
 - An Apple Watch app. The phone is the timer; a watch face would be the next real piece of work.
 - Follow-along video. The catalogue's YouTube-backed workouts run as timed steps without the clip.
-- Editing a past session. History is read-only here; correct a session on the web.

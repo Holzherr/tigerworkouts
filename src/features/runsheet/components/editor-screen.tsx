@@ -151,7 +151,8 @@ export const EditorScreen = ({ runsheet, onChange, onPickExercise, onSwapExercis
               <Play /> Start · {minutes} min
             </Button>
           ) : (
-            <Button block onClick={onSaveAsMine} disabled={!runsheet.items.length}>
+            // A name is enough to keep it (Nick, 15 Nov 2026); Start still needs something to run.
+            <Button block onClick={onSaveAsMine} disabled={!runsheet.items.length && !runsheet.title.trim()}>
               <Save /> Save workout
             </Button>
           )}

@@ -46,8 +46,11 @@ const seed = (s: ExerciseStep, m: Map<string, LastUsed>): ExerciseStep => {
   const step = m.get(`step:${s.id}`);
   const hit = (step?.exerciseKey === s.exercise.key ? step : undefined) ?? m.get(`ex:${s.exercise.key}`);
   if (!hit) return s;
-  // A relative load (% of a training max) is computed at run time; leave it to the resolver.
-  const target = typeof s.target === 'number' && hit.target !== undefined ? hit.target : s.target;
+  // A relative load (% of a training max, × bodyweight) is computed at run time; leave it to the
+  // resolver. A lift written with no load at all (most catalogue programs) takes last time's: it
+  // used to start at 0 kg every session, sixteen taps from where you left off.
+  const relative = s.targetPct !== undefined || s.loadFactor !== undefined || (s.target !== undefined && typeof s.target !== 'number');
+  const target = !relative && hit.target !== undefined ? hit.target : s.target;
   const incline = hit.incline !== undefined ? hit.incline : s.incline;
   return target === s.target && incline === s.incline ? s : { ...s, target, incline };
 };

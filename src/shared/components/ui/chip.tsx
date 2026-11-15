@@ -18,7 +18,8 @@ export const chipVariants = cva('inline-flex items-center gap-1 rounded-full fon
       md: 'h-8 px-3 text-[13px]',
       lg: 'h-9 px-3.5 text-[14px]',
     },
-    interactive: { true: 'cursor-pointer active:opacity-80 focus-visible:outline-2 focus-visible:outline-brand' },
+    // The pill stays its size; the hit area reaches 44px, as Button's small sizes do.
+    interactive: { true: "relative cursor-pointer after:absolute after:inset-x-0 after:top-1/2 after:h-11 after:-translate-y-1/2 after:content-[''] active:opacity-80 focus-visible:outline-2 focus-visible:outline-brand" },
   },
   defaultVariants: { variant: 'outline', size: 'md' },
 });

@@ -557,7 +557,8 @@ export const setAmountAt = (s: RunState, slotId: string, value: number, field?: 
 /** Only rest stands between the cursor and slot idx, inside one block: the set after the rest. */
 const onlyRestBefore = (s: RunState, idx: number) => idx > s.i && s.slots.slice(s.i, idx).every(sl => sl.kind === 'rest' && sl.blockId === s.slots[idx].blockId);
 /** The tick on a set row. The running set is Done (advance). The set after a rest ends the rest
- * early and is done in the same tap — people start before the rest runs out. A set passed without
+ * early and is done in the same tap — people start before the rest runs out. A countdown after a
+ * rest only starts: it has not run, so there is nothing to log. A set passed without
  * a tick (skipped, or un-ticked to fix its weight) is logged where it is and the cursor stays put. */
 export const completeSet = (s: RunState, now: number, slotId: string): RunState => {
   const idx = slotIndex(s, slotId);
@@ -568,6 +569,7 @@ export const completeSet = (s: RunState, now: number, slotId: string): RunState 
   if (onlyRestBefore(s, idx)) {
     let st = s;
     while (st.i < idx) st = advance(st, now, { skipped: true });
+    if (sl.seconds !== undefined) return st;
     return st.i === idx ? advance(st, now) : st;
   }
   if (idx > s.i) return s;
@@ -898,10 +900,13 @@ export const toResult = (s: RunState, r: Runsheet, now: number): SessionResult =
     const amrap = r.items.find((i): i is Block => i.kind === 'block' && i.mode === 'amrap');
     if (amrap) {
       const done = s.blockDone[amrap.id] ?? 0;
-      const per = amrap.steps.filter(x => x.kind === 'exercise').length || 1;
+      // A round is the exercises still in the session: one dropped at the start is not in any
+      // round, and counting it made four rounds of the other two read as "2 rounds + 15 reps".
+      const inRound = amrap.steps.filter(x => x.kind === 'exercise' && !s.dropped.includes(x.id));
+      const per = inRound.length || 1;
       const rounds = Math.floor(done / per);
       const extraSlots = done - rounds * per;
-      const extraReps = amrap.steps.filter(x => x.kind === 'exercise').slice(0, extraSlots).reduce((t, x) => t + (x.kind === 'exercise' && x.forMode === 'reps' ? x.forValue : 0), 0);
+      const extraReps = inRound.slice(0, extraSlots).reduce((t, x) => t + (x.kind === 'exercise' && x.forMode === 'reps' ? x.forValue : 0), 0);
       score = rounds + Math.min(999, extraReps) / 1000;
     }
   } else if (type === 'reps') score = [...steps.values()].reduce((t, x) => t + (x.reps?.reduce((a, b) => a + b, 0) ?? 0), 0);

@@ -629,8 +629,9 @@ final class WalkthroughUITests: XCTestCase {
         XCTAssertFalse(app.buttons["Start workout"].exists, "an empty workout should not offer Start")
         snap("11b New workout, named, empty")
 
-        // No page-wide Edit (1 Nov 2026): a tap on the block's header opens it.
-        tap(app.buttons["block-header"].firstMatch)
+        // A new workout's Block 1 is open already, so Add exercise is offered without a tap on its
+        // header (Nick, 15 Nov 2026: with it shut, Add block was the only button).
+        XCTAssertTrue(app.buttons["Add exercise"].firstMatch.waitForExistence(timeout: 5), "Block 1 of a new workout should be open")
         tap(app.buttons["Add exercise"].firstMatch)
         XCTAssertTrue(app.navigationBars["Add exercise"].waitForExistence(timeout: 5))
         snap("12 Exercise picker")
@@ -686,6 +687,8 @@ final class WalkthroughUITests: XCTestCase {
 
         // Back asks; Discard would delete the autosaved draft, Save keeps it.
         tap(app.buttons["new-back"])
+        XCTAssertTrue(app.buttons["leave-save"].firstMatch.waitForExistence(timeout: 5))
+        snap("11c2 Save this workout?")
         tap(app.buttons["leave-save"].firstMatch)
         XCTAssertTrue(app.buttons["Start \(title)"].waitForExistence(timeout: 5), "a new workout with an exercise should be kept in Mine")
         snap("11d Kept in Mine")
@@ -1679,6 +1682,24 @@ final class WalkthroughUITests: XCTestCase {
         tap(app.buttons["Finish and save"])
         XCTAssertTrue(app.staticTexts["Workout saved"].waitForExistence(timeout: 10), "Finish and save should save the session")
         tap(app.buttons["Done"])
+    }
+
+    /// Discard in the ⋯ menu asks first: Keep going stays in the session, Discard leaves it.
+    func testMenuDiscardAsksFirst() {
+        open("Tabata Kettlebell Swings")
+        tap(app.buttons["Start workout"])
+        XCTAssertTrue(app.buttons["Tick set 1"].waitForExistence(timeout: 12))
+        tap(app.buttons["Session menu"])
+        tap(app.buttons["Discard"])
+        XCTAssertTrue(app.staticTexts["Discard this session?"].waitForExistence(timeout: 5), "the menu's Discard should ask first")
+        snap("111 Menu Discard, asked first")
+        tap(app.buttons["Keep going"].firstMatch)
+        XCTAssertTrue(app.buttons["Tick set 1"].waitForExistence(timeout: 5), "Keep going should stay in the session")
+        tap(app.buttons["Session menu"])
+        tap(app.buttons["Discard"])
+        XCTAssertTrue(app.buttons["Keep going"].firstMatch.waitForExistence(timeout: 5))
+        tap(app.buttons["Discard"].firstMatch)
+        XCTAssertTrue(app.buttons["Start workout"].waitForExistence(timeout: 5), "Discard should close the timer")
     }
 
     /// Eight sets of swings: the set you are on comes into view without a swipe, and the table

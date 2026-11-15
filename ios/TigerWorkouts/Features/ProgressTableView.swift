@@ -6,10 +6,13 @@ import SwiftUI
 struct WorkoutProgressEntry: View {
     @Environment(Store.self) private var store
     let runsheet: Runsheet
+    /// Off while a workout is being built: the question is about training, not about adding
+    /// exercises (Nick, 15 Nov 2026).
+    var ask = true
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
-            if store.suggestions.shouldAsk(runsheet) {
+            if ask && store.suggestions.shouldAsk(runsheet) {
                 SuggestSetupCard()
             }
             let table = WeekTable.table(runsheet, results: store.results, workouts: store.myWorkouts)

@@ -153,3 +153,12 @@ describe('progress modes (port of ProgressModesTests.swift)', () => {
     expect(setTarget(step(pushup, { target: undefined }), rated(0, 6, 10, 10).map(({ load: _, ...x }) => x), 'maintain', undefined, 'effort')?.text).toBe('11 reps');
   });
 });
+
+describe('clock', () => {
+  it('rounds the whole time, so a pace never reads 1:60', async () => {
+    const { clock } = await import('./targets');
+    expect(clock(119.6)).toBe('2:00');
+    expect(clock(598 / 5)).toBe('2:00');
+    expect(clock(59.4)).toBe('0:59');
+  });
+});

@@ -51,9 +51,9 @@ enum Targets {
 
     /// m:ss, as the web writes it.
     static func clock(_ sec: Double) -> String {
-        let m = Int((sec / 60).rounded(.down))
-        let s = Int((sec.truncatingRemainder(dividingBy: 60)).rounded())
-        return "\(m):\(String(format: "%02d", s))"
+        // Round the whole, not the seconds: 119.6 s is "2:00", never "1:60".
+        let t = Int(sec.rounded())
+        return "\(t / 60):\(String(format: "%02d", t % 60))"
     }
 
     private static func median(_ xs: [Double]) -> Double { xs.sorted()[(xs.count - 1) / 2] }

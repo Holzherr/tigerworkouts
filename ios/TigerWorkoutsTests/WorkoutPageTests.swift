@@ -9,6 +9,16 @@ struct WorkoutPageTests {
     private let swing = LibraryExerciseFixture.make(key: "kb_swing", name: "Kettlebell swings", unit: "kg", step: 4, group: .kettlebell)
     private let thrust = ExerciseRef(key: "bb_hip_thrust", name: "Barbell hip thrust", unit: "kg", step: 5)
 
+    @Test("a new workout with a name and no exercise yet is kept, without its empty block")
+    func storableNamed() throws {
+        var r = Edit.newRunsheet(creator: "N")
+        r.title = "  "
+        #expect(Edit.storable(r) == nil, "a blank name is no name")
+        r.title = "Leg day"
+        let kept = try #require(Edit.storable(r))
+        #expect(kept.title == "Leg day" && kept.items.isEmpty && kept.id == r.id)
+    }
+
     @Test("a new workout with an exercise is storable even with an empty block or no name")
     func storable() throws {
         var r = Edit.newRunsheet(creator: "P")

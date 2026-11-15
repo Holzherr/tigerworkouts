@@ -469,12 +469,14 @@ enum Edit {
         return out
     }
 
-    /// What a workout being written is saved as, from its first exercise on: a name if it has none
-    /// yet ("My workout"), and without blocks still empty. Nil while there is nothing to run. A new
+    /// What a workout being written is saved as, from its name or its first exercise on: a name if
+    /// it has none yet ("My workout"), and without blocks still empty. Nil while it has neither. A new
     /// workout used to wait for `problem` to clear, so one block left empty (the first, after
     /// building in an added one) meant it was never saved at all (Priyanka, 14 Nov 2026).
     static func storable(_ r: Runsheet) -> Runsheet? {
-        guard !r.exerciseSteps.isEmpty else { return nil }
+        // A name is enough to keep it: named and left without an exercise, it used not to save at
+        // all (Nick, 15 Nov 2026). Unnamed and empty there is still nothing to save.
+        guard !r.exerciseSteps.isEmpty || !r.title.trimmingCharacters(in: .whitespaces).isEmpty else { return nil }
         var out = namedForStart(r)
         out.items = out.items.filter { item in
             guard let b = item.asBlock else { return true }

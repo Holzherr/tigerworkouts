@@ -128,6 +128,27 @@ struct RecommendTests {
         #expect(r[0].reason == "More from Coach A")
     }
 
+    private var franAndCindy: [Runsheet] {
+        [w("fran", keys: ["bw_pullup"], source: cf), w("cindy", keys: ["bw_pullup", "bw_pushup"], source: cf)]
+    }
+    private var franCopy: Runsheet {
+        var copy = w("u-fran", keys: ["bw_pullup", "bw_pushup"], source: src("user", "CrossFit"))
+        copy.copyOf = "fran"
+        return copy
+    }
+
+    @Test("counts a session of the original as a session of your copy: done, so not \"saved and not done\"")
+    func originalDoneCountsForCopy() {
+        #expect(!ids(Recommend.recommend([franCopy] + franAndCindy, results: [did("fran")], saved: ["u-fran"])).contains("u-fran"))
+    }
+
+    @Test("counts a session of your copy as a session of the original")
+    func copyDoneCountsForOriginal() {
+        let r = Recommend.recommend([franCopy] + franAndCindy, results: [did("u-fran", day: 8), did("cindy", day: 7)], saved: ["u-fran"])
+        #expect(!ids(r).contains("fran"))
+        #expect(!ids(r).contains("u-fran"))
+    }
+
     @Test("consecutive picks with one reason share a header")
     func grouping() {
         let a = Recommendation(runsheet: w("x"), reason: "R", score: 1)

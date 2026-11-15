@@ -17,17 +17,24 @@ const fake = vi.hoisted(() => {
     rows,
     calls: [] as string[],
     fail: '',
+    /** A session id the server refuses: any upsert carrying it fails whole, as a batch does. */
+    refuse: '',
     duringSelect: undefined as (() => void) | undefined,
     gate: undefined as Promise<void> | undefined,
     onAuth: (_event: string, _session: unknown) => {},
     table: (name: string, ops: string[] = []): unknown =>
       new Proxy({}, {
         get: (_, m) => {
-          if (m !== 'then') return (arg: unknown) => (m === 'upsert' && !f.fail && Array.isArray(arg) && (arg as { id: string }[]).forEach(r => ((rows[name] ??= {})[r.id] = r)), f.table(name, [...ops, `${name}.${String(m)}`]));
+          if (m !== 'then')
+            return (arg: unknown) => {
+              const refused = m === 'upsert' && !!f.refuse && Array.isArray(arg) && (arg as { id: string }[]).some(r => r.id === f.refuse);
+              if (m === 'upsert' && !f.fail && !refused && Array.isArray(arg)) (arg as { id: string }[]).forEach(r => ((rows[name] ??= {})[r.id] = r));
+              return f.table(name, [...ops, `${name}.${String(m)}`, ...(refused ? ['refused'] : [])]);
+            };
           return (resolve: (v: unknown) => void) => {
-            f.calls.push(...ops);
+            f.calls.push(...ops.filter(o => o !== 'refused'));
             if (ops.includes('sessions.select')) (f.duringSelect?.(), (f.duringSelect = undefined));
-            const answer = () => resolve({ data: ops.includes(`${name}.select`) ? Object.values(rows[name] ?? {}) : [], error: f.fail && ops.some(o => o.endsWith('.upsert')) ? { message: f.fail } : null });
+            const answer = () => resolve({ data: ops.includes(`${name}.select`) ? Object.values(rows[name] ?? {}) : [], error: f.fail && ops.some(o => o.endsWith('.upsert')) ? { message: f.fail } : ops.includes('refused') ? { message: 'row refused' } : null });
             const gate = ops.includes('sessions.select') ? f.gate : undefined;
             if (!gate) answer();
             else {
@@ -59,13 +66,30 @@ beforeEach(() => {
   clearSnap();
   fake.calls.length = 0;
   fake.fail = '';
+  fake.refuse = '';
   fake.gate = undefined;
   for (const t of Object.keys(fake.rows)) delete fake.rows[t];
   fake.onAuth('SIGNED_IN', { user: { id: 'u1', email: 'one@example.com' } });
   setState({ signedIn: true, results: [row('s-a')], workouts: [], favorites: [], saved: [], exercises: {}, trainingMaxes: {}, syncError: undefined });
 });
 
+describe('a session the server refuses', () => {
+  it('does not keep the others off the account', async () => {
+    setState({ results: [row('s-bad'), row('s-gym'), row('s-a')] });
+    fake.refuse = 's-bad';
+    const out = await sync(getState());
+    expect(out.error).toMatch(/row refused/);
+    expect(Object.keys(fake.rows.sessions ?? {}).sort()).toEqual(['s-a', 's-gym']);
+    expect(remembered().sort()).toEqual(['s-a', 's-gym']);
+  });
+});
+
 describe('sign-out', () => {
+  it('forgets the kept run, its origin and the open result sheet with the rest of the device', async () => {
+    for (const k of ['tiger:run', 'tiger:run-from', 'tiger:pending']) localStorage.setItem(k, '{}');
+    expect(await signOut()).toBeUndefined();
+    expect(['tiger:run', 'tiger:run-from', 'tiger:pending'].map(k => localStorage.getItem(k))).toEqual([null, null, null]);
+  });
   it('is refused, and nothing is cleared, when the push fails', async () => {
     await sync(getState()); // s-a is on the server and remembered as seen
     setState(s => ({ results: [row('s-b'), ...s.results] }));

@@ -753,7 +753,8 @@ enum Runner {
     }
 
     /// The tick on a set row. The running set is Done (advance). The set after a rest ends the rest
-    /// early and is done in the same tap — people start before the rest runs out. A set passed
+    /// early and is done in the same tap — people start before the rest runs out. A countdown
+    /// after a rest only starts: it has not run, so there is nothing to log. A set passed
     /// without a tick (skipped, or un-ticked to fix its weight) is logged where it is and the
     /// cursor stays put.
     static func completeSet(_ s: RunState, now: Double, slotId: String) -> RunState {
@@ -765,6 +766,7 @@ enum Runner {
         if idx > s.i, s.slots[s.i..<idx].allSatisfy({ $0.kind == .rest && $0.blockId == s.slots[idx].blockId }) {
             var st = s
             while st.i < idx { st = advance(st, now: now, skipped: true) }
+            if s.slots[idx].seconds != nil { return st }
             return st.i == idx ? advance(st, now: now) : st
         }
         guard idx < s.i else { return s }
@@ -1180,10 +1182,13 @@ enum Runner {
         case .rounds:
             if let amrap = r.items.compactMap(\.asBlock).first(where: { $0.mode == .amrap }) {
                 let done = s.blockDone[amrap.id] ?? 0
-                let per = max(1, amrap.steps.filter { $0.asExercise != nil }.count)
+                // A round is the exercises still in the session: one dropped at the start is not
+                // in any round, and counting it made four rounds of the other two read as 2 + reps.
+                let inRound = amrap.steps.compactMap(\.asExercise).filter { !s.dropped.contains($0.id) }
+                let per = max(1, inRound.count)
                 let rounds = done / per
                 let extraSlots = done - rounds * per
-                let extraReps = amrap.steps.compactMap(\.asExercise).prefix(extraSlots)
+                let extraReps = inRound.prefix(extraSlots)
                     .reduce(0.0) { $0 + ($1.forMode == .reps ? $1.forValue : 0) }
                 score = Double(rounds) + min(999, extraReps) / 1000
             }

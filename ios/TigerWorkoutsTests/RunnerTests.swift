@@ -153,6 +153,26 @@ struct RunTests {
         #expect(abs((result.score ?? 0) - 2.005) < 0.0005)
     }
 
+    @Test("an amrap with an exercise dropped at the start scores rounds of what is left")
+    func amrapDropped() {
+        let sheet = Fixtures.cindy()
+        let first = sheet.items.compactMap(\.asBlock)[0].steps.compactMap(\.asExercise)[0].id
+        let per = sheet.items.compactMap(\.asBlock)[0].steps.compactMap(\.asExercise).count - 1
+        var s = Runner.drop(Runner.tick(Runner.start(sheet, now: 0), now: 5_000), now: 5_000, stepId: first)
+        var t: Double = 5_000
+        for _ in 0..<(2 * per) {
+            t += 5_000
+            s = Runner.advance(s, now: t)
+        }
+        s = Runner.tick(s, now: 5_000 + 61_000)
+        #expect(Runner.toResult(s, sheet, now: 70_000).score == 2)
+    }
+
+    @Test("a pace rounds the whole time, never 1:60")
+    func paceClock() {
+        #expect(Targets.clock(119.6) == "2:00" && Targets.clock(59.4) == "0:59")
+    }
+
     @Test("a load set on a later round carries back to the rest of that step")
     func carriesForward() {
         var s = Runner.tick(Runner.start(Fixtures.interval(), now: 0), now: 5_000)

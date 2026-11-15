@@ -11,6 +11,8 @@ enum Brand {
     static let coralSoft = Color(light: 0xFFF0EC, dark: 0x3B1E18)
     static let brandLine = Color(light: 0xFFB4A3, dark: 0x7A3325)
     static let rest = Color(light: 0x1E3A8A, dark: 0x93A8FF)
+    /// Destructive text: a dark red that cannot be mistaken for the coral beside it.
+    static let danger = Color(light: 0xB91C1C, dark: 0xF87171)
 
     static let ink = Color(light: 0x0F172A, dark: 0xF1F5F9)
     static let body = Color(light: 0x475569, dark: 0xCBD5E1)

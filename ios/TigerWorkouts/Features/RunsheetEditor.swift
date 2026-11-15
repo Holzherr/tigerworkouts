@@ -11,6 +11,9 @@ struct RunsheetEditor<Header: View>: View {
     var runsheet: Runsheet
     /// Off, the list reads except for the one block opened by a tap on its header.
     var editing = true
+    /// A block to open for editing when the screen appears: a new workout's Block 1, so Add
+    /// exercise is the first thing offered and Add block is not the only button (Nick, 15 Nov 2026).
+    var openFirst: String? = nil
     /// Items done or running in a live session: shown, never moved or changed.
     var locked: Set<String> = []
     /// The step running now, marked on its row.
@@ -130,6 +133,9 @@ struct RunsheetEditor<Header: View>: View {
                     .transition(.move(edge: .bottom).combined(with: .opacity))
                     .accessibilityIdentifier("move-note")
             }
+        }
+        .task(id: openFirst) {
+            if !editing, focused == nil, let openFirst { focused = openFirst }
         }
         .sheet(isPresented: $reordering) {
             BlockReorderView(draft: runsheet, locked: locked) { apply($0) }

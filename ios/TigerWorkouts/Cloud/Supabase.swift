@@ -164,16 +164,24 @@ actor Supabase {
         req.setValue("application/json", forHTTPHeaderField: "Content-Type")
         req.httpBody = try JSONSerialization.data(withJSONObject: ["refresh_token": token])
         let (data, response) = try await URLSession.shared.data(for: req)
-        guard let http = response as? HTTPURLResponse, (200..<300).contains(http.statusCode) else {
-            // The refresh token is spent or revoked: sign out rather than loop.
-            session = nil
-            persist()
-            return nil
+        guard let http = response as? HTTPURLResponse else { throw SupabaseError(message: "No response") }
+        guard (200..<300).contains(http.statusCode) else {
+            // The refresh token is spent or revoked: sign out rather than loop. Anything else (a
+            // rate limit, a server error) says nothing about the token, and signing out on it
+            // emptied History.
+            if Self.refreshRefused(http.statusCode) {
+                session = nil
+                persist()
+            }
+            throw SupabaseError(message: Self.message(from: data, status: http.statusCode))
         }
         session = try JSONDecoder().decode(AuthSession.self, from: data)
         persist()
         return session?.accessToken
     }
+
+    /// The statuses GoTrue answers a refresh token it will not take with.
+    static func refreshRefused(_ status: Int) -> Bool { status == 400 || status == 401 }
 
     // MARK: - Sign-in
 
@@ -300,7 +308,8 @@ actor Supabase {
 
     /// Every session this account has logged, in either app.
     func sessions() async throws -> [SessionResult] {
-        guard let uid = session?.user.id else { return [] }
+        // Thrown, not an empty list: a sync would take that for an account with no sessions.
+        guard let uid = session?.user.id else { throw SupabaseError(message: "Not signed in") }
         let (data, _) = try await request("rest/v1/sessions?select=id,data&owner=eq.\(uid)")
         guard let rows = try JSONSerialization.jsonObject(with: data) as? [[String: Any]] else { return [] }
         return rows.compactMap { row in
@@ -341,7 +350,7 @@ actor Supabase {
 
     /// The account's own workouts, on top of the bundled catalogue.
     func workouts() async throws -> [Runsheet] {
-        guard let uid = session?.user.id else { return [] }
+        guard let uid = session?.user.id else { throw SupabaseError(message: "Not signed in") }
         let (data, _) = try await request("rest/v1/workouts?select=id,data,creator,title,public&owner=eq.\(uid)&order=updated_at.desc")
         return Self.decodeWorkouts(data)
     }

@@ -41,8 +41,10 @@ enum Recommend {
     static func recommend(_ all: [Runsheet], results: [SessionResult], saved: [String] = [], limit: Int = 6) -> [Recommendation] {
         let byId = Dictionary(all.map { ($0.key, $0) }, uniquingKeysWith: { first, _ in first })
         let done = results.compactMap { byId[$0.runsheetId] }
-        let doneIds = Set(results.map(\.runsheetId))
-        let recent = Set(results.prefix(5).map(\.runsheetId))
+        // A session of your copy is a session of the original, and the other way round.
+        func rootOf(_ rid: String) -> String { byId[rid].map(NextUp.root) ?? rid }
+        let doneIds = Set(results.map { rootOf($0.runsheetId) })
+        let recent = Set(results.prefix(5).map { rootOf($0.runsheetId) })
 
         if done.isEmpty {
             func pick(_ pred: (Runsheet) -> Bool, _ reason: String) -> [Recommendation] {
@@ -98,12 +100,12 @@ enum Recommend {
             let rid = r.key
             // An original you have a copy of is offered as the copy, or not at all.
             if r.copyOf == nil, copies[rid] != nil { continue }
-            if recent.contains(rid) || programNext.contains(where: { $0.runsheet.key == rid }) { continue }
+            if recent.contains(NextUp.root(r)) || programNext.contains(where: { $0.runsheet.key == rid }) { continue }
             if let p = r.program, !started.contains(p.name), p.order != 1 { continue }
             let a = author(r)
             let sessions = a.isEmpty ? 0 : (authors[a] ?? 0)
             let shared = exerciseKeys(r).filter { keys[$0] != nil }
-            let savedNotDone = saved.contains(rid) && !doneIds.contains(rid)
+            let savedNotDone = saved.contains(rid) && !doneIds.contains(NextUp.root(r))
             if sessions < creatorSessions && shared.count < minOverlap && !savedNotDone { continue }
             var s = 0.0
             var reasons: [(Double, String)] = []
@@ -127,7 +129,7 @@ enum Recommend {
                 s += 4
                 reasons.append((4, "Saved and not done yet"))
             }
-            if doneIds.contains(rid) {
+            if doneIds.contains(NextUp.root(r)) {
                 s += 1
                 reasons.append((0.5, "Beat your last score"))
             }
