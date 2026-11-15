@@ -1,29 +1,75 @@
 import SwiftUI
 
-/// Today's target in one line: a coral eyebrow, the aim in bold, where it came from in grey. Used on
-/// the Up next card and at the top of a workout page.
+/// Today's target in one line — "Today: Shoulder press 27.5 kg × 8 (+2.5 kg)" — with the reasoning
+/// and any other exercise's target behind a tap (Priyanka, 14 Nov 2026: the two-line version was
+/// heavy and repeated the rows below). Display only: the numbers are `Targets.today`'s.
 struct TodayLine: View {
     var today: Targets.Today
+    /// What changed from last time on the first target: "+2.5 kg", "+1 rep".
+    var delta: String? = nil
+    @State private var open = false
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 2) {
-            Text("Today")
-                .font(.caption2.weight(.heavy))
-                .textCase(.uppercase)
-                .tracking(0.6)
-                .foregroundStyle(Brand.coralInk)
-            Text(today.text)
-                .font(.subheadline.weight(.bold))
-                .foregroundStyle(Brand.ink)
-                .fixedSize(horizontal: false, vertical: true)
-            Text(today.detail)
+        VStack(alignment: .leading, spacing: 6) {
+            Button {
+                withAnimation(.easeOut(duration: 0.2)) { open.toggle() }
+            } label: {
+                HStack(alignment: .firstTextBaseline, spacing: 6) {
+                    (Text("Today: ").foregroundStyle(Brand.coralInk)
+                        + Text(today.text).foregroundStyle(Brand.ink)
+                        + Text(delta.map { " (\($0))" } ?? "").foregroundStyle(Brand.coralInk))
+                        .font(.subheadline.weight(.bold))
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.85)
+                    Spacer(minLength: 4)
+                    Image(systemName: open ? "chevron.up" : "chevron.down")
+                        .font(.caption.weight(.bold))
+                        .foregroundStyle(Brand.faint)
+                }
+                .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            .accessibilityHint(open ? "Hides why" : "Shows why")
+            .accessibilityIdentifier("today-target")
+            if open {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(Self.why(today.detail))
+                    ForEach(today.sets.dropFirst(), id: \.stepId) { t in
+                        Text("\(t.name) \(t.text): \(t.reason)")
+                    }
+                }
                 .font(.footnote)
                 .foregroundStyle(Brand.muted)
                 .fixedSize(horizontal: false, vertical: true)
+                .accessibilityIdentifier("today-why")
+            }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .accessibilityElement(children: .combine)
-        .accessibilityIdentifier("today-target")
+    }
+
+    /// The reason without the "· 1 more on the workout page" tail: the others are listed here.
+    static func why(_ detail: String) -> String {
+        guard let r = detail.range(of: " · ", options: .backwards), detail[r.upperBound...].hasSuffix("on the workout page") else { return detail }
+        return String(detail[..<r.lowerBound])
+    }
+
+    /// The change on today's target against last time's working sets: the load if it moves
+    /// ("+2.5 kg"), else the reps ("+1 rep/set" when every set gains the same, else the total).
+    static func delta(_ t: Targets.SetTarget, last: [SetResult]?, unit: String) -> String? {
+        let work = (last ?? []).filter { $0.type != .warmup && $0.type != .drop }
+        guard !work.isEmpty else { return nil }
+        let top = work.compactMap(\.load).max()
+        if let load = t.load, let top, top > 0, load != top {
+            let d = load - top
+            return "\(d > 0 ? "+" : "−")\(Format.number(abs(d)))\(unit.isEmpty ? "" : " \(unit)")"
+        }
+        let before = work.filter { top == nil || $0.load == top }.compactMap(\.reps)
+        guard !before.isEmpty, before.count == t.reps.count else { return nil }
+        let diffs = zip(t.reps, before).map { $0 - $1 }
+        let each = diffs.allSatisfy { $0 == diffs[0] }
+        let d = each ? diffs[0] : diffs.reduce(0, +)
+        guard d != 0 else { return nil }
+        return "\(d > 0 ? "+" : "−")\(Format.number(abs(d))) rep\(abs(d) == 1 ? "" : "s")\(each && diffs.count > 1 ? "/set" : "")"
     }
 }
 

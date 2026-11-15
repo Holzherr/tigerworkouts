@@ -32,6 +32,14 @@ struct WorkoutDetailView: View {
     @State private var asking: Asking?
     /// The page before its "Just this time" change: Undo goes back to it.
     @State private var onceFrom: Runsheet?
+    /// A new workout's Save (or bookmark) has been tapped: it is kept, and back no longer asks.
+    @State private var kept = false
+    /// Back on a new workout not yet kept: Save, Discard or keep editing.
+    @State private var confirmLeave = false
+    /// Save tapped before the workout had a name: saved once the name sheet closes.
+    @State private var saveAfterNaming = false
+    /// "Saved to Mine" for a moment after Save or the bookmark.
+    @State private var toast: String?
 
     private enum EditScope { case once, base }
     private enum Asking { case change(Runsheet) }
@@ -41,6 +49,8 @@ struct WorkoutDetailView: View {
     /// Something to run: a new workout has no Start, length or icon until it has an exercise.
     private var runnable: Bool { !store.prepared(runsheet).exerciseSteps.isEmpty }
     private var mustAsk: Bool { !isNew && scope == nil && store.doneCount(runsheet.key) > 0 }
+    /// A new workout with something in it that Save has not kept yet: back asks before leaving.
+    private var unsavedNew: Bool { isNew && !kept && Edit.storable(runsheet) != nil }
     /// The versions your sessions ran of the workout as stored.
     private var versions: [Versions.Row] {
         store.workout(id: runsheet.key).map { Versions.rows(store.results, base: $0) } ?? []
@@ -105,6 +115,8 @@ struct WorkoutDetailView: View {
             .listRowSeparator(.hidden)
             .listRowInsets(EdgeInsets(top: 6, leading: 4, bottom: 6, trailing: 4))
         }
+        // Less air between the header and the blocks, so more of the workout shows above Start.
+        .listSectionSpacing(.compact)
         .navigationTitle(runsheet.title.isEmpty ? "New workout" : runsheet.title)
         .navigationBarTitleDisplayMode(.inline)
         .onAppear {
@@ -118,7 +130,25 @@ struct WorkoutDetailView: View {
             runsheet = store.seeded(runsheet)
             if isNew && runsheet.title.isEmpty { naming = true }
         }
+        .navigationBarBackButtonHidden(unsavedNew)
         .toolbar {
+            if unsavedNew {
+                ToolbarItem(placement: .topBarLeading) {
+                    Button { confirmLeave = true } label: {
+                        Image(systemName: "chevron.backward").fontWeight(.semibold)
+                    }
+                    .accessibilityLabel("Back")
+                    .accessibilityIdentifier("new-back")
+                }
+            }
+            if isNew && !kept {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button("Save") { keep() }
+                        .fontWeight(.bold)
+                        .disabled(Edit.storable(runsheet) == nil)
+                        .accessibilityIdentifier("save-workout")
+                }
+            }
             ToolbarItem(placement: .topBarTrailing) {
                 Menu {
                     Button { naming = true } label: {
@@ -150,6 +180,9 @@ struct WorkoutDetailView: View {
         }
         .safeAreaInset(edge: .bottom) {
             VStack(spacing: 8) {
+                if let toast {
+                    SavedToast(text: toast) { self.toast = nil }
+                }
                 if let u = undo {
                     UndoToast(label: u.label) {
                         // The steps come back; the identity stays, since a catalogue workout's
@@ -163,6 +196,7 @@ struct WorkoutDetailView: View {
                 if runnable { bottomBar }
             }
             .animation(.easeOut(duration: 0.2), value: undo?.label)
+            .animation(.easeOut(duration: 0.2), value: toast)
         }
         .sheet(item: $editing) { step in
             ExerciseSheet(
@@ -191,7 +225,23 @@ struct WorkoutDetailView: View {
                 next.title = title
                 next.creator = creator
                 apply(next)
+                if saveAfterNaming {
+                    saveAfterNaming = false
+                    if !title.isEmpty { keep() }
+                }
             }
+        }
+        .confirmationDialog("Save this workout?", isPresented: $confirmLeave, titleVisibility: .visible) {
+            Button("Save") {
+                keep()
+                dismiss()
+            }
+            .accessibilityIdentifier("leave-save")
+            Button("Discard", role: .destructive) { discardNew() }
+                .accessibilityIdentifier("leave-discard")
+            Button("Keep editing", role: .cancel) {}
+        } message: {
+            Text("Discard deletes it. Save keeps it in Mine.")
         }
         .confirmationDialog("Delete this workout?", isPresented: $confirmDelete, titleVisibility: .visible) {
             Button("Delete", role: .destructive) {
@@ -380,15 +430,55 @@ struct WorkoutDetailView: View {
     private func duplicate() {
         flushSave()
         // A "Just this time" change is never a workout of its own: the workout is what is copied.
-        var copy = Edit.duplicate(onceFrom ?? runsheet, creator: store.profileName)
-        if store.isMine(runsheet) { copy.title = "\(runsheet.title) (copy)" }
-        // A workout of its own beside the original, not the original edited: its own history.
-        copy.copyOf = nil
-        copy.program = nil
+        // A workout of its own beside the original, not the original edited: its own history, fresh
+        // step ids, the week counted on ("… week 1" → "… week 2"), and the name sheet open on it.
+        let copy = Edit.duplicateForNextWeek(onceFrom ?? runsheet, creator: store.profileName)
         runsheet = copy
         scope = nil
         onceFrom = nil
         Task { await store.saveWorkout(copy) }
+        toast = "Duplicated · now editing the copy"
+        naming = true
+    }
+
+    /// Save on a new workout, and the back prompt's Save: in Mine now, under "My workout" until it
+    /// has a name of its own — the name sheet opens first if it has none.
+    private func keep() {
+        if runsheet.title.trimmingCharacters(in: .whitespaces).isEmpty {
+            saveAfterNaming = true
+            naming = true
+            return
+        }
+        guard let sheet = Edit.storable(runsheet) else { return }
+        pendingSave?.cancel()
+        store.stage(sheet)
+        Task { await store.pushWorkouts() }
+        kept = true
+        toast = "Saved to Mine"
+    }
+
+    /// The back prompt's Discard: the draft autosaved so far goes too.
+    private func discardNew() {
+        pendingSave?.cancel()
+        pendingSave = nil
+        kept = true
+        if let stored = store.workout(id: runsheet.key), store.isMine(stored) {
+            Task { await store.deleteWorkout(stored) }
+        }
+        dismiss()
+    }
+
+    /// The bookmark on a new workout saves it first, so it never bookmarks a workout that is not
+    /// kept anywhere (it did, and so seemed to do nothing).
+    private func bookmark() {
+        if isNew && !kept {
+            guard Edit.storable(runsheet) != nil else { return }
+            keep()
+            guard kept else { return }
+        }
+        let adding = !saved
+        Task { await store.toggleSaved(runsheet.key) }
+        toast = adding ? "Saved to Mine" : "Removed from saved"
     }
 
     /// Who can see it, as the store last heard from the server: this screen's copy can be older.
@@ -406,9 +496,9 @@ struct WorkoutDetailView: View {
 
     private func scheduleSave() {
         pendingSave?.cancel()
-        // A new workout waits until it is worth keeping: a name and an exercise.
-        guard Edit.problem(with: runsheet) == nil else { return }
-        let sheet = runsheet
+        // Autosaved as a draft from its first exercise on: a block left empty, or no name yet, no
+        // longer holds the save back (Priyanka, 14 Nov 2026).
+        guard let sheet = Edit.storable(runsheet) else { return }
         pendingSave = Task {
             try? await Task.sleep(for: .milliseconds(700))
             guard !Task.isCancelled else { return }
@@ -423,17 +513,18 @@ struct WorkoutDetailView: View {
         guard editable else { return }
         guard store.workout(id: runsheet.key) == nil else { return flushSave() }
         pendingSave?.cancel()
-        runsheet = Edit.namedForStart(runsheet)
+        runsheet = Edit.storable(runsheet) ?? Edit.namedForStart(runsheet)
         store.stage(runsheet)
+        kept = true
         Task { await store.pushWorkouts() }
     }
 
     /// In the store before it returns, so a session started next reads the edit as the workout,
     /// not as a version of it; the upload follows.
     private func flushSave() {
-        guard let task = pendingSave, !task.isCancelled, Edit.problem(with: runsheet) == nil else { return }
+        guard let task = pendingSave, !task.isCancelled, let sheet = Edit.storable(runsheet) else { return }
         task.cancel()
-        store.stage(runsheet)
+        store.stage(sheet)
         Task { await store.pushWorkouts() }
     }
 
@@ -503,7 +594,7 @@ struct WorkoutDetailView: View {
     @ViewBuilder
     private var progress: some View {
         if let today = Targets.today(store.prepared(runsheet), results: store.results, intent: Intent(rawValue: intent) ?? .maintain, kit: store.equipment) {
-            TodayLine(today: today)
+            TodayLine(today: today, delta: todayDelta(today))
         }
         if let stall = Stall.workout(runsheet, results: store.results), !dismissedStalls.contains(stall.id) {
             StallCard(stall: stall) {
@@ -511,6 +602,13 @@ struct WorkoutDetailView: View {
                 dismissedStalls = StallDismissals.all()
             }
         }
+    }
+
+    /// "+2.5 kg" on today's first target, against that step's sets last time.
+    private func todayDelta(_ today: Targets.Today) -> String? {
+        let sheet = store.prepared(runsheet)
+        guard let t = today.sets.first, let step = sheet.exerciseSteps.first(where: { $0.id == t.stepId }) else { return nil }
+        return TodayLine.delta(t, last: LastTime.sets(store.results, for: step, in: sheet), unit: step.shortUnit)
     }
 
     /// "Benchmark · CrossFit", "Program · StrongLifts · Day A" — what it is, and whose.
@@ -552,7 +650,7 @@ struct WorkoutDetailView: View {
             .buttonStyle(BigButtonStyle())
 
             Button {
-                Task { await store.toggleSaved(runsheet.key) }
+                bookmark()
             } label: {
                 Image(systemName: saved ? "bookmark.fill" : "bookmark")
                     .font(.system(size: 20, weight: .semibold))
@@ -562,6 +660,7 @@ struct WorkoutDetailView: View {
                     .foregroundStyle(saved ? Brand.coral : Brand.ink)
             }
             .accessibilityLabel(saved ? "Remove from saved" : "Save to my list")
+            .accessibilityIdentifier("bookmark")
         }
         .padding(.horizontal, 16)
         .padding(.top, 10)
@@ -578,7 +677,8 @@ struct WorkoutDetailView: View {
             parts.append("\(Format.number(kg)) \(e.shortUnit)")
         }
         if let incline = e.incline { parts.append("\(Format.number(incline))% incline") }
-        if let last = LastTime.label(store.results, for: e, in: runsheet) { parts.append(last) }
+        // Every set last time, in order — not the heaviest one (Priyanka, 14 Nov 2026).
+        if let last = LastTime.lastSessionLabel(store.results, for: e, in: runsheet) { parts.append(last) }
         return parts.joined(separator: " · ")
     }
 
@@ -592,5 +692,26 @@ struct WorkoutDetailView: View {
 
     private func find(_ stepId: String) -> ExerciseStep? {
         runsheet.exerciseSteps.first { $0.id == stepId }
+    }
+}
+
+/// "Saved to Mine" above the Start bar for two seconds.
+private struct SavedToast: View {
+    var text: String
+    var onExpire: () -> Void
+
+    var body: some View {
+        Label(text, systemImage: "checkmark.circle.fill")
+            .font(.subheadline.weight(.bold))
+            .foregroundStyle(.white)
+            .padding(.horizontal, 16)
+            .frame(minHeight: 40)
+            .background(Brand.ink, in: Capsule())
+            .transition(.move(edge: .bottom).combined(with: .opacity))
+            .accessibilityIdentifier("saved-toast")
+            .task(id: text) {
+                try? await Task.sleep(for: .seconds(2))
+                if !Task.isCancelled { onExpire() }
+            }
     }
 }
