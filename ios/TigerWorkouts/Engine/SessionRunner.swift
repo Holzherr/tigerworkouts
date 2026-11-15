@@ -17,8 +17,9 @@ final class SessionRunner {
     private(set) var beat = 0
     @ObservationIgnored private var shown: [Int] = []
     /// Whether anyone can see the timer. Off screen (locked, another app) nothing is published;
-    /// the tick still runs, and the cues with it.
-    @ObservationIgnored var onScreen: () -> Bool = { UIApplication.shared.applicationState == .active }
+    /// the tick still runs, and the cues with it. Behind Control Centre or a banner it is still
+    /// on screen.
+    @ObservationIgnored var onScreen: () -> Bool = { UIApplication.shared.applicationState != .background }
     private(set) var runsheet: Runsheet
     /// The list the workout was tapped in, written on the result so the web's origins breakdown
     /// counts gym sessions too. Only a path that knows it sets it; it rides in the crash-safe copy,
