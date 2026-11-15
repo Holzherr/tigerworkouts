@@ -2,6 +2,7 @@ import { Minus, Plus } from 'lucide-react';
 import { Button } from '@/shared/components/ui/button';
 import { Stepper } from '@/shared/components/ui/stepper';
 import { cn } from '@/shared/utils/ui-utils';
+import { loadStep, useStepSizes } from '@/shared/utils/step-sizes';
 import { addSet, countLabel, editSet, nextSetType, plannedSet, plannedType, removeSet, SET_TYPE_LABEL, setMarks, shortUnit, showsLoad, straightSetStep, type Block, type SetType } from '../model';
 import { kitOf, type Equipment } from '../plates';
 import { PlatesButton } from './plate-sheet';
@@ -44,6 +45,7 @@ export const SetMark = ({ mark, type, label, onCycle, className }: { mark: strin
  * load has a plate button beside it. Add set / Remove set change how many times the block repeats.
  */
 export const SetGrid = ({ block, onChange, hintFor, equipment }: SetGridProps) => {
+  useStepSizes();
   const step = straightSetStep(block);
   if (!step) return null;
   const hasLoad = showsLoad(step);
@@ -69,7 +71,7 @@ export const SetGrid = ({ block, onChange, hintFor, equipment }: SetGridProps) =
               </div>
               {hasLoad && (
                 <div className="flex flex-1 items-center justify-center">
-                  <Stepper size="sm" aria-label={`Set ${i + 1} load`} value={p.load ?? 0} step={step.exercise.step || 1} max={1000} onChange={load => onChange(editSet(block, i, { load }))} />
+                  <Stepper size="sm" aria-label={`Set ${i + 1} load`} value={p.load ?? 0} step={loadStep(step.exercise)} max={1000} onChange={load => onChange(editSet(block, i, { load }))} />
                   {barbell && <PlatesButton load={p.load} equipment={equipment} className="-mr-2" />}
                 </div>
               )}

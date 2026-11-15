@@ -21,6 +21,7 @@ import { EffortRow } from './effort-row';
 import { ShareCardSheet } from './share-card-sheet';
 import { SplitsCard } from './splits-card';
 import { withRowLoad } from '../edit-sets';
+import { loadStep } from '@/shared/utils/step-sizes';
 
 export interface ResultSheetProps {
   runsheet: Runsheet;
@@ -127,7 +128,7 @@ export const ResultSheet = ({ runsheet, history = [], allResults = history, trai
                     {s.targetPct ? ` · ${s.targetPct}% TM` : ''}
                   </div>
                 </div>
-                {s.exercise.unit && s.exercise.unit !== 'reps' && !measureOf(s.exercise.unit) && <Stepper size="sm" aria-label="Load used" value={row.target ?? 0} step={s.exercise.step} onChange={t => setRows(r => ({ ...r, [s.id]: withRowLoad(r[s.id], t) }))} />}
+                {s.exercise.unit && s.exercise.unit !== 'reps' && !measureOf(s.exercise.unit) && <Stepper size="sm" aria-label="Load used" value={row.target ?? 0} step={loadStep(s.exercise)} onChange={t => setRows(r => ({ ...r, [s.id]: withRowLoad(r[s.id], t) }))} />}
               </div>
               {(hasRule(s) || logsReps) && (
                 <div className="mt-2 flex items-center justify-between gap-2">
