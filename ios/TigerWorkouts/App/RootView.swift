@@ -7,6 +7,8 @@ struct RootView: View {
     @State private var tab = Tab.workouts
     @State private var running: SessionRunner?
     @State private var interrupted: Interrupted?
+    /// When coming to the foreground last started a sync.
+    @State private var lastForegroundSync = Date.distantPast
     /// A workout the Up next widget asked to start, waiting for the catalogue on a cold launch.
     @State private var widgetStart: String?
     /// A coach's invite link that opened the app.
@@ -100,6 +102,12 @@ struct RootView: View {
                 Task { await store.backfillHeartRate() }
                 // What a coach sent while the app was in the background.
                 Task { await store.refreshCoaching() }
+                if running != nil { Cues.shared.reopenIfNeeded() }
+                // A session finished without signal goes up now, not at the next save or launch.
+                if Self.foregroundSyncDue(last: lastForegroundSync, now: Date(), signedIn: store.loaded && store.user != nil, running: running != nil, syncing: store.syncing) {
+                    lastForegroundSync = Date()
+                    Task { await store.sync() }
+                }
             }
         }
         // A workout link lands on the Workouts tab, whichever tab was open.
@@ -179,6 +187,12 @@ struct RootView: View {
             Task { await store.save(result) { SessionRunner.clearSaved(startedAt: startedAt) } }
         }
         return runner
+    }
+
+    /// Whether coming to the foreground should sync: signed in, no session on the timer, no sync
+    /// already out, and not within a minute of the last one from here.
+    static func foregroundSyncDue(last: Date, now: Date, signedIn: Bool, running: Bool, syncing: Bool) -> Bool {
+        signedIn && !running && !syncing && now.timeIntervalSince(last) >= 60
     }
 
     /// iOS stops the haptic engine when the app leaves the foreground. Coming back is the moment

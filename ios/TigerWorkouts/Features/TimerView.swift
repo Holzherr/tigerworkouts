@@ -16,6 +16,7 @@ struct TimerView: View {
     /// Opens tall: the alternatives sit under the steppers, and a half sheet hides them.
     @State private var sheetDetent: PresentationDetent = .large
     @State private var confirmQuit = false
+    @State private var confirmDiscard = false
     /// The set row open for editing on a straight-set block; nil = the set you are on.
     @State private var openSet: String?
     @State private var rowsFade = RowsFade()
@@ -98,6 +99,14 @@ struct TimerView: View {
         } message: {
             Text("Finish and save keeps what you have done so far. Discard throws this session away: no history, no streak, nothing in Health.")
         }
+        // The ⋯ menu's Discard sits right under Finish and save: it asks first.
+        .confirmationDialog("Discard this session?", isPresented: $confirmDiscard, titleVisibility: .visible) {
+            Button("Discard", role: .destructive) { discard() }
+            // Not a cancel role, as above.
+            Button("Keep going") {}
+        } message: {
+            Text("No history, no streak.")
+        }
     }
 
     /// Out of the session with nothing kept: the crash-safe copy goes, and nothing reached the
@@ -161,7 +170,7 @@ struct TimerView: View {
                         .monospacedDigit()
                 }
                 // Sound and the overview sit in the ⋯ menu with Finish: the bar keeps to where you are.
-                SessionMenu(sound: sound, toggleSound: toggleSound, overview: { showOverview = true }, finish: runner.finish, discard: discard).equatable()
+                SessionMenu(sound: sound, toggleSound: toggleSound, overview: { showOverview = true }, finish: runner.finish, discard: { confirmDiscard = true }).equatable()
             }
             GeometryReader { geo in
                 ZStack(alignment: .leading) {

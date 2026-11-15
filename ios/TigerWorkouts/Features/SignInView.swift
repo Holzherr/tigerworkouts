@@ -51,7 +51,7 @@ struct SignInView: View {
                         SignInWithAppleButton(.continue) { request in
                             let nonce = Supabase.randomNonce()
                             appleNonce = nonce
-                            request.requestedScopes = [.email, .fullName]
+                            request.requestedScopes = [.email]
                             request.nonce = Supabase.sha256(nonce)
                         } onCompletion: { result in
                             Task { await apple(result) }

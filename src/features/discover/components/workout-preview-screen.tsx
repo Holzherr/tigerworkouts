@@ -391,7 +391,7 @@ export const WorkoutPreviewScreen = ({ runsheet: r, history = [], lastTime, onBa
               <Video /> Follow along
             </Button>
           ) : (
-            <Button block onClick={onStart}>
+            <Button block onClick={onStart} disabled={!r.items.length}>
               <Play /> Start
             </Button>
           )}

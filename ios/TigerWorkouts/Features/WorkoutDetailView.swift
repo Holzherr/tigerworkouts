@@ -51,6 +51,10 @@ struct WorkoutDetailView: View {
     private var mustAsk: Bool { !isNew && scope == nil && store.doneCount(runsheet.key) > 0 }
     /// A new workout with something in it that Save has not kept yet: back asks before leaving.
     private var unsavedNew: Bool { isNew && !kept && Edit.storable(runsheet) != nil }
+    /// A workout of yours with nothing in it yet opens with its first block ready to take an exercise.
+    private var openFirst: String? {
+        editable && runsheet.exerciseSteps.isEmpty ? runsheet.items.compactMap(\.asBlock).first?.id : nil
+    }
     /// The versions your sessions ran of the workout as stored.
     private var versions: [Versions.Row] {
         store.workout(id: runsheet.key).map { Versions.rows(store.results, base: $0) } ?? []
@@ -74,6 +78,7 @@ struct WorkoutDetailView: View {
         RunsheetEditor(
             runsheet: runsheet,
             editing: false,
+            openFirst: openFirst,
             setHint: { step, round in
                 let sets = LastTime.sets(store.results, for: step, in: runsheet) ?? []
                 return sets.indices.contains(round) ? LastTime.setLabel(sets[round]) : nil
@@ -89,7 +94,7 @@ struct WorkoutDetailView: View {
                     progress
                     refRows
                     trainingMaxLink
-                    WorkoutProgressEntry(runsheet: runsheet)
+                    WorkoutProgressEntry(runsheet: runsheet, ask: !isNew)
                 } else if !runsheet.title.isEmpty {
                     Text(runsheet.title)
                         .font(.system(size: 26, weight: .heavy))
@@ -129,6 +134,9 @@ struct WorkoutDetailView: View {
             // One copy per original: once you have a copy, the original's page is your copy's.
             if !editable, let copy = Edit.copy(of: runsheet, in: store.myWorkouts) { runsheet = copy }
             runsheet = store.seeded(runsheet)
+            // Saved with a name and nothing else, it is stored without its empty block: reopened,
+            // it gets one to build in (kept only once it holds an exercise).
+            if editable && runsheet.items.isEmpty { runsheet.items = [.block(Edit.newBlock(number: 1))] }
             if isNew && runsheet.title.isEmpty { naming = true }
         }
         .navigationBarBackButtonHidden(unsavedNew)
@@ -233,17 +241,42 @@ struct WorkoutDetailView: View {
                 }
             }
         }
-        .confirmationDialog("Save this workout?", isPresented: $confirmLeave, titleVisibility: .visible) {
-            Button("Save") {
-                keep()
-                dismiss()
-            }
-            .accessibilityIdentifier("leave-save")
-            Button("Discard", role: .destructive) { discardNew() }
+        // A sheet, not a system dialog: there Save took the coral tint and sat on Discard's red,
+        // two reds apart by a shade, and iOS 26 hid Keep editing (Nick, 15 Nov 2026).
+        .sheet(isPresented: $confirmLeave) {
+            VStack(alignment: .leading, spacing: 10) {
+                Text("Save this workout?")
+                    .font(.title3.weight(.heavy))
+                    .foregroundStyle(Brand.ink)
+                Text("Save keeps it in Mine. Discard deletes it.")
+                    .font(.subheadline)
+                    .foregroundStyle(Brand.muted)
+                    .padding(.bottom, 6)
+                Button("Save") {
+                    confirmLeave = false
+                    keep()
+                    dismiss()
+                }
+                .buttonStyle(BigButtonStyle())
+                .accessibilityIdentifier("leave-save")
+                Button("Discard") {
+                    confirmLeave = false
+                    discardNew()
+                }
+                .buttonStyle(BigButtonStyle(tint: Brand.danger, filled: false))
                 .accessibilityIdentifier("leave-discard")
-            Button("Keep editing", role: .cancel) {}
-        } message: {
-            Text("Discard deletes it. Save keeps it in Mine.")
+                Button("Keep editing") { confirmLeave = false }
+                    .font(.system(size: 17, weight: .semibold))
+                    .foregroundStyle(Brand.ink)
+                    .frame(maxWidth: .infinity, minHeight: Tap.regular)
+                    .accessibilityIdentifier("leave-keep-editing")
+            }
+            .padding(.horizontal, 20)
+            .padding(.top, 28)
+            .frame(maxHeight: .infinity, alignment: .top)
+            .presentationDetents([.height(330)])
+            .presentationDragIndicator(.visible)
+            .presentationBackground(Brand.surface)
         }
         .confirmationDialog("Delete this workout?", isPresented: $confirmDelete, titleVisibility: .visible) {
             Button("Delete", role: .destructive) {

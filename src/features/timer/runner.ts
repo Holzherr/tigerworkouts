@@ -557,7 +557,8 @@ export const setAmountAt = (s: RunState, slotId: string, value: number, field?: 
 /** Only rest stands between the cursor and slot idx, inside one block: the set after the rest. */
 const onlyRestBefore = (s: RunState, idx: number) => idx > s.i && s.slots.slice(s.i, idx).every(sl => sl.kind === 'rest' && sl.blockId === s.slots[idx].blockId);
 /** The tick on a set row. The running set is Done (advance). The set after a rest ends the rest
- * early and is done in the same tap — people start before the rest runs out. A set passed without
+ * early and is done in the same tap — people start before the rest runs out. A countdown after a
+ * rest only starts: it has not run, so there is nothing to log. A set passed without
  * a tick (skipped, or un-ticked to fix its weight) is logged where it is and the cursor stays put. */
 export const completeSet = (s: RunState, now: number, slotId: string): RunState => {
   const idx = slotIndex(s, slotId);
@@ -568,6 +569,7 @@ export const completeSet = (s: RunState, now: number, slotId: string): RunState 
   if (onlyRestBefore(s, idx)) {
     let st = s;
     while (st.i < idx) st = advance(st, now, { skipped: true });
+    if (sl.seconds !== undefined) return st;
     return st.i === idx ? advance(st, now) : st;
   }
   if (idx > s.i) return s;

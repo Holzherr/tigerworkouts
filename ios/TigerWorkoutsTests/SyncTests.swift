@@ -115,6 +115,23 @@ struct SyncTests {
         #expect(grant.body == ["email": "review@example.com", "password": "pw"])
     }
 
+    @Test("only a refused refresh token signs out; a rate limit or a server error keeps the sign-in")
+    func refreshFailures() {
+        #expect(Supabase.refreshRefused(400) && Supabase.refreshRefused(401))
+        #expect(![429, 500, 502, 503].contains(where: Supabase.refreshRefused))
+    }
+
+    @Test("the foreground sync waits a minute, and for a sign-in, an idle timer and no sync already out")
+    @MainActor
+    func foregroundSync() {
+        let t = Date(timeIntervalSince1970: 1_000)
+        func due(_ gap: TimeInterval, signedIn: Bool = true, running: Bool = false, syncing: Bool = false) -> Bool {
+            RootView.foregroundSyncDue(last: t, now: t.addingTimeInterval(gap), signedIn: signedIn, running: running, syncing: syncing)
+        }
+        #expect(due(60) && !due(59))
+        #expect(!due(600, signedIn: false) && !due(600, running: true) && !due(600, syncing: true))
+    }
+
     @Test("dates parse whichever way Postgres hands them back")
     func dates() {
         #expect(ISO8601.date("2026-09-06T10:00:00.000Z") != nil)

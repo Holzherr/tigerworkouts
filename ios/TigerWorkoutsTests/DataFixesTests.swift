@@ -34,6 +34,17 @@ struct DataFixesTests {
         #expect(squatLoad(next) == 62.5)
     }
 
+    @Test("a rule that adds 0 kg leaves the weight where it is")
+    func addsNothing() {
+        var sheet = stronglifts()
+        sheet.items = sheet.items.map { item in
+            guard case .block(var b) = item else { return item }
+            b.progression = Progression(onSuccessKg: 0, deloadPct: 10, failAfter: 3)
+            return .block(b)
+        }
+        #expect(squatLoad(ProgressionRules.progressed(sheet, results: [session(6, ok: true)], kit: nil)) == 60)
+    }
+
     @Test("a miss repeats the weight; three in a row deload")
     func deloads() {
         #expect(squatLoad(ProgressionRules.progressed(stronglifts(), results: [session(6, ok: false)], kit: nil)) == 60)

@@ -90,6 +90,21 @@ struct TimedWorkTests {
         #expect(Runner.toResult(s, sheet, now: 60000).steps[0].sets?.map(\.seconds) == [45, nil])
     }
 
+    @Test("ticking a countdown's row during the rest before it starts the countdown; nothing is logged until it has run")
+    func countdownTickedAfterRest() {
+        var s = Runner.tick(Runner.start(Self.plank(), now: 0), now: 5000)
+        s = Runner.tick(s, now: 65000) // plank 1 ran out, rest running
+        #expect(s.slots[s.i].kind == .rest)
+        let second = s.slots[2].id
+        s = Runner.completeSet(s, now: 75000, slotId: second)
+        #expect(s.i == 2 && s.phase == .running)
+        #expect(s.actuals[second]?.doneAt == nil)
+        #expect(s.blockDone["b"] == 1)
+        #expect(Runner.toResult(s, Self.plank(), now: 76000).steps[0].sets?.map(\.seconds) == [60])
+        s = Runner.tick(s, now: 75000 + 60000)
+        #expect(Runner.toResult(s, Self.plank(), now: 140_000).steps[0].sets?.map(\.seconds) == [60, 60])
+    }
+
     @Test("for-time rounds are split per round")
     func forTimeSplits() {
         let sheet = Runsheet(id: "f", title: "F", items: [.block(Block(id: "b", name: "F", repeatCount: 3, mode: .fortime, steps: [Fixtures.work("a", Fixtures.pullup, forMode: .reps, forValue: 5), Fixtures.work("c", Fixtures.pushup, forMode: .reps, forValue: 10)]))])

@@ -903,6 +903,16 @@ describe('a run kept on the device', () => {
 
 describe('timed and distance work', () => {
   const plank = (): Runsheet => ({ id: 'pl', title: 'Plank', items: [{ kind: 'block', id: 'b', name: 'B', repeat: 2, steps: [{ ...makeExercise(EX.bw_plank, { forMode: 'seconds', forValue: 60 }), id: 'p' }, { ...makeRest(30), id: 'r' }] }] });
+  it("ticking a countdown's row during the rest before it starts the countdown; nothing is logged until it has run", () => {
+    let s = tick(tick(start(plank(), 0), 5000), 65000); // plank 1 ran out, rest running
+    expect(s.slots[s.i].kind).toBe('rest');
+    const second = s.slots[2].id;
+    s = R.completeSet(s, 75000, second);
+    expect([s.i, s.phase, s.actuals[second]?.doneAt, s.blockDone.b]).toEqual([2, 'running', undefined, 1]);
+    expect(toResult(s, plank(), 76000).steps[0].sets?.map(x => x.seconds)).toEqual([60]);
+    s = tick(s, 75000 + 60000);
+    expect(toResult(s, plank(), 140000).steps[0].sets?.map(x => x.seconds)).toEqual([60, 60]);
+  });
   const row = (): Runsheet => ({ id: 'rw', title: 'Row', items: [{ ...makeExercise(EX.cardio_rower, { forMode: 'meters', forValue: 500 }), id: 'rw' }] });
   it('a countdown that runs out logs its whole length', () => {
     let s = tick(start(plank(), 0), 5000);

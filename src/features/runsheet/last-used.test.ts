@@ -26,6 +26,13 @@ describe('what you used last time', () => {
     expect(m.get('step:e1')).toEqual({ target: 14.5, incline: 6, exerciseKey: 'sprint' });
   });
 
+  it('seeds a lift written with no load, and leaves a % of training max to the resolver', () => {
+    const squat = { key: 'bb_back_squat', name: 'Barbell back squat', unit: 'kg', step: 2.5 };
+    const r: Runsheet = { id: 'p-1', title: '5×5', items: [{ kind: 'exercise', id: 's1', exercise: squat, forMode: 'reps', forValue: 5 }, { kind: 'exercise', id: 's2', exercise: squat, targetPct: 65, forMode: 'reps', forValue: 5 }] };
+    const out = withLastUsed(r, [{ id: 's-1', runsheetId: 'p-1', startedAt: '2026-11-14T10:00:00Z', steps: [{ stepId: 's1', exerciseKey: 'bb_back_squat', target: 40 }] }]);
+    expect(out.items.map(i => (i.kind === 'exercise' ? i.target : null))).toEqual([40, undefined]);
+  });
+
   it('seeds speed, incline and weight into the workout', () => {
     const out = withLastUsed(sheet(), [session('2026-09-10T10:00:00Z', [
       { stepId: 'e1', exerciseKey: 'sprint', target: 15, incline: 6 },

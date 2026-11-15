@@ -102,6 +102,10 @@ final class Cues {
         if open() { audioLog.info("audio back after \(reason, privacy: .public)") }
     }
 
+    /// A phone call's `.ended` does not always arrive. Coming back to the app is the other moment
+    /// to bring the audio back; does nothing outside a session or with the engine still up.
+    func reopenIfNeeded() { reopen(after: "foreground") }
+
     /// Bumped by every `begin`, so a wind-down scheduled for one session never ends the next.
     private var generation = 0
 

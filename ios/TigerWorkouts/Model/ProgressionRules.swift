@@ -29,7 +29,7 @@ enum ProgressionRules {
     /// What the rule makes of the last session of this exercise; nil when it says nothing.
     static func nextLoad(_ step: ExerciseStep, rule: Progression, last: StepResult, history: [SessionResult], kit: Equipment?) -> Double? {
         guard let ok = last.success, let from = workingLoad(last) else { return nil }
-        if ok, let add = rule.onSuccessKg {
+        if ok, let add = rule.onSuccessKg, add != 0 {
             let up = Plates.snap(from + add, step.exercise, kit, .up)
             return up > from ? up : (Plates.nextUp(from, step.exercise, kit) ?? from)
         }

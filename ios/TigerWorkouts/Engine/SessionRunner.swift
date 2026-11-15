@@ -259,6 +259,9 @@ final class SessionRunner {
         if SessionControls.active === self { SessionControls.active = nil }
     }
 
+    /// When the crash-safe copy was last written, on the session's own clock.
+    private var savedAtMs: Double = 0
+
     private func tick() {
         tick(at: Date().timeIntervalSince1970 * 1000)
     }
@@ -268,6 +271,10 @@ final class SessionRunner {
         self.now = now
         let before = state
         state = Runner.tick(state, now: now)
+        // A tick changes nothing, so two minutes into a set the copy on disk still said "saved
+        // when the set began", and a kill there resumed with those minutes gone from the session
+        // and from a for-time score. While the clock runs the copy is refreshed every ten seconds.
+        if state == before, state.phase == .running || state.phase == .lead, now - savedAtMs >= 10_000 { save() }
         if state != before {
             save()
             refreshGhost()
@@ -993,6 +1000,7 @@ final class SessionRunner {
 
     /// A finished session is written too: until the store has it, this file is the only copy.
     private func save() {
+        savedAtMs = now
         try? JSONEncoder().encode(SavedRun(state: state, startedFrom: startedFrom)).write(to: SessionRunner.savedURL, options: .atomic)
     }
 

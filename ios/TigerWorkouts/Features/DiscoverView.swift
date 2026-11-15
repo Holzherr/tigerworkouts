@@ -275,7 +275,9 @@ struct DiscoverView: View {
     /// One workout as a card: its name and one meta line open its page; with `play`, a coral play
     /// button on the right starts it straight away, last time's numbers carried over.
     private func row(_ sheet: Runsheet, meta: String, tint: Color = Brand.muted, from: SessionOrigin, play: Bool = false, card: Card = Card()) -> some View {
-        HStack(spacing: 12) {
+        // Nothing to run yet (named, no exercise): the card opens its page, it does not start.
+        let play = play && !sheet.exerciseSteps.isEmpty
+        return HStack(spacing: 12) {
             NavigationLink(value: Opened(key: sheet.key, from: from)) {
                 HStack(spacing: 8) {
                     VStack(alignment: .leading, spacing: 3) {

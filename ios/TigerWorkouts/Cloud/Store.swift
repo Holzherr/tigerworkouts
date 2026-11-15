@@ -167,6 +167,8 @@ final class Store {
             Task { await backfillHeartRate() }
         } catch {
             syncError = error.localizedDescription
+            // A sign-in the server ended shows as signed out; what is on the phone stays.
+            user = await Supabase.shared.user
         }
         // Its own failures stay quiet: until migration 0008 is live every call here fails.
         await refreshCoaching()
