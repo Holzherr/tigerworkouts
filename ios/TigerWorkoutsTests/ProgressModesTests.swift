@@ -173,6 +173,33 @@ struct ProgressModesTests {
         #expect(LiftEffortCard.lifts(Self.sheet(), result: r, suggest: SuggestPrefs()).isEmpty)
     }
 
+    @Test("Priyanka's week one: Today is the shoulder press at 27.5 × 8, the press starts on it, and off stops the prefill")
+    @MainActor
+    func seededWeekOne() throws {
+        let store = Store()
+        store.seedWeekOneIfAsked(["-seedWeekOne"])
+        let sheet = try #require(store.workout(id: "seed-week1"))
+        let today = try #require(Targets.today(store.prepared(sheet), results: store.results, kit: store.equipment, suggest: SuggestPrefs()))
+        #expect(today.sets.map(\.exerciseKey) == ["db_shoulder_press"])
+        #expect(today.sets.first?.load == 27.5)
+        #expect(today.sets.first?.reps.first == 8)
+        let on = try #require(store.seeded(sheet).exerciseSteps.first { $0.id == "seed-w1-press" })
+        #expect(on.target == 27.5)
+        // The player fills each press set with the target, reps too (a range's last time was 12).
+        let run = store.prepared(store.seeded(sheet))
+        let state = SessionRunner.prefilled(Runner.start(run, now: 0), runsheet: run, history: store.results,
+                                            today: Targets.today(run, results: store.results, kit: store.equipment, suggest: SuggestPrefs()))
+        let press = state.slots.filter { $0.kind == .work && $0.exercise?.id == "seed-w1-press" }
+        #expect(press.map { state.actuals[$0.id]?.reps } == [8, 8, 8])
+        #expect(run.exerciseSteps.first { $0.id == "seed-w1-press" }?.sets?.map(\.load) == [27.5, 27.5, 27.5])
+        // Off, as Store.seeded builds it (not set on the store: its UserDefaults mirror is shared
+        // with tests running alongside): last time's 25 kg carries over, no target prefill.
+        let none = Targets.sets(sheet, results: store.results, kit: store.equipment, suggest: SuggestPrefs(off: true))
+        #expect(none.isEmpty)
+        let off = try #require(Settings.withLastUsed(sheet, results: store.results, targets: none).exerciseSteps.first { $0.id == "seed-w1-press" })
+        #expect(off.target == 25)
+    }
+
     @Test("an old set row without rpe still decodes")
     func setDecodes() throws {
         let x = try JSONDecoder().decode(SetResult.self, from: Data(#"{"reps":8,"load":60}"#.utf8))

@@ -36,8 +36,10 @@ enum Versions {
         let own = Dictionary(base.exerciseSteps.map { ($0.id, $0) }, uniquingKeysWith: { a, _ in a })
         func step(_ s: Step) -> Step {
             guard case .exercise(var e) = s, let a = was[e.id], let b = own[e.id],
-                  a.exercise.key == e.exercise.key, e.target == a.target, e.incline == a.incline else { return s }
+                  a.exercise.key == e.exercise.key, e.target == a.target, e.incline == a.incline, e.sets == a.sets else { return s }
             e.target = b.target
+            // Last time's loads set by set (`Settings.withLastUsed`) are the app's too.
+            e.sets = b.sets
             e.incline = b.incline
             e.targetPct = b.targetPct
             e.loadFactor = b.loadFactor

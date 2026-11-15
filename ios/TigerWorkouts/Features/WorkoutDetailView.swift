@@ -202,6 +202,7 @@ struct WorkoutDetailView: View {
         .sheet(item: $editing) { step in
             ExerciseSheet(
                 step: step,
+                workout: runsheet,
                 target: bind(step.id, \.target),
                 incline: bind(step.id, \.incline),
                 onDrop: { remove(step) },

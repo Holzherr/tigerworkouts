@@ -40,6 +40,32 @@ final class ProgressTableUITests: XCTestCase {
         snap("P5 The exercise across every workout")
     }
 
+    /// Priyanka's week one: Today names the shoulder press at 27.5 × 8, and the player's press set
+    /// starts on it (the hip thrust's ramping sets get no target).
+    func testWeekOneTodayMatchesThePlayer() {
+        app.terminate()
+        app.launchArguments = ["-seedWeekOne"]
+        app.launch()
+        let discard = app.alerts.buttons["Discard"]
+        if discard.waitForExistence(timeout: 3) { discard.tap() }
+        open("Hip thrust focus week 1")
+        let today = app.buttons["today-target"]
+        XCTAssertTrue(today.waitForExistence(timeout: 5))
+        XCTAssertTrue(today.label.contains("Shoulder press") && today.label.contains("27.5"), today.label)
+        snap("W1 Today: shoulder press 27.5 × 8")
+        tap(app.buttons["Start workout"])
+        let target = app.descendants(matching: .any)["target"].firstMatch
+        for _ in 0..<30 {
+            if target.exists, target.label.contains("27.5") { break }
+            let skip = app.buttons["Skip"]
+            if skip.waitForExistence(timeout: 2) { skip.tap() } else { break }
+        }
+        XCTAssertTrue(target.waitForExistence(timeout: 3) && target.label.contains("27.5"), "the press's target in the player")
+        snap("W2 Player: shoulder press set")
+        let grid = app.descendants(matching: .any)["timer-set-grid"].firstMatch
+        if grid.exists { XCTAssertTrue(grid.label.contains("27.5") || app.staticTexts.matching(NSPredicate(format: "label CONTAINS '27.5'")).count > 1) }
+    }
+
     private func open(_ title: String) {
         XCTAssertTrue(app.navigationBars["Workouts"].waitForExistence(timeout: 10))
         let search = app.searchFields.firstMatch

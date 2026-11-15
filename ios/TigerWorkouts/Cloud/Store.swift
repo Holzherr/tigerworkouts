@@ -513,9 +513,12 @@ final class Store {
 
     /// What a session starts on: last time's loads carried over, then a program's rules applied to
     /// them (+2.5 kg after a clean session, the deload after repeated misses). The workout page
-    /// seeds with this before it shows the numbers; so do Up next and Do it again.
+    /// seeds with this before it shows the numbers; so do Up next and Do it again. Today's targets
+    /// go in with last time's sets, so the sets start on what the "Target" line says.
     func seeded(_ r: Runsheet) -> Runsheet {
-        ProgressionRules.progressed(Settings.withLastUsed(r, results: results), results: results, kit: equipment)
+        // Suggestions off (SuggestPrefs) gives no targets: last time's loads still carry over, nothing is prefilled from a target.
+        let targets = Targets.sets(r, results: results, intent: Intent.current(), kit: equipment, suggest: suggestions)
+        return ProgressionRules.progressed(Settings.withLastUsed(r, results: results, targets: targets), results: results, kit: equipment)
     }
 
     /// A workout as the timer runs it: shared parts (refs) inlined — each seeded first, since the
