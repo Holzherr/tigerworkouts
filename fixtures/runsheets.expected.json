@@ -1,0 +1,4 @@
+{
+  "fx-every-field": { "slots": 60, "work": 46, "seconds": 3735, "minutes": 60 },
+  "fx-plain": { "slots": 2, "work": 1, "seconds": 90, "minutes": 2 }
+}

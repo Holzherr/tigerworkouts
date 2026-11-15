@@ -1,0 +1,28 @@
+name: Database rules
+
+# Applies every migration to a throwaway Postgres and runs the row-level-security scenarios in
+# legacy/supabase/tests, so a policy change is checked before it is merged. Nothing here touches
+# the real project.
+on:
+  push:
+    branches: [main]
+    paths: ['legacy/supabase/**', '.github/workflows/db.yml']
+  pull_request:
+    paths: ['legacy/supabase/**', '.github/workflows/db.yml']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  rls:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      # The image ships Postgres; its server binaries are not on PATH.
+      - name: Run the scenarios
+        run: |
+          bin=$(ls -d /usr/lib/postgresql/*/bin | sort -V | tail -1)
+          "$bin/postgres" --version
+          PATH="$bin:$PATH" legacy/supabase/tests/run.sh

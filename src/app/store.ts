@@ -1,6 +1,6 @@
 /**
  * Local-first app state: the user's own workouts, results, training maxes, saved ids.
- * One localStorage key, read once, written on every change. Cloud sync comes later.
+ * One localStorage key, read once, written whole on every change. Synced by features/cloud.
  */
 import { useSyncExternalStore } from 'react';
 import type { Runsheet } from '@/features/runsheet/model';

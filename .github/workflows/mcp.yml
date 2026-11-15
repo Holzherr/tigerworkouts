@@ -6,9 +6,9 @@ name: MCP worker
 on:
   push:
     branches: [main]
-    paths: ['mcp/**', 'src/features/**', 'src/shared/**', 'src/app/config.ts', 'imports/**', 'plugin/**', 'package-lock.json', '.github/workflows/mcp.yml']
+    paths: ['mcp/**', 'src/features/**', 'src/shared/**', 'src/app/config.ts', 'imports/**', 'fixtures/**', 'plugin/**', 'package-lock.json', '.github/workflows/mcp.yml']
   pull_request:
-    paths: ['mcp/**', 'src/features/**', 'src/shared/**', 'src/app/config.ts', 'imports/**', 'plugin/**', 'package-lock.json', '.github/workflows/mcp.yml']
+    paths: ['mcp/**', 'src/features/**', 'src/shared/**', 'src/app/config.ts', 'imports/**', 'fixtures/**', 'plugin/**', 'package-lock.json', '.github/workflows/mcp.yml']
   workflow_dispatch:
 
 permissions:
