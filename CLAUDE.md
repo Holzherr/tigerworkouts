@@ -20,8 +20,14 @@ deploying. See README.md for what is where.
 
 - **Never rename a storage key** (`workout-hub:*`, `workout-hub-next:*` in localStorage, table
   names in Supabase). The names are old; renaming them wipes people's data. See REBRAND.md.
-- **The service worker stays network-first for navigations**, and Cloudflare must never cache
-  `/sw.js`. A stale worker once stranded a phone on a broken build with no way out.
+- **The service worker must not strand a phone**, and Cloudflare must never cache `/sw.js`. A
+  stale worker once stranded a phone on a broken build with no way out. What holds today:
+  the start URL (`/`, `index.html`) is served from the precache, so the home-screen app opens at
+  once and picks up a deploy one launch later (Nick, 2026-11-15); every other navigation is
+  network-first (4 s, then the `shell` cache); the worker is registered under a per-build URL
+  (`sw.js?v=<build>`, `src/app/update-prompt.tsx`); and `index.html` heals itself once (clears
+  workers and caches, reloads with `?r=`, which the precache does not answer) when the bundle
+  does not start. Keep all four.
 - **One catalogue.** `imports/` is the source; `legacy/imported.js`, `src/features/exercises/
   library.ts` and `ios/TigerWorkouts/Resources/*.json` are generated from it (or from
   `legacy/data.js`) by the scripts in `tools/`. Edit the source and re-run, never the output.

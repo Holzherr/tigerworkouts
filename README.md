@@ -40,8 +40,10 @@ The custom domain is the `CNAME` file. Run it by hand with
 - Nightly report: `legacy/supabase/migrations/0004_agent_snapshot.sql` adds `agent_snapshot(days)`,
   aggregates only (sessions per day, start origins per owner, top workouts, owner ids), and the
   login role `agent_reader` that can run only that function. Nick applies it and sets the password.
-- The service worker keeps navigations network-first, and Cloudflare must never cache `/sw.js` —
-  a stale worker is what once stranded a phone on an old build.
+- The service worker serves the start URL from its precache (instant open; a deploy shows one
+  launch later) and keeps every other navigation network-first. Cloudflare must never cache
+  `/sw.js` — a stale worker is what once stranded a phone on an old build; the per-build worker
+  URL and the self-heal in `index.html` cover that case.
 - Domain setup, for the record: [SETUP.md](./SETUP.md).
 
 ## Stack
