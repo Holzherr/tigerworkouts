@@ -18,6 +18,7 @@ struct SetPlanGrid: View {
     var apply: (_ change: (Runsheet) -> Runsheet) -> Void
 
     @State private var varying = false
+    @State private var entry: NumberEntryRequest?
 
     private var marks: [String] { SetType.marks((0..<block.repeatCount).map { step.plannedType($0) }) }
 
@@ -87,22 +88,30 @@ struct SetPlanGrid: View {
                         .frame(width: 36, alignment: .leading)
                         if step.hasSetLoad {
                             if Plates.kit(step.exercise) == .barbell { PlatesButton(load: run.load) }
-                            MiniStepper(value: run.load ?? 0, label: "\(label) load", disabled: locked) { direction in
+                            MiniStepper(value: run.load ?? 0, label: "\(label) load", disabled: locked, onTapValue: locked ? nil : {
+                                entry = NumberEntryRequest(title: "\(label) \(step.settingLabel.lowercased())", unit: step.shortUnit, current: run.load) { v in
+                                    apply { Edit.editRun($0, block: block.id, run: run, load: v) }
+                                }
+                            }) { direction in
                                 // Read from the sheet as it is now: a held button fires many times
                                 // before this view is drawn again.
                                 apply { r in
                                     let now = r.exerciseSteps.first { $0.id == step.id }?.plannedSet(round).load ?? run.load
-                                    let next = max(0, (now ?? 0) + direction * (step.exercise.step == 0 ? 1 : step.exercise.step))
+                                    let next = max(0, (now ?? 0) + direction * StepSizes.load(step.exercise))
                                     return Edit.editRun(r, block: block.id, run: run, load: next)
                                 }
                             }
                             .frame(maxWidth: .infinity)
                         }
                         if let count = step.countLabel {
-                            MiniStepper(value: run.reps, label: "\(label) \(count.lowercased())", disabled: locked) { direction in
+                            MiniStepper(value: run.reps, label: "\(label) \(count.lowercased())", disabled: locked, onTapValue: locked ? nil : {
+                                entry = NumberEntryRequest(title: "\(label) \(count.lowercased())", unit: step.forMode == .meters ? "m" : count.lowercased(), current: run.reps) { v in
+                                    apply { Edit.editRun($0, block: block.id, run: run, reps: max(1, step.forMode == .reps ? v.rounded() : v)) }
+                                }
+                            }) { direction in
                                 apply { r in
                                     let now = r.exerciseSteps.first { $0.id == step.id }?.plannedSet(round).reps ?? run.reps
-                                    return Edit.editRun(r, block: block.id, run: run, reps: max(1, now + direction))
+                                    return Edit.editRun(r, block: block.id, run: run, reps: max(1, now + direction * (step.forMode == .meters ? StepSizes.meters(step.exercise, fallback: 10) : 1)))
                                 }
                             }
                             .frame(maxWidth: .infinity)
@@ -142,6 +151,7 @@ struct SetPlanGrid: View {
         }
         // Back to folded rows once an edit leaves every set alike.
         .onChange(of: Edit.setRuns(block).count) { _, count in if count == 1 { varying = false } }
+        .numberEntry($entry)
         .accessibilityElement(children: .contain)
         .accessibilityIdentifier("set-grid")
     }
@@ -157,6 +167,8 @@ struct MiniStepper: View {
     var disabled = false
     /// On a coral-tinted row the buttons go white, or they vanish into it.
     var onTint = false
+    /// A tap on the number, to type one in (`NumberEntryRequest`); nil leaves it a label.
+    var onTapValue: (() -> Void)? = nil
     var nudge: (Double) -> Void
 
     var body: some View {
@@ -171,18 +183,34 @@ struct MiniStepper: View {
     private func stepper(hit: CGFloat) -> some View {
         HStack(spacing: 0) {
             button("minus", "\(label), less", hit: hit) { nudge(-$0) }
-            Text(Format.number(value))
-                .font(.system(size: 18, weight: .bold, design: .rounded))
-                .monospacedDigit()
-                .foregroundStyle(Brand.ink)
-                .lineLimit(1)
-                .minimumScaleFactor(0.5)
-                // The ideal width is fixed so a long number never makes ViewThatFits drop to the
-                // small targets; it shrinks the text instead.
-                .frame(minWidth: 28, idealWidth: 28, maxWidth: 56)
+            number
+            button("plus", "\(label), more", hit: hit) { nudge($0) }
+        }
+    }
+
+    @ViewBuilder
+    private var number: some View {
+        let text = Text(Format.number(value))
+            .font(.system(size: 18, weight: .bold, design: .rounded))
+            .monospacedDigit()
+            .foregroundStyle(Brand.ink)
+            .lineLimit(1)
+            .minimumScaleFactor(0.5)
+            // The ideal width is fixed so a long number never makes ViewThatFits drop to the
+            // small targets; it shrinks the text instead.
+            .frame(minWidth: 28, idealWidth: 28, maxWidth: 56)
+        if let onTapValue {
+            Button(action: onTapValue) {
+                text.frame(minHeight: 44).contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel(label)
+            .accessibilityValue(Format.number(value))
+            .accessibilityHint("Type a number")
+        } else {
+            text
                 .accessibilityLabel(label)
                 .accessibilityValue(Format.number(value))
-            button("plus", "\(label), more", hit: hit) { nudge($0) }
         }
     }
 

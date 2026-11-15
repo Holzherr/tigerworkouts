@@ -823,6 +823,57 @@ enum Runner {
         return s
     }
 
+    /// One more set of a straight-set block, "+ Add set" under its last set: a copy of the last set
+    /// with its weight and reps, after it, behind the block's rest between sets when it has one.
+    /// Every slot of the block counts one more round. Added once the last set is done (the timer
+    /// is on the next part, nothing run there yet), the set goes in before it with no rest and the
+    /// timer goes back to it. Ported to `addSet` in runner.ts.
+    static func addSet(_ s: RunState, now: Double, blockId: String) -> RunState {
+        guard s.phase != .done, s.phase != .lead else { return s }
+        let work = s.slots.indices.filter { s.slots[$0].blockId == blockId && s.slots[$0].kind == .work }
+        guard let last = work.last, s.slots[last].mode == .rounds, s.i <= last + 1,
+              work.allSatisfy({ s.slots[$0].step.id == s.slots[last].step.id }) else { return s }
+        let behind = last < s.i
+        func base(_ id: String) -> Substring { id.lastIndex(of: "#").map { id[..<$0] } ?? Substring(id) }
+        var n = s.slots.reduce(-1) { m, sl in max(m, sl.id.lastIndex(of: "#").flatMap { Int(sl.id[sl.id.index(after: $0)...]) } ?? -1) } + 1
+        let from = s.slots[last]
+        var inserted: [Slot] = []
+        if !behind, let r = s.slots.indices.last(where: { $0 < last && s.slots[$0].blockId == blockId && s.slots[$0].kind == .rest && !s.slots[$0].untilBoundary }) {
+            var rest = s.slots[r]
+            rest.id = "\(base(rest.id))#\(n)"
+            n += 1
+            rest.round = from.round
+            rest.seconds = rest.step.clockSeconds
+            inserted.append(rest)
+        }
+        var set = from
+        set.id = "\(base(from.id))#\(n)"
+        set.round = from.round + 1
+        // Its weight and reps, not its type: one more drop set or warm-up is not what was asked for.
+        set.plan = from.plan.flatMap { $0.reps == nil && $0.load == nil ? nil : SetPlan(reps: $0.reps, load: $0.load) }
+        inserted.append(set)
+
+        var a = Actual()
+        let was = s.actuals[from.id]
+        if let t = effectiveTarget(s, last) {
+            a.target = t
+            a.changes = [Change(atSec: 0, target: t)]
+        }
+        if let e = from.exercise, [.reps, .amrap, .max].contains(e.forMode) {
+            a.reps = was?.reps ?? (e.forMode == .reps ? e.forValue : nil)
+        }
+        a.meters = was?.meters
+        a.calories = was?.calories
+        a.incline = was?.incline
+        var out = s
+        out.slots.insert(contentsOf: inserted, at: last + 1)
+        out.actuals[set.id] = a
+        for j in out.slots.indices where out.slots[j].blockId == blockId { out.slots[j].rounds = from.rounds + 1 }
+        guard behind else { return out }
+        out.i += inserted.count
+        return back(out, now: now)
+    }
+
     /// Drop a step for the rest of the session: remove every remaining slot of it.
     static func drop(_ s: RunState, now: Double, stepId: String) -> RunState {
         let c = current(s)

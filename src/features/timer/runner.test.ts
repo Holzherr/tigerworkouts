@@ -435,6 +435,33 @@ describe('the set grid', () => {
     const s = tick(start(sheet(), 0), 5000);
     expect(R.completeSet(s, 6000, ids(s)[2])).toBe(s);
   });
+  it('+ Add set copies the last set, weight and reps, behind a rest', () => {
+    let s = tick(start(sheet(), 0), 5000);
+    s = R.adjustAt(s, 6000, ids(s)[2], 22.5);
+    s = R.setRepsAt(s, ids(s)[2], 6);
+    s = R.addSet(s, 7000, 'b');
+    expect(s.slots.map(x => x.kind)).toEqual(['work', 'rest', 'work', 'rest', 'work', 'rest', 'work']);
+    expect(s.slots.every(x => x.rounds === 4)).toBe(true);
+    const added = s.slots[6];
+    expect(added.round).toBe(3);
+    expect(R.targetOf(s, added)).toBe(22.5);
+    expect(s.actuals[added.id].reps).toBe(6);
+    expect(new Set(s.slots.map(x => x.id)).size).toBe(7);
+    expect(s.i).toBe(0); // the set in hand stays in hand
+  });
+  it('+ Add set after the last set goes back to the new set, and it is logged', () => {
+    const two = (): Runsheet => ({ ...sheet(), items: [...sheet().items, { ...swings(), id: 'after' }] });
+    let s = tick(start(two(), 0), 5000);
+    for (const id of ids(s).slice(0, 3)) s = R.completeSet(s, 10000 + s.i * 1000, id);
+    expect(s.slots[s.i].step.id).toBe('after');
+    s = R.addSet(s, 30000, 'b');
+    expect(s.slots[s.i].blockId).toBe('b');
+    expect(s.slots[s.i].round).toBe(3);
+    expect(s.phase).toBe('running');
+    s = R.completeSet(s, 40000, s.slots[s.i].id);
+    expect(s.slots[s.i].step.id).toBe('after');
+    expect(toResult(s, two(), 41000).steps[0].sets).toHaveLength(4);
+  });
 });
 
 describe('set types', () => {

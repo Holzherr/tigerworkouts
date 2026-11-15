@@ -53,6 +53,9 @@ final class SessionRunner {
     private(set) var recordFlash: RecordFlash?
     /// The last drop or skip, for five seconds: Undo puts the session back as it was.
     private(set) var undoable: Undoable?
+    /// Sets added this session with "+ Add set", by block id: the finish screen asks whether they
+    /// go on the workout.
+    private(set) var addedSets: [String: Int] = [:]
 
     struct RecordFlash: Equatable {
         var slotId: String
@@ -65,6 +68,7 @@ final class SessionRunner {
         var state: RunState
         var runsheet: Runsheet
         var at: Double
+        var added: [String: Int] = [:]
     }
 
     /// Runs the runsheet exactly as handed over. The workout screen seeds the last-used numbers
@@ -78,11 +82,43 @@ final class SessionRunner {
         self.startedFrom = startedFrom
         self.history = history
         let fresh = Runner.start(runsheet, now: Date().timeIntervalSince1970 * 1000)
-        self.state = history.isEmpty ? fresh : Runner.prefillReps(fresh) { step, round in
+        let today = Targets.today(runsheet, results: history, intent: Intent.current(), kit: Equipment.current())
+        self.state = history.isEmpty ? fresh : Self.prefilled(fresh, runsheet: runsheet, history: history, today: today)
+        self.rival = Pace.lastTimed(history, runsheetIds: runsheet.lineage)
+        self.today = today
+    }
+
+    /// The reps each set starts on. A range or a max takes last time's set, as before; a fixed count
+    /// takes today's target where the "Target" line covers that set (so the line says what the set
+    /// is filled with), else its own set last time, set n against set n, so 100 × 8, 110 × 4 comes
+    /// back as it was done. The loads come from the seeded sheet (`Settings.withLastUsed`).
+    nonisolated static func prefilled(_ fresh: RunState, runsheet: Runsheet, history: [SessionResult], today: Targets.Today?) -> RunState {
+        var s = Runner.prefillReps(fresh) { step, round in
             LastTime.sets(history, for: step, in: runsheet).flatMap { $0.indices.contains(round) ? $0[round].reps : nil }
         }
-        self.rival = Pace.lastTimed(history, runsheetIds: runsheet.lineage)
-        self.today = Targets.today(runsheet, results: history, intent: Intent.current(), kit: Equipment.current())
+        var last: [String: [SetResult]] = [:]
+        for idx in s.slots.indices {
+            let sl = s.slots[idx]
+            guard sl.kind == .work, let e = sl.exercise, e.forMode == .reps, sl.mode == .rounds || sl.mode == .loose else { continue }
+            let a = s.actuals[sl.id]
+            if a?.reps != nil || a?.doneAt != nil { continue }
+            let type = Runner.typeAt(s, idx)
+            var reps: Double?
+            if let t = today?.sets.first(where: { $0.stepId == e.id && $0.exerciseKey == e.exercise.key }) {
+                guard type != .warmup, type != .drop, !t.reps.isEmpty else { continue }
+                let setNo = s.slots[..<idx].indices.filter { j in
+                    s.slots[j].kind == .work && s.slots[j].blockId == sl.blockId && s.slots[j].step.id == e.id && Runner.typeAt(s, j) != .warmup
+                }.count
+                reps = t.reps[min(setNo, t.reps.count - 1)]
+            } else {
+                if last[e.id] == nil { last[e.id] = LastTime.sets(history, for: e, in: runsheet) ?? [] }
+                if let then = last[e.id], then.indices.contains(sl.round), (then[sl.round].type ?? .normal) == type {
+                    reps = then[sl.round].reps
+                }
+            }
+            if let reps { s.actuals[sl.id, default: Actual()].reps = reps }
+        }
+        return s
     }
 
     /// Resume a session the app was killed in the middle of. It comes back paused at the moment
@@ -500,7 +536,7 @@ final class SessionRunner {
     // MARK: - Undo
 
     private func keepForUndo(_ label: String) {
-        undoable = Undoable(label: label, state: state, runsheet: runsheet, at: Date().timeIntervalSince1970 * 1000)
+        undoable = Undoable(label: label, state: state, runsheet: runsheet, at: Date().timeIntervalSince1970 * 1000, added: addedSets)
     }
 
     /// Put the session back as it was before the last drop or skip. A rest skipped by mistake comes
@@ -509,6 +545,7 @@ final class SessionRunner {
         guard let u = undoable else { return }
         undoable = nil
         runsheet = u.runsheet
+        addedSets = u.added
         apply { _, _ in u.state }
         Haptics.shared.play(.tick)
     }
@@ -576,8 +613,7 @@ final class SessionRunner {
     /// Nudge the load or speed of whatever is running, by the exercise's own step.
     func nudgeTarget(_ direction: Double) {
         guard let ex = slot?.exercise else { return }
-        let step = ex.exercise.step == 0 ? 1 : ex.exercise.step
-        let next = max(0, (target ?? ex.target ?? 0) + direction * step)
+        let next = max(0, (target ?? ex.target ?? 0) + direction * StepSizes.load(ex.exercise))
         apply { Runner.adjust($0, now: $1, target: next) }
         Haptics.shared.play(.tick)
     }
@@ -718,8 +754,7 @@ final class SessionRunner {
 
     func nudgeSetLoad(_ slotId: String, _ direction: Double) {
         guard let row = setRows.first(where: { $0.slotId == slotId }), let ex = straightSetStep else { return }
-        let step = ex.exercise.step == 0 ? 1 : ex.exercise.step
-        apply { Runner.adjustAt($0, now: $1, slotId: slotId, target: max(0, (row.load ?? 0) + direction * step)) }
+        apply { Runner.adjustAt($0, now: $1, slotId: slotId, target: max(0, (row.load ?? 0) + direction * StepSizes.load(ex.exercise))) }
         Haptics.shared.play(.tick)
     }
 
@@ -752,6 +787,136 @@ final class SessionRunner {
         Haptics.shared.play(.tick)
     }
 
+    // MARK: - Typed numbers
+
+    /// A number typed on a set row: its load, count, metres or calories, reps counted, incline.
+    func setSetLoad(_ slotId: String, _ value: Double) { apply { Runner.adjustAt($0, now: $1, slotId: slotId, target: max(0, value)) } }
+    func setSetReps(_ slotId: String, _ value: Double) { apply { s, _ in Runner.setRepsAt(s, slotId: slotId, reps: max(0, value)) } }
+    func setSetAmount(_ slotId: String, _ value: Double, field: Runner.Amount? = nil) {
+        apply { s, _ in Runner.setAmountAt(s, slotId: slotId, value: max(0, value), field: field) }
+    }
+    func setSetIncline(_ slotId: String, _ value: Double) {
+        apply { s, _ in
+            guard s.actuals[slotId]?.doneAt == nil, s.slots.contains(where: { $0.id == slotId }) else { return s }
+            var s = s
+            s.actuals[slotId, default: Actual()].incline = max(0, value)
+            return s
+        }
+    }
+    /// A number typed on the running card: metres or calories done.
+    func setAmount(_ value: Double, field: Runner.Amount? = nil) { apply { s, _ in Runner.setAmount(s, value: max(0, value), field: field) } }
+
+    // MARK: - Add set
+
+    /// "+ Add set" under the block's last set: a copy of it, weight and reps (`Runner.addSet`). The
+    /// session's sheet gets the set too, so the session keeps it as its version and the finish
+    /// screen can offer it to the workout. Undo takes it back.
+    func addSet(blockId: String) {
+        let before = state.slots.count
+        let label = "Added a set"
+        let undo = Undoable(label: label, state: state, runsheet: runsheet, at: Date().timeIntervalSince1970 * 1000, added: addedSets)
+        apply { Runner.addSet($0, now: $1, blockId: blockId) }
+        guard state.slots.count > before else { return }
+        undoable = undo
+        runsheet = Edit.addSet(runsheet, block: blockId)
+        addedSets[blockId, default: 0] += 1
+        Haptics.shared.play(.tick)
+    }
+
+    /// The workout with the sets added this session put on it ("Update workout" on the finish
+    /// screen): each block one set longer per set added, the new sets at the weight and reps they
+    /// were logged at, else copies of the block's last set.
+    nonisolated static func withAddedSets(_ base: Runsheet, added: [String: Int], result: SessionResult) -> Runsheet {
+        var next = base
+        for (blockId, n) in added where n > 0 {
+            guard let block = next.items.compactMap(\.asBlock).first(where: { $0.id == blockId }), let step = block.straightSetStep else { continue }
+            let from = block.repeatCount
+            for _ in 0..<n { next = Edit.addSet(next, block: blockId) }
+            let logged = result.steps.first { $0.stepId == step.id }?.sets ?? []
+            // The added sets were the last ones done.
+            for k in 0..<n where logged.count >= n {
+                let set = logged[logged.count - n + k]
+                next = Edit.editSet(next, block: blockId, round: from + k, reps: step.forMode == .reps ? set.reps : nil, load: step.hasSetLoad ? set.load : nil)
+            }
+        }
+        return next
+    }
+
+    /// The straight-set block a set can be added to from here: the one running, or the one just
+    /// finished while nothing after it has been done (the gate of the next block, or the first
+    /// moments of the next step).
+    var addableBlock: Block? {
+        guard state.phase != .done, state.phase != .lead else { return nil }
+        let blocks = runsheet.items.compactMap(\.asBlock)
+        // At a gate the block in hand has not started: the one before it is the one just done.
+        if state.phase != .ready, let id = slot?.blockId, let b = blocks.first(where: { $0.id == id }), b.straightSetStep != nil { return b }
+        guard state.i > 0, let prev = state.slots[safe: state.i - 1], prev.kind == .work, let id = prev.blockId,
+              state.actuals[state.slots[state.i].id]?.doneAt == nil,
+              let b = blocks.first(where: { $0.id == id }), b.straightSetStep != nil else { return nil }
+        return b
+    }
+
+    // MARK: - Up next
+
+    /// One part of what is left: a block or a loose step, its sets still to do in order.
+    struct RemainingPart: Identifiable, Hashable {
+        var id: String
+        var name: String
+        var sets: [RemainingSet]
+    }
+
+    struct RemainingSet: Identifiable, Hashable {
+        var id: String
+        /// "Hip thrust", "Rest".
+        var name: String
+        /// "Set 2 · 110 kg × 4", "Round 3", "1:30".
+        var detail: String
+        var current: Bool
+    }
+
+    /// Everything not done yet, from the slot in hand on, grouped by block: the player's "Up next"
+    /// list. Rests between sets are left out; a rest of its own (a loose rest step) is listed.
+    nonisolated static func remaining(_ state: RunState, runsheet: Runsheet) -> [RemainingPart] {
+        guard state.phase != .done else { return [] }
+        var parts: [RemainingPart] = []
+        var setNo: [String: Int] = [:]
+        for idx in state.slots.indices {
+            let sl = state.slots[idx]
+            if sl.kind == .work { setNo["\(sl.blockId ?? sl.step.id)|\(sl.step.id)", default: 0] += 1 }
+            guard idx >= state.i, state.actuals[sl.id]?.doneAt == nil else { continue }
+            if sl.kind == .rest, sl.blockId != nil { continue }
+            let partId = sl.blockId ?? sl.step.id
+            let name = sl.exercise?.exercise.name ?? "Rest"
+            var detail: String
+            if sl.kind == .rest {
+                detail = Format.clock(sl.seconds ?? 0)
+            } else {
+                let n = setNo["\(partId)|\(sl.step.id)"] ?? 1
+                let line = setLine(state, idx) ?? sl.exercise?.forLabel ?? ""
+                let type = Runner.typeAt(state, idx)
+                let label = sl.blockId == nil ? nil : sl.mode == .rounds ? "Set \(n)" + (type == .normal ? "" : " · \(type.label)") : sl.roundLabel
+                detail = [label, line].compactMap { $0?.isEmpty == false ? $0 : nil }.joined(separator: " · ")
+            }
+            let item = RemainingSet(id: sl.id, name: name, detail: detail, current: idx == state.i)
+            if let i = parts.lastIndex(where: { $0.id == partId }), i == parts.count - 1 {
+                parts[i].sets.append(item)
+            } else {
+                parts.append(RemainingPart(id: partId, name: sl.blockName ?? name, sets: [item]))
+            }
+        }
+        return parts
+    }
+
+    /// The next thing to do that is not the set in hand: the next exercise after this block when
+    /// the block is one exercise done for sets (its sets are on screen), else the next work slot.
+    var upNext: (name: String, detail: String)? {
+        let from = state.phase == .ready ? state.i : state.i + 1
+        let block = straightSetStep != nil ? slot?.blockId : nil
+        guard let idx = state.slots.indices.first(where: { $0 >= from && state.slots[$0].kind == .work && (block == nil || state.slots[$0].blockId != block) && state.actuals[state.slots[$0].id]?.doneAt == nil }),
+              let ex = state.slots[idx].exercise else { return nil }
+        return (ex.exercise.name, Self.setLine(state, idx) ?? ex.forLabel)
+    }
+
     /// Timed work on the running slot: Done ends it early and logs the time it ran.
     var timedWork: Bool { slot.map(Runner.timesWork) == true && slot?.seconds != nil }
 
@@ -761,10 +926,11 @@ final class SessionRunner {
     func amount(_ field: Runner.Amount) -> Double? { slot.flatMap { Runner.amountAt(state, $0, field: field) } }
     var amount: Double? { amountField.flatMap(amount) }
 
-    /// 10 m on a distance, the machine's own step (100 m on a rower) on a timed piece, 1 calorie.
+    /// 10 m on a distance, the machine's own step (100 m on a rower) on a timed piece, 1 calorie;
+    /// metres by the step picked for the exercise when one was (`StepSizes`).
     nonisolated static func amountStep(_ sl: Slot, _ field: Runner.Amount? = nil) -> Double {
         guard (field ?? Runner.amountField(sl)) == .meters, let e = sl.exercise else { return 1 }
-        return e.forMode == .meters ? 10 : max(10, e.exercise.step)
+        return StepSizes.meters(e.exercise, fallback: e.forMode == .meters ? 10 : max(10, e.exercise.step))
     }
 
     func nudgeAmount(_ direction: Double, field: Runner.Amount? = nil) {
