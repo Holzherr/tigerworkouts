@@ -19,6 +19,7 @@ Metadata follows fastlane `deliver`'s layout in `ios/fastlane/`, so it can be up
 9. **Submit for Review.** Release option: manual or automatic after approval.
 10. **Optional, to automate later uploads:** an App Store Connect API key (Users and Access → Integrations → Team Keys, role App Manager), saved outside the repo. Then `fastlane deliver --skip_binary_upload` pushes all of the metadata and screenshots.
 11. **Positioning:** approve [app-store-positioning.md](app-store-positioning.md) (screen 1 "Use ChatGPT or Claude as your trainer"); the screenshots and metadata are redone after.
+12. **Sign in with Apple key (review D15):** developer.apple.com → Certificates, IDs & Profiles → Keys → + → Sign in with Apple, primary App ID `dev.brambruesch.tigerworkouts`; download the .p8. Put its Key ID in `APPLE_KEY_ID` in `mcp/wrangler.jsonc`, run `npx wrangler secret put APPLE_PRIVATE_KEY` in `mcp/` and paste the .p8 text, then `npm run deploy` there. Until then deleting an account made with Sign in with Apple does not revoke its Apple token.
 
 ## App Store Connect fields
 
@@ -96,7 +97,7 @@ Not collected: location, contacts, photos, browsing or search history, purchases
 | Guideline | Check | State |
 |---|---|---|
 | 4.8 Login services | Google sign-in is offered | Sign in with Apple is offered beside it (Paid entitlement, `SignInView`) |
-| 5.1.1(v) Account deletion | in-app | Me → Settings → Delete account, calls the server's delete; confirmation dialog |
+| 5.1.1(v) Account deletion | in-app | Me → Settings → Delete account, calls the server's delete; confirmation dialog. An account made with Sign in with Apple has its Apple token revoked first (review D15, 15 Nov 2026): the app asks Apple for a fresh authorization code and the worker's `POST /apple/revoke` (`mcp/src/apple.ts`) swaps it for a refresh token and revokes it. The route answers 503 until Nick adds the Sign in with Apple key (`APPLE_KEY_ID` in `mcp/wrangler.jsonc`, `APPLE_PRIVATE_KEY` as a secret) and deploys the worker; until then the account is deleted without the revocation |
 | 5.1.1 Sign-in not required | app usable signed out | yes: catalogue bundled, history kept on the phone |
 | 5.1.1 Privacy links in app | privacy policy reachable in the app | **fixed in this PR**: Settings → About has Support, Privacy Policy, Terms, version |
 | 5.1.2 / 5.1.3 HealthKit | entitlement, usage strings, purpose in UI, policy | entitlement in `TigerWorkouts-Paid.entitlements`; both usage strings in Info.plist; Health section footer **now says** heart rate and bodyweight are kept with history when signed in and never sold or used for ads; privacy policy has an Apple Health section |
@@ -105,7 +106,7 @@ Not collected: location, contacts, photos, browsing or search history, purchases
 | Export compliance | `ITSAppUsesNonExemptEncryption` | `false` (HTTPS through URLSession only) |
 | 2.1 Completeness | placeholder content | none found; seeded test data is `#if DEBUG` only |
 | 2.1 Offline first launch | no crash without network | bundled catalogue; Supabase is called only when signed in; image loads fail to a placeholder |
-| 2.5.4 Background modes | `audio` background mode | used while a workout runs, to play tones and keep the timer with the screen locked; explained in the review notes. The session holds a near-silent loop between tones, which a reviewer could question; the answer is in the notes |
+| 2.5.4 Background modes | `audio` background mode | used while a workout runs, to play tones and keep the timer with the screen locked. The session holds a near-silent loop between tones. The review notes say so plainly (Nick, review D15, 15 Nov 2026): "the timer keeps running when the phone is locked", by playing a near-silent sound only while a workout runs |
 | 2.3.7 Metadata | no trademarks in keywords, no prices, accurate | done |
 | Icon | 1024 px, no alpha | `icon-1024.png` has no alpha; dark and tinted variants present |
 | Launch screen | present | `UILaunchScreen` in Info.plist |
