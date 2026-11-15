@@ -87,6 +87,16 @@ export const readState = (raw: string | null): { state: AppState; intact: boolea
 /** False once a write to disk has failed (storage full, private mode), until one succeeds again. */
 let persisted = true;
 export const storePersisted = () => persisted;
+/** Why the last write failed: the storage is full, or it cannot be written at all (private mode). */
+let full = false;
+const persistListeners = new Set<() => void>();
+/** How often a failed write is tried again while the page stays open. */
+export const RETRY_MS = 15_000;
+let retry: ReturnType<typeof setInterval> | undefined;
+const isQuota = (e: unknown) => e instanceof DOMException && (e.name === 'QuotaExceededError' || e.name === 'NS_ERROR_DOM_QUOTA_REACHED' || e.code === 22 || e.code === 1014);
+/** `ok` once everything is on this device; `full` or `blocked` while what is on screen is in memory only. */
+export type SaveState = 'ok' | 'full' | 'blocked';
+const saveState = (): SaveState => (persisted ? 'ok' : full ? 'full' : 'blocked');
 
 /**
  * The sync snapshot says "the server had these rows, and so did this device". It may only be
@@ -153,6 +163,17 @@ export const setState = (patch: Partial<AppState> | ((s: AppState) => Partial<Ap
   const keys = Object.keys(next) as (keyof AppState)[];
   if (keys.every(k => Object.is(state[k], next[k]))) return;
   state = { ...state, ...next };
+  write();
+  emit();
+};
+
+/**
+ * Writes the whole state to this device. A failed write is said (`useSaveState`, the notice in
+ * app/storage-notice.tsx) and tried again every `RETRY_MS`, when the page is hidden and on every
+ * later change: the session stays in memory, and so in the next sync, until one gets through.
+ */
+const write = () => {
+  const before = saveState();
   try {
     localStorage.setItem(KEY, JSON.stringify(state));
     persisted = true;
@@ -160,10 +181,31 @@ export const setState = (patch: Partial<AppState> | ((s: AppState) => Partial<Ap
     // Private mode, or the storage is full. What is on disk is now older than what is on screen.
     if (persisted) console.error('[tiger] could not save to this device', e);
     persisted = false;
+    full = isQuota(e);
     forgetSnapshot();
   }
-  emit();
+  if (!persisted && retry === undefined) retry = setInterval(write, RETRY_MS);
+  if (persisted && retry !== undefined) {
+    clearInterval(retry);
+    retry = undefined;
+  }
+  if (saveState() !== before) persistListeners.forEach(l => l());
+  return persisted;
 };
+/** Try the failed write again now. True when what is on screen is on this device. */
+export const retrySave = () => persisted || write();
+export const useSaveState = () => useSyncExternalStore(cb => (persistListeners.add(cb), () => void persistListeners.delete(cb)), saveState);
+
+if (typeof window !== 'undefined') {
+  // The last chance before the page goes: a tab closed, the phone locked.
+  const last = () => void (persisted || write());
+  window.addEventListener('pagehide', last);
+  document.addEventListener('visibilitychange', () => document.hidden && last());
+  // Closing the tab now would lose what is only in memory: the browser asks first.
+  window.addEventListener('beforeunload', e => {
+    if (!persisted) e.preventDefault();
+  });
+}
 
 // Another tab wrote the store. Each tab holds the whole state and writes all of it, so without
 // this a tab opened earlier wrote its older copy back over a session logged in the other one.
