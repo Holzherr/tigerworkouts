@@ -14,6 +14,8 @@ export interface JoinScreenProps {
   signIn?: React.ReactNode;
   /** Resolves to an error line, or null once linked. */
   onAccept: () => Promise<string | null>;
+  /** Given with a notice that another try may clear (no connection): a Try again button. */
+  onRetry?: () => void;
   /** After accepting: on to the workouts. */
   onContinue: () => void;
   /** Opens the invite in the iPhone app (tigerworkouts://join/<code>). */
@@ -24,7 +26,7 @@ export interface JoinScreenProps {
  * Where an invite link lands: who invited you, what accepting means, sign-in when needed (a coach
  * link needs an account; guests can still run shared workouts), then Accept.
  */
-export const JoinScreen = ({ info, notice, signedIn, signIn, onAccept, onContinue, appHref }: JoinScreenProps) => {
+export const JoinScreen = ({ info, notice, onRetry, signedIn, signIn, onAccept, onContinue, appHref }: JoinScreenProps) => {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [done, setDone] = useState(false);
@@ -44,6 +46,11 @@ export const JoinScreen = ({ info, notice, signedIn, signIn, onAccept, onContinu
         {notice ? (
           <>
             <div className="rounded-card border border-line bg-surface px-3 py-3 text-[14px] text-muted">{notice}</div>
+            {onRetry && (
+              <Button block onClick={onRetry}>
+                Try again
+              </Button>
+            )}
             <Button block variant="ghost" onClick={onContinue}>
               Go to TigerWorkouts
             </Button>

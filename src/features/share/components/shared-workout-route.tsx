@@ -37,14 +37,14 @@ export const SharedWorkoutView = ({ state, onBack, onRetry }: { state: 'loading'
         Try again
       </Button>
       <Button variant="ghost" className="mt-2" onClick={onBack}>
-        Back to Discover
+        Back to Workouts
       </Button>
     </div>
   ) : (
     <div className="flex flex-col items-center p-6 text-center">
       <h1 className="text-[18px] font-bold">This workout is private. Only its owner can open it.</h1>
       <Button className="mt-4" onClick={onBack}>
-        Back to Discover
+        Back to Workouts
       </Button>
     </div>
   );

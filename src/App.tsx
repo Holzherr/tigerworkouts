@@ -76,7 +76,8 @@ import { ClientRoute, CoachRoute, JoinRoute, MyAiCoach, MyCoaches } from '@/feat
 
 
 const TABS = [
-  { id: 'discover', label: 'Discover', icon: <Flame /> },
+  // The page it opens is titled Workouts, with Mine and Discover inside it (Nick, 15 Nov 2026).
+  { id: 'discover', label: 'Workouts', icon: <Flame /> },
   { id: 'history', label: 'History', icon: <History /> },
   { id: 'me', label: 'Me', icon: <User /> },
 ] as const;
@@ -484,7 +485,7 @@ export default function App() {
   }
   if (route.name === 'session') {
     const res = st.results.find(x => x.id === route.id);
-    if (!res) return shell('history', <Missing />);
+    if (!res) return shell('history', <Missing what="Session" home={{ label: 'Back to History', path: '/history' }} />);
     const r = byId.get(res.runsheetId);
     return full(
         <SessionDetailScreen
@@ -986,11 +987,12 @@ const CreatorRoute = ({ id, onOpen, onShare }: { id: string; onOpen: (r: Runshee
   return <CreatorScreen loading={!page} profile={page?.profile ?? null} workouts={page?.workouts ?? []} onBack={() => (history.length > 1 ? history.back() : go('/discover'))} onOpen={onOpen} onShare={onShare} />;
 };
 
-const Missing = () => (
-  <div className="p-6 text-center text-[13px] text-muted">
-    Workout not found.{' '}
-    <button type="button" className="font-bold text-brand-ink" onClick={() => go('/discover')}>
-      Back to Discover
-    </button>
+/** A link to something that is not here (deleted, or another device's): what it was, and a way home. */
+const Missing = ({ what = 'Workout', home = { label: 'Back to Workouts', path: '/discover' } }: { what?: string; home?: { label: string; path: string } }) => (
+  <div className="flex flex-col items-center p-6 text-center">
+    <h1 className="text-[18px] font-bold">{what} not found</h1>
+    <Button className="mt-4" onClick={() => go(home.path)}>
+      {home.label}
+    </Button>
   </div>
 );

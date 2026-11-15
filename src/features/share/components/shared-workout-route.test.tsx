@@ -32,7 +32,7 @@ describe('a #/w/ link to someone’s workout', () => {
     const onBack = vi.fn();
     render(<SharedWorkoutRoute id="u-private1" signedIn signIn={null} onFound={() => {}} onBack={onBack} />);
     expect(await screen.findByText('This workout is private. Only its owner can open it.')).toBeTruthy();
-    fireEvent.click(screen.getByRole('button', { name: 'Back to Discover' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Back to Workouts' }));
     expect(onBack).toHaveBeenCalled();
   });
 

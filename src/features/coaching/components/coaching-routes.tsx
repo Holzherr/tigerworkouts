@@ -154,13 +154,21 @@ export const ClientRoute = ({ clientId, me, workouts, lookup, exercise, onBack, 
 export const JoinRoute = ({ code, signedIn, signIn, onContinue, onAccepted }: { code: string; signedIn: boolean; signIn: React.ReactNode; onContinue: () => void; onAccepted: () => void }) => {
   const [info, setInfo] = useState<C.InviteInfo | null | undefined>();
   const [notice, setNotice] = useState<string | undefined>();
+  const [tries, setTries] = useState(0);
   useEffect(() => {
-    C.inviteInfo(code).then(setInfo, e => setNotice(err(e)));
-  }, [code]);
+    let live = true;
+    C.inviteInfo(code).then(
+      i => live && (setNotice(undefined), setInfo(i)),
+      e => live && setNotice(err(e))
+    );
+    return () => void (live = false);
+  }, [code, tries]);
   return (
     <JoinScreen
       info={info}
       notice={notice}
+      // With no answer from the server the invite may well be fine: offer another go.
+      onRetry={notice === C.OFFLINE_MESSAGE ? () => (setNotice(undefined), setTries(n => n + 1)) : undefined}
       signedIn={signedIn}
       signIn={signIn}
       appHref={`tigerworkouts://join/${encodeURIComponent(code)}`}
