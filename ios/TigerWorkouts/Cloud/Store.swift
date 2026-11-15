@@ -104,6 +104,7 @@ final class Store {
         seedTimedIfAsked()
         seedVersionsIfAsked()
         seedAICoachIfAsked()
+        seedWeekOneIfAsked()
         #endif
         loaded = true
         shareUpNext()

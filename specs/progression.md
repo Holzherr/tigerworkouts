@@ -36,6 +36,10 @@ metric, no chatbot, nothing that costs you for ignoring it.
   offWorkouts?: [id] }`), synced like `equipment`. The web carries it through untouched and keeps
   its stamp; the web's targets take a `mode` (ported, tested) but the web has no picker yet and
   always uses reps.
+- **Last time, set by set** (Priyanka via Nick, 15 Nov 2026). Targets read the last session's working
+  sets in order. Straight sets (one load) get a target; sets at different loads (ramping, a pyramid,
+  100 × 8 then 110 × 4, an odd 115 × 1 at the end) get none, as the timer gives a pyramid none and
+  starts each set on last time's. The heaviest set is never taken for the working weight.
 - **Intent.** Settings → Suggestions: Restore (match), Maintain (default: a rep or round more),
   Overreach (two more, a faster time).
 - **Stall.** The session that set the standing best plus at least three after it, over at least
@@ -55,7 +59,7 @@ A workout page's "Week by week" row opens a table: a row per exercise and set, a
 (Wk 1, Wk 2…, weeks counted from the first session), each cell what was logged ("100 × 8") with the
 change since the column before ("+5 kg", "+1 rep"; coral when heavier or more reps), the newest
 column highlighted. Columns cover the workout, the original of an edited copy, and every workout
-linked by ⋯ Duplicate (`duplicateOf` on the copy, iOS). A tap on an exercise opens its history
+linked by ⋯ Duplicate (`duplicatedFrom` on the copy, iOS). A tap on an exercise opens its history
 across every workout, with the chart. iOS only so far. Code: `ios/TigerWorkouts/Results/WeekTable.swift`,
 `Features/ProgressTableView.swift`.
 

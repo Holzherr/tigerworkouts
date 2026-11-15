@@ -155,7 +155,10 @@ enum Targets {
 
     /// Today's sets for one step, from its sets last time (`LastTime.sets`). Only steps counted in
     /// reps whose load is theirs to change: no pyramid, no relative load, nothing on a speed. Last
-    /// time's warm-ups and drop sets are not the work, so they are left out. The next load up is
+    /// time's warm-ups and drop sets are not the work, so they are left out. Last time is read set by
+    /// set, in order: straight sets (one load) get a target; sets at different loads (ramping, a
+    /// pyramid, an odd single at the end) get none, as the timer gives a pyramid none and starts each
+    /// set on last time's — the heaviest set is never taken for the working weight. The next load up is
     /// the next one `kit` can make (a 24 kg bell goes to 28, not 26.5). `mode` is how the lift moves
     /// on (`ProgressMode`): reps (double progression, the default), weight at fixed reps, or effort.
     static func set(_ s: ExerciseStep, last all: [SetResult]?, intent: Intent = .maintain, kit: Equipment? = nil, mode: ProgressMode = .reps) -> SetTarget? {
@@ -164,7 +167,9 @@ enum Targets {
         guard [.reps, .amrap, .max].contains(s.forMode) else { return nil }
         let unit = s.shortUnit
         guard unit != "kph" else { return nil }
-        let top = last.map { $0.load ?? 0 }.max() ?? 0
+        // One load, or no target: 100 × 8, 110 × 4, 110 × 4, 115 × 1 is not "115 kg".
+        guard Set(last.map { $0.load ?? 0 }).count == 1 else { return nil }
+        let top = last[0].load ?? 0
         let add: Double = switch intent { case .restore: 0; case .overreach: 2; case .maintain: 1 }
         func make(load: Double?, reps: [Double], jump: Bool, text: String, reason: String) -> SetTarget {
             SetTarget(stepId: s.id, exerciseKey: s.exercise.key, name: s.exercise.name, load: load, reps: reps, jump: jump, text: text, reason: reason)

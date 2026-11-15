@@ -153,8 +153,11 @@ export const setTarget = (s: ExerciseStep, lastAll: SetResult[] | undefined, int
   const unit = shortUnit(s.exercise.unit);
   if (unit === 'kph') return undefined;
   const base = { stepId: s.id, exerciseKey: s.exercise.key, name: s.exercise.name };
+  // Read set by set: straight sets (one load) only. Ramping sets, a pyramid or an odd single at the
+  // end get no target, as the timer gives a pyramid none — the heaviest set is never the working weight.
   const loads = last.map(x => x.load ?? 0);
-  const top = Math.max(...loads);
+  if (new Set(loads).size > 1) return undefined;
+  const top = loads[0];
   const add = intent === 'restore' ? 0 : intent === 'overreach' ? 2 : 1;
   if (top <= 0 || !unit) {
     const done = last.map(x => x.reps).filter((n): n is number => n !== undefined && n > 0);

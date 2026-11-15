@@ -131,6 +131,7 @@
 		DF6DD6221EB835B5A56F96DE /* workouts.json in Resources */ = {isa = PBXBuildFile; fileRef = 5820D43896B67ACA2086F001 /* workouts.json */; };
 		E1086487A0AD37810BFC5884 /* Targets.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3F35DA991E47AC04C5CF1094 /* Targets.swift */; };
 		E3443BE7A5A9D6A0A6C760A2 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 4F479DC8710989893BCE68D6 /* PrivacyInfo.xcprivacy */; };
+		E542D6A5CBCA9D929ED710F8 /* WorkoutPageTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C4E707D1907D145B1FBFBDE4 /* WorkoutPageTests.swift */; };
 		E7E7A30B8578E843E0D98D22 /* UpNextWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = D91D1FE772E16CBEC2B027B2 /* UpNextWidget.swift */; };
 		E87938CB5347B0BF50CBB2F2 /* CelebrationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CA6F9BD8E2DD41D78F5CFF71 /* CelebrationView.swift */; };
 		E8FF9F709DAB7BE226BC46D1 /* SetGrid.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1E38F7FA144B053254278A46 /* SetGrid.swift */; };
@@ -284,6 +285,7 @@
 		BEBB7BC4CAC7E345AFA74D2B /* WorkoutDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkoutDetailView.swift; sourceTree = "<group>"; };
 		C1CA40FB23F26CFD0D7CB467 /* WalkthroughUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WalkthroughUITests.swift; sourceTree = "<group>"; };
 		C322AE0162817671C5EF928C /* TigerWorkoutsWidgets-Paid.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = "TigerWorkoutsWidgets-Paid.entitlements"; sourceTree = "<group>"; };
+		C4E707D1907D145B1FBFBDE4 /* WorkoutPageTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkoutPageTests.swift; sourceTree = "<group>"; };
 		CA6F9BD8E2DD41D78F5CFF71 /* CelebrationView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CelebrationView.swift; sourceTree = "<group>"; };
 		CCE071589D583B406205189C /* HomeTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeTests.swift; sourceTree = "<group>"; };
 		CD7FDA4D739693E3EB3F2EB7 /* RoundsViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RoundsViews.swift; sourceTree = "<group>"; };
@@ -492,6 +494,7 @@
 				343141B3CD43DC7DFA0B0A5B /* VersionsTests.swift */,
 				E3194D3CF7F64567149CE8AA /* WeekTableTests.swift */,
 				F5CF9DC0EA5841510B9D13F6 /* WorkoutIconTests.swift */,
+				C4E707D1907D145B1FBFBDE4 /* WorkoutPageTests.swift */,
 			);
 			path = TigerWorkoutsTests;
 			sourceTree = "<group>";
@@ -801,6 +804,7 @@
 				33035C8F3399C9BACC8A6459 /* VersionsTests.swift in Sources */,
 				DDF782ED4E1A20C711291CE2 /* WeekTableTests.swift in Sources */,
 				A6DFA29A5C8E113653F132FF /* WorkoutIconTests.swift in Sources */,
+				E542D6A5CBCA9D929ED710F8 /* WorkoutPageTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

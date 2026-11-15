@@ -214,7 +214,7 @@ export interface Runsheet {
   copyOf?: string;
   /** Set by the iPhone app's Duplicate (week 1 → week 2): the workout it was duplicated from. Not
    * its history; the iOS week-by-week table follows it. Kept as it came. */
-  duplicateOf?: string;
+  duplicatedFrom?: string;
   items: Item[];
 }
 

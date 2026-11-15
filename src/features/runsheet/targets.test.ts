@@ -79,8 +79,14 @@ describe('increment-aware load targets', () => {
     expect(setTarget(step(kb, { forMax: 12 }), sets(24, 12, 11, 12))!.reps).toEqual([12, 12, 12]);
   });
 
-  it('reads the working sets at the top load, not warm-ups', () => {
-    expect(setTarget(step(bench, { forValue: 5 }), [...sets(40, 10), ...sets(60, 5, 5)])!.text).toBe('60 kg × 6');
+  it('reads the working sets, not warm-ups', () => {
+    expect(setTarget(step(bench, { forValue: 5 }), [{ reps: 10, load: 40, type: 'warmup' }, ...sets(60, 5, 5)])!.text).toBe('60 kg × 6');
+  });
+
+  it('sets at different loads get no target; the heaviest single is never the working weight', () => {
+    const priyanka = [...sets(100, 8), ...sets(110, 4, 4), ...sets(115, 1)];
+    for (const mode of ['reps', 'weight', 'effort'] as const) expect(setTarget(step(kb), priyanka, 'maintain', undefined, mode)).toBeUndefined();
+    expect(setTarget(step(bench, { forValue: 5 }), [...sets(40, 10), ...sets(60, 5, 5)])).toBeUndefined();
   });
 
   it('restore repeats last time; overreach adds two', () => {

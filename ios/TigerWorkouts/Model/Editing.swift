@@ -44,6 +44,57 @@ enum Edit {
         return sheet
     }
 
+    /// Duplicate in the ⋯ menu: a workout of its own beside the original, to change for next week.
+    /// Fresh block and step ids, because a session keys its loads by step id and two workouts must
+    /// not share them; no `copyOf`, so the original keeps its own history and its place in Mine;
+    /// `duplicatedFrom` keeps the thread for a week-by-week view.
+    static func duplicateForNextWeek(_ r: Runsheet, creator: String?) -> Runsheet {
+        var sheet = r
+        sheet.id = id("w")
+        sheet.title = nextTitle(r.title)
+        sheet.creator = creator ?? r.creator
+        sheet.source = Source(title: r.title, author: creator, kind: "user")
+        sheet.isPublic = nil
+        sheet.copyOf = nil
+        sheet.program = nil
+        sheet.duplicatedFrom = r.key
+        sheet.createdAt = ISO8601DateFormatter().string(from: Date())
+        sheet.items = r.items.map { item in
+            switch item {
+            case .block(var b):
+                b.id = id("b")
+                b.steps = b.steps.map(freshId)
+                return .block(b)
+            case .step(let s): return .step(freshId(s))
+            case .ref(var ref):
+                ref.id = id("i")
+                return .ref(ref)
+            }
+        }
+        return sheet
+    }
+
+    private static func freshId(_ s: Step) -> Step {
+        switch s {
+        case .exercise(var e):
+            e.id = id("e")
+            return .exercise(e)
+        case .rest(var r):
+            r.id = id("r")
+            return .rest(r)
+        }
+    }
+
+    /// The name a duplicate is offered: the week number counted on when the name ends in one
+    /// ("Hip thrust focus week 1" → "… week 2", "Legs Wk 3" → "Legs Wk 4"), else "(copy)".
+    static func nextTitle(_ title: String) -> String {
+        let t = title.trimmingCharacters(in: .whitespaces)
+        if let m = t.firstMatch(of: /^(.*?\b(?:week|wk|w)[\s.]*)(\d+)$/.ignoresCase()), let n = Int(m.2) {
+            return "\(m.1)\(n + 1)"
+        }
+        return t.isEmpty ? "Untitled (copy)" : "\(t) (copy)"
+    }
+
     // MARK: - Adding
 
     static func addBlock(_ r: Runsheet) -> Runsheet {
@@ -415,6 +466,20 @@ enum Edit {
         guard r.title.trimmingCharacters(in: .whitespaces).isEmpty else { return r }
         var out = r
         out.title = "My workout"
+        return out
+    }
+
+    /// What a workout being written is saved as, from its first exercise on: a name if it has none
+    /// yet ("My workout"), and without blocks still empty. Nil while there is nothing to run. A new
+    /// workout used to wait for `problem` to clear, so one block left empty (the first, after
+    /// building in an added one) meant it was never saved at all (Priyanka, 14 Nov 2026).
+    static func storable(_ r: Runsheet) -> Runsheet? {
+        guard !r.exerciseSteps.isEmpty else { return nil }
+        var out = namedForStart(r)
+        out.items = out.items.filter { item in
+            guard let b = item.asBlock else { return true }
+            return !b.steps.isEmpty
+        }
         return out
     }
 

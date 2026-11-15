@@ -98,9 +98,19 @@ struct TargetsTests {
         #expect(Targets.set(Self.step(Self.kb) { $0.forMax = 12 }, last: Self.sets(24, 12, 11, 12))?.reps == [12, 12, 12])
     }
 
-    @Test("reads the working sets at the top load, not warm-ups")
+    @Test("reads the working sets, not warm-ups")
     func working() {
-        #expect(Targets.set(Self.step(Self.bench, forValue: 5), last: Self.sets(40, 10) + Self.sets(60, 5, 5))?.text == "60 kg × 6")
+        var warm = SetResult(reps: 10, load: 40)
+        warm.type = .warmup
+        #expect(Targets.set(Self.step(Self.bench, forValue: 5), last: [warm] + Self.sets(60, 5, 5))?.text == "60 kg × 6")
+    }
+
+    @Test("sets at different loads get no target; the heaviest single is never the working weight")
+    func ramping() {
+        // Priyanka, 14 Nov 2026: 100 × 8, 110 × 4, 110 × 4 and an odd 115 × 1 read as "115 kg × 2".
+        let priyanka = Self.sets(100, 8) + Self.sets(110, 4, 4) + Self.sets(115, 1)
+        for mode in ProgressMode.allCases { #expect(Targets.set(Self.step(Self.kb), last: priyanka, mode: mode) == nil) }
+        #expect(Targets.set(Self.step(Self.bench, forValue: 5), last: Self.sets(40, 10) + Self.sets(60, 5, 5)) == nil)
     }
 
     @Test("restore repeats last time; overreach adds two")

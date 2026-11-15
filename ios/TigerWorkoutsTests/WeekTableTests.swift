@@ -7,12 +7,12 @@ struct WeekTableTests {
     static let hip = ExerciseRef(key: "bb_hip_thrust", name: "Hip thrust", unit: "kg", step: 2.5)
     static let press = ExerciseRef(key: "db_shoulder_press", name: "Shoulder press", unit: "kg per arm", step: 2.5)
 
-    static func sheet(_ id: String, duplicateOf: String? = nil, copyOf: String? = nil) -> Runsheet {
+    static func sheet(_ id: String, duplicatedFrom: String? = nil, copyOf: String? = nil) -> Runsheet {
         var r = Runsheet(id: id, title: id, items: [.block(Block(id: "b1", name: "Main", repeatCount: 3, steps: [
             .exercise(ExerciseStep(id: "s1", exercise: hip, target: 100, forMode: .reps, forValue: 8)),
             .exercise(ExerciseStep(id: "s2", exercise: press, target: 12.5, forMode: .reps, forValue: 8)),
         ]))])
-        r.duplicateOf = duplicateOf
+        r.duplicatedFrom = duplicatedFrom
         r.copyOf = copyOf
         return r
     }
@@ -30,8 +30,8 @@ struct WeekTableTests {
     @Test("follows duplicates both ways and edited copies, and nothing else")
     func family() {
         let w1 = Self.sheet("w1")
-        let w2 = Self.sheet("w2", duplicateOf: "w1")
-        let w3 = Self.sheet("w3", duplicateOf: "w2")
+        let w2 = Self.sheet("w2", duplicatedFrom: "w1")
+        let w3 = Self.sheet("w3", duplicatedFrom: "w2")
         let other = Self.sheet("other")
         let copy = Self.sheet("c1", copyOf: "w1")
         let all = [w1, w2, w3, other, copy]
@@ -44,7 +44,7 @@ struct WeekTableTests {
     @Test("a column per session, weeks counted from the first, the newest marked latest")
     func columns() {
         let w1 = Self.sheet("w1")
-        let w2 = Self.sheet("w2", duplicateOf: "w1")
+        let w2 = Self.sheet("w2", duplicatedFrom: "w1")
         // Mon 2 Nov 2026, Wed 4 Nov (same week), Mon 9 Nov, Sun 22 Nov.
         let results = [
             Self.session("2026-11-02", "w1", hip: [(100, 8)]),

@@ -629,6 +629,8 @@ final class WalkthroughUITests: XCTestCase {
         XCTAssertFalse(app.buttons["Start workout"].exists, "an empty workout should not offer Start")
         snap("11b New workout, named, empty")
 
+        // No page-wide Edit (1 Nov 2026): a tap on the block's header opens it.
+        tap(app.buttons["block-header"].firstMatch)
         tap(app.buttons["Add exercise"].firstMatch)
         XCTAssertTrue(app.navigationBars["Add exercise"].waitForExistence(timeout: 5))
         snap("12 Exercise picker")
@@ -649,10 +651,90 @@ final class WalkthroughUITests: XCTestCase {
         tap(app.navigationBars["Step"].buttons["Done"])
         tap(app.navigationBars.matching(NSPredicate(format: "identifier BEGINSWITH[c] 'Kettlebell swing'")).buttons["Done"].firstMatch)
 
-        // No Save: it saved itself once it had a name and an exercise.
+        // Saved as a draft already; Save keeps it, and back without Save asks first.
+        tap(app.buttons["save-workout"])
+        XCTAssertTrue(app.descendants(matching: .any)["saved-toast"].waitForExistence(timeout: 3))
+        XCTAssertFalse(app.buttons["save-workout"].exists, "kept: no Save, and back no longer asks")
         app.navigationBars.buttons.element(boundBy: 0).tap()
         XCTAssertTrue(app.buttons["Start Swings and sprints"].waitForExistence(timeout: 5), "a saved workout should appear under Mine")
         snap("15 Workouts with Mine")
+    }
+
+    /// Priyanka, 14 Nov 2026 (TestFlight): a workout built from New workout could not be saved — no
+    /// Save, the bookmark did nothing and back lost it. Built the way she did: a second block with
+    /// the exercises in it, the first block left empty.
+    func testNewWorkoutWithAnEmptyBlockIsKept() {
+        XCTAssertTrue(app.navigationBars["Workouts"].waitForExistence(timeout: 10))
+        tap(app.buttons["New workout"])
+        let name = app.textFields["Name"]
+        XCTAssertTrue(name.waitForExistence(timeout: 5))
+        tap(name)
+        let title = "Glutes \(Int(Date().timeIntervalSince1970) % 100_000)"
+        name.typeText(title)
+        tap(app.navigationBars["Workout"].buttons["Done"])
+        XCTAssertTrue(app.navigationBars[title].waitForExistence(timeout: 5))
+
+        tap(app.buttons["Add block"])
+        tap(app.buttons["Add exercise"].firstMatch)
+        let search = app.searchFields["Exercise"]
+        tap(search)
+        search.typeText("Kettlebell swing")
+        tap(app.buttons.matching(NSPredicate(format: "label BEGINSWITH[c] 'Kettlebell swing'")).firstMatch)
+        XCTAssertTrue(app.buttons["Start workout"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.buttons["save-workout"].exists, "a new workout has a Save")
+        snap("11c New workout, exercise in block 2")
+
+        // Back asks; Discard would delete the autosaved draft, Save keeps it.
+        tap(app.buttons["new-back"])
+        tap(app.buttons["leave-save"].firstMatch)
+        XCTAssertTrue(app.buttons["Start \(title)"].waitForExistence(timeout: 5), "a new workout with an exercise should be kept in Mine")
+        snap("11d Kept in Mine")
+    }
+
+    /// Priyanka's week-1 workout: every set last time on its row, today's one line with the reason
+    /// behind a tap, the last block clear of the Start bar, and Duplicate → week 2.
+    func testWorkoutPageWeekOne() {
+        app.terminate()
+        app.launchArguments = ["-seedWeekOne"]
+        app.launch()
+        let discard = app.alerts.buttons["Discard"]
+        if discard.waitForExistence(timeout: 3) { discard.tap() }
+
+        open("Hip thrust focus week 1")
+        let thrust = app.buttons.matching(NSPredicate(format: "label CONTAINS 'last time 100 × 8, 110 × 4 (×2), 115 × 1'")).firstMatch
+        XCTAssertTrue(thrust.waitForExistence(timeout: 5), "last time lists every set, in order")
+        let today = app.buttons["today-target"]
+        XCTAssertTrue(today.waitForExistence(timeout: 5))
+        XCTAssertTrue(today.label.hasPrefix("Today: "), today.label)
+        XCTAssertFalse(app.descendants(matching: .any)["today-why"].exists, "the reasoning waits for a tap")
+        snap("81 Workout page, week 1")
+        tap(today)
+        XCTAssertTrue(app.descendants(matching: .any)["today-why"].waitForExistence(timeout: 3))
+        snap("81b Today, opened")
+
+        // The last block's last row scrolls clear of the Start bar.
+        let plank = app.buttons.matching(NSPredicate(format: "label BEGINSWITH 'Plank'")).firstMatch
+        for _ in 0..<6 { app.swipeUp() }
+        XCTAssertTrue(plank.exists && plank.isHittable, "the last exercise should be reachable")
+        XCTAssertLessThan(plank.frame.maxY, app.buttons["Start workout"].frame.minY, "nothing hides behind Start")
+        snap("82 Workout page, scrolled to the end")
+
+        tap(app.navigationBars["Hip thrust focus week 1"].buttons["More"])
+        tap(app.buttons["Duplicate"])
+        let name = app.textFields["Name"]
+        XCTAssertTrue(name.waitForExistence(timeout: 5))
+        XCTAssertEqual(name.value as? String, "Hip thrust focus week 2")
+        snap("83 Duplicate, named week 2")
+        tap(app.navigationBars["Workout"].buttons["Done"])
+        XCTAssertTrue(app.navigationBars["Hip thrust focus week 2"].waitForExistence(timeout: 5))
+        snap("84 Week 2")
+
+        // The original stays; the copy goes again so runs do not pile up.
+        tap(app.navigationBars["Hip thrust focus week 2"].buttons["More"])
+        tap(app.buttons["Delete workout"])
+        tap(app.buttons["Delete"].firstMatch)
+        XCTAssertTrue(app.navigationBars["Workouts"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.buttons.matching(NSPredicate(format: "label CONTAINS 'Hip thrust focus week 1'")).firstMatch.waitForExistence(timeout: 5), "the original is still there")
     }
 
     func testSettingsAndHealth() {

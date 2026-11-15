@@ -45,7 +45,7 @@ enum WeekTable {
     }
 
     /// The ids whose sessions belong in this workout's table: its own, the original's for an edited
-    /// copy (`lineage`), and every workout linked to it by ⋯ Duplicate (`duplicateOf`), back to week 1
+    /// copy (`lineage`), and every workout linked to it by ⋯ Duplicate (`duplicatedFrom`), back to week 1
     /// and on to the newest week.
     static func family(_ r: Runsheet, in workouts: [Runsheet]) -> Set<String> {
         var byKey: [String: Runsheet] = [:]
@@ -57,8 +57,8 @@ enum WeekTable {
             guard ids.insert(key).inserted else { continue }
             guard let w = byKey[key] else { continue }
             queue.append(contentsOf: w.lineage.dropFirst())
-            if let from = w.duplicateOf { queue.append(from) }
-            queue.append(contentsOf: workouts.filter { $0.duplicateOf == key }.map(\.key))
+            if let from = w.duplicatedFrom { queue.append(from) }
+            queue.append(contentsOf: workouts.filter { $0.duplicatedFrom == key }.map(\.key))
         }
         return ids
     }
