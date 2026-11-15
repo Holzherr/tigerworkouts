@@ -37,11 +37,11 @@ describe('StepRow: what a step logs', () => {
     expect(screen.queryByLabelText(/^Load/)).toBeNull();
     expect(screen.queryByText(/\(m\)/)).toBeNull();
     row({ ...makeExercise(EX.kb_swing, { forMode: 'seconds', forValue: 30 }), id: 'kb' });
-    expect(screen.getByLabelText(/^Load \(kg/)).toBeTruthy();
+    expect(screen.getByRole('group', { name: /^Load \(kg/ })).toBeTruthy();
   });
   it('a treadmill sprint has a speed row', () => {
     row({ ...makeExercise(EX.sprint, { target: 14.5 }), id: 'sp' });
-    expect(screen.getByLabelText('Speed (kph)')).toBeTruthy();
+    expect(screen.getByRole('group', { name: 'Speed (kph)' })).toBeTruthy();
     expect(screen.queryByLabelText(/^Load/)).toBeNull();
   });
   it('a timed kettlebell can log reps only', () => {

@@ -1,5 +1,6 @@
 import { Minus, Plus } from 'lucide-react';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef } from 'react';
+import { NumberEntry } from './number-entry';
 import { cn, fmtNum } from '@/shared/utils/ui-utils';
 
 export interface StepperProps {
@@ -11,7 +12,7 @@ export interface StepperProps {
   /** Override how the number is shown, e.g. seconds → "1:30". */
   format?: (value: number) => string;
   size?: 'md' | 'sm';
-  /** Tap the number to type one: for amounts a fixed step can't reach, like a 15 m sled push. */
+  /** Tap the number to type one (numeric keypad, decimals): on unless a caller turns it off. */
   typeable?: boolean;
   'aria-label'?: string;
   className?: string;
@@ -52,9 +53,10 @@ const useHold = (fire: () => boolean) => {
 
 /**
  * Minus / value / plus control. One row, 44px tall, value in bold with no unit suffix; the unit
- * belongs in the row label next to it. `sm` is narrower, not shorter. Hold a button to repeat.
+ * belongs in the row label next to it. `sm` is narrower, not shorter. Hold a button to repeat;
+ * tap the number to type it (`NumberEntry`).
  */
-export const Stepper = ({ value, onChange, step = 1, min = 0, max = 999, format = fmtNum, size = 'md', typeable, className, 'aria-label': ariaLabel }: StepperProps) => {
+export const Stepper = ({ value, onChange, step = 1, min = 0, max = 999, format = fmtNum, size = 'md', typeable = true, className, 'aria-label': ariaLabel }: StepperProps) => {
   // The value as last sent: a held button steps from it before the parent's re-render lands.
   const cur = useRef(value);
   cur.current = value;
@@ -64,15 +66,6 @@ export const Stepper = ({ value, onChange, step = 1, min = 0, max = 999, format 
     cur.current = next;
     onChange(next);
     return true;
-  };
-  const [typing, setTyping] = useState<string | null>(null);
-  const commit = () => {
-    const n = Number(typing);
-    if (typing !== null && typing.trim() !== '' && Number.isFinite(n)) {
-      const next = clamp(n, min, max);
-      if (next !== cur.current) onChange(next);
-    }
-    setTyping(null);
   };
   const down = useHold(by(-step));
   const up = useHold(by(step));
@@ -84,18 +77,14 @@ export const Stepper = ({ value, onChange, step = 1, min = 0, max = 999, format 
         <Minus />
       </button>
       {typeable ? (
-        <input
+        <NumberEntry
           aria-label={ariaLabel ? `${ariaLabel} value` : 'Value'}
-          inputMode="decimal"
-          className={cn('h-11 bg-transparent px-1 text-center font-bold tabular-nums outline-none focus:bg-canvas', size === 'sm' ? 'w-12 text-[14px]' : 'w-16 text-[17px]')}
-          value={typing ?? format(value)}
-          onFocus={e => {
-            setTyping(String(value));
-            requestAnimationFrame(() => e.target.select());
-          }}
-          onChange={e => setTyping(e.target.value)}
-          onBlur={commit}
-          onKeyDown={e => e.key === 'Enter' && e.currentTarget.blur()}
+          value={value}
+          min={min}
+          max={max}
+          format={format}
+          onChange={onChange}
+          className={size === 'sm' ? 'w-12 text-[14px]' : 'w-16 text-[17px]'}
         />
       ) : (
         <output className={cn('grid h-11 place-items-center px-1 font-bold tabular-nums', size === 'sm' ? 'min-w-12 text-[14px]' : 'min-w-14 text-[17px]')}>{format(value)}</output>

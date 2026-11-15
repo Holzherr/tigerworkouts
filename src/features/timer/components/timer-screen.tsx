@@ -5,6 +5,7 @@ import { ClipThumb } from '@/shared/components/ui/clip-thumb';
 import { Sheet } from '@/shared/components/ui/sheet';
 import { Stepper } from '@/shared/components/ui/stepper';
 import { cn, fmtClock, fmtNum } from '@/shared/utils/ui-utils';
+import { loadStep, metersStep } from '@/shared/utils/step-sizes';
 import { countLabel, extraLogs, forLabel, hasLoad, roundsLabel, nextSetType, setMarks, shortUnit, showsLoad, straightSetStep, type Block, type ExerciseRef, type ExerciseStep, type Item, type Runsheet, type SetType, type StepLog } from '@/features/runsheet/model';
 import { kitOf, type Equipment } from '@/features/runsheet/plates';
 import { PlatesButton } from '@/features/runsheet/components/plate-sheet';
@@ -210,14 +211,14 @@ const TimerSetGrid = ({ state, step, blockId, actions, equipment, prs = [], onHo
             <div className="mt-1 flex items-center gap-2">
               {loadCol && (
                 <div className="flex flex-1 flex-col items-center">
-                  <Stepper size="sm" aria-label={`Set ${v.n + 1} load`} value={v.load ?? 0} step={step.exercise.step || 1} max={1000} onChange={t => actions.adjust(v.sl.id, t)} />
+                  <Stepper size="sm" aria-label={`Set ${v.n + 1} load`} value={v.load ?? 0} step={loadStep(step.exercise)} max={1000} onChange={t => actions.adjust(v.sl.id, t)} />
                   <span className="text-[11px] text-muted">{unit}</span>
                 </div>
               )}
               {count && (
                 <div className="flex flex-1 flex-col items-center">
                   {!clocked && (!amount || actions.setAmount) ? (
-                    <Stepper size="sm" aria-label={`Set ${v.n + 1} ${count.toLowerCase()}`} value={v.reps} min={0} max={amount ? 99999 : 999} step={step.forMode === 'meters' ? 10 : 1} onChange={x => (amount ? actions.setAmount!(v.sl.id, x) : actions.setReps(v.sl.id, x))} />
+                    <Stepper size="sm" aria-label={`Set ${v.n + 1} ${count.toLowerCase()}`} value={v.reps} min={0} max={amount ? 99999 : 999} step={step.forMode === 'meters' ? metersStep(step.exercise, 10) : 1} onChange={x => (amount ? actions.setAmount!(v.sl.id, x) : actions.setReps(v.sl.id, x))} />
                   ) : (
                     <span className="flex h-11 items-center text-[18px] font-bold tabular-nums">{fmtNum(Math.round(v.reps * 10) / 10)}</span>
                   )}
@@ -226,7 +227,7 @@ const TimerSetGrid = ({ state, step, blockId, actions, equipment, prs = [], onHo
               )}
               {logged.map((l, k) => (
                 <div key={l} className="flex flex-1 flex-col items-center">
-                  <Stepper size="sm" aria-label={`Set ${v.n + 1} ${l === 'reps' ? 'reps' : l === 'meters' ? 'metres' : 'calories'} done`} value={v.extra[k] ?? 0} min={0} max={l === 'reps' ? 999 : 99999} step={l === 'meters' ? Math.max(10, step.exercise.step) : 1} onChange={x => (l === 'reps' ? actions.setReps(v.sl.id, x) : actions.setAmount!(v.sl.id, x, l))} />
+                  <Stepper size="sm" aria-label={`Set ${v.n + 1} ${l === 'reps' ? 'reps' : l === 'meters' ? 'metres' : 'calories'} done`} value={v.extra[k] ?? 0} min={0} max={l === 'reps' ? 999 : 99999} step={l === 'meters' ? metersStep(step.exercise, Math.max(10, step.exercise.step)) : 1} onChange={x => (l === 'reps' ? actions.setReps(v.sl.id, x) : actions.setAmount!(v.sl.id, x, l))} />
                   <span className="text-[11px] text-muted">{loggedUnit(l)} done</span>
                 </div>
               ))}
@@ -480,7 +481,7 @@ export const TimerScreen = ({ runsheet, state, now, onDone, onSkip, onBack, onPa
                               </span>
                               <div className="flex items-center">
                                 {kitOf(stepOf.exercise) === 'barbell' && <PlatesButton load={target} equipment={equipment} />}
-                                <Stepper aria-label="Target" value={target ?? 0} step={stepOf.exercise.step} onChange={onAdjust} />
+                                <Stepper aria-label="Target" value={target ?? 0} step={loadStep(stepOf.exercise)} max={1000} onChange={onAdjust} />
                               </div>
                             </div>
                           )}
@@ -499,7 +500,7 @@ export const TimerScreen = ({ runsheet, state, now, onDone, onSkip, onBack, onPa
                           {amountFields.map(f => (
                             <div key={f} className="flex items-center justify-between gap-3">
                               <span className="text-[14px]">{f === 'meters' ? 'Metres done' : 'Calories done'}</span>
-                              <Stepper aria-label={f === 'meters' ? 'Metres' : 'Calories'} value={amountOf(f) ?? 0} min={0} max={99999} step={f === 'meters' ? (stepOf.forMode === 'meters' ? 10 : Math.max(10, stepOf.exercise.step)) : 1} onChange={v => onSetAmount!(v, f)} />
+                              <Stepper aria-label={f === 'meters' ? 'Metres' : 'Calories'} value={amountOf(f) ?? 0} min={0} max={99999} step={f === 'meters' ? metersStep(stepOf.exercise, stepOf.forMode === 'meters' ? 10 : Math.max(10, stepOf.exercise.step)) : 1} onChange={v => onSetAmount!(v, f)} />
                             </div>
                           ))}
                           {lastLabel && onFill && (

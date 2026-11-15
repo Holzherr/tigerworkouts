@@ -2,7 +2,9 @@ import { ChevronRight } from 'lucide-react';
 import { ClipThumb } from '@/shared/components/ui/clip-thumb';
 import { Sheet } from '@/shared/components/ui/sheet';
 import { Stepper } from '@/shared/components/ui/stepper';
-import { forLabel, shortUnit, type ExerciseStep } from '@/features/runsheet/model';
+import { loadStep, useStepSizes } from '@/shared/utils/step-sizes';
+import { forLabel, hasSetting, shortUnit, type ExerciseStep } from '@/features/runsheet/model';
+import { StepSizes } from './step-sizes';
 
 export interface ExerciseSheetProps {
   step: ExerciseStep | null;
@@ -26,7 +28,9 @@ const isTreadmill = (s: ExerciseStep) => s.exercise.unit === 'kph' || s.incline 
  * as steppers rather than text. There is no separate edit mode — if a screen passes a handler
  * the value is editable where you are reading it.
  */
-export const ExerciseSheet = ({ step: s, onOpenChange, onTarget, onIncline, target, incline, note, onHistory }: ExerciseSheetProps) => (
+export const ExerciseSheet = ({ step: s, onOpenChange, onTarget, onIncline, target, incline, note, onHistory }: ExerciseSheetProps) => {
+  useStepSizes();
+  return (
   <Sheet open={!!s} onOpenChange={onOpenChange} title={s?.exercise.name}>
     {s && (
       <div className="space-y-3">
@@ -37,13 +41,13 @@ export const ExerciseSheet = ({ step: s, onOpenChange, onTarget, onIncline, targ
             {s.exercise.cue && <p className="mt-0.5 text-[13px] leading-relaxed text-muted">{s.exercise.cue}</p>}
           </div>
         </div>
-        {s.exercise.unit && s.exercise.unit !== 'reps' && (
+        {hasSetting(s) && (
           <div className="flex items-center justify-between gap-3 rounded-card border border-line bg-surface px-3 py-2.5">
             <span className="text-[15px] font-semibold">
               {s.exercise.unit === 'kph' ? 'Speed' : 'Weight'} <span className="font-normal text-muted">({shortUnit(s.exercise.unit)})</span>
             </span>
             {onTarget ? (
-              <Stepper aria-label="Target" value={target ?? s.target ?? 0} step={s.exercise.step} onChange={onTarget} />
+              <Stepper aria-label="Target" value={target ?? s.target ?? 0} step={loadStep(s.exercise)} max={1000} onChange={onTarget} />
             ) : (
               <span className="text-[17px] font-extrabold tabular-nums">{target ?? s.target ?? '—'}</span>
             )}
@@ -60,6 +64,7 @@ export const ExerciseSheet = ({ step: s, onOpenChange, onTarget, onIncline, targ
           </div>
         )}
         {note && <p className="text-[12px] text-muted">{note}</p>}
+        <StepSizes step={s} />
         {onHistory && (
           <button type="button" onClick={onHistory} className="flex w-full items-center justify-between gap-3 rounded-card border border-line bg-surface px-3 py-2.5 text-left active:bg-line-soft">
             <span className="text-[15px] font-semibold">History</span>
@@ -71,4 +76,5 @@ export const ExerciseSheet = ({ step: s, onOpenChange, onTarget, onIncline, targ
       </div>
     )}
   </Sheet>
-);
+  );
+};

@@ -25,6 +25,7 @@ import { BlockBracket, BlockHeader } from './block-bracket';
 import { BlockReorder } from './block-reorder';
 import { PlatesButton } from './plate-sheet';
 import { SetGrid, SetMark, type SetGridProps } from './set-grid';
+import { loadStep, useStepSizes } from '@/shared/utils/step-sizes';
 import { kitOf, type Equipment } from '../plates';
 import { StepRow } from './step-row';
 import { SwipeToRemove } from './swipe-to-remove';
@@ -75,6 +76,7 @@ const LIFT_MS = 350;
  * add or drop a set at the end.
  */
 export const SetRuns = ({ block, onChange, onVary, hintFor, equipment }: SetGridProps & { onVary: () => void }) => {
+  useStepSizes();
   const step = straightSetStep(block);
   if (!step) return null;
   const hasLoad = showsLoad(step);
@@ -98,7 +100,7 @@ export const SetRuns = ({ block, onChange, onVary, hintFor, equipment }: SetGrid
               </div>
               {hasLoad && (
                 <div className="flex flex-1 items-center justify-center">
-                  <Stepper size="sm" aria-label={`${label} load`} value={run.load ?? 0} step={step.exercise.step || 1} max={1000} onChange={load => onChange(editRun(block, run, { load }))} />
+                  <Stepper size="sm" aria-label={`${label} load`} value={run.load ?? 0} step={loadStep(step.exercise)} max={1000} onChange={load => onChange(editRun(block, run, { load }))} />
                   {kitOf(step.exercise) === 'barbell' && <PlatesButton load={run.load} equipment={equipment} className="-mr-2" />}
                 </div>
               )}

@@ -6,6 +6,8 @@ import { ClipThumb } from '@/shared/components/ui/clip-thumb';
 import { Dropdown } from '@/shared/components/ui/dropdown';
 import { Stepper } from '@/shared/components/ui/stepper';
 import { cn } from '@/shared/utils/ui-utils';
+import { loadStep, metersStep, useStepSizes } from '@/shared/utils/step-sizes';
+import { StepSizes } from './step-sizes';
 import { extraLogs, forLabel, hasSetting, loadLabel, logChoices, settingLabel, STEP_LOG_LABEL, stepLogs, withLogs, type ExerciseStep, type ForMode, type RestStep, type Step } from '../model';
 
 const FOR_OPTIONS = [
@@ -129,14 +131,16 @@ StepRow.displayName = 'StepRow';
 
 const Label = ({ children }: { children: React.ReactNode }) => <div className="text-[14px] text-ink">{children}</div>;
 
-const ExerciseBody = ({ step, onChange }: { step: ExerciseStep; onChange: (s: Step) => void }) => (
+const ExerciseBody = ({ step, onChange }: { step: ExerciseStep; onChange: (s: Step) => void }) => {
+  useStepSizes();
+  return (
   <>
     {hasSetting(step) && (
       <div className="flex items-center justify-between gap-3">
         <Label>
           {settingLabel(step)} <span className="text-muted">({step.exercise.unit})</span>
         </Label>
-        <Stepper aria-label={`${settingLabel(step)} (${step.exercise.unit})`} value={step.target ?? 0} step={step.exercise.step} onChange={target => onChange({ ...step, target })} />
+        <Stepper aria-label={`${settingLabel(step)} (${step.exercise.unit})`} value={step.target ?? 0} step={loadStep(step.exercise)} max={1000} onChange={target => onChange({ ...step, target })} />
       </div>
     )}
     {step.exercise.unit === 'kph' && (
@@ -148,13 +152,15 @@ const ExerciseBody = ({ step, onChange }: { step: ExerciseStep; onChange: (s: St
     <div className="flex items-center justify-between gap-3">
       <Label>For</Label>
       <div className="flex items-center gap-1.5">
-        <Stepper aria-label="Duration" typeable value={step.forValue} step={step.forMode === 'seconds' ? 5 : step.forMode === 'meters' ? 10 : 1} min={1} max={step.forMode === 'seconds' ? 600 : step.forMode === 'meters' ? 42195 : 200} onChange={forValue => onChange({ ...step, forValue })} />
+        <Stepper aria-label="Duration" value={step.forValue} step={step.forMode === 'seconds' ? 5 : step.forMode === 'meters' ? metersStep(step.exercise, 10) : 1} min={1} max={step.forMode === 'seconds' ? 600 : step.forMode === 'meters' ? 42195 : 200} onChange={forValue => onChange({ ...step, forValue })} />
         <Dropdown aria-label="Duration unit" value={step.forMode} options={FOR_OPTIONS} onValueChange={forMode => onChange(withMode(step, forMode))} />
       </div>
     </div>
     <LogRow step={step} onChange={onChange} />
+    <StepSizes step={step} />
   </>
-);
+  );
+};
 /** A new target drops a log it records itself: reps counted twice is one too many. */
 const withMode = (step: ExerciseStep, forMode: ForMode): ExerciseStep => {
   const next: ExerciseStep = { ...step, forMode, forValue: defaultFor(forMode) };
