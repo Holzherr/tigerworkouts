@@ -1683,7 +1683,8 @@ final class WalkthroughUITests: XCTestCase {
         // Ten sets still to come: Finish asks first, and Keep going stays in the session.
         tap(app.buttons["Finish and save"])
         XCTAssertTrue(app.staticTexts["Finish now?"].waitForExistence(timeout: 5), "with work still to come, the menu's Finish should ask first")
-        XCTAssertTrue(app.staticTexts["10 sets left. What you have done is saved."].exists, "the question should say what is left")
+        // "10 sets left." at once; fewer if the EMOM's minutes moved on while the test waited.
+        XCTAssertTrue(app.staticTexts.matching(NSPredicate(format: "label ENDSWITH 'left. What you have done is saved.'")).firstMatch.exists, "the question should say what is left")
         snap("112 Menu Finish, asked first")
         tap(app.buttons["Keep going"].firstMatch)
         XCTAssertTrue(app.buttons["Set 1 of 10 done"].waitForExistence(timeout: 5), "Keep going should stay in the session")
