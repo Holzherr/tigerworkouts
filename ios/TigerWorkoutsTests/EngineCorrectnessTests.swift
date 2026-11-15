@@ -699,14 +699,14 @@ struct TimerRedrawTests {
             let runner = Self.runner()
             let t0 = runner.state.startedAt
             runner.tick(at: t0 + 5_000) // the lead-in is over: 30 s of swings running
-            runner.tick(at: t0 + 6_600)
+            runner.tick(at: t0 + 7_600) // 27.4 s left: reads 0:27, 0:03 in, 0:08 on the session, 2%
             let beat = runner.beat
-            #expect(Self.redraws(runner, (1...7).map { t0 + 6_600 + Double($0) * 100 }) == 0)
+            #expect(Self.redraws(runner, (1...6).map { t0 + 7_600 + Double($0) * 100 }) == 0)
             #expect(runner.beat == beat)
             // The clock itself is exact at every tick, drawn or not.
-            #expect(runner.now == t0 + 7_300)
-            #expect(abs((runner.clock.left ?? 0) - 27.7) < 0.001)
-            #expect(Self.redraws(runner, [t0 + 7_600]) == 1)
+            #expect(runner.now == t0 + 8_200)
+            #expect(abs((runner.clock.left ?? 0) - 26.8) < 0.001)
+            #expect(Self.redraws(runner, [t0 + 8_600]) == 1)
             #expect(runner.beat == beat + 1)
             SessionRunner.clearSaved()
         }
