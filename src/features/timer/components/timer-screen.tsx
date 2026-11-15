@@ -1,5 +1,6 @@
-import { Check, ChevronLeft, ChevronRight, ChevronsRight, List, Medal, MoreHorizontal, Pause, Play, Shuffle, SkipForward, Square, Volume2, VolumeX, X } from 'lucide-react';
-import { useMemo, useState } from 'react';
+import * as Dialog from '@radix-ui/react-dialog';
+import { Check, ChevronLeft, ChevronRight, ChevronsRight, List, Medal, MoreHorizontal, Pause, Play, Shuffle, SkipForward, Square, Trash2, Volume2, VolumeX, X } from 'lucide-react';
+import { useMemo, useRef, useState } from 'react';
 import { Button } from '@/shared/components/ui/button';
 import { ClipThumb } from '@/shared/components/ui/clip-thumb';
 import { Sheet } from '@/shared/components/ui/sheet';
@@ -145,15 +146,15 @@ const TimerSetGrid = ({ state, step, blockId, actions, equipment, prs = [], onHo
           setOpen(null);
         }
       }}
-      className="grid size-11 shrink-0 place-items-center disabled:opacity-30"
+      className="grid size-11 shrink-0 place-items-center disabled:opacity-70"
     >
-      <span className={cn('grid size-7 place-items-center rounded-full border-2', v.done ? 'border-brand bg-brand text-white' : 'border-line text-faint')}>
+      <span className={cn('grid size-7 place-items-center rounded-full border-2', v.done ? 'border-brand bg-brand text-white' : 'border-body text-body')}>
         <Check className="size-4" strokeWidth={3} />
       </span>
     </button>
   );
   return (
-    <div className="rounded-card bg-white px-3 py-1.5 text-ink" aria-label="Sets">
+    <div className="rounded-card bg-white px-3 py-1.5 text-ink max-[359px]:px-2" aria-label="Sets">
       <button type="button" onClick={onHowTo} disabled={!onHowTo} aria-label={`How to do ${step.exercise.name}`} className="flex w-full items-center gap-3 border-b border-line-soft py-2 text-left">
         <ClipThumb size="md" clip={step.exercise.clip} poster={step.exercise.poster} icon={step.exercise.icon} />
         <span className="min-w-0 flex-1 text-[20px] leading-tight font-extrabold">{step.exercise.name}</span>
@@ -163,11 +164,11 @@ const TimerSetGrid = ({ state, step, blockId, actions, equipment, prs = [], onHo
           if (v !== later[0]) return null;
           return (
             <button key="more" type="button" onClick={() => setAllOpen(true)} aria-label={`${later.length} more ${later.length === 1 ? 'set' : 'sets'}, ${later[0].what}. Show them`} className="flex min-h-12 w-full items-center gap-3 border-b border-line-soft py-1 text-left last:border-0">
-              <span className="ml-2 size-7 shrink-0 rounded-full border-2 border-line" />
-              <span className="flex-1 text-[15px] text-faint">
+              <span className="ml-2 size-7 shrink-0 rounded-full border-2 border-muted" />
+              <span className="flex-1 text-[15px] text-body">
                 {later.length} more {later.length === 1 ? 'set' : 'sets'}
               </span>
-              <span className="pr-1 text-[15px] text-faint tabular-nums">{later[0].what}</span>
+              <span className="pr-1 text-[15px] font-semibold text-body tabular-nums">{later[0].what}</span>
             </button>
           );
         }
@@ -175,13 +176,13 @@ const TimerSetGrid = ({ state, step, blockId, actions, equipment, prs = [], onHo
           return (
             <div key={v.sl.id} className="flex min-h-12 items-center gap-1 border-b border-line-soft last:border-0" onClick={() => !v.done && setOpen(v.sl.id)}>
               {tick(v)}
-              <span className={cn('flex-1 text-[15px]', v.done ? 'text-body' : 'text-faint')}>{v.name}</span>
+              <span className="flex-1 text-[15px] text-body">{v.name}</span>
               {v.done && prs.includes(v.sl.id) && (
                 <span className="grid size-7 shrink-0 place-items-center rounded-full bg-brand text-white" aria-label="Personal record" title="Personal record">
                   <Medal className="size-4" />
                 </span>
               )}
-              <span className={cn('pr-1 text-[16px] font-semibold tabular-nums', v.done ? 'text-body' : 'text-faint')}>{v.what}</span>
+              <span className="pr-1 text-[16px] font-semibold text-body tabular-nums">{v.what}</span>
             </div>
           );
         }
@@ -208,17 +209,17 @@ const TimerSetGrid = ({ state, step, blockId, actions, equipment, prs = [], onHo
                 hint && <span className="text-[13px] text-muted">{hint}</span>
               )}
             </div>
-            <div className="mt-1 flex items-center gap-2">
+            <div className="mt-1 flex items-center gap-2 max-[359px]:gap-1">
               {loadCol && (
-                <div className="flex flex-1 flex-col items-center">
-                  <Stepper size="sm" aria-label={`Set ${v.n + 1} load`} value={v.load ?? 0} step={loadStep(step.exercise)} max={1000} onChange={t => actions.adjust(v.sl.id, t)} />
+                <div className="flex min-w-0 flex-1 flex-col items-center">
+                  <Stepper size="sm" fluid aria-label={`Set ${v.n + 1} load`} value={v.load ?? 0} step={loadStep(step.exercise)} max={1000} onChange={t => actions.adjust(v.sl.id, t)} />
                   <span className="text-[11px] text-muted">{unit}</span>
                 </div>
               )}
               {count && (
-                <div className="flex flex-1 flex-col items-center">
+                <div className="flex min-w-0 flex-1 flex-col items-center">
                   {!clocked && (!amount || actions.setAmount) ? (
-                    <Stepper size="sm" aria-label={`Set ${v.n + 1} ${count.toLowerCase()}`} value={v.reps} min={0} max={amount ? 99999 : 999} step={step.forMode === 'meters' ? metersStep(step.exercise, 10) : 1} onChange={x => (amount ? actions.setAmount!(v.sl.id, x) : actions.setReps(v.sl.id, x))} />
+                    <Stepper size="sm" fluid aria-label={`Set ${v.n + 1} ${count.toLowerCase()}`} value={v.reps} min={0} max={amount ? 99999 : 999} step={step.forMode === 'meters' ? metersStep(step.exercise, 10) : 1} onChange={x => (amount ? actions.setAmount!(v.sl.id, x) : actions.setReps(v.sl.id, x))} />
                   ) : (
                     <span className="flex h-11 items-center text-[18px] font-bold tabular-nums">{fmtNum(Math.round(v.reps * 10) / 10)}</span>
                   )}
@@ -226,8 +227,8 @@ const TimerSetGrid = ({ state, step, blockId, actions, equipment, prs = [], onHo
                 </div>
               )}
               {logged.map((l, k) => (
-                <div key={l} className="flex flex-1 flex-col items-center">
-                  <Stepper size="sm" aria-label={`Set ${v.n + 1} ${l === 'reps' ? 'reps' : l === 'meters' ? 'metres' : 'calories'} done`} value={v.extra[k] ?? 0} min={0} max={l === 'reps' ? 999 : 99999} step={l === 'meters' ? metersStep(step.exercise, Math.max(10, step.exercise.step)) : 1} onChange={x => (l === 'reps' ? actions.setReps(v.sl.id, x) : actions.setAmount!(v.sl.id, x, l))} />
+                <div key={l} className="flex min-w-0 flex-1 flex-col items-center">
+                  <Stepper size="sm" fluid aria-label={`Set ${v.n + 1} ${l === 'reps' ? 'reps' : l === 'meters' ? 'metres' : 'calories'} done`} value={v.extra[k] ?? 0} min={0} max={l === 'reps' ? 999 : 99999} step={l === 'meters' ? metersStep(step.exercise, Math.max(10, step.exercise.step)) : 1} onChange={x => (l === 'reps' ? actions.setReps(v.sl.id, x) : actions.setAmount!(v.sl.id, x, l))} />
                   <span className="text-[11px] text-muted">{loggedUnit(l)} done</span>
                 </div>
               ))}
@@ -239,6 +240,9 @@ const TimerSetGrid = ({ state, step, blockId, actions, equipment, prs = [], onHo
     </div>
   );
 };
+
+/** A second tap on Skip this soon after the lead-in was skipped is ignored. */
+export const DOUBLE_TAP_MS = 600;
 
 const MODE_LABEL: Record<string, string> = { loose: '', rounds: 'Round', fortime: 'For time · round', amrap: 'AMRAP · round', emom: 'EMOM · minute', ladder: 'Rung' };
 /** An EMOM every 60 s counts minutes; any other interval counts intervals. */
@@ -268,6 +272,7 @@ export const TimerScreen = ({ runsheet, state, now, onDone, onSkip, onBack, onPa
   const [swapping, setSwapping] = useState(false);
   /** The slot whose steppers are open; any other slot shows them folded. */
   const [changing, setChanging] = useState<string | null>(null);
+  const leadSkippedAt = useRef(0);
   const slot = R.current(state);
   const nxt = R.next(state);
   const clock = R.clock(state, now);
@@ -276,6 +281,13 @@ export const TimerScreen = ({ runsheet, state, now, onDone, onSkip, onBack, onPa
   const ready = state.phase === 'ready';
   const lead = state.phase === 'lead' || (paused && (state.pausedFrom ? state.pausedFrom === 'lead' : state.i === 0 && Object.keys(state.blockStart).length === 0));
   const done = state.phase === 'done';
+  // The lead-in's Skip and the first step's Skip are the same button: a second tap landing just
+  // after the lead-in went is the same press, not a skip of set 1.
+  const skip = () => {
+    if (lead) leadSkippedAt.current = Date.now();
+    else if (Date.now() - leadSkippedAt.current < DOUBLE_TAP_MS) return;
+    onSkip();
+  };
   const bElapsed = R.blockElapsed(state, now);
   const stepOf = slot?.step;
   const idx = state.i;
@@ -343,7 +355,7 @@ export const TimerScreen = ({ runsheet, state, now, onDone, onSkip, onBack, onPa
   const announcement = done ? 'Workout finished' : paused ? 'Paused' : ready && slot ? `Next block: ${partTitle(partOf(slot.part))}, set up then start` : lead ? `Get ready, ${state.leadSec} seconds` : !slot ? '' : isRest ? `Rest, ${Math.round(slot.seconds ?? 0)} seconds` : stepOf?.kind !== 'exercise' ? '' : straight ? `${stepOf.exercise.name}, set ${slot.round + 1} of ${slot.rounds}` : `${stepOf.exercise.name}, ${forLabel(stepOf)}${slot.rounds > 1 ? `, round ${slot.round + 1}${slot.mode === 'amrap' ? '' : ` of ${slot.rounds}`}` : ''}`;
 
   return (
-    <div className={cn('flex h-full min-h-0 flex-col text-white transition-colors duration-300', isRest && !ready ? 'bg-rest' : 'bg-ink')}>
+    <div inert={confirmExit} className={cn('flex h-full min-h-0 flex-col text-white transition-colors duration-300', isRest && !ready ? 'bg-rest' : 'bg-ink')}>
       {announce && (
         <div aria-live="polite" role="status" className="sr-only">
           {announcement}
@@ -381,7 +393,7 @@ export const TimerScreen = ({ runsheet, state, now, onDone, onSkip, onBack, onPa
         {race && !done && <div className="mt-2 text-[14px] text-white/60 tabular-nums">{race}</div>}
       </header>
 
-      <div className="min-h-0 flex-1 overflow-y-auto px-4">
+      <div className="min-h-0 flex-1 overflow-y-auto px-4 max-[359px]:px-2">
         {ready && slot ? (
           <div className="py-4">
             <div className="text-[11px] font-bold tracking-widest text-brand uppercase">Next block{slot.parts > 1 ? ` · ${slot.part + 1} of ${slot.parts}` : ''}</div>
@@ -395,6 +407,13 @@ export const TimerScreen = ({ runsheet, state, now, onDone, onSkip, onBack, onPa
                     <div className="truncate text-[14px] font-semibold">{s.exercise.name}</div>
                     <div className="text-[12px] text-white/60">{stepLine(s)}</div>
                   </div>
+                  {/* The load can be set here before the block starts, also when the plan gives none. */}
+                  {onAdjustStep && hasLoad(s.exercise) && (
+                    <div className="flex shrink-0 flex-col items-center">
+                      <Stepper size="sm" aria-label={`${s.exercise.name} ${s.exercise.unit === 'kph' ? 'speed' : 'weight'}`} value={R.plannedTarget(state, s.id) ?? 0} step={loadStep(s.exercise)} max={1000} onChange={t => onAdjustStep(s.id, { target: t })} className="text-ink" />
+                      <span className="text-[11px] text-white/60">{shortUnit(s.exercise.unit)}</span>
+                    </div>
+                  )}
                 </div>
               ))}
             </div>
@@ -517,7 +536,7 @@ export const TimerScreen = ({ runsheet, state, now, onDone, onSkip, onBack, onPa
             )}
 
             {nxt && !done && (
-              <button type="button" onClick={() => setPeek(nxt.part)} className="mt-3 flex min-h-11 w-full items-center gap-2.5 px-1.5 text-left text-[16px]">
+              <button type="button" onClick={() => setPeek(nxt.part)} className={cn('sticky bottom-0 mt-3 flex min-h-11 w-full items-center gap-2.5 px-1.5 text-left text-[16px] transition-colors duration-300', isRest ? 'bg-rest' : 'bg-ink')}>
                 <span className={cn('shrink-0 text-[13px] font-semibold tracking-wider uppercase', nextIsNewPart ? (isRest ? 'text-brand-line' : 'text-brand') : 'text-white/60')}>{nextIsNewPart ? 'Next block' : 'Next'}</span>
                 <span className="min-w-0 flex-1 truncate">{nextIsNewPart ? partTitle(partOf(nxt.part)) : nxt.step.kind === 'exercise' ? nxt.step.exercise.name : 'Rest'}</span>
                 <span className="shrink-0 text-white/60 tabular-nums">{nxt.step.kind === 'exercise' ? forLabel(nxt.step) : fmtClock(nxt.seconds ?? 0)}</span>
@@ -529,7 +548,6 @@ export const TimerScreen = ({ runsheet, state, now, onDone, onSkip, onBack, onPa
                 <div className="mt-1 text-[13px] text-white/70">{fmtClock(total)}</div>
               </div>
             )}
-            {!isRest && !done && !lead && !straight && <div className="pt-2 text-center text-[11px] text-white/60">Swipe the card left to drop this exercise for tonight</div>}
           </>
         )}
       </div>
@@ -548,21 +566,21 @@ export const TimerScreen = ({ runsheet, state, now, onDone, onSkip, onBack, onPa
         ) : (
           <>
             <div className="flex gap-2 pb-2">
-              <Button variant="dark" size="lg" onClick={onBack} disabled={idx === 0 || lead} aria-label="Previous step" className="shrink-0 bg-white/10">
+              <Button variant="dark" size="lg" onClick={onBack} disabled={idx === 0 || lead} aria-label="Previous step" className="shrink-0 bg-white/10 max-[359px]:px-3">
                 <ChevronLeft />
               </Button>
               {!countdown ? (
-                <Button block size="lg" variant="dark" onClick={paused ? onResume : onPause} className={cn('bg-white/10', paused && 'bg-white text-ink')}>
+                <Button block size="lg" variant="dark" onClick={paused ? onResume : onPause} className={cn('bg-white/10 max-[359px]:gap-1.5 max-[359px]:px-2', paused && 'bg-white text-ink')}>
                   {paused ? <Play /> : <Pause />} {paused ? 'Resume' : 'Pause'}
                 </Button>
               ) : (
                 timedWork && (
-                  <Button block size="lg" variant="dark" onClick={onDone} className="bg-white/10">
+                  <Button block size="lg" variant="dark" onClick={onDone} className="bg-white/10 max-[359px]:gap-1.5 max-[359px]:px-2">
                     <Check /> Done early
                   </Button>
                 )
               )}
-              <Button block size="lg" variant="dark" onClick={onSkip} aria-label={lead || isRest ? undefined : 'Skip this step'} className="bg-white/10">
+              <Button block size="lg" variant="dark" onClick={skip} aria-label={lead || isRest ? undefined : 'Skip this step'} className="bg-white/10 max-[359px]:gap-1.5 max-[359px]:px-2">
                 <SkipForward /> Skip{isRest ? ' rest' : ''}
               </Button>
             </div>
@@ -598,6 +616,11 @@ export const TimerScreen = ({ runsheet, state, now, onDone, onSkip, onBack, onPa
           {options.length > 0 && (
             <Button block variant="ghost" onClick={() => (setMenu(false), setSwapping(true))}>
               <Shuffle /> Swap exercise
+            </Button>
+          )}
+          {slot && stepOf?.kind === 'exercise' && !lead && !ready && (
+            <Button block variant="ghost" onClick={() => (setMenu(false), onDrop(slot.step.id))}>
+              <Trash2 /> Drop this exercise
             </Button>
           )}
           <Button block variant="ghost" onClick={() => (setMenu(false), setOverview(true))}>
@@ -696,36 +719,39 @@ export const TimerScreen = ({ runsheet, state, now, onDone, onSkip, onBack, onPa
         note={onAdjustStep ? 'Applies from here to the end of the session.' : undefined}
       />
 
-      {confirmExit && (
-        <div className="absolute inset-0 z-20 flex items-end bg-ink/70 p-4" onClick={() => (setConfirmExit(false), setConfirmDiscard(false))}>
-          {confirmDiscard ? (
-            <div className="w-full space-y-2 rounded-card bg-surface p-4 text-ink" onClick={e => e.stopPropagation()}>
-              <div className="text-[16px] font-bold">Discard this session?</div>
-              <p className="text-[13px] text-muted">{fmtClock(total)} of work is not saved.</p>
-              <Button block variant="danger" onClick={onExit}>
-                Discard session
-              </Button>
-              <Button block variant="quiet" onClick={() => setConfirmDiscard(false)}>
-                Keep going
-              </Button>
-            </div>
-          ) : (
-            <div className="w-full space-y-2 rounded-card bg-surface p-4 text-ink" onClick={e => e.stopPropagation()}>
-              <div className="text-[16px] font-bold">End this session?</div>
-              <p className="text-[13px] text-muted">{fmtClock(total)} so far. Save what you did, or discard it.</p>
-              <Button block onClick={onFinish}>
-                Finish and save
-              </Button>
-              <Button block variant="danger" onClick={() => setConfirmDiscard(true)}>
-                Discard
-              </Button>
-              <Button block variant="quiet" onClick={() => setConfirmExit(false)}>
-                Keep going
-              </Button>
-            </div>
-          )}
-        </div>
-      )}
+      <Dialog.Root open={confirmExit} onOpenChange={o => (setConfirmExit(o), !o && setConfirmDiscard(false))}>
+        <Dialog.Portal>
+          <Dialog.Overlay className="fixed inset-0 z-40 bg-ink/70" />
+          <Dialog.Content aria-modal="true" className="fixed inset-x-0 bottom-0 z-50 mx-auto w-full max-w-[480px] p-4 outline-none">
+            {confirmDiscard ? (
+              <div className="w-full space-y-2 rounded-card bg-surface p-4 text-ink">
+                <Dialog.Title className="text-[16px] font-bold">Discard this session?</Dialog.Title>
+                <Dialog.Description className="text-[13px] text-muted">{fmtClock(total)} of work is not saved.</Dialog.Description>
+                <Button block variant="danger" onClick={onExit}>
+                  Discard session
+                </Button>
+                <Button block variant="quiet" onClick={() => setConfirmDiscard(false)}>
+                  Keep going
+                </Button>
+              </div>
+            ) : (
+              <div className="w-full space-y-2 rounded-card bg-surface p-4 text-ink">
+                <Dialog.Title className="text-[16px] font-bold">End this session?</Dialog.Title>
+                <Dialog.Description className="text-[13px] text-muted">{fmtClock(total)} so far. Save what you did, or discard it.</Dialog.Description>
+                <Button block onClick={onFinish}>
+                  Finish and save
+                </Button>
+                <Button block variant="danger" onClick={() => setConfirmDiscard(true)}>
+                  Discard
+                </Button>
+                <Button block variant="quiet" onClick={() => setConfirmExit(false)}>
+                  Keep going
+                </Button>
+              </div>
+            )}
+          </Dialog.Content>
+        </Dialog.Portal>
+      </Dialog.Root>
     </div>
   );
 };

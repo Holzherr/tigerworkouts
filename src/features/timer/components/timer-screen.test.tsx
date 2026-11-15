@@ -52,6 +52,7 @@ it('keeps sound and the overview in the ⋯ menu, with ✕ to end the session', 
   fireEvent.click(screen.getByRole('button', { name: 'End session' }));
   expect(screen.getByText('End this session?')).toBeTruthy();
   expect([screen.queryByRole('button', { name: 'Mute tones' }), screen.queryByRole('button', { name: 'Workout overview' })]).toEqual([null, null]);
+  fireEvent.click(screen.getByRole('button', { name: 'Keep going' }));
   fireEvent.click(screen.getByRole('button', { name: 'More' }));
   fireEvent.click(screen.getByRole('button', { name: 'Mute tones' }));
   expect(toggle).toHaveBeenCalledOnce();

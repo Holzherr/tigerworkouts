@@ -670,8 +670,8 @@ export default function App() {
       {saved && resumable && (
         <div className="flex w-full items-center gap-1 rounded-card border border-brand-line bg-brand-soft pr-1">
           <button type="button" onClick={() => (unlockAudio(), setDrafted(null), setResumeFor(saved.runsheetId), go(`/do/${encodeURIComponent(saved.runsheetId)}`))} className="min-w-0 flex-1 px-3 py-2.5 text-left">
-            <div className="truncate text-[14px] font-bold">Resume {saved.title}</div>
-            <div className="text-[12px] text-muted">Step {Math.min(saved.i + 1, saved.slots.length)} of {saved.slots.length}</div>
+            <div className="truncate text-[14px] font-bold">Open session</div>
+            <div className="truncate text-[12px] text-muted">{saved.title} · step {Math.min(saved.i + 1, saved.slots.length)} of {saved.slots.length}, paused</div>
           </button>
           <Button variant="quiet" size="sm" onClick={() => { if (confirm(`Discard the ${saved.title} session? What you did in it is not saved.`)) { Runner.clearPersisted(); say('Discarded'); } }}>
             Discard
@@ -741,12 +741,12 @@ const RunRoute = ({ resume, lookup, onLogKept, onResumeKept, ...props }: RunRout
       <div className="mt-2 flex w-full max-w-xs flex-col gap-2">
         {own && canResume && (
           <Button block variant="brand" onClick={() => (unlockAudio(), setFrom(Runner.restore(kept.state, kept.savedAt)))}>
-            Resume
+            Open session
           </Button>
         )}
         {!own && other && Date.now() - kept.savedAt < 6 * 3600 * 1000 && (
           <Button block variant="brand" onClick={() => onResumeKept(kept.state.runsheetId)}>
-            Resume {kept.state.title}
+            Open {kept.state.title}
           </Button>
         )}
         {canSave && (
@@ -841,6 +841,8 @@ const RunSession = ({ runsheet, results, intent, equipment, library, origin: sta
     act.skip();
     // A skip that ends the session logs it; that one is not taken back.
     if (Runner.advance(before, Date.now(), { skipped: true }).phase === 'done') return;
+    // Skipping the lead-in skips no work: nothing to take back, and no pill over the controls.
+    if (before.phase === 'lead' || (before.phase === 'paused' && before.pausedFrom === 'lead')) return;
     undo.offer('Skipped', () => act.restore(before));
   };
   const drop = (stepId: string) => {
@@ -856,7 +858,9 @@ const RunSession = ({ runsheet, results, intent, equipment, library, origin: sta
     undo.offer('Block ended', () => act.restore(before));
   };
   return (
-    <div className="relative h-dvh">
+    // A phone-wide column on a larger screen, as every other screen is.
+    <div className="h-dvh bg-ink">
+    <div className="relative mx-auto h-full w-full max-w-[480px]">
       {!over && undo.toast}
       {prSay && (
         <div role="status" className="pointer-events-none fixed inset-x-0 top-24 z-50 flex justify-center px-4">
@@ -866,6 +870,7 @@ const RunSession = ({ runsheet, results, intent, equipment, library, origin: sta
         </div>
       )}
       <TimerScreen runsheet={runsheet} state={state} now={now} onDone={act.done} onSkip={skip} onBack={act.back} onPause={act.pause} onResume={act.resume} onAdjust={act.adjust} onAdjustIncline={act.adjustIncline} onSetReps={act.setReps} onSetAmount={act.setAmount} onDrop={drop} onStartBlock={startBlock} onAdjustStep={act.adjustStep} sets={{ adjust: act.adjustAt, setReps: act.setRepsAt, setAmount: act.setAmountAt, complete: act.completeSet, reopen: act.reopenSet, lastFor: (step, round) => lastSessionSet(results, step, round, runsheet), fill: act.fillSet, setType: act.setTypeAt }} onAdjustRest={act.extendRest} lastFor={step => lastSessionSet(results, step, Runner.current(state)?.round ?? 0, runsheet)} onFill={act.fillSet} ghost={pace?.text} goal={goal} muted={muted} onToggleMute={() => { setMuted(!muted); setMute(!muted); }} equipment={equipment} alternativesFor={(step, target) => alternatives(step.exercise.key, target, library, 6, equipment)} onSwap={act.swap} prs={prs} onEndBlock={endBlock} onFinish={() => { const res = log(state.phase === 'done' ? state : Runner.finish(state, Date.now())); Runner.clearPersisted(); onFinish(res); }} onExit={() => (act.discard(), onExit())} />
+    </div>
     </div>
   );
 };
