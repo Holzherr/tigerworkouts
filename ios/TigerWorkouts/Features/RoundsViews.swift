@@ -114,6 +114,9 @@ struct LoggedSetsCard: View {
     let session: SessionResult
     /// The workout the session ran, for the reps each step prescribed: a reps edit below them is a miss.
     var runsheet: Runsheet? = nil
+    /// On the finish screen: the button reads Edit, and an exercise does not link to its logbook
+    /// (the screen is not in a navigation stack).
+    var compact = false
     var onEdit: (SessionResult) -> Void
 
     @State private var editing = false
@@ -176,7 +179,7 @@ struct LoggedSetsCard: View {
             HStack {
                 Text("Sets").font(.headline)
                 Spacer()
-                Button(editing ? "Done" : "Edit sets") {
+                Button(editing ? "Done" : compact ? "Edit" : "Edit sets") {
                     if !editing {
                         frozen = Dictionary(uniqueKeysWithValues: session.steps.map { ($0.id, Self.fields(Logbook.sets(of: $0), unit: Library.shared.exercise($0.exerciseKey)?.unit ?? "", step: planned($0))) })
                     }
@@ -192,6 +195,9 @@ struct LoggedSetsCard: View {
                     if editing {
                         Text(Library.shared.name(step.exerciseKey)).font(.subheadline.weight(.semibold)).foregroundStyle(Brand.ink)
                         editor(step)
+                    } else if compact {
+                        Text(Library.shared.name(step.exerciseKey)).font(.subheadline.weight(.semibold)).foregroundStyle(Brand.ink)
+                        pills(step)
                     } else {
                         NavigationLink { ExerciseHistoryView(exerciseKey: step.exerciseKey) } label: {
                             HStack {
