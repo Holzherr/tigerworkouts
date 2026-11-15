@@ -1,4 +1,4 @@
-import { createClient, type Session, type User } from '@supabase/supabase-js';
+import { createClient, type Session, type User } from './supabase';
 import { useSyncExternalStore } from 'react';
 import { SB_KEY, SB_URL } from '@/app/config';
 import { clearDevice, getState, setState } from '@/app/store';

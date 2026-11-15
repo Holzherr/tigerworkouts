@@ -46,6 +46,9 @@ export interface DiscoverScreenProps {
   results?: SessionResult[];
   /** Ids the user saved, for Mine. */
   savedIds?: string[];
+  /** The catalogue is still on its way (it loads after first paint): saved workouts not in
+   * `workouts` yet hold their rows on Mine, and Discover shows a quiet stand-in below what it has. */
+  catalogueLoading?: boolean;
   /** Ids of the user's own workouts, for Mine. */
   ownIds?: string[];
   /** What a coach sent, listed first on Mine. */
@@ -87,6 +90,20 @@ const about = (r: Runsheet) => [`${runsheetMinutes(r)} min`, r.program ? `${r.pr
  * meta. `upNext` gives the one card to do next a light coral edge and an "Up next" label
  * ("Up next · your usual" for the one started most).
  */
+/** Rows held for workouts that are on their way: a Mine row's height, no text, no motion to read. */
+const PendingRows = ({ n, label }: { n: number; label: string }) =>
+  n > 0 ? (
+    <div role="status" aria-label={label} className="space-y-2">
+      {Array.from({ length: n }, (_, i) => (
+        <div key={i} className="h-[81px] rounded-card border border-line bg-surface px-4 py-3">
+          <div className="h-4 w-1/2 rounded bg-line-soft" />
+          <div className="mt-2.5 h-3 w-3/4 rounded bg-line-soft" />
+          <div className="mt-2 h-3 w-1/4 rounded bg-line-soft" />
+        </div>
+      ))}
+    </div>
+  ) : null;
+
 const Row = ({ runsheet: r, meta, coach, badge, why, contents, upNext, upNextLabel = 'Up next', onOpen, onStart }: { runsheet: Runsheet; meta: string; coach?: boolean; badge?: string; why?: string; contents?: string; upNext?: boolean; upNextLabel?: string; onOpen: () => void; onStart?: () => void }) => (
   <div className={cn('flex items-center gap-2 rounded-card border bg-surface pr-2', upNext ? 'border-brand-line' : 'border-line')} data-up-next={upNext || undefined}>
     <button type="button" onClick={onOpen} className="flex min-h-14 min-w-0 flex-1 items-center gap-2 py-2.5 pl-4 text-left">
@@ -120,7 +137,7 @@ const Row = ({ runsheet: r, meta, coach, badge, why, contents, upNext, upNextLab
  * Discover: kind chips, the For you picks under their reasons while no chip is on, then the
  * catalogue (programs collapsed to one row each). A search lists matches from everything.
  */
-export const DiscoverScreen = ({ workouts: given, results = [], savedIds = [], ownIds = [], fromCoach = [], onOpen, onStart, onOpenProgram, onCreate, initialTab = 'mine', initialFilter = 'all', title = 'Workouts', above, onOpenCreator }: DiscoverScreenProps) => {
+export const DiscoverScreen = ({ workouts: given, results = [], savedIds = [], catalogueLoading = false, ownIds = [], fromCoach = [], onOpen, onStart, onOpenProgram, onCreate, initialTab = 'mine', initialFilter = 'all', title = 'Workouts', above, onOpenCreator }: DiscoverScreenProps) => {
   const [tab, setTab] = useState<DiscoverTab>(initialTab);
   const [q, setQ] = useState('');
   const [filter, setFilter] = useState<DiscoverFilter>(initialFilter);
@@ -135,6 +152,11 @@ export const DiscoverScreen = ({ workouts: given, results = [], savedIds = [], o
   const coachRows = useMemo(() => [...fromCoach].sort((a, b) => Number(a.done) - Number(b.done)), [fromCoach]);
   const mine = useMemo(() => mineList(workouts, ownIds, savedIds, results, coachRows.map(c => wid(c.runsheet))), [workouts, ownIds, savedIds, results, coachRows]);
   const own = useMemo(() => new Set(ownIds), [ownIds]);
+  const pendingSaved = useMemo(() => {
+    if (!catalogueLoading) return 0;
+    const have = new Set(workouts.map(wid));
+    return savedIds.filter(id => !have.has(id)).length;
+  }, [catalogueLoading, workouts, savedIds]);
   // One card to do next: what a coach sent and is not done, else Mine's own pick.
   const pick = useMemo(() => pickUpNext(mine, ownIds, results), [mine, ownIds, results]);
   const upNext = coachRows.find(c => !c.done)?.id ?? pick?.id;
@@ -192,7 +214,7 @@ export const DiscoverScreen = ({ workouts: given, results = [], savedIds = [], o
           Show more ({singles.length - shown.length} left)
         </button>
       )}
-      {programs.size === 0 && singles.length === 0 && creators.length === 0 && <EmptyState title={searching ? `Nothing matches “${q}”` : 'Nothing here yet'} body="Try a creator, a program name or an exercise." />}
+      {programs.size === 0 && singles.length === 0 && creators.length === 0 && !catalogueLoading && <EmptyState title={searching ? `Nothing matches “${q}”` : 'Nothing here yet'} body="Try a creator, a program name or an exercise." />}
     </>
   );
 
@@ -225,6 +247,7 @@ export const DiscoverScreen = ({ workouts: given, results = [], savedIds = [], o
       <div className="min-h-0 flex-1 space-y-2 overflow-y-auto px-3 py-3">
         {above}
         {searching && catalogue}
+        {searching && <PendingRows n={catalogueLoading ? 3 : 0} label="Loading workouts" />}
 
         {!searching && tab === 'mine' && (
           <>
@@ -233,7 +256,8 @@ export const DiscoverScreen = ({ workouts: given, results = [], savedIds = [], o
               <Row key={c.id} runsheet={c.runsheet} coach badge={c.done ? undefined : 'New · made for you'} why={c.done ? undefined : c.note?.trim() || whyLine(c.runsheet)} contents={contentsLine(c.runsheet)} upNext={c.id === upNext} meta={`${runsheetMinutes(c.runsheet)} min · from ${c.coachName}${c.done ? ' · done' : ''}`} onOpen={() => onOpen(c.runsheet, c.id === upNext ? 'up_next' : 'coach')} onStart={onStart && (() => onStart(c.runsheet, c.id === upNext ? 'up_next' : 'coach'))} />
             ))}
             {ordered.slice(lead).map(mineRow)}
-            {coachRows.length === 0 && mine.length === 0 && <EmptyState icon={<Bookmark />} title="No workouts yet" body="Write your own with +, or save one from Discover." action={{ label: 'Discover workouts', onClick: () => setTab('discover') }} />}
+            <PendingRows n={pendingSaved} label="Loading saved workouts" />
+            {coachRows.length === 0 && mine.length === 0 && pendingSaved === 0 && <EmptyState icon={<Bookmark />} title="No workouts yet" body="Write your own with +, or save one from Discover." action={{ label: 'Discover workouts', onClick: () => setTab('discover') }} />}
           </>
         )}
 
@@ -256,6 +280,7 @@ export const DiscoverScreen = ({ workouts: given, results = [], savedIds = [], o
                 </section>
               ))}
             {catalogue}
+            <PendingRows n={catalogueLoading ? 6 : 0} label="Loading workouts" />
           </>
         )}
       </div>

@@ -3,11 +3,19 @@ import tailwindcss from '@tailwindcss/vite';
 import react from '@vitejs/plugin-react';
 import { defineConfig } from 'vite';
 import { VitePWA } from 'vite-plugin-pwa';
+import fs from 'node:fs';
 import path from 'node:path';
+
+// The landing page shows these before the catalogue chunk has loaded.
+const importsDir = path.resolve(import.meta.dirname, 'imports');
+const catalogueFiles = fs.readdirSync(importsDir, { withFileTypes: true }).flatMap(d => (d.isDirectory() ? fs.readdirSync(path.join(importsDir, d.name)).filter(f => f.endsWith('.json')).map(f => path.join(importsDir, d.name, f)) : []));
+const exerciseKeys = new Set([...fs.readFileSync(path.resolve(import.meta.dirname, 'src/features/exercises/library.ts'), 'utf8').matchAll(/^\s+"([^"]+)": \{"key"/gm)].map(m => m[1]));
+for (const f of catalogueFiles.filter(f => f.endsWith('new-exercises.json'))) for (const e of JSON.parse(fs.readFileSync(f, 'utf8')) as { key: string }[]) exerciseKeys.add(e.key);
+const catalogueCounts = { workouts: catalogueFiles.filter(f => !f.endsWith('new-exercises.json')).length, exercises: exerciseKeys.size };
 
 // Served from the root of tigerworkouts.com; Storybook is built separately into dist/storybook.
 export default defineConfig({
-  define: { __BUILD__: JSON.stringify(Date.now().toString(36)) },
+  define: { __BUILD__: JSON.stringify(Date.now().toString(36)), __CATALOGUE_COUNTS__: JSON.stringify(catalogueCounts) },
   base: process.env.VITE_BASE ?? '/',
   plugins: [
     react(),
@@ -39,10 +47,17 @@ export default defineConfig({
       output: {
         codeSplitting: {
           groups: [
-            { name: 'catalogue', test: /[\\/]imports[\\/].*\.json$/ },
+            // Data only. A module with imports of its own must not be in this group: its dependencies
+            // would come with it and the first screen would wait for the catalogue again.
+            { name: 'catalogue', test: /[\\/]imports[\\/][^\\/]+[\\/][^\\/]+\.json$/ },
             { name: 'vendor-react', test: /[\\/]node_modules[\\/](react|react-dom|scheduler)[\\/]/ },
             { name: 'vendor-supabase', test: /[\\/]node_modules[\\/]@supabase[\\/]/ },
-            { name: 'vendor-ui', test: /[\\/]node_modules[\\/](@radix-ui|@floating-ui|@dnd-kit|react-remove-scroll[^\\/]*|aria-hidden|tslib)[\\/]/ },
+            // Sheets and the dropdown: the timer's exercise sheet uses both, so they are in the
+            // first load. Drag and drop is used only by the workout page and editor, which load
+            // after first paint: it sits in vendor-edit, listed after vendor-ui so anything
+            // shared stays here.
+            { name: 'vendor-ui', test: /[\\/]node_modules[\\/](@radix-ui|@floating-ui|react-remove-scroll[^\\/]*|aria-hidden|tslib)[\\/]/ },
+            { name: 'vendor-edit', test: /[\\/]node_modules[\\/]@dnd-kit[\\/]/ },
           ],
         },
       },

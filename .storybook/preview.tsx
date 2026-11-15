@@ -1,5 +1,9 @@
 import type { Preview } from '@storybook/react-vite';
 import '../src/styles/tailwind.css';
+import { loadCatalogue } from '../src/features/workouts/catalogue';
+
+// The app loads the catalogue after first paint; stories read it as the constant it used to be.
+await loadCatalogue();
 
 const preview: Preview = {
   parameters: {
