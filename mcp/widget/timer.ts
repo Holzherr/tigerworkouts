@@ -125,26 +125,45 @@ const slotDetail = (s: R.RunState, sl: R.Slot) => {
   return [forLabel(step), loadLabel(step), round].filter(Boolean).join(' · ');
 };
 
+// The view is drawn again only when something other than the clocks changes. Replacing the
+// buttons four times a second dropped any tap that was down across a redraw: about half of them.
+let painted = '';
+const paint = (html: string, bind: () => void = () => {}) => {
+  if (html === painted) return;
+  painted = html;
+  $('main').innerHTML = html;
+  bind();
+};
+const put = (id: string, text: string) => {
+  const el = document.getElementById(id);
+  if (el && el.textContent !== text) el.textContent = text;
+};
+
+/** End asks once: the first tap arms it for a few seconds, the second ends the session. */
+let endArmedAt = 0;
+const END_ARMED_MS = 4000;
+
 const render = () => {
   const now = Date.now();
-  if (!out) {
-    $('main').innerHTML = `<p class="muted">Loading the workout…</p>`;
-    return;
-  }
+  if (!out) return paint(`<p class="muted">Loading the workout…</p>`);
   const s = state;
-  const head = `<div class="head"><b>${esc(out.title)}</b>${s ? `<span class="muted">${mmss(R.elapsed(s, now))}</span>` : ''}</div>`;
+  const head = `<div class="head"><b>${esc(out.title)}</b>${s ? `<span class="muted" id="elapsed"></span>` : ''}</div>`;
   if (!s) {
     const steps = R.expand(out.runsheet).filter(sl => sl.kind === 'work').length;
-    $('main').innerHTML = `${head}<p class="muted">${plural(steps, 'set')}. Keep this chat open while you train; the timer runs here.</p><button id="go" class="big">Start workout</button>`;
-    $('go').onclick = () => ((state = R.start(out!.runsheet, Date.now())), (audio ??= new AudioContext()), render());
-    return;
+    return paint(`${head}<p class="muted">${plural(steps, 'set')}. Keep this chat open while you train; the timer runs here.</p><button id="go" class="big">Start workout</button>`, () => {
+      $('go').onclick = () => ((state = R.start(out!.runsheet, Date.now())), (audio ??= new AudioContext()), render());
+    });
   }
   if (s.phase === 'done') {
-    $('main').innerHTML = `${head}<div class="now"><div class="name">Done</div><div class="muted">${mmss(R.elapsed(s, now))} · ${plural(s.slots.filter(sl => sl.kind === 'work' && s.actuals[sl.id]?.doneAt).length, 'set')}</div></div>
-<p class="muted" id="log">${logged === 'yes' ? 'Saved to your TigerWorkouts history.' : logged === 'saving' ? 'Saving…' : logged === 'failed' ? 'Could not save this session.' : ''}</p>
-${logged === 'failed' ? '<button id="retry" class="ghost">Try saving again</button>' : ''}`;
-    if (logged === 'failed') $('retry').onclick = save;
-    return;
+    paint(
+      `${head}<div class="now"><div class="name">Done</div><div class="muted">${mmss(R.elapsed(s, now))} · ${plural(s.slots.filter(sl => sl.kind === 'work' && s.actuals[sl.id]?.doneAt).length, 'set')}</div></div>
+<p class="muted" id="log" role="status">${logged === 'yes' ? 'Saved to your TigerWorkouts history.' : logged === 'saving' ? 'Saving…' : logged === 'failed' ? 'Could not save this session.' : ''}</p>
+${logged === 'failed' ? '<button id="retry" class="ghost">Try saving again</button>' : ''}`,
+      () => {
+        if (logged === 'failed') $('retry').onclick = save;
+      },
+    );
+    return put('elapsed', mmss(R.elapsed(s, now)));
   }
   const cur = R.current(s);
   const nx = R.next(s);
@@ -156,15 +175,26 @@ ${logged === 'failed' ? '<button id="retry" class="ghost">Try saving again</butt
   const detail = lead && cur ? `First: ${slotTitle(cur)}` : cur ? slotDetail(s, cur) : '';
   const userPaced = !lead && s.phase !== 'ready' && cl.left === undefined;
   const primary = s.phase === 'ready' ? ['start', 'Start block'] : s.phase === 'paused' ? ['resume', 'Resume'] : userPaced ? ['done', 'Done'] : ['pause', 'Pause'];
-  $('main').innerHTML = `${head}<div class="bar"><i style="width:${Math.round(R.overall(s, now) * 100)}%"></i></div>
-<div class="now ${cur?.kind === 'rest' && !lead ? 'rest' : ''}"><div class="clock">${big}</div><div class="name">${esc(name)}</div><div class="muted">${esc(detail)}${cap !== undefined ? ` · cap ${mmss(cap)}` : ''}</div></div>
+  if (endArmedAt && now - endArmedAt > END_ARMED_MS) endArmedAt = 0;
+  paint(
+    `${head}<div class="bar"><i id="bar"></i></div>
+<div class="now ${cur?.kind === 'rest' && !lead ? 'rest' : ''}"><div class="clock" id="clock" role="timer"></div><div class="name" aria-live="polite">${esc(name)}</div><div class="muted">${esc(detail)}${cap !== undefined ? ` · cap <span id="cap"></span>` : ''}</div></div>
 <button id="primary" class="big">${primary[1]}</button>
-<div class="row"><button id="back" class="ghost">Back</button><button id="skip" class="ghost">${userPaced || s.phase === 'ready' ? 'Skip' : 'Next'}</button><button id="end" class="ghost">End</button></div>
-${nx && !lead && s.phase !== 'ready' ? `<p class="muted">Up next: ${esc(slotTitle(nx))}${nx.step.kind === 'exercise' ? ` · ${esc(slotDetail(s, nx))}` : nx.seconds ? ` · ${Math.round(Number(nx.seconds)) || 0}s` : ''}</p>` : ''}`;
-  $('primary').onclick = () => act(primary[0]);
-  $('back').onclick = () => act('back');
-  $('skip').onclick = () => act('skip');
-  $('end').onclick = () => act('end');
+<div class="row"><button id="back" class="ghost">Back</button><button id="skip" class="ghost">${userPaced || s.phase === 'ready' ? 'Skip' : 'Next'}</button><button id="end" class="ghost${endArmedAt ? ' armed' : ''}">${endArmedAt ? 'End now?' : 'End'}</button></div>
+${nx && !lead && s.phase !== 'ready' ? `<p class="muted">Up next: ${esc(slotTitle(nx))}${nx.step.kind === 'exercise' ? ` · ${esc(slotDetail(s, nx))}` : nx.seconds ? ` · ${Math.round(Number(nx.seconds)) || 0}s` : ''}</p>` : ''}`,
+    () => {
+      $('primary').onclick = () => act(primary[0]);
+      $('back').onclick = () => act('back');
+      $('skip').onclick = () => act('skip');
+      $('end').onclick = () => act('end');
+    },
+  );
+  put('elapsed', mmss(R.elapsed(s, now)));
+  put('clock', big);
+  if (cap !== undefined) put('cap', mmss(cap));
+  const bar = document.getElementById('bar');
+  const width = `${Math.round(R.overall(s, now) * 100)}%`;
+  if (bar && bar.style.width !== width) bar.style.width = width;
 };
 
 const act = (what: string) => {
@@ -176,7 +206,15 @@ const act = (what: string) => {
   else if (what === 'done') state = R.advance(state, now);
   else if (what === 'skip') state = R.advance(state, now, { skipped: state.phase === 'running' && R.clock(state, now).left === undefined });
   else if (what === 'back') state = R.back(state, now);
-  else if (what === 'end') state = R.finish(state, now);
+  else if (what === 'end') {
+    // One tap beside Skip must not end and log the session.
+    if (!endArmedAt || now - endArmedAt > END_ARMED_MS) {
+      endArmedAt = now;
+      return render();
+    }
+    state = R.finish(state, now);
+  }
+  if (what !== 'end') endArmedAt = 0;
   after();
 };
 
