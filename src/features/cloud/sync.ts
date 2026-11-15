@@ -7,6 +7,7 @@
  *   missing locally, in snapshot → deleted here, delete there
  * Rows the v0.9 app wrote are converted on the way in and preserved on the way out.
  */
+import { storePersisted } from '@/app/store';
 import { accountPageWorkouts } from '@/features/creators/credited';
 import type { Runsheet } from '@/features/runsheet/model';
 import type { LibraryExercise } from '@/features/exercises/library';
@@ -63,7 +64,10 @@ if (typeof window !== 'undefined')
   });
 const saveSnap = () => {
   try {
-    localStorage.setItem(SNAP_KEY, JSON.stringify(snap));
+    // Never on disk ahead of the store: a snapshot beside an older store reads the rows that
+    // store lacks as deleted here (store.ts, forgetSnapshot).
+    if (storePersisted()) localStorage.setItem(SNAP_KEY, JSON.stringify(snap));
+    else localStorage.removeItem(SNAP_KEY);
   } catch {
     /* ignore */
   }
@@ -257,9 +261,19 @@ export const pullPush = async (local: SyncTarget): Promise<SyncResult> => {
     if (workouts.length !== before) changed = true;
     const dirty = workouts.filter(w => w.id && J(w) !== snap[`w:${w.id}`]);
     if (dirty.length) {
-      const { error } = await sb.from('workouts').upsert(dirty.map(w => ({ id: w.id!, owner: uid, creator: w.creator ?? local.name, title: w.title, public: w.public ?? remote.get(w.id!)?.public ?? false, data: workoutData(w) })), { onConflict: 'id' });
-      if (error) errors.push(error.message);
-      else dirty.forEach(w => (snap[`w:${w.id}`] = J(w)));
+      const row = (w: Runsheet) => ({ id: w.id!, owner: uid, creator: w.creator ?? local.name, title: w.title, public: w.public ?? remote.get(w.id!)?.public ?? false, data: workoutData(w) });
+      const { error } = await sb.from('workouts').upsert(dirty.map(row), { onConflict: 'id' });
+      if (!error) dirty.forEach(w => (snap[`w:${w.id}`] = J(w)));
+      else if (dirty.length === 1) errors.push(error.message);
+      else {
+        // As for sessions: one workout the server refuses (an id another account holds, a public
+        // one on a temporary account) must not keep the others off the account.
+        for (const w of dirty) {
+          const { error: e } = await sb.from('workouts').upsert([row(w)], { onConflict: 'id' });
+          if (e) errors.push(e.message);
+          else snap[`w:${w.id}`] = J(w);
+        }
+      }
     }
     const gone = Object.keys(snap).filter(k => k.startsWith('w:') && !workouts.some(w => `w:${w.id}` === k));
     if (gone.length) {

@@ -38,14 +38,90 @@ export interface AppState {
 }
 
 const KEY = 'workout-hub-next:v1';
+/** The sync's record of what the server was last seen holding (cloud/sync.ts). */
+const SNAP_KEY = 'tiger:synced';
+/** A store that could not be read is kept here as it was found, so it can be looked at or put back. */
+const UNREADABLE_KEY = 'workout-hub-next:v1:unreadable';
 const EMPTY: AppState = { workouts: [], results: [], trainingMaxes: {}, saved: [], name: '', units: 'metric', favorites: [], exercises: {}, signedIn: false };
 
-let state: AppState = (() => {
+const isRecord = (v: unknown): v is Record<string, unknown> => !!v && typeof v === 'object' && !Array.isArray(v);
+
+/**
+ * What was on disk as a state every screen can read: each list a list, each map a map, and only
+ * sessions and workouts that have what the app reads without asking (a start time and a workout
+ * id; a list of items). `intact` is false when anything had to be dropped or replaced.
+ */
+export const readState = (raw: string | null): { state: AppState; intact: boolean } => {
+  if (raw === null) return { state: EMPTY, intact: true };
+  let parsed: unknown;
   try {
-    return { ...EMPTY, ...JSON.parse(localStorage.getItem(KEY) || '{}') };
+    parsed = JSON.parse(raw);
+  } catch {
+    return { state: EMPTY, intact: false };
+  }
+  if (!isRecord(parsed)) return { state: EMPTY, intact: false };
+  const out: AppState = { ...EMPTY, ...(parsed as Partial<AppState>) };
+  let intact = true;
+  const list = <K extends 'workouts' | 'results' | 'saved' | 'favorites'>(k: K, ok: (x: unknown) => boolean) => {
+    const v: unknown = out[k];
+    const kept = Array.isArray(v) ? v.filter(ok) : [];
+    if (!Array.isArray(v) || kept.length !== v.length) {
+      intact = false;
+      out[k] = kept as AppState[K];
+    }
+  };
+  list('results', x => isRecord(x) && typeof x.startedAt === 'string' && typeof x.runsheetId === 'string');
+  list('workouts', x => isRecord(x) && Array.isArray(x.items));
+  list('saved', x => typeof x === 'string');
+  list('favorites', isRecord);
+  for (const k of ['trainingMaxes', 'exercises'] as const)
+    if (!isRecord(out[k])) {
+      intact = false;
+      out[k] = {};
+    }
+  if (typeof out.name !== 'string') out.name = '';
+  if (out.units !== 'imperial') out.units = 'metric';
+  return { state: out, intact };
+};
+
+/** False once a write to disk has failed (storage full, private mode), until one succeeds again. */
+let persisted = true;
+export const storePersisted = () => persisted;
+
+/**
+ * The sync snapshot says "the server had these rows, and so did this device". It may only be
+ * believed while the store on disk is the one it was written beside: a row in the snapshot that
+ * the store no longer holds reads as deleted here, and the sync deletes it on the server. So when
+ * the store was unreadable, lost rows on the way in, or could not be written, the snapshot goes;
+ * the next sync then pulls everything and deletes nothing.
+ */
+const forgetSnapshot = () => {
+  try {
+    localStorage.removeItem(SNAP_KEY);
+  } catch {
+    /* no storage */
+  }
+};
+
+let state: AppState = (() => {
+  let raw: string | null = null;
+  try {
+    raw = localStorage.getItem(KEY);
   } catch {
     return EMPTY;
   }
+  const read = readState(raw);
+  // No store beside a snapshot is the same doubt: something removed one key and not the other.
+  if (!read.intact || raw === null) forgetSnapshot();
+  if (!read.intact && raw !== null) {
+    console.error('[tiger] the saved state could not be read as written; kept under', UNREADABLE_KEY);
+    try {
+      localStorage.setItem(UNREADABLE_KEY, raw);
+    } catch {
+      /* no room for a second copy */
+    }
+  }
+  return read.state;
 })();
 
 // One-off: pick up what the v0.9 app left in this origin's localStorage (same domain after the cutover).
@@ -79,8 +155,12 @@ export const setState = (patch: Partial<AppState> | ((s: AppState) => Partial<Ap
   state = { ...state, ...next };
   try {
     localStorage.setItem(KEY, JSON.stringify(state));
-  } catch {
-    /* private mode */
+    persisted = true;
+  } catch (e) {
+    // Private mode, or the storage is full. What is on disk is now older than what is on screen.
+    if (persisted) console.error('[tiger] could not save to this device', e);
+    persisted = false;
+    forgetSnapshot();
   }
   emit();
 };
@@ -90,12 +170,11 @@ export const setState = (patch: Partial<AppState> | ((s: AppState) => Partial<Ap
 if (typeof window !== 'undefined')
   window.addEventListener('storage', e => {
     if (e.key !== KEY || !e.newValue) return;
-    try {
-      state = { ...EMPTY, ...JSON.parse(e.newValue) };
-      emit();
-    } catch {
-      /* keep what we have */
-    }
+    const read = readState(e.newValue);
+    // A write this tab cannot read is not taken: what it holds stays.
+    if (!read.intact) return;
+    state = read.state;
+    emit();
   });
 
 export const subscribe = (cb: () => void) => {
