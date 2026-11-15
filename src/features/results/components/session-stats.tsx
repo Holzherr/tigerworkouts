@@ -42,7 +42,8 @@ export const SessionStats = ({ result, worked, history = [], bodyweightKg, class
       <div className="flex gap-2">
         <Tile icon={<Timer className="size-3" />} label="Work" value={fmtClock(e.workSec)} sub={`${e.sets} ${e.sets === 1 ? 'set' : 'sets'}`} />
         <Tile icon={<Flame className="size-3" />} label="Burn" value={`~${e.kcal}`} sub={e.estimatedWeight ? 'kcal · set your weight' : 'kcal estimate'} />
-        <Tile icon={<Repeat2 className="size-3" />} label="Effort" value={tonnageLine(e) ?? fmtClock(e.workSec)} sub={tonnageLine(e) ? 'load × reps' : 'time under work'} />
+        {/* Named for what it shows: the 1–10 effort question sits just above it. */}
+        {tonnageLine(e) ? <Tile icon={<Repeat2 className="size-3" />} label="Volume" value={tonnageLine(e)!} sub="load × reps" /> : e.reps > 0 && <Tile icon={<Repeat2 className="size-3" />} label="Reps" value={String(e.reps)} sub="in total" />}
       </div>
       {Object.keys(load).length > 0 && <BodyMap load={load} />}
       <StreakLine streak={s} />

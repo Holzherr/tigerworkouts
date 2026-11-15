@@ -40,7 +40,7 @@ const endAndSave = async () => {
   click('More');
   click(/End workout/);
   click(/Finish and save/);
-  await screen.findByText('Save result');
+  await screen.findByPlaceholderText(/^Notes/);
 };
 
 beforeEach(() => {
@@ -61,7 +61,7 @@ describe('where a session was started from', () => {
     click('More');
     click(/End workout/);
     click(/Finish and save/);
-    await screen.findByText('Save result');
+    await screen.findByPlaceholderText(/^Notes/);
     expect(stored().map(r => r.startedFrom)).toEqual(['saved']);
   });
   it('survives a reload and a resume', async () => {
@@ -76,7 +76,7 @@ describe('where a session was started from', () => {
     click('Done');
     reload();
     await findClick('Save what I did');
-    await screen.findByText('Save result');
+    await screen.findByPlaceholderText(/^Notes/);
     expect(stored().map(r => r.startedFrom)).toEqual(['up_next']);
   });
 });
@@ -133,7 +133,9 @@ describe('a reload on the result sheet', () => {
     await endAndSave();
     const id = stored()[0].id;
     reload();
-    await findClick(/Save result/);
+    expect(await screen.findByText('Workout saved')).toBeTruthy();
+    expect(screen.queryByText('Log result')).toBeNull();
+    click('Done');
     expect(stored().map(r => r.id)).toEqual([id]);
   });
   it('Discard takes the logged row out', async () => {

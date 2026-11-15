@@ -71,6 +71,8 @@ export const ResultSheet = ({ runsheet, history = [], allResults = history, trai
   // a row with the planned load would count as sets done. Without a timer run (Log only) every
   // planned step is there to fill in by hand.
   const fromTimer = initial?.steps !== undefined;
+  // The timer logged the session when it ended: this sheet adds to a saved row, it does not save one.
+  const saved = !!initial?.id;
   // What the timer logged beyond one row per planned step — a step swapped mid-session has a row
   // per exercise — rides through untouched, and each row keeps its per-set results.
   const matched = (s: ExerciseStep) => initial?.steps?.find(x => x.stepId === s.id && x.exerciseKey === s.exercise.key) ?? initial?.steps?.find(x => x.stepId === s.id);
@@ -100,7 +102,7 @@ export const ResultSheet = ({ runsheet, history = [], allResults = history, trai
   return (
     <div className="flex h-full min-h-0 flex-col bg-canvas">
       <header className="safe-top shrink-0 border-b border-line bg-surface px-4 pt-3 pb-3">
-        <div className="text-[12px] text-muted">Log result</div>
+        <div className="text-[12px] text-muted">{saved ? 'Workout saved' : 'Log result'}</div>
         <h1 className="text-[19px] leading-tight font-extrabold">{runsheet.title}</h1>
         {initial?.durationSec !== undefined && <div className="mt-0.5 text-[12px] text-muted">{Math.round(initial.durationSec / 60)} min{initial.capped ? ` · ${initial.scoreText ?? 'capped'}` : initial.completed === false ? ' · stopped early' : ''}</div>}
         {type !== 'none' && <ScoreEntry type={type} value={score} onChange={setScore} className="mt-3" />}
@@ -204,7 +206,7 @@ export const ResultSheet = ({ runsheet, history = [], allResults = history, trai
         ) : (
           <div className="flex gap-2">
             <Button block onClick={() => onSave(result, next)}>
-              <Check /> Save result
+              <Check /> {saved ? 'Done' : 'Save result'}
             </Button>
             {onCancel && (
               // A session the timer logged is already saved: Discard deletes it, so it asks first.

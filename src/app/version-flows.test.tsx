@@ -63,7 +63,8 @@ describe('a change to a workout that has been done', () => {
     click('More');
     click(/End workout/);
     click(/Finish and save/);
-    await findClick(/Save result/);
+    await screen.findByPlaceholderText(/^Notes/);
+    fireEvent.click(screen.getByRole('button', { name: 'Done' }));
     const [run] = stored().results.filter(r => r.id !== 's-past');
     expect(run.runsheetId).toBe('two');
     expect(repeatOf(run.version!, 'b1')).toBe(3);
