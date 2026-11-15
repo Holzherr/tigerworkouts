@@ -8,6 +8,8 @@ export interface CreatorScreenProps {
   profile: CreatorProfile | null;
   workouts: Runsheet[];
   loading?: boolean;
+  /** The page could not be fetched (no signal): says so, with Try again, instead of "No creator". */
+  onRetry?: () => void;
   onBack?: () => void;
   onOpen: (r: Runsheet) => void;
   onShare?: () => void;
@@ -20,7 +22,7 @@ export const appLink = (path: string) => `tigerworkouts://${path}`;
  * A creator's public page: who they are and the workouts they chose to share. Anyone with the link
  * can open a workout and do it here in the browser — an account is only needed to keep history.
  */
-export const CreatorScreen = ({ profile, workouts, loading, onBack, onOpen, onShare }: CreatorScreenProps) => {
+export const CreatorScreen = ({ profile, workouts, loading, onRetry, onBack, onOpen, onShare }: CreatorScreenProps) => {
   const initials = (profile?.name ?? '?').split(/\s+/).map(w => w[0]).join('').slice(0, 2).toUpperCase();
   return (
     <div className="flex h-full min-h-0 flex-col bg-canvas">
@@ -37,6 +39,13 @@ export const CreatorScreen = ({ profile, workouts, loading, onBack, onOpen, onSh
         </div>
         {loading ? (
           <div className="mt-4 text-[14px] text-muted">Loading…</div>
+        ) : onRetry ? (
+          <div className="mt-4 space-y-3">
+            <div className="text-[14px] text-muted">Could not load this page. Check your connection.</div>
+            <Button variant="ghost" onClick={onRetry}>
+              Try again
+            </Button>
+          </div>
         ) : !profile ? (
           <div className="mt-4 text-[14px] text-muted">No creator by that name.</div>
         ) : (

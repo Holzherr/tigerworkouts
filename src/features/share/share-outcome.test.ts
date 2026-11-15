@@ -27,3 +27,18 @@ describe('sharing a link', () => {
     expect(await copyText('a')).toBe(false);
   });
 });
+
+describe('the link Share sends', () => {
+  const r = { id: 'cf-girls-cindy', title: 'Cindy', items: [{ kind: 'rest' as const, id: 'r1', seconds: 30 }] };
+  it('is the short one for a workout anyone can open by id', async () => {
+    const { linkFor } = await import('./share');
+    expect(linkFor(r, true, 'https://tigerworkouts.com/')).toBe('https://tigerworkouts.com/#/w/cf-girls-cindy');
+  });
+  it('carries the whole workout when it is private, or has no id yet', async () => {
+    const { linkFor, decodeShared } = await import('./share');
+    const link = linkFor({ ...r, id: 'u-abc' }, false, 'https://tigerworkouts.com/');
+    expect(link.startsWith('https://tigerworkouts.com/#/import/')).toBe(true);
+    expect(decodeShared(link.split('#/import/')[1])?.title).toBe('Cindy');
+    expect(linkFor({ title: 'Cindy', items: r.items }, true, 'https://tigerworkouts.com/')).toContain('#/import/');
+  });
+});

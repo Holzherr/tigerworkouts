@@ -34,7 +34,7 @@ import { SharedWorkoutRoute } from '@/features/share/components/shared-workout-r
 import { LogImportScreen } from '@/features/results/components/log-import-screen';
 import { ImportCsvSheet } from '@/features/results/components/import-csv-sheet';
 import { exportFileName, toCsv } from '@/features/results/csv';
-import { decodeLogged, decodeShared, shareLink, shareToast, shareUrl } from '@/features/share/share';
+import { decodeLogged, decodeShared, linkFor, shareLink, shareToast } from '@/features/share/share';
 import { useCallback, useRef } from 'react';
 import { fmtScore, progressed, resolveLoads, resolveTarget } from '@/features/runsheet/progression';
 import type { Equipment } from '@/features/runsheet/plates';
@@ -54,6 +54,7 @@ import { WorkoutIcon } from '@/shared/components/ui/workout-icon';
 import { useUndo } from '@/shared/components/ui/undo-toast';
 import { loadPending, savePending } from '@/app/pending';
 import { Contain } from '@/app/recover';
+import { pageTitle } from '@/app/page-title';
 import { originOf, rememberOrigin, withOrigin } from '@/features/timer/run-origin';
 import { defaultIcon } from '@/features/workouts/icon';
 import { useActions, useAppState } from './app/store';
@@ -164,6 +165,10 @@ export default function App() {
   }, [st.workouts, st.results, remote, assigned]);
   const byId = useMemo(() => new Map(all.map(r => [wid(r), r])), [all]);
   const lookup = (id: string) => byId.get(id);
+  // The tab's title follows the page: a shared workout, a second tab and the browser's history read apart.
+  useEffect(() => {
+    document.title = pageTitle(route, { workout: id => byId.get(id)?.title, exercise: k => (LIB[k] ?? st.exercises[k])?.name, session: id => st.results.find(x => x.id === id)?.title });
+  }, [route, byId, st.exercises, st.results]);
   const refTitle = (id: string) => byId.get(id)?.title;
   const resolve = (s: ExerciseStep) => resolveTarget(s, st.trainingMaxes, st.bodyweightKg, st.equipment);
   // Step ids are per workout, so "last time" on a row is read against the workout it is in.
@@ -314,7 +319,7 @@ export default function App() {
   }
   if (route.name === 'coach' && route.id && cloud.user) {
     const mine = st.workouts.filter(w => w.id);
-    return full(<ClientRoute key={route.id} clientId={route.id} me={cloud.user.id} workouts={mine} lookup={lookup} exercise={k => ({ name: library[k]?.name ?? k, unit: library[k]?.unit ?? '' })} onBack={() => go('/coach')} syncNow={cloud.syncNow} say={say} />);
+    return full(<ClientRoute key={route.id} clientId={route.id} me={cloud.user.id} workouts={mine} lookup={lookup} exercise={k => ({ name: library[k]?.name ?? k, unit: library[k]?.unit ?? '' })} onBack={() => go('/coach')} onNewWorkout={() => go('/new')} syncNow={cloud.syncNow} say={say} />);
   }
   if (route.name === 'coach') {
     return full(<CoachRoute signedIn={!!cloud.user} signIn={signInCard('Sign in to coach', ['Your clients link to your account', 'No password: we email you a 6-digit code'])} onOpenClient={id => go(`/coach/${encodeURIComponent(id)}`)} onHowItWorks={() => go('/coaches')} onBack={() => go('/me')} say={say} />);
@@ -386,7 +391,7 @@ export default function App() {
           onLogOnly={() => go(`/result/${encodeURIComponent(once ? id : settle(false))}`)}
           onSave={() => act.toggleSaved(id)}
           saved={st.saved.includes(id)}
-          onShare={async () => { const out = await shareLink(base.title, shareUrl(base)); told(shareToast(out)); }}
+          onShare={async () => { const out = await shareLink(base.title, linkFor(base, !!base.public || IMPORTED.some(w => w.runsheet.id === base.id))); told(shareToast(out)); }}
           onCreator={creatorKey(r) ? () => go(creatorPath(creatorKey(r)!)) : r.ownerId || (cloud.user && st.workouts.some(w => w.id === wid(r))) ? () => go(`/c/${r.ownerId ?? cloud.user!.id}`) : undefined}
           onTogglePublic={cloud.user && st.workouts.some(w => w.id === wid(r)) ? () => { act.saveWorkout({ ...base, public: !base.public }); say(base.public ? 'Private now' : 'On your public page'); } : undefined}
           appHref={appLink(`w/${encodeURIComponent(wid(r))}`)}
@@ -984,10 +989,14 @@ const PasteSheet = ({ open, onOpenChange, library, onUse }: { open: boolean; onO
 
 /** A creator's page, loaded from the cloud; its workouts open like any other and run as a guest. */
 const CreatorRoute = ({ id, onOpen, onShare }: { id: string; onOpen: (r: Runsheet) => void; onShare: () => void }) => {
-  const [page, setPage] = useState<{ profile: CreatorProfile | null; workouts: Runsheet[] } | null>(null);
+  const [page, setPage] = useState<{ profile: CreatorProfile | null; workouts: Runsheet[] } | 'failed' | null>(null);
+  const [attempt, setAttempt] = useState(0);
   useEffect(() => {
-    fetchCreator(id).then(p => setPage(p ?? { profile: null, workouts: [] })).catch(() => setPage({ profile: null, workouts: [] }));
-  }, [id]);
+    let live = true;
+    fetchCreator(id).then(p => live && setPage(p ?? { profile: null, workouts: [] })).catch(() => live && setPage('failed'));
+    return () => void (live = false);
+  }, [id, attempt]);
+  if (page === 'failed') return <CreatorScreen profile={null} workouts={[]} onRetry={() => (setPage(null), setAttempt(n => n + 1))} onBack={() => (history.length > 1 ? history.back() : go('/discover'))} onOpen={onOpen} />;
   return <CreatorScreen loading={!page} profile={page?.profile ?? null} workouts={page?.workouts ?? []} onBack={() => (history.length > 1 ? history.back() : go('/discover'))} onOpen={onOpen} onShare={onShare} />;
 };
 

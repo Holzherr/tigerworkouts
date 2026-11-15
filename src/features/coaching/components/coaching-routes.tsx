@@ -82,12 +82,13 @@ export interface ClientRouteProps {
   lookup: (id: string) => Runsheet | undefined;
   exercise: (key: string) => { name: string; unit: string };
   onBack: () => void;
+  onNewWorkout?: () => void;
   /** Pushes local workouts first, so a workout made a minute ago can be sent. */
   syncNow: () => Promise<void> | void;
   say: (m: string) => void;
 }
 
-export const ClientRoute = ({ clientId, me, workouts, lookup, exercise, onBack, syncNow, say }: ClientRouteProps) => {
+export const ClientRoute = ({ clientId, me, workouts, lookup, exercise, onBack, onNewWorkout, syncNow, say }: ClientRouteProps) => {
   const [client, setClient] = useState<{ id: string; name: string; since?: string }>({ id: clientId, name: 'Client' });
   const [assignments, setAssignments] = useState<C.Assignment[] | null>(null);
   const [sessions, setSessions] = useState<SessionResult[] | null>(null);
@@ -147,6 +148,7 @@ export const ClientRoute = ({ clientId, me, workouts, lookup, exercise, onBack, 
       }}
       onEnd={() => void attempt(() => C.endLink(me, clientId)).then(e => (e ? say(e) : (say('Coaching ended'), onBack())))}
       onBack={onBack}
+      onNewWorkout={onNewWorkout}
     />
   );
 };
