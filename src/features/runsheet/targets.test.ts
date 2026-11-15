@@ -79,8 +79,14 @@ describe('increment-aware load targets', () => {
     expect(setTarget(step(kb, { forMax: 12 }), sets(24, 12, 11, 12))!.reps).toEqual([12, 12, 12]);
   });
 
-  it('reads the working sets at the top load, not warm-ups', () => {
-    expect(setTarget(step(bench, { forValue: 5 }), [...sets(40, 10), ...sets(60, 5, 5)])!.text).toBe('60 kg × 6');
+  it('reads the working sets, not warm-ups', () => {
+    expect(setTarget(step(bench, { forValue: 5 }), [{ reps: 10, load: 40, type: 'warmup' }, ...sets(60, 5, 5)])!.text).toBe('60 kg × 6');
+  });
+
+  it('sets at different loads get no target; the heaviest single is never the working weight', () => {
+    const priyanka = [...sets(100, 8), ...sets(110, 4, 4), ...sets(115, 1)];
+    for (const mode of ['reps', 'weight', 'effort'] as const) expect(setTarget(step(kb), priyanka, 'maintain', undefined, mode)).toBeUndefined();
+    expect(setTarget(step(bench, { forValue: 5 }), [...sets(40, 10), ...sets(60, 5, 5)])).toBeUndefined();
   });
 
   it('restore repeats last time; overreach adds two', () => {
@@ -121,5 +127,29 @@ describe('where the target shows', () => {
     const now: SessionResult = { ...done, id: 'r2', startedAt: '2026-09-27T10:00:00Z', steps: [{ stepId: s.id, exerciseKey: 'kb_swing', sets: sets(24, 10, 10, 10) }] };
     expect(nextTime(strength, now, [done]).map(l => l.text)).toEqual(['24 kg × 11']);
     expect(nextTime(strength, now, [done], 'maintain', ['kb_swing'])).toEqual([]);
+  });
+});
+
+describe('progress modes (port of ProgressModesTests.swift)', () => {
+  const benchStep = step(bench, { target: 60 });
+  const rated = (load: number, rpe: number | undefined, ...reps: number[]): SetResult[] => reps.map(r => ({ reps: r, load, ...(rpe !== undefined ? { rpe } : {}) }));
+
+  it('reps is the default', () => {
+    expect(setTarget(benchStep, sets(60, 8, 8, 8))).toEqual(setTarget(benchStep, sets(60, 8, 8, 8), 'maintain', undefined, 'reps'));
+  });
+
+  it('weight keeps the plan’s reps and adds a step once every set made them, else holds', () => {
+    expect(setTarget(benchStep, sets(60, 8, 8, 8), 'maintain', undefined, 'weight')).toMatchObject({ text: '62.5 kg × 8', jump: true, reason: '8 reps at 60 kg on every set: up to 62.5 kg' });
+    expect(setTarget(benchStep, sets(60, 8, 8, 6), 'maintain', undefined, 'weight')).toMatchObject({ text: '60 kg × 8', jump: false, reason: 'hold 60 kg until every set makes 8' });
+    expect(setTarget(benchStep, sets(60, 8, 8, 8), 'overreach', undefined, 'weight')?.text).toBe('65 kg × 8');
+    expect(setTarget(step(pushup, { target: undefined }), sets(undefined, 10, 10), 'maintain', undefined, 'weight')?.text).toBe('11 reps');
+  });
+
+  it('effort holds until the RPE comes down, then adds a step at the same reps', () => {
+    expect(setTarget(benchStep, rated(60, 9, 8, 8, 7), 'maintain', undefined, 'effort')).toMatchObject({ text: '60 kg × 8, 8, 7', jump: false, reason: 'RPE 9 last time: more weight once it is 7 or less' });
+    expect(setTarget(benchStep, rated(60, 7, 8, 8, 8), 'maintain', undefined, 'effort')).toMatchObject({ text: '62.5 kg × 8', jump: true, reason: 'RPE 7 at 60 kg: up to 62.5 kg, same reps' });
+    expect(setTarget(benchStep, sets(60, 8, 8, 8), 'maintain', undefined, 'effort')?.reason).toBe('same as last time · rate how hard it was at the finish');
+    expect(setTarget(benchStep, rated(60, 8, 8, 8, 8), 'overreach', undefined, 'effort')?.jump).toBe(true);
+    expect(setTarget(step(pushup, { target: undefined }), rated(0, 6, 10, 10).map(({ load: _, ...x }) => x), 'maintain', undefined, 'effort')?.text).toBe('11 reps');
   });
 });

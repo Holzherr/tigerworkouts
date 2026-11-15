@@ -54,6 +54,8 @@ export interface SetResult {
   meters?: number;
   /** Calories on the machine's counter: the plan's unless changed. */
   calories?: number;
+  /** How hard the set was, RPE 1–10, for lifts progressed by effort (iOS logs it at the finish). */
+  rpe?: number;
 }
 
 /** A set that counts as work: anything but a warm-up. */

@@ -212,6 +212,9 @@ export interface Runsheet {
   /** Set on the silent copy made when someone else's workout is edited: the id it was copied from.
    * Its sessions stay this workout's history, so Up next, pace and stalls keep the thread. */
   copyOf?: string;
+  /** Set by the iPhone app's Duplicate (week 1 → week 2): the workout it was duplicated from. Not
+   * its history; the iOS week-by-week table follows it. Kept as it came. */
+  duplicatedFrom?: string;
   items: Item[];
 }
 

@@ -20,6 +20,14 @@ import { lastSets } from './last-used';
 
 export type Intent = 'restore' | 'maintain' | 'overreach';
 
+/** How a lift moves on: reps (double progression, the default), weight at the plan's reps, or by
+ * effort (RPE). Chosen on the iPhone app (`prefs.suggestions`); the web has no picker yet and
+ * always uses reps. Port of `ProgressMode` in Suggestions.swift. */
+export type ProgressMode = 'reps' | 'weight' | 'effort';
+
+/** The RPE a set has to come down to before the weight goes up: 7, 8 on overreach. */
+export const easyRpe = (intent: Intent) => (intent === 'overreach' ? 8 : 7);
+
 export const INTENTS: { id: Intent; label: string; note: string }[] = [
   { id: 'restore', label: 'Restore', note: 'Match last time. For a tired week.' },
   { id: 'maintain', label: 'Maintain', note: 'A rep or a round more than last time.' },
@@ -118,6 +126,11 @@ export interface SetTarget {
   reason: string;
 }
 
+const maxRpe = (sets: SetResult[]): number | undefined => {
+  const all = sets.map(x => x.rpe).filter((n): n is number => n !== undefined);
+  return all.length ? Math.max(...all) : undefined;
+};
+
 const repsText = (reps: number[]) => (reps.every(n => n === reps[0]) ? num(reps[0]) : reps.map(num).join(', '));
 
 /** A per-set plan whose working sets differ (a pyramid, ramping sets). Warm-ups before straight
@@ -133,19 +146,30 @@ const pyramid = (s: ExerciseStep): boolean => {
  * speed. `last` is what `lastSets` returns; its warm-ups and drop sets are not the work, so they are
  * left out. The next load up is the next one `kit` can make (a 24 kg bell goes to 28, not 26.5).
  */
-export const setTarget = (s: ExerciseStep, lastAll: SetResult[] | undefined, intent: Intent = 'maintain', kit?: Equipment): SetTarget | undefined => {
+export const setTarget = (s: ExerciseStep, lastAll: SetResult[] | undefined, intent: Intent = 'maintain', kit?: Equipment, mode: ProgressMode = 'reps'): SetTarget | undefined => {
   const last = lastAll?.filter(x => x.type !== 'warmup' && x.type !== 'drop');
   if (!last?.length || pyramid(s) || s.targetPct !== undefined || s.loadFactor !== undefined) return undefined;
   if (s.forMode !== 'reps' && s.forMode !== 'amrap' && s.forMode !== 'max') return undefined;
   const unit = shortUnit(s.exercise.unit);
   if (unit === 'kph') return undefined;
   const base = { stepId: s.id, exerciseKey: s.exercise.key, name: s.exercise.name };
+  // Read set by set: straight sets (one load) only. Ramping sets, a pyramid or an odd single at the
+  // end get no target, as the timer gives a pyramid none — the heaviest set is never the working weight.
   const loads = last.map(x => x.load ?? 0);
-  const top = Math.max(...loads);
+  if (new Set(loads).size > 1) return undefined;
+  const top = loads[0];
   const add = intent === 'restore' ? 0 : intent === 'overreach' ? 2 : 1;
   if (top <= 0 || !unit) {
     const done = last.map(x => x.reps).filter((n): n is number => n !== undefined && n > 0);
     if (!done.length) return undefined;
+    if (mode === 'effort') {
+      const rpe = maxRpe(last);
+      if (rpe !== undefined && intent !== 'restore' && rpe <= easyRpe(intent)) {
+        const reps = done.map(n => n + 1);
+        return { ...base, reps, jump: false, text: `${repsText(reps)} reps`, reason: `RPE ${num(rpe)} last time: a rep more a set` };
+      }
+      return { ...base, reps: done, jump: false, text: `${repsText(done)} reps`, reason: rpe === undefined ? 'same as last time · rate how hard it was at the finish' : 'same as last time' };
+    }
     const reps = done.map(n => n + add);
     return { ...base, reps, jump: false, text: `${repsText(reps)} reps`, reason: add ? `${add === 1 ? 'a rep' : `${add} reps`} more a set than last time` : 'what you did last time' };
   }
@@ -157,6 +181,28 @@ export const setTarget = (s: ExerciseStep, lastAll: SetResult[] | undefined, int
   const ceiling = s.forMax ?? (up !== undefined ? bankTop(top, up - top, bottom) : bottom * 2);
   const next = up !== undefined ? Math.round(up * 100) / 100 : top;
   const u = unit ? ` ${unit}` : '';
+  if (mode === 'weight') {
+    const want = s.forValue;
+    const reps = working.map(() => want);
+    if (up !== undefined && intent !== 'restore' && working.every(n => n >= want)) {
+      const to = intent === 'overreach' ? nextLoadUp(up, s.exercise, kit) ?? up : up;
+      const n = Math.round(to * 100) / 100;
+      return { ...base, load: n, reps, jump: true, text: `${num(n)}${u} × ${repsText(reps)}`, reason: `${num(want)} reps at ${num(top)}${u} on every set: up to ${num(n)}${u}` };
+    }
+    const reason = intent === 'restore' ? 'same weight as last time' : up === undefined ? `${num(top)}${u} is the heaviest you own: hold it` : `hold ${num(top)}${u} until every set makes ${num(want)}`;
+    return { ...base, load: top, reps, jump: false, text: `${num(top)}${u} × ${repsText(reps)}`, reason };
+  }
+  if (mode === 'effort') {
+    const rpe = maxRpe(last.filter(x => x.load === top));
+    const easy = easyRpe(intent);
+    if (rpe !== undefined && up !== undefined && intent !== 'restore' && rpe <= easy) {
+      return { ...base, load: next, reps: working, jump: true, text: `${num(next)}${u} × ${repsText(working)}`, reason: `RPE ${num(rpe)} at ${num(top)}${u}: up to ${num(next)}${u}, same reps` };
+    }
+    const reason = rpe === undefined ? 'same as last time · rate how hard it was at the finish'
+      : up === undefined ? `RPE ${num(rpe)} · ${num(top)}${u} is the heaviest you own`
+      : intent === 'restore' ? 'same as last time' : `RPE ${num(rpe)} last time: more weight once it is ${num(easy)} or less`;
+    return { ...base, load: top, reps: working, jump: false, text: `${num(top)}${u} × ${repsText(working)}`, reason };
+  }
   if (up !== undefined && intent !== 'restore' && working.every(n => n >= ceiling)) {
     const reps = working.map(() => bottom);
     return { ...base, load: next, reps, jump: true, text: `${num(next)}${u} × ${repsText(reps)}`, reason: `${num(ceiling)} reps at ${num(top)}${u} on every set: up to ${num(next)}${u}` };

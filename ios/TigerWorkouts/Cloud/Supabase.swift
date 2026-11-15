@@ -447,6 +447,7 @@ actor Supabase {
         var saved: [String] = []
         var trainingMaxes: [String: Double] = [:]
         var equipment: Equipment?
+        var suggestions = SuggestPrefs()
     }
 
     /// The whole prefs JSON as the server has it. Throws rather than answering "nothing" when it
@@ -491,6 +492,7 @@ actor Supabase {
            let data = try? JSONSerialization.data(withJSONObject: e) {
             out.equipment = try? JSONDecoder().decode(Equipment.self, from: data)
         }
+        out.suggestions = SuggestPrefs.from(json: json["suggestions"])
         return out
     }
 }

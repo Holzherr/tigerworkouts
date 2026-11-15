@@ -16,6 +16,9 @@ struct SetResult: Codable, Hashable, Sendable {
     var meters: Double? = nil
     /// Calories on the machine's counter: the plan's unless changed.
     var calories: Double? = nil
+    /// How hard the set was, RPE 1–10 (10 = nothing left). Logged for lifts progressed by effort
+    /// (`ProgressMode.effort`); nil everywhere else and on rows from before it was kept.
+    var rpe: Double? = nil
 
     /// Anything but a warm-up counts as work.
     var isWorking: Bool { type != .warmup }

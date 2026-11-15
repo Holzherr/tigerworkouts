@@ -89,6 +89,7 @@ struct WorkoutDetailView: View {
                     progress
                     refRows
                     trainingMaxLink
+                    WorkoutProgressEntry(runsheet: runsheet)
                 } else if !runsheet.title.isEmpty {
                     Text(runsheet.title)
                         .font(.system(size: 26, weight: .heavy))

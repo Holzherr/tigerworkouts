@@ -30,6 +30,9 @@ struct ExerciseHistoryView: View {
                     ExerciseThumb(ref: ref, size: 52)
                     Text(ref.name).font(.title3.weight(.heavy)).foregroundStyle(Brand.ink)
                 }
+                if store.suggestions.enabled, ref.unit != "kph", Measure.of(ref.unit) == nil {
+                    progressBy
+                }
                 if history.isEmpty {
                     Text("Not logged yet. Finish a workout with it and it shows up here.")
                         .font(.callout)
@@ -67,6 +70,27 @@ struct ExerciseHistoryView: View {
         .background(Brand.canvas)
         .navigationTitle(ref.name)
         .navigationBarTitleDisplayMode(.inline)
+    }
+
+    /// This exercise's own way to progress, over the account's (Me → Settings).
+    private var progressBy: some View {
+        let own = store.suggestions.exercises?[exerciseKey]
+        let account = store.suggestions.mode ?? .reps
+        return HStack {
+            Text("Progress by").font(.subheadline.weight(.semibold)).foregroundStyle(Brand.ink)
+            Spacer()
+            Picker("Progress by", selection: Binding(get: { own }, set: { m in
+                Task { await store.setSuggestions(store.suggestions.setting(exercise: exerciseKey, mode: m)) }
+            })) {
+                Text("\(account.label) (as in Settings)").tag(ProgressMode?.none)
+                ForEach(ProgressMode.allCases) { Text($0.label).tag(ProgressMode?.some($0)) }
+            }
+            .tint(Brand.coralInk)
+            .accessibilityIdentifier("exercise-progress-mode")
+        }
+        .padding(.horizontal, 14)
+        .padding(.vertical, 6)
+        .cardSurface()
     }
 
     // MARK: - Chart

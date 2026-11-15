@@ -122,6 +122,52 @@ extension Store {
         results = (results.filter { !ids.contains($0.rowId) } + seed).sorted { $0.startedAt > $1.startedAt }
     }
 
+    /// `-seedWeeks` on launch: "Hip thrust focus week 1" run three weeks running, then duplicated into
+    /// "… week 2" and run once, for the week-by-week table. `-seedWeeksAsk` also forgets the setup
+    /// question's answer so it shows again. Fixed ids: launching with it again replaces them.
+    func seedWeeksIfAsked(_ arguments: [String] = ProcessInfo.processInfo.arguments) {
+        guard arguments.contains("-seedWeeks") else { return }
+        if arguments.contains("-seedWeeksAsk") { suggestions = SuggestPrefs() }
+        let day: TimeInterval = 86_400
+        func ago(_ d: Double) -> String { ISO8601.string(Date().addingTimeInterval(-d * day)) }
+        func ex(_ key: String, _ name: String, _ step: Double) -> ExerciseRef {
+            Library.shared.exercise(key)?.ref ?? ExerciseRef(key: key, name: name, unit: "kg", step: step)
+        }
+        func row(_ stepId: String, _ key: String, _ sets: [(Double, Double)]) -> StepResult {
+            StepResult(stepId: stepId, exerciseKey: key, target: sets.map(\.0).max(), reps: sets.map(\.1), success: true,
+                       sets: sets.map { SetResult(reps: $0.1, load: $0.0) })
+        }
+        let weeks: [(String, Double, [(Double, Double)], [(Double, Double)])] = [
+            ("seed-weeks-1", 22, [(100, 8), (110, 4), (110, 4)], [(12.5, 8), (12.5, 8), (12.5, 7)]),
+            ("seed-weeks-1", 15, [(100, 8), (110, 5), (110, 4)], [(12.5, 9), (12.5, 8), (12.5, 8)]),
+            ("seed-weeks-1", 8, [(105, 8), (110, 6), (110, 5)], [(12.5, 10), (12.5, 9), (12.5, 9)]),
+            ("seed-weeks-2", 1, [(105, 8), (115, 4), (115, 4)], [(15, 8), (15, 8), (12.5, 10)]),
+        ]
+        let seed = weeks.map { w in
+            SessionResult(runsheetId: w.0, title: w.0 == "seed-weeks-1" ? "Hip thrust focus week 1" : "Hip thrust focus week 2",
+                          startedAt: ago(w.1), durationSec: 2_400, completed: true,
+                          steps: [row("s1", "bb_hip_thrust", w.2), row("s2", "db_shoulder_press", w.3)], id: "seed-weeks-\(Int(w.1))")
+        }
+        func sheet(_ id: String, _ title: String, hip: Double, press: Double) -> Runsheet {
+            var r = Runsheet(id: id, title: title, items: [
+                .block(Block(id: "\(id)-b1", name: "Glutes", repeatCount: 3, steps: [
+                    .exercise(ExerciseStep(id: "s1", exercise: ex("bb_hip_thrust", "Barbell hip thrust", 2.5), target: hip, forMode: .reps, forValue: 8)),
+                ])),
+                .block(Block(id: "\(id)-b2", name: "Shoulders", repeatCount: 3, steps: [
+                    .exercise(ExerciseStep(id: "s2", exercise: ex("db_shoulder_press", "Dumbbell shoulder press", 2.5), target: press, forMode: .reps, forValue: 8)),
+                ])),
+            ])
+            r.creator = "You"
+            return r
+        }
+        let one = sheet("seed-weeks-1", "Hip thrust focus week 1", hip: 110, press: 12.5)
+        var two = sheet("seed-weeks-2", "Hip thrust focus week 2", hip: 115, press: 15)
+        two.duplicatedFrom = one.key
+        myWorkouts = [two, one] + myWorkouts.filter { $0.key != one.key && $0.key != two.key }
+        let ids = Set(seed.compactMap(\.id))
+        results = (results.filter { !ids.contains($0.rowId) } + seed).sorted { $0.startedAt > $1.startedAt }
+    }
+
     /// `-seedArmsAbs` on launch: "Arms and abs", the 30-minute workout an AI coach writes when asked
     /// for arms and abs today — the App Store shot of a chat request landing in the app. Fixed id:
     /// launching with it again replaces it.

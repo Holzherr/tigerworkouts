@@ -9,7 +9,7 @@ import Foundation
 /// Name, avatar and units are the web's. This app never stamps or holds them, so the server's
 /// always win and are written back untouched.
 enum PrefsMerge {
-    static let fields = ["saved", "trainingMaxes", "bodyweightKg", "equipment", "name", "avatar", "units"]
+    static let fields = ["saved", "trainingMaxes", "bodyweightKg", "equipment", "suggestions", "name", "avatar", "units"]
 
     struct Side {
         /// JSON values by field; a missing key is an empty field.
@@ -69,11 +69,14 @@ enum PrefsMerge {
         return side
     }
 
-    /// The row as written: everything else on it kept, cleared fields as null.
+    /// The row as written: everything else on it kept, cleared fields as null. Stamps of fields
+    /// this app does not know (a newer build's or the web's) are kept too, so they keep winning.
     static func row(existing: [String: Any], _ m: Merged) -> [String: Any] {
         var out = existing
         for f in fields { out[f] = m.values[f] ?? NSNull() }
-        out["updatedAt"] = m.updatedAt
+        var stamps = (existing["updatedAt"] as? [String: String] ?? [:]).filter { !fields.contains($0.key) }
+        stamps.merge(m.updatedAt) { _, new in new }
+        out["updatedAt"] = stamps
         return out
     }
 

@@ -269,15 +269,35 @@ struct SettingsView: View {
             }
 
             Section {
-                Picker("Suggestions", selection: $intent) {
-                    ForEach(Intent.allCases) { Text($0.label).tag($0.rawValue) }
+                Toggle("Suggest progress", isOn: Binding(get: { store.suggestions.enabled }, set: { on in
+                    var next = store.suggestions
+                    next.off = on ? nil : true
+                    next.asked = true
+                    Task { await store.setSuggestions(next) }
+                }))
+                .accessibilityIdentifier("suggestions-on")
+                if store.suggestions.enabled {
+                    Picker("Progress by", selection: Binding(get: { store.suggestions.mode ?? .reps }, set: { m in
+                        var next = store.suggestions
+                        next.mode = m
+                        next.asked = true
+                        Task { await store.setSuggestions(next) }
+                    })) {
+                        ForEach(ProgressMode.allCases) { Text($0.label).tag($0) }
+                    }
+                    .accessibilityIdentifier("progress-mode")
+                    Picker("Suggestions", selection: $intent) {
+                        ForEach(Intent.allCases) { Text($0.label).tag($0.rawValue) }
+                    }
+                    .pickerStyle(.segmented)
+                    .accessibilityIdentifier("intent")
                 }
-                .pickerStyle(.segmented)
-                .accessibilityIdentifier("intent")
             } header: {
                 Text("Suggestions")
             } footer: {
-                Text("\((Intent(rawValue: intent) ?? .maintain).note) Sets the Today targets and Next time. Ignoring a suggestion costs nothing.")
+                Text(store.suggestions.enabled
+                     ? "\((store.suggestions.mode ?? .reps).note) \((Intent(rawValue: intent) ?? .maintain).note) Sets the Today targets and Next time; an exercise's own page can progress it another way, a workout's Week by week can turn them off for it. Ignoring a suggestion costs nothing."
+                     : "No Today targets, no target on the timer, no Next time and no stall cards.")
             }
 
             Section {

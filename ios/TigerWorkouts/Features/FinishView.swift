@@ -26,6 +26,8 @@ struct FinishView: View {
     /// Made it / Missed and AMRAP reps as set here, by step id.
     @State private var success: [String: Bool] = [:]
     @State private var repsDone: [String: Double] = [:]
+    /// RPE per lift as set here (LiftEffortCard), by exercise key; nil inside clears it.
+    @State private var liftRPE: [String: Double?] = [:]
     @State private var sharing = false
     @State private var confirmDiscard = false
     /// The answer to "Save to the workout?": nil until tapped.
@@ -39,6 +41,7 @@ struct FinishView: View {
         r.notes = notes.isEmpty ? nil : notes
         if let score { r = ScoreEntryView.scored(r, score, type: runsheet.effectiveScore) }
         r.steps = r.steps.map { Self.marked($0, success: success[$0.stepId], reps: repsDone[$0.stepId]) }
+        for (key, rpe) in liftRPE { r = LiftEffortCard.rated(r, key: key, rpe: rpe) }
         return r
     }
 
@@ -97,6 +100,11 @@ struct FinishView: View {
                 EffortRow(value: rpe) { value in
                     rpe = value
                     store.amend(result.rowId) { $0.rpe = value }
+                }
+
+                LiftEffortCard(runsheet: runsheet, result: current, suggest: store.suggestions) { key, value in
+                    liftRPE[key] = .some(value)
+                    store.amend(result.rowId) { $0 = LiftEffortCard.rated($0, key: key, rpe: value) }
                 }
 
                 notesField

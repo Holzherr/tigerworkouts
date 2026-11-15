@@ -88,9 +88,10 @@ final class SessionRunner {
         self.today = today
     }
 
-    /// The reps each set starts on. A range or a max takes last time's set, as before; a fixed count
-    /// takes today's target where the "Target" line covers that set (so the line says what the set
-    /// is filled with), else its own set last time, set n against set n, so 100 × 8, 110 × 4 comes
+    /// The reps each set starts on: today's target where the "Target" line covers that set (so the
+    /// line says what the set is filled with — a range too: 25 × 12 at the top of 8–12 moves to
+    /// 27.5 × 8, not 27.5 × 12); else a range or a max takes last time's set, as before, and a fixed
+    /// count its own set last time, set n against set n, so 100 × 8, 110 × 4 comes
     /// back as it was done. The loads come from the seeded sheet (`Settings.withLastUsed`).
     nonisolated static func prefilled(_ fresh: RunState, runsheet: Runsheet, history: [SessionResult], today: Targets.Today?) -> RunState {
         var s = Runner.prefillReps(fresh) { step, round in
@@ -101,10 +102,13 @@ final class SessionRunner {
             let sl = s.slots[idx]
             guard sl.kind == .work, let e = sl.exercise, e.forMode == .reps, sl.mode == .rounds || sl.mode == .loose else { continue }
             let a = s.actuals[sl.id]
-            if a?.reps != nil || a?.doneAt != nil { continue }
+            if a?.doneAt != nil { continue }
             let type = Runner.typeAt(s, idx)
             var reps: Double?
-            if let t = today?.sets.first(where: { $0.stepId == e.id && $0.exerciseKey == e.exercise.key }) {
+            let target = today?.sets.first(where: { $0.stepId == e.id && $0.exerciseKey == e.exercise.key })
+            // Reps already in (a range's last time) stand, unless today's target covers the set.
+            if a?.reps != nil && target == nil { continue }
+            if let t = target {
                 guard type != .warmup, type != .drop, !t.reps.isEmpty else { continue }
                 let setNo = s.slots[..<idx].indices.filter { j in
                     s.slots[j].kind == .work && s.slots[j].blockId == sl.blockId && s.slots[j].step.id == e.id && Runner.typeAt(s, j) != .warmup

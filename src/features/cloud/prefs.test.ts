@@ -46,4 +46,11 @@ describe('mergePrefs', () => {
   it('keeps what else is on the row', () => {
     expect(prefsRow({ somethingNew: 1 }, { values: {}, updatedAt: {} }).somethingNew).toBe(1);
   });
+
+  it('keeps the iPhone app’s suggestions and its stamp, and drops stale stamps of its own fields', () => {
+    const row = prefsRow({ suggestions: { off: true }, updatedAt: { suggestions: T1, saved: T1 } }, { values: { saved: ['fran'] }, updatedAt: { saved: T2 } });
+    expect(row.suggestions).toEqual({ off: true });
+    expect(row.updatedAt).toEqual({ suggestions: T1, saved: T2 });
+    expect(prefsRow({ updatedAt: { saved: T1 } }, { values: {}, updatedAt: {} }).updatedAt).toEqual({});
+  });
 });
