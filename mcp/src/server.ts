@@ -107,6 +107,8 @@ const run = async (f: () => Promise<unknown>): Promise<Result> => {
   }
 };
 
+/** A logged amount (reps, kg, seconds, metres, calories): finite, not negative, and small enough to show. */
+const qty = z.number().finite().min(0).max(1_000_000);
 const readOnly = { readOnlyHint: true, destructiveHint: false, openWorldHint: false } as const;
 
 export const buildServer = (db: Db, account: Account = {}) => {
@@ -282,25 +284,27 @@ export const buildServer = (db: Db, account: Account = {}) => {
         id: z.string().regex(/^s-[\w-]{1,60}$/).optional().describe('Session id; the same id twice is logged once'),
         workoutId: z.string().min(1).max(120),
         title: z.string().max(120).optional(),
-        startedAt: z.string().describe('ISO date/time'),
-        endedAt: z.string().optional(),
+        startedAt: z.string().max(40).describe('ISO date/time'),
+        endedAt: z.string().max(40).optional(),
         durationSec: z.number().int().min(0).max(86400).optional(),
         completed: z.boolean().optional(),
         notes: z.string().max(2000).optional(),
         rpe: z.number().int().min(1).max(10).optional().describe('How hard it felt, 1–10'),
-        score: z.number().optional(),
+        score: z.number().finite().min(0).max(10_000_000).optional(),
         scoreText: z.string().max(60).optional(),
         steps: z
           .array(
+            // Loose, so a field a newer app logs is kept; the fields the apps decode are typed and
+            // bounded, because the iPhone app drops a whole session over one it cannot read.
             z.looseObject({
-              stepId: z.string(),
-              exerciseKey: z.string(),
-              target: z.number().optional(),
-              incline: z.number().optional(),
-              reps: z.array(z.number()).optional(),
+              stepId: z.string().max(120),
+              exerciseKey: z.string().max(120),
+              target: qty.optional(),
+              incline: z.number().min(-10).max(40).optional(),
+              reps: z.array(qty).max(100).optional(),
               success: z.boolean().optional(),
               sets: z
-                .array(z.looseObject({ reps: z.number().optional(), load: z.number().optional(), seconds: z.number().optional(), meters: z.number().optional(), calories: z.number().optional(), type: z.enum(['normal', 'warmup', 'drop', 'failure']).optional(), at: z.number().optional() }))
+                .array(z.looseObject({ reps: qty.optional(), load: qty.optional(), seconds: qty.optional(), meters: qty.optional(), calories: qty.optional(), type: z.enum(['normal', 'warmup', 'drop', 'failure']).optional(), at: qty.optional(), rpe: z.number().min(1).max(10).optional() }))
                 .max(100)
                 .optional()
                 .describe('Each set in order, with what was recorded: reps, load, seconds worked, meters, calories; type for a warm-up, drop set or set to failure'),
