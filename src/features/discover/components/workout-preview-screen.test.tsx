@@ -16,6 +16,20 @@ const blocks = () => last.items.filter((i): i is Block => i.kind === 'block');
 const more = (group: string) => fireEvent.click(within(screen.getByRole('group', { name: group })).getByLabelText('Increase'));
 const edit = () => fireEvent.click(screen.getByRole('button', { name: 'Edit Squats' }));
 
+describe('the pinned header (Nick, 15 Nov 2026)', () => {
+  it('holds Back and the title only; the chips and Open in the app scroll with the blocks', () => {
+    render(<WorkoutPreviewScreen runsheet={{ ...start, level: 'Hard' }} appHref="tigerworkouts://w/u-1" onBack={() => {}} />);
+    const header = screen.getByRole('banner');
+    expect(within(header).getByRole('heading', { name: 'Legs' })).toBeTruthy();
+    expect(within(header).getByRole('button', { name: /Back/ })).toBeTruthy();
+    expect(within(header).queryByText('Open in the app')).toBeNull();
+    expect(within(header).queryByText('Hard')).toBeNull();
+    const about = screen.getByTestId('workout-about');
+    expect(within(about).getByText('Open in the app')).toBeTruthy();
+    expect(within(about).getByText('Hard')).toBeTruthy();
+  });
+});
+
 describe('the workout page reads plain; a tap on a block opens it for editing (Nick, 1 Nov 2026)', () => {
   it('has no page-wide Edit; a tap on a block header opens that block, and Done closes it', () => {
     render(<Page />);
