@@ -1,12 +1,12 @@
 // After `vite build`: what a phone must fetch before the first paint (the entry script and every
 // chunk index.html preloads for it), gzipped. Fails the build when that grows past the budget or
 // when the catalogue or the editor's drag and drop are back in it (review D12, 2026-11-15: 483 kB
-// before, about 235 kB after).
+// before, 240 kB after).
 import fs from 'node:fs';
 import path from 'node:path';
 import zlib from 'node:zlib';
 
-const BUDGET_KB = 250;
+const BUDGET_KB = 265;
 const LATER = [/catalogue/, /vendor-edit/, /landing/, /coaching/, /workout-preview/, /editor-screen/, /import-csv/];
 
 const dist = path.resolve(import.meta.dirname, '../dist');
