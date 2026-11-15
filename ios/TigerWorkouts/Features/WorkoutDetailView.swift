@@ -100,7 +100,7 @@ struct WorkoutDetailView: View {
                     progress
                     refRows
                     trainingMaxLink
-                    WorkoutProgressEntry(runsheet: runsheet, ask: !isNew)
+                    WorkoutProgressEntry(runsheet: runsheet)
                 } else if !runsheet.title.isEmpty {
                     Text(runsheet.title)
                         .font(.system(size: 26, weight: .heavy))
@@ -211,6 +211,11 @@ struct WorkoutDetailView: View {
                         apply(restored)
                         undo = nil
                     } onExpire: { undo = nil }
+                }
+                // The progression question, before the workout starts: by Start, once per account,
+                // and never while a workout is being built (Nick, 15 Nov 2026, review D1).
+                if runnable, !isNew, store.suggestions.shouldAsk(runsheet) {
+                    SuggestSetupCard().padding(.horizontal, 16)
                 }
                 if runnable { bottomBar }
             }

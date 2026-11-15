@@ -1122,6 +1122,12 @@ final class SessionRunner {
         return Targets.timer(today, blockId: slot.blockId, stepId: slot.exercise?.id, round: slot.round, runsheet: runsheet, type: Runner.typeAt(state, idx), set: setNo)
     }
 
+    /// The suggestions setting changed mid-session (⋯ → Suggestions): the Target line follows it
+    /// from the set in hand on. Sets already done, and numbers already on the rows, stay.
+    func refreshTargets(suggest: SuggestPrefs = .current()) {
+        today = Targets.today(runsheet, results: history, intent: Intent.current(), kit: Equipment.current(), suggest: suggest)
+    }
+
     func plannedTarget(_ stepId: String) -> Double? { Runner.plannedTarget(state, stepId: stepId) }
     func plannedIncline(_ stepId: String) -> Double? { Runner.plannedIncline(state, stepId: stepId) }
 

@@ -1,20 +1,13 @@
 import SwiftUI
 
-/// What the workout page shows for progress, in one place so the page carries a single line for it:
-/// the one-time setup question while it is unanswered, then a "Week by week" row once the workout
-/// has history.
+/// What the workout page shows for progress: a "Week by week" row once the workout has history.
+/// The one-time setup question sits by Start (`SuggestSetupCard`).
 struct WorkoutProgressEntry: View {
     @Environment(Store.self) private var store
     let runsheet: Runsheet
-    /// Off while a workout is being built: the question is about training, not about adding
-    /// exercises (Nick, 15 Nov 2026).
-    var ask = true
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
-            if ask && store.suggestions.shouldAsk(runsheet) {
-                SuggestSetupCard()
-            }
             let table = WeekTable.table(runsheet, results: store.results, workouts: store.myWorkouts)
             if !table.isEmpty {
                 // A hidden link behind the row, so the list does not add a second chevron.
@@ -53,7 +46,9 @@ struct WorkoutProgressEntry: View {
 }
 
 /// "Want suggestions on how to progress?" Yes / No, then reps, weight or effort. Asked once per
-/// account, on the first workout with a loaded exercise; Me → Settings changes it later.
+/// account, before a workout starts: by Start on the page of the first workout with a loaded
+/// exercise, never on one being created (Nick, 15 Nov 2026). The timer's ⋯ menu and Me → Settings
+/// change it later.
 struct SuggestSetupCard: View {
     @Environment(Store.self) private var store
     @State private var choosing = false
@@ -119,6 +114,76 @@ struct SuggestSetupCard: View {
     private func answer(yes: Bool, mode: ProgressMode? = nil) {
         let next = store.suggestions.answered(yes: yes, mode: mode)
         Task { await store.setSuggestions(next) }
+    }
+}
+
+/// The same choice, to change during a workout (the timer's ⋯ menu → Suggestions): none, or by
+/// reps, weight or effort, the one in force ticked. A tap saves it and closes the sheet.
+struct SuggestChoiceSheet: View {
+    @Environment(Store.self) private var store
+    @Environment(\.dismiss) private var dismiss
+    /// The setting as just saved, so the timer's Target line can follow it.
+    var onChange: (SuggestPrefs) -> Void = { _ in }
+
+    var body: some View {
+        NavigationStack {
+            ScrollView {
+                VStack(alignment: .leading, spacing: 10) {
+                    Text("Want suggestions on how to progress?").font(.headline).foregroundStyle(Brand.ink)
+                    Text("A target for each lift, from what you did last time. A change shows on the sets still to come.")
+                        .font(.footnote)
+                        .foregroundStyle(Brand.muted)
+                        .fixedSize(horizontal: false, vertical: true)
+                    ForEach(ProgressMode.allCases) { mode in
+                        row(mode.label, mode.note, on: store.suggestions.enabled && (store.suggestions.mode ?? .reps) == mode, id: "suggest-by-\(mode.rawValue)") {
+                            choose(store.suggestions.answered(yes: true, mode: mode))
+                        }
+                    }
+                    row("No suggestions", "No targets. Last time's weights still carry over.", on: !store.suggestions.enabled, id: "suggest-none") {
+                        choose(store.suggestions.answered(yes: false))
+                    }
+                }
+                .padding(16)
+            }
+            .background(Brand.canvas)
+            .navigationTitle("Suggestions")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Close") { dismiss() }
+                }
+            }
+        }
+        .accessibilityIdentifier("suggest-choice")
+    }
+
+    private func row(_ title: String, _ note: String, on: Bool, id: String, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            HStack(spacing: 10) {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(title).font(.subheadline.weight(.bold)).foregroundStyle(Brand.ink)
+                    Text(note).font(.footnote).foregroundStyle(Brand.muted).fixedSize(horizontal: false, vertical: true)
+                }
+                Spacer(minLength: 8)
+                if on {
+                    Image(systemName: "checkmark").font(.body.weight(.bold)).foregroundStyle(Brand.coralInk)
+                }
+            }
+            .padding(12)
+            .frame(maxWidth: .infinity, minHeight: 44, alignment: .leading)
+            .background(Brand.surface, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+            .overlay(RoundedRectangle(cornerRadius: 12, style: .continuous).strokeBorder(on ? Brand.brandLine : Brand.line))
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .accessibilityAddTraits(on ? .isSelected : [])
+        .accessibilityIdentifier(id)
+    }
+
+    private func choose(_ next: SuggestPrefs) {
+        Task { await store.setSuggestions(next) }
+        onChange(next)
+        dismiss()
     }
 }
 

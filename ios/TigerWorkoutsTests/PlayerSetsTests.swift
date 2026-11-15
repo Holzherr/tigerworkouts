@@ -212,6 +212,30 @@ struct PlayerSetsTests {
         #expect(SessionRunner.leftLine(Runner.finish(r.state, now: r.state.startedAt + 60_000), runsheet: r.runsheet) == nil)
     }
 
+    @Test("a change of the suggestions setting mid-session moves the Target line for what is still to come")
+    @MainActor
+    func suggestionsMidSession() {
+        let r = Self.runner(Self.sheet(), Self.history())
+        defer { SessionRunner.clearSaved() }
+        r.refreshTargets(suggest: SuggestPrefs(mode: .weight))
+        let weight = Targets.today(r.runsheet, results: Self.history(), intent: Intent.current(), kit: Equipment.current(), suggest: SuggestPrefs(mode: .weight))
+        #expect(weight != nil)
+        #expect(r.today == weight)
+        r.refreshTargets(suggest: SuggestPrefs(mode: .reps))
+        #expect(r.today == Targets.today(r.runsheet, results: Self.history(), intent: Intent.current(), kit: Equipment.current(), suggest: SuggestPrefs(mode: .reps)))
+        r.refreshTargets(suggest: SuggestPrefs(off: true))
+        #expect(r.today == nil)
+        #expect(r.goal == nil)
+    }
+
+    @Test("the setting is answered the same way from the timer: a mode turns suggestions on, none turns them off")
+    func suggestionsAnswer() {
+        let off = SuggestPrefs().answered(yes: false)
+        #expect(off.asked == true && !off.enabled)
+        let back = off.answered(yes: true, mode: .effort)
+        #expect(back.enabled && back.mode == .effort && back.asked == true)
+    }
+
     // MARK: - Correcting a done set
 
     @Test("a done set is corrected in place: it stays ticked with its time, and only it changes")

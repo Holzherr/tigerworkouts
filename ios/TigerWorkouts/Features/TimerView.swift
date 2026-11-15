@@ -31,6 +31,8 @@ struct TimerView: View {
     @State private var showRemaining = false
     /// Last time's sets and settings, worked out once per step, not on every redraw.
     @State private var memo = HistoryMemo()
+    /// ⋯ → Suggestions: the progression question, to change it mid-workout.
+    @State private var showSuggestions = false
 
     private var isRest: Bool { runner.slot?.kind == .rest }
     private var accent: Color { isRest ? Brand.Night.rest : Brand.coral }
@@ -71,6 +73,10 @@ struct TimerView: View {
         .sheet(isPresented: $showRemaining) { remainingSheet.preferredColorScheme(.light) }
         .onDisappear { runner.end() }
         .sheet(isPresented: $showOverview) { overview.preferredColorScheme(.light) }
+        .sheet(isPresented: $showSuggestions) {
+            SuggestChoiceSheet { runner.refreshTargets(suggest: $0) }
+                .preferredColorScheme(.light)
+        }
         .sheet(item: $editing) { step in
             ExerciseSheet(
                 step: step,
@@ -190,7 +196,7 @@ struct TimerView: View {
                         .monospacedDigit()
                 }
                 // Sound and the overview sit in the ⋯ menu with Finish: the bar keeps to where you are.
-                SessionMenu(sound: sound, toggleSound: toggleSound, overview: { showOverview = true }, finish: menuFinish, discard: { confirmDiscard = true }).equatable()
+                SessionMenu(sound: sound, toggleSound: toggleSound, overview: { showOverview = true }, suggestions: { showSuggestions = true }, finish: menuFinish, discard: { confirmDiscard = true }).equatable()
             }
             GeometryReader { geo in
                 ZStack(alignment: .leading) {
@@ -1448,6 +1454,7 @@ private struct SessionMenu: View, Equatable {
     let sound: Bool
     let toggleSound: () -> Void
     let overview: () -> Void
+    let suggestions: () -> Void
     let finish: () -> Void
     let discard: () -> Void
 
@@ -1456,6 +1463,7 @@ private struct SessionMenu: View, Equatable {
     var body: some View {
         Menu {
             Button("Session overview", systemImage: "list.bullet", action: overview)
+            Button("Suggestions", systemImage: "chart.line.uptrend.xyaxis", action: suggestions)
             Button(sound ? "Mute tones" : "Unmute tones", systemImage: sound ? "speaker.slash.fill" : "speaker.wave.2.fill", action: toggleSound)
             Divider()
             Button("Finish and save", action: finish)
