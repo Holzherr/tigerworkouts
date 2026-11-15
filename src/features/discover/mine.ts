@@ -66,22 +66,6 @@ export const madeForYou = (r: Runsheet) => /\bcoach\b/i.test(r.creator ?? r.sour
 /** The badge on a workout of yours not done yet. */
 export const newBadge = (r: Runsheet) => (madeForYou(r) ? 'New · made for you' : 'New');
 
-/**
- * The one card Mine accents as Up next: the first of your own not yet done, else the one done
- * longest ago, which keeps the rotation even. Undefined when nothing qualifies.
- */
-export const upNextOf = (list: Runsheet[], ownIds: string[], last: Map<string, string>) => {
-  const own = new Set(ownIds);
-  const fresh = list.find(r => own.has(wid(r)) && !lastDoneOf(r, last));
-  if (fresh) return wid(fresh);
-  let oldest: { id: string; at: string } | undefined;
-  for (const r of list) {
-    const at = lastDoneOf(r, last);
-    if (at && (!oldest || at < oldest.at)) oldest = { id: wid(r), at };
-  }
-  return oldest?.id;
-};
-
 /** The Up next card first, the rest in their order (Nick, 27 Oct 2026). Ported to iOS as `Home.upNextFirst`. */
 export const upNextFirst = <T>(list: T[], isNext: (t: T) => boolean) => {
   const i = list.findIndex(isNext);

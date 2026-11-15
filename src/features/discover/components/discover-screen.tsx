@@ -7,7 +7,8 @@ import { runsheetMinutes, type Runsheet } from '@/features/runsheet/model';
 import type { SessionResult } from '@/features/runsheet/progression';
 import { adaptedLine, findCreators, isAdapted } from '@/features/creators/credited';
 import { recommend } from '../recommend';
-import { contentsLine, lastDoneById, lastDoneOf, mineLine, mineList, newBadge, upNextFirst, upNextOf, whyLine } from '../mine';
+import { contentsLine, lastDoneById, lastDoneOf, mineLine, mineList, newBadge, upNextFirst, whyLine } from '../mine';
+import { pickUpNext, upNextBadge, usualLine } from '../next-up';
 
 export type DiscoverTab = 'mine' | 'discover';
 /** The list a workout was tapped in, recorded on the session it starts. */
@@ -82,9 +83,10 @@ const about = (r: Runsheet) => [`${runsheetMinutes(r)} min`, r.program ? `${r.pr
  * One workout as a card: name and one meta line open its page; with `onStart`, a round coral play
  * starts it. On Mine a card says more, a line each (Nick, 18 Oct 2026): a New badge until it is
  * first done, with the description's first sentence under the title; what is in it; then the
- * meta. `upNext` gives the one card to do next a light coral edge and an "Up next" label.
+ * meta. `upNext` gives the one card to do next a light coral edge and an "Up next" label
+ * ("Up next · your usual" for the one started most).
  */
-const Row = ({ runsheet: r, meta, coach, badge, why, contents, upNext, onOpen, onStart }: { runsheet: Runsheet; meta: string; coach?: boolean; badge?: string; why?: string; contents?: string; upNext?: boolean; onOpen: () => void; onStart?: () => void }) => (
+const Row = ({ runsheet: r, meta, coach, badge, why, contents, upNext, upNextLabel = 'Up next', onOpen, onStart }: { runsheet: Runsheet; meta: string; coach?: boolean; badge?: string; why?: string; contents?: string; upNext?: boolean; upNextLabel?: string; onOpen: () => void; onStart?: () => void }) => (
   <div className={cn('flex items-center gap-2 rounded-card border bg-surface pr-2', upNext ? 'border-brand-line' : 'border-line')} data-up-next={upNext || undefined}>
     <button type="button" onClick={onOpen} className="flex min-h-14 min-w-0 flex-1 items-center gap-2 py-2.5 pl-4 text-left">
       <span className="flex min-w-0 flex-1 flex-col">
@@ -92,7 +94,7 @@ const Row = ({ runsheet: r, meta, coach, badge, why, contents, upNext, onOpen, o
         {/* Drawn above the title, read after it: the card is named by its title. */}
         {(badge || upNext) && (
           <span className="order-first mb-0.5 flex items-center gap-1.5 text-[11px] font-bold">
-            {upNext && <span className="text-brand-ink">Up next</span>}
+            {upNext && <span className="text-brand-ink">{upNextLabel}</span>}
             {badge && <span className="rounded-full bg-brand-soft px-2 py-px text-brand-ink">{badge}</span>}
           </span>
         )}
@@ -131,7 +133,8 @@ export const DiscoverScreen = ({ workouts, results = [], savedIds = [], ownIds =
   const mine = useMemo(() => mineList(workouts, ownIds, savedIds, results, coachRows.map(c => wid(c.runsheet))), [workouts, ownIds, savedIds, results, coachRows]);
   const own = useMemo(() => new Set(ownIds), [ownIds]);
   // One card to do next: what a coach sent and is not done, else Mine's own pick.
-  const upNext = coachRows.find(c => !c.done)?.id ?? upNextOf(mine, ownIds, last);
+  const pick = useMemo(() => pickUpNext(mine, ownIds, results), [mine, ownIds, results]);
+  const upNext = coachRows.find(c => !c.done)?.id ?? pick?.id;
   // Mine's Up next leads, above what a coach sent (all done then).
   const ordered = upNextFirst(mine, r => wid(r) === upNext);
   const lead = ordered.length > 0 && wid(ordered[0]) === upNext ? 1 : 0;
@@ -162,7 +165,7 @@ export const DiscoverScreen = ({ workouts, results = [], savedIds = [], ownIds =
     const fresh = !done && own.has(wid(r));
     const next = wid(r) === upNext;
     const origin = next ? 'up_next' : 'saved';
-    return <Row key={wid(r)} runsheet={r} badge={fresh ? newBadge(r) : undefined} why={fresh ? whyLine(r) : undefined} contents={contentsLine(r)} upNext={next} meta={mineLine(r, done)} onOpen={() => onOpen(r, origin)} onStart={onStart && (() => onStart(r, origin))} />;
+    return <Row key={wid(r)} runsheet={r} badge={fresh ? newBadge(r) : undefined} why={fresh ? whyLine(r) : undefined} contents={contentsLine(r)} upNext={next} upNextLabel={upNextBadge(pick)} meta={[mineLine(r, done), next ? usualLine(pick) : undefined].filter(Boolean).join(' · ')} onOpen={() => onOpen(r, origin)} onStart={onStart && (() => onStart(r, origin))} />;
   };
 
   const creators = useMemo(() => (onOpenCreator && searching ? findCreators(workouts, q) : []), [onOpenCreator, searching, workouts, q]);
@@ -242,7 +245,7 @@ export const DiscoverScreen = ({ workouts, results = [], savedIds = [], ownIds =
           <>
             {ordered.slice(0, lead).map(mineRow)}
             {coachRows.map(c => (
-              <Row key={c.id} runsheet={c.runsheet} coach badge={c.done ? undefined : 'New · made for you'} why={c.done ? undefined : c.note?.trim() || whyLine(c.runsheet)} contents={contentsLine(c.runsheet)} upNext={c.id === upNext} meta={`${runsheetMinutes(c.runsheet)} min · from ${c.coachName}${c.done ? ' · done' : ''}`} onOpen={() => onOpen(c.runsheet, 'coach')} onStart={onStart && (() => onStart(c.runsheet, 'coach'))} />
+              <Row key={c.id} runsheet={c.runsheet} coach badge={c.done ? undefined : 'New · made for you'} why={c.done ? undefined : c.note?.trim() || whyLine(c.runsheet)} contents={contentsLine(c.runsheet)} upNext={c.id === upNext} meta={`${runsheetMinutes(c.runsheet)} min · from ${c.coachName}${c.done ? ' · done' : ''}`} onOpen={() => onOpen(c.runsheet, c.id === upNext ? 'up_next' : 'coach')} onStart={onStart && (() => onStart(c.runsheet, c.id === upNext ? 'up_next' : 'coach'))} />
             ))}
             {ordered.slice(lead).map(mineRow)}
             {coachRows.length === 0 && mine.length === 0 && <EmptyState icon={<Bookmark />} title="No workouts yet" body="Write your own with +, or save one from Discover." action={{ label: 'Discover workouts', onClick: () => setTab('discover') }} />}

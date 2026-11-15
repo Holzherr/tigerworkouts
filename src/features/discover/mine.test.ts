@@ -2,7 +2,8 @@ import { describe, expect, it } from 'vitest';
 import { EX } from '@/features/runsheet/fixtures';
 import { makeExercise, type Runsheet } from '@/features/runsheet/model';
 import type { SessionResult } from '@/features/runsheet/progression';
-import { contentsLine, lastDoneById, lastDoneOf, mineLine, mineList, newBadge, upNextFirst, upNextOf, whyLine } from './mine';
+import { contentsLine, lastDoneById, lastDoneOf, mineLine, mineList, newBadge, upNextFirst, whyLine } from './mine';
+import { pickUpNext } from './next-up';
 
 const w = (id: string, extra: Partial<Runsheet> = {}): Runsheet => ({ id, title: id, items: [], source: { title: id, kind: 'benchmark' }, ...extra });
 const did = (runsheetId: string, day: number): SessionResult => ({ runsheetId, startedAt: `2026-10-${String(day).padStart(2, '0')}T10:00:00Z`, steps: [] });
@@ -64,19 +65,9 @@ describe('a Mine card', () => {
   });
 });
 
-describe('upNextOf', () => {
-  it('is the first new one, else the one done longest ago', () => {
-    const list = [w('u-new'), w('a'), w('b')];
-    const last = lastDoneById([did('a', 16), did('b', 2)]);
-    expect(upNextOf(list, ['u-new', 'a'], last)).toBe('u-new');
-    expect(upNextOf(list.slice(1), ['a'], last)).toBe('b');
-    expect(upNextOf([w('c')], [], last)).toBeUndefined();
-  });
-});
-
 describe('upNextFirst', () => {
   const lead = (list: Runsheet[], own: string[], results: SessionResult[]) => {
-    const next = upNextOf(list, own, lastDoneById(results));
+    const next = pickUpNext(list, own, results, new Date('2026-10-27T12:00:00Z'))?.id;
     return { next, ids: upNextFirst(list, r => r.id === next).map(r => r.id) };
   };
   it('puts the one done longest ago first when all are done, the rest newest first', () => {
