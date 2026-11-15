@@ -10,7 +10,7 @@ struct StepEditorView: View {
     @Environment(\.dismiss) private var dismiss
 
     private var unit: String { step.shortUnit }
-    private var increment: Double { step.exercise.step == 0 ? 1 : step.exercise.step }
+    private var increment: Double { StepSizes.load(step.exercise) }
     private var showsIncline: Bool {
         Library.shared.group(step.exercise.key).map { [.treadmill, .walk, .run].contains($0) } ?? false
     }
@@ -66,7 +66,18 @@ struct StepEditorView: View {
                 if step.hasSetting {
                     Section(step.settingLabel) {
                         Stepper(value: Binding(get: { step.target ?? 0 }, set: { step.target = $0 }), in: 0...500, step: increment) {
-                            LabeledContent(step.settingLabel, value: step.target.map { "\(Format.number($0)) \(unit)" } ?? "—")
+                            HStack {
+                                Text(step.settingLabel)
+                                Spacer()
+                                // Typed too: 27.5 kg is five taps of 2.5 from 15.
+                                TextField(unit, value: Binding(get: { step.target }, set: { step.target = $0.map { min(max($0, 0), 500) } }), format: .number)
+                                    .keyboardType(.decimalPad)
+                                    .multilineTextAlignment(.trailing)
+                                    .monospacedDigit()
+                                    .frame(maxWidth: 80)
+                                    .accessibilityIdentifier("target-value")
+                                Text(unit).foregroundStyle(Brand.muted)
+                            }
                         }
                     }
                 }
@@ -149,7 +160,7 @@ struct StepEditorView: View {
     private var stepSize: Double {
         switch step.forMode {
         case .seconds: 5
-        case .meters: 10
+        case .meters: StepSizes.meters(step.exercise, fallback: 10)
         default: 1
         }
     }

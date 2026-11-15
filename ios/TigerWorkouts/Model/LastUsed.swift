@@ -34,18 +34,35 @@ enum Settings {
     /// Start a workout on the numbers you finished on. The treadmill speed and incline, and the
     /// weight on the bench, are what you set last time rather than whatever the workout was
     /// written with — the thing you would otherwise dial in again at the start of every block.
-    static func withLastUsed(_ r: Runsheet, results: [SessionResult]) -> Runsheet {
+    ///
+    /// In a block done for sets, each set starts on its own set last time (`LastTime.sets`), so a
+    /// pyramid (100 × 8, 110 × 4, 110 × 4) comes back as it was done rather than as one load. Where
+    /// today's target (`targets`, from `Targets.sets` on the same workout) moves sets that were all
+    /// one load last time, the working sets start on its load instead, so the "Target" line over
+    /// the timer is what the sets are filled with. A step a programme's rules load is left to them.
+    static func withLastUsed(_ r: Runsheet, results: [SessionResult], targets: [Targets.SetTarget] = []) -> Runsheet {
         guard !results.isEmpty else { return r }
         let m = lastUsed(results, workout: r)
         guard !m.isEmpty else { return r }
 
-        func seed(_ s: ExerciseStep) -> ExerciseStep {
+        func seed(_ s: ExerciseStep, rounds: Int?) -> ExerciseStep {
             let step = m["step:\(s.id)"].flatMap { $0.exerciseKey == s.exercise.key ? $0 : nil }
             guard let hit = step ?? m["ex:\(s.exercise.key)"] else { return s }
             var s = s
             // A relative load (% of a training max) is computed at run time; leave it alone.
             if s.target != nil, let t = hit.target { s.target = t }
             if let i = hit.incline { s.incline = i }
+            guard s.target != nil || s.sets?.contains(where: { $0.load != nil }) == true, s.targetPct == nil, s.loadFactor == nil,
+                  Measure.of(s.exercise.unit) == nil, !Targets.ruled(r, s),
+                  let last = LastTime.lastSession(results, for: s, in: r), !last.isEmpty else { return s }
+            let target = targets.first { $0.stepId == s.id && $0.exerciseKey == s.exercise.key }?.load
+            let follow = target != nil && Set(last.filter(isWork).map { $0.load ?? -1 }).count <= 1
+            if let rounds {
+                s.sets = seededSets(s, rounds: rounds, last: last, target: follow ? target : nil)
+                if let first = s.sets?.first(where: { isWork($0.type) })?.load ?? s.sets?.first?.load { s.target = first }
+            } else if follow, let target {
+                s.target = target
+            }
             return s
         }
 
@@ -53,13 +70,40 @@ enum Settings {
         out.items = r.items.map { item in
             switch item {
             case .block(var b):
-                b.steps = b.steps.map { if case .exercise(let e) = $0 { return .exercise(seed(e)) } else { return $0 } }
+                let rounds = b.runMode == .rounds ? max(1, b.repeatCount) : nil
+                b.steps = b.steps.map { if case .exercise(let e) = $0 { return .exercise(seed(e, rounds: rounds)) } else { return $0 } }
                 return .block(b)
             case .step(.exercise(let e)):
-                return .step(.exercise(seed(e)))
+                return .step(.exercise(seed(e, rounds: nil)))
             default:
                 return item
             }
+        }
+        return out
+    }
+
+    private static func isWork(_ type: SetType?) -> Bool { type != .warmup && type != .drop }
+    private static func isWork(_ set: SetResult) -> Bool { isWork(set.type) }
+
+    /// A plan for every set of a step: set n's load (and type) from last time's set n, or `target`
+    /// on a working set when today's target is followed; past last time's sets, the plan's own
+    /// load or the set before's. Reps stay the plan's: the runner fills them (`SessionRunner`).
+    static func seededSets(_ s: ExerciseStep, rounds: Int, last: [SetResult], target: Double?) -> [SetPlan] {
+        var out: [SetPlan] = []
+        for i in 0..<rounds {
+            let own = s.sets.flatMap { $0.indices.contains(i) ? $0[i] : nil }
+            let then = last.indices.contains(i) ? last[i] : nil
+            let planned = s.plannedType(i)
+            let type: SetType? = then.map { ($0.type ?? .normal) == .normal ? nil : $0.type } ?? (planned == .normal ? nil : planned)
+            var load: Double?
+            if let target, isWork(type) {
+                load = target
+            } else if let then, let l = then.load {
+                load = l
+            } else {
+                load = own?.load ?? out.last?.load ?? s.plannedSet(i).load
+            }
+            out.append(SetPlan(reps: own?.reps, load: load, type: type))
         }
         return out
     }
@@ -199,5 +243,15 @@ enum LastTime {
         lastSession(results, for: step, in: workout)
             .flatMap { compact($0, unit: step.shortUnit) }
             .map { "last time " + $0 }
+    }
+}
+
+/// The player's half of last time: one round's set from the same `lastSession` the workout page
+/// and the exercise sheet show, so every screen reads the same sets.
+extension LastTime {
+    /// Last time's set for one round of a step: set n against set n, the last set past the end.
+    static func set(_ results: [SessionResult], for step: ExerciseStep, round: Int, in workout: Runsheet? = nil) -> SetResult? {
+        guard let all = lastSession(results, for: step, in: workout), !all.isEmpty else { return nil }
+        return all[min(max(0, round), all.count - 1)]
     }
 }

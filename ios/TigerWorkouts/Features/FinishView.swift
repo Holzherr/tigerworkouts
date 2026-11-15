@@ -10,6 +10,11 @@ struct FinishView: View {
     var onClose: () -> Void
     /// Takes the session out again: the phone, the account and Health.
     var onDiscard: () -> Void = {}
+    /// Sets added with "+ Add set" this session, on a workout of your own: the screen asks whether
+    /// they go on the workout. 0: nothing to ask.
+    var addedSets = 0
+    /// Puts the added sets on the workout ("Update workout").
+    var onUpdateWorkout: () -> Void = {}
 
     /// Bodyweight is asked for once, on a finish screen, and never again once answered or skipped.
     @AppStorage("bodyweightAsked") private var bodyweightAsked = false
@@ -23,6 +28,8 @@ struct FinishView: View {
     @State private var repsDone: [String: Double] = [:]
     @State private var sharing = false
     @State private var confirmDiscard = false
+    /// The answer to "Save to the workout?": nil until tapped.
+    @State private var templateAnswer: Bool?
     @FocusState private var notesFocused: Bool
 
     /// This session as it now stands, with what was tapped here.
@@ -69,6 +76,10 @@ struct FinishView: View {
                 .padding(.top, 24)
 
                 CelebrationCard(celebration: celebration, scoreType: runsheet.effectiveScore, blockName: blockName) { sharing = true }
+
+                if addedSets > 0 {
+                    templateCard
+                }
 
                 if runsheet.effectiveScore != .none {
                     ScoreEntryView(type: runsheet.effectiveScore, value: current.score) { value in
@@ -143,6 +154,41 @@ struct FinishView: View {
         } message: {
             Text("It comes out of History here and on the web, and out of Apple Health.")
         }
+    }
+
+    /// "You added a set. Save it to the workout?" — Just this time keeps it with this session as
+    /// your version (specs/workout-versions.md); Update workout puts it on the workout.
+    private var templateCard: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Text(addedSets == 1 ? "You added a set" : "You added \(addedSets) sets").font(.headline).foregroundStyle(Brand.ink)
+            switch templateAnswer {
+            case true?:
+                Text("Saved to the workout: next time starts with it.").font(.footnote).foregroundStyle(Brand.muted)
+            case false?:
+                Text("Kept with this session as your version. Make base on the workout page puts it on the workout.").font(.footnote).foregroundStyle(Brand.muted)
+            case nil:
+                Text("Save to the workout template?").font(.footnote).foregroundStyle(Brand.muted)
+                HStack {
+                    Button("Just this time") { templateAnswer = false }
+                        .foregroundStyle(Brand.muted)
+                        .accessibilityIdentifier("template-once")
+                    Spacer()
+                    Button("Update workout") {
+                        templateAnswer = true
+                        onUpdateWorkout()
+                    }
+                    .fontWeight(.semibold)
+                    .foregroundStyle(Brand.coralInk)
+                    .accessibilityIdentifier("template-update")
+                }
+                .padding(.top, 2)
+            }
+        }
+        .padding(16)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .cardSurface()
+        .accessibilityElement(children: .contain)
+        .accessibilityIdentifier("template-card")
     }
 
     private var notesField: some View {

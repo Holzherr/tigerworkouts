@@ -626,6 +626,48 @@ export const prefillReps = (s: RunState, last: (step: ExerciseStep, round: numbe
   return changed ? { ...s, actuals } : s;
 };
 
+/**
+ * One more set of a straight-set block, "+ Add set" under its last set: a copy of the last set with
+ * its weight and reps, after it, behind the block's rest between sets when it has one. Every slot of
+ * the block counts one more round. Added once the last set is done (the timer is on the next part,
+ * nothing run there yet), the set goes in before it with no rest and the timer goes back to it.
+ * Ported from `Runner.addSet` in the iOS app.
+ */
+export const addSet = (s: RunState, now: number, blockId: string): RunState => {
+  if (s.phase === 'done' || s.phase === 'lead') return s;
+  const work = s.slots.flatMap((sl, i) => (sl.blockId === blockId && sl.kind === 'work' ? [i] : []));
+  const last = work[work.length - 1];
+  if (last === undefined || s.slots[last].mode !== 'rounds' || s.i > last + 1 || !work.every(i => s.slots[i].step.id === s.slots[last].step.id)) return s;
+  const behind = last < s.i;
+  const base = (id: string) => (id.includes('#') ? id.slice(0, id.lastIndexOf('#')) : id);
+  let n = s.slots.reduce((m, sl) => Math.max(m, sl.id.includes('#') ? Number(sl.id.slice(sl.id.lastIndexOf('#') + 1)) : -1), -1) + 1;
+  const from = s.slots[last];
+  const inserted: Slot[] = [];
+  const r = behind ? -1 : s.slots.findLastIndex((sl, i) => i < last && sl.blockId === blockId && sl.kind === 'rest' && !sl.untilBoundary);
+  if (r >= 0) inserted.push({ ...s.slots[r], id: `${base(s.slots[r].id)}#${n++}`, round: from.round, seconds: slotSeconds(s.slots[r].step) });
+  // Its weight and reps, not its type: one more drop set or warm-up is not what was asked for.
+  const plan = from.plan && (from.plan.reps !== undefined || from.plan.load !== undefined) ? { reps: from.plan.reps, load: from.plan.load } : undefined;
+  const set: Slot = { ...from, id: `${base(from.id)}#${n++}`, round: from.round + 1, plan };
+  inserted.push(set);
+  const was = s.actuals[from.id];
+  const a: Actual = { changes: [] };
+  const target = effectiveTarget(s, last);
+  if (target !== undefined) {
+    a.target = target;
+    a.changes = [{ atSec: 0, target }];
+  }
+  if (from.step.kind === 'exercise' && (from.step.forMode === 'reps' || from.step.forMode === 'amrap' || from.step.forMode === 'max')) {
+    const reps = was?.reps ?? (from.step.forMode === 'reps' ? from.step.forValue : undefined);
+    if (reps !== undefined) a.reps = reps;
+  }
+  if (was?.meters !== undefined) a.meters = was.meters;
+  if (was?.calories !== undefined) a.calories = was.calories;
+  if (was?.incline !== undefined) a.incline = was.incline;
+  const slots = [...s.slots.slice(0, last + 1), ...inserted, ...s.slots.slice(last + 1)].map(sl => (sl.blockId === blockId ? { ...sl, rounds: from.rounds + 1 } : sl));
+  const out: RunState = { ...s, slots, actuals: { ...s.actuals, [set.id]: a } };
+  return behind ? back({ ...out, i: out.i + inserted.length }, now) : out;
+};
+
 /** Drop a step for the rest of the session: remove every remaining slot of it. */
 export const drop = (s: RunState, now: number, stepId: string): RunState => {
   const c = current(s);
