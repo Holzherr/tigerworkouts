@@ -1190,6 +1190,8 @@ extension SessionRunner: SessionControllable {
             if isRestSlot { extendRest(by: 15) }
         case .resume:
             if state.phase == .paused { pauseOrResume() }
+        case .pause:
+            if state.phase == .running, !isRestSlot { pauseOrResume() }
         }
     }
 
@@ -1201,7 +1203,7 @@ extension SessionRunner: SessionControllable {
         let slot = Runner.current(state)
         switch state.phase {
         case .lead, .ready: content.action = .start
-        case .running: content.action = slot?.kind == .rest ? (state.endsAt == nil ? .done : .rest) : .done
+        case .running: content.action = slot?.kind == .rest ? (state.endsAt == nil ? .done : .rest) : (countsDown(state) ? .pause : .done)
         case .paused: content.action = .resume
         case .done: content.action = .none
         }
@@ -1222,6 +1224,13 @@ extension SessionRunner: SessionControllable {
         content.setLine = state.phase == .done ? nil : work.flatMap { setLine(state, $0) }
         content.token = token(state)
         return content
+    }
+
+    /// The running slot ends by its own countdown, so the big button, in the app and on the Lock
+    /// Screen, is Pause: timed work, or a rest. Not EMOM reps, whose minute runs out but whose set
+    /// is logged by Done.
+    nonisolated static func countsDown(_ state: RunState) -> Bool {
+        (state.phase == .paused ? state.remainingMs : state.endsAt) != nil && !Runner.minuteOnly(Runner.current(state))
     }
 
     nonisolated static func token(_ state: RunState) -> String {
