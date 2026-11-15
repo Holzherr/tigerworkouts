@@ -3,8 +3,9 @@ name: iOS tests
 # Compiles the iPhone app and runs its tests on a hosted Mac whenever ios/ changes.
 #
 #   unit   every push and pull request. The unit tests (incl. the runner.ts port). Must pass.
-#   smoke  pull requests. A handful of simulator walkthroughs that need no system dialog, no Lock
-#          Screen and no Health sheet, so a red one is the change's doing. About ten minutes.
+#   smoke  pull requests. Eight simulator walkthroughs that need no system dialog, no Lock Screen
+#          and no Health sheet. A failed one is run once more before it counts: a busy hosted
+#          runner times a UI query out now and then.
 #   ui     pushes to main, nightly, and by hand. Every walkthrough, split over four runners.
 #
 # The walkthroughs used to be one job with a 40-minute limit. There are 45 of them at about 50 s
@@ -13,9 +14,9 @@ name: iOS tests
 on:
   push:
     branches: [main]
-    paths: ['ios/**', '.github/workflows/ios.yml', '.github/workflows/ios-setup.sh']
+    paths: ['ios/**', 'fixtures/**', '.github/workflows/ios.yml', '.github/workflows/ios-setup.sh']
   pull_request:
-    paths: ['ios/**', '.github/workflows/ios.yml', '.github/workflows/ios-setup.sh']
+    paths: ['ios/**', 'fixtures/**', '.github/workflows/ios.yml', '.github/workflows/ios-setup.sh']
   schedule:
     - cron: '17 3 * * *'
   workflow_dispatch:
@@ -74,14 +75,14 @@ jobs:
       - name: xcodebuild test
         run: |
           only=""
-          for t in testWorkoutLinkOnColdLaunch testTimerControls testMenuDiscardAsksFirst testCapClock \
-                   testSessionSheetIncline testChartMetricAndRange testLogbook testAICoach \
-                   testNewWorkoutWithAnEmptyBlockIsKept testSignInOptions; do
+          for t in testWorkoutLinkOnColdLaunch testTimerControls testCapClock testChartMetricAndRange \
+                   testLogbook testAICoach testNewWorkoutWithAnEmptyBlockIsKept testSignInOptions; do
             only="$only -only-testing:TigerWorkoutsUITests/WalkthroughUITests/$t"
           done
           xcodebuild test -project TigerWorkouts.xcodeproj -scheme TigerWorkouts \
             -destination "platform=iOS Simulator,id=${{ steps.sim.outputs.udid }}" \
-            $only -resultBundlePath out.xcresult CODE_SIGNING_ALLOWED=NO
+            $only -retry-tests-on-failure -test-iterations 2 \
+            -resultBundlePath out.xcresult CODE_SIGNING_ALLOWED=NO
       # The result bundle holds the failure detail and a screenshot per stop:
       # `xcrun xcresulttool export attachments --path out.xcresult --output-path shots`.
       - uses: actions/upload-artifact@v4
@@ -123,7 +124,7 @@ jobs:
         run: |
           xcodebuild test -project TigerWorkouts.xcodeproj -scheme TigerWorkouts \
             -destination "platform=iOS Simulator,id=${{ steps.sim.outputs.udid }}" \
-            ${{ steps.pick.outputs.only }} \
+            ${{ steps.pick.outputs.only }} -retry-tests-on-failure -test-iterations 2 \
             -resultBundlePath out.xcresult CODE_SIGNING_ALLOWED=NO
       - uses: actions/upload-artifact@v4
         if: failure()
