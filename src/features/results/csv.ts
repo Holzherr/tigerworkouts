@@ -339,11 +339,39 @@ const dayKey = (iso: string) => {
 /** Two sessions are the same when they share a day and a workout name. */
 export const sameSessionKey = (startedAt: string, title: string) => `${dayKey(startedAt)}|${title.trim().toLowerCase()}`;
 
-/** FNV-1a, base 36: a stable id, so the same session imported on two devices is one row. */
+/** FNV-1a, base 36. */
 const hash = (s: string) => {
   let h = 0x811c9dc5;
   for (let i = 0; i < s.length; i++) h = Math.imul(h ^ s.charCodeAt(i), 0x01000193) >>> 0;
   return h.toString(36);
+};
+
+/**
+ * The id of an imported session: from whose it is and what it is (its day and workout name), so the
+ * same file imported again by the same account is the same rows, and two accounts importing the
+ * same file never share one. Session ids are global on the server: until 15 Nov 2026 the id came
+ * from the day and name alone, and the second account's import was refused. `whose` is the account
+ * id, or the device's tag before sign-in. Sessions imported before then keep the id they have; a
+ * re-import skips them by day and name (`sameSessionKey`), not by id.
+ */
+export const importedSessionId = (whose: string, startedAt: string, title: string) => {
+  const k = sameSessionKey(startedAt, title);
+  return `s-imp-${hash(`${whose}|${k}`)}${hash(`${k}|${whose}`)}`;
+};
+
+const TAG_KEY = 'tiger:import-tag';
+/** A random tag kept on this device, standing in for the account id until someone signs in. */
+export const deviceImportTag = (): string => {
+  const fresh = () => Math.random().toString(36).slice(2, 12).padEnd(10, '0');
+  try {
+    const had = localStorage.getItem(TAG_KEY);
+    if (had) return had;
+    const tag = fresh();
+    localStorage.setItem(TAG_KEY, tag);
+    return tag;
+  } catch {
+    return fresh();
+  }
 };
 
 export interface ImportPlan {
@@ -359,8 +387,10 @@ export interface ImportPlan {
 }
 
 
-/** What importing the file would add, before anything is written. */
-export const planImport = (parsed: ParsedCsv, existing: SessionResult[], library: Record<string, LibraryExercise>, owner?: string): ImportPlan => {
+/** What importing the file would add, before anything is written. `owner` is the signed-in
+ * account's id; `device` this device's tag (`deviceImportTag`), used for the ids until there is one. */
+export const planImport = (parsed: ParsedCsv, existing: SessionResult[], library: Record<string, LibraryExercise>, owner?: string, device = ''): ImportPlan => {
+  const whose = owner ?? device;
   const match = matcher(library);
   const seen = new Set(existing.map(r => sameSessionKey(r.startedAt, r.title ?? r.activity?.name ?? r.runsheetId)));
   const created = new Map<string, LibraryExercise>();
@@ -389,7 +419,7 @@ export const planImport = (parsed: ParsedCsv, existing: SessionResult[], library
     }
     seen.add(k);
     sessions.push({
-      id: `s-imp-${hash(k)}`,
+      id: importedSessionId(whose, s.startedAt, s.title),
       runsheetId: `import:${parsed.format}`,
       title: s.title,
       startedAt: s.startedAt,

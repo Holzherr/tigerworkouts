@@ -4,7 +4,7 @@ import { Button } from '@/shared/components/ui/button';
 import { Sheet } from '@/shared/components/ui/sheet';
 import type { LibraryExercise } from '@/features/exercises/library';
 import type { SessionResult } from '@/features/runsheet/progression';
-import { FORMAT_LABEL, parseWorkoutCsv, planImport, type ImportPlan } from '../csv';
+import { deviceImportTag, FORMAT_LABEL, parseWorkoutCsv, planImport, type ImportPlan } from '../csv';
 import { setsOf } from '../logbook';
 
 const when = (iso: string) => new Date(iso).toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' });
@@ -59,7 +59,7 @@ export interface ImportCsvSheetProps {
   /** What is in History now, to skip what is already there. */
   results: SessionResult[];
   library: Record<string, LibraryExercise>;
-  /** The signed-in account's id, which tags the keys of exercises the import makes. */
+  /** The signed-in account's id, which tags the ids of the sessions and the keys of exercises the import makes. */
   owner?: string;
   onImport: (plan: ImportPlan) => void;
   /** Shows a preview straight away; for stories. */
@@ -79,7 +79,7 @@ export const ImportCsvSheet = ({ open, onOpenChange, results, library, owner, on
     const parsed = parseWorkoutCsv(await f.text());
     if ('error' in parsed) return (setPlan(null), setError(parsed.error));
     setError(null);
-    setPlan(planImport(parsed, results, library, owner));
+    setPlan(planImport(parsed, results, library, owner, deviceImportTag()));
   };
   return (
     <Sheet open={open} onOpenChange={o => (onOpenChange(o), o || reset())} title="Import history" height="88dvh">

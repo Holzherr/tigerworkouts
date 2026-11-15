@@ -4,7 +4,7 @@ import { describe, expect, it } from 'vitest';
 import { FULL_LIBRARY } from '@/features/workouts/imported';
 import type { SessionResult } from '@/features/runsheet/progression';
 import type { LibraryExercise } from '@/features/exercises/library';
-import { customExercise, customKey, matcher, parseCsv, parseDate, parseDuration, parseWorkoutCsv, planImport, toCsv, type ParsedCsv } from './csv';
+import { importedSessionId, customExercise, customKey, matcher, parseCsv, parseDate, parseDuration, parseWorkoutCsv, planImport, toCsv, type ParsedCsv } from './csv';
 
 const fixture = (name: string) => readFileSync(path.join(import.meta.dirname, 'fixtures', name), 'utf8');
 const parsed = (name: string) => {
@@ -126,8 +126,29 @@ describe('Hevy import', () => {
     expect(plan.duplicates.map(d => d.title)).toEqual(['Push Day']);
   });
 
-  it('gives the same session the same id on every import', () => {
-    expect(planImport(hevy, [], FULL_LIBRARY).sessions.map(s => s.id)).toEqual(planImport(hevy, [], FULL_LIBRARY).sessions.map(s => s.id));
+  it('gives the same session the same id on every import by one account', () => {
+    const ids = (owner?: string, device?: string) => planImport(hevy, [], FULL_LIBRARY, owner, device).sessions.map(s => s.id);
+    expect(ids(OWNER)).toEqual(ids(OWNER));
+    expect(new Set(ids(OWNER)).size).toBe(ids(OWNER).length);
+    // Signed out, the device's tag stands in.
+    expect(ids(undefined, 'dev1')).toEqual(ids(undefined, 'dev1'));
+  });
+
+  it('gives two accounts importing one file different ids, so the server takes both', () => {
+    const ids = (owner?: string, device?: string) => planImport(hevy, [], FULL_LIBRARY, owner, device).sessions.map(s => s.id!);
+    const [a, b, guest] = [ids(OWNER), ids('9f8e7d6c-0000-4000-8000-000000000000'), ids(undefined, 'dev1')];
+    for (const id of a) {
+      expect(b).not.toContain(id);
+      expect(guest).not.toContain(id);
+    }
+    expect(importedSessionId('a', local(2026, 9, 26, 9, 0), 'Push Day')).not.toBe(importedSessionId('b', local(2026, 9, 26, 9, 0), 'Push Day'));
+  });
+
+  it('skips sessions an account imported under the older ids, so a re-import does not double them', () => {
+    const before = planImport(hevy, [], FULL_LIBRARY, OWNER).sessions.map((s, i) => ({ ...s, id: `s-imp-old${i}` }));
+    const again = planImport(hevy, before, FULL_LIBRARY, OWNER);
+    expect(again.sessions).toEqual([]);
+    expect(again.duplicates).toHaveLength(before.length);
   });
 
   it('reads distance in km or miles into metres, with the time', () => {
