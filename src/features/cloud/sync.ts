@@ -364,7 +364,9 @@ const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
  */
 export const fetchCreator = async (key: string): Promise<{ profile: CreatorProfile; workouts: Runsheet[] } | null> => {
   const q = sb.from('profiles').select('id,name,handle,bio');
-  const { data: p } = await (UUID.test(key) ? q.eq('id', key) : q.eq('handle', key.toLowerCase())).maybeSingle();
+  const { data: p, error } = await (UUID.test(key) ? q.eq('id', key) : q.eq('handle', key.toLowerCase())).maybeSingle();
+  // No answer from the server is not "no such creator": the page says it could not load.
+  if (error) throw new Error(error.message);
   if (!p) return null;
   const { data: rows } = await sb.from('workouts').select('id,data,creator,title,public,owner').eq('owner', p.id).eq('public', true).order('updated_at', { ascending: false });
   return {

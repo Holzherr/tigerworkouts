@@ -31,6 +31,8 @@ export interface ClientDetailScreenProps {
   onAddNote: (body: string, sessionId?: string) => Promise<string | null>;
   onEnd: () => void;
   onBack: () => void;
+  /** Opens the new-workout editor, for a coach with nothing of their own to send yet. */
+  onNewWorkout?: () => void;
   now?: Date;
 }
 
@@ -42,7 +44,7 @@ const dateLabel = (iso: string) => new Date(iso).toLocaleDateString('en-GB', { w
  * whether it was done, their sessions with each exercise's sets against what the workout set,
  * the notes between you, and End coaching.
  */
-export const ClientDetailScreen = ({ client, me, workouts, assignments, sessions, notes, notice, lookup, exercise, onAssign, onUnassign, onAddNote, onEnd, onBack, now = new Date() }: ClientDetailScreenProps) => {
+export const ClientDetailScreen = ({ client, me, workouts, assignments, sessions, notes, notice, lookup, exercise, onAssign, onUnassign, onAddNote, onEnd, onBack, onNewWorkout, now = new Date() }: ClientDetailScreenProps) => {
   const [pick, setPick] = useState<string | null>(null);
   const [note, setNote] = useState('');
   const [query, setQuery] = useState('');
@@ -87,7 +89,14 @@ export const ClientDetailScreen = ({ client, me, workouts, assignments, sessions
         <section aria-label="Assign a workout" className="space-y-2 rounded-card border border-line bg-surface p-3">
           <div className="text-[14px] font-bold">Send a workout</div>
           {workouts.length === 0 ? (
-            <div className="text-[13px] text-muted">Make a workout of your own first (New workout on Discover), then send it here.</div>
+            <>
+              <div className="text-[13px] text-muted">You send workouts you have made. Make one, then come back here to send it.</div>
+              {onNewWorkout && (
+                <Button block variant="ghost" onClick={onNewWorkout}>
+                  New workout
+                </Button>
+              )}
+            </>
           ) : (
             <>
               {workouts.length > 6 && (

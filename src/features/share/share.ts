@@ -7,6 +7,13 @@ export { decodeShared } from './link';
 
 export const shareUrl = (r: Runsheet, base = location.origin + location.pathname) => shareUrlAt(r, base);
 
+/**
+ * The link Share sends. A catalogue workout and a public one open for anyone by id, so their link
+ * is the short `#/w/<id>`; only a private workout needs the whole thing packed into the link
+ * (a StrongLifts day was 2,871 characters, the longest catalogue workout 15,710).
+ */
+export const linkFor = (r: Runsheet, opensById: boolean, base = location.origin + location.pathname) => (r.id && opensById ? `${base}#/w/${encodeURIComponent(r.id)}` : shareUrl(r, base));
+
 export type ShareOutcome = 'shared' | 'copied' | 'cancelled' | 'failed';
 
 /** Native share sheet when available, clipboard otherwise. Returns what happened for the toast.
