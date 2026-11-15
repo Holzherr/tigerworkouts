@@ -23,7 +23,7 @@ struct UpNextEntry: TimelineEntry {
 /// coming is the week turning over, so the timeline carries one more entry at Monday midnight.
 struct UpNextProvider: TimelineProvider {
     func placeholder(in context: Context) -> UpNextEntry {
-        UpNextEntry(date: Date(), snapshot: UpNextSnapshot(workoutId: "x", title: "Upper body", reason: "Your last workout", detail: "45 min"))
+        UpNextEntry(date: Date(), snapshot: UpNextSnapshot(workoutId: "x", title: "Upper body", reason: "Up next · your usual", detail: "45 min · 4 of your last 5"))
     }
 
     func getSnapshot(in context: Context, completion: @escaping (UpNextEntry) -> Void) {

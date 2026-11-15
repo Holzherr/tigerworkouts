@@ -224,6 +224,40 @@ actor Supabase {
         return session!.user
     }
 
+    /// The worker route that revokes a Sign in with Apple token (`mcp/src/apple.ts`).
+    static let appleRevoke = URL(string: "https://mcp.tigerworkouts.com/apple/revoke")!
+
+    /// Whether the signed-in account has an Apple identity (`app_metadata.providers`, or its
+    /// identities). False when it cannot be read.
+    func signedInWithApple() async -> Bool {
+        guard let token = try? await validAccessToken(), let info = try? await userInfo(accessToken: token) else { return false }
+        return Self.hasAppleIdentity(info)
+    }
+
+    nonisolated static func hasAppleIdentity(_ user: [String: Any]) -> Bool {
+        let meta = user["app_metadata"] as? [String: Any]
+        let providers = (meta?["providers"] as? [String] ?? []) + [meta?["provider"] as? String].compactMap { $0 }
+        let identities = (user["identities"] as? [[String: Any]] ?? []).compactMap { $0["provider"] as? String }
+        return (providers + identities).contains("apple")
+    }
+
+    /// Ends the app's access to the Apple ID before the account is deleted (App Review 5.1.1(v),
+    /// review D15): a fresh authorization code goes to the worker, which swaps it for a refresh
+    /// token and revokes that at Apple. False when it could not be done (the route not configured
+    /// yet, no network); deleting the account goes ahead either way.
+    @discardableResult
+    func revokeApple(code: String) async -> Bool {
+        guard let token = try? await validAccessToken() else { return false }
+        var req = URLRequest(url: Self.appleRevoke)
+        req.httpMethod = "POST"
+        req.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        req.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        req.httpBody = try? JSONSerialization.data(withJSONObject: ["code": code])
+        req.timeoutInterval = 20
+        guard let (_, response) = try? await URLSession.shared.data(for: req) else { return false }
+        return (response as? HTTPURLResponse)?.statusCode == 200
+    }
+
     /// A random string for Apple's request; its SHA-256 goes to Apple, the raw value to Supabase.
     static func randomNonce() -> String { randomVerifier() }
 
@@ -348,15 +382,34 @@ actor Supabase {
         id.addingPercentEncoding(withAllowedCharacters: .alphanumerics.union(CharacterSet(charactersIn: "-_"))) ?? id
     }
 
+    /// A `workouts` row as the server has it: the workout, its `data` as it came (with what this
+    /// app does not model, `Passthrough`), and when the row last changed.
+    struct WorkoutRow: Codable, Hashable, Sendable {
+        var sheet: Runsheet
+        var raw: JSONValue?
+        var updatedAt: String?
+    }
+
+    private static let workoutColumns = "id,data,creator,title,public,updated_at"
+
     /// The account's own workouts, on top of the bundled catalogue.
-    func workouts() async throws -> [Runsheet] {
+    func workouts() async throws -> [WorkoutRow] {
         guard let uid = session?.user.id else { throw SupabaseError(message: "Not signed in") }
-        let (data, _) = try await request("rest/v1/workouts?select=id,data,creator,title,public&owner=eq.\(uid)&order=updated_at.desc")
-        return Self.decodeWorkouts(data)
+        let (data, _) = try await request("rest/v1/workouts?select=\(Self.workoutColumns)&owner=eq.\(uid)&order=updated_at.desc")
+        return Self.decodeWorkoutRows(data)
+    }
+
+    /// One of the account's workouts as the server has it now; nil when it is gone.
+    func workout(id: String) async throws -> WorkoutRow? {
+        guard let uid = session?.user.id else { throw SupabaseError(message: "Not signed in") }
+        let (data, _) = try await request("rest/v1/workouts?select=\(Self.workoutColumns)&id=eq.\(Self.escape(id))&owner=eq.\(uid)")
+        return Self.decodeWorkoutRows(data).first
     }
 
     /// `workouts` rows into runsheets; a row whose `data` is not a runsheet is skipped.
-    static func decodeWorkouts(_ data: Data) -> [Runsheet] {
+    static func decodeWorkouts(_ data: Data) -> [Runsheet] { decodeWorkoutRows(data).map(\.sheet) }
+
+    static func decodeWorkoutRows(_ data: Data) -> [WorkoutRow] {
         guard let rows = try? JSONSerialization.jsonObject(with: data) as? [[String: Any]] else { return [] }
         let decoder = Library.shared.decoder
         return rows.compactMap { row in
@@ -367,7 +420,7 @@ actor Supabase {
             if let creator = row["creator"] as? String { sheet.creator = creator }
             // The column decides who can see it; `data` may predate the flag.
             sheet.isPublic = row["public"] as? Bool
-            return sheet
+            return WorkoutRow(sheet: sheet, raw: try? JSONDecoder().decode(JSONValue.self, from: body), updatedAt: row["updated_at"] as? String)
         }
     }
 
@@ -383,11 +436,45 @@ actor Supabase {
         )
     }
 
+    /// Writes a workout only while the server's row is as this phone last saw it (`since`, the
+    /// row's `updated_at` from the last pull). Returns the row's new `updated_at`; nil when the
+    /// row has changed or gone since, and nothing was written. A phone that had not synced once
+    /// put its old copy over a newer edit made from Claude or the web (review D14).
+    func saveWorkout(_ r: Runsheet, sendPublic: Bool, ifUnchangedSince since: String, raw: JSONValue?) async throws -> String? {
+        guard let uid = session?.user.id else { throw SupabaseError(message: "Not signed in") }
+        guard let id = r.id else { throw SupabaseError(message: "Workout has no id") }
+        var row = try Self.workoutRow(r, owner: uid, sendPublic: sendPublic, raw: raw)
+        row["id"] = nil
+        row["owner"] = nil
+        let (data, _) = try await request(
+            "rest/v1/workouts?id=eq.\(Self.escape(id))&owner=eq.\(uid)&updated_at=eq.\(Self.escapeStamp(since))&select=updated_at",
+            method: "PATCH",
+            body: row,
+            headers: ["Prefer": "return=representation"]
+        )
+        return Self.updatedStamp(data)
+    }
+
+    /// A timestamp as a filter value: its `+` and `:` must not read as a space or a separator.
+    static func escapeStamp(_ stamp: String) -> String {
+        stamp.addingPercentEncoding(withAllowedCharacters: .alphanumerics.union(CharacterSet(charactersIn: "-_."))) ?? stamp
+    }
+
+    /// The `updated_at` of the one row a conditional write returned; nil when it matched none.
+    static func updatedStamp(_ data: Data) -> String? {
+        ((try? JSONSerialization.jsonObject(with: data)) as? [[String: Any]])?.first?["updated_at"] as? String
+    }
+
     /// The `workouts` row for an upsert. `public` goes only when this phone set it: an upsert
     /// updates the columns it is sent, so leaving it out keeps what the server has (a new row
     /// starts private). The copy inside `data` goes with it, since both apps read the column first.
-    static func workoutRow(_ r: Runsheet, owner: String, sendPublic: Bool) throws -> [String: Any] {
+    ///
+    /// `raw` is the row's `data` as last pulled: what this app does not model in it (an import's
+    /// credit handle and review state, a field a newer web app added) is put back, so an edit on
+    /// the phone does not drop it (`Passthrough`, review D14).
+    static func workoutRow(_ r: Runsheet, owner: String, sendPublic: Bool, raw: JSONValue? = nil) throws -> [String: Any] {
         var data = try JSONSerialization.jsonObject(with: JSONEncoder().encode(r)) as? [String: Any] ?? [:]
+        if let raw { data = Passthrough.carried(from: raw, into: data) }
         var row: [String: Any] = [
             "id": r.id ?? r.key,
             "owner": owner,

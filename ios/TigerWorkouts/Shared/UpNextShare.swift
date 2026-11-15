@@ -8,9 +8,9 @@ struct UpNextSnapshot: Codable, Hashable {
     /// Nil with no history: the widget then says "Pick a workout" rather than guessing.
     var workoutId: String?
     var title: String?
-    /// "Next in StrongLifts 5×5", "Your last workout".
+    /// "Up next · your usual", "Up next", "New · made for you".
     var reason: String?
-    /// "45 min · Day B".
+    /// "45 min · 4 of your last 5".
     var detail: String?
     /// When each session of the last few weeks started.
     var sessions: [Date] = []

@@ -218,4 +218,131 @@ struct SyncTests {
         #expect(merged.map(\.rowId) == ["d", "c", "a"])
         #expect(merged.last?.notes == "phone")
     }
+
+    // MARK: - Review D14: what this app does not model survives an edit here
+
+    /// An Instagram import as the MCP stores it (specs/creator-imports.md, instagram-bot.md).
+    private var imported: [String: Any] {
+        [
+            "id": "u-ig", "title": "Glutes", "creator": "Sam Fit", "later": ["a": 1],
+            "source": ["title": "Glutes", "url": "https://www.instagram.com/reel/x/", "author": "Sam Fit", "kind": "social",
+                       "handle": "samfit", "platform": "instagram", "review": "pending"],
+            "items": [[
+                "kind": "block", "id": "b1", "name": "Block 1", "repeat": 3, "pinned": true,
+                "steps": [["kind": "exercise", "id": "e1", "exercise": ["key": "kb_swing", "name": "Kettlebell swings", "unit": "kg", "step": 4, "cue": "hips"],
+                           "target": 16, "forMode": "reps", "forValue": 10, "tempo": "2-0-1"]],
+            ]],
+        ]
+    }
+
+    @Test("editing an import on the phone keeps its credit link and its place in the approval queue")
+    func importKeepsCredit() throws {
+        let raw = try JSONDecoder().decode(JSONValue.self, from: json(imported))
+        var sheet = try JSONDecoder().decode(Runsheet.self, from: json(imported))
+        sheet = Edit.updateStep(sheet, id: "e1") { $0.target = 20 }
+        sheet.title = "Glutes, heavier"
+        let data = try #require(Supabase.workoutRow(sheet, owner: "u", sendPublic: false, raw: raw)["data"] as? [String: Any])
+        let source = try #require(data["source"] as? [String: Any])
+        #expect(source["handle"] as? String == "samfit" && source["platform"] as? String == "instagram")
+        #expect(source["review"] as? String == "pending" && source["kind"] as? String == "social")
+        #expect(source["url"] as? String == "https://www.instagram.com/reel/x/")
+        // The edit itself, and fields no version of this app knows, at every depth.
+        #expect(data["title"] as? String == "Glutes, heavier")
+        #expect((data["later"] as? [String: Any])?["a"] as? Double == 1)
+        let block = try #require((data["items"] as? [[String: Any]])?.first)
+        #expect(block["pinned"] as? Bool == true)
+        let step = try #require((block["steps"] as? [[String: Any]])?.first)
+        #expect(step["target"] as? Double == 20 && step["tempo"] as? String == "2-0-1")
+        #expect((step["exercise"] as? [String: Any])?["cue"] as? String == "hips")
+        // Without the pulled copy, as before: only what the model holds.
+        let bare = try #require(Supabase.workoutRow(sheet, owner: "u", sendPublic: false)["data"] as? [String: Any])
+        #expect((bare["source"] as? [String: Any])?["handle"] == nil)
+    }
+
+    @Test("a field removed here stays removed, and a step given another exercise takes nothing from the old one")
+    func removedStaysRemoved() throws {
+        let raw = try JSONDecoder().decode(JSONValue.self, from: json(imported))
+        var sheet = try JSONDecoder().decode(Runsheet.self, from: json(imported))
+        sheet.source?.url = nil
+        sheet = Edit.updateStep(sheet, id: "e1") {
+            $0.target = nil
+            $0.exercise = ExerciseRef(key: "db_row", name: "Dumbbell row", unit: "kg per arm", step: 2.5)
+        }
+        // A block added here has nothing to carry.
+        sheet.items.append(.block(Block(id: "b-new", name: "Block 2", steps: [])))
+        let data = try #require(Supabase.workoutRow(sheet, owner: "u", sendPublic: false, raw: raw)["data"] as? [String: Any])
+        #expect((data["source"] as? [String: Any])?["url"] == nil)
+        let items = try #require(data["items"] as? [[String: Any]])
+        let step = try #require((items[0]["steps"] as? [[String: Any]])?.first)
+        #expect(step["target"] == nil && step["tempo"] as? String == "2-0-1")
+        #expect((step["exercise"] as? [String: Any])?["key"] as? String == "db_row")
+        #expect((step["exercise"] as? [String: Any])?["cue"] == nil)
+        #expect(items[1]["pinned"] == nil)
+    }
+
+    // MARK: - Review D14: a stale phone copy against a newer edit
+
+    private func block(_ id: String, _ load: Double) -> Item {
+        .block(Block(id: id, name: id, repeatCount: 3, steps: [Fixtures.work("\(id)-s", Fixtures.swing, target: load, forMode: .reps, forValue: 10)]))
+    }
+
+    @Test("merging a phone edit with a newer server copy keeps what each side alone changed")
+    func mergeKeepsBoth() {
+        let base = Runsheet(id: "u-1", title: "Legs", items: [block("a", 16), block("b", 20)])
+        // Claude raised block b and added block c; the phone, not synced, renamed it and raised a.
+        var remote = base
+        remote.items = [block("a", 16), block("b", 24), block("c", 12)]
+        var local = base
+        local.title = "Legs day"
+        local.items = [block("a", 20), block("b", 20)]
+        let merged = WorkoutMerge.merge(base: base, local: local, remote: remote, localNewer: true)
+        #expect(merged.title == "Legs day")
+        #expect(merged.items == [block("a", 20), block("b", 24), block("c", 12)])
+        // The same whichever is newer: nothing was changed on both sides.
+        #expect(WorkoutMerge.merge(base: base, local: local, remote: remote, localNewer: false) == merged)
+    }
+
+    @Test("where both changed the same thing the newer edit wins; a removal stands unless the item was changed")
+    func mergeNewerWins() {
+        let base = Runsheet(id: "u-1", title: "Legs", items: [block("a", 16), block("b", 20)])
+        var remote = base
+        remote.title = "Legs (coach)"
+        remote.items = [block("a", 18)]
+        var local = base
+        local.title = "Legs day"
+        local.items = [block("a", 20), block("b", 22)]
+        let phone = WorkoutMerge.merge(base: base, local: local, remote: remote, localNewer: true)
+        #expect(phone.title == "Legs day" && phone.items == [block("a", 20), block("b", 22)])
+        let server = WorkoutMerge.merge(base: base, local: local, remote: remote, localNewer: false)
+        // Block b was removed on the server and changed here: the change keeps it.
+        #expect(server.title == "Legs (coach)" && server.items == [block("a", 18), block("b", 22)])
+        // Removed on the server, untouched here: gone.
+        var untouched = base
+        untouched.title = "Legs day"
+        #expect(WorkoutMerge.merge(base: base, local: untouched, remote: remote, localNewer: true).items == [block("a", 18)])
+        // Never pulled: the newer side whole.
+        #expect(WorkoutMerge.merge(base: nil, local: local, remote: remote, localNewer: false) == remote)
+        #expect(WorkoutMerge.merge(base: nil, local: local, remote: remote, localNewer: true) == local)
+    }
+
+    @Test("the conditional write names the row's updated_at exactly, and reads back the new one")
+    func conditionalWrite() {
+        #expect(Supabase.escapeStamp("2026-11-15T23:09:34.123456+00:00") == "2026-11-15T23%3A09%3A34.123456%2B00%3A00")
+        #expect(Supabase.updatedStamp(json2([["updated_at": "2026-11-16T08:00:00+00:00"]])) == "2026-11-16T08:00:00+00:00")
+        #expect(Supabase.updatedStamp(json2([])) == nil)
+        let rows = Supabase.decodeWorkoutRows(json2([["id": "u-ig", "creator": "Sam Fit", "title": "Glutes", "public": false, "updated_at": "2026-11-15T23:09:34.123456+00:00", "data": imported]]))
+        #expect(rows.first?.updatedAt == "2026-11-15T23:09:34.123456+00:00")
+        #expect(rows.first?.sheet.title == "Glutes" && rows.first?.raw != nil)
+    }
+
+    @Test("an account made with Sign in with Apple is told from its user record")
+    func appleIdentity() {
+        #expect(Supabase.hasAppleIdentity(["app_metadata": ["provider": "apple", "providers": ["apple"]]]))
+        #expect(Supabase.hasAppleIdentity(["app_metadata": ["provider": "email", "providers": ["email", "apple"]]]))
+        #expect(Supabase.hasAppleIdentity(["identities": [["provider": "apple"]]]))
+        #expect(!Supabase.hasAppleIdentity(["app_metadata": ["provider": "email", "providers": ["email", "google"]]]))
+        #expect(!Supabase.hasAppleIdentity([:]))
+    }
+
+    private func json2(_ object: [Any]) -> Data { try! JSONSerialization.data(withJSONObject: object) }
 }

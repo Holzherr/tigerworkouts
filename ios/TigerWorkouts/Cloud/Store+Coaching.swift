@@ -101,6 +101,8 @@ extension Store {
         guard s != coaching else { return }
         coaching = s
         writeCoachingCache()
+        // What a coach sent leads Up next: the widget follows.
+        shareUpNext()
     }
 
     // MARK: - Cache

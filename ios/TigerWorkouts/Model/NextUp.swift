@@ -1,8 +1,9 @@
 import Foundation
 
-/// What to do next, from what was done last: the following day of the program the last session
-/// belonged to, or else that same workout again. Ported from `src/features/discover/next-up.ts`.
-/// Nothing without history, so the first run stays the catalogue.
+/// What to do next. `pick` is the rule for the Up next card on Workouts and the widget; `find` is
+/// the older one (the following day of the program the last session belonged to, or else that same
+/// workout again). Ported from `src/features/discover/next-up.ts`. Nothing without history, so the
+/// first run stays the catalogue.
 struct NextUp: Hashable {
     var runsheet: Runsheet
     /// "Next in StrongLifts 5×5" or "Your last workout".
@@ -23,6 +24,54 @@ struct NextUp: Hashable {
             }
         }
         return NextUp(runsheet: last, reason: "Your last workout", lastAt: latest.startedDate)
+    }
+
+    // MARK: - The Up next card
+
+    /// The one card to do next, and why it was picked. `UpNextPick` in next-up.ts.
+    struct Pick: Hashable {
+        /// `new`: yours and not done yet. `usual`: the one started most lately. `oldest`: done longest ago.
+        enum Why: String { case new, usual, oldest }
+        var id: String
+        var why: Why
+        /// For `usual`: this workout was `count` of the last `of` sessions.
+        var count: Int?
+        var of: Int?
+    }
+
+    /// How far back "started most" counts, and how lately done rules a workout out.
+    static let usualDays = 28.0
+    static let justDoneHours = 20.0
+
+    /// Up next (Nick, review D2, 15 Nov 2026): a workout of yours not done yet comes first.
+    /// Otherwise the workout started most in the last 28 days, at least twice, unless it was done
+    /// in the last 20 hours, then the next most started. Done longest ago is only the fallback. A
+    /// copy counts its original's sessions. Nil when nothing qualifies. The port of `pickUpNext`
+    /// in next-up.ts; the Workouts tab and the home-screen widget both use it.
+    static func pick(_ list: [Runsheet], own: Set<String>, results: [SessionResult], now: Date = Date()) -> Pick? {
+        let rows = list.map { r -> (r: Runsheet, last: Date?, lately: Int) in
+            let at = results.filter(r.owns).map(\.startedDate)
+            return (r, at.max(), at.filter { $0 >= now.addingTimeInterval(-usualDays * 86_400) }.count)
+        }
+        if let fresh = rows.first(where: { own.contains($0.r.key) && $0.last == nil }) { return Pick(id: fresh.r.key, why: .new) }
+        let justDone = now.addingTimeInterval(-justDoneHours * 3_600)
+        // Most started first; between equals the one done longer ago, which keeps a rotation even.
+        let usual = rows.filter { $0.lately >= 2 && ($0.last ?? now) < justDone }
+            .min { a, b in a.lately != b.lately ? a.lately > b.lately : (a.last ?? now) < (b.last ?? now) }
+        if let usual {
+            let lastFive = results.filter { $0.activity == nil }.sorted { $0.startedAt > $1.startedAt }.prefix(5)
+            return Pick(id: usual.r.key, why: .usual, count: lastFive.filter(usual.r.owns).count, of: lastFive.count)
+        }
+        return rows.compactMap { x in x.last.map { (x.r.key, $0) } }.min { $0.1 < $1.1 }.map { Pick(id: $0.0, why: .oldest) }
+    }
+
+    /// The label over the Up next card.
+    static func badge(_ pick: Pick?) -> String { pick?.why == .usual ? "Up next · your usual" : "Up next" }
+
+    /// "4 of your last 5" for the meta line, where the usual one was at least two of them.
+    static func usualLine(_ pick: Pick?) -> String? {
+        guard let pick, pick.why == .usual, let count = pick.count, let of = pick.of, count >= 2 else { return nil }
+        return "\(count) of your last \(of)"
     }
 
     /// The workout a copy was made from, or the workout itself.

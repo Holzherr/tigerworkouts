@@ -78,18 +78,9 @@ struct HomeTests {
         #expect(Home.badge(r) == "New")
     }
 
-    @Test("Up next is the first new one, else the one done longest ago")
-    func upNext() {
-        let list = [w("u-new"), w("a"), w("b")]
-        let last = Home.lastDone([did("a", day: 16), did("b", day: 2)])
-        #expect(Home.upNext(list, own: ["u-new", "a"], last: last) == "u-new")
-        #expect(Home.upNext(Array(list.dropFirst()), own: ["a"], last: last) == "b")
-        #expect(Home.upNext([w("c")], own: [], last: last) == nil)
-    }
-
     private func lead(_ own: [Runsheet], _ results: [SessionResult]) -> (next: String?, keys: [String]) {
         let list = Home.mine(own: own, all: [], saved: [], results: results)
-        let next = Home.upNext(list, own: Set(own.map(\.key)), last: Home.lastDone(results))
+        let next = NextUp.pick(list, own: Set(own.map(\.key)), results: results, now: ISO8601.date("2026-10-27T12:00:00Z")!)?.id
         return (next, Home.upNextFirst(list) { $0.key == next }.map(\.key))
     }
 

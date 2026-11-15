@@ -117,30 +117,45 @@ struct UpNextWidgetTests {
         return [a, b]
     }
 
-    @Test("carries the Up next pick and a link that starts it")
+    @Test("carries the same pick as the Up next card, and a link that starts it")
     func pick() {
         let now = ISO8601DateFormatter().date(from: "2026-09-24T12:00:00Z")!
-        let snap = Store.upNextSnapshot(all: all, results: [did("a", "2026-09-23T10:00:00Z")], now: now)
-        #expect(snap.workoutId == "b")
-        #expect(snap.reason == "Next in P")
-        #expect(snap.url.absoluteString == "tigerworkouts://do/b")
-        #expect(UpNextSnapshot.workoutId(fromStart: snap.url) == "b")
+        // Day A twice this month, day B once: A is the usual one, and it leads Mine too.
+        let results = [did("a", "2026-09-20T10:00:00Z"), did("a", "2026-09-16T10:00:00Z"), did("b", "2026-09-22T10:00:00Z")]
+        let snap = Store.upNextSnapshot(own: all, all: all, results: results, now: now)
+        let mine = Home.mine(own: all, all: all, saved: [], results: results)
+        #expect(snap.workoutId == NextUp.pick(mine, own: ["a", "b"], results: results, now: now)?.id)
+        #expect(snap.workoutId == "a")
+        #expect(snap.reason == "Up next · your usual")
+        #expect(snap.detail?.hasSuffix(" min · 2 of your last 3") == true)
+        #expect(snap.url.absoluteString == "tigerworkouts://do/a")
+        #expect(UpNextSnapshot.workoutId(fromStart: snap.url) == "a")
         var odd = snap
         odd.workoutId = "u-1 my/day"
         #expect(UpNextSnapshot.workoutId(fromStart: odd.url) == "u-1 my/day")
+        // A workout of yours not done yet comes first; what a coach sent comes before that.
+        let fresh = Runsheet(id: "u-new", title: "New one")
+        #expect(Store.upNextSnapshot(own: all + [fresh], all: all, results: results, now: now).reason == "New")
+        let sent = Runsheet(id: "c-1", title: "From coach")
+        let coached = Store.upNextSnapshot(own: all + [fresh], all: all, coach: [(sheet: sent, done: false)], results: results, now: now)
+        #expect(coached.workoutId == "c-1" && coached.reason == "New · made for you")
+        #expect(Store.upNextSnapshot(own: all + [fresh], all: all, coach: [(sheet: sent, done: true)], results: results, now: now).workoutId == "u-new")
+        // Saved from the catalogue, done once long ago: the fallback, plain "Up next".
+        let old = Store.upNextSnapshot(own: [], all: all, saved: ["b"], results: [did("b", "2026-08-01T10:00:00Z")], now: now)
+        #expect(old.workoutId == "b" && old.reason == "Up next")
     }
 
     @Test("counts this week at draw time, so Monday starts from nothing")
     func week() {
         let results = [did("a", "2026-09-21T10:00:00Z"), did("b", "2026-09-23T10:00:00Z"), did("a", "2026-09-17T10:00:00Z")]
-        let snap = Store.upNextSnapshot(all: all, results: results, now: ISO8601DateFormatter().date(from: "2026-09-24T12:00:00Z")!)
+        let snap = Store.upNextSnapshot(own: all, all: all, results: results, now: ISO8601DateFormatter().date(from: "2026-09-24T12:00:00Z")!)
         #expect(snap.thisWeek(now: ISO8601DateFormatter().date(from: "2026-09-24T12:00:00Z")!) == 2)
         #expect(snap.thisWeek(now: ISO8601DateFormatter().date(from: "2026-09-28T09:00:00Z")!) == 0)
     }
 
     @Test("with no history it picks nothing, and opens the app")
     func empty() {
-        let snap = Store.upNextSnapshot(all: all, results: [])
+        let snap = Store.upNextSnapshot(own: [], all: all, results: [])
         #expect(snap.workoutId == nil)
         #expect(snap.url.absoluteString == "tigerworkouts://")
     }

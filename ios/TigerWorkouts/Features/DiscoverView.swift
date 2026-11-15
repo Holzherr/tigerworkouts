@@ -167,29 +167,33 @@ struct DiscoverView: View {
         } else {
             // One card to do next: what a coach sent and is not done, else Mine's own pick.
             let coachNext = assigned.first { !Coaching.isDone($0.0, results: store.results) }?.0.id
-            let next = coachNext == nil ? Home.upNext(sheets, own: own, last: last) : nil
+            let pick = coachNext == nil ? NextUp.pick(sheets, own: own, results: store.results) : nil
+            let next = pick?.id
             // Up next leads: Mine's above what a coach sent (all done then), a coach's atop theirs.
             let ordered = Home.upNextFirst(sheets) { $0.key == next }
             let lead = ordered.first.map { $0.key == next } == true ? 1 : 0
-            ForEach(Array(ordered.prefix(lead)), id: \.key) { mineRow($0, own: own, last: last, next: next) }
+            ForEach(Array(ordered.prefix(lead)), id: \.key) { mineRow($0, own: own, last: last, pick: pick) }
             ForEach(Home.upNextFirst(assigned) { $0.0.id == coachNext }, id: \.0.id) { pair in
                 let (a, sheet) = pair
                 let coach = Coaching.name(for: a, in: store.coaching)
                 let done = Coaching.isDone(a, results: store.results)
                 let note = a.note?.trimmingCharacters(in: .whitespacesAndNewlines)
-                row(sheet, meta: "\(sheet.minutes) min · from \(coach)\(done ? " · done" : "")", tint: Brand.coralInk, from: .coach, play: true,
+                row(sheet, meta: "\(sheet.minutes) min · from \(coach)\(done ? " · done" : "")", tint: Brand.coralInk, from: a.id == coachNext ? .upNext : .coach, play: true,
                     card: Card(badge: done ? nil : "New · made for you", why: done ? nil : (note?.isEmpty == false ? note : Home.why(sheet)), contents: Home.contents(sheet), upNext: a.id == coachNext))
             }
-            ForEach(Array(ordered.dropFirst(lead)), id: \.key) { mineRow($0, own: own, last: last, next: next) }
+            ForEach(Array(ordered.dropFirst(lead)), id: \.key) { mineRow($0, own: own, last: last, pick: pick) }
         }
     }
 
-    /// A Mine card: its play and its page both record `Home.origin`, so Up next reads apart.
-    private func mineRow(_ sheet: Runsheet, own: Set<String>, last: [String: Date], next: String?) -> some View {
+    /// A Mine card: its play and its page both record `Home.origin`, so Up next reads apart. A
+    /// coach's card that is Up next records `up_next` too (review D2).
+    private func mineRow(_ sheet: Runsheet, own: Set<String>, last: [String: Date], pick: NextUp.Pick?) -> some View {
         let done = Home.lastDone(of: sheet, in: last)
         let fresh = own.contains(sheet.key) && done == nil
-        return row(sheet, meta: Home.line(minutes: sheet.minutes, level: sheet.level, lastDone: done), from: Home.origin(of: sheet, own: own, next: next),
-                   play: true, card: Card(badge: fresh ? Home.badge(sheet) : nil, why: fresh ? Home.why(sheet) : nil, contents: Home.contents(sheet), upNext: sheet.key == next))
+        let next = sheet.key == pick?.id
+        let meta = [Home.line(minutes: sheet.minutes, level: sheet.level, lastDone: done), next ? NextUp.usualLine(pick) : nil].compactMap { $0 }.joined(separator: " · ")
+        return row(sheet, meta: meta, from: Home.origin(of: sheet, own: own, next: pick?.id),
+                   play: true, card: Card(badge: fresh ? Home.badge(sheet) : nil, why: fresh ? Home.why(sheet) : nil, contents: Home.contents(sheet), upNext: next, upNextLabel: NextUp.badge(pick)))
     }
 
     // MARK: - Discover
@@ -270,6 +274,8 @@ struct DiscoverView: View {
         var why: String?
         var contents: String?
         var upNext = false
+        /// "Up next · your usual" on the one started most.
+        var upNextLabel = "Up next"
     }
 
     /// One workout as a card: its name and one meta line open its page; with `play`, a coral play
@@ -284,7 +290,7 @@ struct DiscoverView: View {
                         if card.badge != nil || card.upNext {
                             // Drawn above the title, read after it: the card is named by its title.
                             HStack(spacing: 6) {
-                                if card.upNext { Text("Up next").foregroundStyle(Brand.coralInk) }
+                                if card.upNext { Text(card.upNextLabel).foregroundStyle(Brand.coralInk) }
                                 if let badge = card.badge {
                                     Text(badge)
                                         .padding(.horizontal, 8).padding(.vertical, 1)

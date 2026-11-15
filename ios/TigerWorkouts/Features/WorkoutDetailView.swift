@@ -444,7 +444,10 @@ struct WorkoutDetailView: View {
     /// Saves itself a moment after the last change. A catalogue workout is never written over: its
     /// first edit silently makes it yours, as a copy, and this screen carries on with the copy.
     private func commit(_ next: Runsheet) {
+        // A load changed here runs as written, whatever last session's was (review D4).
+        let written = Written.changed(from: runsheet, to: next)
         guard !editable else {
+            store.markWritten(next.key, steps: written)
             runsheet = next
             if let id = editing?.id { editing = find(id) }
             scheduleSave()
@@ -454,6 +457,7 @@ struct WorkoutDetailView: View {
         // The copy keeps its step ids; an open sheet follows its step across either way.
         let renamed = Dictionary(zip(Edit.ids(next), Edit.ids(copy)), uniquingKeysWith: { a, _ in a })
         let wasSaved = saved
+        store.markWritten(copy.key, steps: written.compactMap { renamed[$0] })
         runsheet = copy
         if let id = editing?.id { editing = renamed[id].flatMap(find) }
         store.stage(copy)

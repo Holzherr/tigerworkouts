@@ -77,13 +77,6 @@ enum Home {
     /// The badge on a workout of yours not done yet.
     static func badge(_ r: Runsheet) -> String { madeForYou(r) ? "New · made for you" : "New" }
 
-    /// The one card Mine accents as Up next: the first of your own not yet done, else the one done
-    /// longest ago, which keeps the rotation even.
-    static func upNext(_ list: [Runsheet], own: Set<String>, last: [String: Date]) -> String? {
-        if let fresh = list.first(where: { own.contains($0.key) && lastDone(of: $0, in: last) == nil }) { return fresh.key }
-        return list.compactMap { r in lastDone(of: r, in: last).map { (r.key, $0) } }.min { $0.1 < $1.1 }?.0
-    }
-
     /// The Up next card first, the rest in their order (Nick, 27 Oct 2026). `upNextFirst` in mine.ts.
     static func upNextFirst<T>(_ list: [T], isNext: (T) -> Bool) -> [T] {
         guard let i = list.firstIndex(where: isNext) else { return list }

@@ -107,15 +107,19 @@ struct LastUsedTests {
         #expect(seeded.exerciseSteps.first { $0.id == "pr" }?.target == 24)
     }
 
-    @Test("the newest session wins, and the exercise key carries between workouts")
+    @Test("the newest session wins; a load written here is not replaced from another workout")
     func newestWins() {
         let history = [
-            SessionResult(runsheetId: "x", title: "X", startedAt: "2026-09-16T17:00:00.000Z",
-                          steps: [StepResult(stepId: "other", exerciseKey: "kb_swing", target: 36, incline: nil, reps: nil, success: true)]),
-            SessionResult(runsheetId: "x", title: "X", startedAt: "2026-09-01T17:00:00.000Z",
-                          steps: [StepResult(stepId: "other", exerciseKey: "kb_swing", target: 20, incline: nil, reps: nil, success: true)]),
+            SessionResult(runsheetId: "i", title: "Interval", startedAt: "2026-09-16T17:00:00.000Z",
+                          steps: [StepResult(stepId: "sw", exerciseKey: "kb_swing", target: 36, incline: nil, reps: nil, success: true)]),
+            SessionResult(runsheetId: "i", title: "Interval", startedAt: "2026-09-01T17:00:00.000Z",
+                          steps: [StepResult(stepId: "sw", exerciseKey: "kb_swing", target: 20, incline: nil, reps: nil, success: true)]),
         ]
-        let seeded = Settings.withLastUsed(Fixtures.interval(), results: history)
+        let seeded = Settings.withLastUsed(Fixtures.interval(), results: history, written: [:])
         #expect(seeded.exerciseSteps.first { $0.id == "sw" }?.target == 36)
+        // The same swings done in another workout (review D4): what is written here runs.
+        let elsewhere = history.map { r in var r = r; r.runsheetId = "x"; r.steps[0].stepId = "other"; return r }
+        let written = Fixtures.interval().exerciseSteps.first { $0.id == "sw" }?.target
+        #expect(Settings.withLastUsed(Fixtures.interval(), results: elsewhere, written: [:]).exerciseSteps.first { $0.id == "sw" }?.target == written)
     }
 }

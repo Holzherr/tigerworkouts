@@ -1,3 +1,4 @@
+import AuthenticationServices
 import SwiftUI
 
 /// The Me tab as a profile: who you are and whether you are signed in, your numbers, the streak
@@ -376,6 +377,17 @@ struct SettingsView: View {
 
     private func deleteAccount(clearPhone: Bool) {
         Task {
+            // An account made with Sign in with Apple: Apple is asked once more, and the code it
+            // gives revokes the app's token before the account goes (review D15). Cancelling the
+            // Apple sheet cancels the delete; any other failure does not stand in its way.
+            if SignInView.offersApple, await Supabase.shared.signedInWithApple() {
+                do {
+                    let code = try await AppleReauth().code()
+                    await Supabase.shared.revokeApple(code: code)
+                } catch let e as ASAuthorizationError where e.code == .canceled {
+                    return
+                } catch {}
+            }
             do {
                 let all = try await store.deleteAccount(clearPhone: clearPhone)
                 deleteMessage = all
@@ -407,5 +419,40 @@ struct SettingsView: View {
                 healthError = error.localizedDescription
             }
         }
+    }
+}
+
+/// Sign in with Apple, asked again for its authorization code alone: what revoking the app's
+/// token at account deletion needs (`Supabase.revokeApple`).
+@MainActor
+final class AppleReauth: NSObject, ASAuthorizationControllerDelegate, ASAuthorizationControllerPresentationContextProviding {
+    private var waiting: CheckedContinuation<String, any Error>?
+
+    struct NoCode: Error {}
+
+    func code() async throws -> String {
+        try await withCheckedThrowingContinuation { continuation in
+            waiting = continuation
+            let controller = ASAuthorizationController(authorizationRequests: [ASAuthorizationAppleIDProvider().createRequest()])
+            controller.delegate = self
+            controller.presentationContextProvider = self
+            controller.performRequests()
+        }
+    }
+
+    func authorizationController(controller: ASAuthorizationController, didCompleteWithAuthorization authorization: ASAuthorization) {
+        let code = (authorization.credential as? ASAuthorizationAppleIDCredential)?.authorizationCode.flatMap { String(data: $0, encoding: .utf8) }
+        waiting?.resume(with: code.map { .success($0) } ?? .failure(NoCode()))
+        waiting = nil
+    }
+
+    func authorizationController(controller: ASAuthorizationController, didCompleteWithError error: any Error) {
+        waiting?.resume(throwing: error)
+        waiting = nil
+    }
+
+    func presentationAnchor(for controller: ASAuthorizationController) -> ASPresentationAnchor {
+        let scenes = UIApplication.shared.connectedScenes.compactMap { $0 as? UIWindowScene }
+        return scenes.flatMap(\.windows).first(where: \.isKeyWindow) ?? ASPresentationAnchor()
     }
 }

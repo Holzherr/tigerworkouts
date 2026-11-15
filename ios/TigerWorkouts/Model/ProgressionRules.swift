@@ -101,13 +101,15 @@ enum ProgressionRules {
 
     /// The workout loaded as its rules say, from the latest session that did each ruled exercise
     /// (in any workout, so day A's squat carries into day B). Loads from a training max or
-    /// bodyweight are left to those.
-    static func progressed(_ r: Runsheet, results: [SessionResult], kit: Equipment?) -> Runsheet {
+    /// bodyweight are left to those, and so is a load written after the step's last session
+    /// (`Written.wins`).
+    static func progressed(_ r: Runsheet, results: [SessionResult], kit: Equipment?, written: Written.Edits = Written.current()) -> Runsheet {
         guard !results.isEmpty else { return r }
         let newest = results.sorted { $0.startedAt > $1.startedAt }
         var memo: [String: Double?] = [:]
         func load(_ e: ExerciseStep, rule: Progression?) -> ExerciseStep {
-            guard let rule, e.target != nil, e.targetPct == nil, e.loadFactor == nil else { return e }
+            guard let rule, e.target != nil, e.targetPct == nil, e.loadFactor == nil,
+                  !Written.wins(e, in: r, results: results, edits: written) else { return e }
             let key = e.exercise.key
             if memo[key] == nil {
                 memo[key] = newest.lazy
