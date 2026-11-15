@@ -22,7 +22,7 @@ const COACH_STEPS: { icon: React.ReactNode; title: string; body: string }[] = [
 
 const CLIENT_STEPS = [
   ['Accept', 'the invite link from your coach (a free account, no password).'],
-  ['Find', 'the workout under From your coach, top of Discover.'],
+  ['Find', 'the workout at the top of Mine, marked New · made for you.'],
   ['Run it', 'with the timer on your iPhone or in the browser. It logs itself.'],
 ];
 

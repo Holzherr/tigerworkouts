@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Button } from '@/shared/components/ui/button';
 import { cn } from '@/shared/utils/ui-utils';
+import { signInMessage } from '../errors';
 
 export interface SignInCardProps {
   /** Send a 6-digit code to the address; reject to show the error. */
@@ -44,7 +45,7 @@ export const SignInCard = ({ onSendCode, onVerify, onGoogle, pendingEmail, title
       setPhase('code');
       setNotice(null);
     } catch (err) {
-      setError((err as Error).message || 'Could not send the code');
+      setError(signInMessage(err, 'send'));
       setPhase('email');
     }
   };
@@ -57,7 +58,7 @@ export const SignInCard = ({ onSendCode, onVerify, onGoogle, pendingEmail, title
     try {
       await onVerify(email.trim(), c);
     } catch (err) {
-      setError((err as Error).message || 'That code did not work');
+      setError(signInMessage(err, 'verify'));
       setPhase('code');
     }
   };
@@ -73,7 +74,7 @@ export const SignInCard = ({ onSendCode, onVerify, onGoogle, pendingEmail, title
         <Button type="submit" block className="mt-2" disabled={phase === 'verifying'}>
           {phase === 'verifying' ? 'Signing in…' : 'Sign in'}
         </Button>
-        {error && <div className="mt-2 text-[13px] text-danger">{error}</div>}
+        {error && <div role="alert" className="mt-2 text-[13px] text-danger">{error}</div>}
         {notice && <div className="mt-2 text-[13px] text-muted">{notice}</div>}
         <div className="mt-3 flex justify-between text-[13px]">
           <button type="button" className="text-muted" onClick={() => (setPhase('email'), setCode(''), setError(null))}>
@@ -99,7 +100,7 @@ export const SignInCard = ({ onSendCode, onVerify, onGoogle, pendingEmail, title
       )}
       {onGoogle && (
         <>
-          <Button type="button" variant="ghost" block onClick={() => onGoogle().catch(err => setError((err as Error).message))}>
+          <Button type="button" variant="ghost" block onClick={() => onGoogle().catch(err => setError(signInMessage(err, 'google')))}>
             Continue with Google
           </Button>
           <div className="my-2 text-center text-[11px] text-faint">or</div>
@@ -109,7 +110,7 @@ export const SignInCard = ({ onSendCode, onVerify, onGoogle, pendingEmail, title
       <Button type="submit" block className="mt-2 whitespace-nowrap" disabled={phase === 'sending'}>
         {phase === 'sending' ? 'Sending…' : 'Email me a code'}
       </Button>
-      {error && <div className="mt-2 text-[13px] text-danger">{error}</div>}
+      {error && <div role="alert" className="mt-2 text-[13px] text-danger">{error}</div>}
     </form>
   );
 };
