@@ -538,3 +538,131 @@ struct TimerDiscardTests {
         }
     }
 }
+
+/// Ported from 'a countdown skipped earlier and ticked later…' in `runner.test.ts` (review D14).
+@Suite("a timed set ticked after it was passed")
+struct PassedCountdownTests {
+    /// 3 × 30 s plank with 10 s between, then a block of push-ups.
+    static func holds() -> Runsheet {
+        Runsheet(id: "p", title: "P", items: [
+            .block(Block(id: "b", name: "B", repeatCount: 3, steps: [Fixtures.work("h", Fixtures.squat, forMode: .seconds, forValue: 30)], restBetweenSec: 10)),
+            .block(Block(id: "c", name: "C", repeatCount: 1, steps: [Fixtures.work("q", Fixtures.pushup, forMode: .reps, forValue: 10)])),
+        ])
+    }
+
+    @Test("a countdown skipped earlier and ticked later runs, is logged with its time, and the timer goes back")
+    func runsThenReturns() {
+        var s = Runner.tick(Runner.start(Self.holds(), now: 0), now: 5_000)
+        let first = s.slots[0].id
+        s = Runner.advance(s, now: 7_000, skipped: true)
+        s = Runner.tick(s, now: 17_000) // the rest ran out: set 2 is running
+        #expect(s.i == 2)
+        s = Runner.completeSet(s, now: 20_000, slotId: first)
+        #expect(s.i == 0)
+        #expect(s.phase == .running)
+        #expect(s.endsAt == 50_000)
+        #expect(s.actuals[first]?.doneAt == nil)
+        s = Runner.tick(s, now: 50_000)
+        #expect(s.i == 2) // back on set 2, from its start
+        #expect(s.endsAt == 80_000)
+        #expect(s.detour == nil)
+        let sets = Runner.toResult(s, Self.holds(), now: 50_000).steps.first?.sets
+        #expect(sets?.map(\.seconds) == [30])
+        #expect(sets?.map(\.at) == [50])
+        #expect(s.blockDone["b"] == 1)
+    }
+
+    @Test("a countdown un-ticked after it ran is logged with the time it ran")
+    func untickedKeepsItsTime() {
+        var s = Runner.tick(Runner.start(Self.holds(), now: 0), now: 5_000)
+        let first = s.slots[0].id
+        s = Runner.tick(s, now: 35_000)
+        s = Runner.reopenSet(s, slotId: first)
+        #expect(Runner.toResult(s, Self.holds(), now: 36_000).steps.isEmpty)
+        s = Runner.completeSet(s, now: 37_000, slotId: first)
+        #expect(s.i == 1)
+        let sets = Runner.toResult(s, Self.holds(), now: 38_000).steps.first?.sets
+        #expect(sets?.map(\.seconds) == [30])
+        #expect(sets?.map(\.at) == [37])
+    }
+
+    @Test("a countdown that never ran cannot be ticked from another block")
+    func notFromAnotherBlock() {
+        var s = Runner.tick(Runner.start(Self.holds(), now: 0), now: 5_000)
+        let first = s.slots[0].id
+        for k in 0..<5 { s = Runner.advance(s, now: 7_000 + Double(k) * 100, skipped: true) }
+        #expect(s.phase == .ready)
+        #expect(Runner.completeSet(s, now: 9_000, slotId: first) == s)
+        s = Runner.startBlock(s, now: 9_000)
+        #expect(Runner.completeSet(s, now: 10_000, slotId: first) == s)
+    }
+}
+
+/// review D14: resuming after the app was killed lost sets added with "+ Add set" and a
+/// "Just this time" version.
+@Suite("a resumed session keeps its own sheet")
+@MainActor
+struct ResumedSheetTests {
+    static func straight() -> Runsheet {
+        Runsheet(id: "k", title: "K", items: [.block(Block(id: "b", name: "B", repeatCount: 2, steps: [Fixtures.work("sw", Fixtures.swing, target: 28, forMode: .reps, forValue: 8)], restBetweenSec: 30))])
+    }
+
+    @Test("sets added with + Add set come back, on the sheet and in the count the finish screen asks about")
+    func addedSets() throws {
+        try SessionRunner.$savedName.withValue("test-\(UUID().uuidString).json") {
+            let runner = SessionRunner(runsheet: Self.straight())
+            runner.begin()
+            runner.tick(at: runner.state.startedAt + 5_000)
+            runner.addSet(blockId: "b")
+            #expect(runner.addedSets == ["b": 1])
+            let slots = runner.state.slots.map(\.id)
+            let sheet = runner.runsheet
+            runner.end()
+            // The app is killed; the workout in the store is still the one with two sets.
+            let back = try #require(SessionRunner(resuming: Self.straight()))
+            #expect(back.state.slots.map(\.id) == slots)
+            #expect(back.runsheet == sheet)
+            #expect(back.runsheet.items.first?.asBlock?.repeatCount == 3)
+            #expect(back.addedSets == ["b": 1])
+            SessionRunner.clearSaved()
+        }
+    }
+
+    @Test("a Just this time version comes back with its plan")
+    func justThisTime() throws {
+        try SessionRunner.$savedName.withValue("test-\(UUID().uuidString).json") {
+            var once = Self.straight()
+            once.items.append(.step(Fixtures.work("pr", Fixtures.press, target: 20, forMode: .reps, forValue: 10)))
+            let runner = SessionRunner(runsheet: once)
+            runner.planned = SessionVersion(items: once.items)
+            runner.begin()
+            runner.tick(at: runner.state.startedAt + 5_000)
+            runner.done()
+            runner.end()
+            let saved = try #require(SessionRunner.readSaved())
+            #expect(saved.sheet == once)
+            #expect(saved.planned == SessionVersion(items: once.items))
+            let back = try #require(SessionRunner(resuming: Self.straight()))
+            #expect(back.runsheet == once)
+            #expect(back.planned == SessionVersion(items: once.items))
+            // Saved as it stands, the result is read against the sheet it ran.
+            let found = SessionRunner.recovery(of: saved.state, savedAt: saved.savedAt, ran: saved.sheet, lookup: { _ in Self.straight() })
+            #expect(found.sheet == once)
+            #expect(found.canResume)
+            SessionRunner.clearSaved()
+        }
+    }
+
+    @Test("a copy from before the sheet was kept resumes on the workout")
+    func oldCopy() throws {
+        try SessionRunner.$savedName.withValue("test-\(UUID().uuidString).json") {
+            let url = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0].appendingPathComponent(SessionRunner.savedName)
+            try JSONEncoder().encode(Runner.tick(Runner.start(Self.straight(), now: Date().timeIntervalSince1970 * 1000 - 60_000), now: Date().timeIntervalSince1970 * 1000 - 55_000)).write(to: url)
+            let saved = try #require(SessionRunner.readSaved())
+            #expect(saved.sheet == nil)
+            #expect(saved.addedSets.isEmpty)
+            #expect(SessionRunner(resuming: Self.straight())?.runsheet == Self.straight())
+            SessionRunner.clearSaved()
+        }
+    }
+}

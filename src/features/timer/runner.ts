@@ -90,6 +90,9 @@ export interface RunState {
   /** Session time, seconds, each round of a block began its work, by block id and round: a round's
    * time runs from here, so the rest before it is not counted in it. */
   roundAt?: Record<string, Record<number, number>>;
+  /** A countdown passed without running, started from its row (see `completeSet`): the slot it runs
+   * in (`at`) and the slot the timer was on, which it goes back to when the countdown is over. */
+  detour?: { at: string; to: string };
 }
 
 const LEAD_SEC = 5;
@@ -332,7 +335,22 @@ const nextMinute = (s: RunState, now: number): RunState => {
     blockDone[c.blockId!] = (blockDone[c.blockId!] ?? 0) + 1;
   }
   if (s.slots[j]?.untilBoundary && s.slots[j].blockId === c.blockId && s.slots[j].round === c.round) j++;
-  return enter({ ...s, actuals, blockDone }, j, now);
+  return enter({ ...s, actuals, blockDone }, minuteNow(s, c, j, now), now);
+};
+/**
+ * Where an EMOM goes on from slot `from` when the clock is past that slot's minute — the phone was
+ * asleep, so no tick came for minutes on end: the first slot of the minute the clock is in. The
+ * minutes in between were not seen and are not logged. Past the last minute, the slot after the
+ * block: it is over.
+ */
+const minuteNow = (s: RunState, c: Slot, from: number, now: number): number => {
+  const began = c.blockId !== undefined ? s.blockStart[c.blockId] : undefined;
+  const sl = s.slots[from];
+  if (c.mode !== 'emom' || !c.everySec || began === undefined || sl?.blockId !== c.blockId) return from;
+  const minute = Math.floor((now - began) / 1000 / c.everySec);
+  let j = from;
+  while (j < s.slots.length && s.slots[j].blockId === c.blockId && s.slots[j].round < minute) j++;
+  return j;
 };
 
 /** Advance past the current slot (Done / countdown finished / skip). */
@@ -350,8 +368,11 @@ export const advance = (given: RunState, now: number, opts: { skipped?: boolean 
     actuals[c.id] = { ...(actuals[c.id] ?? { changes: [] }), doneAt: now, at: Math.round(elapsed(s, now)), ...(worked !== undefined ? { seconds: worked } : {}) };
     if (c.blockId && c.kind === 'work') blockDone[c.blockId] = (blockDone[c.blockId] ?? 0) + 1;
   }
-  const st = { ...s, actuals, blockDone };
-  return enter(c ? extendAmrap(st, c) : st, s.i + 1, now);
+  const { detour, ...st } = { ...s, actuals, blockDone };
+  const out = c ? extendAmrap(st, c) : st;
+  // A countdown started from its row is over: back to where the timer was.
+  const to = detour && c && detour.at === c.id ? slotIndex(out, detour.to) : -1;
+  return enter(out, to > s.i ? to : s.i + 1, now);
 };
 
 /** The work a set's time says something about: a countdown (a plank, a 40 s interval), a max
@@ -391,7 +412,10 @@ export const tick = (s: RunState, now: number): RunState => {
   const c = current(s);
   if (s.phase === 'running' && s.endsAt !== undefined && now >= s.endsAt) {
     const boundary = c ? emomBoundary(s, c) : undefined;
-    return boundary !== undefined && now >= boundary ? nextMinute(s, now) : advance(s, now);
+    if (boundary !== undefined && now >= boundary) return nextMinute(s, now);
+    // An EMOM's wait that ran out minutes ago: on to the minute the clock is in.
+    const to = c?.untilBoundary ? minuteNow(s, c, s.i + 1, now) : s.i + 1;
+    return to > s.i + 1 ? enter(s, to, now) : advance(s, now);
   }
   // amrap / fortime cap reached mid-slot
   if (s.phase === 'running' && c?.capSec && c.blockId && s.blockStart[c.blockId] !== undefined && (now - s.blockStart[c.blockId]) / 1000 >= c.capSec) return capOut(s, c.blockId, now);
@@ -559,7 +583,10 @@ const onlyRestBefore = (s: RunState, idx: number) => idx > s.i && s.slots.slice(
 /** The tick on a set row. The running set is Done (advance). The set after a rest ends the rest
  * early and is done in the same tap — people start before the rest runs out. A countdown after a
  * rest only starts: it has not run, so there is nothing to log. A set passed without
- * a tick (skipped, or un-ticked to fix its weight) is logged where it is and the cursor stays put. */
+ * a tick (skipped, or un-ticked to fix its weight) is logged where it is and the cursor stays put.
+ * A countdown passed without running is the same as the one after a rest: it starts, and the timer
+ * goes back to where it was when it is over. Un-ticked after it ran, it is logged with the time it
+ * ran. Outside the part the timer is in it cannot be started, so the tick does nothing. */
 export const completeSet = (s: RunState, now: number, slotId: string): RunState => {
   const idx = slotIndex(s, slotId);
   const sl = s.slots[idx];
@@ -573,10 +600,16 @@ export const completeSet = (s: RunState, now: number, slotId: string): RunState 
     return st.i === idx ? advance(st, now) : st;
   }
   if (idx > s.i) return s;
+  if (sl.seconds !== undefined && s.actuals[slotId]?.seconds === undefined) {
+    const cur = current(s);
+    if (!cur || cur.part !== sl.part || (s.phase !== 'running' && s.phase !== 'paused')) return s;
+    return { ...enter(s, idx, now), detour: { at: sl.id, to: cur.id } };
+  }
   const blockDone = sl.blockId ? { ...s.blockDone, [sl.blockId]: (s.blockDone[sl.blockId] ?? 0) + 1 } : s.blockDone;
   return { ...s, blockDone, actuals: { ...s.actuals, [slotId]: { ...(s.actuals[slotId] ?? { changes: [] }), doneAt: now, at: Math.round(elapsed(s, now)) } } };
 };
-/** Un-tick a done set so its weight and reps can be put right. It is not logged until ticked again. */
+/** Un-tick a done set so its weight and reps can be put right. It is not logged until ticked again.
+ * The time it ran is kept for then: a countdown that ran is not run again to be ticked. */
 export const reopenSet = (s: RunState, slotId: string): RunState => {
   const sl = s.slots[slotIndex(s, slotId)];
   const a = s.actuals[slotId];
@@ -584,7 +617,6 @@ export const reopenSet = (s: RunState, slotId: string): RunState => {
   const rest = { ...a };
   delete rest.doneAt;
   delete rest.at;
-  delete rest.seconds;
   const blockDone = sl.blockId ? { ...s.blockDone, [sl.blockId]: Math.max(0, (s.blockDone[sl.blockId] ?? 0) - 1) } : s.blockDone;
   return { ...s, blockDone, actuals: { ...s.actuals, [slotId]: rest } };
 };
@@ -993,9 +1025,13 @@ export const splits = (s: RunState): RoundSplit[] => {
 
 // ── persistence ──
 const KEY = 'tiger:run';
-export const persist = (s: RunState) => {
+/** Keep the run on the device. `sheet` is the workout as this session runs it when that is not the
+ * saved workout (a "Just this time" change, a version run again): the page holding it is gone
+ * after a reload, and the resumed session is still logged with its version. Sets added mid-session
+ * are slots, so they are in the run itself. */
+export const persist = (s: RunState, sheet?: Runsheet) => {
   try {
-    localStorage.setItem(KEY, JSON.stringify({ ...s, savedAt: Date.now() }));
+    localStorage.setItem(KEY, JSON.stringify({ ...s, savedAt: Date.now(), ...(sheet ? { sheet } : {}) }));
   } catch {
     /* ignore */
   }
@@ -1011,7 +1047,7 @@ export const clearPersisted = () => {
 export const didWork = (s: RunState) => s.slots.some(sl => sl.kind === 'work' && s.actuals[sl.id]?.doneAt !== undefined);
 
 const KEPT_MS = 6 * 3600 * 1000;
-export type Kept = { state: RunState; savedAt: number };
+export type Kept = { state: RunState; savedAt: number; /** See `persist`. */ sheet?: Runsheet };
 
 /** The run kept on this device, if it is not done and under six hours old — or older with work done,
  * which can still be saved — and, given a workout id, only if it is that workout's. */
@@ -1019,10 +1055,10 @@ export const loadPersisted = (runsheetId?: string): Kept | null => {
   try {
     const r = JSON.parse(localStorage.getItem(KEY) || 'null');
     if (!r || r.phase === 'done') return null;
-    const { savedAt, ...state } = r;
+    const { savedAt, sheet, ...state } = r;
     if (!(Date.now() - savedAt < KEPT_MS) && !didWork(state as RunState)) return null;
     if (runsheetId !== undefined && r.runsheetId !== runsheetId) return null;
-    return { state: state as RunState, savedAt };
+    return { state: state as RunState, savedAt, ...(sheet ? { sheet: sheet as Runsheet } : {}) };
   } catch {
     return null;
   }

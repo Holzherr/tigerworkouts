@@ -104,7 +104,7 @@ const vib = (p: number | number[]) => {
  * screen goes off), persistence on every change so an iOS reload resumes where it was. The web
  * timer still stops with the screen off: the page is suspended.
  */
-export const useRunner = (runsheet: Runsheet, opts: { /** A kept run to carry on with (see `R.restore`); the caller asks first. */ from?: R.RunState; silent?: boolean; persist?: boolean; /** Applied to a fresh start only, never to a resumed run. */ seed?: (s: R.RunState) => R.RunState } = {}) => {
+export const useRunner = (runsheet: Runsheet, opts: { /** A kept run to carry on with (see `R.restore`); the caller asks first. */ from?: R.RunState; silent?: boolean; persist?: boolean; /** The workout as this session runs it, when it is not the saved one: kept with the run (see `R.persist`). */ sheet?: Runsheet; /** Applied to a fresh start only, never to a resumed run. */ seed?: (s: R.RunState) => R.RunState } = {}) => {
   const silent = !!opts.silent;
   const persist = opts.persist !== false;
   const [state, setState] = useState<R.RunState>(() => {
@@ -126,10 +126,12 @@ export const useRunner = (runsheet: Runsheet, opts: { /** A kept run to carry on
   // the copy is refreshed every few seconds and when the page is hidden or left.
   const latest = useRef(state);
   latest.current = state;
+  const sheet = useRef(opts.sheet);
+  sheet.current = opts.sheet;
   const keep = useRef(() => {});
   keep.current = () => {
     const s = latest.current;
-    if (persist && !discarded.current && (s.phase === 'running' || s.phase === 'lead')) R.persist(s);
+    if (persist && !discarded.current && (s.phase === 'running' || s.phase === 'lead')) R.persist(s, sheet.current);
   };
 
   // tick
@@ -160,7 +162,7 @@ export const useRunner = (runsheet: Runsheet, opts: { /** A kept run to carry on
   useEffect(() => {
     if (persist && !discarded.current) {
       if (state.phase === 'done') R.clearPersisted();
-      else R.persist(state);
+      else R.persist(state, opts.sheet);
     }
     if (state.i !== prevSlot.current) {
       prevSlot.current = state.i;
@@ -181,7 +183,7 @@ export const useRunner = (runsheet: Runsheet, opts: { /** A kept run to carry on
       }
     }
     if (state.phase !== 'done') finished.current = false;
-  }, [state, persist, silent]);
+  }, [state, persist, silent, opts.sheet]);
 
   // countdown beeps
   useEffect(() => {

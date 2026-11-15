@@ -223,6 +223,48 @@ struct EmomMinuteTests {
         #expect(Runner.current(s)?.step.id == "x")
     }
 
+    // review D6: the screen was off for minutes, so no tick came.
+    @Test("woken after minutes asleep, it is on the minute the clock is in and the missed ones are not logged")
+    func asleepOnWork() {
+        let r = Self.emom(10)
+        var s = Runner.tick(Runner.start(r, now: 0), now: 5_000)
+        s = Runner.tick(s, now: 25_000)
+        s = Runner.tick(s, now: 325_000) // 5 min 20 s into the block: minute 6
+        #expect(s.phase == .running)
+        #expect(Runner.current(s)?.kind == .work)
+        #expect(Runner.current(s)?.round == 5)
+        #expect(Runner.minuteLeft(s, now: 325_000) == 40)
+        #expect(s.endsAt == 365_000)
+        // The minute in hand when the screen went off is logged, as a minute that ran out is; 2 to 5 are not.
+        #expect(s.slots.filter { $0.kind == .work && s.actuals[$0.id]?.doneAt != nil }.map(\.round) == [0, 0])
+        s = Runner.advance(s, now: 335_000)
+        #expect(Runner.toResult(s, r, now: 335_000).steps.map { $0.sets?.count } == [2, 1])
+        s = Runner.tick(s, now: 365_000)
+        #expect(Runner.current(s)?.round == 6)
+        #expect(Runner.current(s)?.kind == .work)
+    }
+
+    @Test("asleep on the wait, it wakes on the minute the clock is in")
+    func asleepOnWait() {
+        var s = Runner.tick(Runner.start(Self.emom(10), now: 0), now: 5_000)
+        s = Runner.advance(Runner.advance(s, now: 20_000), now: 25_000)
+        #expect(Runner.current(s)?.untilBoundary == true)
+        s = Runner.tick(s, now: 205_000) // 3 min 20 s in: minute 4
+        #expect(Runner.current(s)?.kind == .work)
+        #expect(Runner.current(s)?.round == 3)
+        #expect(s.endsAt == 245_000)
+        #expect(s.slots.filter { $0.kind == .work && s.actuals[$0.id]?.doneAt != nil }.count == 2)
+    }
+
+    @Test("asleep past the last minute, the block is over")
+    func asleepPastTheEnd() {
+        let r = Self.emom(10)
+        var s = Runner.tick(Runner.start(r, now: 0), now: 5_000)
+        s = Runner.tick(s, now: 705_000)
+        #expect(s.phase == .done)
+        #expect(Runner.toResult(s, r, now: 705_000).steps.map { $0.sets?.count } == [1, 1])
+    }
+
     @Test("a timed EMOM set keeps its own countdown inside the minute")
     func timedSet() {
         let r = Runsheet(id: "t", title: "T", items: [.block(Block(

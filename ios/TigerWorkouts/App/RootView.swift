@@ -52,7 +52,11 @@ struct RootView: View {
         .onChange(of: store.loaded, initial: true) { _, loaded in
             guard loaded, running == nil, interrupted == nil, let saved = SessionRunner.readSaved() else { return }
             // A workout no longer here (deleted, never saved) still gives its session back.
-            let found = SessionRunner.recovery(of: saved.state, savedAt: saved.savedAt, startedFrom: saved.startedFrom, lookup: { store.workout(id: $0) })
+            var found = SessionRunner.recovery(of: saved.state, savedAt: saved.savedAt, startedFrom: saved.startedFrom, ran: saved.sheet, lookup: { store.workout(id: $0) })
+            // Saved as it stands, it keeps what it ran as its version, as a finished session does.
+            if found.partial != nil, let ran = saved.sheet, let base = store.workout(id: saved.state.runsheetId) {
+                found.partial?.version = Versions.ofSession(run: ran, started: ran, auto: store.prepared(store.seeded(base)), planned: saved.planned, base: base, resumed: true)
+            }
             // Finished, but the app died before the store had it: log it, no question to ask.
             if saved.state.phase == .done {
                 if let result = found.partial {
@@ -76,7 +80,7 @@ struct RootView: View {
         ) { pending in
             if pending.canResume {
                 Button("Resume") {
-                    running = SessionRunner(resuming: store.prepared(pending.sheet), history: store.results).map { logOnFinish($0, resumed: true) }
+                    running = SessionRunner(resuming: store.prepared(pending.sheet), history: store.results).map { logOnFinish($0, planned: $0.planned, resumed: true) }
                     interrupted = nil
                 }
             }
@@ -176,6 +180,7 @@ struct RootView: View {
     private func logOnFinish(_ runner: SessionRunner, planned: SessionVersion? = nil, resumed: Bool = false) -> SessionRunner {
         let startedAt = runner.state.startedAt
         let started = runner.runsheet
+        runner.planned = planned
         let base = store.workout(id: started.key)
         // Resumed, there is no plan: the run is compared with the workout as the app starts it now.
         let auto = resumed ? base.map { store.prepared(store.seeded($0)) } : started

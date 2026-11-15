@@ -113,6 +113,14 @@ struct RunState: Hashable, Sendable, Codable {
     /// Session time, seconds, each round of a block began its work, by block id and round: a
     /// round's time runs from here, so the rest before it is not counted in it.
     var roundAt: [String: [Int: Double]]?
+    /// A countdown passed without running, started from its row (see `completeSet`): the slot it
+    /// runs in (`at`) and the slot the timer was on, which it goes back to when the countdown is over.
+    var detour: Detour?
+
+    struct Detour: Hashable, Sendable, Codable {
+        var at: String
+        var to: String
+    }
 }
 
 enum Runner {
@@ -410,7 +418,20 @@ enum Runner {
             j += 1
         }
         if j < s.slots.count, s.slots[j].untilBoundary, s.slots[j].blockId == block, s.slots[j].round == c.round { j += 1 }
-        return enter(s, j, now)
+        return enter(s, minuteNow(given, c, j, now), now)
+    }
+
+    /// Where an EMOM goes on from slot `from` when the clock is past that slot's minute — the phone
+    /// was asleep, so no tick came for minutes on end: the first slot of the minute the clock is in.
+    /// The minutes in between were not seen and are not logged. Past the last minute, the slot after
+    /// the block: it is over.
+    private static func minuteNow(_ s: RunState, _ c: Slot, _ from: Int, _ now: Double) -> Int {
+        guard c.mode == .emom, let every = c.everySec, every > 0, let block = c.blockId, let began = s.blockStart[block],
+              s.slots.indices.contains(from), s.slots[from].blockId == block else { return from }
+        let minute = Int(((now - began) / 1000 / every).rounded(.down))
+        var j = from
+        while j < s.slots.count, s.slots[j].blockId == block, s.slots[j].round < minute { j += 1 }
+        return j
     }
 
     /// The block's cap has run out: what is left of it is skipped, and it is marked as capped.
@@ -490,7 +511,13 @@ enum Runner {
             s.actuals[c.id] = a
             if let id = c.blockId, c.kind == .work { s.blockDone[id, default: 0] += 1 }
         }
+        let detour = s.detour
+        s.detour = nil
         if let c = current(s) { s = extendAmrap(s, c) }
+        // A countdown started from its row is over: back to where the timer was.
+        if let detour, let c = current(s), detour.at == c.id, let to = s.slots.firstIndex(where: { $0.id == detour.to }), to > s.i {
+            return enter(s, to, now)
+        }
         return enter(s, s.i + 1, now)
     }
 
@@ -550,6 +577,11 @@ enum Runner {
         if s.phase == .lead, let end = s.endsAt, now >= end { return enter(s, s.i, now) }
         if s.phase == .running, let end = s.endsAt, now >= end {
             if let c = current(s), let boundary = emomBoundary(s, c), now >= boundary { return nextMinute(s, now) }
+            // An EMOM's wait that ran out minutes ago: on to the minute the clock is in.
+            if let c = current(s), c.untilBoundary {
+                let to = minuteNow(s, c, s.i + 1, now)
+                if to > s.i + 1 { return enter(s, to, now) }
+            }
             return advance(s, now: now)
         }
         if s.phase == .running, let c = current(s), let cap = c.capSec, let id = c.blockId, let began = s.blockStart[id],
@@ -756,7 +788,10 @@ enum Runner {
     /// early and is done in the same tap — people start before the rest runs out. A countdown
     /// after a rest only starts: it has not run, so there is nothing to log. A set passed
     /// without a tick (skipped, or un-ticked to fix its weight) is logged where it is and the
-    /// cursor stays put.
+    /// cursor stays put. A countdown passed without running is the same as the one after a rest: it
+    /// starts, and the timer goes back to where it was when it is over. Un-ticked after it ran, it
+    /// is logged with the time it ran. Outside the part the timer is in it cannot be started, so
+    /// the tick does nothing.
     static func completeSet(_ s: RunState, now: Double, slotId: String) -> RunState {
         guard let idx = s.slots.firstIndex(where: { $0.id == slotId }), s.slots[idx].kind == .work,
               s.actuals[slotId]?.doneAt == nil else { return s }
@@ -770,6 +805,12 @@ enum Runner {
             return st.i == idx ? advance(st, now: now) : st
         }
         guard idx < s.i else { return s }
+        if s.slots[idx].seconds != nil, s.actuals[slotId]?.seconds == nil {
+            guard live, let cur = current(s), cur.part == s.slots[idx].part else { return s }
+            var st = enter(s, idx, now)
+            st.detour = RunState.Detour(at: slotId, to: cur.id)
+            return st
+        }
         var s = s
         var a = s.actuals[slotId] ?? Actual()
         a.doneAt = now
@@ -780,12 +821,12 @@ enum Runner {
     }
 
     /// Un-tick a done set so its weight and reps can be put right. It is not logged until ticked again.
+    /// The time it ran is kept for then: a countdown that ran is not run again to be ticked.
     static func reopenSet(_ s: RunState, slotId: String) -> RunState {
         guard let idx = s.slots.firstIndex(where: { $0.id == slotId }), s.actuals[slotId]?.doneAt != nil else { return s }
         var s = s
         s.actuals[slotId]?.doneAt = nil
         s.actuals[slotId]?.at = nil
-        s.actuals[slotId]?.seconds = nil
         if let block = s.slots[idx].blockId { s.blockDone[block] = max(0, (s.blockDone[block] ?? 0) - 1) }
         return s
     }
