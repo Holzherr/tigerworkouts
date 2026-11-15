@@ -36,6 +36,16 @@ const score = z.enum(keys(SCORE));
 const role = z.enum(keys(ROLE)).describe('warmup | main (default) | cooldown; the app draws dividers between parts');
 const num = z.number().finite();
 const pos = num.nonnegative();
+// Upper bounds: generous for any real workout, small enough that the apps can show and count the
+// number. Unbounded, 1e300 kg was stored and the iPhone app trapped turning it into an integer.
+/** Reps, seconds, minutes, metres or calories. */
+const amount = pos.max(100_000);
+/** kg, kph, or whatever the exercise's unit is. */
+const load = pos.max(2000);
+/** A stretch of clock, seconds: up to a day. */
+const span = num.int().positive().max(86_400);
+/** Steps × rounds across the workout; the timer makes one slot for each. */
+const MAX_SLOTS = 3000;
 
 const exerciseRef = z.object({
   key: z.string().min(1).max(80),
@@ -45,26 +55,26 @@ const exerciseRef = z.object({
   cue: z.string().max(200).optional(),
 });
 
-const progression = z.object({ onSuccessKg: pos.optional(), deloadPct: pos.max(100).optional(), failAfter: z.number().int().positive().optional(), amrapBumpAt: z.number().int().positive().optional(), tmBumpKg: pos.optional() });
+const progression = z.object({ onSuccessKg: pos.max(100).optional(), deloadPct: pos.max(100).optional(), failAfter: z.number().int().positive().max(100).optional(), amrapBumpAt: z.number().int().positive().max(1000).optional(), tmBumpKg: pos.max(100).optional() });
 
 export const exerciseStepInput = z.object({
   kind: z.literal('exercise'),
   id: z.string().max(60).optional(),
   exercise: z.union([z.string().min(1), exerciseRef]).describe('An exercise key from search_exercises (preferred), or a full {key,name,unit,step} for something not in the library'),
   forMode,
-  forValue: pos.describe('Reps, seconds, minutes, metres or calories, per forMode'),
-  forMax: pos.optional().describe('Upper bound of a range: 8–12 reps is forValue 8, forMax 12'),
-  target: pos.optional().describe("Load or speed in the exercise's unit (kg, kg per arm, kph). Omit for bodyweight"),
+  forValue: amount.describe('Reps, seconds, minutes, metres or calories, per forMode'),
+  forMax: amount.optional().describe('Upper bound of a range: 8–12 reps is forValue 8, forMax 12'),
+  target: load.optional().describe("Load or speed in the exercise's unit (kg, kg per arm, kph). Omit for bodyweight"),
   perSide: z.boolean().optional().describe('Reps/time are per side; the timer doubles it'),
-  loadFactor: pos.optional().describe('Load as a multiple of bodyweight, instead of target'),
+  loadFactor: pos.max(10).optional().describe('Load as a multiple of bodyweight, instead of target'),
   targetPct: pos.max(200).optional().describe('Load as % of the training max, instead of target'),
   incline: pos.max(40).optional().describe('Treadmill incline %'),
-  rx: z.object({ men: pos.optional(), women: pos.optional() }).optional(),
-  startSeconds: pos.optional(),
-  endSeconds: pos.optional(),
-  ladderFactor: pos.optional(),
+  rx: z.object({ men: load.optional(), women: load.optional() }).optional(),
+  startSeconds: pos.max(86_400).optional(),
+  endSeconds: pos.max(86_400).optional(),
+  ladderFactor: pos.max(100).optional(),
   ladderFixed: z.boolean().optional(),
-  sets: z.array(z.object({ reps: pos.optional(), load: pos.optional(), type: z.enum(keys(SET_TYPE)).optional().describe(Object.entries(SET_TYPE).map(([k, v]) => `${k}: ${v}`).join('; ')) }))
+  sets: z.array(z.object({ reps: amount.optional(), load: load.optional(), type: z.enum(keys(SET_TYPE)).optional().describe(Object.entries(SET_TYPE).map(([k, v]) => `${k}: ${v}`).join('; ')) }))
     .max(30).optional().describe('Per-set prescription inside a rounds block, one entry per round: a pyramid, ramping sets, warm-up or drop sets. A reps or load left out carries the one before it'),
   log: z.union([z.enum(keys(STEP_LOG)), z.array(z.enum(keys(STEP_LOG))).min(1).max(3)]).optional().describe(`What to record after the step, beyond its target: one value or a list (a rower can log ["meters","calories"]). Omit to log nothing extra (finishing is the result). ${Object.entries(STEP_LOG).map(([k, v]) => `${k}: ${v}`).join('; ')}. Only what the exercise can log (search_exercises gives each exercise's \`logs\`: metres and calories for machines and runs, reps for lifts and bodyweight, nothing for holds). Reps are already counted for forMode reps/amrap/max, and metres/calories for forMode meters/calories`),
   role: role.optional(),
@@ -78,10 +88,10 @@ export const blockInput = z.object({
   name: z.string().max(80).optional().describe('Defaults to the exercise names joined with " + "'),
   repeat: num.int().positive().max(100).describe('Rounds; ignored for amrap'),
   mode: blockMode.optional().describe(Object.entries(BLOCK_MODE).map(([k, v]) => `${k}: ${v}`).join('; ')),
-  timeCapSec: num.int().positive().optional(),
-  everySec: num.int().positive().optional(),
-  ladder: z.array(num.int().positive()).max(50).optional(),
-  restBetweenSec: num.int().nonnegative().optional().describe('Rest between repeats of the block, not after the last'),
+  timeCapSec: span.optional(),
+  everySec: span.optional(),
+  ladder: z.array(num.int().positive().max(1000)).max(50).optional(),
+  restBetweenSec: num.int().nonnegative().max(86_400).optional().describe('Rest between repeats of the block, not after the last'),
   score: score.optional(),
   progression: progression.optional(),
   role: role.optional(),
@@ -96,7 +106,7 @@ export const runsheetInput = z.object({
   creator: z.string().max(80).optional().describe("Shown as the author; defaults to the user's name"),
   tags: z.array(z.string().max(30)).max(12).optional(),
   level: z.enum(['Easy', 'Medium', 'Hard']).optional(),
-  timeCapSec: num.int().positive().optional().describe('One cap across the whole workout'),
+  timeCapSec: span.optional().describe('One cap across the whole workout'),
   score: score.optional(),
   progression: progression.optional(),
   items: z.array(itemInput).min(1).max(60),
@@ -152,7 +162,11 @@ export const normalise = (input: RunsheetInput, library: (key: string) => Exerci
   });
   if (problems.length) throw new RunsheetError(problems.join('\n'));
   const r: Runsheet = { ...input, items };
-  if (runsheetMinutes(r) > 300) throw new RunsheetError(`That runs for about ${runsheetMinutes(r)} minutes; keep a workout under 5 hours`);
+  // The length is judged without the whole-workout cap: a 1-second cap must not let ten hours through.
+  const minutes = runsheetMinutes({ items });
+  if (minutes > 300) throw new RunsheetError(`That runs for about ${minutes} minutes; keep a workout under 5 hours`);
+  const slots = items.reduce((n, it) => n + (it.kind !== 'block' ? 1 : it.steps.length * ((it.mode ?? 'rounds') === 'ladder' ? (it.ladder?.length ?? 1) : (it.mode ?? 'rounds') === 'amrap' ? 1 : it.repeat)), 0);
+  if (slots > MAX_SLOTS) throw new RunsheetError(`That is ${slots} steps once the rounds are counted; keep a workout under ${MAX_SLOTS}`);
   return r;
 };
 

@@ -3,7 +3,7 @@
  * plain arguments and returns plain JSON. server.ts wires them to MCP; the tests call them directly
  * against a mocked Supabase.
  */
-import { fromRow, workoutFromRow } from '@/features/cloud/rows';
+import { fromRow, readableWorkout, workoutFromRow } from '@/features/cloud/rows';
 import type { LibraryExercise } from '@/features/exercises/library';
 import { exerciseLogs, forLabel, loadLabel, modeLabel, ROLE_LABEL, runsheetMinutes, stepLogs, type ExerciseStep, type Item, type Runsheet, type Step } from '@/features/runsheet/model';
 import { parsePlan } from '@/features/runsheet/parse-text';
@@ -175,7 +175,9 @@ export const getSession = async (db: Db, id: string) => {
 const findWorkout = async (db: Db, id: string): Promise<{ runsheet: Runsheet; owner: Owner; row?: WorkoutRow; source?: string } | null> => {
   const rows = await db.get<WorkoutRow[]>(`workouts?id=eq.${enc(id)}&select=${WORKOUT_COLS}`);
   const row = rows?.[0];
-  if (row) return { runsheet: workoutFromRow(row), owner: row.owner === db.userId ? 'me' : 'other', row };
+  // `data` is whatever its owner wrote: a row that is not a runsheet is not a workout to anyone.
+  const stored = row && readableWorkout(row);
+  if (row && stored) return { runsheet: stored, owner: row.owner === db.userId ? 'me' : 'other', row };
   const c = catalogue().find(w => w.runsheet.id === id);
   return c ? { runsheet: c.runsheet, owner: 'catalogue', source: c.source } : null;
 };
@@ -196,11 +198,18 @@ export const listWorkouts = async (db: Db, a: ListWorkoutsArgs) => {
   const out: ReturnType<typeof summary>[] = [];
   if (scope === 'mine' || scope === 'all') {
     const rows = await db.get<WorkoutRow[]>(`workouts?owner=eq.${db.userId}&select=${WORKOUT_COLS}&order=updated_at.desc`);
-    for (const r of rows ?? []) out.push(summary(workoutFromRow(r), 'me', { public: r.public, source: 'user', updatedAt: r.updated_at }));
+    for (const r of rows ?? []) {
+      const w = readableWorkout(r);
+      if (w) out.push(summary(w, 'me', { public: r.public, source: 'user', updatedAt: r.updated_at }));
+    }
   }
   if (scope === 'public' || scope === 'all') {
     const rows = await db.get<WorkoutRow[]>(`workouts?public=eq.true&owner=neq.${db.userId}&select=${WORKOUT_COLS}&order=updated_at.desc&limit=500`);
-    for (const r of rows ?? []) out.push(summary(workoutFromRow(r), 'other', { source: 'community', updatedAt: r.updated_at }));
+    // One malformed public row must not fail the list for everyone.
+    for (const r of rows ?? []) {
+      const w = readableWorkout(r);
+      if (w) out.push(summary(w, 'other', { source: 'community', updatedAt: r.updated_at }));
+    }
   }
   if (scope === 'catalogue' || scope === 'all') for (const w of catalogue()) out.push(summary(w.runsheet, 'catalogue', { source: w.source }));
 

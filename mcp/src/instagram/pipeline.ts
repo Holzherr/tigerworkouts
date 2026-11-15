@@ -3,7 +3,7 @@
  * reuse the workout when that reel was imported before (no second Claude call), otherwise adapt the
  * caption, save it as a pending credited import owned by the import owner, and reply with its link.
  */
-import { workoutFromRow } from '@/features/cloud/rows';
+import { readableWorkout } from '@/features/cloud/rows';
 import { cleanHandle, HANDLE_RE } from '@/features/creators/credited';
 import type { Db } from '../supabase';
 import { creditFrom, insertCredited, previewUrl, SITE } from '../tools';
@@ -67,7 +67,8 @@ export const handleJob = async (job: Job, d: Deps) => {
   const eventKey = `ig:event:${job.eventId}`;
   if (await d.kv.get(eventKey)) return log('duplicate', { event: job.eventId });
   await d.kv.put(eventKey, String(now), { expirationTtl: 30 * DAY });
-  log('job', { ...job });
+  // What was sent, not who sent it or what they wrote: these lines are kept in Workers Logs.
+  log('job', { event: job.eventId, kind: job.kind, media: job.kind === 'dm' ? job.share?.mediaId : job.mediaId });
 
   const requester = job.kind === 'dm' ? `u:${job.senderId}` : job.from?.id ? `u:${job.from.id}` : `m:${job.mediaId}`;
   if ((await hit(d.kv, `ig:rl:${requester}:${hour}`, 3600)) > LIMITS.perRequesterHour) return log('rate limited', { requester });
@@ -86,7 +87,7 @@ export const handleJob = async (job: Job, d: Deps) => {
           await d.graph.sendMessage({ comment_id: job.commentId }, text);
         }
       }
-      log('replied', { event: job.eventId, text });
+      log('replied', { event: job.eventId });
     } catch (e) {
       log('reply failed', { event: job.eventId, error: (e as Error).message, code: e instanceof GraphError ? e.code : undefined });
     }
@@ -109,7 +110,7 @@ export const handleJob = async (job: Job, d: Deps) => {
   const handle = cleanHandle(media?.username ?? '');
   const code = shortcode(media?.permalink);
   if (!media?.id || !media.permalink || !HANDLE_RE.test(handle)) {
-    log('reel unreadable', { event: job.eventId, media });
+    log('reel unreadable', { event: job.eventId, media: media?.id, permalink: !!media?.permalink, handle });
     return reply(REPLIES.unreadable);
   }
 
@@ -163,7 +164,11 @@ export const resolveShortLink = async (id: string, db: Db | null): Promise<{ to:
   const rows = await db.get<{ id: string; owner: string; creator: string | null; title: string | null; public: boolean; data: unknown }[]>(`workouts?id=eq.${encodeURIComponent(id)}&select=id,owner,creator,title,public,data`);
   const row = rows?.[0];
   if (!row) return { status: 404 };
-  const r = workoutFromRow(row);
-  if (r.source?.kind !== 'social') return { status: 404 };
-  return { to: row.public ? `${SITE}#/w/${encodeURIComponent(id)}` : previewUrl(r) };
+  // Only what the import account holds: the link is the bot's, not a way to read any row by id.
+  if (row.owner !== db.userId) return { status: 404 };
+  const r = readableWorkout(row);
+  if (r?.source?.kind !== 'social') return { status: 404 };
+  if (row.public) return { to: `${SITE}#/w/${encodeURIComponent(id)}` };
+  // Private and no longer pending: unpublished after approval. The preview goes with it.
+  return r.source.review === 'pending' ? { to: previewUrl(r) } : { status: 404 };
 };

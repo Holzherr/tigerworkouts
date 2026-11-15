@@ -246,6 +246,9 @@ describe('pending imports and the queue', () => {
     expect((await T.listWorkouts(as(OTHER), { scope: 'public', query: 'coach.amy' })).total).toBe(1);
     expect(creditedCreators(tables.workouts.map(r => workoutFromRow(r as never))).get('coach-amy')?.workouts).toHaveLength(1);
     expect(await resolveShortLink(id, as(NICK))).toEqual({ to: `https://tigerworkouts.com/#/w/${id}` });
+    // Unpublished after approval: neither the page nor the preview.
+    tables.workouts[0].public = false;
+    expect(await resolveShortLink(id, as(NICK))).toEqual({ status: 404 });
   });
 
   it('list, reject: rejected is deleted, its link is not available and the bot says so for that reel', async () => {

@@ -16,7 +16,7 @@ import type { Equipment } from '@/features/runsheet/plates';
 import { currentUser, sb } from './client';
 import type { LegacySession } from './legacy';
 import { mergePrefs, prefsRow, remoteSide, type PrefStamps } from './prefs';
-import { fromRow, workoutFromRow, type WorkoutRow } from './rows';
+import { fromRow, readableWorkout, readableWorkouts, workoutFromRow, type WorkoutRow } from './rows';
 
 export { fromRow, workoutFromRow, type WorkoutRow } from './rows';
 
@@ -335,7 +335,7 @@ export const pullPush = async (local: SyncTarget): Promise<SyncResult> => {
 export const fetchPublicWorkouts = async (): Promise<Runsheet[]> => {
   const { data } = await sb.from('workouts').select('id,data,creator,title,owner').eq('public', true);
   const me = currentUser()?.id;
-  return (data ?? []).filter(r => r.owner !== me).map(r => workoutFromRow(r as WorkoutRow));
+  return readableWorkouts((data ?? []).filter(r => r.owner !== me) as WorkoutRow[]);
 };
 
 /** One workout by id, for a `#/w/` link opened cold; null when RLS hides it (private, not yours) or it does not exist. */
@@ -343,7 +343,9 @@ export const fetchWorkout = async (id: string): Promise<Runsheet | null> => {
   const { data, error } = await sb.from('workouts').select('id,owner,creator,title,public,data').eq('id', id).maybeSingle();
   // No answer is not "no row": the caller tells "could not load" from "private".
   if (error && !data) throw new Error(error.message);
-  return data ? workoutFromRow(data as WorkoutRow) : null;
+  // Your own row is read as it is; anyone else's has to be a workout the page can draw.
+  if (!data) return null;
+  return data.owner === currentUser()?.id ? workoutFromRow(data as WorkoutRow) : readableWorkout(data as WorkoutRow);
 };
 
 export interface CreatorProfile {
@@ -368,7 +370,7 @@ export const fetchCreator = async (key: string): Promise<{ profile: CreatorProfi
   return {
     profile: { id: p.id, name: p.name ?? 'Creator', handle: p.handle ?? undefined, bio: p.bio ?? undefined },
     // What an admin adapted from a creator's post lives on that creator's page (#/by/), not the admin's.
-    workouts: accountPageWorkouts((rows ?? []).map(r => workoutFromRow(r as WorkoutRow))),
+    workouts: accountPageWorkouts(readableWorkouts((rows ?? []) as WorkoutRow[])),
   };
 };
 

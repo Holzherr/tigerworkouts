@@ -4,6 +4,7 @@
  */
 import type { Runsheet } from '@/features/runsheet/model';
 import type { SessionResult } from '@/features/runsheet/progression';
+import { isRunsheet } from '@/features/runsheet/shape';
 import { fromLegacySession, isLegacySession, legacyWorkoutToRunsheet, type LegacySession } from './legacy';
 
 export const fromRow = (row: { id: string; data: unknown }): SessionResult => {
@@ -29,4 +30,23 @@ export const workoutFromRow = (row: WorkoutRow): Runsheet => {
   const base = d && Array.isArray(d.items) ? { ...(d as unknown as Runsheet), id: row.id } : legacyWorkoutToRunsheet({ id: row.id, title: String(row.title ?? d?.title ?? row.id), creator: row.creator ?? undefined, blocks: (d?.blocks as never) ?? [] });
   // The row's column is the truth for who can see it; the copy inside `data` may be stale.
   return { ...base, public: row.public ?? base.public ?? false, ownerId: row.owner ?? undefined };
+};
+
+/**
+ * Somebody else's row, or null when it is not a workout the screens can draw. `data` is whatever
+ * its owner wrote: one public row with `items: [null]` took Discover down for everyone who loaded it.
+ */
+export const readableWorkout = (row: WorkoutRow): Runsheet | null => {
+  try {
+    const r = workoutFromRow(row);
+    return isRunsheet(r) ? r : null;
+  } catch {
+    return null;
+  }
+};
+/** The rows that read as workouts; the rest are left out and counted in the console. */
+export const readableWorkouts = (rows: WorkoutRow[]): Runsheet[] => {
+  const out = rows.map(readableWorkout).filter((r): r is Runsheet => r !== null);
+  if (out.length !== rows.length) console.warn(`[tiger] ${rows.length - out.length} stored workout(s) left out: not in the runsheet shape`);
+  return out;
 };

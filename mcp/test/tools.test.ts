@@ -108,6 +108,32 @@ describe('reads', () => {
   });
 });
 
+describe('what is stored is not trusted', () => {
+  it('a public row that is not a runsheet is left out instead of failing list_workouts for everyone', async () => {
+    tables.workouts.push({ id: 'u-broken', owner: OTHER, creator: 'x', title: 'x', public: true, data: { title: 'x', items: [null] }, updated_at: '2026-09-22T10:00:00Z' });
+    tables.workouts.push({ id: 'u-half', owner: OTHER, creator: 'x', title: 'y', public: true, data: { title: 'y', items: [{ kind: 'exercise' }] }, updated_at: '2026-09-22T10:00:00Z' });
+    const all = await T.listWorkouts(db, { scope: 'public' });
+    expect(all.workouts.map(w => w.id)).toEqual(['u-theirs-public']);
+    await expect(T.getWorkout(db, 'u-broken')).rejects.toThrow();
+  });
+
+  it('create_workout refuses numbers no gym has: the iPhone app trapped on 1e300 kg', () => {
+    const step = (over: object) => ({ title: 'x', items: [{ kind: 'exercise', exercise: 'bb_bench', forMode: 'reps', forValue: 5, ...over }] });
+    expect(runsheetInput.safeParse(step({ target: 1e300 })).success).toBe(false);
+    expect(runsheetInput.safeParse(step({ forValue: 1e9 })).success).toBe(false);
+    expect(runsheetInput.safeParse(step({ target: 400 })).success).toBe(true);
+    expect(runsheetInput.safeParse({ title: 'x', timeCapSec: 1e9, items: step({}).items }).success).toBe(false);
+  });
+
+  it('the five-hour limit is not lifted by a short cap, and the rounds are counted', async () => {
+    const long = { kind: 'exercise' as const, exercise: 'cardio_rower', forMode: 'minutes' as const, forValue: 200 };
+    await expect(T.createWorkout(db, { workout: runsheetInput.parse({ title: 'x', timeCapSec: 1, items: [long, long] }) })).rejects.toThrow(/under 5 hours/);
+    const zero = { kind: 'exercise' as const, exercise: 'bb_bench', forMode: 'reps' as const, forValue: 0 };
+    const block = { kind: 'block' as const, repeat: 100, steps: Array.from({ length: 40 }, () => zero) };
+    await expect(T.createWorkout(db, { workout: runsheetInput.parse({ title: 'x', items: [block] }) })).rejects.toThrow(/steps once the rounds are counted/);
+  });
+});
+
 describe('writes', () => {
   it('create_workout saves a private, model-shaped workout owned by the user', async () => {
     const out = await T.createWorkout(db, { workout: draft() });
@@ -432,7 +458,7 @@ describe('plans, timer and logging', () => {
     const evil = '<img src=x onerror=alert(1)>';
     tables.workouts.push({ id: 'u-evil', owner: OTHER, creator: 'x', title: 'Evil', public: true, data: { id: 'u-evil', title: 'Evil', items: [
       { kind: 'exercise', id: 'e1', exercise: { key: 'bb_bench', name: 'Bench', unit: 'kg', step: 2.5 }, forMode: 'reps', forValue: 5, target: evil },
-      { kind: 'block', id: 'b1', name: 'B', repeat: evil, steps: [{ kind: 'rest', id: 'r1', seconds: evil }] },
+      { kind: 'block', id: 'b1', name: 'B', repeat: evil, steps: [{ kind: 'rest', id: 'r1', seconds: 30 }, { kind: 'exercise', id: 'e2', exercise: { key: 'bb_bench', name: 'Bench', unit: 'kg', step: 2.5 }, forMode: 'reps', forValue: 5, incline: evil }] },
       { kind: 'rest', id: 'r2', seconds: 45 },
     ] } });
     const r = await T.startWorkout(db, { id: 'u-evil' });
