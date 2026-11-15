@@ -4,12 +4,8 @@ import { setLabel } from '@/features/results/logbook';
 import { useEffect, useMemo, useState } from 'react';
 import { DiscoverScreen, type DiscoverTab } from '@/features/discover/components/discover-screen';
 import { uniqueById } from '@/features/discover/catalogue';
-import { LandingScreen } from '@/features/landing/components/landing-screen';
-import { TimerDemo } from '@/features/landing/components/timer-demo';
 import { SignInCard } from '@/features/auth/components/sign-in-card';
 import { FULL_LIBRARY } from '@/features/workouts/imported';
-import { WorkoutPreviewScreen } from '@/features/discover/components/workout-preview-screen';
-import { EditorScreen } from '@/features/runsheet/components/editor-screen';
 import { EX, withStarter } from '@/features/runsheet/fixtures';
 import { copyIn, copyOnEdit, forLabel, lineage, makeExercise, measureOf, ofWorkout, resolveRefs, runsheetMinutes, scoreType, shortUnit, type ExerciseStep, type Runsheet } from '@/features/runsheet/model';
 import { versionOf, versionsOf } from '@/features/runsheet/versions';
@@ -23,7 +19,6 @@ import { CreditedCreatorScreen } from '@/features/creators/components/credited-c
 import { creatorFor, creatorKey, creatorPath } from '@/features/creators/credited';
 import { cn, plural } from '@/shared/utils/ui-utils';
 import { shortDate } from '@/shared/utils/dates';
-import { ExercisePicker } from '@/features/exercises/components/exercise-picker';
 import type { LibraryExercise } from '@/features/exercises/library';
 import { SettingsSheet } from '@/features/profile/components/settings-sheet';
 import { MeScreen } from '@/features/profile/components/me-screen';
@@ -32,8 +27,6 @@ import { muscleLoad } from '@/features/results/muscles';
 import { ImportScreen } from '@/features/share/components/import-screen';
 import { SharedWorkoutRoute } from '@/features/share/components/shared-workout-route';
 import { LogImportScreen } from '@/features/results/components/log-import-screen';
-import { ImportCsvSheet } from '@/features/results/components/import-csv-sheet';
-import { exportFileName, toCsv } from '@/features/results/csv';
 import { decodeLogged, decodeShared, linkFor, shareLink, shareToast } from '@/features/share/share';
 import { useCallback, useRef } from 'react';
 import { fmtScore, progressed, resolveLoads, resolveTarget } from '@/features/runsheet/progression';
@@ -47,6 +40,9 @@ import { useRunner } from '@/features/timer/use-runner';
 import * as Runner from '@/features/timer/runner';
 import type { SessionOrigin, SessionResult } from '@/features/runsheet/progression';
 import { IMPORTED } from '@/features/workouts/imported';
+import { keepOffline, useCatalogue } from '@/features/workouts/catalogue';
+// Fetched when first shown: see app/lazy.tsx.
+import { ClientRoute, CoachesPage, CoachRoute, EditorScreen, ExercisePicker, Holding, ImportCsvSheet, JoinRoute, LandingScreen, MyAiCoach, MyCoaches, TimerDemo, WorkoutPreviewScreen } from './app/lazy';
 import { Button } from '@/shared/components/ui/button';
 import { Sheet } from '@/shared/components/ui/sheet';
 import { TabBar } from '@/shared/components/ui/tab-bar';
@@ -73,8 +69,6 @@ import { dismissStall, getDismissed, getIntent, setIntent as storeIntent } from 
 import { alternatives } from '@/features/exercises/alternatives';
 import { myAssignments, type MyAssignment } from '@/features/cloud/coaching';
 import { doneBy } from '@/features/coaching/rollup';
-import { CoachesPage } from '@/features/coaching/components/coaches-page';
-import { ClientRoute, CoachRoute, JoinRoute, MyAiCoach, MyCoaches } from '@/features/coaching/components/coaching-routes';
 
 
 const TABS = [
@@ -129,6 +123,10 @@ export default function App() {
   const st = useAppState();
   const act = useActions();
   const cloud = useCloudSync();
+  // The catalogue arrives after first paint; until then `all` holds the person's own workouts and
+  // the catalogue ones kept on this device (saved, in progress, recently done).
+  const cat = useCatalogue();
+  const catLoading = !cat.ready && !cat.failed;
   const [remote, setRemote] = useState<Runsheet[]>([]);
   const [remoteLoaded, setRemoteLoaded] = useState(false);
   useEffect(() => {
@@ -162,7 +160,7 @@ export default function App() {
   const all = useMemo(() => {
     // Yours first, then a coach's, public ones, the catalogue: an id met again is the same workout.
     return uniqueById([...withStarter(st.workouts, st.results), ...assigned.flatMap(a => (a.workout ? [a.workout] : [])), ...remote, ...IMPORTED.map(w => w.runsheet)]);
-  }, [st.workouts, st.results, remote, assigned]);
+  }, [st.workouts, st.results, remote, assigned, cat]);
   const byId = useMemo(() => new Map(all.map(r => [wid(r), r])), [all]);
   const lookup = (id: string) => byId.get(id);
   // The tab's title follows the page: a shared workout, a second tab and the browser's history read apart.
@@ -178,7 +176,11 @@ export default function App() {
   // exercise picker as a promise so the editor can await a pick
   const [pickerOpen, setPickerOpen] = useState(false);
   const pickResolve = useRef<((e: LibraryExercise | null) => void) | null>(null);
-  const library = useMemo(() => ({ ...LIB, ...st.exercises }), [st.exercises]);
+  const library = useMemo(() => ({ ...LIB, ...st.exercises }), [st.exercises, cat]);
+  useEffect(() => {
+    const run = Runner.loadPersisted()?.state.runsheetId;
+    keepOffline([...st.saved, ...(run ? [run] : []), ...st.results.slice(0, 30).map(r => r.runsheetId), ...st.results.slice(-30).map(r => r.runsheetId)]);
+  }, [cat, st.saved, st.results]);
   const usage = useMemo(() => {
     const u: Record<string, number> = {};
     for (const w of all) for (const it of w.items) for (const s of it.kind === 'block' ? it.steps : it.kind === 'ref' ? [] : [it]) if (s.kind === 'exercise') u[s.exercise.key] = (u[s.exercise.key] ?? 0) + 1;
@@ -330,7 +332,7 @@ export default function App() {
     // to a signed-out browser, maybe its own and not visible until sign-in.
     if (!found && route.id.startsWith('u-'))
       return shell('discover', <SharedWorkoutRoute key={route.id} id={route.id} signedIn={!!cloud.user} signIn={signInCard('Sign in to see this workout', ['It is saved in your TigerWorkouts account', 'No password: we email you a 6-digit code'])} onFound={r => setRemote(rs => [r, ...rs.filter(x => x.id !== r.id)])} onBack={() => go('/discover')} />);
-    if (!found) return shell('discover', <Missing />);
+    if (!found) return shell('discover', catLoading ? <Holding label="Loading workout" /> : <Missing />);
     const foundOwn = st.workouts.some(w => w.id === wid(found));
     // One copy per original: once you have a copy, the original's page is your copy's page.
     const base = (!foundOwn && copyIn(st.workouts, found)) || found;
@@ -444,7 +446,7 @@ export default function App() {
   }
   if (route.name === 'follow') {
     const r = byId.get(route.id);
-    if (!r) return shell('discover', <Missing />);
+    if (!r) return shell('discover', catLoading ? <Holding label="Loading workout" /> : <Missing />);
     return full(
         <FollowAlongScreen runsheet={r} onBack={() => go(`/w/${encodeURIComponent(route.id)}`)} onFinish={() => go(`/result/${encodeURIComponent(route.id)}`)} />
     );
@@ -475,7 +477,7 @@ export default function App() {
   }
   if (route.name === 'do') {
     const r = draftOf(route.id) ?? byId.get(route.id);
-    if (!r) return shell('discover', <Missing />);
+    if (!r) return shell('discover', catLoading ? <Holding label="Loading workout" /> : <Missing />);
     // Refs inlined, last time's loads carried in, a program's rules applied to them (+2.5 kg after
     // a clean session, the deload after repeated misses), then % of a training max and × bodyweight
     // worked out, so the timer shows and logs a weight for every loaded set.
@@ -516,7 +518,7 @@ export default function App() {
   }
   if (route.name === 'result') {
     const r = draftOf(route.id) ?? byId.get(route.id);
-    if (!r) return shell('discover', <Missing />);
+    if (!r) return shell('discover', catLoading ? <Holding label="Loading workout" /> : <Missing />);
     // What the timer recorded, if it was this workout's run.
     const logged = pending && pending.runsheetId === wid(r) ? pending : null;
     return full(
@@ -643,7 +645,8 @@ export default function App() {
           onOpenHistory={() => go('/history')}
           onOpenWeek={() => go('/history/week')}
           onOpenExercises={() => go('/history/exercises')}
-          onExport={() => {
+          onExport={async () => {
+            const { exportFileName, toCsv } = await import('@/features/results/csv');
             const url = URL.createObjectURL(new Blob([toCsv(st.results, k => library[k] ?? { name: k, unit: '' })], { type: 'text/csv;charset=utf-8' }));
             const a = Object.assign(document.createElement('a'), { href: url, download: exportFileName() });
             a.click();
@@ -694,7 +697,7 @@ export default function App() {
     const stills = Object.values(LIB).filter(e => e.poster).slice(0, 28).map(e => e.poster!);
     return (
       <div className="h-dvh">
-        <LandingScreen onCoaches={() => go('/coaches')} onGetStarted={() => leaveLanding('/me')} onSignIn={() => leaveLanding('/me')} onBrowse={() => leaveLanding('/discover/search')} workoutCount={all.length} exerciseCount={Object.keys(FULL_LIBRARY).length} clips={clips} stills={stills} demo={<TimerDemo />} />
+        <LandingScreen onCoaches={() => go('/coaches')} onGetStarted={() => leaveLanding('/me')} onSignIn={() => leaveLanding('/me')} onBrowse={() => leaveLanding('/discover/search')} workoutCount={cat.ready ? all.length : all.length - IMPORTED.length + __CATALOGUE_COUNTS__.workouts} exerciseCount={Math.max(Object.keys(FULL_LIBRARY).length, __CATALOGUE_COUNTS__.exercises)} clips={clips} stills={stills} demo={<TimerDemo />} />
       </div>
     );
   }
@@ -703,9 +706,11 @@ export default function App() {
   const saved = kept?.state;
   // A run that cannot be resumed (its workout gone, or left more than six hours) can still be saved.
   const resumable = !!kept && byId.has(kept.state.runsheetId) && Date.now() - kept.savedAt < 6 * 3600 * 1000;
+  // Its workout may be a catalogue one that has not arrived yet: say nothing until that is known.
+  const keptUnknown = !!kept && catLoading && !byId.has(kept.state.runsheetId);
   const above = (
     <>
-      {kept && !resumable && Runner.didWork(kept.state) && (
+      {kept && !resumable && !keptUnknown && Runner.didWork(kept.state) && (
         <div className="flex w-full items-center gap-3 rounded-card border border-brand-line bg-brand-soft px-3 py-2.5 text-left">
           <div className="min-w-0 flex-1">
             <div className="text-[14px] font-bold">{kept.state.title} was left unfinished</div>
@@ -745,6 +750,7 @@ export default function App() {
       workouts={all}
       results={st.results}
       savedIds={st.saved}
+      catalogueLoading={catLoading}
       ownIds={withStarter(st.workouts, st.results).map(wid)}
       fromCoach={fromCoach}
       above={above}

@@ -28,6 +28,13 @@ deploying. See README.md for what is where.
   (`sw.js?v=<build>`, `src/app/update-prompt.tsx`); and `index.html` heals itself once (clears
   workers and caches, reloads with `?r=`, which the precache does not answer) when the bundle
   does not start. Keep all four.
+- **First load stays small** (review D12, 2026-11-15). `npm run build` ends with
+  `tools/check-bundle.mjs`, which fails when the JS needed before first paint passes its budget, or
+  when the catalogue or the editor's drag and drop are back in it. The catalogue loads after first
+  paint (`src/features/workouts/catalogue.ts`: `IMPORTED` and `FULL_LIBRARY` fill in place, call
+  `useCatalogue()` to draw again); screens the first paint does not need come from
+  `src/app/lazy.tsx`. Mine, the timer, the result sheet and History stay in the first file, so a
+  saved workout starts with no network.
 - **One catalogue.** `imports/` is the source; `legacy/imported.js`, `src/features/exercises/
   library.ts` and `ios/TigerWorkouts/Resources/*.json` are generated from it (or from
   `legacy/data.js`) by the scripts in `tools/`. Edit the source and re-run, never the output.

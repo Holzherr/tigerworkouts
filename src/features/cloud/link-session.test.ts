@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 
-vi.mock('@supabase/supabase-js', () => ({ createClient: () => ({ auth: { onAuthStateChange: () => {} } }) }));
+vi.mock('@/features/cloud/supabase', () => ({ createClient: () => ({ auth: { onAuthStateChange: () => {} } }) }));
 const { linkSession } = await import('./client');
 
 describe('linkSession', () => {

@@ -47,7 +47,7 @@ const fake = vi.hoisted(() => {
   };
   return f;
 });
-vi.mock('@supabase/supabase-js', () => ({
+vi.mock('@/features/cloud/supabase', () => ({
   createClient: () => ({
     auth: { onAuthStateChange: (cb: typeof fake.onAuth) => (fake.onAuth = cb), signOut: async () => (fake.calls.push('auth.signOut'), { error: null }) },
     from: (name: string) => fake.table(name),

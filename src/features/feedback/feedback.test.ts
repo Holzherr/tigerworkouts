@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import type { User } from '@supabase/supabase-js';
+import type { User } from '@supabase/auth-js';
 import type { RunState } from '@/features/timer/runner';
 import { buildContext, runSummary, screenName } from './context';
 import { FEEDBACK_KEY, FEEDBACK_URL, sendFeedback } from './send';

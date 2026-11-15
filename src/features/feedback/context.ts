@@ -4,7 +4,7 @@
  * Never an access token: the user's token goes in the Authorization header and the intake Worker
  * stamps the verified id itself.
  */
-import type { User } from '@supabase/supabase-js';
+import type { User } from '@supabase/auth-js';
 import type { RunState } from '@/features/timer/runner';
 
 export interface LoggedError { at: string; message: string }
