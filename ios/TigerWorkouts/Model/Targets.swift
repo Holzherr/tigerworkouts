@@ -156,8 +156,9 @@ enum Targets {
     /// Today's sets for one step, from its sets last time (`LastTime.sets`). Only steps counted in
     /// reps whose load is theirs to change: no pyramid, no relative load, nothing on a speed. Last
     /// time's warm-ups and drop sets are not the work, so they are left out. The next load up is
-    /// the next one `kit` can make (a 24 kg bell goes to 28, not 26.5).
-    static func set(_ s: ExerciseStep, last all: [SetResult]?, intent: Intent = .maintain, kit: Equipment? = nil) -> SetTarget? {
+    /// the next one `kit` can make (a 24 kg bell goes to 28, not 26.5). `mode` is how the lift moves
+    /// on (`ProgressMode`): reps (double progression, the default), weight at fixed reps, or effort.
+    static func set(_ s: ExerciseStep, last all: [SetResult]?, intent: Intent = .maintain, kit: Equipment? = nil, mode: ProgressMode = .reps) -> SetTarget? {
         let last = all?.filter { $0.type != .warmup && $0.type != .drop }
         guard let last, !last.isEmpty, !pyramid(s), s.targetPct == nil, s.loadFactor == nil else { return nil }
         guard [.reps, .amrap, .max].contains(s.forMode) else { return nil }
@@ -171,6 +172,7 @@ enum Targets {
         if top <= 0 || unit.isEmpty {
             let done = last.compactMap(\.reps).filter { $0 > 0 }
             guard !done.isEmpty else { return nil }
+            if mode == .effort { return effortBodyweight(s, last: last, done: done, intent: intent) }
             let reps = done.map { $0 + add }
             let reason = add == 0 ? "what you did last time" : "\(add == 1 ? "a rep" : "\(Format.number(add)) reps") more a set than last time"
             return make(load: nil, reps: reps, jump: false, text: "\(repsText(reps)) reps", reason: reason)
@@ -183,6 +185,14 @@ enum Targets {
         let ceiling = s.forMax ?? (up.map { bankTop(load: top, step: $0 - top, reps: bottom) } ?? bottom * 2)
         let next = up.map { ($0 * 100).rounded() / 100 } ?? top
         let u = unit.isEmpty ? "" : " \(unit)"
+        switch mode {
+        case .weight:
+            return byWeight(s, top: top, working: working, up: up, intent: intent, kit: kit, unit: u)
+        case .effort:
+            return byEffort(s, last: last, top: top, working: working, next: up.map { _ in next }, intent: intent, unit: u)
+        case .reps:
+            break
+        }
         if up != nil && intent != .restore && working.allSatisfy({ $0 >= ceiling }) {
             let reps = working.map { _ in bottom }
             return make(load: next, reps: reps, jump: true, text: "\(Format.number(next))\(u) × \(repsText(reps))",
@@ -194,20 +204,74 @@ enum Targets {
                     reason: add == 0 ? "what you did last time" : up == nil ? "bank reps: \(Format.number(top))\(u) is the heaviest you own" : "bank reps: \(Format.number(next))\(u) once every set reaches \(Format.number(ceiling))")
     }
 
+    private static func target(_ s: ExerciseStep, load: Double?, reps: [Double], jump: Bool, text: String, reason: String) -> SetTarget {
+        SetTarget(stepId: s.id, exerciseKey: s.exercise.key, name: s.exercise.name, load: load, reps: reps, jump: jump, text: text, reason: reason)
+    }
+
+    /// Weight at fixed reps: the plan's reps on every set; one step up (two on overreach) once every
+    /// working set made them, else hold the weight.
+    private static func byWeight(_ s: ExerciseStep, top: Double, working: [Double], up: Double?, intent: Intent, kit: Equipment?, unit u: String) -> SetTarget {
+        let want = s.forValue
+        let reps = working.map { _ in want }
+        if let up, intent != .restore, working.allSatisfy({ $0 >= want }) {
+            let to = intent == .overreach ? (Plates.nextUp(up, s.exercise, kit) ?? up) : up
+            let next = (to * 100).rounded() / 100
+            return target(s, load: next, reps: reps, jump: true, text: "\(Format.number(next))\(u) × \(repsText(reps))",
+                          reason: "\(Format.number(want)) reps at \(Format.number(top))\(u) on every set: up to \(Format.number(next))\(u)")
+        }
+        let reason = intent == .restore ? "same weight as last time"
+            : up == nil ? "\(Format.number(top))\(u) is the heaviest you own: hold it"
+            : "hold \(Format.number(top))\(u) until every set makes \(Format.number(want))"
+        return target(s, load: top, reps: reps, jump: false, text: "\(Format.number(top))\(u) × \(repsText(reps))", reason: reason)
+    }
+
+    /// The RPE a set has to come down to before the weight goes up: 7 (three reps left), 8 on overreach.
+    static func easyRPE(_ intent: Intent) -> Double { intent == .overreach ? 8 : 7 }
+
+    /// Effort: the same weight and reps as last time; one step up once the hardest working set's RPE
+    /// came down to `easyRPE`. Without an RPE there is nothing to read, so it holds.
+    private static func byEffort(_ s: ExerciseStep, last: [SetResult], top: Double, working: [Double], next: Double?, intent: Intent, unit u: String) -> SetTarget {
+        let rpe = last.filter { $0.load == top }.compactMap(\.rpe).max()
+        let easy = easyRPE(intent)
+        if let rpe, let next, intent != .restore, rpe <= easy {
+            return target(s, load: next, reps: working, jump: true, text: "\(Format.number(next))\(u) × \(repsText(working))",
+                          reason: "RPE \(Format.number(rpe)) at \(Format.number(top))\(u): up to \(Format.number(next))\(u), same reps")
+        }
+        let reason = switch (rpe, next) {
+        case (nil, _): "same as last time · rate how hard it was at the finish"
+        case (let r?, nil): "RPE \(Format.number(r)) · \(Format.number(top))\(u) is the heaviest you own"
+        case (let r?, _): intent == .restore ? "same as last time" : "RPE \(Format.number(r)) last time: more weight once it is \(Format.number(easy)) or less"
+        }
+        return target(s, load: top, reps: working, jump: false, text: "\(Format.number(top))\(u) × \(repsText(working))", reason: reason)
+    }
+
+    /// Effort without a load: the same reps, a rep more a set once it felt easy.
+    private static func effortBodyweight(_ s: ExerciseStep, last: [SetResult], done: [Double], intent: Intent) -> SetTarget {
+        let rpe = last.compactMap(\.rpe).max()
+        if let rpe, intent != .restore, rpe <= easyRPE(intent) {
+            let reps = done.map { $0 + 1 }
+            return target(s, load: nil, reps: reps, jump: false, text: "\(repsText(reps)) reps", reason: "RPE \(Format.number(rpe)) last time: a rep more a set")
+        }
+        return target(s, load: nil, reps: done, jump: false, text: "\(repsText(done)) reps",
+                      reason: rpe == nil ? "same as last time · rate how hard it was at the finish" : "same as last time")
+    }
+
     /// A programme's own progression rule covers this step: the runsheet's, or its block's.
     static func ruled(_ r: Runsheet, _ s: ExerciseStep) -> Bool {
         r.progression != nil || r.items.compactMap(\.asBlock).contains { $0.progression != nil && $0.steps.contains { $0.id == s.id } }
     }
 
     /// A target per step, first step of each exercise only, skipping warm-ups and steps a
-    /// programme's own progression rules already move.
-    static func sets(_ r: Runsheet, results: [SessionResult], intent: Intent = .maintain, kit: Equipment? = nil) -> [SetTarget] {
+    /// programme's own progression rules already move. None while suggestions are off for the
+    /// account or this workout; each exercise moves by its own mode (`SuggestPrefs`).
+    static func sets(_ r: Runsheet, results: [SessionResult], intent: Intent = .maintain, kit: Equipment? = nil, suggest: SuggestPrefs = .current()) -> [SetTarget] {
+        guard suggest.on(for: r) else { return [] }
         var seen = Set<String>()
         var out: [SetTarget] = []
         for s in r.exerciseSteps {
             if seen.contains(s.exercise.key) || (s.role ?? .main) != .main || ruled(r, s) { continue }
             seen.insert(s.exercise.key)
-            if let t = set(s, last: LastTime.sets(results, for: s, in: r), intent: intent, kit: kit) { out.append(t) }
+            if let t = set(s, last: LastTime.sets(results, for: s, in: r), intent: intent, kit: kit, mode: suggest.mode(for: s.exercise.key)) { out.append(t) }
         }
         return out
     }
@@ -220,11 +284,12 @@ enum Targets {
     }
 
     /// The one line for the Up next card and the top of the workout page.
-    static func today(_ r: Runsheet, results: [SessionResult], intent: Intent = .maintain, kit: Equipment? = nil) -> Today? {
+    static func today(_ r: Runsheet, results: [SessionResult], intent: Intent = .maintain, kit: Equipment? = nil, suggest: SuggestPrefs = .current()) -> Today? {
+        guard suggest.on(for: r) else { return nil }
         if let score = score(r, results: results, intent: intent) {
             return Today(text: score.text, detail: score.detail, score: score, sets: [])
         }
-        let all = sets(r, results: results, intent: intent, kit: kit)
+        let all = sets(r, results: results, intent: intent, kit: kit, suggest: suggest)
         guard let first = all.first else { return nil }
         let more = all.count > 1 ? " · \(all.count - 1) more on the workout page" : ""
         return Today(text: "\(first.name) \(first.text)", detail: "\(first.reason)\(more)", score: nil, sets: all)
@@ -256,14 +321,15 @@ enum Targets {
 
     /// The finish screen's "Next time", read as if the session just done were the newest: the score
     /// to aim for, then a line per exercise not already moved by a programme's rules (`covered`).
-    static func nextTime(_ r: Runsheet, done: SessionResult, history: [SessionResult], intent: Intent = .maintain, covered: [String] = [], kit: Equipment? = nil) -> [NextTimeLine] {
+    static func nextTime(_ r: Runsheet, done: SessionResult, history: [SessionResult], intent: Intent = .maintain, covered: [String] = [], kit: Equipment? = nil, suggest: SuggestPrefs = .current()) -> [NextTimeLine] {
+        guard suggest.on(for: r) else { return [] }
         var now = done
         if now.runsheetId.isEmpty { now.runsheetId = r.key }
         let all = history.filter { $0 != done && ($0.id == nil || $0.id != done.id) } + [now]
         if let score = score(r, results: all, intent: intent) {
             return [NextTimeLine(key: "score", name: r.title, text: score.text, reason: score.detail)]
         }
-        return sets(r, results: all, intent: intent, kit: kit)
+        return sets(r, results: all, intent: intent, kit: kit, suggest: suggest)
             .filter { !covered.contains($0.exerciseKey) }
             .map { NextTimeLine(key: $0.exerciseKey, name: $0.name, text: $0.text, reason: $0.reason) }
     }

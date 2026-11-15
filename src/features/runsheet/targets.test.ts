@@ -123,3 +123,27 @@ describe('where the target shows', () => {
     expect(nextTime(strength, now, [done], 'maintain', ['kb_swing'])).toEqual([]);
   });
 });
+
+describe('progress modes (port of ProgressModesTests.swift)', () => {
+  const benchStep = step(bench, { target: 60 });
+  const rated = (load: number, rpe: number | undefined, ...reps: number[]): SetResult[] => reps.map(r => ({ reps: r, load, ...(rpe !== undefined ? { rpe } : {}) }));
+
+  it('reps is the default', () => {
+    expect(setTarget(benchStep, sets(60, 8, 8, 8))).toEqual(setTarget(benchStep, sets(60, 8, 8, 8), 'maintain', undefined, 'reps'));
+  });
+
+  it('weight keeps the plan’s reps and adds a step once every set made them, else holds', () => {
+    expect(setTarget(benchStep, sets(60, 8, 8, 8), 'maintain', undefined, 'weight')).toMatchObject({ text: '62.5 kg × 8', jump: true, reason: '8 reps at 60 kg on every set: up to 62.5 kg' });
+    expect(setTarget(benchStep, sets(60, 8, 8, 6), 'maintain', undefined, 'weight')).toMatchObject({ text: '60 kg × 8', jump: false, reason: 'hold 60 kg until every set makes 8' });
+    expect(setTarget(benchStep, sets(60, 8, 8, 8), 'overreach', undefined, 'weight')?.text).toBe('65 kg × 8');
+    expect(setTarget(step(pushup, { target: undefined }), sets(undefined, 10, 10), 'maintain', undefined, 'weight')?.text).toBe('11 reps');
+  });
+
+  it('effort holds until the RPE comes down, then adds a step at the same reps', () => {
+    expect(setTarget(benchStep, rated(60, 9, 8, 8, 7), 'maintain', undefined, 'effort')).toMatchObject({ text: '60 kg × 8, 8, 7', jump: false, reason: 'RPE 9 last time: more weight once it is 7 or less' });
+    expect(setTarget(benchStep, rated(60, 7, 8, 8, 8), 'maintain', undefined, 'effort')).toMatchObject({ text: '62.5 kg × 8', jump: true, reason: 'RPE 7 at 60 kg: up to 62.5 kg, same reps' });
+    expect(setTarget(benchStep, sets(60, 8, 8, 8), 'maintain', undefined, 'effort')?.reason).toBe('same as last time · rate how hard it was at the finish');
+    expect(setTarget(benchStep, rated(60, 8, 8, 8, 8), 'overreach', undefined, 'effort')?.jump).toBe(true);
+    expect(setTarget(step(pushup, { target: undefined }), rated(0, 6, 10, 10).map(({ load: _, ...x }) => x), 'maintain', undefined, 'effort')?.text).toBe('11 reps');
+  });
+});

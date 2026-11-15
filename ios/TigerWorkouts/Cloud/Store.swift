@@ -19,6 +19,11 @@ final class Store {
     var equipment: Equipment? {
         didSet { Equipment.store(equipment) }
     }
+    /// Whether and how to suggest progress (`SuggestPrefs`). Synced on `user_state.prefs.suggestions`;
+    /// mirrored into UserDefaults for the engine and the targets (`SuggestPrefs.current()`).
+    var suggestions = SuggestPrefs() {
+        didSet { SuggestPrefs.store(suggestions) }
+    }
     var saved: Set<String> = []
     /// When each synced pref was last changed on this phone (PrefsMerge): the newer side wins a sync.
     private(set) var prefsUpdatedAt: [String: String] = [:]
@@ -93,6 +98,7 @@ final class Store {
         seedLogbookIfAsked()
         seedPaceIfAsked()
         seedProgressIfAsked()
+        seedWeeksIfAsked()
         seedLoadsIfAsked()
         seedArmsAbsIfAsked()
         seedTimedIfAsked()
@@ -219,6 +225,7 @@ final class Store {
             saved = []
             trainingMaxes = [:]
             equipment = nil
+            suggestions = SuggestPrefs()
             bodyweightKg = nil
             prefsUpdatedAt = [:]
             customExercises = [:]
@@ -456,6 +463,13 @@ final class Store {
         await writePrefs()
     }
 
+    func setSuggestions(_ p: SuggestPrefs) async {
+        guard p != suggestions else { return }
+        suggestions = p
+        touched("suggestions")
+        await writePrefs()
+    }
+
     private func touched(_ field: String) {
         prefsUpdatedAt[field] = PrefsMerge.stamp()
     }
@@ -468,6 +482,7 @@ final class Store {
         if let equipment, let data = try? JSONEncoder().encode(equipment), let json = try? JSONSerialization.jsonObject(with: data) {
             values["equipment"] = json
         }
+        if let json = suggestions.json { values["suggestions"] = json }
         return PrefsMerge.Side(values: values, updatedAt: prefsUpdatedAt)
     }
 
@@ -487,8 +502,9 @@ final class Store {
         trainingMaxes = p.trainingMaxes
         bodyweightKg = p.bodyweightKg
         equipment = p.equipment
+        suggestions = p.suggestions
         profileName = (m.values["name"] as? String).map { $0.trimmingCharacters(in: .whitespaces) }.flatMap { $0.isEmpty ? nil : $0 }
-        prefsUpdatedAt = m.updatedAt.filter { ["saved", "trainingMaxes", "bodyweightKg", "equipment"].contains($0.key) }
+        prefsUpdatedAt = m.updatedAt.filter { ["saved", "trainingMaxes", "bodyweightKg", "equipment", "suggestions"].contains($0.key) }
     }
 
     /// Set by the workout page as it starts a session, taken by RootView (Versions.swift).
@@ -718,6 +734,7 @@ final class Store {
         var pendingExercises: [LibraryExercise]?
         var trainingMaxes: [String: Double]?
         var equipment: Equipment?
+        var suggestions: SuggestPrefs?
         var prefsUpdatedAt: [String: String]?
         var publicSetHere: [String]?
     }
@@ -748,6 +765,7 @@ final class Store {
         pendingExercises = c.pendingExercises ?? []
         trainingMaxes = c.trainingMaxes ?? [:]
         equipment = c.equipment
+        suggestions = c.suggestions ?? SuggestPrefs()
         prefsUpdatedAt = c.prefsUpdatedAt ?? [:]
         publicSetHere = Set(c.publicSetHere ?? [])
     }
@@ -759,7 +777,7 @@ final class Store {
             pendingWorkouts: pendingWorkouts, pendingWorkoutDeletes: pendingWorkoutDeletes,
             pendingDeletes: pendingDeletes,
             customExercises: Array(customExercises.values), pendingExercises: pendingExercises,
-            trainingMaxes: trainingMaxes, equipment: equipment, prefsUpdatedAt: prefsUpdatedAt,
+            trainingMaxes: trainingMaxes, equipment: equipment, suggestions: suggestions, prefsUpdatedAt: prefsUpdatedAt,
             publicSetHere: publicSetHere.sorted()
         )
         try? JSONEncoder().encode(c).write(to: cacheURL, options: .atomic)

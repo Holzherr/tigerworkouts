@@ -507,6 +507,10 @@ struct Runsheet: Codable, Hashable, Sendable, Identifiable {
     /// Set on the copy made when someone else's workout is edited: the id it was copied from. Its
     /// sessions stay this workout's history, so Up next, pace and stalls keep the thread.
     var copyOf: String?
+    /// Set on a duplicate (⋯ Duplicate, week 1 → week 2): the workout it was duplicated from. Not
+    /// part of its history (`lineage`) — the copy starts its own — but the progress table follows it,
+    /// so week 2 shows week 1 beside it (`WeekTable.family`).
+    var duplicateOf: String?
     /// The card icon the web app picked or uploaded (`WorkoutIcon` in icon.ts). Not drawn here yet,
     /// but kept as it came, so a workout edited on the phone does not lose it.
     var icon: JSONValue?
@@ -524,7 +528,7 @@ struct Runsheet: Codable, Hashable, Sendable, Identifiable {
     func owns(_ r: SessionResult) -> Bool { lineage.contains(r.runsheetId) }
 
     private enum CodingKeys: String, CodingKey {
-        case id, title, creator, description, source, tags, level, program, timeCapSec, score, progression, video, items, copyOf, icon, createdAt
+        case id, title, creator, description, source, tags, level, program, timeCapSec, score, progression, video, items, copyOf, duplicateOf, icon, createdAt
         case isPublic = "public"
     }
 
@@ -554,6 +558,7 @@ struct Runsheet: Codable, Hashable, Sendable, Identifiable {
         items = try c.decodeIfPresent([Item].self, forKey: .items) ?? []
         isPublic = try c.decodeIfPresent(Bool.self, forKey: .isPublic)
         copyOf = try c.decodeIfPresent(String.self, forKey: .copyOf)
+        duplicateOf = try? c.decodeIfPresent(String.self, forKey: .duplicateOf)
         icon = try? c.decodeIfPresent(JSONValue.self, forKey: .icon)
         createdAt = try c.decodeIfPresent(String.self, forKey: .createdAt)
     }

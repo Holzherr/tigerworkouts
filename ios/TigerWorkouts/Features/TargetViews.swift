@@ -217,3 +217,89 @@ struct MadeItCard: View {
         .accessibilityIdentifier(title == "Made it" ? "made-it-yes" : "made-it-no")
     }
 }
+
+/// How hard each lift was, RPE 1–10, on the finish screen — only for lifts progressed by effort
+/// (`ProgressMode.effort`), whose next target reads it. Written onto every working set of that
+/// exercise in the session (`SetResult.rpe`).
+struct LiftEffortCard: View {
+    var runsheet: Runsheet
+    var result: SessionResult
+    var suggest: SuggestPrefs
+    var onRate: (_ exerciseKey: String, _ rpe: Double?) -> Void
+
+    /// The exercises to ask about: progressed by effort, in the main work, not moved by a
+    /// programme's rules, and logged in sets this session. In workout order, once each.
+    static func lifts(_ r: Runsheet, result: SessionResult, suggest: SuggestPrefs) -> [(key: String, name: String)] {
+        guard suggest.on(for: r) else { return [] }
+        var seen = Set<String>()
+        return r.exerciseSteps.compactMap { s in
+            let key = s.exercise.key
+            guard suggest.mode(for: key) == .effort, (s.role ?? .main) == .main, !Targets.ruled(r, s),
+                  result.steps.contains(where: { $0.exerciseKey == key && ($0.sets ?? []).contains { $0.isWorking && ($0.reps ?? 0) > 0 } }),
+                  seen.insert(key).inserted else { return nil }
+            return (key, s.exercise.name)
+        }
+    }
+
+    /// The session with `rpe` on every working set of the exercise (nil clears it).
+    static func rated(_ r: SessionResult, key: String, rpe: Double?) -> SessionResult {
+        var r = r
+        r.steps = r.steps.map { row in
+            guard row.exerciseKey == key, var sets = row.sets else { return row }
+            for i in sets.indices where sets[i].isWorking { sets[i].rpe = rpe }
+            var row = row
+            row.sets = sets
+            return row
+        }
+        return r
+    }
+
+    static func value(_ r: SessionResult, key: String) -> Double? {
+        r.steps.filter { $0.exerciseKey == key }.flatMap { $0.sets ?? [] }.compactMap(\.rpe).max()
+    }
+
+    var body: some View {
+        let lifts = Self.lifts(runsheet, result: result, suggest: suggest)
+        if !lifts.isEmpty {
+            VStack(alignment: .leading, spacing: 12) {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("How hard was each lift?").font(.subheadline.weight(.bold)).foregroundStyle(Brand.ink)
+                    Text("RPE: 10 is nothing left, 7 is three more reps in the tank. Weight goes up once it is 7 or less.")
+                        .font(.footnote)
+                        .foregroundStyle(Brand.muted)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+                ForEach(lifts, id: \.key) { lift in
+                    let value = Self.value(result, key: lift.key)
+                    VStack(alignment: .leading, spacing: 6) {
+                        HStack {
+                            Text(lift.name).font(.footnote.weight(.semibold)).foregroundStyle(Brand.ink).lineLimit(1)
+                            Spacer()
+                            Text(value.map { "RPE \(Format.number($0))" } ?? "Tap 1–10").font(.caption).foregroundStyle(Brand.muted)
+                        }
+                        HStack(spacing: 3) {
+                            ForEach(1...10, id: \.self) { n in
+                                let on = value.map(Int.init) == n
+                                Button { onRate(lift.key, on ? nil : Double(n)) } label: {
+                                    Text("\(n)")
+                                        .font(.system(size: 14, weight: .bold, design: .rounded))
+                                        .monospacedDigit()
+                                        .frame(maxWidth: .infinity, minHeight: 36)
+                                        .foregroundStyle(on ? Color.white : Brand.ink)
+                                        .background(on ? Brand.ink : Brand.lineSoft, in: RoundedRectangle(cornerRadius: 8, style: .continuous))
+                                }
+                                .buttonStyle(.plain)
+                                .accessibilityLabel("\(lift.name) RPE \(n)")
+                                .accessibilityAddTraits(on ? .isSelected : [])
+                            }
+                        }
+                    }
+                }
+            }
+            .padding(14)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .cardSurface()
+            .accessibilityIdentifier("lift-effort")
+        }
+    }
+}

@@ -152,7 +152,9 @@ enum Stall {
 
     /// The same, with the swap taken from the alternatives data: the first option for this exercise
     /// that takes a load at its standing best, else the first option.
-    static func exercise(_ results: [SessionResult], key: String, now: Date = Date()) -> Found? {
+    /// Nothing while suggestions are off for the account (`SuggestPrefs`).
+    static func exercise(_ results: [SessionResult], key: String, now: Date = Date(), suggest: SuggestPrefs = .current()) -> Found? {
+        guard suggest.enabled else { return nil }
         let ref = Library.shared.exercise(key)?.ref ?? .placeholder(key: key)
         guard let plain = exercise(results, exercise: ref, now: now) else { return nil }
         let bestLoad = Logbook.history(results, exerciseKey: key).flatMap(\.sets).compactMap(\.load).max()
@@ -165,7 +167,9 @@ enum Stall {
     }
 
     /// A scored workout's stall: rounds or reps that stopped going up, a time that stopped coming down.
-    static func workout(_ r: Runsheet, results: [SessionResult], now: Date = Date()) -> Found? {
+    /// Nothing while suggestions are off for the account or this workout (`SuggestPrefs`).
+    static func workout(_ r: Runsheet, results: [SessionResult], now: Date = Date(), suggest: SuggestPrefs = .current()) -> Found? {
+        guard suggest.on(for: r) else { return nil }
         let type = r.effectiveScore
         guard type == .rounds || type == .time || type == .reps else { return nil }
         let pts = results

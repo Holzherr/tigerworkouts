@@ -54,11 +54,14 @@ export const mergePrefs = (local: PrefsSide, remote: PrefsSide): MergedPrefs => 
 /** Now, as a stamp. A device whose clock runs slow loses a tie it should have won; that is all. */
 export const stamp = () => new Date().toISOString();
 
-/** The prefs row as written: what else is on it kept, cleared fields written as null. */
+/** The prefs row as written: what else is on it kept, cleared fields written as null. Stamps of
+ * fields this app does not know (the iPhone app's `suggestions`) are kept too, so they keep winning. */
 export const prefsRow = (existing: Record<string, unknown>, merged: PrefsSide): Record<string, unknown> => {
   const out: Record<string, unknown> = { ...existing };
   for (const f of PREF_FIELDS) out[f] = merged.values[f] ?? null;
-  out.updatedAt = merged.updatedAt;
+  const old = existing.updatedAt && typeof existing.updatedAt === 'object' ? (existing.updatedAt as Record<string, string>) : {};
+  const kept = Object.fromEntries(Object.entries(old).filter(([k]) => !(PREF_FIELDS as readonly string[]).includes(k)));
+  out.updatedAt = { ...kept, ...merged.updatedAt };
   return out;
 };
 

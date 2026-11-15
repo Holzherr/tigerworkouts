@@ -79,6 +79,7 @@ struct WorkoutDetailView: View {
                     progress
                     refRows
                     trainingMaxLink
+                    WorkoutProgressEntry(runsheet: runsheet)
                 } else if !runsheet.title.isEmpty {
                     Text(runsheet.title)
                         .font(.system(size: 26, weight: .heavy))
@@ -384,6 +385,8 @@ struct WorkoutDetailView: View {
         if store.isMine(runsheet) { copy.title = "\(runsheet.title) (copy)" }
         // A workout of its own beside the original, not the original edited: its own history.
         copy.copyOf = nil
+        // Not its history, but the week-by-week table follows it back (WeekTable.family).
+        copy.duplicateOf = (onceFrom ?? runsheet).key
         copy.program = nil
         runsheet = copy
         scope = nil
