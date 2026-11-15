@@ -928,6 +928,28 @@ final class SessionRunner {
         return parts
     }
 
+    /// "3 blocks left." / "2 sets left.": the work Finish and save would leave undone, for the
+    /// question the ⋯ menu asks first. Nil when every set is done (a rest may still be running),
+    /// and then Finish does not ask.
+    nonisolated static func leftLine(_ state: RunState, runsheet: Runsheet) -> String? {
+        guard state.phase != .done else { return nil }
+        var parts: [String] = []
+        var sets = 0
+        for idx in state.slots.indices where idx >= state.i {
+            let sl = state.slots[idx]
+            guard sl.kind == .work, state.actuals[sl.id]?.doneAt == nil else { continue }
+            sets += 1
+            let part = sl.blockId ?? sl.step.id
+            if parts.last != part { parts.append(part) }
+        }
+        guard sets > 0 else { return nil }
+        if parts.count > 1 { return "\(parts.count) blocks left." }
+        return sets == 1 ? "1 set left." : "\(sets) sets left."
+    }
+
+    /// What Finish and save in the ⋯ menu asks about; nil = finish without asking.
+    var leftLine: String? { Self.leftLine(state, runsheet: runsheet) }
+
     /// The next thing to do that is not the set in hand: the next exercise after this block when
     /// the block is one exercise done for sets (its sets are on screen), else the next work slot.
     var upNext: (name: String, detail: String)? {
