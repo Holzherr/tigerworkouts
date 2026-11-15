@@ -253,14 +253,8 @@ export const WorkoutPreviewScreen = ({ runsheet: r, history = [], lastTime, onBa
         )}
         </div>
         {today && (
-          <div className="rounded-card border border-brand-line bg-surface px-3 py-2.5">
-            <TodayLine text={today.text} detail={today.sets.length > 1 ? today.sets[0].reason : today.detail} />
-            {today.sets.slice(1).map(t => (
-              <div key={t.stepId} className="mt-1.5 pl-6 text-[13px]">
-                <span className="font-bold">{t.name} {t.text}</span>
-                <div className="text-[12px] text-muted">{t.reason}</div>
-              </div>
-            ))}
+          <div className="rounded-card border border-brand-line bg-surface px-3">
+            <TodayLine today={today} />
           </div>
         )}
         {stall && onDismissStall && <StallCard stall={stall} onDismiss={onDismissStall} />}
@@ -327,7 +321,7 @@ export const WorkoutPreviewScreen = ({ runsheet: r, history = [], lastTime, onBa
                         <ClipThumb size="sm" clip={s.exercise.clip} poster={s.exercise.poster} icon={s.exercise.icon} />
                         <div className="min-w-0 flex-1">
                           <div className="truncate text-[14px]">{s.exercise.name}</div>
-                          {lastTime?.(s) && <div className="truncate text-[12px] text-muted">{lastTime(s)}</div>}
+                          {lastTime?.(s) && <div className="line-clamp-2 text-[12px] text-muted">{lastTime(s)}</div>}
                         </div>
                         <span className="text-[13px] font-semibold tabular-nums">{[loadLabel(s), forLabel(s)].filter(Boolean).join(' · ')}</span>
                         <ChevronRight className="size-4 shrink-0 text-faint" />

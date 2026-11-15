@@ -1,25 +1,56 @@
-import { ChevronRight, Target } from 'lucide-react';
+import { ChevronDown, ChevronRight, ChevronUp } from 'lucide-react';
+import { useState } from 'react';
+import type { Today } from '@/features/runsheet/targets';
 import { Button } from '@/shared/components/ui/button';
-import { cn } from '@/shared/utils/ui-utils';
 import type { Stall } from '../stall';
 
+/** The reason without the "· 1 more on the workout page" tail: the others are listed under it. */
+export const whyOf = (detail: string) => {
+  const at = detail.lastIndexOf(' · ');
+  return at >= 0 && detail.slice(at + 3).endsWith('on the workout page') ? detail.slice(0, at) : detail;
+};
+
 /**
- * One line of what to aim for today: a coral "Today" eyebrow with a target icon, the target in
- * bold ("Aim for 8+ rounds") and what it was read from underneath, muted ("Last 3 times: 7, 7, 8
- * rounds"). No border of its own; the host card frames it.
+ * Today's target in one line, "Today: Shoulder press 27.5 kg × 8 (+2.5 kg)", with the reasoning
+ * and any other exercise's target behind a tap (Priyanka, 14 Nov 2026: the two-line version was
+ * heavy and repeated the rows below). `lines` shows a line per lift instead, for a program day
+ * that follows its own rule. No border of its own; the host card frames it.
  */
-export const TodayLine = ({ text, detail, className }: { text: string; detail?: string; className?: string }) => (
-  <div className={cn('flex items-start gap-2', className)} aria-label="Today's target">
-    <Target className="mt-0.5 size-4 shrink-0 text-brand-ink" />
-    <div className="min-w-0 flex-1">
-      <div className="text-[13px] leading-snug">
-        <span className="mr-1.5 text-[11px] font-bold tracking-widest text-brand-ink uppercase">Today</span>
-        <span className="font-bold">{text}</span>
-      </div>
-      {detail && <div className="text-[12px] text-muted">{detail}</div>}
+export const TodayLine = ({ today, className }: { today: Pick<Today, 'text' | 'detail' | 'delta' | 'sets'> & { lines?: boolean }; className?: string }) => {
+  const [open, setOpen] = useState(false);
+  const rest = today.sets.slice(1);
+  return (
+    <div className={className} aria-label="Today's target">
+      <button type="button" onClick={() => setOpen(o => !o)} aria-expanded={open} className="flex min-h-11 w-full items-center gap-2 text-left">
+        <span className="min-w-0 flex-1 text-[14px] leading-snug font-bold">
+          <span className="text-brand-ink">Today: </span>
+          {today.text}
+          {today.delta && <span className="text-brand-ink"> ({today.delta})</span>}
+          {today.lines &&
+            rest.map(t => (
+              <span key={t.stepId} className="block">
+                {t.name} {t.text}
+                {t.delta && <span className="text-brand-ink"> ({t.delta})</span>}
+              </span>
+            ))}
+        </span>
+        {open ? <ChevronUp className="size-4 shrink-0 text-faint" /> : <ChevronDown className="size-4 shrink-0 text-faint" />}
+      </button>
+      {open && (
+        <div className="space-y-1 pb-2 text-[13px] text-muted" aria-label="Why">
+          <div>{whyOf(today.detail)}</div>
+          {!today.lines &&
+            rest.map(t => (
+              <div key={t.stepId}>
+                {t.name} {t.text}
+                {t.delta ? ` (${t.delta})` : ''}: {t.reason}
+              </div>
+            ))}
+        </div>
+      )}
     </div>
-  </div>
-);
+  );
+};
 
 /**
  * The Up next card's one stall line: "Goblet squat · At 24 kg × 8 for 5 weeks · two options" in
