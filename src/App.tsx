@@ -3,6 +3,7 @@ import { newRecords } from '@/features/timer/live-pr';
 import { setLabel } from '@/features/results/logbook';
 import { useEffect, useMemo, useState } from 'react';
 import { DiscoverScreen, type DiscoverTab } from '@/features/discover/components/discover-screen';
+import { uniqueById } from '@/features/discover/catalogue';
 import { LandingScreen } from '@/features/landing/components/landing-screen';
 import { TimerDemo } from '@/features/landing/components/timer-demo';
 import { SignInCard } from '@/features/auth/components/sign-in-card';
@@ -12,6 +13,7 @@ import { EditorScreen } from '@/features/runsheet/components/editor-screen';
 import { EX, withStarter } from '@/features/runsheet/fixtures';
 import { copyIn, copyOnEdit, forLabel, lineage, makeExercise, measureOf, ofWorkout, resolveRefs, runsheetMinutes, scoreType, shortUnit, type ExerciseStep, type Runsheet } from '@/features/runsheet/model';
 import { versionOf, versionsOf } from '@/features/runsheet/versions';
+import { dropEmptyBlocks, settleEdit } from '@/features/runsheet/real-change';
 import { lastSessionLabel, lastSessionSet, lastSetLabel, lastSets, withLastUsed } from '@/features/runsheet/last-used';
 import { applyCommands, parsePlan } from '@/features/runsheet/parse-text';
 import { isImage, readImport } from '@/features/runsheet/import-file';
@@ -74,7 +76,8 @@ import { ClientRoute, CoachRoute, JoinRoute, MyAiCoach, MyCoaches } from '@/feat
 
 
 const TABS = [
-  { id: 'discover', label: 'Discover', icon: <Flame /> },
+  // The page it opens is titled Workouts, with Mine and Discover inside it (Nick, 15 Nov 2026).
+  { id: 'discover', label: 'Workouts', icon: <Flame /> },
   { id: 'history', label: 'History', icon: <History /> },
   { id: 'me', label: 'Me', icon: <User /> },
 ] as const;
@@ -155,9 +158,8 @@ export default function App() {
   }, []);
 
   const all = useMemo(() => {
-    const coach = assigned.flatMap(a => (a.workout && !st.workouts.some(w => w.id === a.workout!.id) ? [a.workout] : []));
-    const coachIds = new Set(coach.map(w => w.id));
-    return [...withStarter(st.workouts, st.results), ...coach.filter((w, i) => coach.findIndex(x => x.id === w.id) === i), ...remote.filter(r => !st.workouts.some(w => w.id === r.id) && !coachIds.has(r.id)), ...IMPORTED.map(w => w.runsheet)];
+    // Yours first, then a coach's, public ones, the catalogue: an id met again is the same workout.
+    return uniqueById([...withStarter(st.workouts, st.results), ...assigned.flatMap(a => (a.workout ? [a.workout] : [])), ...remote, ...IMPORTED.map(w => w.runsheet)]);
   }, [st.workouts, st.results, remote, assigned]);
   const byId = useMemo(() => new Map(all.map(r => [wid(r), r])), [all]);
   const lookup = (id: string) => byId.get(id);
@@ -218,6 +220,33 @@ export default function App() {
   const [drafted, setDrafted] = useState<{ for: string; r: Runsheet } | null>(null);
   const draftOf = (id: string) => (drafted?.for === id ? drafted.r : null);
   const draftFor = (id: string) => (r: Runsheet | null) => setDrafted(r && { for: id, r });
+  // An edit of a workout that is not yours, held on its page until a block is closed or the page is
+  // left: only then, and only if something real changed, is your copy made (review D18).
+  const [held, setHeld] = useState<{ for: string; r: Runsheet } | null>(null);
+  const makeCopy = (next: Runsheet, original: Runsheet) => {
+    const copy = copyOnEdit(next, original, `u-${Date.now().toString(36)}`, st.name);
+    act.saveWorkout({ ...copy, icon: copy.icon ?? defaultIcon(copy.id!) });
+    return copy.id!;
+  };
+  // Leaving a workout's page any way (Back, a link, the browser's own Back) closes its edit: a held
+  // change becomes your copy if it is a real one, and an empty block left on your own is dropped.
+  const lastPage = useRef<string | undefined>(undefined);
+  useEffect(() => {
+    const at = route.name === 'workout' ? route.id : undefined;
+    const left = lastPage.current;
+    lastPage.current = at;
+    if (held && held.for !== at) {
+      const original = byId.get(held.for);
+      const kept = original && settleEdit(held.r, original);
+      if (kept) makeCopy(kept, original);
+      setHeld(null);
+    }
+    if (!left || left === at) return;
+    const mine = st.workouts.find(w => w.id === left);
+    if (mine && dropEmptyBlocks(mine) !== mine) act.saveWorkout(dropEmptyBlocks(mine));
+    // Only a change of page settles; what the page holds is read as it is then.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [route]);
   // Kept on the device while the result sheet is open, so a reload there still edits the logged row.
   const [pending, setPendingState] = useState<Partial<SessionResult> | null>(() => (parse(location.hash).name === 'result' ? loadPending() : (savePending(null), null)));
   const setPending = (p: Partial<SessionResult> | null) => (savePending(p), setPendingState(p));
@@ -302,18 +331,33 @@ export default function App() {
     const id = wid(base);
     // A "Just this time" change is held here until the session that runs it (or Undo).
     const once = draftOf(id);
-    const r = once ?? base;
+    const own = st.workouts.some(w => w.id === id);
+    const pendingEdit = !own && held?.for === id ? held.r : null;
+    const r = once ?? pendingEdit ?? base;
     const versions = versionsOf(st.results, base);
     const done = st.results.some(ofWorkout(base));
     const stall = live(workoutStall(r, st.results, new Date()));
-    const own = st.workouts.some(w => w.id === id);
-    // The page is the one editor: yours saves in place, anyone else's first edit makes your copy.
+    // Saves it now: yours in place, anyone else's as your copy, whose page this then is.
+    const keep = (next: Runsheet, stay = true): string => {
+      setDrafted(null);
+      setHeld(null);
+      if (own) return (act.saveWorkout(next), id);
+      const copyId = makeCopy(next, base);
+      if (stay) goReplace(`/w/${encodeURIComponent(copyId)}`);
+      return copyId;
+    };
+    // The page is the one editor: yours saves as it is changed; a change to anyone else's is held
+    // until its block is closed.
     const edit = (next: Runsheet) => {
       setDrafted(null);
       if (own) return act.saveWorkout(next);
-      const copy = copyOnEdit(next, base, `u-${Date.now().toString(36)}`, st.name);
-      act.saveWorkout({ ...copy, icon: copy.icon ?? defaultIcon(copy.id!) });
-      goReplace(`/w/${encodeURIComponent(copy.id!)}`);
+      setHeld({ for: id, r: next });
+    };
+    // A block's Done, or Start: keeps a real change and drops the rest. The id the workout is under after it.
+    const settle = (stay = true): string => {
+      const kept = settleEdit(pendingEdit ?? base, base);
+      if (!kept) return (setHeld(null), id);
+      return keep(kept, stay);
     };
     return full(
         <WorkoutPreviewScreen
@@ -326,18 +370,19 @@ export default function App() {
           onDismissStall={stall ? () => dismiss(stall) : undefined}
           history={st.results.filter(ofWorkout(r))}
           lastTime={lastTime(r)}
+          onBlockDone={() => settle()}
           editor={{ onChange: edit, onPickExercise: pick, onSwapExercise: pick, resolveTarget: resolve, hintFor: lastTime(r), setHintFor: lastSetHint(r), equipment: st.equipment, refTitle, autoRest: defaultRest, historyFor: s => (st.results.some(x => x.steps.some(y => y.exerciseKey === s.exercise.key)) ? () => go(exerciseLink(s.exercise.key)) : undefined) }}
           onChangeOnce={done ? draftFor(id) : undefined}
-          variant={once ? { onKeep: () => edit(once), onDiscard: () => setDrafted(null) } : undefined}
+          variant={once ? { onKeep: () => keep(dropEmptyBlocks(once)), onDiscard: () => setDrafted(null) } : undefined}
           versions={versions}
           onRunVersion={v => (unlockAudio(), setDrafted({ for: id, r: { ...base, items: v.items } }), go(`/do/${encodeURIComponent(id)}`))}
-          onMakeBase={v => (edit({ ...base, items: v.items }), say('This version is the workout now'))}
+          onMakeBase={v => (keep({ ...base, items: v.items }), say('This version is the workout now'))}
           mergeTargets={own ? st.workouts.filter(w => w.id !== id).sort((a, b) => Number(b.title === base.title) - Number(a.title === base.title)).map(w => ({ id: w.id!, title: w.title, minutes: runsheetMinutes(w) })) : undefined}
           onMergeInto={own ? into => (act.mergeWorkout(id, into), say('Merged: kept as your version'), goReplace(`/w/${encodeURIComponent(into)}`)) : undefined}
           onBack={() => (setDrafted(null), go('/discover'))}
-          onStart={() => (unlockAudio(), drafted?.for !== id && setDrafted(null), go(`/do/${encodeURIComponent(id)}`))}
+          onStart={() => (unlockAudio(), drafted?.for !== id && setDrafted(null), go(`/do/${encodeURIComponent(once ? id : settle(false))}`))}
           onFollowAlong={r.video ? () => go(`/follow/${encodeURIComponent(id)}`) : undefined}
-          onLogOnly={() => go(`/result/${encodeURIComponent(id)}`)}
+          onLogOnly={() => go(`/result/${encodeURIComponent(once ? id : settle(false))}`)}
           onSave={() => act.toggleSaved(id)}
           saved={st.saved.includes(id)}
           onShare={async () => { const out = await shareLink(base.title, shareUrl(base)); told(shareToast(out)); }}
@@ -440,7 +485,7 @@ export default function App() {
   }
   if (route.name === 'session') {
     const res = st.results.find(x => x.id === route.id);
-    if (!res) return shell('history', <Missing />);
+    if (!res) return shell('history', <Missing what="Session" home={{ label: 'Back to History', path: '/history' }} />);
     const r = byId.get(res.runsheetId);
     return full(
         <SessionDetailScreen
@@ -942,11 +987,12 @@ const CreatorRoute = ({ id, onOpen, onShare }: { id: string; onOpen: (r: Runshee
   return <CreatorScreen loading={!page} profile={page?.profile ?? null} workouts={page?.workouts ?? []} onBack={() => (history.length > 1 ? history.back() : go('/discover'))} onOpen={onOpen} onShare={onShare} />;
 };
 
-const Missing = () => (
-  <div className="p-6 text-center text-[13px] text-muted">
-    Workout not found.{' '}
-    <button type="button" className="font-bold text-brand-ink" onClick={() => go('/discover')}>
-      Back to Discover
-    </button>
+/** A link to something that is not here (deleted, or another device's): what it was, and a way home. */
+const Missing = ({ what = 'Workout', home = { label: 'Back to Workouts', path: '/discover' } }: { what?: string; home?: { label: string; path: string } }) => (
+  <div className="flex flex-col items-center p-6 text-center">
+    <h1 className="text-[18px] font-bold">{what} not found</h1>
+    <Button className="mt-4" onClick={() => go(home.path)}>
+      {home.label}
+    </Button>
   </div>
 );

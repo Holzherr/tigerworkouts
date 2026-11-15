@@ -25,8 +25,13 @@ type PgError = { message: string; code?: string } | null;
 /** Missing table (42P01, PGRST205), missing function (42883, PGRST202). */
 export const isMissing = (e: PgError) => !!e && (['42P01', '42883', 'PGRST202', 'PGRST205'].includes(e.code ?? '') || /does not exist|could not find the (table|function)/i.test(e.message));
 
+/** The request never reached the server: the browser's own words for it ("TypeError: Failed to fetch"). */
+export const isOffline = (message: string) => /failed to fetch|networkerror|load failed|network request failed|fetch failed/i.test(message);
+export const OFFLINE_MESSAGE = 'Could not load. Check your connection and try again.';
+
 const fail = (e: NonNullable<PgError>): never => {
   if (isMissing(e)) throw new CoachingError('Coaching is not switched on yet.', true);
+  if (isOffline(e.message)) throw new CoachingError(OFFLINE_MESSAGE);
   throw new CoachingError(friendly(e.message));
 };
 const friendly = (m: string) =>
@@ -249,4 +254,4 @@ export const addNote = async (n: { coach: string; client: string; body: string; 
   note(ok(await sb.from('coach_notes').insert({ coach: n.coach, client: n.client, author: me(), body: n.body.trim(), session_id: n.sessionId ?? null, assignment_id: n.assignmentId ?? null }).select(NOTE).single()) as NoteRow);
 
 /** A short line for a screen: the "not switched on" text, or the error's message. */
-export const coachingMessage = (e: unknown) => (e instanceof CoachingError ? e.message : 'Could not load. Check your connection and try again.');
+export const coachingMessage = (e: unknown) => (e instanceof CoachingError ? e.message : OFFLINE_MESSAGE);

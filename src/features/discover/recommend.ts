@@ -11,6 +11,7 @@ import type { ExerciseStep, Runsheet } from '@/features/runsheet/model';
 import { runsheetMinutes } from '@/features/runsheet/model';
 import type { SessionResult } from '@/features/runsheet/progression';
 import { copiesOf, programDays, root } from './next-up';
+import { madeForYou } from './mine';
 
 export interface Recommendation {
   runsheet: Runsheet;
@@ -19,6 +20,8 @@ export interface Recommendation {
 }
 
 const id = (r: Runsheet) => r.id ?? r.title;
+/** The starter workout a new device shows (fixtures `priyanka`). */
+const SAMPLE_ID = 'priyanka-swings-incline-press-sprints';
 const exerciseKeys = (r: Runsheet) => new Set(r.items.flatMap(i => (i.kind === 'block' ? i.steps : i.kind === 'ref' ? [] : [i])).filter((s): s is ExerciseStep => s.kind === 'exercise').map(s => s.exercise.key));
 const author = (r: Runsheet) => r.source?.author ?? r.creator ?? '';
 
@@ -41,7 +44,9 @@ export const recommend = (all: Runsheet[], results: SessionResult[], saved: stri
       return r ? [{ runsheet: r, reason, score: 1 }] : [];
     };
     return [
-      ...pick(r => (r.source?.kind ?? 'user') === 'user', 'Made for you'),
+      ...pick(r => (r.source?.kind ?? 'user') === 'user' && madeForYou(r), 'Made for you'),
+      // The sample circuit a new device starts with: nobody made it for you.
+      ...pick(r => id(r) === SAMPLE_ID, 'A sample circuit to try the timer'),
       ...pick(r => r.title === 'Cindy', 'A classic 20-minute AMRAP to set a baseline'),
       ...pick(r => r.program?.name === 'Couch to 5K' && r.program.order === 1, 'Start running, three short sessions a week'),
       ...pick(r => r.source?.kind === 'video' && runsheetMinutes(r) <= 15, 'A short follow-along to try the player'),

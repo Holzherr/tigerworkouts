@@ -21,18 +21,19 @@ const moreRounds = () => {
 };
 
 describe('editing a catalogue workout on its page', () => {
-  it('the first edit saves a copy of yours and the page shows it; a second edit session updates that copy', async () => {
+  it('a block closed with a change saves a copy of yours and the page shows it; a second edit session updates that copy', async () => {
     setState({ signedIn: true, results: [], workouts: [], saved: [] });
     location.hash = `#/w/${encodeURIComponent(original.id!)}`;
     render(<App />);
     moreRounds();
+    // Held on the page until the block is closed: nothing is saved yet.
+    expect(mine()).toHaveLength(0);
+    fireEvent.click(screen.getByTestId('block-done'));
     await waitFor(() => expect(location.hash).toMatch(/^#\/w\/u-/));
     const [copy] = mine();
     expect(copy).toMatchObject({ copyOf: original.id, title: `${original.title} (mine)`, source: { kind: 'user' } });
     expect(copy.items.find(i => i.id === block.id)).toMatchObject({ repeat: block.repeat + 1 });
     expect(await screen.findByRole('heading', { name: `${original.title} (mine)` })).toBeTruthy();
-    // The switch to the copy keeps the block open.
-    expect(screen.getByTestId('block-done')).toBeTruthy();
     // Between sessions the copy is renamed and made public; the next edit must keep both.
     act(() => setState({ workouts: [{ ...copy, title: 'Squat day', public: true }] }));
     location.hash = `#/w/${encodeURIComponent(original.id!)}`;
@@ -41,6 +42,38 @@ describe('editing a catalogue workout on its page', () => {
     await waitFor(() => expect(mine()[0].items.find(i => i.id === block.id)).toMatchObject({ repeat: block.repeat + 2 }));
     expect(mine()).toHaveLength(1);
     expect(mine()[0]).toMatchObject({ id: copy.id, title: 'Squat day', public: true });
+  });
+});
+
+describe('a stray tap on a catalogue workout (review D18)', () => {
+  it('Add block, then Back, leaves no copy behind', async () => {
+    setState({ signedIn: true, results: [], workouts: [], saved: [] });
+    location.hash = `#/w/${encodeURIComponent(original.id!)}`;
+    const { unmount } = render(<App />);
+    fireEvent.click(screen.getByRole('button', { name: /Add block/ }));
+    fireEvent.click(await screen.findByRole('button', { name: 'Close' }));
+    fireEvent.click(screen.getByTestId('block-done'));
+    expect(mine()).toHaveLength(0);
+    expect(location.hash).toBe(`#/w/${encodeURIComponent(original.id!)}`);
+    fireEvent.click(screen.getByRole('button', { name: /Add block/ }));
+    fireEvent.click(await screen.findByRole('button', { name: 'Close' }));
+    fireEvent.click(screen.getByRole('button', { name: /Back/ }));
+    await waitFor(() => expect(location.hash).toBe('#/discover'));
+    expect(mine()).toHaveLength(0);
+    unmount();
+  });
+  it('a change left open when the page is left is kept as your copy, without the empty block', async () => {
+    setState({ signedIn: true, results: [], workouts: [], saved: [] });
+    location.hash = `#/w/${encodeURIComponent(original.id!)}`;
+    const { unmount } = render(<App />);
+    moreRounds();
+    fireEvent.click(screen.getByRole('button', { name: /Add block/ }));
+    fireEvent.click(await screen.findByRole('button', { name: 'Close' }));
+    fireEvent.click(screen.getByRole('button', { name: /Back/ }));
+    await waitFor(() => expect(mine()).toHaveLength(1));
+    expect(mine()[0]).toMatchObject({ copyOf: original.id });
+    expect(mine()[0].items).toHaveLength(original.items.length);
+    unmount();
   });
 });
 

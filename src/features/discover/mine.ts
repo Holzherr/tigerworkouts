@@ -16,15 +16,16 @@ export const lastDoneOf = (r: Runsheet, last: Map<string, string>) =>
   [last.get(wid(r)), r.copyOf ? last.get(r.copyOf) : undefined].filter((x): x is string => !!x).sort().pop();
 
 /**
- * Mine on home: your own workouts and the ones you saved, as one list without repeats. Your own
- * not yet done come first, newest first (Nick, 18 Oct 2026: a workout just made for you is what to
+ * Mine on home: your own workouts, the ones you saved and any workout you have a session of (Nick,
+ * 15 Nov 2026: a catalogue workout done five times belongs here without a bookmark), as one list
+ * without repeats. Your own not yet done come first, newest first (Nick, 18 Oct 2026: a workout just made for you is what to
  * do next); then the rest by last done or made, whichever is later, newest first. A workout you
  * have your own copy of shows as the copy only. `skip` leaves out what is already listed above it
- * (what your coach sent). Ported to iOS as `Home.mine`.
+ * (what your coach sent). iOS: `Home.mine`.
  */
 export const mineList = (workouts: Runsheet[], ownIds: string[], savedIds: string[], results: SessionResult[], skip: string[] = []) => {
   const own = new Set(ownIds);
-  const listed = new Set([...ownIds, ...savedIds]);
+  const listed = new Set([...ownIds, ...savedIds, ...results.map(x => x.runsheetId)]);
   const skipped = new Set(skip);
   const last = lastDoneById(results);
   const copied = new Set(workouts.flatMap(r => (r.copyOf ? [r.copyOf] : [])));
