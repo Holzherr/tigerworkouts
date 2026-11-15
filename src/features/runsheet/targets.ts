@@ -17,12 +17,13 @@ import { ofWorkout, plannedSet, scoreType, shortUnit, type Block, type ExerciseS
 import type { SessionResult, SetResult } from './progression';
 import { nextLoadUp, type Equipment } from './plates';
 import { lastSets } from './last-used';
+import { modeFor, suggestOn, type SuggestPrefs } from '@/features/results/suggestions';
 
 export type Intent = 'restore' | 'maintain' | 'overreach';
 
 /** How a lift moves on: reps (double progression, the default), weight at the plan's reps, or by
- * effort (RPE). Chosen on the iPhone app (`prefs.suggestions`); the web has no picker yet and
- * always uses reps. Port of `ProgressMode` in Suggestions.swift. */
+ * effort (RPE). Per account and per exercise (`prefs.suggestions`, results/suggestions.ts). Port of
+ * `ProgressMode` in Suggestions.swift. */
 export type ProgressMode = 'reps' | 'weight' | 'effort';
 
 /** The RPE a set has to come down to before the weight goes up: 7, 8 on overreach. */
@@ -223,14 +224,16 @@ const exerciseSteps = (items: Item[]): ExerciseStep[] => items.flatMap(it => (it
 export const ruled = (r: Runsheet, s: ExerciseStep) => !!r.progression || r.items.some(i => i.kind === 'block' && !!i.progression && i.steps.some(x => x.id === s.id));
 
 /** A target per step, first step of each exercise only, skipping warm-ups and steps a programme's
- * own progression rules already move. */
-export const setTargets = (r: Runsheet, results: SessionResult[], intent: Intent = 'maintain', kit?: Equipment): SetTarget[] => {
+ * own progression rules already move. None while suggestions are off for the account or this
+ * workout; each exercise moves by its own mode (`suggest`). */
+export const setTargets = (r: Runsheet, results: SessionResult[], intent: Intent = 'maintain', kit?: Equipment, suggest?: SuggestPrefs): SetTarget[] => {
+  if (!suggestOn(suggest, r)) return [];
   const seen = new Set<string>();
   const out: SetTarget[] = [];
   for (const s of exerciseSteps(r.items)) {
     if (seen.has(s.exercise.key) || (s.role ?? 'main') !== 'main' || ruled(r, s)) continue;
     seen.add(s.exercise.key);
-    const t = setTarget(s, lastSets(results, s, r), intent, kit);
+    const t = setTarget(s, lastSets(results, s, r), intent, kit, modeFor(suggest, s.exercise.key));
     if (t) out.push(t);
   }
   return out;
@@ -246,9 +249,10 @@ export interface Today {
 
 /** The one line for the Up next card and the top of the workout page: the score target if the
  * workout is scored, else the first exercise with a target. */
-export const today = (r: Runsheet, results: SessionResult[], intent: Intent = 'maintain', kit?: Equipment): Today | undefined => {
+export const today = (r: Runsheet, results: SessionResult[], intent: Intent = 'maintain', kit?: Equipment, suggest?: SuggestPrefs): Today | undefined => {
+  if (!suggestOn(suggest, r)) return undefined;
   const score = scoreTarget(r, results, intent);
-  const sets = score ? [] : setTargets(r, results, intent, kit);
+  const sets = score ? [] : setTargets(r, results, intent, kit, suggest);
   if (score) return { text: score.text, detail: score.detail, score, sets };
   const first = sets[0];
   if (!first) return undefined;
@@ -286,11 +290,12 @@ export interface NextTimeLine {
  * The finish screen's "Next time", read as if the session just done were the newest: the score to
  * aim for, then a line per exercise not already moved by `nextLoads` (`covered`).
  */
-export const nextTime = (r: Runsheet, done: SessionResult, history: SessionResult[], intent: Intent = 'maintain', covered: string[] = [], kit?: Equipment): NextTimeLine[] => {
+export const nextTime = (r: Runsheet, done: SessionResult, history: SessionResult[], intent: Intent = 'maintain', covered: string[] = [], kit?: Equipment, suggest?: SuggestPrefs): NextTimeLine[] => {
+  if (!suggestOn(suggest, r)) return [];
   const all = [...history.filter(h => h !== done && (h.id === undefined || h.id !== done.id)), { ...done, runsheetId: done.runsheetId || id(r) }];
   const out: NextTimeLine[] = [];
   const score = scoreTarget(r, all, intent);
   if (score) out.push({ key: 'score', name: r.title, text: score.text, reason: score.detail });
-  if (!score) for (const s of setTargets(r, all, intent, kit)) if (!covered.includes(s.exerciseKey)) out.push({ key: s.exerciseKey, name: s.name, text: s.text, reason: s.reason });
+  if (!score) for (const s of setTargets(r, all, intent, kit, suggest)) if (!covered.includes(s.exerciseKey)) out.push({ key: s.exerciseKey, name: s.name, text: s.text, reason: s.reason });
   return out;
 };

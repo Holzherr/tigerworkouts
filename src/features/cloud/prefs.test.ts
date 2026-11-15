@@ -47,10 +47,22 @@ describe('mergePrefs', () => {
     expect(prefsRow({ somethingNew: 1 }, { values: {}, updatedAt: {} }).somethingNew).toBe(1);
   });
 
-  it('keeps the iPhone app’s suggestions and its stamp, and drops stale stamps of its own fields', () => {
-    const row = prefsRow({ suggestions: { off: true }, updatedAt: { suggestions: T1, saved: T1 } }, { values: { saved: ['fran'] }, updatedAt: { saved: T2 } });
-    expect(row.suggestions).toEqual({ off: true });
-    expect(row.updatedAt).toEqual({ suggestions: T1, saved: T2 });
+  it('keeps a field this build does not know and its stamp, and drops stale stamps of its own fields', () => {
+    const row = prefsRow({ theme: { dark: true }, updatedAt: { theme: T1, saved: T1 } }, { values: { saved: ['fran'] }, updatedAt: { saved: T2 } });
+    expect(row.theme).toEqual({ dark: true });
+    expect(row.updatedAt).toEqual({ theme: T1, saved: T2 });
     expect(prefsRow({ updatedAt: { saved: T1 } }, { values: {}, updatedAt: {} }).updatedAt).toEqual({});
+  });
+  it('syncs suggestions like any other pref: the newer side wins, and a cleared one stays cleared', () => {
+    const fromPhone = mergePrefs({ values: {}, updatedAt: {} }, remoteSide({ suggestions: { off: true, asked: true }, updatedAt: { suggestions: T1 } }));
+    expect(fromPhone.values.suggestions).toEqual({ off: true, asked: true });
+    expect(fromPhone.push).toBe(false);
+    const fromWeb = mergePrefs({ values: { suggestions: { mode: 'weight', asked: true } }, updatedAt: { suggestions: T2 } }, remoteSide({ suggestions: { off: true }, updatedAt: { suggestions: T1 } }));
+    expect(fromWeb.values.suggestions).toEqual({ mode: 'weight', asked: true });
+    expect(fromWeb.push).toBe(true);
+    expect(prefsRow({ suggestions: { off: true } }, fromWeb).suggestions).toEqual({ mode: 'weight', asked: true });
+    const cleared = mergePrefs({ values: {}, updatedAt: { suggestions: T2 } }, remoteSide({ suggestions: { off: true }, updatedAt: { suggestions: T1 } }));
+    expect(cleared.values.suggestions).toBeUndefined();
+    expect(prefsRow({ suggestions: { off: true } }, cleared).suggestions).toBeNull();
   });
 });

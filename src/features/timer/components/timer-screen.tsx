@@ -16,6 +16,9 @@ import type { SetResult } from '@/features/runsheet/progression';
 import { SwipeToRemove } from '@/features/runsheet/components/swipe-to-remove';
 import { ExerciseSheet } from '@/features/runsheet/components/exercise-sheet';
 import * as R from '../runner';
+import { Target } from 'lucide-react';
+import { useContext } from 'react';
+import { TimerExtrasContext } from '../timer-extras';
 import { raceLine } from '../pace';
 import type { Alternative } from '@/features/exercises/alternatives';
 
@@ -270,6 +273,7 @@ export const TimerScreen = ({ runsheet, state, now, onDone, onSkip, onBack, onPa
   const [confirmExit, setConfirmExit] = useState(false);
   const [confirmDiscard, setConfirmDiscard] = useState(false);
   const [menu, setMenu] = useState(false);
+  const { onSuggestions } = useContext(TimerExtrasContext);
   const [overview, setOverview] = useState(false);
   const [peek, setPeek] = useState<number | null>(null);
   const [look, setLook] = useState<ExerciseStep | null>(null);
@@ -658,6 +662,11 @@ export const TimerScreen = ({ runsheet, state, now, onDone, onSkip, onBack, onPa
           <Button block variant="ghost" onClick={() => (setMenu(false), setOverview(true))}>
             <List /> Workout overview
           </Button>
+          {onSuggestions && (
+            <Button block variant="ghost" onClick={() => (setMenu(false), onSuggestions())}>
+              <Target /> Suggestions
+            </Button>
+          )}
           {onToggleMute && (
             <Button block variant="ghost" onClick={onToggleMute} aria-pressed={!!muted}>
               {muted ? <VolumeX /> : <Volume2 />} {muted ? 'Unmute tones' : 'Mute tones'}
