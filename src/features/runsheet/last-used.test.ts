@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import { lastSet, lastSetLabel, lastSets, lastTimeLabel, lastUsed, withLastUsed } from './last-used';
-import type { SessionResult } from './progression';
-import type { Runsheet } from './model';
+import { compactSets, lastSessionLabel, lastSessionSet, lastSet, lastSetLabel, lastSets, lastTimeLabel, lastUsed, seededSets, withLastUsed } from './last-used';
+import type { SessionResult, SetResult } from './progression';
+import { makeExercise, type Block, type ExerciseStep, type Runsheet } from './model';
+import { EX } from './fixtures';
 
 const sprint = { key: 'sprint', name: 'Treadmill sprints', unit: 'kph', step: 0.5 };
 const press = { key: 'db_incline_press', name: 'Incline chest press', unit: 'kg per arm', step: 2.5 };
@@ -144,5 +145,57 @@ describe('last time, per set, on an exercise counted in a measure', () => {
     const res: SessionResult = { runsheetId: 'x', startedAt: '2026-09-01', steps: [{ stepId: 'row', exerciseKey: 'cardio_rower', sets: [{ load: 500 }] }] };
     expect(lastSets([res], row)).toEqual([{ meters: 500 }]);
     expect(lastSetLabel(lastSets([res], row)?.[0])).toBeUndefined();
+  });
+});
+
+describe('last time, set by set (Priyanka, 15 Nov 2026)', () => {
+  const lift = { ...makeExercise(EX.bb_bench, { target: 100, forMode: 'reps', forValue: 8 }), id: 'b1' };
+  const w: Runsheet = { id: 'u-w', title: 'Push', items: [{ kind: 'block', id: 'blk', name: 'Bench', repeat: 3, mode: 'rounds', steps: [lift] }] };
+  const row = (sets: [number, number][], stepId = 'b1') => ({ stepId, exerciseKey: lift.exercise.key, target: sets[0][0], reps: sets.map(x => x[1]), sets: sets.map(([load, reps]) => ({ load, reps })) });
+  const done = (id: string, at: string, sets: [number, number][], runsheetId = 'u-w', stepId = 'b1'): SessionResult => ({ id, runsheetId, startedAt: at, steps: [row(sets, stepId)] });
+
+  it('reads the last session in order, never the heaviest set', () => {
+    const results = [done('a', '2026-11-01T10:00:00Z', [[120, 1]]), done('b', '2026-11-08T10:00:00Z', [[100, 8], [110, 4], [110, 4]])];
+    expect(lastSessionLabel(results, lift, w)).toBe('last time 100 × 8, 110 × 4 (×2)');
+    expect(lastSessionSet(results, lift, 0, w)).toEqual({ load: 100, reps: 8 });
+    expect(lastSessionSet(results, lift, 1, w)).toEqual({ load: 110, reps: 4 });
+    // Past the end: the last set.
+    expect(lastSessionSet(results, lift, 7, w)).toEqual({ load: 110, reps: 4 });
+  });
+  it('takes the same step of this workout first, else the same exercise', () => {
+    const results = [done('mine', '2026-11-01T10:00:00Z', [[60, 8]]), done('other', '2026-11-09T10:00:00Z', [[30, 12]], 'u-other', 'zz')];
+    expect(lastSessionLabel(results, lift, w)).toBe('last time 60 × 8');
+    expect(lastSessionLabel(results, lift, { id: 'u-third', title: 'Third' })).toBe('last time 30 × 12');
+    expect(lastSessionLabel(results, lift)).toBe('last time 30 × 12');
+  });
+  it('writes sets alike once, reps without a load, and stops at four groups', () => {
+    expect(compactSets([{ load: 100, reps: 8 }, { load: 100, reps: 8 }, { load: 100, reps: 8 }])).toBe('100 × 8 (×3)');
+    expect(compactSets([{ reps: 12 }, { reps: 12 }, { reps: 10 }])).toBe('12 (×2), 10 reps');
+    expect(compactSets([{ load: 10 }], 'kph')).toBe('10 kph');
+    expect(compactSets([1, 2, 3, 4, 5, 6].map(n => ({ load: n * 10, reps: 5 })))).toBe('10 × 5, 20 × 5, 30 × 5, 40 × 5 +2 more');
+    expect(compactSets([])).toBeUndefined();
+  });
+  it('a row from before sets were kept stands in with its reps at its one load', () => {
+    const old: SessionResult = { id: 'o', runsheetId: 'u-w', startedAt: '2026-08-01T10:00:00Z', steps: [{ stepId: 'b1', exerciseKey: lift.exercise.key, target: 50, reps: [8, 7] }] };
+    expect(lastSessionLabel([old], lift, w)).toBe('last time 50 × 8, 50 × 7');
+  });
+  it('starts each set on its own set last time, so a pyramid carries over', () => {
+    const run = withLastUsed(w, [done('b', '2026-11-08T10:00:00Z', [[100, 8], [110, 4], [110, 4]])]);
+    const step = (run.items[0] as Block).steps[0] as ExerciseStep;
+    expect(step.sets?.map(x => x.load)).toEqual([100, 110, 110]);
+    expect(step.target).toBe(100);
+  });
+  it("starts sets that were all one load on today's target when it moves them", () => {
+    const results = [done('b', '2026-11-08T10:00:00Z', [[100, 8], [100, 8], [100, 8]])];
+    const run = withLastUsed(w, results, [{ stepId: 'b1', exerciseKey: lift.exercise.key, load: 102.5 }]);
+    expect(((run.items[0] as Block).steps[0] as ExerciseStep).sets?.map(x => x.load)).toEqual([102.5, 102.5, 102.5]);
+    // A pyramid is left as it was done, whatever the target says.
+    const pyramid = withLastUsed(w, [done('b', '2026-11-08T10:00:00Z', [[100, 8], [110, 4], [110, 4]])], [{ stepId: 'b1', exerciseKey: lift.exercise.key, load: 112.5 }]);
+    expect(((pyramid.items[0] as Block).steps[0] as ExerciseStep).sets?.map(x => x.load)).toEqual([100, 110, 110]);
+  });
+  it('past last time\'s sets, a new set takes the set before\'s load; a warm-up keeps its type', () => {
+    const last: SetResult[] = [{ load: 40, reps: 10, type: 'warmup' }, { load: 100, reps: 8 }];
+    expect(seededSets(lift, 3, last, undefined)).toEqual([{ load: 40, type: 'warmup' }, { load: 100 }, { load: 100 }]);
+    expect(seededSets(lift, 3, last, 105)).toEqual([{ load: 40, type: 'warmup' }, { load: 105 }, { load: 105 }]);
   });
 });

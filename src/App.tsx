@@ -12,7 +12,7 @@ import { EditorScreen } from '@/features/runsheet/components/editor-screen';
 import { EX, withStarter } from '@/features/runsheet/fixtures';
 import { copyIn, copyOnEdit, forLabel, lineage, makeExercise, measureOf, ofWorkout, resolveRefs, runsheetMinutes, scoreType, shortUnit, type ExerciseStep, type Runsheet } from '@/features/runsheet/model';
 import { versionOf, versionsOf } from '@/features/runsheet/versions';
-import { lastSet, lastSetLabel, lastSets, lastTimeLabel, withLastUsed } from '@/features/runsheet/last-used';
+import { lastSessionLabel, lastSessionSet, lastSetLabel, lastSets, withLastUsed } from '@/features/runsheet/last-used';
 import { applyCommands, parsePlan } from '@/features/runsheet/parse-text';
 import { isImage, readImport } from '@/features/runsheet/import-file';
 import { appLink, CreatorScreen } from '@/features/creators/components/creator-screen';
@@ -63,7 +63,7 @@ import { SessionDetailScreen } from '@/features/results/components/session-detai
 import { ExerciseHistoryScreen } from '@/features/results/components/exercise-history-screen';
 import { ExerciseListScreen } from '@/features/results/components/exercise-list-screen';
 import { FULL_LIBRARY as LIB } from '@/features/workouts/imported';
-import { timerTarget, today as todayFor, type Intent } from '@/features/runsheet/targets';
+import { setTargets, timerTarget, today as todayFor, type Intent } from '@/features/runsheet/targets';
 import { exerciseStall, workoutStall, type Stall } from '@/features/results/stall';
 import { dismissStall, getDismissed, getIntent, setIntent as storeIntent } from '@/features/results/suggestions';
 import { alternatives } from '@/features/exercises/alternatives';
@@ -164,8 +164,8 @@ export default function App() {
   const refTitle = (id: string) => byId.get(id)?.title;
   const resolve = (s: ExerciseStep) => resolveTarget(s, st.trainingMaxes, st.bodyweightKg, st.equipment);
   // Step ids are per workout, so "last time" on a row is read against the workout it is in.
-  const lastTime = (r: Runsheet) => (s: ExerciseStep) => lastTimeLabel(lastSet(st.results, s, r), s);
-  const lastSetHint = (r: Runsheet) => (s: ExerciseStep, round: number) => lastSetLabel(lastSets(st.results, s, r)?.[round]);
+  const lastTime = (r: Runsheet) => (s: ExerciseStep) => lastSessionLabel(st.results, s, r);
+  const lastSetHint = (r: Runsheet) => (s: ExerciseStep, round: number) => lastSetLabel(lastSessionSet(st.results, s, round, r));
 
   // exercise picker as a promise so the editor can await a pick
   const [pickerOpen, setPickerOpen] = useState(false);
@@ -427,7 +427,8 @@ export default function App() {
     // Refs inlined, last time's loads carried in, a program's rules applied to them (+2.5 kg after
     // a clean session, the deload after repeated misses), then % of a training max and × bodyweight
     // worked out, so the timer shows and logs a weight for every loaded set.
-    const prepare = (x: Runsheet) => resolveLoads(progressed(withLastUsed(resolveRefs(x, lookup), st.results), st.results, st.trainingMaxes, st.equipment), st.trainingMaxes, st.bodyweightKg, st.equipment);
+    const seeded = (x: Runsheet) => withLastUsed(x, st.results, setTargets(x, st.results, intent, st.equipment));
+    const prepare = (x: Runsheet) => resolveLoads(progressed(seeded(resolveRefs(x, lookup)), st.results, st.trainingMaxes, st.equipment), st.trainingMaxes, st.bodyweightKg, st.equipment);
     const run = prepare(r);
     // Run with a "Just this time" change or a version: what it ran is kept with the session. Both
     // sides as written, before last time's loads go in, so a version never holds the app's fill-ins.
@@ -864,7 +865,7 @@ const RunSession = ({ runsheet, results, intent, equipment, library, origin: sta
           </div>
         </div>
       )}
-      <TimerScreen runsheet={runsheet} state={state} now={now} onDone={act.done} onSkip={skip} onBack={act.back} onPause={act.pause} onResume={act.resume} onAdjust={act.adjust} onAdjustIncline={act.adjustIncline} onSetReps={act.setReps} onSetAmount={act.setAmount} onDrop={drop} onStartBlock={startBlock} onAdjustStep={act.adjustStep} sets={{ adjust: act.adjustAt, setReps: act.setRepsAt, setAmount: act.setAmountAt, complete: act.completeSet, reopen: act.reopenSet, lastFor: (step, round) => lastSets(results, step, runsheet)?.[round], fill: act.fillSet, setType: act.setTypeAt }} onAdjustRest={act.extendRest} lastFor={step => lastSet(results, step, runsheet)} onFill={act.fillSet} ghost={pace?.text} goal={goal} muted={muted} onToggleMute={() => { setMuted(!muted); setMute(!muted); }} equipment={equipment} alternativesFor={(step, target) => alternatives(step.exercise.key, target, library, 6, equipment)} onSwap={act.swap} prs={prs} onEndBlock={endBlock} onFinish={() => { const res = log(state.phase === 'done' ? state : Runner.finish(state, Date.now())); Runner.clearPersisted(); onFinish(res); }} onExit={() => (act.discard(), onExit())} />
+      <TimerScreen runsheet={runsheet} state={state} now={now} onDone={act.done} onSkip={skip} onBack={act.back} onPause={act.pause} onResume={act.resume} onAdjust={act.adjust} onAdjustIncline={act.adjustIncline} onSetReps={act.setReps} onSetAmount={act.setAmount} onDrop={drop} onStartBlock={startBlock} onAdjustStep={act.adjustStep} sets={{ adjust: act.adjustAt, setReps: act.setRepsAt, setAmount: act.setAmountAt, complete: act.completeSet, reopen: act.reopenSet, lastFor: (step, round) => lastSessionSet(results, step, round, runsheet), fill: act.fillSet, setType: act.setTypeAt }} onAdjustRest={act.extendRest} lastFor={step => lastSessionSet(results, step, Runner.current(state)?.round ?? 0, runsheet)} onFill={act.fillSet} ghost={pace?.text} goal={goal} muted={muted} onToggleMute={() => { setMuted(!muted); setMute(!muted); }} equipment={equipment} alternativesFor={(step, target) => alternatives(step.exercise.key, target, library, 6, equipment)} onSwap={act.swap} prs={prs} onEndBlock={endBlock} onFinish={() => { const res = log(state.phase === 'done' ? state : Runner.finish(state, Date.now())); Runner.clearPersisted(); onFinish(res); }} onExit={() => (act.discard(), onExit())} />
     </div>
   );
 };

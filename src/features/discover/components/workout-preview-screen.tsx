@@ -382,6 +382,7 @@ export const WorkoutPreviewScreen = ({ runsheet: r, history = [], lastTime, onBa
           onIncline={stepChange && open ? v => (stepChange(open.id, { incline: v }), setOpen({ ...open, incline: v })) : undefined}
           note={stepChange ? (variant || scope === 'once' ? 'Just this time.' : 'Saved to this workout.') : undefined}
           onHistory={open ? historyOf(open) : undefined}
+          lastTime={open ? lastTime?.(open) : undefined}
         />
       </div>
       <div className="safe-bottom shrink-0 border-t border-line bg-surface p-3">

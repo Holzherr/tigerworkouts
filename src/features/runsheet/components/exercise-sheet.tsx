@@ -19,6 +19,8 @@ export interface ExerciseSheetProps {
   note?: string;
   /** Opens this exercise's logbook: every session it was done in, its chart and records. */
   onHistory?: () => void;
+  /** "last time 100 × 8, 110 × 4": the last session's sets, as every other screen says them. */
+  lastTime?: string;
 }
 
 const isTreadmill = (s: ExerciseStep) => s.exercise.unit === 'kph' || s.incline !== undefined;
@@ -28,7 +30,7 @@ const isTreadmill = (s: ExerciseStep) => s.exercise.unit === 'kph' || s.incline 
  * as steppers rather than text. There is no separate edit mode — if a screen passes a handler
  * the value is editable where you are reading it.
  */
-export const ExerciseSheet = ({ step: s, onOpenChange, onTarget, onIncline, target, incline, note, onHistory }: ExerciseSheetProps) => {
+export const ExerciseSheet = ({ step: s, onOpenChange, onTarget, onIncline, target, incline, note, onHistory, lastTime }: ExerciseSheetProps) => {
   useStepSizes();
   return (
   <Sheet open={!!s} onOpenChange={onOpenChange} title={s?.exercise.name}>
@@ -38,6 +40,7 @@ export const ExerciseSheet = ({ step: s, onOpenChange, onTarget, onIncline, targ
           <ClipThumb size="lg" clip={s.exercise.clip} poster={s.exercise.poster} icon={s.exercise.icon} />
           <div className="min-w-0 flex-1">
             <div className="text-[13px] font-semibold">{forLabel(s)}</div>
+            {lastTime && <div className="mt-0.5 text-[13px] font-semibold text-brand-ink">{lastTime[0].toUpperCase() + lastTime.slice(1)}</div>}
             {s.exercise.cue && <p className="mt-0.5 text-[13px] leading-relaxed text-muted">{s.exercise.cue}</p>}
           </div>
         </div>
