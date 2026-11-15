@@ -40,6 +40,12 @@ struct WorkoutDetailView: View {
     @State private var saveAfterNaming = false
     /// "Saved to Mine" for a moment after Save or the bookmark.
     @State private var toast: String?
+    /// The store's copy of this workout that the page is in step with, and the page as it was
+    /// then. When the store's copy moves for another reason (a sync brought in an edit made from
+    /// Claude or the web while the page was open), the page takes it and keeps what was changed
+    /// here, so its next save is not the old copy over the newer one (review D14).
+    @State private var mirrored: Runsheet?
+    @State private var pageBase: Runsheet?
 
     private enum EditScope { case once, base }
     private enum Asking { case change(Runsheet) }
@@ -138,7 +144,9 @@ struct WorkoutDetailView: View {
             // it gets one to build in (kept only once it holds an exercise).
             if editable && runsheet.items.isEmpty { runsheet.items = [.block(Edit.newBlock(number: 1))] }
             if isNew && runsheet.title.isEmpty { naming = true }
+            inStep()
         }
+        .onChange(of: store.workout(id: runsheet.key)) { _, now in follow(now) }
         .navigationBarBackButtonHidden(unsavedNew)
         .toolbar {
             if unsavedNew {
@@ -417,6 +425,27 @@ struct WorkoutDetailView: View {
         store.stage(next)
         Task { await store.pushWorkouts() }
         runsheet = store.seeded(next)
+        inStep()
+    }
+
+    /// The page and the store's copy of its workout agree as of now.
+    private func inStep() {
+        mirrored = store.workout(id: runsheet.key)
+        pageBase = runsheet
+    }
+
+    /// The store's copy changed and not from this page: the page takes it, with what was changed
+    /// here and not yet saved laid over it (`WorkoutMerge`).
+    private func follow(_ now: Runsheet?) {
+        guard seeded, let now, now != mirrored, let base = pageBase else { return }
+        let theirs = store.seeded(now)
+        runsheet = WorkoutMerge.merge(base: base, local: runsheet, remote: theirs, localNewer: true)
+        mirrored = now
+        pageBase = theirs
+        if onceFrom != nil { onceFrom = theirs }
+        if let id = editing?.id { editing = find(id) }
+        // A save waiting to go out holds the page as it was: it goes again, as it is now.
+        if let waiting = pendingSave, !waiting.isCancelled, runsheet != theirs { scheduleSave() }
     }
 
     // MARK: - Editing in place
@@ -461,6 +490,7 @@ struct WorkoutDetailView: View {
         runsheet = copy
         if let id = editing?.id { editing = renamed[id].flatMap(find) }
         store.stage(copy)
+        inStep()
         Task {
             await store.pushWorkouts()
             if wasSaved { await store.toggleSaved(copy.key) }
@@ -477,7 +507,9 @@ struct WorkoutDetailView: View {
         runsheet = copy
         scope = nil
         onceFrom = nil
-        Task { await store.saveWorkout(copy) }
+        store.stage(copy)
+        inStep()
+        Task { await store.pushWorkouts() }
         toast = "Duplicated · now editing the copy"
         naming = true
     }
@@ -493,6 +525,7 @@ struct WorkoutDetailView: View {
         guard let sheet = Edit.storable(runsheet) else { return }
         pendingSave?.cancel()
         store.stage(sheet)
+        inStep()
         Task { await store.pushWorkouts() }
         kept = true
         toast = "Saved to Mine"
@@ -532,7 +565,9 @@ struct WorkoutDetailView: View {
         var next = onceFrom ?? runsheet
         next.isPublic = on
         if onceFrom != nil { onceFrom = next } else { runsheet = next }
-        Task { await store.saveWorkout(next, visibility: true) }
+        store.stage(next, visibility: true)
+        inStep()
+        Task { await store.pushWorkouts() }
     }
 
     private func scheduleSave() {
@@ -543,7 +578,9 @@ struct WorkoutDetailView: View {
         pendingSave = Task {
             try? await Task.sleep(for: .milliseconds(700))
             guard !Task.isCancelled else { return }
-            await store.saveWorkout(sheet)
+            store.stage(sheet)
+            inStep()
+            await store.pushWorkouts()
         }
     }
 
@@ -556,6 +593,7 @@ struct WorkoutDetailView: View {
         pendingSave?.cancel()
         runsheet = Edit.storable(runsheet) ?? Edit.namedForStart(runsheet)
         store.stage(runsheet)
+        inStep()
         kept = true
         Task { await store.pushWorkouts() }
     }
@@ -566,6 +604,7 @@ struct WorkoutDetailView: View {
         guard let task = pendingSave, !task.isCancelled, let sheet = Edit.storable(runsheet) else { return }
         task.cancel()
         store.stage(sheet)
+        inStep()
         Task { await store.pushWorkouts() }
     }
 

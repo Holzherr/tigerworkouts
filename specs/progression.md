@@ -40,6 +40,13 @@ metric, no chatbot, nothing that costs you for ignoring it.
   sets in order. Straight sets (one load) get a target; sets at different loads (ramping, a pyramid,
   100 × 8 then 110 × 4, an odd 115 × 1 at the end) get none, as the timer gives a pyramid none and
   starts each set on last time's. The heaviest set is never taken for the working weight.
+- **Written loads win** (Nick, review D4, 15 Nov 2026). A load written on a step runs when the step
+  was edited after its last session, and on any step with no session in this workout's own history:
+  a load from another workout never replaces it, and it gets no Today target. Last time still seeds
+  a step not touched since, and stays the "last time" hint. iOS keeps when a written load last
+  changed on the phone, by workout and step (`Written` in `ios/TigerWorkouts/Model/LastUsed.swift`):
+  set by an edit on the workout page and by a sync that brings a changed load in from the web or
+  Claude. A programme's lift with no session in this workout still carries by its rule.
 - **Intent.** Settings → Suggestions: Restore (match), Maintain (default: a rep or round more),
   Overreach (two more, a faster time).
 - **Stall.** The session that set the standing best plus at least three after it, over at least
