@@ -67,7 +67,7 @@ describe('where a session was started from', () => {
   it('survives a reload and a resume', async () => {
     await startSaved();
     reload();
-    await findClick('Resume');
+    await findClick('Open session');
     await endAndSave();
     expect(stored().map(r => r.startedFrom)).toEqual(['up_next']);
   });
@@ -82,6 +82,11 @@ describe('where a session was started from', () => {
 });
 
 describe('undo in the timer', () => {
+  it('is not offered for skipping the lead-in', async () => {
+    await startSaved();
+    expect(screen.getByRole('button', { name: 'Skip this step' })).toBeTruthy();
+    expect(screen.queryByRole('button', { name: 'Undo' })).toBeNull();
+  });
   it('is gone once the session is done, so a finished run cannot come back', async () => {
     await startSaved();
     click('More');
