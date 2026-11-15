@@ -79,6 +79,16 @@ describe('DiscoverScreen Mine', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Start u-d' }));
     expect(onStart).toHaveBeenLastCalledWith(expect.objectContaining({ id: 'u-d' }), 'saved');
   });
+  it('makes the workout started most the Up next card, as your usual, with how many of the last five', () => {
+    const own = ['u-a', 'u-b'];
+    const ago = (days: number) => new Date(Date.now() - days * 86_400_000).toISOString();
+    const results = [2, 4, 6, 9].map((d): SessionResult => ({ runsheetId: 'u-a', startedAt: ago(d), steps: [] })).concat([{ runsheetId: 'u-b', startedAt: ago(20), steps: [] }]);
+    const { container } = render(<DiscoverScreen workouts={own.map((id): Runsheet => ({ id, title: id, items: [] }))} ownIds={own} results={results} onOpen={() => {}} />);
+    const card = within(container.querySelector('[data-up-next]') as HTMLElement);
+    expect(card.getByText('u-a')).toBeInTheDocument();
+    expect(card.getByText('Up next · your usual')).toBeInTheDocument();
+    expect(card.getByText(/· 4 of your last 5$/)).toBeInTheDocument();
+  });
   it('shows what is in each workout by block name', () => {
     render(<DiscoverScreen workouts={ALL} ownIds={OWN} results={ONE_SESSION} onOpen={() => {}} />);
     const blocks = priyanka().items.flatMap(i => (i.kind === 'block' ? [i.name] : []));
@@ -91,7 +101,8 @@ describe('DiscoverScreen Mine', () => {
     expect(rows).toEqual(['Start Fran', `Start ${priyanka().title}`]);
     expect(screen.getByText(/from Sam/)).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: 'Start Fran' }));
-    expect(onStart).toHaveBeenCalledWith(expect.objectContaining({ id: 'cf-girls-fran' }), 'coach');
+    // What a coach sent and is not done is the Up next card, and records it (review D2).
+    expect(onStart).toHaveBeenCalledWith(expect.objectContaining({ id: 'cf-girls-fran' }), 'up_next');
   });
   it('has no carousels, no Up next and no week line', () => {
     render(<DiscoverScreen workouts={FEW} ownIds={OWN} results={ONE_SESSION} onOpen={() => {}} />);
