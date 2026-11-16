@@ -159,8 +159,8 @@ struct SetPlanGrid: View {
 
 /// Minus, the number, plus, small enough that two sit side by side on a set row with a tick, on a
 /// 390 pt phone. Each button keeps a 44 pt tap target around a narrower chip; a long number
-/// shrinks before it pushes the row wider. Narrower still (a 375 pt phone), the targets drop to
-/// 38 pt rather than overflow the screen.
+/// shrinks before it pushes the row wider. Narrower still (a 375 pt phone), the targets stay 44 pt
+/// and reach 6 pt over the number between them, rather than drop to 38 pt or overflow the screen.
 struct MiniStepper: View {
     var value: Double
     var label: String
@@ -173,25 +173,25 @@ struct MiniStepper: View {
 
     var body: some View {
         ViewThatFits(in: .horizontal) {
-            stepper(hit: 44)
-            stepper(hit: 38)
+            stepper(overlap: 0)
+            stepper(overlap: 6)
         }
         .opacity(disabled ? 0.5 : 1)
         .disabled(disabled)
     }
 
-    private func stepper(hit: CGFloat) -> some View {
-        HStack(spacing: 0) {
-            button("minus", "\(label), less", hit: hit) { nudge(-$0) }
+    private func stepper(overlap: CGFloat) -> some View {
+        HStack(spacing: -overlap) {
+            button("minus", "\(label), less", edge: overlap > 0 ? .leading : .center) { nudge(-$0) }
             number
-            button("plus", "\(label), more", hit: hit) { nudge($0) }
+            button("plus", "\(label), more", edge: overlap > 0 ? .trailing : .center) { nudge($0) }
         }
     }
 
     @ViewBuilder
     private var number: some View {
         let text = Text(Format.number(value))
-            .font(.system(size: 18, weight: .bold, design: .rounded))
+            .scaledFont(18, weight: .bold, design: .rounded, relativeTo: .body)
             .monospacedDigit()
             .foregroundStyle(Brand.ink)
             .lineLimit(1)
@@ -215,7 +215,7 @@ struct MiniStepper: View {
     }
 
     /// Held, it repeats and the steps grow; `action` gets 1, 2 or 5.
-    private func button(_ symbol: String, _ label: String, hit: CGFloat, action: @escaping (Double) -> Void) -> some View {
+    private func button(_ symbol: String, _ label: String, edge: Alignment, action: @escaping (Double) -> Void) -> some View {
         RepeatButton(action: action) {
             Image(systemName: symbol)
                 .font(.system(size: 14, weight: .bold))
@@ -223,7 +223,7 @@ struct MiniStepper: View {
                 .background(onTint ? Brand.surface : Brand.coralSoft, in: RoundedRectangle(cornerRadius: 10, style: .continuous))
                 .overlay(RoundedRectangle(cornerRadius: 10, style: .continuous).strokeBorder(onTint ? Brand.brandLine : .clear))
                 .foregroundStyle(Brand.coralInk)
-                .frame(width: hit, height: 44)
+                .frame(width: 44, height: 44, alignment: edge)
                 .contentShape(Rectangle())
         }
         .accessibilityLabel(label)
