@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		01A6F335FB89DBA2C0AAFC04 /* SyncReadTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 59FB2BAEFF7BB53085AB6F73 /* SyncReadTests.swift */; };
 		01BB8AD0F33A985650943AC6 /* Theme.swift in Sources */ = {isa = PBXBuildFile; fileRef = 27367887652A0380A66B6363 /* Theme.swift */; };
 		030E80EFA623468658AC8D6C /* ExercisePickerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 62CA4732B4B2A3F75FD14AF1 /* ExercisePickerView.swift */; };
 		0332F10757EBDC1D23299FCA /* StepEditorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DB29B220F1D0DA49508EF0DE /* StepEditorView.swift */; };
@@ -240,6 +241,7 @@
 		5856434B2D5B998718B051FF /* Library.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Library.swift; sourceTree = "<group>"; };
 		5884BC5A4FCB13E065BB2605 /* ScoreEntryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScoreEntryView.swift; sourceTree = "<group>"; };
 		59021F0253F067958A657DD2 /* RunsheetEditor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RunsheetEditor.swift; sourceTree = "<group>"; };
+		59FB2BAEFF7BB53085AB6F73 /* SyncReadTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SyncReadTests.swift; sourceTree = "<group>"; };
 		5AB9A9747889F2ECFD2B33EF /* Celebrate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Celebrate.swift; sourceTree = "<group>"; };
 		5D8FDE05A7149CE66FF79B2F /* TigerWorkoutsTests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = TigerWorkoutsTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		5ED4A3BC17499CADDE7EF681 /* SignInView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SignInView.swift; sourceTree = "<group>"; };
@@ -496,6 +498,7 @@
 				4091AAF4AF7AB0D132C03B29 /* StallTests.swift */,
 				6F781B1689DE90644353CB87 /* StoreSaveTests.swift */,
 				32C06182F780EF3B0331CF01 /* StripesShapeTests.swift */,
+				59FB2BAEFF7BB53085AB6F73 /* SyncReadTests.swift */,
 				E84311BE7C5AA68401341805 /* SyncTests.swift */,
 				DE66D2C56C04D57BFB270F0F /* TargetsTests.swift */,
 				38D739C137365162C9F1D895 /* TimedRecordsTests.swift */,
@@ -810,6 +813,7 @@
 				F06A699989CEBDCE07E7DD4B /* StallTests.swift in Sources */,
 				159A498BEFAD77C9C584839A /* StoreSaveTests.swift in Sources */,
 				03A968B825518327A0B07545 /* StripesShapeTests.swift in Sources */,
+				01A6F335FB89DBA2C0AAFC04 /* SyncReadTests.swift in Sources */,
 				77321A9F5C2B299AA484314C /* SyncTests.swift in Sources */,
 				A605B92316A505E8591952CC /* TargetsTests.swift in Sources */,
 				57EE87847B9CB5C0244D25CF /* TimedRecordsTests.swift in Sources */,
