@@ -29,6 +29,15 @@ struct HomeTests {
         #expect(list.map(\.key) == ["u-fresh", "u-old", "cindy", "u-done", "fran"])
     }
 
+    @Test("any workout with a session is listed, saved or not; the never-done catalogue is not")
+    func doneWithoutSaving() {
+        let mine = w("u-mine", kind: "user", createdAt: "2026-09-01T09:00:00Z")
+        let list = Home.mine(own: [mine], all: [mine, w("fran"), w("cindy"), w("helen")], saved: [], results: [did("fran", day: 10), did("fran", day: 12), did("cindy", day: 16), did("gone", day: 17)])
+        #expect(list.map(\.key) == ["u-mine", "cindy", "fran"])
+        let copy = w("u-fran", kind: "user", copyOf: "fran")
+        #expect(Home.mine(own: [copy], all: [copy, w("fran")], saved: [], results: [did("fran", day: 10)]).map(\.key) == ["u-fran"])
+    }
+
     @Test("a workout you copied shows as the copy, and what the coach sent is left out")
     func copiesAndSkip() {
         let copy = w("u-fran", kind: "user", copyOf: "fran")

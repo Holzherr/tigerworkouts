@@ -2,7 +2,8 @@ import Foundation
 
 /// The Mine list on home and what each card says. Ported from `src/features/discover/mine.ts`.
 enum Home {
-    /// Your own workouts and the ones you saved, as one list without repeats. Your own not yet done
+    /// Your own workouts, the ones you saved and any workout you have a session of (Nick, 15 Nov
+    /// 2026, review D18), as one list without repeats. Your own not yet done
     /// come first, newest first (Nick, 18 Oct 2026: a workout just made for you is what to do
     /// next); then the rest by last done or made, whichever is later, newest first. A workout you
     /// have your own copy of shows as the copy only. `skip` leaves out what is already listed above
@@ -12,7 +13,7 @@ enum Home {
         let ownKeys = Set(own.map(\.key))
         let copied = Set((own + all).compactMap(\.copyOf))
         var seen = Set<String>()
-        let list = (own + all.filter { saved.contains($0.key) }).filter { r in
+        let list = (own + all.filter { saved.contains($0.key) || last[$0.key] != nil }).filter { r in
             !copied.contains(r.key) && !skip.contains(r.key) && seen.insert(r.key).inserted
         }
         func fresh(_ r: Runsheet) -> Bool { ownKeys.contains(r.key) && lastDone(of: r, in: last) == nil }
