@@ -95,6 +95,7 @@ struct HistoryView: View {
                 }
             }
             .navigationTitle("History")
+            .toolbarTitleDisplayMode(.inlineLarge)
             .toolbar {
                 if store.results.contains(where: { !$0.steps.isEmpty }) {
                     ToolbarItem(placement: .topBarTrailing) {

@@ -272,7 +272,16 @@ struct TimerView: View {
     }
 
     /// Between blocks the timer waits for you, so moving to the next machine eats no work time.
+    /// A block of several exercises lists the rest under First up; when that does not fit the
+    /// height left, the card scrolls.
     private var parked: some View {
+        ViewThatFits(in: .vertical) {
+            parkedCard
+            ScrollView { parkedCard }.scrollBounceBehavior(.basedOnSize)
+        }
+    }
+
+    private var parkedCard: some View {
         VStack(spacing: 18) {
             Text("Next block").font(.title3.weight(.semibold)).foregroundStyle(Brand.Night.muted)
             Text(runner.slot?.blockName ?? "Block")
@@ -282,10 +291,59 @@ struct TimerView: View {
             if let first = runner.slot?.exercise {
                 exerciseCard(first, eyebrow: "First up", adjustable: true)
             }
+            gateThen
             addSetToBlockBehind
             cappedRoundAsk
         }
         .padding(.horizontal, 16)
+    }
+
+    /// "THEN  Lateral raises  6 kg × 12  ›": the block's other exercises at its gate. A tap opens
+    /// the exercise, to see or change its weight before the block starts.
+    @ViewBuilder
+    private var gateThen: some View {
+        let rows = runner.gateRest
+        if !rows.isEmpty {
+            VStack(alignment: .leading, spacing: 8) {
+                Text("Then")
+                    .font(.caption.weight(.bold)).textCase(.uppercase).tracking(0.8)
+                    .foregroundStyle(Brand.Night.muted)
+                ForEach(rows, id: \.slotId) { row in
+                    Button { editing = row.exercise } label: {
+                        nextRow(row.exercise, line: row.line, thumb: 44)
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityElement(children: .combine)
+                    .accessibilityHint("Shows the exercise and its weight")
+                    .accessibilityIdentifier("gate-then")
+                }
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+        }
+    }
+
+    /// One exercise still to come, on the dark timer: its picture, name and line, and a chevron
+    /// because a tap opens it.
+    private func nextRow(_ ex: ExerciseStep, line: String, thumb: CGFloat, eyebrow: String? = nil) -> some View {
+        HStack(spacing: 14) {
+            ExerciseThumb(ref: ex.exercise, size: thumb, radius: thumb / 4)
+            VStack(alignment: .leading, spacing: 3) {
+                if let eyebrow {
+                    Text(eyebrow)
+                        .font(.caption.weight(.bold)).textCase(.uppercase).tracking(0.8)
+                        .foregroundStyle(Brand.Night.muted)
+                }
+                Text(ex.exercise.name).font(eyebrow == nil ? .body.weight(.semibold) : .title3.weight(.bold)).foregroundStyle(Brand.Night.text)
+                Text(line).font(.subheadline).monospacedDigit().foregroundStyle(Brand.Night.muted)
+            }
+            Spacer(minLength: 8)
+            Image(systemName: "chevron.right")
+                .font(.footnote.weight(.bold))
+                .foregroundStyle(Brand.Night.muted)
+        }
+        .padding(eyebrow == nil ? 10 : 14)
+        .background(Brand.Night.raised, in: RoundedRectangle(cornerRadius: eyebrow == nil ? 16 : 20, style: .continuous))
+        .contentShape(Rectangle())
     }
 
     /// The AMRAP before this gate ended on its cap with its rounds ticked whole: the reps into the
@@ -1136,20 +1194,22 @@ struct TimerView: View {
     private var restCard: some View {
         VStack(spacing: 14) {
             Text("Rest").scaledFont(36, weight: .heavy, relativeTo: .largeTitle).foregroundStyle(Brand.Night.rest)
+            // The set just finished reads as finished while its rest runs (Nick, 16 Nov 2026).
+            if let after = runner.restAfter {
+                Label(after, systemImage: "checkmark")
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(Brand.Night.muted)
+                    .accessibilityIdentifier("rest-after")
+            }
+            // A tap opens what is next, with its weight to see or change.
             if let next = runner.nextSlot?.exercise {
-                HStack(spacing: 14) {
-                    ExerciseThumb(ref: next.exercise, size: 64, radius: 16)
-                    VStack(alignment: .leading, spacing: 3) {
-                        Text("Up next")
-                            .font(.caption.weight(.bold)).textCase(.uppercase).tracking(0.8)
-                            .foregroundStyle(Brand.Night.muted)
-                        Text(next.exercise.name).font(.title3.weight(.bold)).foregroundStyle(Brand.Night.text)
-                        Text(next.forLabel).font(.subheadline).foregroundStyle(Brand.Night.muted)
-                    }
-                    Spacer()
+                Button { editing = next } label: {
+                    nextRow(next, line: runner.nextLine ?? next.forLabel, thumb: 64, eyebrow: "Up next")
                 }
-                .padding(14)
-                .background(Brand.Night.raised, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
+                .buttonStyle(.plain)
+                .accessibilityElement(children: .combine)
+                .accessibilityHint("Shows the exercise and its weight")
+                .accessibilityIdentifier("rest-next")
             }
         }
     }

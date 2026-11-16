@@ -105,6 +105,7 @@ struct MeView: View {
                 }
             }
             .navigationTitle("Me")
+            .toolbarTitleDisplayMode(.inlineLarge)
             .scrollContentBackground(.hidden)
             .background(Brand.canvas)
             .sheet(isPresented: $signingIn) {

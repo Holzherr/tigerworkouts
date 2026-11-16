@@ -437,3 +437,43 @@ struct WrittenLoadsTests {
         #expect(Written.current(defaults)["other"] == nil)
     }
 }
+
+/// Nick's notes from the gym, 16 Nov 2026: a rest says the set before it is done, its Up next has
+/// the weight, and a block's gate lists every exercise in it.
+@Suite("timer rest and gate lines")
+struct TimerRestAndGateTests {
+    /// 2 rounds of: swings 28 kg, rest, press 20 kg, rest.
+    static func at(_ i: Int, phase: Phase = .running) -> RunState {
+        var s = Runner.start(Fixtures.interval(), now: 0)
+        s.i = i
+        s.phase = phase
+        return s
+    }
+
+    @Test("a rest between two exercises names the one done; the rest closing a round names the round")
+    func restAfter() {
+        let s = Self.at(1)
+        #expect(s.slots.map(\.kind) == [.work, .rest, .work, .rest, .work, .rest, .work])
+        #expect(SessionRunner.restAfter(s) == "Kettlebell swings done")
+        #expect(SessionRunner.restAfter(Self.at(3)) == "Round 1 of 2 done")
+        #expect(SessionRunner.restAfter(Self.at(5)) == "Kettlebell swings done")
+        #expect(SessionRunner.restAfter(Self.at(0)) == nil)
+        #expect(SessionRunner.restAfter(Self.at(2)) == nil)
+    }
+
+    @Test("the rest card's Up next carries the load")
+    func nextLine() {
+        #expect(SessionRunner.setLine(Self.at(1), 2) == "20 kg")
+    }
+
+    @Test("a block's gate lists its other exercises once, with their loads; one-exercise blocks list none")
+    func gateRest() {
+        let rows = SessionRunner.gateRest(Self.at(0, phase: .ready))
+        #expect(rows.map(\.exercise.exercise.name) == ["Incline chest press"])
+        #expect(rows.map(\.line) == ["20 kg"])
+        #expect(SessionRunner.gateRest(Self.at(0)).isEmpty)
+        var straight = Runner.start(PlayerSetsTests.sheet(), now: 0)
+        straight.phase = .ready
+        #expect(SessionRunner.gateRest(straight).isEmpty)
+    }
+}
