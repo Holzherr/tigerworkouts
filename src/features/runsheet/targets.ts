@@ -129,6 +129,8 @@ export interface SetTarget {
   text: string;
   /** "bank reps: 28 kg once every set reaches 14". */
   reason: string;
+  /** What changed from last time: "+2.5 kg", "+1 rep/set". Unset when nothing moved. */
+  delta?: string;
 }
 
 const maxRpe = (sets: SetResult[]): number | undefined => {
@@ -218,6 +220,30 @@ export const setTarget = (s: ExerciseStep, lastAll: SetResult[] | undefined, int
   return { ...base, load: top, reps, jump: false, text: `${num(top)}${u} × ${repsText(reps)}`, reason: add ? why : 'what you did last time' };
 };
 
+/**
+ * The change on today's target against last time's working sets: the load if it moves ("+2.5 kg"),
+ * else the reps ("+1 rep/set" when every set gains the same, else the total). Port of
+ * `TodayLine.delta` in TargetViews.swift.
+ */
+export const targetDelta = (t: Pick<SetTarget, 'load' | 'reps'>, last: SetResult[] | undefined, unit: string): string | undefined => {
+  const work = (last ?? []).filter(x => x.type !== 'warmup' && x.type !== 'drop');
+  if (!work.length) return undefined;
+  const loads = work.map(x => x.load).filter((n): n is number => n !== undefined);
+  const top = loads.length ? Math.max(...loads) : undefined;
+  const sign = (d: number) => (d > 0 ? '+' : '−');
+  if (t.load !== undefined && top !== undefined && top > 0 && t.load !== top) {
+    const d = t.load - top;
+    return `${sign(d)}${num(Math.abs(d))}${unit ? ` ${unit}` : ''}`;
+  }
+  const before = work.filter(x => top === undefined || x.load === top).map(x => x.reps).filter((n): n is number => n !== undefined);
+  if (!before.length || before.length !== t.reps.length) return undefined;
+  const diffs = t.reps.map((n, i) => n - before[i]);
+  const each = diffs.every(d => d === diffs[0]);
+  const d = each ? diffs[0] : diffs.reduce((a, b) => a + b, 0);
+  if (d === 0) return undefined;
+  return `${sign(d)}${num(Math.abs(d))} rep${Math.abs(d) === 1 ? '' : 's'}${each && diffs.length > 1 ? '/set' : ''}`;
+};
+
 const exerciseSteps = (items: Item[]): ExerciseStep[] => items.flatMap(it => (it.kind === 'block' ? it.steps : it.kind === 'ref' ? [] : [it])).filter((s): s is ExerciseStep => s.kind === 'exercise');
 
 /** A programme's own progression rule covers this step: the runsheet's, or its block's. */
@@ -233,8 +259,9 @@ export const setTargets = (r: Runsheet, results: SessionResult[], intent: Intent
   for (const s of exerciseSteps(r.items)) {
     if (seen.has(s.exercise.key) || (s.role ?? 'main') !== 'main' || ruled(r, s)) continue;
     seen.add(s.exercise.key);
-    const t = setTarget(s, lastSets(results, s, r), intent, kit, modeFor(suggest, s.exercise.key));
-    if (t) out.push(t);
+    const last = lastSets(results, s, r);
+    const t = setTarget(s, last, intent, kit, modeFor(suggest, s.exercise.key));
+    if (t) out.push({ ...t, delta: targetDelta(t, last, shortUnit(s.exercise.unit)) });
   }
   return out;
 };
@@ -243,6 +270,8 @@ export interface Today {
   /** "Aim for 8+ rounds", "Barbell bench press 62.5 kg × 8". */
   text: string;
   detail: string;
+  /** The change on the first target against last time, for the brackets: "+2.5 kg". */
+  delta?: string;
   score?: ScoreTarget;
   sets: SetTarget[];
 }
@@ -257,7 +286,7 @@ export const today = (r: Runsheet, results: SessionResult[], intent: Intent = 'm
   const first = sets[0];
   if (!first) return undefined;
   const more = sets.length > 1 ? ` · ${sets.length - 1} more on the workout page` : '';
-  return { text: `${first.name} ${first.text}`, detail: `${first.reason}${more}`, sets };
+  return { text: `${first.name} ${first.text}`, detail: `${first.reason}${more}`, ...(first.delta ? { delta: first.delta } : {}), sets };
 };
 
 /**
