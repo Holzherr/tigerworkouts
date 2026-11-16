@@ -331,8 +331,8 @@ final class Store {
         results.sort { $0.startedAt > $1.startedAt }
         pending.removeAll { $0.rowId == r.rowId }
         pending.append(r)
-        writeCache()
-        stored()
+        // The timer's crash-safe copy goes only once the result is on disk.
+        if writeCache() { stored() }
         do {
             try await flushPending()
         } catch {
@@ -867,6 +867,8 @@ final class Store {
     // MARK: - Cache
 
     private struct Cache: Codable {
+        /// 1 from 16 Nov 2026; a file without it is the same shape.
+        var version: Int? = 1
         var results: [SessionResult]
         var myWorkouts: [Runsheet]
         var pending: [SessionResult]
@@ -884,6 +886,80 @@ final class Store {
         var publicSetHere: [String]?
         var syncedWorkouts: [String: Supabase.WorkoutRow]?
         var workoutEditedAt: [String: String]?
+        /// Entries or fields that could not be read and were left out. Not written.
+        var dropped = 0
+
+        private enum CodingKeys: String, CodingKey {
+            case version, results, myWorkouts, pending, bodyweightKg, saved, pendingWorkouts, pendingWorkoutDeletes,
+                 pendingDeletes, customExercises, pendingExercises, trainingMaxes, equipment, suggestions,
+                 prefsUpdatedAt, publicSetHere, syncedWorkouts, workoutEditedAt
+        }
+
+        init(results: [SessionResult], myWorkouts: [Runsheet], pending: [SessionResult], bodyweightKg: Double?, saved: [String],
+             pendingWorkouts: [Runsheet]?, pendingWorkoutDeletes: [String]?, pendingDeletes: [String]?,
+             customExercises: [LibraryExercise]?, pendingExercises: [LibraryExercise]?, trainingMaxes: [String: Double]?,
+             equipment: Equipment?, suggestions: SuggestPrefs?, prefsUpdatedAt: [String: String]?, publicSetHere: [String]?,
+             syncedWorkouts: [String: Supabase.WorkoutRow]?, workoutEditedAt: [String: String]?) {
+            self.results = results; self.myWorkouts = myWorkouts; self.pending = pending; self.bodyweightKg = bodyweightKg
+            self.saved = saved; self.pendingWorkouts = pendingWorkouts; self.pendingWorkoutDeletes = pendingWorkoutDeletes
+            self.pendingDeletes = pendingDeletes; self.customExercises = customExercises; self.pendingExercises = pendingExercises
+            self.trainingMaxes = trainingMaxes; self.equipment = equipment; self.suggestions = suggestions
+            self.prefsUpdatedAt = prefsUpdatedAt; self.publicSetHere = publicSetHere; self.syncedWorkouts = syncedWorkouts
+            self.workoutEditedAt = workoutEditedAt
+        }
+
+        /// One entry that cannot be read costs that entry, and one field that cannot be read costs
+        /// that field, not the whole file: decoding it all or nothing started the app empty and the
+        /// next save wrote the empty state over everything, queued sessions included.
+        init(from decoder: any Decoder) throws {
+            let c = try decoder.container(keyedBy: CodingKeys.self)
+            var dropped = 0
+            func list<T: Decodable>(_ key: CodingKeys) -> [T]? {
+                guard c.contains(key) else { return nil }
+                guard let all = try? c.decode(Lossy<T>.self, forKey: key) else { dropped += 1; return nil }
+                dropped += all.dropped
+                return all.items
+            }
+            func field<T: Decodable>(_ key: CodingKeys) -> T? {
+                guard c.contains(key), (try? c.decodeNil(forKey: key)) != true else { return nil }
+                guard let v = try? c.decode(T.self, forKey: key) else { dropped += 1; return nil }
+                return v
+            }
+            version = field(.version)
+            results = list(.results) ?? []
+            myWorkouts = list(.myWorkouts) ?? []
+            pending = list(.pending) ?? []
+            bodyweightKg = field(.bodyweightKg)
+            saved = list(.saved) ?? []
+            pendingWorkouts = list(.pendingWorkouts)
+            pendingWorkoutDeletes = list(.pendingWorkoutDeletes)
+            pendingDeletes = list(.pendingDeletes)
+            customExercises = list(.customExercises)
+            pendingExercises = list(.pendingExercises)
+            trainingMaxes = field(.trainingMaxes)
+            equipment = field(.equipment)
+            suggestions = field(.suggestions)
+            prefsUpdatedAt = field(.prefsUpdatedAt)
+            publicSetHere = list(.publicSetHere)
+            syncedWorkouts = field(.syncedWorkouts)
+            workoutEditedAt = field(.workoutEditedAt)
+            self.dropped = dropped
+        }
+    }
+
+    /// A list read entry by entry: what does not decode is skipped and counted.
+    private struct Lossy<T: Decodable>: Decodable {
+        var items: [T] = []
+        var dropped = 0
+        init(from decoder: any Decoder) throws {
+            var c = try decoder.unkeyedContainer()
+            while !c.isAtEnd {
+                if let x = try? c.decode(T.self) { items.append(x) } else {
+                    _ = try c.decode(JSONValue.self)
+                    dropped += 1
+                }
+            }
+        }
     }
 
     /// The file the cache lives in. Tests point it elsewhere so they never touch the app's own.
@@ -895,12 +971,25 @@ final class Store {
         return dir.appendingPathComponent(cacheName)
     }
 
+    /// Set when the cache file is there but could not be read at all: nothing is written over it
+    /// for the rest of this run.
+    private(set) var cacheBlocked = false
+
     private func readCache() {
-        guard let data = try? Data(contentsOf: cacheURL) else { return }
+        guard FileManager.default.fileExists(atPath: cacheURL.path) else { return }
+        guard let data = try? Data(contentsOf: cacheURL) else {
+            cacheBlocked = true
+            return
+        }
         // Your own exercises first, so a workout that names one by key resolves to it.
-        struct Custom: Decodable { var customExercises: [LibraryExercise]? }
-        mergeCustom((try? JSONDecoder().decode(Custom.self, from: data))?.customExercises ?? [])
-        guard let c = try? Library.shared.decoder.decode(Cache.self, from: data) else { return }
+        struct Custom: Decodable { var customExercises: Lossy<LibraryExercise>? }
+        mergeCustom((try? JSONDecoder().decode(Custom.self, from: data))?.customExercises?.items ?? [])
+        guard let c = try? Library.shared.decoder.decode(Cache.self, from: data) else {
+            // Not JSON at all: kept aside as found, and the app starts from the server.
+            keepUnreadable(data)
+            return
+        }
+        if c.dropped > 0 { keepUnreadable(data) }
         results = c.results
         myWorkouts = c.myWorkouts
         pending = c.pending
@@ -919,7 +1008,8 @@ final class Store {
         workoutEditedAt = c.workoutEditedAt ?? [:]
     }
 
-    private func writeCache() {
+    @discardableResult
+    private func writeCache() -> Bool {
         let c = Cache(
             results: results, myWorkouts: myWorkouts, pending: pending,
             bodyweightKg: bodyweightKg, saved: Array(saved),
@@ -930,7 +1020,21 @@ final class Store {
             publicSetHere: publicSetHere.sorted(),
             syncedWorkouts: syncedWorkouts, workoutEditedAt: workoutEditedAt
         )
-        try? JSONEncoder().encode(c).write(to: cacheURL, options: .atomic)
         shareUpNext()
+        guard !cacheBlocked else { return false }
+        do {
+            try JSONEncoder().encode(c).write(to: cacheURL, options: .atomic)
+            return true
+        } catch {
+            return false
+        }
+    }
+
+    /// The cache as found, beside it, before anything is written over it: what could not be read
+    /// may still be recovered by hand.
+    private func keepUnreadable(_ data: Data) {
+        let stamp = Int(Date().timeIntervalSince1970)
+        let url = cacheURL.deletingPathExtension().appendingPathExtension("unreadable-\(stamp).json")
+        try? data.write(to: url, options: .atomic)
     }
 }
