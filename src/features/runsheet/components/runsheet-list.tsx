@@ -16,15 +16,15 @@ import { SortableContext, useSortable, verticalListSortingStrategy } from '@dnd-
 import { CSS, getEventCoordinates } from '@dnd-kit/utilities';
 import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { cn } from '@/shared/utils/ui-utils';
-import { addSet, appendToBlock, countLabel, editRun, straightSetStep, flatten, groupOnto, isEmptyMain, nextSetType, plannedType, removeSet, repeatAsRounds, setMarks, setRuns, shortUnit, showsLoad, startBlock, insertAfter, makeRest, moveRow, moveRowTo, removeItem, removeStep, replaceStep, ROLE_LABEL, updateBlock, type Block, type ExerciseStep, type Item, type ItemRole, type Row, type Step } from '../model';
-import { Link2, Menu, Minus, Plus, Repeat, X } from 'lucide-react';
+import { appendToBlock, countLabel, editRun, straightSetStep, flatten, groupOnto, isEmptyMain, nextSetType, plannedType, repeatAsRounds, setMarks, setRuns, shortUnit, showsLoad, startBlock, insertAfter, makeRest, moveRow, moveRowTo, removeItem, removeStep, replaceStep, ROLE_LABEL, updateBlock, type Block, type ExerciseStep, type Item, type ItemRole, type Row, type Step } from '../model';
+import { Link2, Menu, Repeat, X } from 'lucide-react';
 import { Button } from '@/shared/components/ui/button';
 import { Stepper } from '@/shared/components/ui/stepper';
 import { AddTile, SeamInsert, type AddKind } from './add-controls';
 import { BlockBracket, BlockHeader } from './block-bracket';
 import { BlockReorder } from './block-reorder';
 import { PlatesButton } from './plate-sheet';
-import { SetGrid, SetMark, type SetGridProps } from './set-grid';
+import { SetCount, SetGrid, SetMark, type SetGridProps } from './set-grid';
 import { loadStep, useStepSizes } from '@/shared/utils/step-sizes';
 import { kitOf, type Equipment } from '../plates';
 import { StepRow } from './step-row';
@@ -57,6 +57,9 @@ export interface RunsheetListProps {
   onRemoved?: (before: Item[], what: string) => void;
   /** Given, an expanded exercise offers History; undefined where there is nothing to open. */
   historyFor?: (step: ExerciseStep) => (() => void) | undefined;
+  /** False leaves out what adds to the end of the whole list (Repeat as rounds, the dashed add
+   * tile): a block opened on the workout page has its own add row, and the page has Add block. */
+  tail?: boolean;
   className?: string;
 }
 
@@ -72,8 +75,8 @@ const LIFT_MS = 350;
 
 /**
  * A straight-set block with sets alike in a row folded into one (`8×  − 20 +  − 30 +`); a stepper
- * there changes every set in the run. Vary sets opens the per-set SetGrid; Add set / Remove set
- * add or drop a set at the end.
+ * there changes every set in the run. Vary sets opens the per-set SetGrid; the Sets stepper adds
+ * or drops a set at the end.
  */
 export const SetRuns = ({ block, onChange, onVary, hintFor, equipment }: SetGridProps & { onVary: () => void }) => {
   useStepSizes();
@@ -114,19 +117,7 @@ export const SetRuns = ({ block, onChange, onVary, hintFor, equipment }: SetGrid
           </div>
         );
       })}
-      <div className="flex gap-2 border-t border-line-soft pt-2">
-        <Button variant="ghost" size="sm" onClick={() => onChange(addSet(block))}>
-          <Plus /> Add set
-        </Button>
-        <Button variant="ghost" size="sm" disabled={block.repeat <= 1} onClick={() => onChange(removeSet(block))}>
-          <Minus /> Remove set
-        </Button>
-        {block.repeat > 1 && (
-          <Button variant="quiet" size="sm" className="ml-auto" onClick={onVary}>
-            Vary sets
-          </Button>
-        )}
-      </div>
+      <SetCount block={block} onChange={onChange} onVary={onVary} />
     </div>
   );
 };
@@ -140,7 +131,7 @@ export const SetRuns = ({ block, onChange, onVary, hintFor, equipment }: SetGrid
  * BlockReorder, every block as one card. Tap a row to expand it,
  * swipe or ✕ to remove, ＋ on a seam to insert there.
  */
-export const RunsheetList = ({ items, onChange, onPickExercise, onSwapExercise, expandedId: expandedProp, onExpandedChange, autoRest = 30, resolveTarget, hintFor, setHintFor, equipment, refTitle, onRemoved, historyFor, onReorder, className }: RunsheetListProps) => {
+export const RunsheetList = ({ items, onChange, onPickExercise, onSwapExercise, expandedId: expandedProp, onExpandedChange, autoRest = 30, resolveTarget, hintFor, setHintFor, equipment, refTitle, onRemoved, historyFor, onReorder, tail = true, className }: RunsheetListProps) => {
   const [expandedLocal, setExpandedLocal] = useState<string | null>(null);
   const expandedId = expandedProp === undefined ? expandedLocal : expandedProp;
   const setExpanded = (id: string | null) => (onExpandedChange ? onExpandedChange(id) : setExpandedLocal(id));
@@ -440,7 +431,7 @@ export const RunsheetList = ({ items, onChange, onPickExercise, onSwapExercise, 
       <SortableContext items={ids} strategy={verticalListSortingStrategy}>
         <div className={cn('space-y-2', className)}>
           {blocks}
-          {items.some(it => (it.kind === 'exercise' || it.kind === 'rest') && (it.role ?? 'main') === 'main') && (
+          {tail && items.some(it => (it.kind === 'exercise' || it.kind === 'rest') && (it.role ?? 'main') === 'main') && (
             <button
               type="button"
               onClick={() => {
@@ -453,7 +444,7 @@ export const RunsheetList = ({ items, onChange, onPickExercise, onSwapExercise, 
               <Repeat className="size-4" /> Repeat as rounds
             </button>
           )}
-          <AddTile variant="loose" onAdd={k => add(k, { after: null })} className="mt-3" />
+          {tail && <AddTile variant="loose" onAdd={k => add(k, { after: null })} className="mt-3" />}
         </div>
       </SortableContext>
       <DragOverlay dropAnimation={null}>{null}</DragOverlay>

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { addSet, amountsOf, exerciseLogs, extraLogs, hasLoad, logChoices, stepLogs, withLogs, roundsLabel, editSet, plannedSet, removeSet, straightSetStep, flatten, fromLegacy, groupOnto, insertAfter, makeExercise, makeRest, moveRow, moveRowTo, moveToTopLevel, rebuild, removeStep, isEmptyMain, repeatAsRounds, startBlock, runsheetSeconds, editedCopy, ofWorkout, hasSetting, settingLabel, type Block, type ExerciseRef, type Item, type Runsheet } from './model';
+import { addSet, amountsOf, exerciseLogs, extraLogs, hasLoad, logChoices, stepLogs, withLogs, roundsLabel, editSet, plannedSet, removeSet, withSetCount, straightSetStep, flatten, fromLegacy, groupOnto, insertAfter, makeExercise, makeRest, moveRow, moveRowTo, moveToTopLevel, rebuild, removeStep, isEmptyMain, repeatAsRounds, startBlock, runsheetSeconds, editedCopy, ofWorkout, hasSetting, settingLabel, type Block, type ExerciseRef, type Item, type Runsheet } from './model';
 import { EX, priyanka, withStarter } from './fixtures';
 
 const KB: ExerciseRef = { key: 'kb_swing', name: 'Kettlebell swings', unit: 'kg', step: 4 };
@@ -220,6 +220,14 @@ describe('straight sets', () => {
     expect(c.repeat).toBe(2);
     expect(step(c).sets).toEqual([{ reps: 8, load: 20 }, { reps: 8, load: 20 }]);
     expect(removeSet({ ...bench(), repeat: 1 }).repeat).toBe(1);
+  });
+  it('the Sets stepper sets the count: added sets copy the last, never below one', () => {
+    const b = withSetCount(editSet(bench(), 2, { load: 30 }), 5);
+    expect(b.repeat).toBe(5);
+    expect(plannedSet(step(b), 4)).toEqual({ reps: 8, load: 30 });
+    expect(withSetCount(b, 2).repeat).toBe(2);
+    expect(withSetCount(b, 0).repeat).toBe(1);
+    expect(withSetCount(b, 5)).toBe(b);
   });
 });
 

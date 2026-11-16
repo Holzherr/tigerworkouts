@@ -15,7 +15,7 @@ const Live = () => {
 const meta = {
   title: 'Runsheet/SetGrid',
   component: SetGrid,
-  parameters: { docs: { description: { component: 'A straight-set block (one exercise, rounds) in the editor: one row per set with its own load and reps, so a pyramid or ramping sets can be written as they are done. Add set copies the last row; Remove set drops it. Both change how many times the block repeats.' } } },
+  parameters: { docs: { description: { component: 'A straight-set block (one exercise, rounds) in the editor: one row per set with its own load and reps, so a pyramid or ramping sets can be written as they are done. The Sets stepper under the rows adds a set (a copy of the last row) or drops the last one.' } } },
   args: { block: bench(), onChange: () => {} },
   decorators: [S => <div className="w-[348px] overflow-hidden rounded-card border border-line bg-surface"><S /></div>],
 } satisfies Meta<typeof SetGrid>;

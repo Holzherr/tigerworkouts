@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, within } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, within } from '@testing-library/react';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { EX } from '../fixtures';
 import { makeExercise, makeRest, plannedSet, straightSetStep, type Block, type Item } from '../model';
@@ -28,6 +28,23 @@ describe('sets in the editor', () => {
     expect(screen.getAllByRole('button', { name: /^Sets? \d/ }).map(el => el.textContent)).toEqual(['W', '4×']);
     fireEvent.click(screen.getByRole('button', { name: 'Vary sets' }));
     expect(screen.getAllByRole('button', { name: /^Set \d/ })).toHaveLength(5);
+  });
+
+  it('how many sets is one Sets stepper on the line with Vary sets (Nick, 1 Nov 2026)', () => {
+    let changed: Item[] = [];
+    list([eight()], items => (changed = items));
+    expect(screen.queryByRole('button', { name: /Add set|Remove set/ })).toBeNull();
+    fireEvent.click(within(screen.getByRole('group', { name: 'Sets' })).getByRole('button', { name: 'Increase' }));
+    expect((changed[0] as Block).repeat).toBe(9);
+    cleanup();
+    list([eight()], items => (changed = items));
+    fireEvent.click(within(screen.getByRole('group', { name: 'Sets' })).getByRole('button', { name: 'Decrease' }));
+    expect((changed[0] as Block).repeat).toBe(7);
+  });
+
+  it('a block opened on the workout page has one add row: no dashed tile for the end of the list', () => {
+    render(<RunsheetList items={[eight()]} onChange={() => {}} onPickExercise={async () => null} tail={false} />);
+    expect(screen.getAllByRole('button', { name: /Exercise/ })).toHaveLength(1);
   });
 
   it('puts a grip on every block header and no drag tip (Nick, 18 Oct 2026)', () => {
