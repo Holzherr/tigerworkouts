@@ -1,9 +1,8 @@
-import { Minus, Plus } from 'lucide-react';
 import { Button } from '@/shared/components/ui/button';
 import { Stepper } from '@/shared/components/ui/stepper';
 import { cn } from '@/shared/utils/ui-utils';
 import { loadStep, useStepSizes } from '@/shared/utils/step-sizes';
-import { addSet, countLabel, editSet, nextSetType, plannedSet, plannedType, removeSet, SET_TYPE_LABEL, setMarks, shortUnit, showsLoad, straightSetStep, type Block, type SetType } from '../model';
+import { countLabel, editSet, nextSetType, plannedSet, plannedType, SET_TYPE_LABEL, setMarks, shortUnit, showsLoad, straightSetStep, withSetCount, type Block, type SetType } from '../model';
 import { kitOf, type Equipment } from '../plates';
 import { PlatesButton } from './plate-sheet';
 
@@ -27,7 +26,8 @@ export const SetMark = ({ mark, type, label, onCycle, className }: { mark: strin
       onCycle?.();
     }}
     className={cn(
-      'grid h-8 min-w-8 shrink-0 place-items-center rounded-md text-[15px] font-extrabold tabular-nums',
+      // Drawn at 32px; the tap reaches 44px (DESIGN.md).
+      "relative grid h-8 min-w-8 shrink-0 place-items-center rounded-md text-[15px] font-extrabold tabular-nums after:absolute after:-inset-1.5 after:content-['']",
       type === 'warmup' && 'bg-warn-soft text-warn',
       type === 'drop' && 'bg-well text-rest',
       type === 'failure' && 'bg-danger-soft text-danger',
@@ -42,7 +42,7 @@ export const SetMark = ({ mark, type, label, onCycle, className }: { mark: strin
  * A straight-set block (one exercise, rounds) as the gym writes it: one row per set with its load
  * and reps, each editable on its own for pyramids and ramping sets. The set number is a button:
  * a tap steps it through warm-up (W), normal (1, 2, 3), drop set (D) and to failure (F). A barbell
- * load has a plate button beside it. Add set / Remove set change how many times the block repeats.
+ * load has a plate button beside it. The Sets stepper under the rows changes how many times the block repeats.
  */
 export const SetGrid = ({ block, onChange, hintFor, equipment }: SetGridProps) => {
   useStepSizes();
@@ -85,14 +85,21 @@ export const SetGrid = ({ block, onChange, hintFor, equipment }: SetGridProps) =
           </div>
         );
       })}
-      <div className="flex gap-2 border-t border-line-soft pt-2">
-        <Button variant="ghost" size="sm" onClick={() => onChange(addSet(block))}>
-          <Plus /> Add set
-        </Button>
-        <Button variant="ghost" size="sm" disabled={block.repeat <= 1} onClick={() => onChange(removeSet(block))}>
-          <Minus /> Remove set
-        </Button>
-      </div>
+      <SetCount block={block} onChange={onChange} />
     </div>
   );
 };
+
+/** How many sets, as one stepper, with Vary sets beside it when given: one line where Add set,
+ * Remove set and Vary sets used to wrap (Nick, 1 Nov 2026; SetPlanGrid on iOS). */
+export const SetCount = ({ block, onChange, onVary }: { block: Block; onChange: (block: Block) => void; onVary?: () => void }) => (
+  <div className="flex items-center gap-3 border-t border-line-soft pt-2">
+    <span className="text-[14px] font-semibold text-body">Sets</span>
+    <Stepper size="sm" aria-label="Sets" value={block.repeat} min={1} max={99} onChange={n => onChange(withSetCount(block, n))} />
+    {onVary && block.repeat > 1 && (
+      <Button variant="quiet" size="sm" className="ml-auto" onClick={onVary}>
+        Vary sets
+      </Button>
+    )}
+  </div>
+);

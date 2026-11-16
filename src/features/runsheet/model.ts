@@ -408,6 +408,24 @@ export const removeSet = (b: Block): Block => {
   return { ...b, repeat, steps: b.steps.map(s => (s.id === step.id ? next : s)) };
 };
 
+/** A straight-set block with `n` sets (at least one): sets added copy the last, sets dropped come off
+ * the end. The Sets stepper under the set rows (Nick, 1 Nov 2026). */
+export const withSetCount = (b: Block, n: number): Block => {
+  let out = b;
+  const want = Math.max(1, Math.round(n));
+  while (out.repeat < want) {
+    const next = addSet(out);
+    if (next === out) break;
+    out = next;
+  }
+  while (out.repeat > want) {
+    const next = removeSet(out);
+    if (next === out) break;
+    out = next;
+  }
+  return out;
+};
+
 /** An exercise whose unit is the measure of the work — a rower in metres, a plank in seconds, a bike
  * in calories — rather than a load. Its `target` is not a weight in hand. */
 export const measureOf = (unit: string | undefined): 'meters' | 'seconds' | 'calories' | undefined => (unit === 'm' ? 'meters' : unit === 's' ? 'seconds' : unit === 'cal' ? 'calories' : undefined);

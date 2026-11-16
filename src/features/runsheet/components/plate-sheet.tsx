@@ -57,7 +57,7 @@ export const PlatesButton = ({ load, equipment, className }: { load: number | un
           e.stopPropagation();
           setOpen(true);
         }}
-        className={cn('grid size-9 shrink-0 place-items-center rounded-full text-muted hover:bg-line-soft', className)}
+        className={cn("relative grid size-9 shrink-0 place-items-center rounded-full text-muted after:absolute after:-inset-1 after:content-[''] hover:bg-line-soft", className)}
       >
         <Disc3 className="size-[18px]" />
       </button>

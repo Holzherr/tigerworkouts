@@ -34,11 +34,11 @@ const EditableBlock = ({ runsheet: r, block, editor: { onChange, ...list }, shee
   return (
     <section className="rounded-card ring-2 ring-brand">
       <div className="flex justify-end px-1 pt-1">
-        <Button variant="quiet" size="inline" className="font-extrabold text-brand-ink" onClick={onDone} data-testid="block-done">
+        <Button variant="quiet" className="h-11 px-3 font-extrabold text-brand-ink" onClick={onDone} data-testid="block-done">
           Done
         </Button>
       </div>
-      <RunsheetList {...list} onReorder={onReorder} items={[block]} onChange={splice} expandedId={expanded === block.id ? null : expanded} onExpandedChange={id => (id === block.id ? onSheet(true) : setExpanded(id))} onRemoved={(before, what) => undo.offer(what, () => splice(before))} />
+      <RunsheetList {...list} tail={false} onReorder={onReorder} items={[block]} onChange={splice} expandedId={expanded === block.id ? null : expanded} onExpandedChange={id => (id === block.id ? onSheet(true) : setExpanded(id))} onRemoved={(before, what) => undo.offer(what, () => splice(before))} />
       <BlockSheet block={sheetOpen ? block : null} onOpenChange={o => onSheet(o)} onChange={b => splice([b])} onRemove={() => (setItems(removeItem(r.items, block.id)), undo.offer(`Removed ${block.name || 'block'}`, () => setItems(r.items)))} />
       {undo.toast}
     </section>
@@ -183,7 +183,7 @@ export const WorkoutPreviewScreen = ({ runsheet: r, history = [], lastTime, onBa
     <div className="flex h-full min-h-0 flex-col bg-canvas">
       <header className="safe-top shrink-0 bg-surface px-4 pt-2 pb-2">
         <div className="flex items-center justify-between gap-2">
-          <Button variant="quiet" size="inline" onClick={onBack} className="-ml-1 text-muted">
+          <Button variant="quiet" onClick={onBack} className="-ml-3 gap-1 px-2 text-[13px] text-muted [&_svg]:size-4">
             <ChevronLeft /> Back
           </Button>
           {(suggestions || onDuplicate) && (
@@ -249,7 +249,7 @@ export const WorkoutPreviewScreen = ({ runsheet: r, history = [], lastTime, onBa
           )}
         </div>
         {appHref && (
-          <a href={appHref} className="mt-2 inline-flex items-center gap-1.5 text-[13px] font-bold text-brand-ink">
+          <a href={appHref} className="mt-1 inline-flex min-h-11 items-center gap-1.5 text-[13px] font-bold text-brand-ink">
             <Smartphone className="size-4" /> Open in the app
           </a>
         )}
@@ -288,7 +288,7 @@ export const WorkoutPreviewScreen = ({ runsheet: r, history = [], lastTime, onBa
               <section key={it.id} className="rounded-card border border-line bg-surface">
                 <div className="flex items-center gap-2 px-3 pt-2.5 pb-1.5">
                   <div
-                    className={cn('min-w-0 flex-1', editor && 'cursor-pointer')}
+                    className={cn('flex min-h-11 min-w-0 flex-1 flex-col justify-center', editor && 'cursor-pointer')}
                     {...(editor ? { role: 'button', tabIndex: 0, 'aria-label': `Edit ${it.name || 'block'}`, onClick: () => openBlock(it.id), onKeyDown: (e: React.KeyboardEvent) => (e.key === 'Enter' || e.key === ' ') && (e.preventDefault(), openBlock(it.id)) } : {})}
                   >
                     <div className="truncate text-[14px] font-bold">
@@ -304,7 +304,7 @@ export const WorkoutPreviewScreen = ({ runsheet: r, history = [], lastTime, onBa
                     {modeLabel(it)}
                   </Chip>
                   {editor && (
-                    <button type="button" aria-label="Reorder blocks" data-testid="block-grip" onClick={() => setReordering(true)} className="-mr-1 grid size-9 shrink-0 place-items-center text-muted active:text-ink">
+                    <button type="button" aria-label="Reorder blocks" data-testid="block-grip" onClick={() => setReordering(true)} className="-mr-2 grid size-11 shrink-0 place-items-center text-muted active:text-ink">
                       <Menu className="size-5" />
                     </button>
                   )}
@@ -438,7 +438,7 @@ export const WorkoutPreviewScreen = ({ runsheet: r, history = [], lastTime, onBa
             </Button>
           )}
           {onShare && (
-            <Button variant="ghost" size="icon" aria-label="Share" onClick={onShare}>
+            <Button variant="ghost" size="icon" aria-label="Share" onClick={onShare} className="shrink-0">
               <Share2 />
             </Button>
           )}
