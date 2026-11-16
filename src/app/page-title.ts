@@ -18,6 +18,8 @@ export const pageTitle = (route: { name: string; tab?: string; id?: string }, na
       return of(route.id && names.session(route.id));
     case 'exercise':
       return of(route.id && names.exercise(route.id));
+    case 'weeks':
+      return of('Week by week');
     case 'new':
       return of('New workout');
     case 'coach':

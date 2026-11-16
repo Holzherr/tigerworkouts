@@ -16,6 +16,8 @@ import { cleanHandle } from '@/features/creators/credited';
 import type { Today } from '@/features/runsheet/targets';
 import type { Stall } from '@/features/results/stall';
 import { StallCard, TodayLine } from '@/features/results/components/targets';
+import { WeekByWeekRow } from '@/features/results/components/week-table-screen';
+import type { WeekTable } from '@/features/results/week-table';
 import { RunsheetList, type RunsheetListProps } from '@/features/runsheet/components/runsheet-list';
 import { BlockReorder } from '@/features/runsheet/components/block-reorder';
 import { BlockSheet } from '@/features/runsheet/components/block-sheet';
@@ -107,6 +109,8 @@ export interface WorkoutPreviewScreenProps {
   /** Suggestions for this workout, in its ⋯ menu: on unless turned off here; `enabled` false when
    * they are off for the whole account. */
   suggestions?: { on: boolean; enabled: boolean; onChange: (on: boolean) => void };
+  /** The workout week by week; its row shows once the workout has history. */
+  weekByWeek?: { table: WeekTable; onOpen: () => void };
 }
 
 /** A straight-set block whose sets differ, read as the gym writes it: one line per run of sets
@@ -137,7 +141,7 @@ const SCORE_TEXT: Record<string, string> = { time: 'For time', rounds: 'AMRAP: r
  * Edit & start, Follow along for videos, Save. Tapping any exercise opens it — the clip, the cue,
  * and its numbers as steppers when the host can save them.
  */
-export const WorkoutPreviewScreen = ({ runsheet: r, history = [], lastTime, onBack, onStart, onEditAndStart, onFollowAlong, onLogOnly, onSave, saved, onShare, onStepChange, onCreator, onTogglePublic, appHref, onExerciseHistory, hasHistory, today, stall, onDismissStall, onDelete, editor: given, initialEditing, onBlockDone, onChangeOnce, variant, versions = [], onRunVersion, onMakeBase, mergeTargets, onMergeInto, suggestions, onDuplicate }: WorkoutPreviewScreenProps) => {
+export const WorkoutPreviewScreen = ({ runsheet: r, history = [], lastTime, onBack, onStart, onEditAndStart, onFollowAlong, onLogOnly, onSave, saved, onShare, onStepChange, onCreator, onTogglePublic, appHref, onExerciseHistory, hasHistory, today, stall, onDismissStall, onDelete, editor: given, initialEditing, onBlockDone, onChangeOnce, variant, versions = [], onRunVersion, onMakeBase, mergeTargets, onMergeInto, suggestions, onDuplicate, weekByWeek }: WorkoutPreviewScreenProps) => {
   const [open, setOpen] = useState<ExerciseStep | null>(null);
   const [menu, setMenu] = useState(false);
   const [merging, setMerging] = useState(false);
@@ -260,6 +264,7 @@ export const WorkoutPreviewScreen = ({ runsheet: r, history = [], lastTime, onBa
           </div>
         )}
         {stall && onDismissStall && <StallCard stall={stall} onDismiss={onDismissStall} />}
+        {!focus && weekByWeek && weekByWeek.table.rows.length > 0 && <WeekByWeekRow table={weekByWeek.table} onOpen={weekByWeek.onOpen} />}
         {variant && <VariantBanner onKeep={() => (setScope('base'), variant.onKeep())} onDiscard={() => (setScope(null), variant.onDiscard())} />}
         {r.description && <p className="px-1 text-[14px] leading-relaxed text-body">{r.description}</p>}
         {(best || last) && (
