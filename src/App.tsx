@@ -42,7 +42,7 @@ import type { SessionOrigin, SessionResult } from '@/features/runsheet/progressi
 import { IMPORTED } from '@/features/workouts/imported';
 import { keepOffline, useCatalogue } from '@/features/workouts/catalogue';
 // Fetched when first shown: see app/lazy.tsx.
-import { ClientRoute, CoachesPage, CoachRoute, EditorScreen, ExercisePicker, Holding, ImportCsvSheet, JoinRoute, LandingScreen, MyAiCoach, MyCoaches, TimerDemo, WorkoutPreviewScreen } from './app/lazy';
+import { ClientRoute, CoachesPage, CoachRoute, EditorScreen, ExercisePicker, Holding, ImportCsvSheet, JoinRoute, LandingScreen, MyAiCoach, MyCoaches, TimerDemo, WeekTableScreen, WorkoutPreviewScreen } from './app/lazy';
 import { Button } from '@/shared/components/ui/button';
 import { Sheet } from '@/shared/components/ui/sheet';
 import { TabBar } from '@/shared/components/ui/tab-bar';
@@ -69,6 +69,7 @@ import { exerciseStall, workoutStall, type Stall } from '@/features/results/stal
 import { dismissStall, getDismissed, getIntent, setIntent as storeIntent, shouldAsk, suggestEnabled, suggestOn, withExercise, withWorkout } from '@/features/results/suggestions';
 import { addedSets, withAddedSets } from '@/features/results/added-sets';
 import { duplicateForNextWeek } from '@/features/runsheet/duplicate';
+import { weekTable } from '@/features/results/week-table';
 import { SuggestSheet } from '@/features/results/components/suggest-sheet';
 import { TimerExtrasContext } from '@/features/timer/timer-extras';
 import { alternatives } from '@/features/exercises/alternatives';
@@ -84,7 +85,7 @@ const TABS = [
 ] as const;
 type Tab = (typeof TABS)[number]['id'];
 
-type Route = { name: 'tab'; tab: Tab; sub?: string } | { name: 'new' } | { name: 'coaches' } | { name: 'coach'; id?: string } | { name: 'workout' | 'follow' | 'result' | 'do' | 'session' | 'import' | 'log' | 'creator' | 'credited' | 'exercise' | 'join'; id: string };
+type Route = { name: 'tab'; tab: Tab; sub?: string } | { name: 'new' } | { name: 'coaches' } | { name: 'coach'; id?: string } | { name: 'workout' | 'weeks' | 'follow' | 'result' | 'do' | 'session' | 'import' | 'log' | 'creator' | 'credited' | 'exercise' | 'join'; id: string };
 
 const parse = (hash: string): Route => {
   const seg = hash.replace(/^#\/?/, '').split('/');
@@ -94,6 +95,7 @@ const parse = (hash: string): Route => {
   if (seg[0] === 'coach') return { name: 'coach', id: id || undefined };
   if (seg[0] === 'join' && id) return { name: 'join', id };
   if ((seg[0] === 'w' || seg[0] === 'edit') && id) return { name: 'workout', id };
+  if (seg[0] === 'weeks' && id) return { name: 'weeks', id };
   if (seg[0] === 'follow' && id) return { name: 'follow', id };
   if (seg[0] === 'result' && id) return { name: 'result', id };
   if (seg[0] === 'do' && id) return { name: 'do', id };
@@ -336,6 +338,8 @@ export default function App() {
   if (route.name === 'coach') {
     return full(<CoachRoute signedIn={!!cloud.user} signIn={signInCard('Sign in to coach', ['Your clients link to your account', 'No password: we email you a 6-digit code'])} onOpenClient={id => go(`/coach/${encodeURIComponent(id)}`)} onHowItWorks={() => go('/coaches')} onBack={() => go('/me')} say={say} />);
   }
+  // The workout week by week, with the workouts it was duplicated from or into (review D9).
+  const weeksOf = (w: Runsheet) => weekTable(w, st.results, st.workouts, k => library[k]?.name ?? k, k => library[k]?.unit);
   if (route.name === 'workout') {
     const found = byId.get(route.id);
     // Someone's own workout (u-…) not loaded yet: ask the server for it. A hidden row is private, or,
@@ -404,6 +408,7 @@ export default function App() {
           onBack={() => (setDrafted(null), go('/discover'))}
           onStart={() => { unlockAudio(); if (drafted?.for !== id) setDrafted(null); const to = once ? id : settle(false); if (shouldAsk(st.suggestions, r)) setAskFor(to); else go(`/do/${encodeURIComponent(to)}`); }}
           suggestions={{ on: suggestOn(st.suggestions, base), enabled: suggestEnabled(st.suggestions), onChange: on => act.setSuggestions(withWorkout(st.suggestions, base, on)) }}
+          weekByWeek={{ table: weeksOf(r), onOpen: () => go(`/weeks/${encodeURIComponent(id)}`) }}
           onFollowAlong={r.video ? () => go(`/follow/${encodeURIComponent(id)}`) : undefined}
           onLogOnly={() => go(`/result/${encodeURIComponent(once ? id : settle(false))}`)}
           onSave={() => act.toggleSaved(id)}
@@ -531,6 +536,11 @@ export default function App() {
           onExercise={k => go(exerciseLink(k))}
         />
     );
+  }
+  if (route.name === 'weeks') {
+    const found = byId.get(route.id);
+    if (!found) return shell('discover', catLoading ? <Holding label="Loading workout" /> : <Missing />);
+    return full(<WeekTableScreen key={route.id} title={found.title} table={weeksOf(found)} onBack={() => back(`/w/${encodeURIComponent(route.id)}`)} onExercise={k => go(exerciseLink(k))} suggestions={{ on: suggestOn(st.suggestions, found), enabled: suggestEnabled(st.suggestions), onChange: on => act.setSuggestions(withWorkout(st.suggestions, found, on)) }} />);
   }
   if (route.name === 'exercise') {
     const ex = library[route.id] ?? { key: route.id, name: route.id, unit: '', step: 1 };

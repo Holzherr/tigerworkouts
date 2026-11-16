@@ -84,6 +84,7 @@ export const JoinRoute = screen(() => coaching().then(m => m.JoinRoute));
 export const MyCoaches = screen(() => coaching().then(m => m.MyCoaches), null);
 export const MyAiCoach = screen(() => coaching().then(m => m.MyAiCoach), null);
 export const WorkoutPreviewScreen = screen(() => workoutPage().then(m => m.WorkoutPreviewScreen));
+export const WeekTableScreen = screen(() => import('@/features/results/components/week-table-screen').then(m => m.WeekTableScreen));
 export const EditorScreen = screen(() => import('@/features/runsheet/components/editor-screen').then(m => m.EditorScreen));
 export const ExercisePicker = sheet(() => picker().then(m => m.ExercisePicker));
 export const ImportCsvSheet = sheet(() => import('@/features/results/components/import-csv-sheet').then(m => m.ImportCsvSheet));
