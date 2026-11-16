@@ -31,6 +31,11 @@
       "name": "Deadlift 1×5+",
       "repeat": 1,
       "note": "Rest 3–5 min; +2.5 kg per session (+5 kg deadlift); 3 fails at a weight → drop 10%",
+      "progression": {
+        "onSuccessKg": 5,
+        "deloadPct": 10,
+        "failAfter": 3
+      },
       "steps": [
         {
           "kind": "exercise",

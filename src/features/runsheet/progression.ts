@@ -157,6 +157,64 @@ export const failStreak = (history: SessionResult[], exerciseKey: string): numbe
   return n;
 };
 
+/** The sets a step is prescribed: its block's rounds when the block runs for rounds, else one. */
+const plannedSets = (r: Runsheet, s: ExerciseStep): number => {
+  const b = r.items.find((i): i is Block => i.kind === 'block' && i.steps.some(x => x.id === s.id));
+  return b && (b.mode ?? 'rounds') === 'rounds' ? Math.max(1, b.repeat) : 1;
+};
+
+/**
+ * Whether a logged row made every prescribed set. The timer and the result sheet record it
+ * (`success`) on a step a rule reads; a row logged before the program carried its rule as data has
+ * none, so it is read from the sets: as many working sets as prescribed, each at the prescribed
+ * reps or more. A row with another number of sets (the same lift done to another prescription)
+ * says nothing.
+ */
+export const madeIt = (row: StepResult, s: ExerciseStep, sets: number): boolean | undefined => {
+  if (row.success !== undefined) return row.success;
+  if (s.forMode !== 'reps') return undefined;
+  const reps = row.sets?.length ? row.sets.filter(x => x.type !== 'warmup' && x.type !== 'drop').map(x => x.reps) : (row.reps ?? []);
+  if (reps.length !== sets || reps.some(n => n === undefined)) return undefined;
+  return reps.every(n => n! >= s.forValue);
+};
+
+export interface RuleNext {
+  /** The load the lift was last done at. */
+  from: number;
+  /** The load the rule gives the next session. */
+  to: number;
+  made: boolean;
+  /** "all sets done: +2.5 kg", "missed reps (1/3): repeat the weight". */
+  reason: string;
+}
+
+/**
+ * What a program's rule makes of the newest session that did this lift, in any workout of the
+ * program (StrongLifts squats on day A and day B): +2.5 kg after a clean session, the same weight
+ * after a miss, the deload after `failAfter` misses. Undefined for a step no rule covers, a load
+ * taken from a training max or bodyweight, or a lift with no session to read.
+ */
+export const ruleNext = (r: Runsheet, s: ExerciseStep, results: SessionResult[], tms: TrainingMaxes = {}, kit?: Equipment): RuleNext | undefined => {
+  const block = r.items.find((i): i is Block => i.kind === 'block' && i.steps.some(x => x.id === s.id));
+  const rule = block?.progression ?? r.progression;
+  if (!rule || s.targetPct !== undefined || s.loadFactor !== undefined) return undefined;
+  const key = s.exercise.key;
+  const sets = plannedSets(r, s);
+  const newest = [...results].sort((a, b) => b.startedAt.localeCompare(a.startedAt));
+  for (const h of newest) {
+    const row = h.steps.find(x => x.exerciseKey === key && madeIt(x, s, sets) !== undefined);
+    if (!row) continue;
+    const made = madeIt(row, s, sets)!;
+    const from = workingLoad(row);
+    if (from === undefined) return undefined;
+    // The same lift only, read by its exercise: step ids are per workout and "s1" is in every one.
+    const only: Runsheet = { ...r, items: [block ? { ...block, steps: [s] } : s] };
+    const line = nextLoads(only, { ...h, steps: [{ ...row, stepId: s.id, success: made }] }, newest, tms, kit).find(n => n.exerciseKey === key && !n.reason.includes('training max'));
+    return { from, to: line?.to ?? from, made, reason: line?.reason ?? (made ? 'all sets done' : 'missed reps: repeat the weight') };
+  }
+  return undefined;
+};
+
 export interface NextLoad {
   exerciseKey: string;
   name: string;
@@ -192,13 +250,14 @@ export const nextLoads = (r: Runsheet, last: SessionResult, history: SessionResu
         continue;
       }
     }
-    if (res.success === undefined || from === undefined) continue;
-    if (res.success && rule.onSuccessKg) {
+    const made = madeIt(res, s, plannedSets(r, s));
+    if (made === undefined || from === undefined) continue;
+    if (made && rule.onSuccessKg) {
       // The next load you can make at or above the rule's step: a 24 kg bell +2.5 is the 28.
       const up = snapToKit(from + rule.onSuccessKg, s.exercise, kit, 'up');
       const to = up > from ? up : (nextLoadUp(from, s.exercise, kit) ?? from);
       out.push({ exerciseKey: key, name: s.exercise.name, from, to, reason: to === from ? `all sets done: already the heaviest you own` : `all sets done: +${rule.onSuccessKg} kg${Math.abs(to - from - rule.onSuccessKg) > 1e-6 ? `, ${fmtKg(to)} kg is the next you can load` : ''}` });
-    } else if (!res.success && rule.deloadPct && rule.failAfter) {
+    } else if (!made && rule.deloadPct && rule.failAfter) {
       // `last` is the result sheet's copy of a row already in `history`: match it by id, not identity.
       const streak = failStreak([last, ...history.filter(h => !sameSession(h, last))], key);
       // The session after a deload starts at the lighter weight; its misses count towards the next.
@@ -226,10 +285,8 @@ export const progressed = (r: Runsheet, results: SessionResult[], tms: TrainingM
   for (const s of exerciseSteps(r.items)) {
     const key = s.exercise.key;
     if (to.has(key) || !ruled(s) || s.targetPct !== undefined || s.loadFactor !== undefined || typeof s.target !== 'number') continue;
-    const last = newest.find(h => h.steps.some(x => x.exerciseKey === key && x.success !== undefined));
-    if (!last) continue;
-    const line = nextLoads(r, { ...last, steps: last.steps.filter(x => x.exerciseKey === key) }, newest, tms, kit).find(n => n.exerciseKey === key && !n.reason.includes('training max'));
-    if (line?.to !== undefined) to.set(key, line.to);
+    const next = ruleNext(r, s, newest, tms, kit);
+    if (next) to.set(key, next.to);
   }
   if (!to.size) return r;
   const step = (s: ExerciseStep): ExerciseStep => {

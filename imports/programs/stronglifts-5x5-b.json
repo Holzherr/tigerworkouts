@@ -30,6 +30,11 @@
       "name": "Squat 5×5",
       "repeat": 5,
       "note": "Rest 90 s if the last set was easy, 3 min if hard, 5 min after a failed set",
+      "progression": {
+        "onSuccessKg": 2.5,
+        "deloadPct": 10,
+        "failAfter": 3
+      },
       "steps": [
         {
           "kind": "exercise",
@@ -52,6 +57,11 @@
       "name": "Overhead press 5×5",
       "repeat": 5,
       "note": "Rest 90 s if the last set was easy, 3 min if hard, 5 min after a failed set",
+      "progression": {
+        "onSuccessKg": 2.5,
+        "deloadPct": 10,
+        "failAfter": 3
+      },
       "steps": [
         {
           "kind": "exercise",
@@ -74,6 +84,11 @@
       "name": "Deadlift 1×5",
       "repeat": 1,
       "note": "Warm-up sets first, then a single heavy set of five",
+      "progression": {
+        "onSuccessKg": 5,
+        "deloadPct": 10,
+        "failAfter": 3
+      },
       "steps": [
         {
           "kind": "exercise",

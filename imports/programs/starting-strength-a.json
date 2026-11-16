@@ -30,6 +30,9 @@
       "name": "Squat 3×5",
       "repeat": 3,
       "note": "3–5 min between heavy sets is the norm",
+      "progression": {
+        "onSuccessKg": 2.5
+      },
       "steps": [
         {
           "kind": "exercise",
@@ -52,6 +55,9 @@
       "name": "Press 3×5",
       "repeat": 3,
       "note": "3–5 min between heavy sets is the norm",
+      "progression": {
+        "onSuccessKg": 2.5
+      },
       "steps": [
         {
           "kind": "exercise",
@@ -74,6 +80,9 @@
       "name": "Deadlift 1×5",
       "repeat": 1,
       "note": "3–5 min between heavy sets is the norm",
+      "progression": {
+        "onSuccessKg": 5
+      },
       "steps": [
         {
           "kind": "exercise",

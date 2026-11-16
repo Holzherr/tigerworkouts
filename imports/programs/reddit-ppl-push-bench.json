@@ -31,6 +31,11 @@
       "name": "Bench press 4×5, 1×5+",
       "repeat": 4,
       "note": "Rest 3–5 min; +2.5 kg per session (+5 kg deadlift); 3 fails at a weight → drop 10%",
+      "progression": {
+        "onSuccessKg": 2.5,
+        "deloadPct": 10,
+        "failAfter": 3
+      },
       "steps": [
         {
           "kind": "exercise",
@@ -52,6 +57,11 @@
       "name": "Bench press 4×5, 1×5+ – AMRAP",
       "repeat": 1,
       "note": "AMRAP set",
+      "progression": {
+        "onSuccessKg": 2.5,
+        "deloadPct": 10,
+        "failAfter": 3
+      },
       "steps": [
         {
           "kind": "exercise",
