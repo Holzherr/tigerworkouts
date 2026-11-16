@@ -47,7 +47,7 @@ describe('TodayLine', () => {
     const why = screen.getByLabelText('Why').textContent ?? '';
     expect(why).toContain('8 reps at 25 kg on every set: up to 27.5 kg');
     expect(why).not.toContain('on the workout page');
-    expect(why).toContain('Barbell bench press 60 kg × 8: hold 60 kg until every set makes 8');
+    expect(why).toContain('Barbell bench press 60 kg × 8 (+1 rep): hold 60 kg until every set makes 8');
   });
   it('drops only the "more on the workout page" tail from the reason', () => {
     expect(whyOf('bank reps: 28 kg once every set reaches 14 · 1 more on the workout page')).toBe('bank reps: 28 kg once every set reaches 14');
