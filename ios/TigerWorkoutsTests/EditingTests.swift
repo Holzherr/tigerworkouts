@@ -27,6 +27,12 @@ struct EditingTests {
         #expect(Edit.problem(with: named) == "Add at least one exercise.")
     }
 
+    @Test("a new workout's id is a whole UUID: ids are one key across every account")
+    func workoutIdIsUnique() {
+        let id = Edit.newRunsheet(creator: nil).id ?? ""
+        #expect(id.hasPrefix("w-") && UUID(uuidString: String(id.dropFirst(2))) != nil)
+    }
+
     @Test("an empty block blocks saving even when there are exercises elsewhere")
     func emptyBlock() {
         var (r, _) = sheetWithOneBlock()

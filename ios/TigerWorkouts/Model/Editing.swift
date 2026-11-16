@@ -9,8 +9,13 @@ enum Edit {
         "\(prefix)-\(UUID().uuidString.prefix(8).lowercased())"
     }
 
+    /// A workout's id is one key across every account, not one runsheet, so it carries a whole
+    /// UUID: eight hex digits clash somewhere once there are tens of thousands of workouts, and the
+    /// second save is refused.
+    static func workoutId() -> String { "w-\(UUID().uuidString.lowercased())" }
+
     static func newRunsheet(creator: String?) -> Runsheet {
-        var sheet = Runsheet(id: id("w"), title: "", creator: creator)
+        var sheet = Runsheet(id: workoutId(), title: "", creator: creator)
         sheet.source = Source(title: "", author: creator, kind: "user")
         sheet.items = [.block(newBlock(number: 1))]
         sheet.createdAt = ISO8601DateFormatter().string(from: Date())
@@ -35,7 +40,7 @@ enum Edit {
     /// The port of `editedCopy` in model.ts.
     static func duplicate(_ r: Runsheet, creator: String?) -> Runsheet {
         var sheet = r
-        sheet.id = id("w")
+        sheet.id = workoutId()
         sheet.title = r.title.isEmpty ? "Untitled" : "\(r.title) (mine)"
         sheet.creator = creator
         sheet.source = Source(title: r.title, author: creator, kind: "user")
@@ -50,7 +55,7 @@ enum Edit {
     /// `duplicatedFrom` keeps the thread for a week-by-week view.
     static func duplicateForNextWeek(_ r: Runsheet, creator: String?) -> Runsheet {
         var sheet = r
-        sheet.id = id("w")
+        sheet.id = workoutId()
         sheet.title = nextTitle(r.title)
         sheet.creator = creator ?? r.creator
         sheet.source = Source(title: r.title, author: creator, kind: "user")

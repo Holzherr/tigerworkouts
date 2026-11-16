@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { addSet, amountsOf, exerciseLogs, extraLogs, hasLoad, logChoices, stepLogs, withLogs, roundsLabel, editSet, plannedSet, removeSet, withSetCount, straightSetStep, flatten, fromLegacy, groupOnto, insertAfter, makeExercise, makeRest, moveRow, moveRowTo, moveToTopLevel, rebuild, removeStep, isEmptyMain, repeatAsRounds, startBlock, runsheetSeconds, editedCopy, ofWorkout, hasSetting, settingLabel, type Block, type ExerciseRef, type Item, type Runsheet } from './model';
+import { addSet, amountsOf, exerciseLogs, extraLogs, hasLoad, logChoices, stepLogs, withLogs, roundsLabel, editSet, plannedSet, removeSet, withSetCount, straightSetStep, flatten, fromLegacy, groupOnto, insertAfter, makeExercise, makeRest, moveRow, moveRowTo, moveToTopLevel, rebuild, removeStep, isEmptyMain, repeatAsRounds, startBlock, runsheetSeconds, editedCopy, newWorkoutId, ofWorkout, hasSetting, settingLabel, type Block, type ExerciseRef, type Item, type Runsheet } from './model';
 import { EX, priyanka, withStarter } from './fixtures';
 
 const KB: ExerciseRef = { key: 'kb_swing', name: 'Kettlebell swings', unit: 'kg', step: 4 };
@@ -314,5 +314,13 @@ describe('hasSetting / settingLabel (iOS RunsheetMath)', () => {
     expect(hasSetting(noTarget('kg'))).toBe(true);
     expect(hasSetting(makeExercise(EX.cardio_rower))).toBe(false);
     expect(hasSetting(makeExercise(EX.cardio_assault_bike))).toBe(false);
+  });
+});
+
+describe('newWorkoutId', () => {
+  it('differs within one millisecond: workout ids are one key across every account', () => {
+    const ids = new Set(Array.from({ length: 50 }, newWorkoutId));
+    expect(ids.size).toBe(50);
+    for (const id of ids) expect(id).toMatch(/^u-[0-9a-z]+$/);
   });
 });

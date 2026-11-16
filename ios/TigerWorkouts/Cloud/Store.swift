@@ -650,7 +650,7 @@ final class Store {
     /// an edit reads the edited workout as the base, so the edit is not taken for a version.
     func stage(_ r: Runsheet, visibility: Bool = false) {
         var sheet = r
-        if sheet.id == nil { sheet.id = Edit.id("w") }
+        if sheet.id == nil { sheet.id = Edit.workoutId() }
         if sheet.creator == nil { sheet.creator = profileName }
         if visibility {
             publicSetHere.insert(sheet.key)
