@@ -11,13 +11,14 @@ Branded TigerWorkouts on 6 Sep 2026 (was Workout Hub). Moved into its own reposi
 
 ```
 src/          the web app — React, a component library first and an app second
-imports/      472 public workouts and the exercises they need; the one catalogue both apps read
+imports/      484 public workouts and the exercises they need; the one catalogue both apps read
 ios/          the native iPhone app (SwiftUI) — see ios/README.md
 legacy/       the v0.9 single-file app, served at /legacy/; also holds the Supabase schema
 mcp/          the MCP server for AI assistants (Cloudflare Worker, mcp.tigerworkouts.com) — specs/mcp.md;
               also the Instagram bot's webhook (mcp/src/instagram/) — specs/instagram-bot.md
 tools/        catalogue validation, the v0.9 library port, and the iOS catalogue export
-.github/      the build and deploy to tigerworkouts.com
+fixtures/     runsheets with every field, read by the web, MCP and iOS tests so the three stay in step
+.github/      build, test and deploy to tigerworkouts.com; MCP and iOS tests
 ```
 
 - **Live:** https://tigerworkouts.com — the React app (PWA)

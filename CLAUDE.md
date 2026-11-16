@@ -40,6 +40,13 @@ deploying. See README.md for what is where.
   `legacy/data.js`) by the scripts in `tools/`. Edit the source and re-run, never the output.
 - **The iOS engine is a port.** `ios/TigerWorkouts/Engine/Runner.swift` follows
   `src/features/timer/runner.ts`; change one, change the other, and port the test.
+- **The runsheet shape is defined twice**: `src/features/runsheet/model.ts` and
+  `ios/TigerWorkouts/Model/Runsheet.swift` (the MCP worker uses the web one). A new field goes in
+  both, and in `fixtures/runsheets.json`, which tests on web, MCP and iOS all read; the iOS test
+  fails when the phone would drop a field on save.
+- **A merged migration may be applied.** Additive SQL under `legacy/supabase/migrations/` is picked
+  up after merge by the deploy-watch job; anything with `revoke`, `drop` or `delete` waits for Nick.
+  Leave a migration PR open if it must not run yet.
 - **Legacy logs go to `nick-prototypes` issues on purpose** (`GH_REPO` in `legacy/index.html`):
   that is where the workout-log pipeline picks them up. Crash reports from the React app come here.
 

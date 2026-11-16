@@ -1,0 +1,82 @@
+[
+  {
+    "id": "fx-every-field",
+    "title": "Every field",
+    "creator": "Coach Amy",
+    "description": "One of everything the stored shape can hold.",
+    "source": { "title": "Every field", "url": "https://www.instagram.com/reel/abc/", "author": "Coach Amy", "kind": "social", "license": "CC BY 4.0", "importedAt": "2026-11-01T10:00:00.000Z", "handle": "coach.amy", "platform": "instagram", "review": "pending" },
+    "createdAt": "2026-11-01T10:00:00.000Z",
+    "tags": ["strength", "barbell"],
+    "level": "Hard",
+    "program": { "name": "Six weeks", "day": "Week 1 · Day 1", "order": 1 },
+    "timeCapSec": 3600,
+    "score": "load",
+    "progression": { "onSuccessKg": 2.5, "deloadPct": 10, "failAfter": 3, "amrapBumpAt": 8, "tmBumpKg": 5 },
+    "video": { "provider": "youtube", "id": "dQw4w9WgXcQ", "url": "https://www.youtube.com/watch?v=dQw4w9WgXcQ" },
+    "icon": { "kind": "image", "src": "data:image/png;base64,AAAA" },
+    "public": false,
+    "copyOf": "cf-girls-fran",
+    "duplicatedFrom": "u-week-1",
+    "items": [
+      { "kind": "ref", "id": "ref-1", "runsheetId": "fx-warm-up", "role": "warmup" },
+      {
+        "kind": "exercise", "id": "e-1",
+        "exercise": { "key": "cardio_rower", "name": "Rower", "unit": "m", "step": 50, "clip": "media/rower.mp4", "poster": "media/rower.jpg", "icon": "rowing", "cue": "Legs, then back, then arms" },
+        "forMode": "seconds", "forValue": 30, "forMax": 45, "log": ["meters", "calories"], "role": "warmup", "note": "Easy pace"
+      },
+      { "kind": "rest", "id": "r-1", "seconds": 60, "role": "warmup", "note": "Set the bar up" },
+      {
+        "kind": "block", "id": "b-1", "name": "Bench", "repeat": 4, "mode": "rounds", "restBetweenSec": 90, "score": "load",
+        "progression": { "onSuccessKg": 2.5, "deloadPct": 10, "failAfter": 3 }, "role": "main", "note": "Leave one in the tank",
+        "steps": [
+          {
+            "kind": "exercise", "id": "e-2",
+            "exercise": { "key": "bb_bench", "name": "Barbell bench press", "unit": "kg", "step": 2.5 },
+            "target": 60, "forMode": "amrap", "forValue": 5, "targetPct": 85, "rx": { "men": 60, "women": 40 }, "log": "reps",
+            "sets": [{ "reps": 5, "load": 40, "type": "warmup" }, { "reps": 5, "load": 60 }, { "load": 62.5 }, { "reps": 8, "load": 50, "type": "drop" }]
+          },
+          { "kind": "rest", "id": "r-2", "seconds": 120 }
+        ]
+      },
+      {
+        "kind": "block", "id": "b-2", "name": "Fran", "repeat": 1, "mode": "ladder", "ladder": [21, 15, 9], "timeCapSec": 600,
+        "steps": [
+          { "kind": "exercise", "id": "e-3", "exercise": { "key": "bb_thruster", "name": "Thruster", "unit": "kg", "step": 2.5 }, "target": 43, "forMode": "reps", "forValue": 21 },
+          { "kind": "exercise", "id": "e-4", "exercise": { "key": "bw_double_under", "name": "Double-under", "unit": "", "step": 1 }, "forMode": "reps", "forValue": 21, "ladderFactor": 10 },
+          { "kind": "exercise", "id": "e-5", "exercise": { "key": "cardio_run", "name": "Run", "unit": "kph", "step": 0.5 }, "target": 12, "incline": 1, "forMode": "meters", "forValue": 200, "ladderFixed": true }
+        ]
+      },
+      {
+        "kind": "block", "id": "b-3", "name": "Every minute", "repeat": 10, "mode": "emom", "everySec": 60,
+        "steps": [
+          { "kind": "exercise", "id": "e-6", "exercise": { "key": "kb_swing", "name": "Kettlebell swing", "unit": "kg", "step": 4 }, "target": 24, "forMode": "reps", "forValue": 15 },
+          { "kind": "exercise", "id": "e-7", "exercise": { "key": "bw_lunge", "name": "Lunge", "unit": "", "step": 1 }, "forMode": "reps", "forValue": 10, "perSide": true, "loadFactor": 0.5 }
+        ]
+      },
+      {
+        "kind": "block", "id": "b-4", "name": "Finisher", "repeat": 1, "mode": "amrap", "timeCapSec": 300, "score": "rounds", "role": "cooldown",
+        "steps": [
+          { "kind": "exercise", "id": "e-8", "exercise": { "key": "bw_plank", "name": "Plank", "unit": "s", "step": 5 }, "forMode": "max", "forValue": 0 },
+          { "kind": "exercise", "id": "e-9", "exercise": { "key": "cardio_bike", "name": "Bike", "unit": "cal", "step": 1 }, "forMode": "calories", "forValue": 15 },
+          { "kind": "exercise", "id": "e-10", "exercise": { "key": "cardio_walk", "name": "Walk", "unit": "kph", "step": 0.5 }, "target": 5, "forMode": "minutes", "forValue": 5 }
+        ]
+      },
+      {
+        "kind": "block", "id": "b-5", "name": "For time", "repeat": 3, "mode": "fortime", "timeCapSec": 900, "score": "time",
+        "steps": [
+          { "kind": "exercise", "id": "e-11", "exercise": { "key": "yt_follow", "name": "Follow along", "unit": "", "step": 1 }, "forMode": "segment", "forValue": 0, "startSeconds": 30, "endSeconds": 90 },
+          { "kind": "exercise", "id": "e-12", "exercise": { "key": "bw_push_up", "name": "Push-up", "unit": "", "step": 1 }, "forMode": "reps", "forValue": 10, "sets": [{ "reps": 10, "type": "failure" }] }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "fx-plain",
+    "title": "Plain",
+    "source": { "title": "Plain", "kind": "user" },
+    "items": [
+      { "kind": "exercise", "id": "e-1", "exercise": { "key": "bw_squat", "name": "Air squat", "unit": "", "step": 1 }, "forMode": "reps", "forValue": 20 },
+      { "kind": "rest", "id": "r-1", "seconds": 30 }
+    ]
+  }
+]

@@ -101,7 +101,7 @@ extension Runsheet {
         return est
     }
 
-    var minutes: Int { Int((estimatedSeconds / 60).rounded()) }
+    var minutes: Int { Format.whole(estimatedSeconds / 60) }
 
     /// Every exercise step in the sheet, blocks flattened.
     var exerciseSteps: [ExerciseStep] {
@@ -235,22 +235,31 @@ extension ExerciseStep {
 }
 
 enum Format {
+    /// A whole number of the value, for display. `Int(_:)` traps on NaN, infinity and anything past
+    /// Int.max, and a stored workout is whatever its owner (or an agent) wrote: 1e300 kg took the
+    /// app down on every screen that showed it.
+    static func whole(_ v: Double) -> Int {
+        guard v.isFinite else { return 0 }
+        return Int(max(-1e15, min(1e15, v.rounded())))
+    }
+
     /// 43 not 43.0, 14.5 not 14.500000.
     static func number(_ v: Double) -> String {
-        v == v.rounded() ? String(Int(v)) : String(format: "%.1f", v)
+        guard v.isFinite else { return "–" }
+        return v == v.rounded() ? String(whole(v)) : String(format: "%.1f", v)
     }
 
     /// 0:30, 10:00, 1:02:30
     static func clock(_ seconds: Double) -> String {
-        let s = max(0, Int(seconds.rounded()))
+        let s = max(0, whole(seconds))
         let h = s / 3600, m = (s % 3600) / 60, sec = s % 60
         return h > 0 ? String(format: "%d:%02d:%02d", h, m, sec) : String(format: "%d:%02d", m, sec)
     }
 
     /// "24 min", "1h 05"
     static func duration(_ seconds: Double) -> String {
-        if seconds < 60 { return "\(max(0, Int(seconds.rounded())))s" }
-        let m = Int((seconds / 60).rounded())
+        if seconds < 60 { return "\(max(0, whole(seconds)))s" }
+        let m = whole(seconds / 60)
         return m < 60 ? "\(m) min" : String(format: "%dh %02d", m / 60, m % 60)
     }
 }

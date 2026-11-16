@@ -66,6 +66,13 @@ struct Source: Codable, Hashable, Sendable {
     var kind: String = "user"
     var license: String?
     var importedAt: String?
+    /// A creator's post adapted by an admin (`kind` "social"): their handle without the @, where
+    /// the post is, and "pending" until the import is approved. The web and the MCP worker set and
+    /// read these; kept here so a workout edited on the phone does not lose its credit or leave
+    /// the import queue.
+    var handle: String?
+    var platform: String?
+    var review: String?
 }
 
 struct Video: Codable, Hashable, Sendable {
