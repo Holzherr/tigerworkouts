@@ -67,6 +67,7 @@ import { setTargets, timerTarget, today as todayFor, type Intent } from '@/featu
 import { exerciseStall, workoutStall, type Stall } from '@/features/results/stall';
 import { dismissStall, getDismissed, getIntent, setIntent as storeIntent, shouldAsk, suggestEnabled, suggestOn, withExercise, withWorkout } from '@/features/results/suggestions';
 import { addedSets, withAddedSets } from '@/features/results/added-sets';
+import { duplicateForNextWeek } from '@/features/runsheet/duplicate';
 import { SuggestSheet } from '@/features/results/components/suggest-sheet';
 import { TimerExtrasContext } from '@/features/timer/timer-extras';
 import { alternatives } from '@/features/exercises/alternatives';
@@ -397,6 +398,7 @@ export default function App() {
           onRunVersion={v => (unlockAudio(), setDrafted({ for: id, r: { ...base, items: v.items } }), go(`/do/${encodeURIComponent(id)}`))}
           onMakeBase={v => (keep({ ...base, items: v.items }), say('This version is the workout now'))}
           mergeTargets={own ? st.workouts.filter(w => w.id !== id).sort((a, b) => Number(b.title === base.title) - Number(a.title === base.title)).map(w => ({ id: w.id!, title: w.title, minutes: runsheetMinutes(w) })) : undefined}
+          onDuplicate={() => { const d = duplicateForNextWeek(pendingEdit ?? base, `u-${Date.now().toString(36)}`, st.name || undefined); setHeld(null); setDrafted(null); act.saveWorkout({ ...d, icon: d.icon ?? defaultIcon(d.id!) }); say('Duplicated · now editing the copy'); go(`/w/${encodeURIComponent(d.id!)}`); }}
           onMergeInto={own ? into => (act.mergeWorkout(id, into), say('Merged: kept as your version'), goReplace(`/w/${encodeURIComponent(into)}`)) : undefined}
           onBack={() => (setDrafted(null), go('/discover'))}
           onStart={() => { unlockAudio(); if (drafted?.for !== id) setDrafted(null); const to = once ? id : settle(false); if (shouldAsk(st.suggestions, r)) setAskFor(to); else go(`/do/${encodeURIComponent(to)}`); }}
