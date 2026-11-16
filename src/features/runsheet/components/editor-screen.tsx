@@ -2,6 +2,7 @@ import { ChevronLeft, ClipboardPaste, PenLine, Play, Save } from 'lucide-react';
 import { Button } from '@/shared/components/ui/button';
 import { useState } from 'react';
 import { Dropdown } from '@/shared/components/ui/dropdown';
+import { Sheet } from '@/shared/components/ui/sheet';
 import { Stepper } from '@/shared/components/ui/stepper';
 import { WorkoutIcon } from '@/shared/components/ui/workout-icon';
 import { useUndo } from '@/shared/components/ui/undo-toast';
@@ -29,6 +30,10 @@ export interface EditorScreenProps {
   onSwapExercise?: (step: ExerciseStep) => Promise<ExerciseStep | null>;
   onBack?: () => void;
   onReset?: () => void;
+  /** Discard on the way out: throws the draft away and leaves. Defaults to `onBack`. */
+  onDiscard?: () => void;
+  /** Save on the way out: keeps it and leaves. Defaults to `onSaveAsMine`. */
+  onSaveAndLeave?: () => void;
   onStart?: () => void;
   onSaveAsMine?: () => void;
   /** Opens the "Describe the workout" sheet. */
@@ -57,23 +62,27 @@ export interface EditorScreenProps {
  * body; Start and Save as mine are pinned above the tab bar. In `author` mode (a new workout)
  * the title is an input and the pinned bar is Save workout + Start.
  */
-export const EditorScreen = ({ runsheet, onChange, onPickExercise, onSwapExercise, onBack, onReset, onStart, onSaveAsMine, onPastePlan, onTextChange, mode = 'tonight', resolveTarget, hintFor, setHintFor, equipment, refTitle, autoRest, dirty, own }: EditorScreenProps) => {
+export const EditorScreen = ({ runsheet, onChange, onPickExercise, onSwapExercise, onBack, onReset, onDiscard, onSaveAndLeave, onStart, onSaveAsMine, onPastePlan, onTextChange, mode = 'tonight', resolveTarget, hintFor, setHintFor, equipment, refTitle, autoRest, dirty, own }: EditorScreenProps) => {
   const setItems = (items: Item[]) => onChange({ ...runsheet, items });
   const minutes = runsheetMinutes(runsheet);
   const blocks = runsheet.items.filter(i => i.kind === 'block').length;
   const score = scoreType(runsheet);
   const [settings, setSettings] = useState(false);
   const undo = useUndo();
-  const discarding = (fn?: () => void) => () => (!dirty || confirm('Throw away your changes?')) && fn?.();
+  // Back or Reset with something to lose asks in a sheet, as iOS does (review D9): Save, Discard or
+  // Keep editing on the way out; Discard or Keep editing on Reset.
+  const [leaving, setLeaving] = useState<'back' | 'reset' | null>(null);
+  const discarding = (fn: (() => void) | undefined, why: 'back' | 'reset') => () => (dirty ? setLeaving(why) : fn?.());
+  const saveLeaving = onSaveAndLeave ?? onSaveAsMine;
   return (
     <div className="flex h-full min-h-0 flex-col bg-canvas">
       <header className="safe-top shrink-0 border-b border-line bg-surface px-4 pb-2.5">
         <div className="flex items-center justify-between pt-2">
-          <Button variant="quiet" size="inline" onClick={discarding(onBack)} className="-ml-1 text-muted">
+          <Button variant="quiet" size="inline" onClick={discarding(onBack, 'back')} className="-ml-1 text-muted">
             <ChevronLeft /> Back
           </Button>
           {onReset && (
-            <Button variant="text" size="inline" onClick={discarding(onReset)}>
+            <Button variant="text" size="inline" onClick={discarding(onReset, 'reset')}>
               Reset
             </Button>
           )}
@@ -169,6 +178,24 @@ export const EditorScreen = ({ runsheet, onChange, onPickExercise, onSwapExercis
           )}
         </div>
       </div>
+      <Sheet open={leaving !== null} onOpenChange={o => !o && setLeaving(null)} title={leaving === 'back' && saveLeaving ? 'Save this workout?' : 'Throw away your changes?'} height="auto" hideClose>
+        <div className="space-y-2 pb-2">
+          {leaving === 'back' && saveLeaving ? (
+            <>
+              <p className="pb-1.5 text-[14px] text-muted">Save keeps it in Mine. Discard deletes it.</p>
+              <Button block size="lg" onClick={() => (setLeaving(null), saveLeaving())}>
+                Save
+              </Button>
+            </>
+          ) : null}
+          <Button block size="lg" variant="ghost" className="border-danger text-danger" onClick={() => { const why = leaving; setLeaving(null); (why === 'reset' ? onReset : (onDiscard ?? onBack))?.(); }}>
+            Discard
+          </Button>
+          <Button block size="lg" variant="quiet" className="text-ink" onClick={() => setLeaving(null)}>
+            Keep editing
+          </Button>
+        </div>
+      </Sheet>
     </div>
   );
 };

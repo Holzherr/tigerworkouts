@@ -49,6 +49,7 @@ import { TabBar } from '@/shared/components/ui/tab-bar';
 import { WorkoutIcon } from '@/shared/components/ui/workout-icon';
 import { useUndo } from '@/shared/components/ui/undo-toast';
 import { loadPending, savePending } from '@/app/pending';
+import { loadNewDraft, saveNewDraft, worthKeeping } from '@/app/new-draft';
 import { Contain } from '@/app/recover';
 import { pageTitle } from '@/app/page-title';
 import { originOf, rememberOrigin, withOrigin } from '@/features/timer/run-origin';
@@ -424,25 +425,30 @@ export default function App() {
     return full(<CreditedCreatorScreen key={route.id} creator={creator} loading={!creator && !remoteLoaded} onBack={() => back('/discover')} onOpen={r => open(r)} onShare={async () => { const out = await shareLink(creator?.name ?? 'TigerWorkouts', location.href); told(shareToast(out)); }} />);
   }
   if (route.name === 'new') {
-    const r: Runsheet = draftOf('new') ?? { title: '', creator: st.name || undefined, items: [] };
+    // Kept on the device as it is written, as iOS autosaves it: a reload brings it back (new-draft.ts).
+    const r: Runsheet = draftOf('new') ?? loadNewDraft() ?? { title: '', creator: st.name || undefined, items: [] };
+    const edit = (x: Runsheet | null) => (saveNewDraft(x), draftFor('new')(x));
     const saveMine = (): Runsheet => {
       const title = r.title.trim() || 'My workout';
       const id = `u-${Date.now().toString(36)}`;
-      const mine: Runsheet = { ...r, id, title, createdAt: new Date().toISOString(), creator: st.name || undefined, source: { title, author: st.name || undefined, kind: 'user' }, program: undefined, icon: r.icon ?? defaultIcon(id) };
+      const mine: Runsheet = { ...dropEmptyBlocks(r), id, title, createdAt: new Date().toISOString(), creator: st.name || undefined, source: { title, author: st.name || undefined, kind: 'user' }, program: undefined, icon: r.icon ?? defaultIcon(id) };
       act.saveWorkout(mine);
       setDrafted(null);
+      saveNewDraft(null);
       return mine;
     };
     return full(
       <>
         <EditorScreen
           runsheet={r}
-          onChange={draftFor('new')}
+          onChange={edit}
           onPickExercise={pick}
           onSwapExercise={pick}
           onBack={() => (setDrafted(null), go('/discover/saved'))}
-          onReset={() => setDrafted(null)}
+          onDiscard={() => (edit(null), go('/discover/saved'))}
+          onReset={() => edit(null)}
           onSaveAsMine={() => { const m = saveMine(); say('Saved to My workouts'); go(`/w/${encodeURIComponent(m.id!)}`); }}
+          onSaveAndLeave={() => (saveMine(), say('Saved to My workouts'), go('/discover/saved'))}
           onStart={() => { unlockAudio(); const m = saveMine(); go(`/do/${encodeURIComponent(m.id!)}`); }}
           resolveTarget={resolve}
           hintFor={lastTime(r)}
@@ -450,12 +456,12 @@ export default function App() {
           equipment={st.equipment}
           refTitle={refTitle}
           autoRest={defaultRest}
-          dirty={!!(r.title.trim() || r.items.length)}
+          dirty={worthKeeping(r)}
           mode="author"
-          onTextChange={t => { const out = applyCommands(r, t, library); draftFor('new')(out.runsheet); say(out.applied.length ? out.applied.join(' · ') : `Didn't understand “${t}”`); }}
+          onTextChange={t => { const out = applyCommands(r, t, library); edit(out.runsheet); say(out.applied.length ? out.applied.join(' · ') : `Didn't understand “${t}”`); }}
           onPastePlan={() => setPasteOpen(true)}
         />
-        <PasteSheet open={pasteOpen} onOpenChange={setPasteOpen} library={library} onUse={items => { draftFor('new')({ ...r, items }); setPasteOpen(false); }} />
+        <PasteSheet open={pasteOpen} onOpenChange={setPasteOpen} library={library} onUse={items => { edit({ ...r, items }); setPasteOpen(false); }} />
       </>
     );
   }
