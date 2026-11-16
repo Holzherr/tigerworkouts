@@ -62,23 +62,42 @@ struct SupabaseError: LocalizedError {
     var errorDescription: String? { message }
 }
 
-/// Serialises token refresh so two concurrent requests cannot both spend the refresh token.
+/// One refresh at a time: a refresh token is single-use, so callers that find the access token
+/// stale while a refresh is out wait for that refresh instead of spending the token again (a
+/// second spend is refused with 400 and used to sign the person out).
 actor Supabase {
     static let shared = Supabase()
 
+    /// Posts a refresh token to GoTrue; answers the body and the status. A parameter so tests can
+    /// count and pace the calls.
+    typealias RefreshTransport = @Sendable (String) async throws -> (Data, Int)
+
     private var session: AuthSession?
-    private let store = "supabase.session"
+    /// Keychain key; nil keeps the session in memory only (tests).
+    private let store: String?
+    private let refreshTransport: RefreshTransport
+    private var refreshing: Task<String?, any Error>?
 
     var user: AuthUser? { session?.user }
     var isSignedIn: Bool { session != nil }
 
     init() {
-        if let raw = Keychain.get(store), let data = raw.data(using: .utf8) {
+        store = "supabase.session"
+        refreshTransport = Self.liveRefresh
+        if let raw = Keychain.get("supabase.session"), let data = raw.data(using: .utf8) {
             session = try? JSONDecoder().decode(AuthSession.self, from: data)
         }
     }
 
+    /// For tests: a given session, nothing read from or written to the Keychain.
+    init(session: AuthSession?, refresh: @escaping RefreshTransport) {
+        store = nil
+        refreshTransport = refresh
+        self.session = session
+    }
+
     private func persist() {
+        guard let store else { return }
         guard let session, let data = try? JSONEncoder().encode(session), let raw = String(data: data, encoding: .utf8) else {
             Keychain.set(nil, for: store)
             return
@@ -150,34 +169,45 @@ actor Supabase {
     /// For the in-app feedback note's Authorization header, so the intake Worker can verify who sent it.
     func feedbackToken() async -> String? { try? await validAccessToken() }
 
-    private func validAccessToken() async throws -> String? {
+    func validAccessToken() async throws -> String? {
         guard let current = session else { return nil }
         if current.isFresh { return current.accessToken }
-        return try await refresh(current.refreshToken)
+        if let refreshing { return try await refreshing.value }
+        let task = Task { try await self.refresh(current.refreshToken) }
+        refreshing = task
+        defer { refreshing = nil }
+        return try await task.value
     }
 
-    @discardableResult
     private func refresh(_ token: String) async throws -> String? {
-        var req = URLRequest(url: Self.endpoint("auth/v1/token?grant_type=refresh_token"))
+        let (data, status) = try await refreshTransport(token)
+        // Signed out, or signed in again, while the refresh was out: that answer is for a session
+        // that no longer exists, so it must neither bring it back nor sign the new one out.
+        guard session?.refreshToken == token else { return session?.accessToken }
+        guard (200..<300).contains(status) else {
+            // The refresh token is spent or revoked: sign out rather than loop. Anything else (a
+            // rate limit, a server error) says nothing about the token, and signing out on it
+            // emptied History.
+            if Self.refreshRefused(status) {
+                session = nil
+                persist()
+            }
+            throw SupabaseError(message: Self.message(from: data, status: status))
+        }
+        session = try JSONDecoder().decode(AuthSession.self, from: data)
+        persist()
+        return session?.accessToken
+    }
+
+    private static let liveRefresh: RefreshTransport = { token in
+        var req = URLRequest(url: endpoint("auth/v1/token?grant_type=refresh_token"))
         req.httpMethod = "POST"
         req.setValue(SupabaseConfig.anonKey, forHTTPHeaderField: "apikey")
         req.setValue("application/json", forHTTPHeaderField: "Content-Type")
         req.httpBody = try JSONSerialization.data(withJSONObject: ["refresh_token": token])
         let (data, response) = try await URLSession.shared.data(for: req)
         guard let http = response as? HTTPURLResponse else { throw SupabaseError(message: "No response") }
-        guard (200..<300).contains(http.statusCode) else {
-            // The refresh token is spent or revoked: sign out rather than loop. Anything else (a
-            // rate limit, a server error) says nothing about the token, and signing out on it
-            // emptied History.
-            if Self.refreshRefused(http.statusCode) {
-                session = nil
-                persist()
-            }
-            throw SupabaseError(message: Self.message(from: data, status: http.statusCode))
-        }
-        session = try JSONDecoder().decode(AuthSession.self, from: data)
-        persist()
-        return session?.accessToken
+        return (data, http.statusCode)
     }
 
     /// The statuses GoTrue answers a refresh token it will not take with.
