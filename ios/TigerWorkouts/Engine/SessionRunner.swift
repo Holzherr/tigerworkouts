@@ -1061,6 +1061,41 @@ final class SessionRunner {
     /// What Finish and save in the ⋯ menu asks about; nil = finish without asking.
     var leftLine: String? { Self.leftLine(state, runsheet: runsheet) }
 
+    /// What the rest in hand follows, so a finished set reads as finished on the rest card:
+    /// "Round 4 of 8 done" on a rest that closes a round, "Kettlebell swings done" on one between
+    /// two exercises. Nil off a rest, or on a rest with no work right before it.
+    nonisolated static func restAfter(_ state: RunState) -> String? {
+        guard state.phase != .ready, let rest = state.slots[safe: state.i], rest.kind == .rest,
+              let prev = state.slots[safe: state.i - 1], prev.kind == .work, let ex = prev.exercise else { return nil }
+        let next = state.slots[(state.i + 1)...].first { $0.kind == .work }
+        let closesRound = prev.blockId != nil && (next == nil || next?.blockId != prev.blockId || next?.round != prev.round)
+        if closesRound, let round = prev.roundLabel { return "\(round) done" }
+        return "\(ex.exercise.name) done"
+    }
+
+    var restAfter: String? { Self.restAfter(state) }
+
+    /// The next slot's line as the set grid has it, load first: "16 kg × 15". The rest card's Up
+    /// next, so the weight of what comes next is on screen.
+    var nextLine: String? { Self.setLine(state, state.i + 1) }
+
+    /// At a block's gate, the block's other exercises in the round it starts with, each with its
+    /// line: the Next block card shows the whole block, not only what comes first.
+    nonisolated static func gateRest(_ state: RunState) -> [(slotId: String, exercise: ExerciseStep, line: String)] {
+        guard state.phase == .ready, let first = state.slots[safe: state.i], let block = first.blockId else { return [] }
+        var seen: Set<String> = [first.step.id]
+        var rows: [(slotId: String, exercise: ExerciseStep, line: String)] = []
+        for idx in state.slots.indices where idx > state.i {
+            let sl = state.slots[idx]
+            guard sl.blockId == block, sl.round == first.round else { break }
+            guard sl.kind == .work, let ex = sl.exercise, seen.insert(sl.step.id).inserted else { continue }
+            rows.append((sl.id, ex, setLine(state, idx) ?? ex.forLabel))
+        }
+        return rows
+    }
+
+    var gateRest: [(slotId: String, exercise: ExerciseStep, line: String)] { Self.gateRest(state) }
+
     /// The next thing to do that is not the set in hand: the next exercise after this block when
     /// the block is one exercise done for sets (its sets are on screen), else the next work slot.
     var upNext: (name: String, detail: String)? {

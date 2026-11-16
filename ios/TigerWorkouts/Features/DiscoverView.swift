@@ -98,7 +98,9 @@ struct DiscoverView: View {
             .scrollDismissesKeyboard(.immediately)
             .searchable(text: $query, placement: .navigationBarDrawer(displayMode: .always), prompt: "Search")
             .navigationTitle("Workouts")
-            .navigationBarTitleDisplayMode(.large)
+            // The title sits in the bar, level with +, not on a row of its own above the search
+            // field (Nick, 16 Nov 2026). History and Me do the same.
+            .toolbarTitleDisplayMode(.inlineLarge)
             .navigationDestination(for: Opened.self) { opened in
                 if let sheet = store.workout(id: opened.key) {
                     WorkoutDetailView(runsheet: sheet, startedFrom: opened.from, onStart: onStart)
