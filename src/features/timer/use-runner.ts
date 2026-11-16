@@ -273,6 +273,7 @@ export const useRunner = (runsheet: Runsheet, opts: { /** A kept run to carry on
     setAmountAt: useCallback((slotId: string, n: number, field?: R.Amount) => setState(s => R.setAmountAt(s, slotId, n, field)), []),
     completeSet: useCallback((slotId: string) => setState(s => R.completeSet(s, Date.now(), slotId)), []),
     reopenSet: useCallback((slotId: string) => setState(s => R.reopenSet(s, slotId)), []),
+    addSet: useCallback((blockId: string) => setState(s => R.addSet(s, Date.now(), blockId)), []),
     setTypeAt: useCallback((slotId: string, type: SetType) => setState(s => R.setTypeAt(s, slotId, type)), []),
     extendRest: useCallback((deltaSec: number) => setState(s => R.extendRest(s, Date.now(), deltaSec)), []),
     fillSet: useCallback((slotId: string, set: SetResult) => setState(s => R.fillSet(s, Date.now(), slotId, set)), []),

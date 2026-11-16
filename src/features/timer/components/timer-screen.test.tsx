@@ -88,21 +88,28 @@ it('reads target and race as one line, ±15 s either side of the rest clock', ()
   expect(less.parentElement!.textContent).toContain('1:30');
 });
 
-it('shows a done set as one line, the next with its steppers, the rest folded', () => {
+it('shows a done set as one line and every set still to do as a row with its steppers', () => {
   const v = at(resting());
   const sets = screen.getByLabelText('Sets');
   expect(sets.textContent).not.toMatch(/^.*SetKG/i);
   expect(screen.getByRole('button', { name: 'Un-tick set 1' }).parentElement!.textContent).toContain('Set 145 kg × 10');
-  expect(screen.getAllByRole('group').length >= 0 && screen.getByLabelText('Set 2 load')).toBeTruthy();
-  expect(screen.queryByLabelText('Set 3 load')).toBeNull();
-  fireEvent.click(screen.getByRole('button', { name: /^2 more sets, 45 kg × 10/ }));
+  expect(screen.getByLabelText('Set 2 load')).toBeTruthy();
+  expect(screen.getByLabelText('Set 3 load')).toBeTruthy();
   expect(screen.getByRole('button', { name: 'Tick set 4' })).toBeTruthy();
-  expect(v.container.textContent).toContain('Set 3');
+  expect(screen.queryByRole('button', { name: /more sets?,/ })).toBeNull();
+  expect(v.container.textContent).toContain('Set3kgreps');
 });
 
-it('the RestBetweenSets story rests after set 1 with set 3 folded', () => {
+it('+ Add set under the last set adds one more', () => {
+  const add = vi.fn();
+  at(resting(), { sets: { ...grid, add } });
+  fireEvent.click(screen.getByRole('button', { name: /Add set/ }));
+  expect(add).toHaveBeenCalledTimes(1);
+});
+
+it('the RestBetweenSets story rests after set 1 with sets 2 and 3 as rows', () => {
   render(<Stories.RestBetweenSets />);
-  expect([!!screen.getByRole('button', { name: 'Un-tick set 1' }), !!screen.getByLabelText('Set 2 load'), !!screen.getByRole('button', { name: /^1 more set,/ }), !!screen.getByText('Target 70 × 8 · 0:12 ahead of last time')]).toEqual([true, true, true, true]);
+  expect([!!screen.getByRole('button', { name: 'Un-tick set 1' }), !!screen.getByLabelText('Set 2 load'), !!screen.getByLabelText('Set 3 load'), !!screen.getByText('Target 70 × 8 · 0:12 ahead of last time')]).toEqual([true, true, true, true]);
 });
 
 describe('what the card asks to log', () => {

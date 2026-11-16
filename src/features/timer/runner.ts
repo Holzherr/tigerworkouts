@@ -726,11 +726,18 @@ export const prefillReps = (s: RunState, last: (step: ExerciseStep, round: numbe
  * nothing run there yet), the set goes in before it with no rest and the timer goes back to it.
  * Ported from `Runner.addSet` in the iOS app.
  */
-export const addSet = (s: RunState, now: number, blockId: string): RunState => {
-  if (s.phase === 'done' || s.phase === 'lead') return s;
+/** Whether "+ Add set" can add to this block now: a straight-set block not yet left behind. */
+export const canAddSet = (s: RunState, blockId: string): boolean => {
+  if (s.phase === 'done' || s.phase === 'lead') return false;
   const work = s.slots.flatMap((sl, i) => (sl.blockId === blockId && sl.kind === 'work' ? [i] : []));
   const last = work[work.length - 1];
-  if (last === undefined || s.slots[last].mode !== 'rounds' || s.i > last + 1 || !work.every(i => s.slots[i].step.id === s.slots[last].step.id)) return s;
+  return last !== undefined && s.slots[last].mode === 'rounds' && s.i <= last + 1 && work.every(i => s.slots[i].step.id === s.slots[last].step.id);
+};
+
+export const addSet = (s: RunState, now: number, blockId: string): RunState => {
+  if (!canAddSet(s, blockId)) return s;
+  const work = s.slots.flatMap((sl, i) => (sl.blockId === blockId && sl.kind === 'work' ? [i] : []));
+  const last = work[work.length - 1];
   const behind = last < s.i;
   const base = (id: string) => (id.includes('#') ? id.slice(0, id.lastIndexOf('#')) : id);
   let n = s.slots.reduce((m, sl) => Math.max(m, sl.id.includes('#') ? Number(sl.id.slice(sl.id.lastIndexOf('#') + 1)) : -1), -1) + 1;
