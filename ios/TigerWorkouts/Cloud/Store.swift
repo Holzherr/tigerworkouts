@@ -237,13 +237,52 @@ final class Store {
         return byId.values.sorted { $0.startedAt > $1.startedAt }
     }
 
-    /// Ends the account session and nothing else. What is on the phone stays: History keeps the
-    /// sessions already logged, and anything still queued goes up with the next sign-in.
-    func signOut() async {
+    /// Pushes what is queued, then ends the account session. History and your workouts stay on
+    /// the phone; what was queued for this account and what the phone knew of its server rows go,
+    /// so the next account to sign in here is not sent any of it. Nothing changes and a message
+    /// comes back while something is still not on the account (offline, a refused row), unless
+    /// `discardUnsent`: clearing then loses the only copy.
+    func signOut(discardUnsent: Bool = false) async -> String? {
+        if !discardUnsent {
+            do { try await flushPending() } catch {}
+            do { try await flushDeletes() } catch {}
+            do { try await flushWorkouts() } catch {}
+            do { try await flushExercises() } catch {}
+            writeCache()
+            if let held = Self.signOutRefusal(waiting: waitingCount) { return held }
+        }
         await Supabase.shared.signOut()
         user = nil
+        syncError = nil
+        forgetAccountQueues()
+        prefsUpdatedAt = [:]
         writeCache()
         setCoaching(CoachingState())
+        return nil
+    }
+
+    nonisolated static func signOutRefusal(waiting: Int) -> String? {
+        guard waiting > 0 else { return nil }
+        return waiting == 1
+            ? "1 change is not saved to your account yet. Try again when online."
+            : "\(waiting) changes are not saved to your account yet. Try again when online."
+    }
+
+    /// Everything queued for the account and what the phone knew of its rows on the server.
+    func forgetAccountQueues() {
+        pending = []
+        pendingWorkouts = []
+        pendingWorkoutDeletes = []
+        syncedWorkouts = [:]
+        workoutEditedAt = [:]
+        publicSetHere = []
+        pendingDeletes = []
+        pendingExercises = []
+    }
+
+    /// Changes made on this phone that the server does not have yet, of every kind.
+    var waitingCount: Int {
+        pending.count + pendingDeletes.count + pendingWorkouts.count + pendingWorkoutDeletes.count + pendingExercises.count
     }
 
     /// Deletes the account and its data on the server. `clearPhone` also forgets everything here;
@@ -253,14 +292,7 @@ final class Store {
         let account = try await Supabase.shared.deleteAccount()
         user = nil
         setCoaching(CoachingState())
-        pending = []
-        pendingWorkouts = []
-        pendingWorkoutDeletes = []
-        syncedWorkouts = [:]
-        workoutEditedAt = [:]
-        publicSetHere = []
-        pendingDeletes = []
-        pendingExercises = []
+        forgetAccountQueues()
         if clearPhone {
             results = []
             myWorkouts = []

@@ -144,8 +144,16 @@ struct MeView: View {
     }
 
     private var status: String {
-        guard store.signedIn else { return "Not signed in · sessions are kept on this phone" }
-        return store.syncing ? "Syncing…" : "Synced with tigerworkouts.com"
+        Self.syncStatus(signedIn: store.signedIn, syncing: store.syncing, waiting: store.waitingCount, failed: store.syncError != nil)
+    }
+
+    /// "Synced" only when nothing is waiting and the last sync went through.
+    static func syncStatus(signedIn: Bool, syncing: Bool, waiting: Int, failed: Bool) -> String {
+        guard signedIn else { return "Not signed in · sessions are kept on this phone" }
+        if syncing { return "Syncing…" }
+        if waiting > 0 { return "\(waiting) waiting to sync" }
+        if failed { return "Last sync failed · see Settings" }
+        return "Synced with tigerworkouts.com"
     }
 
     private var numbers: some View {
@@ -221,6 +229,8 @@ struct SettingsView: View {
     @State private var healthError: String?
     @State private var confirmDelete = false
     @State private var deleteMessage: String?
+    /// Why the last sign-out did not happen: something is not on the account yet.
+    @State private var signOutHeld: String?
 
     var body: some View {
         Form {
@@ -232,7 +242,17 @@ struct SettingsView: View {
                     if let error = store.syncError {
                         Text(error).font(.footnote).foregroundStyle(.red)
                     }
-                    Button("Sign out", role: .destructive) { Task { await store.signOut() } }
+                    Button("Sign out", role: .destructive) { Task { signOutHeld = await store.signOut() } }
+                        .disabled(store.syncing)
+                    if let signOutHeld {
+                        Text(signOutHeld).font(.footnote).foregroundStyle(.red)
+                        Button("Sign out and lose them", role: .destructive) {
+                            Task {
+                                _ = await store.signOut(discardUnsent: true)
+                                self.signOutHeld = nil
+                            }
+                        }
+                    }
                     Button("Delete account", role: .destructive) { confirmDelete = true }
                         .accessibilityIdentifier("delete-account")
                 } else {
