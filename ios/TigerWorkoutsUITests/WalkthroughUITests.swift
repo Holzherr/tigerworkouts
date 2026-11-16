@@ -243,12 +243,32 @@ final class WalkthroughUITests: XCTestCase {
         XCTAssertTrue(app.buttons["Un-tick set 2"].waitForExistence(timeout: 5), "ticking the next set during the rest should log it")
         snap("34 Set 2 ticked during the rest")
 
+        // A done set is corrected in place: a tap on its line opens it, still ticked.
+        tap(app.buttons["done-set-2"])
+        let more = app.buttons["Set 2 load, more"]
+        XCTAssertTrue(more.waitForExistence(timeout: 5), "a tap on a done set should open it to correct")
+        more.tap()
+        XCTAssertTrue(app.buttons["Un-tick set 2"].exists, "a corrected set stays ticked")
+        snap("34b Done set 2 open for correction")
+
         tap(app.buttons["Un-tick set 1"])
         XCTAssertTrue(app.buttons["Set 1 load, more"].waitForExistence(timeout: 5), "an un-ticked set can be changed")
         snap("35 Set un-ticked to fix its weight")
 
         tap(app.buttons["End session"])
         tap(app.buttons["Finish and save"])
+        // The finish screen has the sets too, with the editor History has.
+        XCTAssertTrue(app.staticTexts["Workout saved"].waitForExistence(timeout: 10))
+        let edit = app.buttons["edit-sets"]
+        for _ in 0..<6 where !(edit.exists && edit.isHittable) { app.swipeUp(velocity: .slow) }
+        XCTAssertEqual(edit.label, "Edit")
+        snap("35b Finish screen, Sets card")
+        edit.tap()
+        XCTAssertTrue(app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH 'add-set-'")).firstMatch.waitForExistence(timeout: 5), "Edit should open the set editor")
+        snap("35c Finish screen, sets being edited")
+        tap(app.buttons["edit-sets"])
+        let done = app.buttons["Done"]
+        for _ in 0..<10 where !(done.exists && done.isHittable) { app.swipeUp() }
         tap(app.buttons["Done"])
     }
 

@@ -20,7 +20,9 @@ final class ProgressTableUITests: XCTestCase {
         open("Hip thrust focus week 2")
         let setup = app.descendants(matching: .any)["suggest-setup"].firstMatch
         XCTAssertTrue(setup.waitForExistence(timeout: 8), "a workout with a loaded lift asks once how to progress")
-        scrollTo(setup)
+        // By Start, before the workout begins: on screen without a scroll.
+        XCTAssertTrue(setup.isHittable, "the question sits by Start")
+        XCTAssertTrue(app.buttons["Start workout"].isHittable, "Start stays on screen under the question")
         snap("P1 Want suggestions on how to progress?")
         tap(app.buttons["suggest-yes"])
         XCTAssertTrue(app.buttons["progress-by-weight"].waitForExistence(timeout: 5))
@@ -63,6 +65,17 @@ final class ProgressTableUITests: XCTestCase {
         }
         XCTAssertTrue(target.waitForExistence(timeout: 3) && target.label.contains("27.5"), "the press's target in the player")
         snap("W2 Player: shoulder press set")
+        // The same choice from the ⋯ menu mid-workout: None takes the target off the sets to come.
+        tap(app.buttons["Session menu"])
+        tap(app.buttons["Suggestions"])
+        XCTAssertTrue(app.buttons["suggest-none"].waitForExistence(timeout: 5), "the menu's Suggestions should open the choice")
+        snap("W3 Suggestions from the timer menu")
+        tap(app.buttons["suggest-none"])
+        XCTAssertTrue(target.waitForNonExistence(timeout: 5), "with suggestions off the Target line goes")
+        tap(app.buttons["Session menu"])
+        tap(app.buttons["Suggestions"])
+        tap(app.buttons["suggest-by-weight"])
+        XCTAssertTrue(target.waitForExistence(timeout: 5), "back on, the Target line returns")
         let grid = app.descendants(matching: .any)["timer-set-grid"].firstMatch
         if grid.exists { XCTAssertTrue(grid.label.contains("27.5") || app.staticTexts.matching(NSPredicate(format: "label CONTAINS '27.5'")).count > 1) }
     }

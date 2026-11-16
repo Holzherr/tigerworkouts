@@ -26,6 +26,8 @@ struct FinishView: View {
     /// Made it / Missed and AMRAP reps as set here, by step id.
     @State private var success: [String: Bool] = [:]
     @State private var repsDone: [String: Double] = [:]
+    /// The logged sets as corrected on the Sets card; nil until one is.
+    @State private var steps: [StepResult]?
     /// RPE per lift as set here (LiftEffortCard), by exercise key; nil inside clears it.
     @State private var liftRPE: [String: Double?] = [:]
     @State private var sharing = false
@@ -40,6 +42,7 @@ struct FinishView: View {
         r.rpe = rpe
         r.notes = notes.isEmpty ? nil : notes
         if let score { r = ScoreEntryView.scored(r, score, type: runsheet.effectiveScore) }
+        if let steps { r.steps = steps }
         r.steps = r.steps.map { Self.marked($0, success: success[$0.stepId], reps: repsDone[$0.stepId]) }
         for (key, rpe) in liftRPE { r = LiftEffortCard.rated(r, key: key, rpe: rpe) }
         return r
@@ -82,6 +85,20 @@ struct FinishView: View {
 
                 if addedSets > 0 {
                     templateCard
+                }
+
+                // A set logged wrong is put right here, before it is history: a circuit has no set
+                // table to fix it in while it runs (Nick, 31 Oct 2026).
+                if !current.steps.isEmpty {
+                    LoggedSetsCard(session: current, runsheet: runsheet, compact: true) { edited in
+                        // The edit carries what was marked below; the marks then stand in the rows.
+                        steps = edited.steps
+                        success = [:]
+                        repsDone = [:]
+                        store.amend(result.rowId) { $0.steps = edited.steps }
+                    }
+                    .accessibilityElement(children: .contain)
+                    .accessibilityIdentifier("finish-sets")
                 }
 
                 if runsheet.effectiveScore != .none {

@@ -838,7 +838,7 @@ final class SessionRunner {
 
     func nudgeSetLoad(_ slotId: String, _ direction: Double) {
         guard let row = setRows.first(where: { $0.slotId == slotId }), let ex = straightSetStep else { return }
-        apply { Runner.adjustAt($0, now: $1, slotId: slotId, target: max(0, (row.load ?? 0) + direction * StepSizes.load(ex.exercise))) }
+        setSetLoad(slotId, (row.load ?? 0) + direction * StepSizes.load(ex.exercise))
         Haptics.shared.play(.tick)
     }
 
@@ -847,39 +847,52 @@ final class SessionRunner {
     func nudgeSetIncline(_ slotId: String, _ direction: Double) {
         guard let row = setRows.first(where: { $0.slotId == slotId }) else { return }
         let next = max(0, (row.incline ?? 0) + direction * 0.5)
-        apply { s, _ in var s = s; s.actuals[slotId, default: Actual()].incline = next; return s }
+        if !correct(slotId, { $0.incline = next }) {
+            apply { s, _ in var s = s; s.actuals[slotId, default: Actual()].incline = next; return s }
+        }
         Haptics.shared.play(.tick)
     }
 
     func nudgeSetReps(_ slotId: String, _ direction: Double) {
         guard let row = setRows.first(where: { $0.slotId == slotId }) else { return }
-        apply { s, _ in Runner.setRepsAt(s, slotId: slotId, reps: max(0, row.reps + direction)) }
+        setSetReps(slotId, row.reps + direction)
         Haptics.shared.play(.tick)
     }
 
     /// The reps on a timed set set to log them: from nothing counted, the first press lands on one.
     func nudgeSetCounted(_ slotId: String, _ direction: Double) {
         guard let row = setRows.first(where: { $0.slotId == slotId }) else { return }
-        apply { s, _ in Runner.setRepsAt(s, slotId: slotId, reps: max(0, (row.counted ?? 0) + direction)) }
+        setSetReps(slotId, (row.counted ?? 0) + direction)
         Haptics.shared.play(.tick)
     }
 
     func nudgeSetAmount(_ slotId: String, _ direction: Double, field: Runner.Amount? = nil) {
         guard let row = setRows.first(where: { $0.slotId == slotId }), let sl = state.slots.first(where: { $0.id == slotId }),
               let f = field ?? Runner.amountField(sl) else { return }
-        apply { s, _ in Runner.setAmountAt(s, slotId: slotId, value: max(0, (row.amounts[f] ?? 0) + direction * Self.amountStep(sl, f)), field: f) }
+        setSetAmount(slotId, (row.amounts[f] ?? 0) + direction * Self.amountStep(sl, f), field: f)
         Haptics.shared.play(.tick)
     }
 
     // MARK: - Typed numbers
 
     /// A number typed on a set row: its load, count, metres or calories, reps counted, incline.
-    func setSetLoad(_ slotId: String, _ value: Double) { apply { Runner.adjustAt($0, now: $1, slotId: slotId, target: max(0, value)) } }
-    func setSetReps(_ slotId: String, _ value: Double) { apply { s, _ in Runner.setRepsAt(s, slotId: slotId, reps: max(0, value)) } }
+    /// On a set already done it is a correction (`corrected`): the set stays ticked.
+    func setSetLoad(_ slotId: String, _ value: Double) {
+        if correct(slotId, { $0.target = max(0, value) }) { return }
+        apply { Runner.adjustAt($0, now: $1, slotId: slotId, target: max(0, value)) }
+    }
+    func setSetReps(_ slotId: String, _ value: Double) {
+        if correct(slotId, { $0.reps = max(0, value) }) { return }
+        apply { s, _ in Runner.setRepsAt(s, slotId: slotId, reps: max(0, value)) }
+    }
     func setSetAmount(_ slotId: String, _ value: Double, field: Runner.Amount? = nil) {
+        let sl = state.slots.first { $0.id == slotId }
+        if let f = field ?? Runner.amountField(sl), Runner.amountFields(sl).contains(f),
+           correct(slotId, { if f == .meters { $0.meters = max(0, value) } else { $0.calories = max(0, value) } }) { return }
         apply { s, _ in Runner.setAmountAt(s, slotId: slotId, value: max(0, value), field: field) }
     }
     func setSetIncline(_ slotId: String, _ value: Double) {
+        if correct(slotId, { $0.incline = max(0, value) }) { return }
         apply { s, _ in
             guard s.actuals[slotId]?.doneAt == nil, s.slots.contains(where: { $0.id == slotId }) else { return s }
             var s = s
@@ -889,6 +902,40 @@ final class SessionRunner {
     }
     /// A number typed on the running card: metres or calories done.
     func setAmount(_ value: Double, field: Runner.Amount? = nil) { apply { s, _ in Runner.setAmount(s, value: max(0, value), field: field) } }
+
+    // MARK: - Correcting a done set
+
+    /// A set already ticked, put right in place (Nick, 31 Oct 2026: "App didn't let me edit
+    /// retrospectively after set"): its load, reps, metres, calories or incline change; it stays
+    /// done, with the time it was done at and the seconds it ran. Only that set changes: a set
+    /// after it that was following its load or incline keeps the number it showed.
+    nonisolated static func corrected(_ state: RunState, slotId: String, _ change: (inout Actual) -> Void) -> RunState {
+        guard let idx = state.slots.firstIndex(where: { $0.id == slotId }), state.slots[idx].kind == .work,
+              var a = state.actuals[slotId], a.doneAt != nil else { return state }
+        let work = state.slots.indices.filter { state.slots[$0].kind == .work }
+        let loads = work.map { Runner.effectiveTarget(state, $0) }
+        let inclines = work.map { Runner.effectiveIncline(state, $0) }
+        let kept = (a.doneAt, a.at, a.seconds)
+        change(&a)
+        (a.doneAt, a.at, a.seconds) = kept
+        var s = state
+        s.actuals[slotId] = a
+        for (k, j) in work.enumerated() where j != idx {
+            let id = s.slots[j].id
+            if let was = loads[k], Runner.effectiveTarget(s, j) != was { s.actuals[id, default: Actual()].target = was }
+            if let was = inclines[k], Runner.effectiveIncline(s, j) != was { s.actuals[id, default: Actual()].incline = was }
+        }
+        return s
+    }
+
+    /// Applies a correction when the set is done, and says whether it was. The medal follows the
+    /// corrected numbers, without the toast: a record typed in afterwards is not a moment.
+    private func correct(_ slotId: String, _ change: @escaping (inout Actual) -> Void) -> Bool {
+        guard state.actuals[slotId]?.doneAt != nil else { return false }
+        apply { s, _ in Self.corrected(s, slotId: slotId, change) }
+        if Self.liveRecord(state, runsheet, slotId: slotId, history: history, now: now) != nil { records.insert(slotId) } else { records.remove(slotId) }
+        return true
+    }
 
     // MARK: - Add set
 
@@ -1073,6 +1120,12 @@ final class SessionRunner {
             state.slots[j].kind == .work && state.slots[j].blockId == slot.blockId && state.slots[j].step.id == slot.step.id && Runner.typeAt(state, j) != .warmup
         }.count
         return Targets.timer(today, blockId: slot.blockId, stepId: slot.exercise?.id, round: slot.round, runsheet: runsheet, type: Runner.typeAt(state, idx), set: setNo)
+    }
+
+    /// The suggestions setting changed mid-session (⋯ → Suggestions): the Target line follows it
+    /// from the set in hand on. Sets already done, and numbers already on the rows, stay.
+    func refreshTargets(suggest: SuggestPrefs = .current()) {
+        today = Targets.today(runsheet, results: history, intent: Intent.current(), kit: Equipment.current(), suggest: suggest)
     }
 
     func plannedTarget(_ stepId: String) -> Double? { Runner.plannedTarget(state, stepId: stepId) }

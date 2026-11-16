@@ -31,6 +31,8 @@ struct TimerView: View {
     @State private var showRemaining = false
     /// Last time's sets and settings, worked out once per step, not on every redraw.
     @State private var memo = HistoryMemo()
+    /// ⋯ → Suggestions: the progression question, to change it mid-workout.
+    @State private var showSuggestions = false
 
     private var isRest: Bool { runner.slot?.kind == .rest }
     private var accent: Color { isRest ? Brand.Night.rest : Brand.coral }
@@ -71,6 +73,10 @@ struct TimerView: View {
         .sheet(isPresented: $showRemaining) { remainingSheet.preferredColorScheme(.light) }
         .onDisappear { runner.end() }
         .sheet(isPresented: $showOverview) { overview.preferredColorScheme(.light) }
+        .sheet(isPresented: $showSuggestions) {
+            SuggestChoiceSheet { runner.refreshTargets(suggest: $0) }
+                .preferredColorScheme(.light)
+        }
         .sheet(item: $editing) { step in
             ExerciseSheet(
                 step: step,
@@ -190,7 +196,7 @@ struct TimerView: View {
                         .monospacedDigit()
                 }
                 // Sound and the overview sit in the ⋯ menu with Finish: the bar keeps to where you are.
-                SessionMenu(sound: sound, toggleSound: toggleSound, overview: { showOverview = true }, finish: menuFinish, discard: { confirmDiscard = true }).equatable()
+                SessionMenu(sound: sound, toggleSound: toggleSound, overview: { showOverview = true }, suggestions: { showSuggestions = true }, finish: menuFinish, discard: { confirmDiscard = true }).equatable()
             }
             GeometryReader { geo in
                 ZStack(alignment: .leading) {
@@ -796,8 +802,8 @@ struct TimerView: View {
     /// is a row of its own with its weight and reps and last time's set of the same number, each
     /// changeable before and during it (Priyanka, 14 Nov 2026: the sets after the next one were
     /// folded into "2 more sets · 105 kg × 6"). "+ Add set" under the last copies it. A done set is
-    /// locked until it is un-ticked (tap the tick again), so a weight is never changed by a stray
-    /// tap on a set already logged.
+    /// one line; a tap on it opens it as a row again to correct its weight or reps, still ticked
+    /// and with the time it was done at (Nick, 31 Oct 2026). The tick alone un-ticks it.
     private func setGrid(_ ex: ExerciseStep) -> some View {
         let rows = runner.setRows
         let sheet = runner.runsheet
@@ -827,10 +833,10 @@ struct TimerView: View {
 
             ForEach(rows) { row in
                 Group {
-                    if row.done {
+                    if row.done, openSet != row.slotId {
                         doneLine(row, ex)
                     } else {
-                        setRow(row, ex, incline: incline, last: last.indices.contains(row.number - 1) && (last[row.number - 1].type ?? .normal) == row.type ? last[row.number - 1] : nil)
+                        setRow(row, ex, incline: incline, last: !row.done && last.indices.contains(row.number - 1) && (last[row.number - 1].type ?? .normal) == row.type ? last[row.number - 1] : nil)
                     }
                 }
                 .id(row.slotId)
@@ -874,7 +880,7 @@ struct TimerView: View {
         return row.incline.map { "\(line) · \(Format.number($0))%" } ?? line
     }
 
-    /// "✓ Set 1    45 kg × 10". The tick takes it back.
+    /// "✓ Set 1    45 kg × 10". A tap on the line opens the set to correct it; the tick takes it back.
     private func doneLine(_ row: SessionRunner.SetRow, _ ex: ExerciseStep) -> some View {
         HStack(spacing: 10) {
             Button {
@@ -892,19 +898,29 @@ struct TimerView: View {
             .buttonStyle(.plain)
             .disabled(!row.tickable)
             .accessibilityLabel("Un-tick set \(row.number)")
-            Text(row.type == .normal ? "Set \(row.number)" : "Set \(row.number) · \(row.type.label)")
-                .font(.body)
-            Spacer(minLength: 8)
-            if runner.records.contains(row.slotId) {
-                Image(systemName: "medal.fill")
-                    .font(.system(size: 15, weight: .bold))
-                    .foregroundStyle(Brand.coral)
-                    .accessibilityLabel("New record")
-                    .accessibilityIdentifier("set-record")
+            Button { withAnimation(.easeInOut(duration: 0.2)) { openSet = row.slotId } } label: {
+                HStack(spacing: 10) {
+                    Text(row.type == .normal ? "Set \(row.number)" : "Set \(row.number) · \(row.type.label)")
+                        .font(.body)
+                    Spacer(minLength: 8)
+                    if runner.records.contains(row.slotId) {
+                        Image(systemName: "medal.fill")
+                            .font(.system(size: 15, weight: .bold))
+                            .foregroundStyle(Brand.coral)
+                            .accessibilityLabel("New record")
+                            .accessibilityIdentifier("set-record")
+                    }
+                    Text(setSummary(row, ex))
+                        .font(.body.weight(.semibold))
+                        .monospacedDigit()
+                }
+                .frame(minHeight: 44)
+                .contentShape(Rectangle())
             }
-            Text(setSummary(row, ex))
-                .font(.body.weight(.semibold))
-                .monospacedDigit()
+            .buttonStyle(.plain)
+            .accessibilityLabel("Set \(row.number), \(setSummary(row, ex))")
+            .accessibilityHint("Change this set")
+            .accessibilityIdentifier("done-set-\(row.number)")
         }
         .foregroundStyle(Brand.body)
         .padding(.horizontal, SetRowMetrics.inset)
@@ -952,9 +968,11 @@ struct TimerView: View {
 
     private func setRow(_ row: SessionRunner.SetRow, _ ex: ExerciseStep, incline: Bool, last: SetResult?) -> some View {
         let hint = LastTime.setLabel(last)
-        let editable = !row.done
+        // A done set is drawn as a row only while it is open for correction.
+        let editable = !row.done || openSet == row.slotId
+        let tinted = row.current || row.done
         let wraps = incline && editable && Self.inclineWraps(ex)
-        let inclineCell = SetInclineCell(incline: row.incline, number: row.number, editable: editable, onTint: row.current) {
+        let inclineCell = SetInclineCell(incline: row.incline, number: row.number, editable: editable, onTint: tinted) {
             runner.nudgeSetIncline(row.slotId, $0)
         }.equatable()
         return VStack(alignment: .leading, spacing: 2) {
@@ -966,7 +984,7 @@ struct TimerView: View {
                 if ex.hasSetLoad, Measure.of(ex.exercise.unit) == nil {
                     Group {
                         if editable {
-                            MiniStepper(value: row.load ?? 0, label: "Set \(row.number) load", onTint: row.current, onTapValue: {
+                            MiniStepper(value: row.load ?? 0, label: "Set \(row.number) load", onTint: tinted, onTapValue: {
                                 entry = NumberEntryRequest(title: "Set \(row.number) \(ex.settingLabel.lowercased())", unit: ex.shortUnit, current: row.load) { runner.setSetLoad(row.slotId, $0) }
                             }) { runner.nudgeSetLoad(row.slotId, $0) }
                         } else {
@@ -988,7 +1006,7 @@ struct TimerView: View {
                     Group {
                         if editable, !clocked {
                             let amount = ex.forMode == .meters || ex.forMode == .calories
-                            MiniStepper(value: shown, label: "Set \(row.number) \(count.lowercased())", onTint: row.current, onTapValue: {
+                            MiniStepper(value: shown, label: "Set \(row.number) \(count.lowercased())", onTint: tinted, onTapValue: {
                                 entry = NumberEntryRequest(title: "Set \(row.number) \(count.lowercased())", unit: ex.forMode == .meters ? "m" : ex.forMode == .calories ? "cal" : "reps", current: shown) { v in
                                     if amount { runner.setSetAmount(row.slotId, v) } else { runner.setSetReps(row.slotId, v.rounded()) }
                                 }
@@ -1008,7 +1026,7 @@ struct TimerView: View {
                     let unit = extra == .reps ? "reps" : extra == .meters ? "m" : "cal"
                     Group {
                         if editable {
-                            MiniStepper(value: Self.loggedShown(row, extra) ?? 0, label: "Set \(row.number) \(extra.label.lowercased()) done", onTint: row.current, onTapValue: {
+                            MiniStepper(value: Self.loggedShown(row, extra) ?? 0, label: "Set \(row.number) \(extra.label.lowercased()) done", onTint: tinted, onTapValue: {
                                 entry = NumberEntryRequest(title: "Set \(row.number) \(extra.label.lowercased()) done", unit: unit, current: Self.loggedShown(row, extra)) { v in
                                     if extra == .reps { runner.setSetReps(row.slotId, v.rounded()) } else { runner.setSetAmount(row.slotId, v, field: extra == .meters ? .meters : .calories) }
                                 }
@@ -1073,9 +1091,10 @@ struct TimerView: View {
         }
         .padding(.horizontal, SetRowMetrics.inset)
         .padding(.vertical, 6)
-        .background(row.current && !row.done ? Brand.coralSoft : Color.clear, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+        .background(tinted ? Brand.coralSoft : Color.clear, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
         .contentShape(Rectangle())
-        .onTapGesture { if !row.done { openSet = row.slotId } }
+        // A corrected set folds back into its line on a tap beside the numbers.
+        .onTapGesture { withAnimation(.easeInOut(duration: 0.2)) { openSet = row.done ? nil : row.slotId } }
     }
 
     /// "kg", "reps" under a stepper's number, now the table has no header to name its columns.
@@ -1435,6 +1454,7 @@ private struct SessionMenu: View, Equatable {
     let sound: Bool
     let toggleSound: () -> Void
     let overview: () -> Void
+    let suggestions: () -> Void
     let finish: () -> Void
     let discard: () -> Void
 
@@ -1443,6 +1463,7 @@ private struct SessionMenu: View, Equatable {
     var body: some View {
         Menu {
             Button("Session overview", systemImage: "list.bullet", action: overview)
+            Button("Suggestions", systemImage: "chart.line.uptrend.xyaxis", action: suggestions)
             Button(sound ? "Mute tones" : "Unmute tones", systemImage: sound ? "speaker.slash.fill" : "speaker.wave.2.fill", action: toggleSound)
             Divider()
             Button("Finish and save", action: finish)

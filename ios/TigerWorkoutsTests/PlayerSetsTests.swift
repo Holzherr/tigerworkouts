@@ -212,6 +212,83 @@ struct PlayerSetsTests {
         #expect(SessionRunner.leftLine(Runner.finish(r.state, now: r.state.startedAt + 60_000), runsheet: r.runsheet) == nil)
     }
 
+    @Test("a change of the suggestions setting mid-session moves the Target line for what is still to come")
+    @MainActor
+    func suggestionsMidSession() {
+        let r = Self.runner(Self.sheet(), Self.history())
+        defer { SessionRunner.clearSaved() }
+        r.refreshTargets(suggest: SuggestPrefs(mode: .weight))
+        let weight = Targets.today(r.runsheet, results: Self.history(), intent: Intent.current(), kit: Equipment.current(), suggest: SuggestPrefs(mode: .weight))
+        #expect(weight != nil)
+        #expect(r.today == weight)
+        r.refreshTargets(suggest: SuggestPrefs(mode: .reps))
+        #expect(r.today == Targets.today(r.runsheet, results: Self.history(), intent: Intent.current(), kit: Equipment.current(), suggest: SuggestPrefs(mode: .reps)))
+        r.refreshTargets(suggest: SuggestPrefs(off: true))
+        #expect(r.today == nil)
+        #expect(r.goal == nil)
+    }
+
+    @Test("the setting is answered the same way from the timer: a mode turns suggestions on, none turns them off")
+    func suggestionsAnswer() {
+        let off = SuggestPrefs().answered(yes: false)
+        #expect(off.asked == true && !off.enabled)
+        let back = off.answered(yes: true, mode: .effort)
+        #expect(back.enabled && back.mode == .effort && back.asked == true)
+    }
+
+    // MARK: - Correcting a done set
+
+    @Test("a done set is corrected in place: it stays ticked with its time, and only it changes")
+    @MainActor
+    func correctDone() {
+        let r = Self.runner(Self.sheet(), Self.history())
+        defer { SessionRunner.clearSaved() }
+        r.tick(at: r.state.startedAt + Runner.leadSec * 1000 + 1)
+        r.startBlock()
+        let rows = r.setRows
+        r.tickSet(rows[0].slotId)
+        r.tickSet(rows[1].slotId)
+        let was = r.state.actuals[rows[0].slotId]
+        let loads = r.setRows.map(\.load)
+        #expect(loads == [100, 110, 110])
+
+        r.setSetLoad(rows[0].slotId, 95)
+        r.nudgeSetReps(rows[0].slotId, -1)
+        let after = r.setRows
+        #expect(after[0].done)
+        #expect(after[0].load == 95)
+        #expect(after[0].reps == 7)
+        #expect(r.state.actuals[rows[0].slotId]?.doneAt == was?.doneAt)
+        #expect(r.state.actuals[rows[0].slotId]?.at == was?.at)
+        #expect(after.dropFirst().map(\.load) == [110, 110])
+        #expect(after[1].done)
+        #expect(!after[2].done)
+        let sets = r.result().steps.first { $0.stepId == "ht" }?.sets
+        #expect(sets?.map(\.load) == [95, 110])
+        #expect(sets?.map(\.reps) == [7, 4])
+        #expect(sets?.first?.at == was?.at)
+    }
+
+    @Test("a corrected timed set keeps the seconds it ran, and the sets after keep their load")
+    func correctTimed() throws {
+        let sheet = Fixtures.interval()
+        var s = Runner.tick(Runner.start(sheet, now: 0), now: 5_000)
+        s = Runner.advance(s, now: 35_000)
+        let id = s.slots[0].id
+        let was = try #require(s.actuals[id])
+        #expect(was.doneAt != nil)
+        let c = SessionRunner.corrected(s, slotId: id) { $0.target = 24; $0.seconds = 1; $0.doneAt = nil; $0.at = nil }
+        #expect(c.actuals[id]?.target == 24)
+        #expect(c.actuals[id]?.seconds == was.seconds)
+        #expect(c.actuals[id]?.doneAt == was.doneAt)
+        #expect(c.actuals[id]?.at == was.at)
+        // Round 2's swings were following round 1's 28 kg: they still are.
+        let later = try #require(c.slots.lastIndex { $0.step.id == "sw" })
+        #expect(Runner.effectiveTarget(c, later) == 28)
+        // A set not done yet is not this function's to change.
+        #expect(SessionRunner.corrected(s, slotId: s.slots[2].id) { $0.target = 1 } == s)
+    }
+
     // MARK: - Typed numbers and steps
 
     @Test("a typed number takes a point or a comma")
