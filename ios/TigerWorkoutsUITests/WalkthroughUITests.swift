@@ -362,18 +362,39 @@ final class WalkthroughUITests: XCTestCase {
         if discard.waitForExistence(timeout: 3) { discard.tap() }
         open("Cindy")
         tap(app.buttons["Start workout"])
-        let done = app.buttons["Done"]
         XCTAssertTrue(app.descendants(matching: .any)["cap-left"].waitForExistence(timeout: 12))
-        // The reps sit folded in one line; Change opens their stepper and last time.
-        tap(app.buttons["Change"])
-        XCTAssertTrue(app.buttons["use-last-time"].waitForExistence(timeout: 3), "the card should offer last time")
-        snap("40 Last time on the card")
-        for _ in 0..<3 { tap(done) }
+        // Review D17: Cindy's round of plain reps is one card with one button.
+        XCTAssertTrue(app.descendants(matching: .any)["round-card"].firstMatch.waitForExistence(timeout: 5), "a round of plain reps should be one card")
+        snap("40 Cindy's round on one card")
+        tap(app.buttons["Round 1 done"])
         XCTAssertTrue(app.descendants(matching: .any)["ghost"].waitForExistence(timeout: 5), "round 1 should be raced against last time")
         snap("41 Round 1 against last time")
         tap(app.buttons["End session"])
         tap(app.buttons["Finish and save"])
         tap(app.buttons["Done"])
+    }
+
+    /// Pull to refresh on home springs back to the top once the sync is done (#155).
+    func testPullToRefreshSpringsBack() {
+        app.terminate()
+        app.launchArguments = ["-slowSync", "-seedLogbook", "-seedLoads"]
+        app.launch()
+        let discard = app.alerts.buttons["Discard"]
+        if discard.waitForExistence(timeout: 3) { discard.tap() }
+        XCTAssertTrue(app.navigationBars["Workouts"].waitForExistence(timeout: 10))
+        let pill = app.buttons["Discover"].firstMatch
+        XCTAssertTrue(pill.waitForExistence(timeout: 5))
+        sleep(2) // the launch sync
+        let top = pill.frame.minY
+        for (pass, list) in ["Mine", "Discover", "Mine"].enumerated() {
+            tap(app.buttons[list].firstMatch)
+            sleep(1)
+            let from = app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.45))
+            from.press(forDuration: 0.1, thenDragTo: from.withOffset(CGVector(dx: 0, dy: 350)))
+            sleep(4)
+            snap("PTR \(pass) \(list) after refresh")
+            XCTAssertEqual(pill.frame.minY, top, accuracy: 2, "\(list): the list should spring back to the top after the refresh")
+        }
     }
 
     /// An AMRAP runs against its cap, and the timer says how much of it is left.
@@ -525,6 +546,7 @@ final class WalkthroughUITests: XCTestCase {
         reorder("Tabata Pull-up", above: squatCard)
         waitFor("the Pull-up card moves above Squat") { pullCard.frame.minY < squatCard.frame.minY }
         tap(app.navigationBars["Reorder blocks"].buttons["Done"])
+        updateIfAsked()
         XCTAssertTrue(app.navigationBars["Tabata This (mine)"].waitForExistence(timeout: 5), "the reorder saves as a copy")
         reveal(pullup)
         XCTAssertTrue(pullStep.waitForExistence(timeout: 5))
@@ -555,6 +577,7 @@ final class WalkthroughUITests: XCTestCase {
         waitFor("the Pull-up card moves above Squat") { pullCard.frame.minY < squatCard.frame.minY }
         snap("24e Reorder blocks, Pull-up moved up")
         tap(app.navigationBars["Reorder blocks"].buttons["Done"])
+        updateIfAsked()
 
         let squat = app.buttons.matching(NSPredicate(format: "label BEGINSWITH[c] 'Tabata Squat'")).firstMatch
         let pullup = app.buttons.matching(NSPredicate(format: "label BEGINSWITH[c] 'Tabata Pull-up'")).firstMatch
@@ -1159,7 +1182,8 @@ final class WalkthroughUITests: XCTestCase {
             }
         }
         tap(startPull)
-        let load = app.staticTexts["Set 1 load"]
+        // The number is a button: a tap types one in.
+        let load = app.buttons["Set 1 load"]
         XCTAssertTrue(load.waitForExistence(timeout: 5))
         let before = Double(load.value as? String ?? "") ?? 0
         app.buttons["Set 1 load, more"].press(forDuration: 2.5)
@@ -1560,18 +1584,18 @@ final class WalkthroughUITests: XCTestCase {
         }
         tap(startBench)
         XCTAssertTrue(app.buttons["Tick set 1"].waitForExistence(timeout: 5))
-        // The sets after the one you are on sit folded in one line until tapped.
-        tap(app.buttons["more-sets"])
+        // Every set is its own row (15 Nov 2026), the drop set among them.
         XCTAssertTrue(app.buttons["Set 4: Drop set"].waitForExistence(timeout: 5), "the drop set shows as D")
         snap("72 Set types on the timer")
 
-        tap(app.buttons["Plates for 60 kg"].firstMatch)
-        XCTAssertTrue(app.staticTexts["20 kg bar + 20 per side"].waitForExistence(timeout: 5), "the calculator should load 60 kg as a 20 each side")
+        // The plates sit by the name, for the set being done: the 40 kg warm-up.
+        tap(app.buttons["Plates for 40 kg"].firstMatch)
+        XCTAssertTrue(app.staticTexts["20 kg bar + 10 per side"].waitForExistence(timeout: 5), "the calculator should load 40 kg as a 10 each side")
         snap("73 Plate calculator")
         // Close it by a tap above the sheet. A swipe from the screen's middle started above the
         // half sheet on a Pro Max, and a swipe on the sheet's text did not move it either.
         app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.12)).tap()
-        XCTAssertFalse(app.staticTexts["20 kg bar + 20 per side"].waitForExistence(timeout: 2) && app.staticTexts["20 kg bar + 20 per side"].isHittable, "the plate sheet should close")
+        XCTAssertFalse(app.staticTexts["20 kg bar + 10 per side"].waitForExistence(timeout: 2) && app.staticTexts["20 kg bar + 10 per side"].isHittable, "the plate sheet should close")
         XCTAssertTrue(app.buttons["Tick set 1"].waitForExistence(timeout: 5))
 
         // A tap on a set number changes its type: set 3 becomes a warm-up.
