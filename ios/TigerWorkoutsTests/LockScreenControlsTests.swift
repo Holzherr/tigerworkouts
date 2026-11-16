@@ -40,6 +40,9 @@ struct LockScreenControlsTests {
         let tabata = Runsheet(id: "t", title: "T", items: [.block(Block(id: "b", name: "B", repeatCount: 2, steps: [Fixtures.work("sq", Fixtures.squat, forMode: .seconds, forValue: 20)]))])
         let t = Runner.tick(Runner.start(tabata, now: 0), now: 5_000)
         #expect(SessionRunner.lockScreenState(t, runsheet: tabata, now: 6_000).setLine == nil)
+        // A countdown's button is Pause, as in the app: Done five seconds in logged a 5 s set.
+        #expect(SessionRunner.lockScreenState(t, runsheet: tabata, now: 6_000).action == .pause)
+        #expect(SessionRunner.lockScreenState(s, runsheet: sheet, now: 6_000).action == .pause)
         let paused = Runner.pause(s, now: 10_000)
         #expect(SessionRunner.lockScreenState(paused, runsheet: sheet, now: 11_000).action == .resume)
     }
@@ -72,6 +75,38 @@ struct LockScreenControlsTests {
             #expect(runner.slot?.kind == .work)
             #expect(runner.slot?.round == 1)
         }
+    }
+
+    @Test("Pause on timed work pauses it and logs nothing; Resume carries on; rep sets keep Done")
+    func pauseTimedWork() {
+        SessionRunner.$savedName.withValue("test-\(UUID().uuidString).json") {
+            let runner = SessionRunner(runsheet: Fixtures.interval())
+            runner.control(.done, token: SessionRunner.token(runner.state)) // Start, from the lead-in
+            #expect(runner.state.phase == .running)
+            #expect(runner.slot?.kind == .work)
+            #expect(SessionRunner.lockScreenState(runner.state, runsheet: runner.runsheet, now: runner.now).action == .pause)
+
+            runner.control(.pause, token: SessionRunner.token(runner.state))
+            #expect(runner.state.phase == .paused)
+            #expect(!runner.state.actuals.values.contains { $0.doneAt != nil })
+            #expect(SessionRunner.lockScreenState(runner.state, runsheet: runner.runsheet, now: runner.now).action == .resume)
+
+            runner.control(.resume, token: SessionRunner.token(runner.state))
+            #expect(runner.state.phase == .running)
+            #expect(runner.slot?.exercise?.id == "sw")
+
+            // A rest is not paused from the card: it has +15 s and Skip rest.
+            runner.done()
+            #expect(runner.slot?.kind == .rest)
+            let rest = runner.state
+            runner.control(.pause, token: SessionRunner.token(runner.state))
+            #expect(runner.state == rest)
+        }
+        // EMOM reps run against the minute, but Done logs the set: the card keeps Done.
+        let emom = Runsheet(id: "e", title: "E", items: [.block(Block(id: "b", name: "B", repeatCount: 3, mode: .emom, steps: [Fixtures.work("bu", Fixtures.burpee, forMode: .reps, forValue: 5)]))])
+        let e = Runner.tick(Runner.start(emom, now: 0), now: 5_000)
+        #expect(e.phase == .running)
+        #expect(SessionRunner.lockScreenState(e, runsheet: emom, now: 7_000).action == .done)
     }
 
     @Test("a tap from a card that is behind the session does nothing")

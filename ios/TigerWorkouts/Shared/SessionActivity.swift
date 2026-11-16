@@ -49,6 +49,9 @@ struct SessionActivityAttributes: ActivityAttributes {
             case start
             /// A set or step: Done.
             case done
+            /// Timed work on a countdown: Pause, as the app's big button is. Done here logged a
+            /// 30 s hold as the five seconds it had run.
+            case pause
             /// A counted-down rest: +15 s and Skip rest.
             case rest
         }

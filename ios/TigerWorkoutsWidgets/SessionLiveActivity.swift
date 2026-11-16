@@ -96,7 +96,7 @@ struct SessionLiveActivity: Widget {
         .padding(14)
     }
 
-    /// Done on a set, Start at a gate, +15 s and Skip on a rest. Each runs in the app's process
+    /// Done on a set, Pause on timed work, Start at a gate, +15 s and Skip on a rest. Each runs in the app's process
     /// (see `SessionIntents`), and the card redraws from the update that follows.
     @ViewBuilder
     private func controls(_ state: SessionActivityAttributes.ContentState) -> some View {
@@ -116,6 +116,11 @@ struct SessionLiveActivity: Widget {
         case .done:
             HStack(spacing: 8) {
                 Button(intent: CompleteStepIntent(token: state.token)) { pill("Done", "checkmark", filled: true, state) }
+            }
+            .buttonStyle(.plain)
+        case .pause:
+            HStack(spacing: 8) {
+                Button(intent: PauseSessionIntent(token: state.token)) { pill("Pause", "pause.fill", filled: true, state) }
             }
             .buttonStyle(.plain)
         case .rest:
