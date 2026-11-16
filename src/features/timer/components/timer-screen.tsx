@@ -1,5 +1,5 @@
 import * as Dialog from '@radix-ui/react-dialog';
-import { Check, ChevronLeft, ChevronRight, ChevronsRight, List, Medal, MoreHorizontal, Pause, Play, Shuffle, SkipForward, Square, Trash2, Volume2, VolumeX, X } from 'lucide-react';
+import { Check, ChevronLeft, ChevronRight, ChevronsRight, List, Medal, Plus, MoreHorizontal, Pause, Play, Shuffle, SkipForward, Square, Trash2, Volume2, VolumeX, X } from 'lucide-react';
 import { useMemo, useRef, useState } from 'react';
 import { Button } from '@/shared/components/ui/button';
 import { ClipThumb } from '@/shared/components/ui/clip-thumb';
@@ -89,21 +89,21 @@ export interface SetActions {
   fill?: (slotId: string, set: SetResult) => void;
   /** A tap on the set number: warm-up, normal, drop set, to failure. */
   setType?: (slotId: string, type: SetType) => void;
+  /** "+ Add set": one more set of the block, a copy of its last set. */
+  add?: (blockId: string) => void;
 }
 
 /**
- * A straight-set block on the timer, tidied: a done set is one line ("✓ Set 1   45 kg × 10", the
- * tick un-ticks it), the set you are on (or one tapped open) has its steppers and last time's
- * numbers, and the sets still to come fold into one line ("2 more sets   45 kg × 10") that opens
- * them all. No column header: the units sit under the steppers. The rest between sets counts down
- * above the grid.
+ * A straight-set block on the timer: a done set is one line ("✓ Set 1   45 kg × 10", the tick
+ * un-ticks it), and every set still to do is a row of its own with its steppers and last time's set
+ * of the same number, changeable before and during it (Priyanka, 14 Nov 2026: the sets after the
+ * next one were folded into "2 more sets"). "+ Add set" under the last copies it. No column header:
+ * the units sit under the steppers. The rest between sets counts down above the grid. Port of
+ * `setGrid` in TimerView.swift.
  */
 const TimerSetGrid = ({ state, step, blockId, actions, equipment, prs = [], onHowTo }: { state: R.RunState; step: ExerciseStep; blockId: string; actions: SetActions; equipment?: Equipment; prs?: string[]; onHowTo?: () => void }) => {
   const rows = state.slots.map((sl, idx) => ({ sl, idx })).filter(x => x.sl.blockId === blockId && x.sl.kind === 'work');
   const on = rows.find(x => x.idx >= state.i)?.sl.id;
-  const [open, setOpen] = useState<string | null>(null);
-  const [allOpen, setAllOpen] = useState(false);
-  const editing = open ?? on;
   // A load given as a % of a training max or × bodyweight shows once it is resolved into target.
   const loadCol = showsLoad(step);
   const barbell = loadCol && kitOf(step.exercise) === 'barbell';
@@ -131,12 +131,8 @@ const TimerSetGrid = ({ state, step, blockId, actions, equipment, prs = [], onHo
     const base = loadCol && count ? `${load !== undefined ? fmtNum(load) : '—'} ${unit} × ${n10}`.replace(/ {2}/, ' ') : loadCol ? `${load !== undefined ? fmtNum(load) : '—'} ${unit}`.trim() : count ? `${n10} ${count.toLowerCase()}` : '';
     const what = [base, ...logged.flatMap((l, k) => (extra[k] !== undefined ? [`${fmtNum(extra[k]!)} ${loggedUnit(l)}`] : []))].filter(Boolean).join(' · ');
     const canTick = done || idx < state.i || (live && (idx === state.i || (sl.id === on && state.slots.slice(state.i, idx).every(x => x.kind === 'rest'))));
-    return { sl, idx, n, done, load, reps, extra, what, canTick, edit: !done && sl.id === editing, name: /^\d+$/.test(marks[n]) ? `Set ${marks[n]}` : `Set ${n + 1} (${marks[n]})` };
+    return { sl, idx, n, done, load, reps, extra, what, canTick, edit: !done, name: /^\d+$/.test(marks[n]) ? `Set ${marks[n]}` : `Set ${n + 1} (${marks[n]})` };
   });
-  // The sets after the one being set, not done: folded into one line until tapped open.
-  const at = view.findIndex(v => v.edit);
-  const later = view.filter((v, i) => i > at && at >= 0 && !v.done && !v.edit);
-  const fold = !allOpen && later.length > 0;
   const tick = (v: (typeof view)[number]) => (
     <button
       type="button"
@@ -145,13 +141,8 @@ const TimerSetGrid = ({ state, step, blockId, actions, equipment, prs = [], onHo
       disabled={!v.canTick}
       onClick={e => {
         e.stopPropagation();
-        if (v.done) {
-          actions.reopen(v.sl.id);
-          setOpen(v.sl.id);
-        } else {
-          actions.complete(v.sl.id);
-          setOpen(null);
-        }
+        if (v.done) actions.reopen(v.sl.id);
+        else actions.complete(v.sl.id);
       }}
       className="grid size-11 shrink-0 place-items-center disabled:opacity-70"
     >
@@ -167,21 +158,9 @@ const TimerSetGrid = ({ state, step, blockId, actions, equipment, prs = [], onHo
         <span className="min-w-0 flex-1 text-[20px] leading-tight font-extrabold">{step.exercise.name}</span>
       </button>
       {view.map(v => {
-        if (fold && later.includes(v)) {
-          if (v !== later[0]) return null;
-          return (
-            <button key="more" type="button" onClick={() => setAllOpen(true)} aria-label={`${later.length} more ${later.length === 1 ? 'set' : 'sets'}, ${later[0].what}. Show them`} className="flex min-h-12 w-full items-center gap-3 border-b border-line-soft py-1 text-left last:border-0">
-              <span className="ml-2 size-7 shrink-0 rounded-full border-2 border-muted" />
-              <span className="flex-1 text-[15px] text-body">
-                {later.length} more {later.length === 1 ? 'set' : 'sets'}
-              </span>
-              <span className="pr-1 text-[15px] font-semibold text-body tabular-nums">{later[0].what}</span>
-            </button>
-          );
-        }
         if (!v.edit) {
           return (
-            <div key={v.sl.id} className="flex min-h-12 items-center gap-1 border-b border-line-soft last:border-0" onClick={() => !v.done && setOpen(v.sl.id)}>
+            <div key={v.sl.id} className="flex min-h-12 items-center gap-1 border-b border-line-soft last:border-0">
               {tick(v)}
               <span className="flex-1 text-[15px] text-body">{v.name}</span>
               {v.done && prs.includes(v.sl.id) && (
@@ -209,7 +188,7 @@ const TimerSetGrid = ({ state, step, blockId, actions, equipment, prs = [], onHo
               {barbell && <PlatesButton load={v.load} equipment={equipment} />}
               <span className="flex-1" />
               {hint && copy && Object.keys(copy).length ? (
-                <button type="button" aria-label={`Use last time for set ${v.n + 1}`} onClick={() => (actions.fill!(v.sl.id, copy), setOpen(v.sl.id))} className="min-h-8 text-[13px] text-muted underline decoration-dotted underline-offset-2">
+                <button type="button" aria-label={`Use last time for set ${v.n + 1}`} onClick={() => actions.fill!(v.sl.id, copy)} className="min-h-8 text-[13px] text-muted underline decoration-dotted underline-offset-2">
                   {hint}
                 </button>
               ) : (
@@ -244,6 +223,11 @@ const TimerSetGrid = ({ state, step, blockId, actions, equipment, prs = [], onHo
           </div>
         );
       })}
+      {actions.add && R.canAddSet(state, blockId) && (
+        <button type="button" onClick={() => actions.add!(blockId)} title="Copies the last set's weight and reps" className="flex min-h-11 w-full items-center justify-center gap-1.5 text-[15px] font-semibold text-brand-ink">
+          <Plus className="size-4" /> Add set
+        </button>
+      )}
     </div>
   );
 };

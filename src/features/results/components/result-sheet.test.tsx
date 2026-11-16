@@ -179,3 +179,17 @@ describe('ResultSheet after a timed session', () => {
     expect(screen.queryByText('Effort')).toBeNull();
   });
 });
+
+describe('ResultSheet after + Add set', () => {
+  it('asks to save the added set to the workout, and Update workout does it once', () => {
+    const onUpdate = vi.fn();
+    render(<ResultSheet runsheet={priyanka()} onSave={vi.fn()} added={{ count: 1, onUpdate }} />);
+    const card = screen.getByLabelText('Added sets');
+    expect(card.textContent).toContain('You added a set');
+    expect(card.textContent).toContain('Save to the workout template?');
+    fireEvent.click(within(card).getByRole('button', { name: 'Update workout' }));
+    expect(onUpdate).toHaveBeenCalledTimes(1);
+    expect(card.textContent).toContain('Saved to the workout: next time starts with it.');
+    expect(within(card).queryByRole('button')).toBeNull();
+  });
+});

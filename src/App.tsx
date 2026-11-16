@@ -66,6 +66,7 @@ import { FULL_LIBRARY as LIB } from '@/features/workouts/imported';
 import { setTargets, timerTarget, today as todayFor, type Intent } from '@/features/runsheet/targets';
 import { exerciseStall, workoutStall, type Stall } from '@/features/results/stall';
 import { dismissStall, getDismissed, getIntent, setIntent as storeIntent, shouldAsk, suggestEnabled, suggestOn, withExercise, withWorkout } from '@/features/results/suggestions';
+import { addedSets, withAddedSets } from '@/features/results/added-sets';
 import { SuggestSheet } from '@/features/results/components/suggest-sheet';
 import { TimerExtrasContext } from '@/features/timer/timer-extras';
 import { alternatives } from '@/features/exercises/alternatives';
@@ -533,6 +534,10 @@ export default function App() {
     if (!r) return shell('discover', catLoading ? <Holding label="Loading workout" /> : <Missing />);
     // What the timer recorded, if it was this workout's run.
     const logged = pending && pending.runsheetId === wid(r) ? pending : null;
+    // Sets added with + Add set, on a workout of your own run as written: Update workout puts them on it.
+    const own = logged && !logged.version ? st.workouts.find(w => w.id === wid(r)) : undefined;
+    const added = own && logged ? addedSets(own, logged) : {};
+    const plus = Object.values(added).reduce((a, b) => a + b, 0);
     return full(
       <>
         <ResultSheet
@@ -545,6 +550,7 @@ export default function App() {
           startedFrom={from ?? logged?.startedFrom}
           intent={intent}
           suggest={st.suggestions}
+          added={plus && own ? { count: plus, onUpdate: () => act.saveWorkout(withAddedSets(own, added)) } : undefined}
           equipment={st.equipment}
           onBodyweight={st.bodyweightKg === undefined && !st.bodyweightAsked ? kg => (kg === undefined ? act.skipBodyweight() : act.setBodyweight(kg)) : undefined}
           onCancel={() => {
@@ -969,7 +975,7 @@ const RunSession = ({ runsheet, results, intent, equipment, library, origin: sta
       <TimerExtrasContext.Provider value={timerExtras}>
       {/* The run lives here, above the screen: if the screen crashes it is put up again and the run carries on. */}
       <Contain retry name="timer screen">
-        <TimerScreen runsheet={runsheet} state={state} now={now} onDone={act.done} onSkip={skip} onBack={act.back} onPause={act.pause} onResume={act.resume} onAdjust={act.adjust} onAdjustIncline={act.adjustIncline} onSetReps={act.setReps} onSetAmount={act.setAmount} onDrop={drop} onStartBlock={startBlock} onAdjustStep={act.adjustStep} sets={{ adjust: act.adjustAt, setReps: act.setRepsAt, setAmount: act.setAmountAt, complete: act.completeSet, reopen: act.reopenSet, lastFor: (step, round) => lastSessionSet(results, step, round, runsheet), fill: act.fillSet, setType: act.setTypeAt }} onAdjustRest={act.extendRest} lastFor={step => lastSessionSet(results, step, Runner.current(state)?.round ?? 0, runsheet)} onFill={act.fillSet} ghost={pace?.text} goal={goal} muted={muted} onToggleMute={() => { setMuted(!muted); setMute(!muted); }} equipment={equipment} alternativesFor={(step, target) => alternatives(step.exercise.key, target, library, 6, equipment)} onSwap={act.swap} prs={prs} onEndBlock={endBlock} onRoundDone={act.roundDone} onExtraReps={act.setExtraReps} onFinish={() => { const res = log(state.phase === 'done' ? state : Runner.finish(state, Date.now())); Runner.clearPersisted(); onFinish(res); }} onExit={() => (act.discard(), onExit())} />
+        <TimerScreen runsheet={runsheet} state={state} now={now} onDone={act.done} onSkip={skip} onBack={act.back} onPause={act.pause} onResume={act.resume} onAdjust={act.adjust} onAdjustIncline={act.adjustIncline} onSetReps={act.setReps} onSetAmount={act.setAmount} onDrop={drop} onStartBlock={startBlock} onAdjustStep={act.adjustStep} sets={{ adjust: act.adjustAt, setReps: act.setRepsAt, setAmount: act.setAmountAt, complete: act.completeSet, reopen: act.reopenSet, lastFor: (step, round) => lastSessionSet(results, step, round, runsheet), fill: act.fillSet, setType: act.setTypeAt, add: act.addSet }} onAdjustRest={act.extendRest} lastFor={step => lastSessionSet(results, step, Runner.current(state)?.round ?? 0, runsheet)} onFill={act.fillSet} ghost={pace?.text} goal={goal} muted={muted} onToggleMute={() => { setMuted(!muted); setMute(!muted); }} equipment={equipment} alternativesFor={(step, target) => alternatives(step.exercise.key, target, library, 6, equipment)} onSwap={act.swap} prs={prs} onEndBlock={endBlock} onRoundDone={act.roundDone} onExtraReps={act.setExtraReps} onFinish={() => { const res = log(state.phase === 'done' ? state : Runner.finish(state, Date.now())); Runner.clearPersisted(); onFinish(res); }} onExit={() => (act.discard(), onExit())} />
       </Contain>
       </TimerExtrasContext.Provider>
     </div>

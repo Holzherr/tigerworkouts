@@ -48,7 +48,34 @@ export interface ResultSheetProps {
   equipment?: Equipment;
   /** Whether to suggest, and how: off hides Next time; a lift progressed by effort is asked its RPE. */
   suggest?: SuggestPrefs;
+  /** Sets added with "+ Add set" on a workout of your own: asks whether they go on the workout. */
+  added?: { count: number; onUpdate: () => void };
 }
+
+/** "You added a set. Save to the workout template?" Port of FinishView's templateCard. */
+const TemplateCard = ({ count, onUpdate }: { count: number; onUpdate: () => void }) => {
+  const [answer, setAnswer] = useState<boolean | null>(null);
+  return (
+    <section aria-label="Added sets" className="rounded-card border border-line bg-surface px-3 py-2">
+      <div className="text-[15px] font-bold">{count === 1 ? 'You added a set' : `You added ${count} sets`}</div>
+      {answer === null ? (
+        <>
+          <div className="text-[13px] text-muted">Save to the workout template?</div>
+          <div className="mt-1 flex items-center justify-between">
+            <button type="button" onClick={() => setAnswer(false)} className="min-h-11 text-[14px] text-muted">
+              Just this time
+            </button>
+            <button type="button" onClick={() => (setAnswer(true), onUpdate())} className="min-h-11 text-[14px] font-semibold text-brand-ink">
+              Update workout
+            </button>
+          </div>
+        </>
+      ) : (
+        <div className="text-[13px] text-muted">{answer ? 'Saved to the workout: next time starts with it.' : 'Kept with this session only. The workout stays as it was.'}</div>
+      )}
+    </section>
+  );
+};
 
 const exerciseSteps = (r: Runsheet): ExerciseStep[] => r.items.flatMap(it => (it.kind === 'block' ? it.steps : it.kind === 'ref' ? [] : [it])).filter((s): s is ExerciseStep => s.kind === 'exercise');
 
@@ -60,7 +87,7 @@ const exerciseSteps = (r: Runsheet): ExerciseStep[] => r.items.flatMap(it => (it
  * for everything they do not move, the targets read from history (targets.ts), then Save. Pure:
  * the host stores the result and updates training maxes.
  */
-export const ResultSheet = ({ runsheet, history = [], allResults = history, trainingMaxes = {}, bodyweightKg, startedAt, initial, startedFrom, onSave, onCancel, onBodyweight, intent = 'maintain', equipment, suggest }: ResultSheetProps) => {
+export const ResultSheet = ({ runsheet, history = [], allResults = history, trainingMaxes = {}, bodyweightKg, startedAt, initial, startedFrom, onSave, onCancel, onBodyweight, intent = 'maintain', equipment, suggest, added }: ResultSheetProps) => {
   const suggesting = suggestOn(suggest, runsheet);
   const type = scoreType(runsheet);
   const steps = useMemo(() => exerciseSteps(runsheet), [runsheet]);
@@ -117,6 +144,7 @@ export const ResultSheet = ({ runsheet, history = [], allResults = history, trai
       </header>
       <div className="min-h-0 flex-1 space-y-2 overflow-y-auto px-3 py-3">
         <CelebrationCard celebration={celebration} scoreType={type} exercise={exerciseName} blockName={blockName} onShare={() => setSharing(true)} />
+        {added && added.count > 0 && <TemplateCard count={added.count} onUpdate={added.onUpdate} />}
         <SplitsCard result={result} last={celebration.last} runsheet={runsheet} exerciseName={k => steps.find(s => s.exercise.key === k)?.exercise.name} blockName={blockName} records={celebration.rounds} />
         <EffortRow value={rpe} onChange={setRpe} />
         <LiftEffortCard lifts={lifts} rows={allRows} onRate={rate} />
