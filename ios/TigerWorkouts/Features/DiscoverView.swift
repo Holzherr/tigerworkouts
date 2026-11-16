@@ -47,6 +47,8 @@ struct DiscoverView: View {
 
     private func kind(of r: Runsheet) -> Kind? { r.source.flatMap { Kind(rawValue: $0.kind) } }
 
+    private var listId: String { searching ? "search" : tab.rawValue }
+
     private var searching: Bool { !query.trimmingCharacters(in: .whitespaces).isEmpty }
 
     private var results: [Runsheet] {
@@ -63,25 +65,36 @@ struct DiscoverView: View {
 
     var body: some View {
         NavigationStack(path: $path) {
-            ScrollView {
-                LazyVStack(alignment: .leading, spacing: 10) {
-                    if searching {
-                        browse
-                    } else {
-                        tabs
-                        if tab == .mine { mine } else { discover }
+            ScrollViewReader { proxy in
+                ScrollView {
+                    LazyVStack(alignment: .leading, spacing: 10) {
+                        if searching {
+                            browse
+                        } else {
+                            tabs
+                            if tab == .mine { mine } else { discover }
+                        }
+                    }
+                    // Search, Mine and Discover key their rows by workout, and a lazy stack keeps a built
+                    // row by its key: without a fresh stack per list, Mine drew a saved workout with the
+                    // search row's chevron instead of its play button.
+                    .padding(.vertical, 8)
+                    // Room under the last row so it clears the floating tab bar.
+                    .padding(.bottom, 40)
+                    // Outside the padding, so scrolling to it shows the top of the list.
+                    .id(listId)
+                }
+                .background(Brand.canvas)
+                .refreshable {
+                    await store.sync()
+                    // A sync that redraws the long list while the spinner shows left it pulled down,
+                    // the spinner's height short of the top (#155): once the spinner has gone, back up.
+                    Task {
+                        try? await Task.sleep(for: .milliseconds(350))
+                        withAnimation(.snappy) { proxy.scrollTo(listId, anchor: .top) }
                     }
                 }
-                // Search, Mine and Discover key their rows by workout, and a lazy stack keeps a built
-                // row by its key: without a fresh stack per list, Mine drew a saved workout with the
-                // search row's chevron instead of its play button.
-                .id(searching ? "search" : tab.rawValue)
-                .padding(.vertical, 8)
-                // Room under the last row so it clears the floating tab bar.
-                .padding(.bottom, 40)
             }
-            .background(Brand.canvas)
-            .refreshable { await store.sync() }
             .scrollDismissesKeyboard(.immediately)
             .searchable(text: $query, placement: .navigationBarDrawer(displayMode: .always), prompt: "Search")
             .navigationTitle("Workouts")

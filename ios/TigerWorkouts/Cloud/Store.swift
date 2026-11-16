@@ -138,6 +138,18 @@ final class Store {
     }
 
     func sync() async {
+        #if DEBUG
+        // UI tests are signed out, so a sync returns at once: -slowSync stands in for a signed-in
+        // one, a second and a half out and lists replaced at the end.
+        if ProcessInfo.processInfo.arguments.contains("-slowSync") {
+            syncing = true
+            try? await Task.sleep(for: .seconds(1.5))
+            myWorkouts = myWorkouts
+            results = results
+            syncing = false
+            return
+        }
+        #endif
         guard await Supabase.shared.isSignedIn else { return }
         syncing = true
         syncError = nil
