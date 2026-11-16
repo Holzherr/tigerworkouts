@@ -254,9 +254,10 @@ struct SyncTests {
         let step = try #require((block["steps"] as? [[String: Any]])?.first)
         #expect(step["target"] as? Double == 20 && step["tempo"] as? String == "2-0-1")
         #expect((step["exercise"] as? [String: Any])?["cue"] as? String == "hips")
-        // Without the pulled copy, as before: only what the model holds.
+        // Without the pulled copy, as before: only what the model holds (the credit fields are modelled).
         let bare = try #require(Supabase.workoutRow(sheet, owner: "u", sendPublic: false)["data"] as? [String: Any])
-        #expect((bare["source"] as? [String: Any])?["handle"] == nil)
+        #expect((bare["source"] as? [String: Any])?["handle"] as? String == "samfit")
+        #expect(bare["later"] == nil)
     }
 
     @Test("a field removed here stays removed, and a step given another exercise takes nothing from the old one")
