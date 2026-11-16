@@ -67,8 +67,9 @@ A workout page's "Week by week" row opens a table: a row per exercise and set, a
 change since the column before ("+5 kg", "+1 rep"; coral when heavier or more reps), the newest
 column highlighted. Columns cover the workout, the original of an edited copy, and every workout
 linked by ⋯ Duplicate (`duplicatedFrom` on the copy, iOS). A tap on an exercise opens its history
-across every workout, with the chart. iOS only so far. Code: `ios/TigerWorkouts/Results/WeekTable.swift`,
-`Features/ProgressTableView.swift`.
+across every workout, with the chart. iOS and web (review D9). Code: `ios/TigerWorkouts/Results/WeekTable.swift`,
+`Features/ProgressTableView.swift`; web `src/features/results/week-table.ts`,
+`src/features/results/components/week-table-screen.tsx` (route `#/weeks/<id>`).
 
 Code: `src/features/runsheet/targets.ts`, `src/features/results/stall.ts`, ported to
 `ios/TigerWorkouts/Model/Targets.swift` and `ios/TigerWorkouts/Results/Stall.swift`.
