@@ -194,7 +194,7 @@ final class SessionRunner {
 
     /// One id per session, so a result saved twice (finished, then recovered after a kill before the
     /// store confirmed it) replaces itself rather than logging the workout twice.
-    nonisolated static func rowId(_ s: RunState) -> String { "s-\(Int(s.startedAt))-run" }
+    nonisolated static func rowId(_ s: RunState) -> String { "s-\(Int(s.startedAt))-\(DeviceTag.current)" }
 
     // MARK: - Derived
 

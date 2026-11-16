@@ -324,3 +324,20 @@ enum SessionRow {
         ]
     }
 }
+
+/// A random tag made once per install. Session ids are one key across every account, and the
+/// timer's id is built from the start time so a result saved twice replaces itself; the tag keeps
+/// two people who press Start in the same millisecond apart. Sessions saved before it ended "-run".
+enum DeviceTag {
+    static let key = "deviceTag"
+
+    /// Read or made once per launch (a static let is initialised once, whatever thread asks first).
+    nonisolated static let current: String = current(in: .standard)
+
+    nonisolated static func current(in defaults: UserDefaults) -> String {
+        if let tag = defaults.string(forKey: key), !tag.isEmpty { return tag }
+        let tag = String(UUID().uuidString.replacingOccurrences(of: "-", with: "").prefix(12)).lowercased()
+        defaults.set(tag, forKey: key)
+        return tag
+    }
+}
