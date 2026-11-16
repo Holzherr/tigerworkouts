@@ -932,7 +932,8 @@ final class WalkthroughUITests: XCTestCase {
         let clear = app.buttons["clear-equipment"]
         snap("77 My equipment, clear")
         tap(clear)
-        tap(app.buttons["clear-equipment-confirm"])
+        // A confirmation dialog lists its button twice (sheet and its inner view); take the first.
+        tap(app.buttons["clear-equipment-confirm"].firstMatch)
         XCTAssertFalse(clear.waitForExistence(timeout: 2), "cleared equipment should leave nothing to clear")
         app.navigationBars.buttons.element(boundBy: 0).tap()
         XCTAssertTrue(app.buttons["my-equipment"].waitForExistence(timeout: 5))
