@@ -1702,15 +1702,15 @@ final class WalkthroughUITests: XCTestCase {
         snap("97 Me, AI coach")
     }
 
-    /// Pause is big on the lead-in, "Set 1 of 10 done" on the burpees; Finish is in the ⋯ menu, and
+    /// Pause is big on the lead-in, "Round 1 done" on the burpees; Finish is in the ⋯ menu, and
     /// asks first while sets are still to come.
     func testTimerControls() {
         open("EMOM 10: 5 burpees")
         tap(app.buttons["Start workout"])
         XCTAssertTrue(app.buttons["Pause"].waitForExistence(timeout: 5), "a countdown's big button is Pause")
-        XCTAssertTrue(app.buttons["Set 1 of 10 done"].waitForExistence(timeout: 12), "a set's big button says which set it logs")
+        XCTAssertTrue(app.buttons["Round 1 done"].waitForExistence(timeout: 12), "an EMOM round of plain reps is one Round n done")
         XCTAssertEqual(app.buttons["Skip"].label, "Skip this step")
-        snap("110 Set 1 of 10 done")
+        snap("110 Round 1 done")
         tap(app.buttons["Session menu"])
         XCTAssertTrue(app.buttons["Discard"].waitForExistence(timeout: 5), "the ⋯ menu should offer Discard")
         // Ten sets still to come: Finish asks first, and Keep going stays in the session.
@@ -1720,7 +1720,7 @@ final class WalkthroughUITests: XCTestCase {
         XCTAssertTrue(app.staticTexts.matching(NSPredicate(format: "label ENDSWITH 'left. What you have done is saved.'")).firstMatch.exists, "the question should say what is left")
         snap("112 Menu Finish, asked first")
         tap(app.buttons["Keep going"].firstMatch)
-        XCTAssertTrue(app.buttons["Set 1 of 10 done"].waitForExistence(timeout: 5), "Keep going should stay in the session")
+        XCTAssertTrue(app.buttons["Round 1 done"].waitForExistence(timeout: 5), "Keep going should stay in the session")
         tap(app.buttons["Session menu"])
         tap(app.buttons["Finish and save"])
         XCTAssertTrue(app.staticTexts["Finish now?"].waitForExistence(timeout: 5))

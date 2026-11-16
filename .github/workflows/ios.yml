@@ -1,16 +1,24 @@
 name: iOS tests
 
-# Compiles the iPhone app and runs its tests on a hosted Mac whenever ios/ changes, so a Swift
-# change is verified on every pull request rather than only on a Mac somebody is sitting at.
-# Two legs: the 42 unit tests (incl. the runner.ts port) are the check that must pass; the 5
-# simulator walkthroughs run too, but tolerate the hosted runner, which has no Health sheet to
-# tap and no Lock Screen to press — a red walkthrough shows here, it does not block the PR.
+# Compiles the iPhone app and runs its tests on a hosted Mac whenever ios/ changes.
+#
+#   unit   every push and pull request. The unit tests (incl. the runner.ts port). Must pass.
+#   smoke  pull requests. Eight simulator walkthroughs that need no system dialog, no Lock Screen
+#          and no Health sheet. A failed one is run once more before it counts: a busy hosted
+#          runner times a UI query out now and then.
+#   ui     pushes to main, nightly, and by hand. Every walkthrough, split over four runners.
+#
+# The walkthroughs used to be one job with a 40-minute limit. There are 45 of them at about 50 s
+# each on a hosted runner, plus the build: it ran out of time on 38 of the last 40 runs and was
+# cancelled before it could report anything. Split four ways each part takes about 15 minutes.
 on:
   push:
     branches: [main]
-    paths: ['ios/**', '.github/workflows/ios.yml']
+    paths: ['ios/**', 'fixtures/**', '.github/workflows/ios.yml', '.github/workflows/ios-setup.sh']
   pull_request:
-    paths: ['ios/**', '.github/workflows/ios.yml']
+    paths: ['ios/**', 'fixtures/**', '.github/workflows/ios.yml', '.github/workflows/ios-setup.sh']
+  schedule:
+    - cron: '17 3 * * *'
   workflow_dispatch:
 
 permissions:
@@ -20,60 +28,106 @@ concurrency:
   group: ios-${{ github.ref }}
   cancel-in-progress: true
 
+env:
+  # Unsigned, so the app has no HealthKit entitlement; the walkthrough reads this (the
+  # TEST_RUNNER_ prefix is stripped on the way in) and skips the check that needs one.
+  TEST_RUNNER_UNSIGNED_BUILD: "1"
+
 jobs:
-  test:
-    name: ${{ matrix.suite }}
+  unit:
+    name: TigerWorkoutsTests
+    if: github.event_name != 'schedule'
     runs-on: macos-latest
-    timeout-minutes: 40
-    strategy:
-      fail-fast: false
-      matrix:
-        suite: [TigerWorkoutsTests, TigerWorkoutsUITests]
-    continue-on-error: ${{ matrix.suite == 'TigerWorkoutsUITests' }}
+    timeout-minutes: 30
     defaults:
       run:
         working-directory: ios
     steps:
       - uses: actions/checkout@v4
-
-      # The image ships several Xcodes and defaults to an older one; the newest release carries
-      # the newest iOS simulator. Betas are skipped unless nothing else is installed.
-      - name: Select the newest Xcode
-        run: |
-          xcode=$(ls -d /Applications/Xcode_*.app | grep -vi beta | sort -V | tail -1)
-          [ -n "$xcode" ] || xcode=$(ls -d /Applications/Xcode_*.app | sort -V | tail -1)
-          sudo xcode-select -s "$xcode"
-          xcodebuild -version
-
-      # Pick the device at run time so a new image with different simulators does not break
-      # the job: iPhone 17 Pro when it exists (the device the tests were written on), otherwise
-      # the first available iPhone. Booting first keeps the first launch inside its timeout.
-      - name: Pick a simulator
+      - name: Xcode and simulator
         id: sim
-        run: |
-          json=$(xcrun simctl list devices available -j)
-          udid=$(echo "$json" | jq -r '[.devices[][] | select(.name == "iPhone 17 Pro")][0].udid // empty')
-          [ -n "$udid" ] || udid=$(echo "$json" | jq -r '[.devices[][] | select(.name | startswith("iPhone"))][0].udid')
-          name=$(echo "$json" | jq -r --arg u "$udid" '.devices[][] | select(.udid == $u) | .name')
-          echo "using $name ($udid)"
-          echo "udid=$udid" >> "$GITHUB_OUTPUT"
-          xcrun simctl bootstatus "$udid" -b
-
-      - name: xcodebuild test ${{ matrix.suite }}
-        # Unsigned, so the app has no HealthKit entitlement; the walkthrough reads this (the
-        # TEST_RUNNER_ prefix is stripped on the way in) and skips the check that needs one.
-        env:
-          TEST_RUNNER_UNSIGNED_BUILD: "1"
+        run: ../.github/workflows/ios-setup.sh
+      - name: xcodebuild test
         run: |
           xcodebuild test -project TigerWorkouts.xcodeproj -scheme TigerWorkouts \
             -destination "platform=iOS Simulator,id=${{ steps.sim.outputs.udid }}" \
-            -only-testing:${{ matrix.suite }} \
+            -only-testing:TigerWorkoutsTests \
             -resultBundlePath out.xcresult CODE_SIGNING_ALLOWED=NO
-
-      # The result bundle holds the failure detail and, for the walkthroughs, a screenshot per
-      # stop: `xcrun xcresulttool export attachments --path out.xcresult --output-path shots`.
       - uses: actions/upload-artifact@v4
         if: failure()
         with:
-          name: out.xcresult-${{ matrix.suite }}
+          name: out.xcresult-unit
+          path: ios/out.xcresult
+
+  smoke:
+    name: Walkthroughs (smoke)
+    if: github.event_name == 'pull_request'
+    runs-on: macos-latest
+    timeout-minutes: 30
+    defaults:
+      run:
+        working-directory: ios
+    steps:
+      - uses: actions/checkout@v4
+      - name: Xcode and simulator
+        id: sim
+        run: ../.github/workflows/ios-setup.sh
+      - name: xcodebuild test
+        run: |
+          only=""
+          for t in testWorkoutLinkOnColdLaunch testTimerControls testCapClock testChartMetricAndRange \
+                   testLogbook testAICoach testNewWorkoutWithAnEmptyBlockIsKept testSignInOptions; do
+            only="$only -only-testing:TigerWorkoutsUITests/WalkthroughUITests/$t"
+          done
+          xcodebuild test -project TigerWorkouts.xcodeproj -scheme TigerWorkouts \
+            -destination "platform=iOS Simulator,id=${{ steps.sim.outputs.udid }}" \
+            $only -retry-tests-on-failure -test-iterations 2 \
+            -resultBundlePath out.xcresult CODE_SIGNING_ALLOWED=NO
+      # The result bundle holds the failure detail and a screenshot per stop:
+      # `xcrun xcresulttool export attachments --path out.xcresult --output-path shots`.
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: out.xcresult-smoke
+          path: ios/out.xcresult
+
+  ui:
+    name: Walkthroughs (${{ matrix.part }} of 4)
+    if: github.event_name != 'pull_request'
+    runs-on: macos-latest
+    timeout-minutes: 40
+    strategy:
+      fail-fast: false
+      matrix:
+        part: [1, 2, 3, 4]
+    defaults:
+      run:
+        working-directory: ios
+    steps:
+      - uses: actions/checkout@v4
+      - name: Xcode and simulator
+        id: sim
+        run: ../.github/workflows/ios-setup.sh
+      # Every `func test…` in the UI test sources, dealt out in turn, so a new walkthrough lands
+      # in a part without anyone editing this file.
+      - name: Pick this part's walkthroughs
+        id: pick
+        run: |
+          only=$(for f in TigerWorkoutsUITests/*UITests.swift; do
+              class=$(basename "$f" .swift)
+              grep -oE 'func test[A-Za-z0-9_]+' "$f" | sed "s|func |TigerWorkoutsUITests/$class/|"
+            done | sort | awk -v part=${{ matrix.part }} 'NR % 4 == part % 4 { printf " -only-testing:%s", $0 }')
+          [ -n "$only" ] || { echo "no walkthroughs found"; exit 1; }
+          echo "only=$only" >> "$GITHUB_OUTPUT"
+          echo "$only" | tr ' ' '\n'
+      - name: xcodebuild test
+        run: |
+          xcodebuild test -project TigerWorkouts.xcodeproj -scheme TigerWorkouts \
+            -destination "platform=iOS Simulator,id=${{ steps.sim.outputs.udid }}" \
+            ${{ steps.pick.outputs.only }} -retry-tests-on-failure -test-iterations 2 \
+            -resultBundlePath out.xcresult CODE_SIGNING_ALLOWED=NO
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: out.xcresult-ui-${{ matrix.part }}
           path: ios/out.xcresult
