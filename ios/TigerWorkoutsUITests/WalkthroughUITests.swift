@@ -1676,7 +1676,8 @@ final class WalkthroughUITests: XCTestCase {
         snap("97 Me, AI coach")
     }
 
-    /// Pause is big on the lead-in, "Set 1 of 10 done" on the burpees; Finish is in the ⋯ menu.
+    /// Pause is big on the lead-in, "Set 1 of 10 done" on the burpees; Finish is in the ⋯ menu, and
+    /// asks first while sets are still to come.
     func testTimerControls() {
         open("EMOM 10: 5 burpees")
         tap(app.buttons["Start workout"])
@@ -1686,7 +1687,18 @@ final class WalkthroughUITests: XCTestCase {
         snap("110 Set 1 of 10 done")
         tap(app.buttons["Session menu"])
         XCTAssertTrue(app.buttons["Discard"].waitForExistence(timeout: 5), "the ⋯ menu should offer Discard")
+        // Ten sets still to come: Finish asks first, and Keep going stays in the session.
         tap(app.buttons["Finish and save"])
+        XCTAssertTrue(app.staticTexts["Finish now?"].waitForExistence(timeout: 5), "with work still to come, the menu's Finish should ask first")
+        // "10 sets left." at once; fewer if the EMOM's minutes moved on while the test waited.
+        XCTAssertTrue(app.staticTexts.matching(NSPredicate(format: "label ENDSWITH 'left. What you have done is saved.'")).firstMatch.exists, "the question should say what is left")
+        snap("112 Menu Finish, asked first")
+        tap(app.buttons["Keep going"].firstMatch)
+        XCTAssertTrue(app.buttons["Set 1 of 10 done"].waitForExistence(timeout: 5), "Keep going should stay in the session")
+        tap(app.buttons["Session menu"])
+        tap(app.buttons["Finish and save"])
+        XCTAssertTrue(app.staticTexts["Finish now?"].waitForExistence(timeout: 5))
+        tap(app.buttons["Finish and save"].firstMatch)
         XCTAssertTrue(app.staticTexts["Workout saved"].waitForExistence(timeout: 10), "Finish and save should save the session")
         tap(app.buttons["Done"])
     }
@@ -1750,6 +1762,9 @@ final class WalkthroughUITests: XCTestCase {
 
         tap(app.buttons["Session menu"])
         tap(app.buttons["Finish and save"])
+        // Set 8 is still to do, so Finish asks.
+        XCTAssertTrue(app.staticTexts["1 set left. What you have done is saved."].waitForExistence(timeout: 5))
+        tap(app.buttons["Finish and save"].firstMatch)
         XCTAssertTrue(app.staticTexts["Workout saved"].waitForExistence(timeout: 10))
         tap(app.buttons["Done"])
     }

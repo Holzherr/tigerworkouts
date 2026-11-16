@@ -17,6 +17,8 @@ struct TimerView: View {
     @State private var sheetDetent: PresentationDetent = .large
     @State private var confirmQuit = false
     @State private var confirmDiscard = false
+    /// Finish and save from the ⋯ menu with work still to come: what is left, asked first.
+    @State private var confirmFinish: String?
     /// The set row open for editing on a straight-set block; nil = the set you are on.
     @State private var openSet: String?
     @State private var rowsFade = RowsFade()
@@ -107,6 +109,14 @@ struct TimerView: View {
         } message: {
             Text("No history, no streak.")
         }
+        // Finish and save sits one row above Discard: with work still to come it asks too.
+        .confirmationDialog("Finish now?", isPresented: Binding(get: { confirmFinish != nil }, set: { if !$0 { confirmFinish = nil } }), titleVisibility: .visible) {
+            Button("Finish and save") { runner.finish() }
+            // Not a cancel role, as above.
+            Button("Keep going") {}
+        } message: {
+            Text("\(confirmFinish ?? "") What you have done is saved.")
+        }
     }
 
     /// Out of the session with nothing kept: the crash-safe copy goes, and nothing reached the
@@ -114,6 +124,11 @@ struct TimerView: View {
     private func discard() {
         runner.discard()
         onClose()
+    }
+
+    /// The ⋯ menu's Finish and save: one tap once every set is done, a question before that.
+    private func menuFinish() {
+        if let left = runner.leftLine { confirmFinish = left } else { runner.finish() }
     }
 
     // MARK: - Running
@@ -170,7 +185,7 @@ struct TimerView: View {
                         .monospacedDigit()
                 }
                 // Sound and the overview sit in the ⋯ menu with Finish: the bar keeps to where you are.
-                SessionMenu(sound: sound, toggleSound: toggleSound, overview: { showOverview = true }, finish: runner.finish, discard: { confirmDiscard = true }).equatable()
+                SessionMenu(sound: sound, toggleSound: toggleSound, overview: { showOverview = true }, finish: menuFinish, discard: { confirmDiscard = true }).equatable()
             }
             GeometryReader { geo in
                 ZStack(alignment: .leading) {

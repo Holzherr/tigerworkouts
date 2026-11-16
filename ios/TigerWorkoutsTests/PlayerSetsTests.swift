@@ -190,6 +190,28 @@ struct PlayerSetsTests {
         #expect(r.upNext?.name == "Incline chest press")
     }
 
+    @Test("Finish and save asks only while work is still to come, and says how much")
+    @MainActor
+    func finishAsks() {
+        let r = Self.runner(Self.sheet(), Self.history())
+        defer { SessionRunner.clearSaved() }
+        #expect(r.leftLine == "2 blocks left.")
+        r.tick(at: r.state.startedAt + Runner.leadSec * 1000 + 1)
+        r.startBlock()
+        for row in r.setRows { r.tickSet(row.slotId) }
+        // The press: its gate, then two of three sets.
+        #expect(r.leftLine == "3 sets left.")
+        if r.state.phase == .ready { r.startBlock() }
+        r.tickSet(r.setRows[0].slotId)
+        r.tickSet(r.setRows[1].slotId)
+        #expect(r.leftLine == "1 set left.")
+        // Every set ticked while a rest still runs: nothing to ask about.
+        var s = r.state
+        for sl in s.slots where sl.kind == .work { s.actuals[sl.id, default: Actual()].doneAt = 1 }
+        #expect(SessionRunner.leftLine(s, runsheet: r.runsheet) == nil)
+        #expect(SessionRunner.leftLine(Runner.finish(r.state, now: r.state.startedAt + 60_000), runsheet: r.runsheet) == nil)
+    }
+
     // MARK: - Typed numbers and steps
 
     @Test("a typed number takes a point or a comma")
