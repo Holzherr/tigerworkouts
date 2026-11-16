@@ -1,4 +1,4 @@
-import { ChevronLeft, ChevronRight, ExternalLink, GitMerge, Globe, Layers, Lock, Menu, MoreHorizontal, Pencil, Play, Plus, Share2, Smartphone, Trash2, Video } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Copy, ExternalLink, GitMerge, Globe, Layers, Lock, Menu, MoreHorizontal, Pencil, Play, Plus, Share2, Smartphone, Trash2, Video } from 'lucide-react';
 import { shortDate } from '@/shared/utils/dates';
 import { Fragment, useState } from 'react';
 import { Button } from '@/shared/components/ui/button';
@@ -102,6 +102,8 @@ export interface WorkoutPreviewScreenProps {
   /** Your other workouts, for folding this one into one of them as a version. */
   mergeTargets?: { id: string; title: string; minutes?: number }[];
   onMergeInto?: (id: string) => void;
+  /** ⋯ Duplicate: a workout of its own beside this one ("week 1" → "week 2"). */
+  onDuplicate?: () => void;
   /** Suggestions for this workout, in its ⋯ menu: on unless turned off here; `enabled` false when
    * they are off for the whole account. */
   suggestions?: { on: boolean; enabled: boolean; onChange: (on: boolean) => void };
@@ -135,7 +137,7 @@ const SCORE_TEXT: Record<string, string> = { time: 'For time', rounds: 'AMRAP: r
  * Edit & start, Follow along for videos, Save. Tapping any exercise opens it — the clip, the cue,
  * and its numbers as steppers when the host can save them.
  */
-export const WorkoutPreviewScreen = ({ runsheet: r, history = [], lastTime, onBack, onStart, onEditAndStart, onFollowAlong, onLogOnly, onSave, saved, onShare, onStepChange, onCreator, onTogglePublic, appHref, onExerciseHistory, hasHistory, today, stall, onDismissStall, onDelete, editor: given, initialEditing, onBlockDone, onChangeOnce, variant, versions = [], onRunVersion, onMakeBase, mergeTargets, onMergeInto, suggestions }: WorkoutPreviewScreenProps) => {
+export const WorkoutPreviewScreen = ({ runsheet: r, history = [], lastTime, onBack, onStart, onEditAndStart, onFollowAlong, onLogOnly, onSave, saved, onShare, onStepChange, onCreator, onTogglePublic, appHref, onExerciseHistory, hasHistory, today, stall, onDismissStall, onDelete, editor: given, initialEditing, onBlockDone, onChangeOnce, variant, versions = [], onRunVersion, onMakeBase, mergeTargets, onMergeInto, suggestions, onDuplicate }: WorkoutPreviewScreenProps) => {
   const [open, setOpen] = useState<ExerciseStep | null>(null);
   const [menu, setMenu] = useState(false);
   const [merging, setMerging] = useState(false);
@@ -184,7 +186,7 @@ export const WorkoutPreviewScreen = ({ runsheet: r, history = [], lastTime, onBa
           <Button variant="quiet" size="inline" onClick={onBack} className="-ml-1 text-muted">
             <ChevronLeft /> Back
           </Button>
-          {suggestions && (
+          {(suggestions || onDuplicate) && (
             <Button variant="quiet" size="icon" aria-label="More" onClick={() => setMenu(true)} className="-mr-2 text-muted">
               <MoreHorizontal />
             </Button>
@@ -382,6 +384,11 @@ export const WorkoutPreviewScreen = ({ runsheet: r, history = [], lastTime, onBa
         )}
         <Sheet open={menu} onOpenChange={setMenu} title="Workout" height="auto">
           <div className="space-y-2 pt-1 pb-2">
+            {onDuplicate && (
+              <Button block variant="ghost" onClick={() => (setMenu(false), onDuplicate())}>
+                <Copy /> Duplicate
+              </Button>
+            )}
             {suggestions && (
               <div>
                 <div className="flex items-center justify-between gap-3">
