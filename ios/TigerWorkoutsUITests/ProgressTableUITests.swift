@@ -9,6 +9,7 @@ final class ProgressTableUITests: XCTestCase {
         continueAfterFailure = false
         app = XCUIApplication()
         app.launchEnvironment["UITEST_NO_PROMPTS"] = "1"
+        app.launchEnvironment["UITEST_MUTE"] = "1"
         app.launchArguments = ["-seedWeeks", "-seedWeeksAsk"]
         app.launch()
         let discard = app.alerts.buttons["Discard"]

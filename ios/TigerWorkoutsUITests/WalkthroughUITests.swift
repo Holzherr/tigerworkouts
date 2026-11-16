@@ -11,6 +11,7 @@ final class WalkthroughUITests: XCTestCase {
         app = XCUIApplication()
         // The rest-end notification prompt would sit over every walkthrough; one test asks for it.
         app.launchEnvironment["UITEST_NO_PROMPTS"] = "1"
+        app.launchEnvironment["UITEST_MUTE"] = "1"
         app.launch()
         // A test that ended mid-session leaves one to resume; start each test from a clean slate.
         let discard = app.alerts.buttons["Discard"]

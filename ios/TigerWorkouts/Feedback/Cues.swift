@@ -134,8 +134,11 @@ final class Cues {
         try? AVAudioSession.sharedInstance().setActive(false, options: [.notifyOthersOnDeactivation])
     }
 
+    /// UI tests run on a Mac someone is sitting at: their cues stay silent.
+    private static let muted = ProcessInfo.processInfo.environment["UITEST_MUTE"] != nil
+
     func play(_ tone: Tone) {
-        guard enabled, running, engine.isRunning, let buffer = render(notes(for: tone)) else { return }
+        guard enabled, !Self.muted, running, engine.isRunning, let buffer = render(notes(for: tone)) else { return }
         if !tones.isPlaying { tones.play() }
         tones.scheduleBuffer(buffer, at: nil, options: [])
     }
