@@ -54,3 +54,23 @@ describe('TodayLine', () => {
     expect(whyOf('same as last time · rate how hard it was at the finish')).toBe('same as last time · rate how hard it was at the finish');
   });
 });
+
+describe('TodayLine on a program day that follows its rule', () => {
+  it('reads a line per lift with the change, and the rule under them', () => {
+    render(
+      <TodayLine
+        today={{
+          text: 'Squat 42.5 kg × 5',
+          delta: '+2.5 kg',
+          detail: 'all sets done: +2.5 kg',
+          rule: 'every set made, add 2.5 kg',
+          sets: [
+            { stepId: 's1', exerciseKey: 'squat', name: 'Squat', load: 42.5, reps: [5], jump: true, text: '42.5 kg × 5', reason: 'all sets done: +2.5 kg', delta: '+2.5 kg' },
+            { stepId: 's2', exerciseKey: 'bench', name: 'Bench', load: 32.5, reps: [5], jump: true, text: '32.5 kg × 5', reason: 'all sets done: +2.5 kg', delta: '+2.5 kg' },
+          ],
+        }}
+      />
+    );
+    expect(screen.getByRole('button').textContent).toBe("Today: Squat 42.5 kg × 5 (+2.5 kg)Bench 32.5 kg × 5 (+2.5 kg)The program's rule: every set made, add 2.5 kg.");
+  });
+});

@@ -31,6 +31,9 @@
       "name": "T1 squat 5×3+",
       "repeat": 4,
       "note": "T1: +5 lb / 2.5 kg (press) or +10 lb / 5 kg (squat, deadlift) per workout; miss the reps → same weight, next stage (6×2+, then 10×1+)",
+      "progression": {
+        "onSuccessKg": 5
+      },
       "steps": [
         {
           "kind": "exercise",
@@ -53,6 +56,9 @@
       "name": "T1 squat 5×3+ – AMRAP",
       "repeat": 1,
       "note": "AMRAP set (stop 1–2 reps short of failure; cap at 10 reps)",
+      "progression": {
+        "onSuccessKg": 5
+      },
       "steps": [
         {
           "kind": "exercise",

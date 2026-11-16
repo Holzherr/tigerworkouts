@@ -13,39 +13,51 @@ export const whyOf = (detail: string) => {
 /**
  * Today's target in one line, "Today: Shoulder press 27.5 kg × 8 (+2.5 kg)", with the reasoning
  * and any other exercise's target behind a tap (Priyanka, 14 Nov 2026: the two-line version was
- * heavy and repeated the rows below). `lines` shows a line per lift instead, for a program day
- * that follows its own rule. No border of its own; the host card frames it.
+ * heavy and repeated the rows below). A program day that follows its own rule reads a line per
+ * lift with the rule under them (review D16). No border of its own; the host card frames it.
  */
-export const TodayLine = ({ today, className }: { today: Pick<Today, 'text' | 'detail' | 'delta' | 'sets'> & { lines?: boolean }; className?: string }) => {
+export const TodayLine = ({ today, className }: { today: Pick<Today, 'text' | 'detail' | 'delta' | 'sets' | 'rule'>; className?: string }) => {
   const [open, setOpen] = useState(false);
   const rest = today.sets.slice(1);
+  // A program day that follows its own rule reads a line per lift, with the rule under them.
+  const lines = !!today.rule;
   return (
     <div className={className} aria-label="Today's target">
-      <button type="button" onClick={() => setOpen(o => !o)} aria-expanded={open} className="flex min-h-11 w-full items-center gap-2 text-left">
+      <button type="button" onClick={() => setOpen(o => !o)} aria-expanded={open} className="flex min-h-11 w-full items-center gap-2 py-1.5 text-left">
         <span className="min-w-0 flex-1 text-[14px] leading-snug font-bold">
           <span className="text-brand-ink">Today: </span>
           {today.text}
           {today.delta && <span className="text-brand-ink"> ({today.delta})</span>}
-          {today.lines &&
+          {lines &&
             rest.map(t => (
               <span key={t.stepId} className="block">
                 {t.name} {t.text}
                 {t.delta && <span className="text-brand-ink"> ({t.delta})</span>}
               </span>
             ))}
+          {lines && <span className="block text-[13px] font-normal text-muted">The program's rule: {today.rule}.</span>}
         </span>
         {open ? <ChevronUp className="size-4 shrink-0 text-faint" /> : <ChevronDown className="size-4 shrink-0 text-faint" />}
       </button>
       {open && (
         <div className="space-y-1 pb-2 text-[13px] text-muted" aria-label="Why">
-          <div>{whyOf(today.detail)}</div>
-          {!today.lines &&
-            rest.map(t => (
+          {lines ? (
+            today.sets.map(t => (
               <div key={t.stepId}>
-                {t.name} {t.text}
-                {t.delta ? ` (${t.delta})` : ''}: {t.reason}
+                {t.name}: {t.reason}
               </div>
-            ))}
+            ))
+          ) : (
+            <>
+              <div>{whyOf(today.detail)}</div>
+              {rest.map(t => (
+                <div key={t.stepId}>
+                  {t.name} {t.text}
+                  {t.delta ? ` (${t.delta})` : ''}: {t.reason}
+                </div>
+              ))}
+            </>
+          )}
         </div>
       )}
     </div>

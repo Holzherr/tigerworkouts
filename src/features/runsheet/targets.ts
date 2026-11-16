@@ -13,8 +13,8 @@
  * `ios/TigerWorkouts/Model/Targets.swift`. Programmes with their own progression rules keep
  * `nextLoads` (progression.ts), and these lines stand aside for the exercises it covers.
  */
-import { ofWorkout, plannedSet, scoreType, shortUnit, type Block, type ExerciseStep, type Item, type Runsheet, type SetType } from './model';
-import type { SessionResult, SetResult } from './progression';
+import { ofWorkout, plannedSet, scoreType, shortUnit, type Block, type ExerciseStep, type Item, type Progression, type Runsheet, type SetType } from './model';
+import { ruleNext, type SessionResult, type SetResult } from './progression';
 import { nextLoadUp, type Equipment } from './plates';
 import { lastSets } from './last-used';
 import { modeFor, suggestOn, type SuggestPrefs } from '@/features/results/suggestions';
@@ -266,12 +266,70 @@ export const setTargets = (r: Runsheet, results: SessionResult[], intent: Intent
   return out;
 };
 
+const ruleOf = (r: Runsheet, s: ExerciseStep): Progression | undefined => r.items.find((i): i is Block => i.kind === 'block' && i.steps.some(x => x.id === s.id))?.progression ?? r.progression;
+
+/**
+ * Today for the lifts a program's own rule moves (review D16): the load the rule gives the next
+ * session, at the program's reps, with the change in brackets. "Squat 42.5 kg × 5 (+2.5 kg)". The
+ * same numbers the timer starts on (`progressed`). First step of each exercise, main work only.
+ */
+export const ruleTargets = (r: Runsheet, results: SessionResult[], kit?: Equipment): SetTarget[] => {
+  const seen = new Set<string>();
+  const out: SetTarget[] = [];
+  for (const s of exerciseSteps(r.items)) {
+    if (seen.has(s.exercise.key) || (s.role ?? 'main') !== 'main' || !ruled(r, s)) continue;
+    seen.add(s.exercise.key);
+    if (s.forMode !== 'reps') continue;
+    const next = ruleNext(r, s, results, {}, kit);
+    if (!next) continue;
+    const unit = shortUnit(s.exercise.unit);
+    const u = unit ? ` ${unit}` : '';
+    const block = r.items.find((i): i is Block => i.kind === 'block' && i.steps.some(x => x.id === s.id));
+    const d = Math.round((next.to - next.from) * 100) / 100;
+    out.push({
+      stepId: s.id,
+      exerciseKey: s.exercise.key,
+      name: s.exercise.name,
+      load: next.to,
+      reps: Array.from({ length: Math.max(1, block?.repeat ?? 1) }, () => s.forValue),
+      jump: d > 0,
+      text: `${num(next.to)}${u} × ${num(s.forValue)}`,
+      reason: next.reason,
+      ...(d !== 0 ? { delta: `${d > 0 ? '+' : '−'}${num(Math.abs(d))}${u}` } : {}),
+    });
+  }
+  return out;
+};
+
+/**
+ * A program's rule in its own words, from the data: "every set made, add 2.5 kg", with the lifts
+ * that move by another step in brackets ("deadlift 5 kg").
+ */
+export const ruleText = (r: Runsheet): string | undefined => {
+  const seen = new Set<string>();
+  const steps: { name: string; kg: number }[] = [];
+  for (const s of exerciseSteps(r.items)) {
+    const kg = ruleOf(r, s)?.onSuccessKg;
+    if (seen.has(s.exercise.key) || !kg) continue;
+    seen.add(s.exercise.key);
+    steps.push({ name: s.exercise.name, kg });
+  }
+  if (!steps.length) return undefined;
+  const count = (kg: number) => steps.filter(x => x.kg === kg).length;
+  const usual = [...steps].sort((a, b) => count(b.kg) - count(a.kg))[0].kg;
+  const others = steps.filter(x => x.kg !== usual).map(x => `${x.name.toLowerCase()} ${num(x.kg)} kg`);
+  return `every set made, add ${num(usual)} kg${others.length ? ` (${others.join(', ')})` : ''}`;
+};
+
 export interface Today {
   /** "Aim for 8+ rounds", "Barbell bench press 62.5 kg × 8". */
   text: string;
   detail: string;
   /** The change on the first target against last time, for the brackets: "+2.5 kg". */
   delta?: string;
+  /** Set when the lifts follow the program's own rule: "every set made, add 2.5 kg". Today then
+   * reads a line per lift. */
+  rule?: string;
   score?: ScoreTarget;
   sets: SetTarget[];
 }
@@ -281,12 +339,17 @@ export interface Today {
 export const today = (r: Runsheet, results: SessionResult[], intent: Intent = 'maintain', kit?: Equipment, suggest?: SuggestPrefs): Today | undefined => {
   if (!suggestOn(suggest, r)) return undefined;
   const score = scoreTarget(r, results, intent);
-  const sets = score ? [] : setTargets(r, results, intent, kit, suggest);
-  if (score) return { text: score.text, detail: score.detail, score, sets };
+  if (score) return { text: score.text, detail: score.detail, score, sets: [] };
+  // The lifts a program's rule moves follow the rule; everything else follows the setting. In
+  // workout order.
+  const order = exerciseSteps(r.items).map(s => s.id);
+  const byRule = ruleTargets(r, results, kit);
+  const sets = [...byRule, ...setTargets(r, results, intent, kit, suggest)].sort((a, b) => order.indexOf(a.stepId) - order.indexOf(b.stepId));
   const first = sets[0];
   if (!first) return undefined;
   const more = sets.length > 1 ? ` · ${sets.length - 1} more on the workout page` : '';
-  return { text: `${first.name} ${first.text}`, detail: `${first.reason}${more}`, ...(first.delta ? { delta: first.delta } : {}), sets };
+  const rule = byRule.length ? ruleText(r) : undefined;
+  return { text: `${first.name} ${first.text}`, detail: `${first.reason}${more}`, ...(first.delta ? { delta: first.delta } : {}), ...(rule ? { rule } : {}), sets };
 };
 
 /**

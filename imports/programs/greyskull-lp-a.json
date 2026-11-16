@@ -30,6 +30,11 @@
       "name": "Overhead press 2×5, 1×5+",
       "repeat": 2,
       "note": "Rest 2–3 min. +2.5 lb upper / +5 lb lower per session; 10+ on the AMRAP → double it; <5 → drop 10%",
+      "progression": {
+        "onSuccessKg": 1,
+        "deloadPct": 10,
+        "failAfter": 1
+      },
       "steps": [
         {
           "kind": "exercise",
@@ -51,6 +56,11 @@
       "name": "Overhead press 2×5, 1×5+ – AMRAP",
       "repeat": 1,
       "note": "AMRAP set, stop 1–2 reps short of failure",
+      "progression": {
+        "onSuccessKg": 1,
+        "deloadPct": 10,
+        "failAfter": 1
+      },
       "steps": [
         {
           "kind": "exercise",
@@ -117,6 +127,11 @@
       "name": "Squat 2×5, 1×5+",
       "repeat": 2,
       "note": "Rest 2–3 min. +2.5 lb upper / +5 lb lower per session; 10+ on the AMRAP → double it; <5 → drop 10%",
+      "progression": {
+        "onSuccessKg": 2.5,
+        "deloadPct": 10,
+        "failAfter": 1
+      },
       "steps": [
         {
           "kind": "exercise",
@@ -138,6 +153,11 @@
       "name": "Squat 2×5, 1×5+ – AMRAP",
       "repeat": 1,
       "note": "AMRAP set, stop 1–2 reps short of failure",
+      "progression": {
+        "onSuccessKg": 2.5,
+        "deloadPct": 10,
+        "failAfter": 1
+      },
       "steps": [
         {
           "kind": "exercise",
