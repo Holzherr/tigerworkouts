@@ -41,6 +41,13 @@ final class Store {
     private(set) var pending: [SessionResult] = []
     private(set) var pendingWorkouts: [Runsheet] = []
     private(set) var pendingWorkoutDeletes: [String] = []
+    /// Each of your workouts as the server last gave it to this phone: the copy an edit here is
+    /// made on, its `data` as it came, and the row's `updated_at`. An upload goes only while the
+    /// server's row is still that one (`flushWorkouts`).
+    private(set) var syncedWorkouts: [String: Supabase.WorkoutRow] = [:]
+    /// When each queued workout was last edited here: against a newer row on the server, the
+    /// newer edit wins.
+    private var workoutEditedAt: [String: String] = [:]
     /// Workouts made public or private on this phone whose upload has not landed yet.
     private var publicSetHere: Set<String> = []
     /// Sessions deleted on the phone that the server still has.
@@ -151,13 +158,7 @@ final class Store {
             async let prefs = Supabase.shared.rawPrefs()
             // What the phone changed while the fetch was out wins over the server's older copy.
             results = Self.merged(remote: try await sessions, pending: pending, deleting: pendingDeletes)
-            let remote = try await workouts
-            let queued = Dictionary(pendingWorkouts.map { ($0.key, $0) }, uniquingKeysWith: { _, last in last })
-            let deleting = Set(pendingWorkoutDeletes)
-            myWorkouts = remote
-                .filter { !deleting.contains($0.key) }
-                .map { queued[$0.key] ?? $0 }
-                + queued.values.filter { q in !remote.contains { $0.key == q.key } }
+            takeWorkouts(try await workouts)
             let before = results
             try await syncPrefs(remote: try await prefs)
             await effortsLearned(before: before)
@@ -172,6 +173,30 @@ final class Store {
         }
         // Its own failures stay quiet: until migration 0008 is live every call here fails.
         await refreshCoaching()
+    }
+
+    /// The server's workouts with what the phone has not pushed yet laid over them: a queued edit
+    /// stands in for its row, a queued delete stays gone.
+    func takeWorkouts(_ rows: [Supabase.WorkoutRow]) {
+        let remote = rows.map(\.sheet)
+        let queued = Dictionary(pendingWorkouts.map { ($0.key, $0) }, uniquingKeysWith: { _, last in last })
+        let deleting = Set(pendingWorkoutDeletes)
+        // What the server has now is what the next edit here is made on. A workout with an edit
+        // still queued keeps the copy that edit was made on, so its upload still finds out that
+        // the server moved on.
+        let seen = syncedWorkouts
+        syncedWorkouts = Dictionary(rows.map { row in
+            let key = row.sheet.key
+            return (key, queued[key] != nil ? seen[key] ?? row : row)
+        }, uniquingKeysWith: { a, _ in a })
+        // A load changed on the web or by Claude since this phone last looked is a written load.
+        for r in remote where queued[r.key] == nil {
+            if let had = myWorkouts.first(where: { $0.key == r.key }) { markWritten(r.key, steps: Written.changed(from: had, to: r)) }
+        }
+        myWorkouts = remote
+            .filter { !deleting.contains($0.key) }
+            .map { queued[$0.key] ?? $0 }
+            + queued.values.filter { q in !remote.contains { $0.key == q.key } }
     }
 
     /// An effort this phone did not have before a sync (entered on the web, or changed there) goes
@@ -219,6 +244,8 @@ final class Store {
         pending = []
         pendingWorkouts = []
         pendingWorkoutDeletes = []
+        syncedWorkouts = [:]
+        workoutEditedAt = [:]
         publicSetHere = []
         pendingDeletes = []
         pendingExercises = []
@@ -523,6 +550,13 @@ final class Store {
         return ProgressionRules.progressed(Settings.withLastUsed(r, results: results, targets: targets), results: results, kit: equipment)
     }
 
+    /// The written loads of these steps of a workout changed now: they run as written until the
+    /// step is next done (`Written`).
+    func markWritten(_ workout: String, steps: [String]) {
+        guard !steps.isEmpty else { return }
+        Written.store(Written.marked(Written.current(), workout: workout, steps: steps))
+    }
+
     /// A workout as the timer runs it: shared parts (refs) inlined — each seeded first, since the
     /// page that seeded the workout saw them only as refs — then loads given as a % of a training
     /// max or × bodyweight worked out into kilos you can load.
@@ -616,6 +650,7 @@ final class Store {
         pendingWorkoutDeletes.removeAll { $0 == sheet.key }
         pendingWorkouts.removeAll { $0.key == sheet.key }
         pendingWorkouts.append(sheet)
+        workoutEditedAt[sheet.key] = ISO8601.string(Date())
         writeCache()
     }
 
@@ -623,6 +658,7 @@ final class Store {
         let key = r.key
         myWorkouts.removeAll { $0.key == key }
         pendingWorkouts.removeAll { $0.key == key }
+        workoutEditedAt[key] = nil
         // Stamped, or the server's older saved list puts the deleted id back on the next sync.
         let unsaved = saved.remove(key) != nil
         if unsaved { touched("saved") }
@@ -650,8 +686,62 @@ final class Store {
 
     /// The workouts table, as a flush reaches it. Properties so a test can hold an upload back.
     var cloudSignedIn: @MainActor () async -> Bool = { await Supabase.shared.isSignedIn }
+    /// A workout the server has never given this phone: written as it is.
     var uploadWorkout: @MainActor (Runsheet, _ sendPublic: Bool) async throws -> Void = { try await Supabase.shared.saveWorkout($0, sendPublic: $1) }
+    /// A workout this phone has pulled before: written only while the server's row is as it was
+    /// then. The row's new `updated_at`, or nil when the row has changed or gone and nothing was written.
+    var uploadWorkoutIfUnchanged: @MainActor (Runsheet, _ sendPublic: Bool, _ seen: Supabase.WorkoutRow) async throws -> String? = { r, sendPublic, seen in
+        try await Supabase.shared.saveWorkout(r, sendPublic: sendPublic, ifUnchangedSince: seen.updatedAt ?? "", raw: seen.raw)
+    }
+    var fetchWorkout: @MainActor (String) async throws -> Supabase.WorkoutRow? = { try await Supabase.shared.workout(id: $0) }
     var removeWorkout: @MainActor (String) async throws -> Void = { try await Supabase.shared.deleteWorkout(id: $0) }
+
+    /// One queued workout up to the server. True when it is off the queue: written, or given way
+    /// to a newer edit made elsewhere.
+    ///
+    /// The phone's copy may be older than the server's (an edit from Claude or the web it has not
+    /// pulled yet), so the write is conditional on the row's `updated_at` being the one last
+    /// pulled. When it is not, the row is pulled and merged (`WorkoutMerge`): what only one side
+    /// changed is kept, and the newer edit wins where both changed the same thing (review D14).
+    private func upload(_ r: Runsheet) async throws {
+        let key = r.key
+        let sendPublic = publicSetHere.contains(key)
+        guard let seen = syncedWorkouts[key], seen.updatedAt != nil else {
+            return try await uploadWorkout(r, sendPublic)
+        }
+        if let stamp = try await uploadWorkoutIfUnchanged(r, sendPublic, seen) {
+            syncedWorkouts[key] = Supabase.WorkoutRow(sheet: r, raw: seen.raw, updatedAt: stamp)
+            return
+        }
+        guard let row = try await fetchWorkout(key) else {
+            // Deleted elsewhere, edited here since: the edit keeps it.
+            syncedWorkouts[key] = nil
+            return try await uploadWorkout(r, sendPublic)
+        }
+        // An edit made here while this was out is newer still: it meets the server's copy on its
+        // own turn, against the copy it was made on.
+        guard pendingWorkouts.last(where: { $0.key == key }) == r else { return }
+        let edited = workoutEditedAt[key].flatMap(ISO8601.date) ?? .distantPast
+        let changed = row.updatedAt.flatMap(ISO8601.date) ?? .distantFuture
+        var merged = WorkoutMerge.merge(base: seen.sheet, local: r, remote: row.sheet, localNewer: edited > changed)
+        // Who can see it is the server's, unless it was set here.
+        if !sendPublic { merged.isPublic = row.sheet.isPublic }
+        syncedWorkouts[key] = row
+        // A load the other side wrote is a written load (`Written`).
+        markWritten(key, steps: Written.changed(from: r, to: merged))
+        if let at = myWorkouts.firstIndex(where: { $0.key == key }) { myWorkouts[at] = merged }
+        guard merged != row.sheet else { return }
+        if let stamp = try await uploadWorkoutIfUnchanged(merged, sendPublic, row) {
+            syncedWorkouts[key] = Supabase.WorkoutRow(sheet: merged, raw: row.raw, updatedAt: stamp)
+        } else {
+            // Changed again in between: the merge stays queued for the next push.
+            if let at = pendingWorkouts.lastIndex(of: r) { pendingWorkouts[at] = merged }
+            throw StillQueued()
+        }
+    }
+
+    /// A workout that could not go up this time and will on the next push; not a failure to show.
+    private struct StillQueued: Error {}
 
     /// Only what went up comes off the queue: an edit or a delete queued while the batch was in
     /// flight is a different value and stays for the next push, as `flushPending` does for sessions.
@@ -664,8 +754,9 @@ final class Store {
         var failure: Error?
         for r in sending {
             do {
-                try await uploadWorkout(r, publicSetHere.contains(r.key))
+                try await upload(r)
                 sent.append(r)
+            } catch is StillQueued {
             } catch {
                 failure = error
             }
@@ -680,7 +771,11 @@ final class Store {
         }
         pendingWorkouts.removeAll { sent.contains($0) }
         pendingWorkoutDeletes.removeAll { removed.contains($0) }
-        for r in sent where !pendingWorkouts.contains(where: { $0.key == r.key }) { publicSetHere.remove(r.key) }
+        for id in removed { syncedWorkouts[id] = nil }
+        for r in sent where !pendingWorkouts.contains(where: { $0.key == r.key }) {
+            publicSetHere.remove(r.key)
+            workoutEditedAt[r.key] = nil
+        }
         // Deleted while its upload was out: the upload may have landed after the delete.
         for r in sent where !myWorkouts.contains(where: { $0.key == r.key }) && !pendingWorkoutDeletes.contains(r.key) {
             pendingWorkoutDeletes.append(r.key)
@@ -743,6 +838,8 @@ final class Store {
         var suggestions: SuggestPrefs?
         var prefsUpdatedAt: [String: String]?
         var publicSetHere: [String]?
+        var syncedWorkouts: [String: Supabase.WorkoutRow]?
+        var workoutEditedAt: [String: String]?
     }
 
     /// The file the cache lives in. Tests point it elsewhere so they never touch the app's own.
@@ -774,6 +871,8 @@ final class Store {
         suggestions = c.suggestions ?? SuggestPrefs()
         prefsUpdatedAt = c.prefsUpdatedAt ?? [:]
         publicSetHere = Set(c.publicSetHere ?? [])
+        syncedWorkouts = c.syncedWorkouts ?? [:]
+        workoutEditedAt = c.workoutEditedAt ?? [:]
     }
 
     private func writeCache() {
@@ -784,7 +883,8 @@ final class Store {
             pendingDeletes: pendingDeletes,
             customExercises: Array(customExercises.values), pendingExercises: pendingExercises,
             trainingMaxes: trainingMaxes, equipment: equipment, suggestions: suggestions, prefsUpdatedAt: prefsUpdatedAt,
-            publicSetHere: publicSetHere.sorted()
+            publicSetHere: publicSetHere.sorted(),
+            syncedWorkouts: syncedWorkouts, workoutEditedAt: workoutEditedAt
         )
         try? JSONEncoder().encode(c).write(to: cacheURL, options: .atomic)
         shareUpNext()

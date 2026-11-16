@@ -77,4 +77,76 @@ struct NextUpTests {
         #expect(NextUp.format(minutes: 200) == "3 h 20")
         #expect(NextUp.format(minutes: 120) == "2 h")
     }
+
+    // MARK: - The Up next card (review D2). The same cases as `pickUpNext` in next-up.test.ts.
+
+    private static let now = ISO8601.date("2026-11-15T12:00:00Z")!
+
+    private func ago(_ id: String, hours: Double) -> SessionResult {
+        SessionResult(runsheetId: id, title: id, startedAt: ISO8601.string(Self.now.addingTimeInterval(-hours * 3_600)))
+    }
+
+    private func days(_ id: String, _ d: Double) -> SessionResult { ago(id, hours: d * 24) }
+
+    private var list: [Runsheet] { [w("swings"), w("rows"), w("press")] }
+    private let own: Set<String> = ["swings", "rows", "press"]
+    /// Nick's history on 15 Nov: swings 4 of the last 5, the others once each in October.
+    private var history: [SessionResult] {
+        [days("swings", 8), days("swings", 10), days("swings", 12), days("rows", 28.5), days("swings", 14), days("press", 27)]
+    }
+
+    @Test("Up next is the workout started most in the last 28 days, with how many of the last five")
+    func usual() {
+        let pick = NextUp.pick(list, own: own, results: history, now: Self.now)
+        #expect(pick == NextUp.Pick(id: "swings", why: .usual, count: 4, of: 5))
+        #expect(NextUp.badge(pick) == "Up next · your usual")
+        #expect(NextUp.usualLine(pick) == "4 of your last 5")
+    }
+
+    @Test("a new workout of yours comes first")
+    func newFirst() {
+        #expect(NextUp.pick(list + [w("new")], own: own.union(["new"]), results: history, now: Self.now) == NextUp.Pick(id: "new", why: .new))
+        // Saved from the catalogue and never done is not yours to do next.
+        #expect(NextUp.pick(list + [w("saved")], own: own, results: history, now: Self.now)?.id == "swings")
+    }
+
+    @Test("done in the last 20 hours: the next most started")
+    func justDone() {
+        let twice = history + [days("press", 20)]
+        let a = NextUp.pick(list, own: own, results: twice + [ago("swings", hours: 19)], now: Self.now)
+        #expect(a?.id == "press" && a?.why == .usual)
+        let b = NextUp.pick(list, own: own, results: twice + [ago("swings", hours: 21)], now: Self.now)
+        #expect(b?.id == "swings" && b?.why == .usual)
+    }
+
+    @Test("done longest ago is the fallback")
+    func oldest() {
+        // Nothing started twice in 28 days.
+        let pick = NextUp.pick(list, own: own, results: [days("swings", 3), days("rows", 40), days("press", 30)], now: Self.now)
+        #expect(pick == NextUp.Pick(id: "rows", why: .oldest))
+        #expect(NextUp.badge(pick) == "Up next")
+        #expect(NextUp.usualLine(pick) == nil)
+        // The usual one done this morning and nothing else started twice.
+        #expect(NextUp.pick(list, own: own, results: history + [ago("swings", hours: 2)], now: Self.now) == NextUp.Pick(id: "rows", why: .oldest))
+    }
+
+    @Test("between two started as often, the one done longer ago")
+    func tie() {
+        let results = [days("swings", 2), days("swings", 9), days("rows", 3), days("rows", 5)]
+        #expect(NextUp.pick(Array(list.prefix(2)), own: own, results: results, now: Self.now)?.id == "rows")
+    }
+
+    @Test("a copy counts its original's sessions; sessions older than 28 days do not count")
+    func copyAndWindow() {
+        var copy = w("u-swings")
+        copy.copyOf = "swings"
+        let results = [days("swings", 3), days("u-swings", 5), days("rows", 29), days("rows", 30), days("rows", 31)]
+        #expect(NextUp.pick([copy, w("rows")], own: ["u-swings"], results: results, now: Self.now) == NextUp.Pick(id: "u-swings", why: .usual, count: 2, of: 5))
+    }
+
+    @Test("nothing with no workout done and none new; no count line for one of the last five")
+    func nothing() {
+        #expect(NextUp.pick([w("saved")], own: [], results: [], now: Self.now) == nil)
+        #expect(NextUp.usualLine(NextUp.Pick(id: "a", why: .usual, count: 1, of: 5)) == nil)
+    }
 }

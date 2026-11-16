@@ -269,13 +269,15 @@ enum Targets {
     /// A target per step, first step of each exercise only, skipping warm-ups and steps a
     /// programme's own progression rules already move. None while suggestions are off for the
     /// account or this workout; each exercise moves by its own mode (`SuggestPrefs`).
-    static func sets(_ r: Runsheet, results: [SessionResult], intent: Intent = .maintain, kit: Equipment? = nil, suggest: SuggestPrefs = .current()) -> [SetTarget] {
+    /// A step that runs as written (`Written.wins`) gets none: the page shows the load written.
+    static func sets(_ r: Runsheet, results: [SessionResult], intent: Intent = .maintain, kit: Equipment? = nil, suggest: SuggestPrefs = .current(), written: Written.Edits = Written.current()) -> [SetTarget] {
         guard suggest.on(for: r) else { return [] }
         var seen = Set<String>()
         var out: [SetTarget] = []
         for s in r.exerciseSteps {
             if seen.contains(s.exercise.key) || (s.role ?? .main) != .main || ruled(r, s) { continue }
             seen.insert(s.exercise.key)
+            if Written.wins(s, in: r, results: results, edits: written) { continue }
             if let t = set(s, last: LastTime.sets(results, for: s, in: r), intent: intent, kit: kit, mode: suggest.mode(for: s.exercise.key)) { out.append(t) }
         }
         return out

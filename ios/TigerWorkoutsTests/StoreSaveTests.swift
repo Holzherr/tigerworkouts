@@ -207,6 +207,134 @@ struct WorkoutQueueTests {
         #expect(sent.last?.2 == false, "sent once, the column is left alone again")
     }
 
+    // MARK: - Review D14: a phone that has not synced against a newer edit
+
+    private func lift(_ id: String, _ load: Double) -> Item {
+        .block(Block(id: id, name: id, repeatCount: 3, steps: [Fixtures.work("\(id)-s", Fixtures.swing, target: load, forMode: .reps, forValue: 10)]))
+    }
+
+    /// A server that holds one row and writes only when the caller has seen its latest stamp.
+    @MainActor private final class Server {
+        var row: Supabase.WorkoutRow
+        var writes: [Runsheet] = []
+        var unconditional = 0
+        init(_ row: Supabase.WorkoutRow) { self.row = row }
+        func change(_ sheet: Runsheet, at stamp: String) { row = Supabase.WorkoutRow(sheet: sheet, raw: row.raw, updatedAt: stamp) }
+        func attach(to store: Store) {
+            store.uploadWorkout = { [self] _, _ in unconditional += 1 }
+            store.uploadWorkoutIfUnchanged = { [self] r, _, seen in
+                guard seen.updatedAt == row.updatedAt else { return nil }
+                writes.append(r)
+                row = Supabase.WorkoutRow(sheet: r, raw: row.raw, updatedAt: (row.updatedAt ?? "") + "+")
+                return row.updatedAt
+            }
+            store.fetchWorkout = { [self] _ in row }
+        }
+    }
+
+    @Test("a phone that has not synced does not put its old copy over a newer edit: it pulls and merges")
+    func staleCopyMerges() async throws {
+        let store = store()
+        let base = Runsheet(id: "u-d14", title: "Legs", items: [lift("a", 16), lift("b", 20)])
+        let server = Server(Supabase.WorkoutRow(sheet: base, raw: nil, updatedAt: "2026-11-14T08:00:00+00:00"))
+        server.attach(to: store)
+        store.takeWorkouts([server.row])
+        // Claude raises block b; this phone has not pulled since.
+        var coach = base
+        coach.items = [lift("a", 16), lift("b", 24)]
+        server.change(coach, at: "2026-11-15T08:00:00+00:00")
+        // An edit here, on the old copy.
+        var mine = base
+        mine.title = "Legs day"
+        await store.saveWorkout(mine)
+        #expect(server.unconditional == 0, "never written without the check")
+        #expect(server.writes.count == 1)
+        #expect(server.row.sheet.title == "Legs day" && server.row.sheet.items == coach.items, "both edits are there")
+        #expect(store.myWorkouts.first?.items == coach.items && store.myWorkouts.first?.title == "Legs day")
+        #expect(store.pendingWorkouts.isEmpty && store.syncError == nil)
+        // The load Claude wrote is a written load on this phone.
+        #expect(Written.current()["u-d14"]?["b-s"] != nil)
+        // The next edit goes straight up: the phone has the latest row now.
+        mine = try #require(store.myWorkouts.first)
+        mine.title = "Legs day 2"
+        await store.saveWorkout(mine)
+        #expect(server.writes.count == 2 && server.row.sheet.title == "Legs day 2")
+        var cleared = Written.current()
+        cleared["u-d14"] = nil
+        Written.store(cleared)
+    }
+
+    @Test("the same thing changed on both sides: the newer edit wins")
+    func staleCopyNewerWins() async {
+        let store = store()
+        let base = Runsheet(id: "u-d14b", title: "Legs", items: [lift("a", 16)])
+        let server = Server(Supabase.WorkoutRow(sheet: base, raw: nil, updatedAt: "2026-11-14T08:00:00+00:00"))
+        server.attach(to: store)
+        store.takeWorkouts([server.row])
+        // Renamed on the web tomorrow (by the server's clock), after the edit about to be made here.
+        var web = base
+        web.title = "Legs (web)"
+        server.change(web, at: ISO8601.string(Date().addingTimeInterval(86_400)))
+        var mine = base
+        mine.title = "Legs (phone)"
+        await store.saveWorkout(mine)
+        #expect(server.writes.isEmpty && server.row.sheet.title == "Legs (web)")
+        #expect(store.myWorkouts.first?.title == "Legs (web)" && store.pendingWorkouts.isEmpty)
+        // Renamed on the web an hour ago, then here now: the phone's is the newer edit.
+        var web2 = web
+        web2.title = "Legs (web 2)"
+        server.change(web2, at: ISO8601.string(Date().addingTimeInterval(-3_600)))
+        var again = web
+        again.title = "Legs (phone)"
+        // The phone still holds the row from before that rename.
+        await store.saveWorkout(again)
+        #expect(server.row.sheet.title == "Legs (phone)" && store.pendingWorkouts.isEmpty)
+    }
+
+    @Test("a workout made here goes up as it is; one deleted elsewhere and edited here is kept")
+    func neverSeenAndGone() async {
+        let store = store()
+        var plain: [String] = []
+        store.uploadWorkout = { r, _ in plain.append(r.title) }
+        store.uploadWorkoutIfUnchanged = { _, _, _ in nil }
+        store.fetchWorkout = { _ in nil }
+        await store.saveWorkout(Runsheet(id: "u-new", title: "New"))
+        #expect(plain == ["New"])
+        let had = Runsheet(id: "u-gone", title: "Old")
+        store.takeWorkouts([Supabase.WorkoutRow(sheet: had, raw: nil, updatedAt: "2026-11-14T08:00:00+00:00")])
+        var edited = had
+        edited.title = "Old, edited"
+        await store.saveWorkout(edited)
+        #expect(plain == ["New", "Old, edited"] && store.pendingWorkouts.isEmpty)
+    }
+
+    @Test("a pull does not move the copy a queued edit was made on")
+    func queuedEditKeepsItsBase() async {
+        let store = store()
+        let base = Runsheet(id: "u-d14c", title: "Legs", items: [lift("a", 16)])
+        let server = Server(Supabase.WorkoutRow(sheet: base, raw: nil, updatedAt: "2026-11-14T08:00:00+00:00"))
+        store.takeWorkouts([server.row])
+        // Offline: the edit queues.
+        struct Offline: Error {}
+        store.uploadWorkoutIfUnchanged = { _, _, _ in throw Offline() }
+        var mine = base
+        mine.title = "Legs day"
+        await store.saveWorkout(mine)
+        #expect(store.pendingWorkouts.count == 1)
+        // Meanwhile the load changes on the web, and a pull brings the new row in.
+        var web = base
+        web.items = [lift("a", 20)]
+        server.change(web, at: "2026-11-15T08:00:00+00:00")
+        store.takeWorkouts([server.row])
+        #expect(store.myWorkouts.first?.title == "Legs day", "the queued edit still shows")
+        #expect(store.syncedWorkouts["u-d14c"]?.updatedAt == "2026-11-14T08:00:00+00:00")
+        // Back online: the upload meets the newer row and merges instead of writing over it.
+        server.attach(to: store)
+        await store.pushWorkouts()
+        #expect(server.row.sheet.title == "Legs day" && server.row.sheet.items == web.items)
+        #expect(store.pendingWorkouts.isEmpty)
+    }
+
     @Test("deleting a saved workout stamps the saved list, so the server's older copy cannot bring it back")
     func deleteStampsSaved() async {
         let store = store()

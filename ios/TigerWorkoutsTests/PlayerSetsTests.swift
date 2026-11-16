@@ -252,3 +252,111 @@ struct PlayerSetsTests {
         #expect(LastTime.lastSessionLabel(store.results, for: thrust, in: sheet) == "last time 100 × 8, 110 × 4 (×2), 115 × 1")
     }
 }
+
+/// Review D4 (Nick, 15 Nov 2026, "Written loads win"): a load written on a step beats last
+/// session's when the step was edited after its last session, and on any step this workout's own
+/// history has no session for. Last time still seeds a step not touched, and stays the hint.
+@Suite("written loads win")
+struct WrittenLoadsTests {
+    typealias P = PlayerSetsTests
+
+    /// Week 1 done as 3 × 100 on the hip thrust.
+    static func straight() -> [SessionResult] {
+        [P.session(10, [P.row("ht", P.thrust.key, Array(repeating: SetResult(reps: 8, load: 100), count: 3))])]
+    }
+
+    static func at(_ day: Int) -> Date { ISO8601.date(String(format: "2026-11-%02dT10:00:00Z", day))! }
+
+    static func seeded(_ sheet: Runsheet, _ history: [SessionResult], _ written: Written.Edits = [:], suggest: SuggestPrefs = SuggestPrefs()) -> Runsheet {
+        let targets = Targets.sets(sheet, results: history, suggest: suggest, written: written)
+        return ProgressionRules.progressed(Settings.withLastUsed(sheet, results: history, targets: targets, written: written), results: history, kit: nil, written: written)
+    }
+
+    @Test("week 1 duplicated into week 2 and the hip thrust raised to 105: the page and the player show 105")
+    @MainActor
+    func duplicatedWeek() throws {
+        var week1 = P.sheet()
+        week1 = Edit.updateStep(week1, id: "ht") { $0.target = 100 }
+        var week2 = Edit.duplicateForNextWeek(week1, creator: nil)
+        let step = try #require(week2.exerciseSteps.first { $0.exercise.key == P.thrust.key })
+        week2 = Edit.updateStep(week2, id: step.id) { $0.target = 105 }
+        // No session of week 2 yet: what is written runs, whatever week 1 was done at.
+        let page = Self.seeded(week2, Self.straight())
+        #expect(page.exerciseSteps.first { $0.id == step.id }?.target == 105)
+        #expect(page.exerciseSteps.first { $0.id == step.id }?.sets == nil)
+        #expect(Targets.sets(week2, results: Self.straight(), written: [:]).isEmpty, "no target from week 1 over a written load")
+        let runner = SessionRunner(runsheet: page, history: Self.straight())
+        #expect(runner.target == 105)
+        // Last time is still the hint.
+        #expect(LastTime.lastSessionLabel(Self.straight(), for: step, in: week2) == "last time 100 × 8 (×3)")
+    }
+
+    @Test("a coach's 60 / 70 / 80 pyramid runs as written after 3 × 100 of the exercise in another workout")
+    @MainActor
+    func coachPyramid() throws {
+        var coach = Runsheet(id: "w-coach", title: "From your coach", creator: "AI Coach", items: [
+            .block(Block(id: "cb", name: "Hip thrust", repeatCount: 3,
+                         steps: [Fixtures.work("c-ht", P.thrust, target: 60, forMode: .reps, forValue: 8)], restBetweenSec: 90)),
+        ])
+        coach = Edit.updateStep(coach, id: "c-ht") { $0.sets = [60, 70, 80].map { SetPlan(reps: 8, load: $0) } }
+        let page = Self.seeded(coach, Self.straight())
+        #expect(page.exerciseSteps.first?.sets?.map(\.load) == [60, 70, 80])
+        let runner = SessionRunner(runsheet: page, history: Self.straight())
+        #expect(runner.target == 60)
+    }
+
+    @Test("a step not touched since its last session starts on last time's")
+    func untouchedTakesLastTime() throws {
+        // Written 80, done at 100: no edit since.
+        #expect(Self.seeded(P.sheet(), Self.straight(), suggest: SuggestPrefs(off: true)).exerciseSteps.first?.target == 100)
+        // An edit from before the session does not count.
+        let before = Written.marked([:], workout: "w-hip", steps: ["ht"], at: Self.at(9))
+        #expect(Self.seeded(P.sheet(), Self.straight(), before, suggest: SuggestPrefs(off: true)).exerciseSteps.first?.target == 100)
+        #expect(!Targets.sets(P.sheet(), results: Self.straight(), written: before).isEmpty)
+    }
+
+    @Test("a step edited after its last session runs as written, until it is done again")
+    func editedAfter() throws {
+        let sheet = Edit.updateStep(P.sheet(), id: "ht") { $0.target = 105 }
+        let edits = Written.marked([:], workout: "w-hip", steps: Written.changed(from: P.sheet(), to: sheet), at: Self.at(11))
+        #expect(edits["w-hip"]?.keys.sorted() == ["ht"])
+        let page = Self.seeded(sheet, Self.straight(), edits)
+        #expect(page.exerciseSteps.first?.target == 105)
+        #expect(page.exerciseSteps.first?.sets == nil)
+        #expect(Targets.sets(sheet, results: Self.straight(), written: edits).allSatisfy { $0.stepId != "ht" })
+        // Done again at 107.5 on the 12th: last time seeds once more.
+        let again = Self.straight() + [P.session(12, [P.row("ht", P.thrust.key, Array(repeating: SetResult(reps: 8, load: 107.5), count: 3))])]
+        #expect(Self.seeded(sheet, again, edits, suggest: SuggestPrefs(off: true)).exerciseSteps.first?.target == 107.5)
+    }
+
+    @Test("a step with no load written still takes last time's incline, and a programme's lift still carries by its rule")
+    func leftAlone() throws {
+        let walk = ExerciseRef(key: "treadmill_walk", name: "Treadmill walk", unit: "kph", step: 0.5)
+        let bare = Runsheet(id: "w-walk", title: "Walk", items: [.step(Fixtures.work("wk", walk))])
+        let elsewhere = [SessionResult(runsheetId: "other", title: nil, startedAt: "2026-11-10T10:00:00Z",
+                                       steps: [StepResult(stepId: "z", exerciseKey: walk.key, target: 6, incline: 4, reps: nil, success: true)])]
+        #expect(Self.seeded(bare, elsewhere).exerciseSteps.first?.incline == 4)
+        // Day B of a programme: the squat done on day A, with Made it, goes up by the rule.
+        let squat = ExerciseRef(key: "bb_squat", name: "Squat", unit: "kg", step: 2.5)
+        var dayB = Runsheet(id: "day-b", title: "Day B", items: [.block(Block(id: "b", name: "Squat", repeatCount: 5, steps: [Fixtures.work("sq", squat, target: 20, forMode: .reps, forValue: 5)]))])
+        dayB.progression = Progression(onSuccessKg: 2.5)
+        let dayA = [SessionResult(runsheetId: "day-a", title: nil, startedAt: "2026-11-10T10:00:00Z",
+                                  steps: [StepResult(stepId: "a-sq", exerciseKey: squat.key, target: 60, incline: nil, reps: [5, 5, 5, 5, 5], success: true)])]
+        #expect(Self.seeded(dayB, dayA).exerciseSteps.first?.target == 62.5)
+        // Written after: the written load runs.
+        let edits = Written.marked([:], workout: "day-b", steps: ["sq"], at: Self.at(11))
+        #expect(Self.seeded(dayB, dayA, edits).exerciseSteps.first?.target == 20)
+    }
+
+    @Test("only a changed load marks a step; the marks are kept by workout")
+    func changed() {
+        let base = P.sheet()
+        #expect(Written.changed(from: base, to: Edit.updateStep(base, id: "ht") { $0.forValue = 10 }).isEmpty)
+        #expect(Written.changed(from: base, to: Edit.updateStep(base, id: "pr") { $0.incline = 2 }) == ["pr"])
+        #expect(Written.changed(from: base, to: Edit.updateStep(base, id: "ht") { $0.sets = [SetPlan(reps: 8, load: 90)] }) == ["ht"])
+        let defaults = UserDefaults(suiteName: "written-\(UUID().uuidString)")!
+        Written.store(Written.marked(Written.current(defaults), workout: "w-hip", steps: ["ht"], at: Self.at(11)), defaults)
+        #expect(Written.current(defaults)["w-hip"]?["ht"].flatMap(ISO8601.date) == Self.at(11))
+        #expect(Written.current(defaults)["other"] == nil)
+    }
+}

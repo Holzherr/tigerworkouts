@@ -8,6 +8,75 @@ struct LastUsed: Hashable, Sendable {
     var exerciseKey: String?
 }
 
+/// A load written on a step, against last session's (Nick, review D4, 15 Nov 2026: "Written loads
+/// win"). What is written runs when the step was edited after its last session, and on any step
+/// this workout's own history has no session for, so a load from another workout never replaces
+/// it. Last time still seeds a step not touched since, and stays the "last time" hint either way.
+///
+/// When a step's written load last changed is kept on the phone (`storageKey`), by workout and
+/// step id: set by an edit on the workout page and by a sync that brings a changed load in from
+/// the web or Claude. Nothing is added to the workout itself.
+enum Written {
+    /// Workout key → step id → when its written load last changed, ISO 8601.
+    typealias Edits = [String: [String: String]]
+
+    static let storageKey = "written-loads"
+
+    static func current(_ defaults: UserDefaults = .standard) -> Edits {
+        guard let data = defaults.data(forKey: storageKey) else { return [:] }
+        return (try? JSONDecoder().decode(Edits.self, from: data)) ?? [:]
+    }
+
+    static func store(_ edits: Edits, _ defaults: UserDefaults = .standard) {
+        defaults.set(try? JSONEncoder().encode(edits), forKey: storageKey)
+    }
+
+    /// `edits` with these steps of a workout marked as written now.
+    static func marked(_ edits: Edits, workout: String, steps: [String], at: Date = Date()) -> Edits {
+        guard !steps.isEmpty else { return edits }
+        var out = edits
+        for id in steps { out[workout, default: [:]][id] = ISO8601.string(at) }
+        return out
+    }
+
+    /// The load a step is written with: its load, its sets' loads, its incline, a relative load.
+    private static func load(_ s: ExerciseStep) -> [Double?] {
+        [s.target, s.incline, s.targetPct, s.loadFactor] + (s.sets ?? []).map(\.load)
+    }
+
+    /// A step with a load or an incline written on it.
+    static func hasLoad(_ s: ExerciseStep) -> Bool {
+        s.target != nil || s.incline != nil || s.sets?.contains { $0.load != nil } == true
+    }
+
+    /// Steps in both copies of a workout whose written load differs, by step id.
+    static func changed(from old: Runsheet, to new: Runsheet) -> [String] {
+        let was = Dictionary(old.exerciseSteps.map { ($0.id, $0) }, uniquingKeysWith: { a, _ in a })
+        return new.exerciseSteps.compactMap { s in
+            guard let o = was[s.id] else { return nil }
+            return o.exercise.key != s.exercise.key || load(o) != load(s) ? s.id : nil
+        }
+    }
+
+    /// When this step was last done in the workout's own sessions; nil when never.
+    static func lastDone(_ results: [SessionResult], step: ExerciseStep, in workout: Runsheet) -> Date? {
+        results
+            .filter { r in workout.owns(r) && r.steps.contains { $0.stepId == step.id && $0.exerciseKey == step.exercise.key } }
+            .map(\.startedDate).max()
+    }
+
+    /// True when the step runs as written: last time's load is not put over it.
+    static func wins(_ s: ExerciseStep, in workout: Runsheet, results: [SessionResult], edits: Edits) -> Bool {
+        guard hasLoad(s) else { return false }
+        let edited = edits[workout.key]?[s.id].flatMap(ISO8601.date)
+        guard let done = lastDone(results, step: s, in: workout) else {
+            // A programme's lift carries from day to day by its rule (day A's squat into day B).
+            return edited != nil || !Targets.ruled(workout, s)
+        }
+        return edited.map { $0 > done } ?? false
+    }
+}
+
 /// Ported from `src/features/runsheet/last-used.ts`.
 enum Settings {
     /// What you actually used, most recent first: keyed by step id for the exact step in this
@@ -40,12 +109,15 @@ enum Settings {
     /// today's target (`targets`, from `Targets.sets` on the same workout) moves sets that were all
     /// one load last time, the working sets start on its load instead, so the "Target" line over
     /// the timer is what the sets are filled with. A step a programme's rules load is left to them.
-    static func withLastUsed(_ r: Runsheet, results: [SessionResult], targets: [Targets.SetTarget] = []) -> Runsheet {
+    ///
+    /// A step whose written load wins (`Written.wins`) is left as written.
+    static func withLastUsed(_ r: Runsheet, results: [SessionResult], targets: [Targets.SetTarget] = [], written: Written.Edits = Written.current()) -> Runsheet {
         guard !results.isEmpty else { return r }
         let m = lastUsed(results, workout: r)
         guard !m.isEmpty else { return r }
 
         func seed(_ s: ExerciseStep, rounds: Int?) -> ExerciseStep {
+            if Written.wins(s, in: r, results: results, edits: written) { return s }
             let step = m["step:\(s.id)"].flatMap { $0.exerciseKey == s.exercise.key ? $0 : nil }
             guard let hit = step ?? m["ex:\(s.exercise.key)"] else { return s }
             var s = s
@@ -207,7 +279,9 @@ enum LastTime {
     }
 
     /// "100 × 8, 110 × 4", "100 × 8 (×3)" for three the same in a row, "12, 12, 10 reps" without a
-    /// load, "10 kph" without reps. At most `limit` groups, then "+N more".
+    /// load, "10 kph" without reps. A run of sets with one number each reads "24 kg × 7 sets",
+    /// the unit beside its number ("24 (×7) kg" read as a typo, review D8). At most `limit`
+    /// groups, then "+N more".
     static func compact(_ sets: [SetResult], unit: String = "", limit: Int = 4) -> String? {
         var groups: [(set: SetResult, count: Int)] = []
         for s in sets {
@@ -220,10 +294,15 @@ enum LastTime {
         guard !groups.isEmpty else { return nil }
         let loads = sets.contains { $0.load != nil }
         let reps = sets.contains { $0.reps != nil }
+        // One number a set and a run of them: each group carries its own unit.
+        let spelled = loads != reps && groups.contains { $0.count > 1 }
+        let own = !loads ? " reps" : unit.isEmpty ? "" : " \(unit)"
         func one(_ g: (set: SetResult, count: Int)) -> String {
             let times = g.count > 1 ? " (×\(g.count))" : ""
             switch (g.set.load, g.set.reps) {
             case let (load?, reps?): return "\(Format.number(load)) × \(Format.number(reps))\(times)"
+            case let (value?, nil) where spelled, let (nil, value?) where spelled:
+                return "\(Format.number(value))\(own)" + (g.count > 1 ? " × \(g.count) sets" : "")
             case let (load?, nil): return "\(Format.number(load))\(times)"
             case let (nil, reps?): return loads ? "\(Format.number(reps)) reps\(times)" : "\(Format.number(reps))\(times)"
             default: return ""
@@ -231,8 +310,10 @@ enum LastTime {
         }
         let shown = groups.prefix(limit).map(one).filter { !$0.isEmpty }
         var text = shown.joined(separator: ", ")
-        if !loads && reps { text += " reps" }
-        if loads && !reps && !unit.isEmpty { text += " \(unit)" }
+        if !spelled {
+            if !loads && reps { text += " reps" }
+            if loads && !reps && !unit.isEmpty { text += " \(unit)" }
+        }
         let rest = groups.dropFirst(limit).reduce(0) { $0 + $1.count }
         if rest > 0 { text += " +\(rest) more" }
         return text.isEmpty ? nil : text

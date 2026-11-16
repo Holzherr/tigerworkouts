@@ -2,7 +2,8 @@ import Foundation
 
 /// The Mine list on home and what each card says. Ported from `src/features/discover/mine.ts`.
 enum Home {
-    /// Your own workouts and the ones you saved, as one list without repeats. Your own not yet done
+    /// Your own workouts, the ones you saved and any workout you have a session of (Nick, 15 Nov
+    /// 2026, review D18), as one list without repeats. Your own not yet done
     /// come first, newest first (Nick, 18 Oct 2026: a workout just made for you is what to do
     /// next); then the rest by last done or made, whichever is later, newest first. A workout you
     /// have your own copy of shows as the copy only. `skip` leaves out what is already listed above
@@ -12,7 +13,7 @@ enum Home {
         let ownKeys = Set(own.map(\.key))
         let copied = Set((own + all).compactMap(\.copyOf))
         var seen = Set<String>()
-        let list = (own + all.filter { saved.contains($0.key) }).filter { r in
+        let list = (own + all.filter { saved.contains($0.key) || last[$0.key] != nil }).filter { r in
             !copied.contains(r.key) && !skip.contains(r.key) && seen.insert(r.key).inserted
         }
         func fresh(_ r: Runsheet) -> Bool { ownKeys.contains(r.key) && lastDone(of: r, in: last) == nil }
@@ -76,13 +77,6 @@ enum Home {
 
     /// The badge on a workout of yours not done yet.
     static func badge(_ r: Runsheet) -> String { madeForYou(r) ? "New · made for you" : "New" }
-
-    /// The one card Mine accents as Up next: the first of your own not yet done, else the one done
-    /// longest ago, which keeps the rotation even.
-    static func upNext(_ list: [Runsheet], own: Set<String>, last: [String: Date]) -> String? {
-        if let fresh = list.first(where: { own.contains($0.key) && lastDone(of: $0, in: last) == nil }) { return fresh.key }
-        return list.compactMap { r in lastDone(of: r, in: last).map { (r.key, $0) } }.min { $0.1 < $1.1 }?.0
-    }
 
     /// The Up next card first, the rest in their order (Nick, 27 Oct 2026). `upNextFirst` in mine.ts.
     static func upNextFirst<T>(_ list: [T], isNext: (T) -> Bool) -> [T] {

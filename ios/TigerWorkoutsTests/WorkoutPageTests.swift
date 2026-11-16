@@ -92,7 +92,11 @@ struct WorkoutPageTests {
 
     @Test("compact sets", arguments: [
         ([SetResult(reps: 8, load: 100), SetResult(reps: 8, load: 100), SetResult(reps: 8, load: 100)], "", "100 × 8 (×3)"),
-        ([SetResult(reps: 12, load: nil), SetResult(reps: 12, load: nil), SetResult(reps: 10, load: nil)], "", "12 (×2), 10 reps"),
+        ([SetResult(reps: 12, load: nil), SetResult(reps: 12, load: nil), SetResult(reps: 10, load: nil)], "", "12 reps × 2 sets, 10 reps"),
+        (Array(repeating: SetResult(reps: nil, load: 24), count: 7), "kg", "24 kg × 7 sets"),
+        (Array(repeating: SetResult(reps: nil, load: 24), count: 2) + [SetResult(reps: nil, load: 28)], "kg", "24 kg × 2 sets, 28 kg"),
+        ([SetResult(reps: 12, load: nil), SetResult(reps: 12, load: nil), SetResult(reps: 10, load: nil), SetResult(reps: 10, load: 20)], "kg", "12 reps (×2), 10 reps, 20 × 10"),
+        ([SetResult(reps: 12, load: nil), SetResult(reps: 11, load: nil), SetResult(reps: 10, load: nil)], "", "12, 11, 10 reps"),
         ([SetResult(reps: nil, load: 10), SetResult(reps: nil, load: 12)], "kph", "10, 12 kph"),
         ((1...6).map { SetResult(reps: 5, load: Double(40 + $0 * 5)) }, "kg", "45 × 5, 50 × 5, 55 × 5, 60 × 5 +2 more"),
     ])
