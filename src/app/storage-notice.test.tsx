@@ -1,5 +1,7 @@
-import { act, cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { act, cleanup, fireEvent, render, renderHook, screen } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { EX } from '@/features/runsheet/fixtures';
+import { makeExercise, type Runsheet } from '@/features/runsheet/model';
 import type { SessionResult } from '@/features/runsheet/progression';
 
 const KEY = 'workout-hub-next:v1';
@@ -114,5 +116,30 @@ describe('a finished session when the browser storage is full', () => {
     });
     act(() => useActions().addResult(session));
     expect(screen.getByRole('alert')).toHaveTextContent('This device is not saving');
+  });
+});
+
+describe('the running timer\'s kept copy when the browser storage is full', () => {
+  const sheet: Runsheet = { id: 'w', title: 'W', items: [{ ...makeExercise(EX.bw_pushup, { forMode: 'reps', forValue: 5 }), id: 'a' }] };
+  it('is said, tried again until it is written, and the notice goes', async () => {
+    vi.useFakeTimers();
+    const { StorageNotice, RETRY_MS } = await load();
+    const { useRunner } = await import('@/features/timer/use-runner');
+    const real = Storage.prototype.setItem;
+    const full = vi.spyOn(Storage.prototype, 'setItem').mockImplementation(function (this: Storage, k: string, v: string) {
+      if (k === 'tiger:run') throw new DOMException('The quota has been exceeded.', 'QuotaExceededError');
+      real.call(this, k, v);
+    });
+    render(<StorageNotice />);
+    renderHook(() => useRunner(sheet));
+    expect(screen.getByRole('alert')).toHaveTextContent("This device's storage is full");
+    expect(localStorage.getItem('tiger:run')).toBeNull();
+    // Still full at the next retry: still said.
+    act(() => void vi.advanceTimersByTime(RETRY_MS));
+    expect(screen.getByRole('alert')).toBeTruthy();
+    full.mockRestore();
+    act(() => void vi.advanceTimersByTime(RETRY_MS));
+    expect(JSON.parse(localStorage.getItem('tiger:run')!).runsheetId).toBe('w');
+    expect(screen.queryByRole('alert')).toBeNull();
   });
 });

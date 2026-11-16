@@ -223,6 +223,8 @@ export default function App() {
   const [pasteOpen, setPasteOpen] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
   const say = (m: string) => { setToast(m); setTimeout(() => setToast(null), 2500); };
+  // Hide on the notice that a kept session could not be read: the flag is the runner's, this redraws.
+  const [, setLostHidden] = useState(0);
   const told = (m: string | null) => void (m && say(m));
   const invite = async () => { const out = await shareLink('TigerWorkouts', location.origin + location.pathname); told(shareToast(out)); };
   // A new workout not saved yet, and what the timer recorded for the result sheet. Each
@@ -721,6 +723,17 @@ export default function App() {
   const keptUnknown = !!kept && catLoading && !byId.has(kept.state.runsheetId);
   const above = (
     <>
+      {Runner.keptUnreadable() && (
+        <div role="status" className="flex w-full items-center gap-3 rounded-card border border-warn bg-warn-soft px-3 py-2.5 text-left">
+          <div className="min-w-0 flex-1">
+            <div className="text-[14px] font-bold">Your last session could not be restored</div>
+            <div className="text-[12px] text-muted">What this device kept of it could not be read. Sessions in History are not affected.</div>
+          </div>
+          <Button variant="quiet" size="inline" onClick={() => (Runner.dismissUnreadable(), setLostHidden(n => n + 1))}>
+            Hide
+          </Button>
+        </div>
+      )}
       {kept && !resumable && !keptUnknown && Runner.didWork(kept.state) && (
         <div className="flex w-full items-center gap-3 rounded-card border border-brand-line bg-brand-soft px-3 py-2.5 text-left">
           <div className="min-w-0 flex-1">

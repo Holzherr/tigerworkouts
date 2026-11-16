@@ -97,9 +97,41 @@ const persistListeners = new Set<() => void>();
 export const RETRY_MS = 15_000;
 let retry: ReturnType<typeof setInterval> | undefined;
 const isQuota = (e: unknown) => e instanceof DOMException && (e.name === 'QuotaExceededError' || e.name === 'NS_ERROR_DOM_QUOTA_REACHED' || e.code === 22 || e.code === 1014);
+/** Writes of other keys that failed (the running timer's kept copy, `tiger:run`), by key: each is
+ * said by the same notice and tried again with the store's own. `retry` writes again and reports
+ * the outcome through `reportWrite`. */
+const others = new Map<string, { retry: () => void; full: boolean }>();
 /** `ok` once everything is on this device; `full` or `blocked` while what is on screen is in memory only. */
 export type SaveState = 'ok' | 'full' | 'blocked';
-const saveState = (): SaveState => (persisted ? 'ok' : full ? 'full' : 'blocked');
+const saveState = (): SaveState => {
+  if (persisted && !others.size) return 'ok';
+  return (!persisted && full) || [...others.values()].some(o => o.full) ? 'full' : 'blocked';
+};
+/** After any write: keep the retry running while something is not on the device, and tell the notice. */
+const settle = (before: SaveState) => {
+  const failing = !persisted || others.size > 0;
+  if (failing && retry === undefined) retry = setInterval(retryAll, RETRY_MS);
+  if (!failing && retry !== undefined) {
+    clearInterval(retry);
+    retry = undefined;
+  }
+  if (saveState() !== before) persistListeners.forEach(l => l());
+};
+/** The outcome of a write of another key: `error` undefined when it is on the device (or was cleared). */
+export const reportWrite = (key: string, error: unknown, retry: () => void = () => {}) => {
+  const before = saveState();
+  if (error === undefined) others.delete(key);
+  else {
+    if (!others.has(key)) console.error(`[tiger] could not save ${key} to this device`, error);
+    others.set(key, { retry, full: isQuota(error) });
+  }
+  settle(before);
+};
+const retryAll = () => {
+  if (!persisted) write();
+  for (const o of [...others.values()]) o.retry();
+  return saveState() === 'ok';
+};
 
 /**
  * The sync snapshot says "the server had these rows, and so did this device". It may only be
@@ -187,26 +219,21 @@ const write = () => {
     full = isQuota(e);
     forgetSnapshot();
   }
-  if (!persisted && retry === undefined) retry = setInterval(write, RETRY_MS);
-  if (persisted && retry !== undefined) {
-    clearInterval(retry);
-    retry = undefined;
-  }
-  if (saveState() !== before) persistListeners.forEach(l => l());
+  settle(before);
   return persisted;
 };
-/** Try the failed write again now. True when what is on screen is on this device. */
-export const retrySave = () => persisted || write();
+/** Try the failed writes again now. True when what is on screen is on this device. */
+export const retrySave = () => saveState() === 'ok' || retryAll();
 export const useSaveState = () => useSyncExternalStore(cb => (persistListeners.add(cb), () => void persistListeners.delete(cb)), saveState);
 
 if (typeof window !== 'undefined') {
   // The last chance before the page goes: a tab closed, the phone locked.
-  const last = () => void (persisted || write());
+  const last = () => void retrySave();
   window.addEventListener('pagehide', last);
   document.addEventListener('visibilitychange', () => document.hidden && last());
   // Closing the tab now would lose what is only in memory: the browser asks first.
   window.addEventListener('beforeunload', e => {
-    if (!persisted) e.preventDefault();
+    if (saveState() !== 'ok') e.preventDefault();
   });
 }
 

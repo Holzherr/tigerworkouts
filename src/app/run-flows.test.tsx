@@ -168,3 +168,18 @@ describe('a logged-session link', () => {
     expect(stored().filter(r => r.id === 's-real').map(r => r.title)).toEqual(['Mine']);
   });
 });
+
+describe('a kept session that cannot be read', () => {
+  it('does not stop home or the timer loading, and home says it could not be restored', async () => {
+    localStorage.setItem('tiger:run', '{"phase":"running","title":"Mine","slots":[{}]');
+    location.hash = '#/';
+    render(<App />);
+    expect(await screen.findByText('Your last session could not be restored')).toBeTruthy();
+    expect(localStorage.getItem('tiger:run-unreadable')).toBe('{"phase":"running","title":"Mine","slots":[{}]');
+    click('Hide');
+    expect(screen.queryByText('Your last session could not be restored')).toBeNull();
+    cleanup();
+    await startSaved();
+    expect(await screen.findByRole('button', { name: 'More' })).toBeTruthy();
+  });
+});
