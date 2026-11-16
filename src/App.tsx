@@ -7,7 +7,7 @@ import { uniqueById } from '@/features/discover/catalogue';
 import { SignInCard } from '@/features/auth/components/sign-in-card';
 import { FULL_LIBRARY } from '@/features/workouts/imported';
 import { EX, withStarter } from '@/features/runsheet/fixtures';
-import { copyIn, copyOnEdit, forLabel, lineage, makeExercise, measureOf, ofWorkout, resolveRefs, runsheetMinutes, scoreType, shortUnit, type ExerciseStep, type Runsheet } from '@/features/runsheet/model';
+import { copyIn, copyOnEdit, forLabel, lineage, makeExercise, measureOf, newWorkoutId, ofWorkout, resolveRefs, runsheetMinutes, scoreType, shortUnit, type ExerciseStep, type Runsheet } from '@/features/runsheet/model';
 import { versionOf, versionsOf } from '@/features/runsheet/versions';
 import { dropEmptyBlocks, settleEdit } from '@/features/runsheet/real-change';
 import { lastSessionLabel, lastSessionSet, lastSetLabel, lastSets, withLastUsed } from '@/features/runsheet/last-used';
@@ -241,7 +241,7 @@ export default function App() {
   // left: only then, and only if something real changed, is your copy made (review D18).
   const [held, setHeld] = useState<{ for: string; r: Runsheet } | null>(null);
   const makeCopy = (next: Runsheet, original: Runsheet) => {
-    const copy = copyOnEdit(next, original, `u-${Date.now().toString(36)}`, st.name);
+    const copy = copyOnEdit(next, original, newWorkoutId(), st.name);
     act.saveWorkout({ ...copy, icon: copy.icon ?? defaultIcon(copy.id!) });
     return copy.id!;
   };
@@ -435,7 +435,7 @@ export default function App() {
     const edit = (x: Runsheet | null) => (saveNewDraft(x), draftFor('new')(x));
     const saveMine = (): Runsheet => {
       const title = r.title.trim() || 'My workout';
-      const id = `u-${Date.now().toString(36)}`;
+      const id = newWorkoutId();
       const mine: Runsheet = { ...dropEmptyBlocks(r), id, title, createdAt: new Date().toISOString(), creator: st.name || undefined, source: { title, author: st.name || undefined, kind: 'user' }, program: undefined, icon: r.icon ?? defaultIcon(id) };
       act.saveWorkout(mine);
       setDrafted(null);
@@ -479,7 +479,7 @@ export default function App() {
   }
   if (route.name === 'import') {
     const shared = decodeShared(route.id);
-    return full(<ImportScreen runsheet={shared} onSave={r => { const mine = { ...r, public: false, ownerId: undefined, id: `u-${Date.now().toString(36)}`, source: { ...(r.source ?? { title: r.title, kind: 'user' as const }), kind: 'user' as const, author: r.creator } }; act.saveWorkout(mine); open(mine, 'link'); }} onDiscard={() => go('/discover')} />);
+    return full(<ImportScreen runsheet={shared} onSave={r => { const mine = { ...r, public: false, ownerId: undefined, id: newWorkoutId(), source: { ...(r.source ?? { title: r.title, kind: 'user' as const }), kind: 'user' as const, author: r.creator } }; act.saveWorkout(mine); open(mine, 'link'); }} onDiscard={() => go('/discover')} />);
   }
   if (route.name === 'log') {
     const logged = decodeLogged(route.id);

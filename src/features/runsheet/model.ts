@@ -256,6 +256,9 @@ export const ofWorkout = (r: Pick<Runsheet, 'id' | 'title' | 'copyOf'>) => {
 };
 
 let seq = 0;
+/** A new own workout's id. Workout ids are one key across every account, so a time stamp alone
+ * lets two people who save in the same millisecond clash, and the second save is refused. */
+export const newWorkoutId = () => `u-${Date.now().toString(36)}${Math.random().toString(36).slice(2, 8)}`;
 export const uid = (prefix = 's') => `${prefix}-${Date.now().toString(36)}${(seq++).toString(36)}`;
 
 // ── constructors ──
