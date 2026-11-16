@@ -152,7 +152,16 @@ actor Supabase {
         guard (200..<300).contains(http.statusCode) else {
             throw SupabaseError(message: Self.message(from: data, status: http.statusCode))
         }
+        if !Self.fromServer(data: data, contentType: http.value(forHTTPHeaderField: "Content-Type")) {
+            throw SupabaseError(message: "The network answered instead of the server. Try again on another connection.")
+        }
         return (data, http)
+    }
+
+    /// Supabase answers in JSON or with nothing. A Wi-Fi sign-in page answers 200 with HTML: taken
+    /// as the server, its "no rows" emptied History and its "OK" took a session off the queue.
+    nonisolated static func fromServer(data: Data, contentType: String?) -> Bool {
+        data.isEmpty || (contentType ?? "").lowercased().contains("json")
     }
 
     /// GoTrue and PostgREST word their errors differently; pull whichever field is there.
@@ -370,12 +379,15 @@ actor Supabase {
 
     // MARK: - Tables
 
-    /// Every session this account has logged, in either app.
+    /// Every session this account has logged, in either app. Read in pages: the server hands back
+    /// at most 1000 rows to a request, and a phone that took those for the whole history dropped
+    /// the rest.
     func sessions() async throws -> [SessionResult] {
         // Thrown, not an empty list: a sync would take that for an account with no sessions.
         guard let uid = session?.user.id else { throw SupabaseError(message: "Not signed in") }
-        let (data, _) = try await request("rest/v1/sessions?select=id,data&owner=eq.\(uid)")
-        guard let rows = try JSONSerialization.jsonObject(with: data) as? [[String: Any]] else { return [] }
+        let rows = try await Self.allPages { offset, size in
+            try await self.request("rest/v1/sessions?select=id,data&owner=eq.\(uid)&order=started_at.desc,id.asc&limit=\(size)&offset=\(offset)").0
+        }
         return rows.compactMap { row in
             guard let id = row["id"] as? String, let payload = row["data"], JSONSerialization.isValidJSONObject(payload),
                   let body = try? JSONSerialization.data(withJSONObject: payload) else { return nil }
@@ -384,18 +396,44 @@ actor Supabase {
         .sorted { $0.startedAt > $1.startedAt }
     }
 
+    static let pageSize = 1000
+
+    /// Every row of a paged read: pages are asked for until one comes back short. A page that is
+    /// not a list of rows throws, so a partial read is never taken for the whole.
+    nonisolated static func allPages(size: Int = pageSize, page: (_ offset: Int, _ size: Int) async throws -> Data) async throws -> [[String: Any]] {
+        var all: [[String: Any]] = []
+        while true {
+            let data = try await page(all.count, size)
+            guard let rows = try? JSONSerialization.jsonObject(with: data) as? [[String: Any]] else {
+                throw SupabaseError(message: "Could not read the server's answer")
+            }
+            all += rows
+            if rows.count < size { return all }
+        }
+    }
+
     /// Upserts the session, laid over the row's `data` as the server has it: an edit made here must
-    /// not drop what the web app keeps on the row and this app does not read.
+    /// not drop what the web app keeps on the row and this app does not read. The server sends the
+    /// row's id back; without it the session stays queued.
     func save(_ result: SessionResult) async throws {
         guard let uid = session?.user.id else { throw SupabaseError(message: "Not signed in") }
         let (data, _) = try await request("rest/v1/sessions?select=data&id=eq.\(Self.escape(result.rowId))&owner=eq.\(uid)")
         let existing = (try? JSONSerialization.jsonObject(with: data) as? [[String: Any]])?.first?["data"] as? [String: Any]
-        _ = try await request(
-            "rest/v1/sessions?on_conflict=id",
+        let (saved, _) = try await request(
+            "rest/v1/sessions?on_conflict=id&select=id",
             method: "POST",
             body: [SessionRow.encode(result, owner: uid, existing: existing)],
-            headers: ["Prefer": "resolution=merge-duplicates,return=minimal"]
+            headers: ["Prefer": "resolution=merge-duplicates,return=representation"]
         )
+        guard Self.confirmed(saved, id: result.rowId) else {
+            throw SupabaseError(message: "The server did not confirm the save")
+        }
+    }
+
+    /// Whether a `return=representation` answer holds the row with this id.
+    nonisolated static func confirmed(_ data: Data, id: String) -> Bool {
+        let rows = (try? JSONSerialization.jsonObject(with: data)) as? [[String: Any]]
+        return rows?.contains { $0["id"] as? String == id } ?? false
     }
 
     /// Deletes one session row; the web app drops it from its own list on its next sync.
@@ -425,8 +463,10 @@ actor Supabase {
     /// The account's own workouts, on top of the bundled catalogue.
     func workouts() async throws -> [WorkoutRow] {
         guard let uid = session?.user.id else { throw SupabaseError(message: "Not signed in") }
-        let (data, _) = try await request("rest/v1/workouts?select=\(Self.workoutColumns)&owner=eq.\(uid)&order=updated_at.desc")
-        return Self.decodeWorkoutRows(data)
+        let rows = try await Self.allPages { offset, size in
+            try await self.request("rest/v1/workouts?select=\(Self.workoutColumns)&owner=eq.\(uid)&order=updated_at.desc,id.asc&limit=\(size)&offset=\(offset)").0
+        }
+        return Self.decodeWorkoutRows(try JSONSerialization.data(withJSONObject: rows))
     }
 
     /// One of the account's workouts as the server has it now; nil when it is gone.
