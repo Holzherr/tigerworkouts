@@ -11,6 +11,7 @@ import type { LibraryExercise } from '@/features/exercises/library';
 import { fromLegacySession, legacyWorkoutToRunsheet, readLegacyLocal } from '@/features/cloud/legacy';
 import { stamp, type PrefField, type PrefStamps } from '@/features/cloud/prefs';
 import { mergeSessions } from '@/features/runsheet/versions';
+import { storedSuggest, type SuggestPrefs } from '@/features/results/suggestions';
 
 export interface AppState {
   workouts: Runsheet[];
@@ -19,6 +20,8 @@ export interface AppState {
   bodyweightKg?: number;
   /** Settings → My equipment: the bar, plates, dumbbells and kettlebells you own. */
   equipment?: Equipment;
+  /** Whether to suggest progress, and how: off / by reps, weight or effort, per account, exercise and workout. */
+  suggestions?: SuggestPrefs;
   /** Bodyweight was asked for once after a workout and skipped; not asked again. */
   bodyweightAsked?: boolean;
   saved: string[];
@@ -249,7 +252,7 @@ export const clearDevice = () => {
   }
   clearState();
 };
-const clearState = () => setState({ ...EMPTY, migratedLegacy: true, prefsUpdatedAt: {}, bodyweightKg: undefined, bodyweightAsked: undefined, equipment: undefined, avatar: undefined, lastSync: undefined, syncError: undefined });
+const clearState = () => setState({ ...EMPTY, migratedLegacy: true, prefsUpdatedAt: {}, bodyweightKg: undefined, bodyweightAsked: undefined, equipment: undefined, suggestions: undefined, avatar: undefined, lastSync: undefined, syncError: undefined });
 
 const ACTIONS = {
   saveWorkout: (r: Runsheet) => setState(s => ({ workouts: [r, ...s.workouts.filter(w => w.id !== r.id)] })),
@@ -272,6 +275,8 @@ const ACTIONS = {
   setTrainingMaxes: (tm: TrainingMaxes) => setPrefs({ trainingMaxes: tm }),
   /** An empty kit clears it: suggested loads go back to the defaults. */
   setEquipment: (equipment: Equipment | undefined) => setPrefs({ equipment: equipment && Object.values(equipment).some(v => (Array.isArray(v) ? v.length : v !== undefined)) ? equipment : undefined }),
+  /** The default (on, by reps, nothing else set) clears the field. */
+  setSuggestions: (p: SuggestPrefs | undefined) => setPrefs({ suggestions: storedSuggest(p) }),
   setBodyweight: (kg: number) => (setPrefs({ bodyweightKg: kg }), setState({ bodyweightAsked: true })),
   skipBodyweight: () => setState({ bodyweightAsked: true }),
   setSignedIn: (signedIn: boolean) => setState({ signedIn }),

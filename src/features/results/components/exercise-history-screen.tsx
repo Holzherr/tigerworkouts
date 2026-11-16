@@ -10,6 +10,9 @@ import { cn } from '@/shared/utils/ui-utils';
 import { ProgressChart } from './progress-chart';
 import { StallCard } from './targets';
 import type { Stall } from '../stall';
+import { Dropdown } from '@/shared/components/ui/dropdown';
+import type { ProgressMode } from '@/features/runsheet/targets';
+import { PROGRESS_MODES } from '../suggestions';
 
 export interface ExerciseHistoryScreenProps {
   exercise: ExerciseRef;
@@ -22,6 +25,9 @@ export interface ExerciseHistoryScreenProps {
   backLabel?: string;
   /** A best that has not moved in weeks, with two ways out; shown under the chart until dismissed. */
   stall?: Stall;
+  /** This exercise's own way to progress, over the account's (Settings). Given for a lift while
+   * suggestions are on. */
+  progress?: { own?: ProgressMode; account: ProgressMode; onChange: (mode: ProgressMode | undefined) => void };
   onDismissStall?: () => void;
   /** Opens another exercise's logbook, from a swap option. */
   onExercise?: (key: string) => void;
@@ -100,7 +106,7 @@ const tiles = (r: Records, unit: string, last?: string, done = new Map<string, n
  * the sessions newest first with their sets. A set that beat a record standing at the time carries
  * a small PR marker.
  */
-export const ExerciseHistoryScreen = ({ exercise: ex, group, results, onBack, onSession, backLabel = 'Back', stall, onDismissStall, onExercise }: ExerciseHistoryScreenProps) => {
+export const ExerciseHistoryScreen = ({ exercise: ex, group, results, onBack, onSession, backLabel = 'Back', stall, onDismissStall, onExercise, progress }: ExerciseHistoryScreenProps) => {
   const history = exerciseHistory(results, ex.key, ex.unit);
   const rec = records(results, ex.key, ex.unit);
   const unit = shortUnit(ex.unit);
@@ -136,6 +142,17 @@ export const ExerciseHistoryScreen = ({ exercise: ex, group, results, onBack, on
         )}
         {points.length > 0 && <ProgressChart points={points} label={metricLabel(metric, unit, per)} format={timeAxis ? fmtDur : undefined} invert={metric !== 'volume' && metric !== 'totalReps' && lowerIsBetter(metric)} />}
         {all.length > 0 && points.length === 0 && <div className="rounded-card border border-line bg-surface px-3 py-4 text-center text-[13px] text-muted">No sessions in the last {range === '3m' ? '3 months' : 'year'}.</div>}
+        {progress && (
+          <div className="flex items-center justify-between gap-3 rounded-card border border-line bg-surface py-1 pr-1.5 pl-3">
+            <span className="text-[14px] font-semibold">Progress by</span>
+            <Dropdown
+              aria-label="Progress by"
+              value={progress.own ?? 'account'}
+              options={[{ value: 'account', label: `${PROGRESS_MODES.find(m => m.id === progress.account)?.label} (as in Settings)` }, ...PROGRESS_MODES.map(m => ({ value: m.id, label: m.label }))]}
+              onValueChange={v => progress.onChange(v === 'account' ? undefined : (v as ProgressMode))}
+            />
+          </div>
+        )}
         {stall && onDismissStall && <StallCard stall={stall} onDismiss={onDismissStall} onExercise={onExercise} />}
         {history.length > 0 && (
           <div className="grid grid-cols-2 gap-2">

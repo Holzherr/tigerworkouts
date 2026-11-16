@@ -16,6 +16,7 @@ import type { Equipment } from '@/features/runsheet/plates';
 import { currentUser, sb } from './client';
 import type { LegacySession } from './legacy';
 import { mergePrefs, prefsRow, remoteSide, type PrefStamps } from './prefs';
+import { readSuggest, storedSuggest, type SuggestPrefs } from '@/features/results/suggestions';
 import { fromRow, readableWorkout, readableWorkouts, workoutFromRow, type WorkoutRow } from './rows';
 
 export { fromRow, workoutFromRow, type WorkoutRow } from './rows';
@@ -31,6 +32,8 @@ export interface SyncTarget {
   trainingMaxes: TrainingMaxes;
   bodyweightKg?: number;
   equipment?: Equipment;
+  /** Whether to suggest progress, and how (`prefs.suggestions`, shared with the iPhone app). */
+  suggestions?: SuggestPrefs;
   exercises?: Record<string, LibraryExercise>;
   /** When each shared pref was last changed on this device (prefs.ts). */
   prefsUpdatedAt?: PrefStamps;
@@ -301,7 +304,7 @@ export const pullPush = async (local: SyncTarget): Promise<SyncResult> => {
   else {
     const remotePrefs = (st?.prefs ?? {}) as Record<string, unknown>;
     const m = mergePrefs(
-      { values: { saved: local.saved, trainingMaxes: local.trainingMaxes, bodyweightKg: local.bodyweightKg, equipment: local.equipment, name: local.name, avatar: local.avatar, units: local.units }, updatedAt: local.prefsUpdatedAt ?? {} },
+      { values: { saved: local.saved, trainingMaxes: local.trainingMaxes, bodyweightKg: local.bodyweightKg, equipment: local.equipment, name: local.name, avatar: local.avatar, units: local.units, suggestions: storedSuggest(local.suggestions) }, updatedAt: local.prefsUpdatedAt ?? {} },
       remoteSide(remotePrefs)
     );
     const favorites = local.favorites.length ? local.favorites : ((st?.favorites as Favorite[] | null) ?? []);
@@ -312,12 +315,13 @@ export const pullPush = async (local: SyncTarget): Promise<SyncResult> => {
       trainingMaxes: (v.trainingMaxes as TrainingMaxes | undefined) ?? {},
       bodyweightKg: v.bodyweightKg as number | undefined,
       equipment: v.equipment as Equipment | undefined,
+      suggestions: storedSuggest(readSuggest(v.suggestions)),
       name: (v.name as string | undefined) ?? local.name,
       avatar: v.avatar as Avatar | undefined,
       units: (v.units as SyncTarget['units'] | undefined) ?? 'metric',
       prefsUpdatedAt: m.updatedAt,
     };
-    const mine = { favorites: local.favorites, saved: local.saved, trainingMaxes: local.trainingMaxes, bodyweightKg: local.bodyweightKg, equipment: local.equipment, name: local.name, avatar: local.avatar, units: local.units, prefsUpdatedAt: local.prefsUpdatedAt ?? {} };
+    const mine = { favorites: local.favorites, saved: local.saved, trainingMaxes: local.trainingMaxes, bodyweightKg: local.bodyweightKg, equipment: local.equipment, name: local.name, avatar: local.avatar, units: local.units, suggestions: storedSuggest(local.suggestions), prefsUpdatedAt: local.prefsUpdatedAt ?? {} };
     if (J(merged) !== J(mine)) changed = true;
     Object.assign(patch, merged);
     if (m.push || J(favorites) !== J(st?.favorites ?? [])) {

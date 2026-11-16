@@ -1,8 +1,10 @@
-import { ChevronLeft, ChevronRight, ExternalLink, GitMerge, Globe, Layers, Lock, Menu, Pencil, Play, Plus, Share2, Smartphone, Trash2, Video } from 'lucide-react';
+import { ChevronLeft, ChevronRight, ExternalLink, GitMerge, Globe, Layers, Lock, Menu, MoreHorizontal, Pencil, Play, Plus, Share2, Smartphone, Trash2, Video } from 'lucide-react';
 import { shortDate } from '@/shared/utils/dates';
 import { Fragment, useState } from 'react';
 import { Button } from '@/shared/components/ui/button';
 import { Chip } from '@/shared/components/ui/chip';
+import { Sheet } from '@/shared/components/ui/sheet';
+import { Switch } from '@/shared/components/ui/switch';
 import { ClipThumb } from '@/shared/components/ui/clip-thumb';
 import { cn, fmtClock, fmtNum, restLabel } from '@/shared/utils/ui-utils';
 import { addBlock, blockSeconds, countLabel, forLabel, loadLabel, modeLabel, removeItem, replaceStep, ROLE_LABEL, runsheetMinutes, scoreType, setRuns, shortUnit, straightSetStep, type Block, type ExerciseStep, type Item, type Runsheet } from '@/features/runsheet/model';
@@ -100,6 +102,9 @@ export interface WorkoutPreviewScreenProps {
   /** Your other workouts, for folding this one into one of them as a version. */
   mergeTargets?: { id: string; title: string; minutes?: number }[];
   onMergeInto?: (id: string) => void;
+  /** Suggestions for this workout, in its ⋯ menu: on unless turned off here; `enabled` false when
+   * they are off for the whole account. */
+  suggestions?: { on: boolean; enabled: boolean; onChange: (on: boolean) => void };
 }
 
 /** A straight-set block whose sets differ, read as the gym writes it: one line per run of sets
@@ -130,8 +135,9 @@ const SCORE_TEXT: Record<string, string> = { time: 'For time', rounds: 'AMRAP: r
  * Edit & start, Follow along for videos, Save. Tapping any exercise opens it — the clip, the cue,
  * and its numbers as steppers when the host can save them.
  */
-export const WorkoutPreviewScreen = ({ runsheet: r, history = [], lastTime, onBack, onStart, onEditAndStart, onFollowAlong, onLogOnly, onSave, saved, onShare, onStepChange, onCreator, onTogglePublic, appHref, onExerciseHistory, hasHistory, today, stall, onDismissStall, onDelete, editor: given, initialEditing, onBlockDone, onChangeOnce, variant, versions = [], onRunVersion, onMakeBase, mergeTargets, onMergeInto }: WorkoutPreviewScreenProps) => {
+export const WorkoutPreviewScreen = ({ runsheet: r, history = [], lastTime, onBack, onStart, onEditAndStart, onFollowAlong, onLogOnly, onSave, saved, onShare, onStepChange, onCreator, onTogglePublic, appHref, onExerciseHistory, hasHistory, today, stall, onDismissStall, onDelete, editor: given, initialEditing, onBlockDone, onChangeOnce, variant, versions = [], onRunVersion, onMakeBase, mergeTargets, onMergeInto, suggestions }: WorkoutPreviewScreenProps) => {
   const [open, setOpen] = useState<ExerciseStep | null>(null);
+  const [menu, setMenu] = useState(false);
   const [merging, setMerging] = useState(false);
   // Asked once per visit: a change for this session only, or for the workout.
   const [scope, setScope] = useState<'once' | 'base' | null>(null);
@@ -178,6 +184,11 @@ export const WorkoutPreviewScreen = ({ runsheet: r, history = [], lastTime, onBa
           <Button variant="quiet" size="inline" onClick={onBack} className="-ml-1 text-muted">
             <ChevronLeft /> Back
           </Button>
+          {suggestions && (
+            <Button variant="quiet" size="icon" aria-label="More" onClick={() => setMenu(true)} className="-mr-2 text-muted">
+              <MoreHorizontal />
+            </Button>
+          )}
         </div>
         <h1 className="mt-1 text-[22px] leading-tight font-extrabold">{r.title}</h1>
       </header>
@@ -375,6 +386,19 @@ export const WorkoutPreviewScreen = ({ runsheet: r, history = [], lastTime, onBa
             <MergeSheet open={merging} onOpenChange={setMerging} title={r.title} targets={mergeTargets} onMerge={id => (setMerging(false), onMergeInto(id))} />
           </>
         )}
+        <Sheet open={menu} onOpenChange={setMenu} title="Workout" height="auto">
+          <div className="space-y-2 pt-1 pb-2">
+            {suggestions && (
+              <div>
+                <div className="flex items-center justify-between gap-3">
+                  <span className="text-[15px] font-semibold">Suggestions for this workout</span>
+                  <Switch aria-label="Suggestions for this workout" checked={suggestions.on} disabled={!suggestions.enabled} onChange={suggestions.onChange} />
+                </div>
+                <p className="text-[12px] text-muted">{suggestions.enabled ? 'Off hides Today, the target on the timer, Next time and stall cards for this workout.' : 'Suggestions are off for your account. Turn them on in Me, Settings.'}</p>
+              </div>
+            )}
+          </div>
+        </Sheet>
         <EditScopeSheet
           open={!!asking}
           onCancel={() => setAsking(null)}

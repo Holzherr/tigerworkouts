@@ -22,6 +22,8 @@ import { ShareCardSheet } from './share-card-sheet';
 import { SplitsCard } from './splits-card';
 import { withRowLoad } from '../edit-sets';
 import { loadStep } from '@/shared/utils/step-sizes';
+import { suggestOn, type SuggestPrefs } from '../suggestions';
+import { effortLifts, LiftEffortCard, ratedRows } from './lift-effort';
 
 export interface ResultSheetProps {
   runsheet: Runsheet;
@@ -44,6 +46,8 @@ export interface ResultSheetProps {
   intent?: Intent;
   /** Settings → My equipment: next time's loads snap to what it can make. */
   equipment?: Equipment;
+  /** Whether to suggest, and how: off hides Next time; a lift progressed by effort is asked its RPE. */
+  suggest?: SuggestPrefs;
 }
 
 const exerciseSteps = (r: Runsheet): ExerciseStep[] => r.items.flatMap(it => (it.kind === 'block' ? it.steps : it.kind === 'ref' ? [] : [it])).filter((s): s is ExerciseStep => s.kind === 'exercise');
@@ -56,7 +60,8 @@ const exerciseSteps = (r: Runsheet): ExerciseStep[] => r.items.flatMap(it => (it
  * for everything they do not move, the targets read from history (targets.ts), then Save. Pure:
  * the host stores the result and updates training maxes.
  */
-export const ResultSheet = ({ runsheet, history = [], allResults = history, trainingMaxes = {}, bodyweightKg, startedAt, initial, startedFrom, onSave, onCancel, onBodyweight, intent = 'maintain', equipment }: ResultSheetProps) => {
+export const ResultSheet = ({ runsheet, history = [], allResults = history, trainingMaxes = {}, bodyweightKg, startedAt, initial, startedFrom, onSave, onCancel, onBodyweight, intent = 'maintain', equipment, suggest }: ResultSheetProps) => {
+  const suggesting = suggestOn(suggest, runsheet);
   const type = scoreType(runsheet);
   const steps = useMemo(() => exerciseSteps(runsheet), [runsheet]);
   // Made it / Missed only where a progression rule reads it: a rule on one block says nothing
@@ -85,14 +90,17 @@ export const ResultSheet = ({ runsheet, history = [], allResults = history, trai
       })
     )
   );
+  const allRows = [...Object.values(rows), ...extra];
+  const lifts = effortLifts(runsheet, allRows, suggest);
+  const rate = (key: string, value: number | undefined) => setRows(r => Object.fromEntries(Object.entries(r).map(([id, row]) => [id, ratedRows([row], key, value)[0]])));
   // A capped for-time stays capped, with its reps, until its score is changed by hand.
   const capped = !!initial?.capped && score === initial.score;
-  const result: SessionResult = { ...initial, runsheetId: runsheet.id ?? runsheet.title, title: runsheet.title, startedAt: initial?.startedAt ?? startedAt ?? new Date().toISOString(), endedAt: initial?.endedAt ?? new Date().toISOString(), score, scoreText: capped ? initial?.scoreText : score !== undefined ? fmtScore(type, score) : undefined, capped: capped || undefined, capReps: capped ? initial?.capReps : undefined, steps: [...Object.values(rows), ...extra], notes: notes || undefined, rpe, startedFrom };
+  const result: SessionResult = { ...initial, runsheetId: runsheet.id ?? runsheet.title, title: runsheet.title, startedAt: initial?.startedAt ?? startedAt ?? new Date().toISOString(), endedAt: initial?.endedAt ?? new Date().toISOString(), score, scoreText: capped ? initial?.scoreText : score !== undefined ? fmtScore(type, score) : undefined, capped: capped || undefined, capReps: capped ? initial?.capReps : undefined, steps: allRows, notes: notes || undefined, rpe, startedFrom };
   const exerciseName = (k: string) => ({ name: LIB[k]?.name ?? k, unit: LIB[k]?.unit });
   const celebration = celebrate(result, allResults, undefined, k => exerciseSteps(runsheet).find(s => s.exercise.key === k)?.exercise.unit ?? LIB[k]?.unit, runsheet);
   const next = useMemo(() => nextLoads(runsheet, result, history, trainingMaxes, equipment), [runsheet, result, history, trainingMaxes, equipment]);
   // Targets from history for what the programme rules do not move: the score, loads, reps.
-  const targets = useMemo(() => nextTime(runsheet, result, history, intent, next.map(n => n.exerciseKey), equipment), [runsheet, result, history, intent, next, equipment]);
+  const targets = useMemo(() => nextTime(runsheet, result, history, intent, next.map(n => n.exerciseKey), equipment, suggest), [runsheet, result, history, intent, next, equipment, suggest]);
   const blockName = (id: string) => runsheet.items.flatMap(i => (i.kind === 'block' && i.id === id ? [i.name] : []))[0];
   // The session was logged when the timer ended, so it is already in `history`: last time is the one before it.
   const previous = useMemo(() => [...history].filter(h => !initial?.id || h.id !== initial.id).sort((a, b) => b.startedAt.localeCompare(a.startedAt))[0], [history, initial?.id]);
@@ -111,6 +119,7 @@ export const ResultSheet = ({ runsheet, history = [], allResults = history, trai
         <CelebrationCard celebration={celebration} scoreType={type} exercise={exerciseName} blockName={blockName} onShare={() => setSharing(true)} />
         <SplitsCard result={result} last={celebration.last} runsheet={runsheet} exerciseName={k => steps.find(s => s.exercise.key === k)?.exercise.name} blockName={blockName} records={celebration.rounds} />
         <EffortRow value={rpe} onChange={setRpe} />
+        <LiftEffortCard lifts={lifts} rows={allRows} onRate={rate} />
         <SessionStats result={result} worked={workedFrom(result, runsheet, k => ({ name: LIB[k]?.name ?? k, group: LIB[k]?.group }))} history={history} bodyweightKg={bodyweightKg} />
         {onBodyweight && bodyweightKg === undefined && <BodyweightPrompt onSave={kg => onBodyweight(kg)} onSkip={() => onBodyweight(undefined)} />}
         {steps.map(s => {
@@ -157,7 +166,7 @@ export const ResultSheet = ({ runsheet, history = [], allResults = history, trai
             </div>
           );
         })}
-        {(next.length > 0 || targets.length > 0) && (
+        {suggesting && (next.length > 0 || targets.length > 0) && (
           <section aria-label="Next time" className="rounded-card border border-brand-line bg-brand-soft px-3 py-2">
             <div className="text-[11px] font-bold tracking-widest text-brand-ink uppercase">Next time</div>
             {next.map(n => (

@@ -5,10 +5,11 @@
  * max stays gone instead of coming back from the other device. A field neither side has stamped
  * (written before stamps existed) takes the server's value, else this device's.
  *
- * Name, avatar and units are the web's; the iPhone app writes them back untouched. Swift port:
+ * Name, avatar and units are the web's; the iPhone app writes them back untouched. `suggestions`
+ * (off / reps / weight / effort, `SuggestPrefs`) is written by both. Swift port:
  * `ios/TigerWorkouts/Cloud/PrefsMerge.swift`.
  */
-export const PREF_FIELDS = ['saved', 'trainingMaxes', 'bodyweightKg', 'equipment', 'name', 'avatar', 'units'] as const;
+export const PREF_FIELDS = ['saved', 'trainingMaxes', 'bodyweightKg', 'equipment', 'name', 'avatar', 'units', 'suggestions'] as const;
 export type PrefField = (typeof PREF_FIELDS)[number];
 export type PrefStamps = Partial<Record<PrefField, string>>;
 export type PrefValues = Partial<Record<PrefField, unknown>>;
@@ -55,7 +56,7 @@ export const mergePrefs = (local: PrefsSide, remote: PrefsSide): MergedPrefs => 
 export const stamp = () => new Date().toISOString();
 
 /** The prefs row as written: what else is on it kept, cleared fields written as null. Stamps of
- * fields this app does not know (the iPhone app's `suggestions`) are kept too, so they keep winning. */
+ * fields this app does not know (a newer build's) are kept too, so they keep winning. */
 export const prefsRow = (existing: Record<string, unknown>, merged: PrefsSide): Record<string, unknown> => {
   const out: Record<string, unknown> = { ...existing };
   for (const f of PREF_FIELDS) out[f] = merged.values[f] ?? null;

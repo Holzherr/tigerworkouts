@@ -8,6 +8,8 @@ import { Chip } from '@/shared/components/ui/chip';
 import { Sheet } from '@/shared/components/ui/sheet';
 import type { Avatar } from '@/features/cloud/sync';
 import { INTENTS, type Intent } from '@/features/runsheet/targets';
+import { PROGRESS_MODES, suggestEnabled, type SuggestPrefs } from '@/features/results/suggestions';
+import { Switch } from '@/shared/components/ui/switch';
 
 const EMOJIS = ['', '💪', '🏋️', '🏃', '🚴', '🧘', '🥊', '🎾', '⚽', '🏊', '🔥', '⚡', '🦁', '🐯', '🦊', '🐻'];
 const COLORS = ['#ff4d2e', '#f59e0b', '#a78bfa', '#38bdf8', '#34d399', '#fb7185', '#4ade80', '#e879f9'];
@@ -36,6 +38,9 @@ export interface SettingsSheetProps {
   /** How hard today's targets push. Maintain until changed. */
   intent?: Intent;
   onIntent?: (v: Intent) => void;
+  /** Whether to suggest progress, and by reps, weight or effort (synced with the iPhone app). */
+  suggest?: SuggestPrefs;
+  onSuggest?: (p: SuggestPrefs) => void;
   /** My equipment: what suggested loads snap to, and the plate calculator's plates. */
   equipment?: Equipment;
   onEquipment?: (e: Equipment | undefined) => void;
@@ -56,7 +61,9 @@ export const AvatarView = ({ name, avatar, size = 56 }: { name: string; avatar?:
  * to 256px and stored as a data URL), Invite someone, Sign out. Loads are in kg everywhere; the
  * Units setting did nothing and went on 27 Sep 2026.
  */
-export const SettingsSheet = ({ open, onOpenChange, name, avatar, email, onChange, onInvite, onSignOut, onDeleteAccount, volume, onVolume, defaultRest, onDefaultRest, intent = 'maintain', onIntent, equipment, onEquipment }: SettingsSheetProps) => {
+export const SettingsSheet = ({ open, onOpenChange, name, avatar, email, onChange, onInvite, onSignOut, onDeleteAccount, volume, onVolume, defaultRest, onDefaultRest, intent = 'maintain', onIntent, suggest, onSuggest, equipment, onEquipment }: SettingsSheetProps) => {
+  const suggesting = suggestEnabled(suggest);
+  const progressBy = suggest?.mode ?? 'reps';
   const file = useRef<HTMLInputElement>(null);
   const [kit, setKit] = useState(false);
   const [deleting, setDeleting] = useState<'ask' | 'busy' | null>(null);
@@ -117,7 +124,32 @@ export const SettingsSheet = ({ open, onOpenChange, name, avatar, email, onChang
           <Stepper aria-label="Default rest" value={defaultRest ?? 30} min={5} max={600} step={15} onChange={onDefaultRest} />
         </div>
       )}
-      {onIntent && (
+      {onSuggest && (
+        <div>
+          <div className="flex items-center justify-between gap-3">
+            <span className="text-[14px]">Suggest progress</span>
+            <Switch aria-label="Suggest progress" checked={suggesting} onChange={on => onSuggest({ ...suggest, off: on ? undefined : true, asked: true })} />
+          </div>
+          {suggesting ? (
+            <>
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <span className="text-[14px]">Progress by</span>
+                <div className="flex gap-1" role="radiogroup" aria-label="Progress by">
+                  {PROGRESS_MODES.map(m => (
+                    <Chip key={m.id} role="radio" aria-checked={progressBy === m.id} variant={progressBy === m.id ? 'on' : 'outline'} onClick={() => onSuggest({ ...suggest, mode: m.id, asked: true })}>
+                      {m.label}
+                    </Chip>
+                  ))}
+                </div>
+              </div>
+              <div className="mt-1 text-[12px] text-muted">{PROGRESS_MODES.find(m => m.id === progressBy)?.note} An exercise's own page can progress it another way, a workout's ⋯ menu can turn suggestions off for it.</div>
+            </>
+          ) : (
+            <div className="text-[12px] text-muted">No Today targets, no target on the timer, no Next time and no stall cards.</div>
+          )}
+        </div>
+      )}
+      {onIntent && suggesting && (
         <div>
           <div className="flex flex-wrap items-center justify-between gap-2">
             <span className="text-[14px]">Suggestions</span>

@@ -65,7 +65,9 @@ import { ExerciseListScreen } from '@/features/results/components/exercise-list-
 import { FULL_LIBRARY as LIB } from '@/features/workouts/imported';
 import { setTargets, timerTarget, today as todayFor, type Intent } from '@/features/runsheet/targets';
 import { exerciseStall, workoutStall, type Stall } from '@/features/results/stall';
-import { dismissStall, getDismissed, getIntent, setIntent as storeIntent } from '@/features/results/suggestions';
+import { dismissStall, getDismissed, getIntent, setIntent as storeIntent, shouldAsk, suggestEnabled, suggestOn, withExercise, withWorkout } from '@/features/results/suggestions';
+import { SuggestSheet } from '@/features/results/components/suggest-sheet';
+import { TimerExtrasContext } from '@/features/timer/timer-extras';
 import { alternatives } from '@/features/exercises/alternatives';
 import { myAssignments, type MyAssignment } from '@/features/cloud/coaching';
 import { doneBy } from '@/features/coaching/rollup';
@@ -265,7 +267,10 @@ export default function App() {
   const [intent, setIntentState] = useState<Intent>(getIntent);
   const [dismissed, setDismissed] = useState<string[]>(getDismissed);
   const dismiss = (s: Stall) => setDismissed(dismissStall(s.id));
-  const live = (s: Stall | undefined) => (s && !dismissed.includes(s.id) ? s : undefined);
+  // No stall cards while suggestions are off.
+  const live = (s: Stall | undefined) => (s && suggestEnabled(st.suggestions) && !dismissed.includes(s.id) ? s : undefined);
+  // The setup question, asked before the first workout with a loaded lift starts; the id is the workout waiting to start.
+  const [askFor, setAskFor] = useState<string | null>(null);
   // A stall for one exercise. The swap is the first alternative the load carries over to, so a
   // loaded lift is not offered a bodyweight move; failing that, the first alternative.
   const stallOf = (key: string) => {
@@ -344,7 +349,7 @@ export default function App() {
     const r = once ?? pendingEdit ?? base;
     const versions = versionsOf(st.results, base);
     const done = st.results.some(ofWorkout(base));
-    const stall = live(workoutStall(r, st.results, new Date()));
+    const stall = suggestOn(st.suggestions, r) ? live(workoutStall(r, st.results, new Date())) : undefined;
     // Saves it now: yours in place, anyone else's as your copy, whose page this then is.
     const keep = (next: Runsheet, stay = true): string => {
       setDrafted(null);
@@ -367,13 +372,16 @@ export default function App() {
       if (!kept) return (setHeld(null), id);
       return keep(kept, stay);
     };
+    const startRun = () => { const to = askFor ?? id; setAskFor(null); go(`/do/${encodeURIComponent(to)}`); };
     return full(
+      <>
+        <SuggestSheet mode="ask" open={askFor !== null} onOpenChange={o => !o && startRun()} prefs={st.suggestions} onChange={p => (act.setSuggestions(p), startRun())} />
         <WorkoutPreviewScreen
           // A page per workout, so the Edit question does not carry over to the next one; your copy
           // keys as its original, so the first edit (which makes it) keeps the page and its sheet open.
           key={base.copyOf ?? id}
           runsheet={r}
-          today={todayFor(resolveRefs(r, lookup), st.results, intent, st.equipment)}
+          today={todayFor(resolveRefs(r, lookup), st.results, intent, st.equipment, st.suggestions)}
           stall={stall}
           onDismissStall={stall ? () => dismiss(stall) : undefined}
           history={st.results.filter(ofWorkout(r))}
@@ -388,7 +396,8 @@ export default function App() {
           mergeTargets={own ? st.workouts.filter(w => w.id !== id).sort((a, b) => Number(b.title === base.title) - Number(a.title === base.title)).map(w => ({ id: w.id!, title: w.title, minutes: runsheetMinutes(w) })) : undefined}
           onMergeInto={own ? into => (act.mergeWorkout(id, into), say('Merged: kept as your version'), goReplace(`/w/${encodeURIComponent(into)}`)) : undefined}
           onBack={() => (setDrafted(null), go('/discover'))}
-          onStart={() => (unlockAudio(), drafted?.for !== id && setDrafted(null), go(`/do/${encodeURIComponent(once ? id : settle(false))}`))}
+          onStart={() => { unlockAudio(); if (drafted?.for !== id) setDrafted(null); const to = once ? id : settle(false); if (shouldAsk(st.suggestions, r)) setAskFor(to); else go(`/do/${encodeURIComponent(to)}`); }}
+          suggestions={{ on: suggestOn(st.suggestions, base), enabled: suggestEnabled(st.suggestions), onChange: on => act.setSuggestions(withWorkout(st.suggestions, base, on)) }}
           onFollowAlong={r.video ? () => go(`/follow/${encodeURIComponent(id)}`) : undefined}
           onLogOnly={() => go(`/result/${encodeURIComponent(once ? id : settle(false))}`)}
           onSave={() => act.toggleSaved(id)}
@@ -399,6 +408,7 @@ export default function App() {
           appHref={appLink(`w/${encodeURIComponent(wid(r))}`)}
           onDelete={st.workouts.some(w => w.id === wid(r)) ? () => { act.deleteWorkout(wid(r)); if (st.saved.includes(wid(r))) act.toggleSaved(wid(r)); say('Workout deleted'); go('/discover/saved'); } : undefined}
         />
+      </>
     );
   }
   if (route.name === 'creator') {
@@ -481,7 +491,7 @@ export default function App() {
     // Refs inlined, last time's loads carried in, a program's rules applied to them (+2.5 kg after
     // a clean session, the deload after repeated misses), then % of a training max and × bodyweight
     // worked out, so the timer shows and logs a weight for every loaded set.
-    const seeded = (x: Runsheet) => withLastUsed(x, st.results, setTargets(x, st.results, intent, st.equipment));
+    const seeded = (x: Runsheet) => withLastUsed(x, st.results, setTargets(x, st.results, intent, st.equipment, st.suggestions));
     const prepare = (x: Runsheet) => resolveLoads(progressed(seeded(resolveRefs(x, lookup)), st.results, st.trainingMaxes, st.equipment), st.trainingMaxes, st.bodyweightKg, st.equipment);
     const run = prepare(r);
     // Run with a "Just this time" change or a version: what it ran is kept with the session. Both
@@ -514,7 +524,7 @@ export default function App() {
   if (route.name === 'exercise') {
     const ex = library[route.id] ?? { key: route.id, name: route.id, unit: '', step: 1 };
     const stall = stallOf(route.id);
-    return full(<ExerciseHistoryScreen key={route.id} exercise={ex} group={LIB[route.id]?.group ?? library[route.id]?.group} results={st.results} onBack={() => back('/history/exercises')} onSession={id => go(`/s/${encodeURIComponent(id)}`)} stall={stall} onDismissStall={stall ? () => dismiss(stall) : undefined} onExercise={k => go(exerciseLink(k))} />);
+    return full(<ExerciseHistoryScreen key={route.id} exercise={ex} group={LIB[route.id]?.group ?? library[route.id]?.group} results={st.results} onBack={() => back('/history/exercises')} onSession={id => go(`/s/${encodeURIComponent(id)}`)} stall={stall} onDismissStall={stall ? () => dismiss(stall) : undefined} onExercise={k => go(exerciseLink(k))} progress={suggestEnabled(st.suggestions) && ex.unit && shortUnit(ex.unit) !== 'kph' && !measureOf(ex.unit) ? { own: st.suggestions?.exercises?.[ex.key], account: st.suggestions?.mode ?? 'reps', onChange: m => act.setSuggestions(withExercise(st.suggestions, ex.key, m)) } : undefined} />);
   }
   if (route.name === 'result') {
     const r = draftOf(route.id) ?? byId.get(route.id);
@@ -532,6 +542,7 @@ export default function App() {
           initial={logged ?? undefined}
           startedFrom={from ?? logged?.startedFrom}
           intent={intent}
+          suggest={st.suggestions}
           equipment={st.equipment}
           onBodyweight={st.bodyweightKg === undefined && !st.bodyweightAsked ? kg => (kg === undefined ? act.skipBodyweight() : act.setBodyweight(kg)) : undefined}
           onCancel={() => {
@@ -679,7 +690,7 @@ export default function App() {
             </Button>
           )}
         </MeScreen>
-        <SettingsSheet open={settingsOpen} onOpenChange={setSettingsOpen} name={st.name} avatar={st.avatar} email={cloud.user?.email ?? undefined} volume={volume} onVolume={v => { setVolume(v); setVol(v); }} defaultRest={defaultRest} onDefaultRest={v => { setDefaultRest(v); setRest(getDefaultRest()); }} intent={intent} onIntent={v => { storeIntent(v); setIntentState(v); }} equipment={st.equipment} onEquipment={act.setEquipment} onChange={act.setProfile} onInvite={invite} onSignOut={cloud.user ? out : undefined} onDeleteAccount={cloud.user ? async clear => {
+        <SettingsSheet open={settingsOpen} onOpenChange={setSettingsOpen} name={st.name} avatar={st.avatar} email={cloud.user?.email ?? undefined} volume={volume} onVolume={v => { setVolume(v); setVol(v); }} defaultRest={defaultRest} onDefaultRest={v => { setDefaultRest(v); setRest(getDefaultRest()); }} intent={intent} onIntent={v => { storeIntent(v); setIntentState(v); }} suggest={st.suggestions} onSuggest={act.setSuggestions} equipment={st.equipment} onEquipment={act.setEquipment} onChange={act.setProfile} onInvite={invite} onSignOut={cloud.user ? out : undefined} onDeleteAccount={cloud.user ? async clear => {
             const done = await deleteAccount();
             if (!done.data) return `Could not delete: ${done.error ?? 'try again'}`;
             if (clear) act.clearDevice();
@@ -841,7 +852,14 @@ const RunSession = ({ runsheet, results, intent, equipment, library, origin: sta
   const [rival] = useState(() => lastTimed(results, lineage(runsheet)));
   const [muted, setMute] = useState(getMuted);
   // Today's targets, read once from the history before this session; the pill follows the timer.
-  const [aims] = useState(() => todayFor(runsheet, results, intent, equipment));
+  // Read from the history before this session, and again when the suggestions choice changes (⋯ menu).
+  const [before] = useState(results);
+  // The suggestions choice comes from the store, not through the route's props: it can change mid-session.
+  const suggest = useAppState().suggestions;
+  const setSuggest = useActions().setSuggestions;
+  const aims = useMemo(() => todayFor(runsheet, before, intent, equipment, suggest), [runsheet, before, intent, equipment, suggest]);
+  const [suggestOpen, setSuggestOpen] = useState(false);
+  const timerExtras = useMemo(() => ({ onSuggestions: () => setSuggestOpen(true) }), []);
   const atIdx = Runner.current(state)?.kind === 'work' ? state.i : state.i + 1;
   const at = state.slots[atIdx];
   // Which working set this is: warm-ups before it do not count.
@@ -934,10 +952,13 @@ const RunSession = ({ runsheet, results, intent, equipment, library, origin: sta
           </div>
         </div>
       )}
+      <SuggestSheet mode="change" open={suggestOpen} onOpenChange={setSuggestOpen} prefs={suggest} onChange={p => (setSuggest(p), setSuggestOpen(false))} />
+      <TimerExtrasContext.Provider value={timerExtras}>
       {/* The run lives here, above the screen: if the screen crashes it is put up again and the run carries on. */}
       <Contain retry name="timer screen">
         <TimerScreen runsheet={runsheet} state={state} now={now} onDone={act.done} onSkip={skip} onBack={act.back} onPause={act.pause} onResume={act.resume} onAdjust={act.adjust} onAdjustIncline={act.adjustIncline} onSetReps={act.setReps} onSetAmount={act.setAmount} onDrop={drop} onStartBlock={startBlock} onAdjustStep={act.adjustStep} sets={{ adjust: act.adjustAt, setReps: act.setRepsAt, setAmount: act.setAmountAt, complete: act.completeSet, reopen: act.reopenSet, lastFor: (step, round) => lastSessionSet(results, step, round, runsheet), fill: act.fillSet, setType: act.setTypeAt }} onAdjustRest={act.extendRest} lastFor={step => lastSessionSet(results, step, Runner.current(state)?.round ?? 0, runsheet)} onFill={act.fillSet} ghost={pace?.text} goal={goal} muted={muted} onToggleMute={() => { setMuted(!muted); setMute(!muted); }} equipment={equipment} alternativesFor={(step, target) => alternatives(step.exercise.key, target, library, 6, equipment)} onSwap={act.swap} prs={prs} onEndBlock={endBlock} onRoundDone={act.roundDone} onExtraReps={act.setExtraReps} onFinish={() => { const res = log(state.phase === 'done' ? state : Runner.finish(state, Date.now())); Runner.clearPersisted(); onFinish(res); }} onExit={() => (act.discard(), onExit())} />
       </Contain>
+      </TimerExtrasContext.Provider>
     </div>
     </div>
   );
