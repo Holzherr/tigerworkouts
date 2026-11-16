@@ -1,7 +1,11 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { ExerciseRef, Runsheet, SetType } from '@/features/runsheet/model';
 import type { SetResult } from '@/features/runsheet/progression';
+import { reportWrite } from '@/app/store';
 import * as R from './runner';
+
+// A failed write of the kept run is said by the storage notice and retried with the store.
+R.onKeptWrite((error, retry) => reportWrite('tiger:run', error, retry));
 
 let actx: AudioContext | null = null;
 type WakeLock = { release: () => Promise<void> };

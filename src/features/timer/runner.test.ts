@@ -937,6 +937,26 @@ describe('a run kept on the device', () => {
     expect(R.loadPersisted('k')!.sheet).toBeUndefined();
     R.clearPersisted();
   });
+  it('a kept run that cannot be read is set aside under its own key, and said once', () => {
+    const run = JSON.stringify({ ...oneSetDone(), savedAt: Date.now() });
+    for (const raw of ['{"phase":"run', '{"phase":"running","title":"T"}', run.replace('"slots":[', '"slots":[null,'), run.replace(/"i":\d+/, '"i":99')]) {
+      localStorage.setItem('tiger:run', raw);
+      R.dismissUnreadable();
+      expect(R.loadPersisted()).toBeNull();
+      expect(R.keptUnreadable()).toBe(true);
+      expect(localStorage.getItem('tiger:run')).toBeNull();
+      expect(localStorage.getItem(R.UNREADABLE_KEY)).toBe(raw);
+      // Gone from the run key: the next read finds nothing, not the same broken copy.
+      R.dismissUnreadable();
+      expect(R.loadPersisted()).toBeNull();
+      expect(R.keptUnreadable()).toBe(false);
+    }
+    localStorage.setItem('tiger:run', run);
+    expect(R.loadPersisted('i')).not.toBeNull();
+    expect(R.keptUnreadable()).toBe(false);
+    R.clearPersisted();
+    localStorage.removeItem(R.UNREADABLE_KEY);
+  });
   it('Start asks about a kept run: its own to resume, another workout\'s with work done to save or drop', () => {
     const now = Date.now();
     const kept = { state: oneSetDone(), savedAt: now - 60000 };

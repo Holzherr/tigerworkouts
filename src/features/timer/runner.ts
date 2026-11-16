@@ -1092,8 +1092,11 @@ const KEY = 'tiger:run';
 export const persist = (s: RunState, sheet?: Runsheet) => {
   try {
     localStorage.setItem(KEY, JSON.stringify({ ...s, savedAt: Date.now(), ...(sheet ? { sheet } : {}) }));
-  } catch {
-    /* ignore */
+    keptWrite(undefined);
+  } catch (e) {
+    // The storage is full or cannot be written: said, and this same copy tried again until a
+    // newer one, or a clear, replaces it.
+    keptWrite(e, () => persist(s, sheet));
   }
 };
 export const clearPersisted = () => {
@@ -1102,6 +1105,44 @@ export const clearPersisted = () => {
   } catch {
     /* ignore */
   }
+  keptWrite(undefined);
+};
+/** Told the outcome of every write of the kept run: `error` undefined once it is on the device or
+ * cleared, else what stopped it and how to try again. The app hands it to its storage notice. */
+let keptWrite: (error: unknown, retry?: () => void) => void = () => {};
+export const onKeptWrite = (report: typeof keptWrite) => {
+  keptWrite = report;
+};
+/** Where a kept run that cannot be read is set aside, so it can still be looked at. */
+export const UNREADABLE_KEY = 'tiger:run-unreadable';
+const isObj = (v: unknown): v is Record<string, unknown> => typeof v === 'object' && v !== null && !Array.isArray(v);
+const num = (v: unknown) => typeof v === 'number' && Number.isFinite(v);
+const PHASES: readonly unknown[] = ['ready', 'lead', 'running', 'paused', 'done'];
+/** What the timer and home read from a kept run without checking: a run without it would crash them. */
+const readable = (r: unknown): boolean =>
+  isObj(r) &&
+  typeof r.runsheetId === 'string' &&
+  typeof r.title === 'string' &&
+  PHASES.includes(r.phase) &&
+  Array.isArray(r.slots) &&
+  r.slots.length > 0 &&
+  r.slots.every(sl => isObj(sl) && typeof sl.id === 'string' && (sl.kind === 'work' || sl.kind === 'rest') && isObj(sl.step)) &&
+  Number.isInteger(r.i) &&
+  (r.i as number) >= 0 &&
+  (r.i as number) <= r.slots.length &&
+  [r.startedAt, r.slotStartedAt, r.pausedMs, r.leadSec].every(num) &&
+  (r.phase === 'done' || num(r.savedAt)) &&
+  isObj(r.actuals) &&
+  Object.values(r.actuals).every(isObj) &&
+  Array.isArray(r.dropped) &&
+  isObj(r.blockStart) &&
+  isObj(r.blockDone) &&
+  (r.sheet === undefined || (isObj(r.sheet) && Array.isArray(r.sheet.items)));
+let unreadable = false;
+/** True once a kept run could not be read and was set aside: home says the session could not be restored. */
+export const keptUnreadable = () => unreadable;
+export const dismissUnreadable = () => {
+  unreadable = false;
 };
 /** A set of work was done: a rest run out says nothing. */
 export const didWork = (s: RunState) => s.slots.some(sl => sl.kind === 'work' && s.actuals[sl.id]?.doneAt !== undefined);
@@ -1112,9 +1153,33 @@ export type Kept = { state: RunState; savedAt: number; /** See `persist`. */ she
 /** The run kept on this device, if it is not done and under six hours old — or older with work done,
  * which can still be saved — and, given a workout id, only if it is that workout's. */
 export const loadPersisted = (runsheetId?: string): Kept | null => {
+  let raw: string | null;
   try {
-    const r = JSON.parse(localStorage.getItem(KEY) || 'null');
-    if (!r || r.phase === 'done') return null;
+    raw = localStorage.getItem(KEY);
+  } catch {
+    return null;
+  }
+  if (raw === null) return null;
+  let r;
+  try {
+    r = JSON.parse(raw);
+  } catch {
+    r = undefined;
+  }
+  if (!readable(r)) {
+    // Moved out of the way, not deleted: the timer and home load, and the copy can still be looked at.
+    console.error('[tiger] the session kept on this device could not be read; kept under', UNREADABLE_KEY);
+    try {
+      localStorage.setItem(UNREADABLE_KEY, raw);
+    } catch {
+      /* no room for a second copy */
+    }
+    clearPersisted();
+    unreadable = true;
+    return null;
+  }
+  try {
+    if (r.phase === 'done') return null;
     const { savedAt, sheet, ...state } = r;
     if (!(Date.now() - savedAt < KEPT_MS) && !didWork(state as RunState)) return null;
     if (runsheetId !== undefined && r.runsheetId !== runsheetId) return null;
