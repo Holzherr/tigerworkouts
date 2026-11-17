@@ -25,7 +25,7 @@ const attempt = async (fn: () => Promise<unknown>) => {
   }
 };
 
-export const CoachRoute = ({ signedIn, signIn, onOpenClient, onHowItWorks, onBack, say }: { signedIn: boolean; signIn: React.ReactNode; onOpenClient: (id: string) => void; onHowItWorks: () => void; onBack: () => void; say: (m: string) => void }) => {
+export const CoachRoute = ({ signedIn, signIn, myName, onSetName, onOpenClient, onHowItWorks, onBack, say }: { signedIn: boolean; signIn: React.ReactNode; myName?: string; onSetName?: (name: string) => Promise<void> | void; onOpenClient: (id: string) => void; onHowItWorks: () => void; onBack: () => void; say: (m: string) => void }) => {
   const [clients, setClients] = useState<ClientSummary[] | null>(null);
   const [invites, setInvites] = useState<C.Invite[]>([]);
   const [notice, setNotice] = useState<string | undefined>();
@@ -56,6 +56,8 @@ export const CoachRoute = ({ signedIn, signIn, onOpenClient, onHowItWorks, onBac
       clients={clients}
       invites={invites}
       notice={notice}
+      myName={myName}
+      onSetName={onSetName}
       onInvite={notice ? undefined : async label => {
         try {
           const i = await C.createInvite(label);
@@ -79,6 +81,11 @@ export interface ClientRouteProps {
   clientId: string;
   me: string;
   workouts: Runsheet[];
+  /** Saved workouts of others, and the catalogue: sent as the coach's copy (U5). */
+  saved?: Runsheet[];
+  catalogue?: Runsheet[];
+  /** The id of the coach's own copy of a workout they do not own, made if there is none yet. */
+  ownCopy: (r: Runsheet) => string;
   lookup: (id: string) => Runsheet | undefined;
   exercise: (key: string) => { name: string; unit: string };
   onBack: () => void;
@@ -88,7 +95,7 @@ export interface ClientRouteProps {
   say: (m: string) => void;
 }
 
-export const ClientRoute = ({ clientId, me, workouts, lookup, exercise, onBack, onNewWorkout, syncNow, say }: ClientRouteProps) => {
+export const ClientRoute = ({ clientId, me, workouts, saved, catalogue, ownCopy, lookup, exercise, onBack, onNewWorkout, syncNow, say }: ClientRouteProps) => {
   const [client, setClient] = useState<{ id: string; name: string; since?: string }>({ id: clientId, name: 'Client' });
   const [assignments, setAssignments] = useState<C.Assignment[] | null>(null);
   const [sessions, setSessions] = useState<SessionResult[] | null>(null);
@@ -119,13 +126,16 @@ export const ClientRoute = ({ clientId, me, workouts, lookup, exercise, onBack, 
       client={client}
       me={me}
       workouts={workouts}
+      saved={saved}
+      catalogue={catalogue}
       assignments={assignments}
       sessions={sessions}
       notes={notes}
       notice={notice}
       lookup={lookup}
       exercise={exercise}
-      onAssign={async (workoutId, note) => {
+      onAssign={async (workout, note) => {
+        const workoutId = workouts.some(w => w.id === workout.id) ? workout.id! : ownCopy(workout);
         await syncNow();
         try {
           const a = await C.assign(clientId, workoutId, note);
@@ -153,7 +163,7 @@ export const ClientRoute = ({ clientId, me, workouts, lookup, exercise, onBack, 
   );
 };
 
-export const JoinRoute = ({ code, signedIn, signIn, onContinue, onAccepted }: { code: string; signedIn: boolean; signIn: React.ReactNode; onContinue: () => void; onAccepted: () => void }) => {
+export const JoinRoute = ({ code, signedIn, signIn, myName, onSetName, onContinue, onAccepted }: { code: string; signedIn: boolean; signIn: React.ReactNode; myName?: string; onSetName?: (name: string) => Promise<void> | void; onContinue: () => void; onAccepted: () => void }) => {
   const [info, setInfo] = useState<C.InviteInfo | null | undefined>();
   const [notice, setNotice] = useState<string | undefined>();
   const [tries, setTries] = useState(0);
@@ -174,7 +184,9 @@ export const JoinRoute = ({ code, signedIn, signIn, onContinue, onAccepted }: { 
       signedIn={signedIn}
       signIn={signIn}
       appHref={`tigerworkouts://join/${encodeURIComponent(code)}`}
-      onAccept={async () => {
+      askName={!!onSetName && !myName?.trim()}
+      onAccept={async name => {
+        if (name) await onSetName?.(name);
         const e = await attempt(() => C.acceptInvite(code));
         if (!e) onAccepted();
         return e;
