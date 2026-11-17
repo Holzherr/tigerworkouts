@@ -46,15 +46,15 @@ struct PlateSheet: View {
     var body: some View {
         let p = Plates.plates(for: load, equipment)
         VStack(alignment: .leading, spacing: 14) {
-            Text("\(Format.number(load)) kg on the bar").font(.title3.weight(.heavy))
+            Text("\(Units.weight(load)) on the bar").font(.title3.weight(.heavy))
             HStack(spacing: 3) {
                 Capsule().fill(Brand.faint).frame(width: 36, height: 12)
                 RoundedRectangle(cornerRadius: 2).fill(Brand.muted).frame(width: 8, height: 28)
                 ForEach(Array(p.perSide.enumerated()), id: \.offset) { _, kg in
-                    Text(Plates.num(kg))
+                    Text(Units.kitNumber(kg))
                         .font(.system(size: 11, weight: .heavy))
                         .foregroundStyle(.white)
-                        .frame(width: 28, height: 28 + min(1, kg / 25) * 72)
+                        .frame(width: 28, height: 28 + min(1, kg / Plates.biggestPlate) * 72)
                         .background(Brand.ink, in: RoundedRectangle(cornerRadius: 6, style: .continuous))
                 }
                 Capsule().fill(Brand.faint).frame(height: 12).frame(minWidth: 24)
@@ -67,7 +67,7 @@ struct PlateSheet: View {
             Text(Plates.text(p)).font(.headline).foregroundStyle(Brand.ink)
                 .accessibilityIdentifier("plate-text")
             if !p.exact {
-                Text("Your plates cannot make \(Format.number(load)) kg. Closest: \(Format.number(p.total)) kg.")
+                Text("Your plates cannot make \(Units.weight(load)). Closest: \(Units.weight(p.total)).")
                     .font(.footnote).foregroundStyle(Color(hex: 0xB45309))
             }
             if (equipment?.plates ?? []).isEmpty {
@@ -100,7 +100,7 @@ struct PlatesButton: View {
                     .contentShape(Rectangle())
             }
             .buttonStyle(.borderless)
-            .accessibilityLabel("Plates for \(Format.number(load)) kg")
+            .accessibilityLabel("Plates for \(Units.weight(load))")
             .sheet(isPresented: $open) { PlateSheet(load: load, equipment: equipment) }
         }
     }
@@ -124,27 +124,33 @@ struct EquipmentView: View {
     var body: some View {
         Form {
             Section {
-                Stepper(value: Binding(get: { e.barKg ?? Plates.defaultBarKg }, set: { v in set { $0.barKg = v } }), in: 0...50, step: 2.5) {
-                    LabeledContent("Bar", value: "\(Format.number(e.barKg ?? Plates.defaultBarKg)) kg")
+                // In lb: 5 lb steps and lb plates, kept as kg (U11).
+                let bar = e.barKg ?? Plates.defaultBarKg
+                Stepper {
+                    LabeledContent("Bar", value: Units.weight(bar))
+                } onIncrement: {
+                    set { $0.barKg = min(Units.lb ? Units.toKg(110) : 50, Units.stepped(bar, by: 1, step: 2.5, unit: "kg")) }
+                } onDecrement: {
+                    set { $0.barKg = Units.stepped(bar, by: -1, step: 2.5, unit: "kg") }
                 }
-                ForEach(Plates.plateSizes, id: \.self) { kg in
+                ForEach(Self.sizes(Units.lb ? Units.lbPlateSizes.map(Units.toKg) : Plates.plateSizes, owned: (e.plates ?? []).map(\.kg)), id: \.self) { kg in
                     let count = e.plates?.first(where: { $0.kg == kg })?.count ?? 0
                     Stepper(value: Binding(get: { count }, set: { n in set { eq in
                         var plates = (eq.plates ?? []).filter { $0.kg != kg }
                         if n > 0 { plates.append(PlateCount(kg: kg, count: n)) }
                         eq.plates = plates.sorted { $0.kg > $1.kg }
                     } }), in: 0...20, step: 2) {
-                        LabeledContent("\(Plates.num(kg)) kg plates", value: "\(count)")
+                        LabeledContent("\(Units.kitNumber(kg)) \(Units.word()) plates", value: "\(count)")
                     }
-                    .accessibilityIdentifier("plates-\(Plates.num(kg))")
+                    .accessibilityIdentifier("plates-\(Units.kitNumber(kg))")
                 }
             } header: {
                 Text("Barbell")
             } footer: {
-                Text((e.plates ?? []).isEmpty ? "No plates set: bar loads round to 2.5 kg." : "Bar loads snap to what these plates make. Count plates singly: a pair is 2.")
+                Text((e.plates ?? []).isEmpty ? "No plates set: bar loads round to \(Units.lb ? "5 lb" : "2.5 kg")." : "Bar loads snap to what these plates make. Count plates singly: a pair is 2.")
             }
             Section {
-                chips(Plates.dumbbellSizes, owned: e.dumbbells ?? []) { kg in set { $0.dumbbells = toggle($0.dumbbells ?? [], kg) } }
+                chips(Self.sizes(Units.lb ? Units.lbDumbbellSizes.map(Units.toKg) : Plates.dumbbellSizes, owned: e.dumbbells ?? []), owned: e.dumbbells ?? []) { kg in set { $0.dumbbells = toggle($0.dumbbells ?? [], kg) } }
             } header: {
                 Text("Dumbbells")
             } footer: {
@@ -152,11 +158,11 @@ struct EquipmentView: View {
             }
             Section {
                 let bells = (e.kettlebells ?? []).isEmpty ? Plates.defaultKettlebells : e.kettlebells!
-                chips(Plates.kettlebellSizes, owned: bells) { kg in set { $0.kettlebells = toggle(bells, kg) } }
+                chips(Self.sizes(Units.lb ? Units.lbKettlebellSizes.map(Units.toKg) : Plates.kettlebellSizes, owned: bells), owned: bells) { kg in set { $0.kettlebells = toggle(bells, kg) } }
             } header: {
                 Text("Kettlebells")
             } footer: {
-                Text((e.kettlebells ?? []).isEmpty ? "Not set: 4 to 48 kg in 4 kg steps." : "Tap the bells you have.")
+                Text((e.kettlebells ?? []).isEmpty ? (Units.lb ? "Not set: 10 to 106 lb, a gym's usual run." : "Not set: 4 to 48 kg in 4 kg steps.") : "Tap the bells you have.")
             }
         }
         .navigationTitle("My equipment")
@@ -179,6 +185,13 @@ struct EquipmentView: View {
         }
     }
 
+    /// The sizes offered, with any you own that the list lacks (kg plates set before switching to lb).
+    static func sizes(_ offered: [Double], owned: [Double]) -> [Double] {
+        let extra = owned.filter { o in !offered.contains { abs($0 - o) < 0.001 } }
+        let all = offered + extra
+        return offered.first.map { first in first > (offered.last ?? first) ? all.sorted(by: >) : all.sorted() } ?? all
+    }
+
     private func toggle(_ list: [Double], _ kg: Double) -> [Double] {
         list.contains(kg) ? list.filter { $0 != kg } : (list + [kg]).sorted()
     }
@@ -188,7 +201,7 @@ struct EquipmentView: View {
             ForEach(sizes, id: \.self) { kg in
                 let on = owned.contains(kg)
                 Button { tap(kg) } label: {
-                    Text(Plates.num(kg))
+                    Text(Units.kitNumber(kg))
                         .font(.subheadline.weight(.semibold))
                         .frame(maxWidth: .infinity, minHeight: 34)
                         .foregroundStyle(on ? .white : Brand.ink)
@@ -241,8 +254,15 @@ struct TrainingMaxesView: View {
             Section {
                 ForEach(exercises, id: \.key) { ex in
                     let tm = store.trainingMaxes[ex.key]
-                    Stepper(value: Binding(get: { tm ?? 0 }, set: { v in Task { await store.setTrainingMax(ex.key, v > 0 ? v : nil) } }), in: 0...500, step: ex.step > 0 ? ex.step : 2.5) {
-                        LabeledContent(ex.name, value: tm.map { "\(Format.number($0)) kg" } ?? "not set")
+                    let step = ex.step > 0 ? ex.step : 2.5
+                    Stepper {
+                        LabeledContent(ex.name, value: tm.map { Units.weight($0) } ?? "not set")
+                    } onIncrement: {
+                        let v = min(500, Units.stepped(tm ?? 0, by: 1, step: step, unit: "kg"))
+                        Task { await store.setTrainingMax(ex.key, v) }
+                    } onDecrement: {
+                        let v = Units.stepped(tm ?? 0, by: -1, step: step, unit: "kg")
+                        Task { await store.setTrainingMax(ex.key, v > 0 ? v : nil) }
                     }
                     .accessibilityIdentifier("tm-\(ex.key)")
                 }
@@ -257,8 +277,8 @@ struct TrainingMaxesView: View {
             }
             if needsBodyweight {
                 Section {
-                    Stepper(value: Binding(get: { store.bodyweightKg ?? 70 }, set: { v in Task { await store.setBodyweight(v) } }), in: 30...200, step: 0.5) {
-                        LabeledContent("Bodyweight", value: store.bodyweightKg.map { "\(Format.number($0)) kg" } ?? "not set")
+                    BodyweightStepper(kg: store.bodyweightKg ?? 70, range: 30...200) { v in Task { await store.setBodyweight(v) } } label: {
+                        LabeledContent("Bodyweight", value: store.bodyweightKg.map { Units.weight($0) } ?? "not set")
                     }
                 } footer: {
                     Text("For loads written as × bodyweight. Apple Health fills it when it is on.")

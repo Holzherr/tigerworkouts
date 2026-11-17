@@ -26,9 +26,11 @@ import { appleFetch, isApplePath, type AppleEnv } from './apple';
 import { allow, clientIp, CODE_TRIES, type LimitEnv } from './limits';
 import { handoffFetch, isHandoffPath, type HandoffEnv } from './handoff';
 import { aasaResponse, isAasaPath } from './links';
+import { isPushPath, pushFetch, type PushEnv } from './push';
+import { healthFetch, isHealthPath, type HealthEnv } from './health';
 
 /** BotEnv: the Instagram bot's vars and secrets (instagram/routes.ts, specs/instagram-bot.md). */
-export interface Env extends BotEnv, AppleEnv, LimitEnv, HandoffEnv {
+export interface Env extends BotEnv, AppleEnv, LimitEnv, HandoffEnv, PushEnv, HealthEnv {
   OAUTH_KV: KVNamespace;
   OAUTH_PROVIDER: OAuthHelpers;
   /** Comma-separated Supabase user ids allowed to connect. Empty = open to every account. */
@@ -312,6 +314,10 @@ export default {
     if (isHandoffPath(new URL(request.url).pathname)) return handoffFetch(request, env);
     // Universal links: tigerworkouts.com routes this one path here (wrangler.jsonc).
     if (isAasaPath(new URL(request.url).pathname)) return aasaResponse();
+    // Coaching pushes, posted by the database with a shared secret (src/push.ts).
+    if (isPushPath(new URL(request.url).pathname)) return pushFetch(request, env);
+    // The apps' anonymous sync-health ping: no sign-in, nothing that identifies anyone.
+    if (isHealthPath(new URL(request.url).pathname)) return healthFetch(request, env);
     return getProvider(env, new URL(request.url).origin).fetch(request, env, ctx);
   },
 } satisfies ExportedHandler<Env>;

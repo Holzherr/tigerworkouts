@@ -17,6 +17,8 @@ struct WorkoutDetailView: View {
     @State private var editing: ExerciseStep?
     @State private var changingAmount: ExerciseStep?
     @State private var naming = false
+    /// ⋯ → Log without the timer (review U9).
+    @State private var logging = false
     @State private var confirmDelete = false
     @State private var seeded = false
     @State private var pendingSave: Task<Void, Never>?
@@ -87,7 +89,7 @@ struct WorkoutDetailView: View {
             openFirst: openFirst,
             setHint: { step, round in
                 let sets = LastTime.sets(store.results, for: step, in: runsheet) ?? []
-                return sets.indices.contains(round) ? LastTime.setLabel(sets[round]) : nil
+                return sets.indices.contains(round) ? LastTime.setLabel(sets[round], unit: step.shortUnit) : nil
             },
             summary: settingSummary,
             onExercise: { editing = $0 },
@@ -176,6 +178,11 @@ struct WorkoutDetailView: View {
                     Button { duplicate() } label: {
                         Label("Duplicate", systemImage: "plus.square.on.square")
                     }
+                    if runnable && !isNew {
+                        Button { logging = true } label: {
+                            Label("Log without the timer", systemImage: "square.and.pencil")
+                        }
+                    }
                     if let url = runsheet.source?.url.flatMap(URL.init(string:)) {
                         Link(destination: url) {
                             Label("Open the original", systemImage: "arrow.up.right.square")
@@ -243,6 +250,9 @@ struct WorkoutDetailView: View {
                     remove(step)
                 }
             }
+        }
+        .sheet(isPresented: $logging) {
+            NavigationStack { LogSessionView(runsheet: runsheet, seed: false) }
         }
         .sheet(isPresented: $naming) {
             NameSheet(title: runsheet.title, creator: runsheet.creator ?? "") { title, creator in
@@ -772,7 +782,7 @@ struct WorkoutDetailView: View {
         // 65% TM reads as the kilos it comes to, the way the timer will show it.
         if e.targetPct != nil || e.loadFactor != nil,
            let kg = Relative.target(e, maxes: store.trainingMaxes, bodyweightKg: store.bodyweightKg, kit: store.equipment) {
-            parts.append("\(Format.number(kg)) \(e.shortUnit)")
+            parts.append(e.loadText(kg))
         }
         if let incline = e.incline { parts.append("\(Format.number(incline))% incline") }
         // Every set last time, in order — not the heaviest one (Priyanka, 14 Nov 2026).

@@ -78,17 +78,12 @@ struct MeView: View {
                     .disabled(store.results.isEmpty)
                     .accessibilityIdentifier("export-history")
 
-                    Stepper(
-                        value: Binding(
-                            get: { store.bodyweightKg ?? EffortModel.defaultBodyweightKg },
-                            set: { kg in Task { await store.setBodyweight(kg) } }
-                        ),
-                        in: 35...200,
-                        step: 0.5
-                    ) {
+                    BodyweightStepper(kg: store.bodyweightKg ?? EffortModel.defaultBodyweightKg, range: 35...200) { kg in
+                        Task { await store.setBodyweight(kg) }
+                    } label: {
                         VStack(alignment: .leading, spacing: 2) {
                             Text("Bodyweight").foregroundStyle(Brand.ink)
-                            Text(store.bodyweightKg.map { "\(Format.number($0)) kg" } ?? "Not set · calories assume \(Int(EffortModel.defaultBodyweightKg)) kg")
+                            Text(store.bodyweightKg.map { Units.weight($0) } ?? "Not set · calories assume \(Units.wholeWeight(EffortModel.defaultBodyweightKg))")
                                 .font(.footnote)
                                 .foregroundStyle(Brand.muted)
                         }
@@ -238,13 +233,15 @@ struct SettingsView: View {
         guard let e else { return "Not set" }
         let plates = (e.plates ?? []).reduce(0) { $0 + $1.count }
         let parts = [
-            plates > 0 ? "\(Format.number(e.barKg ?? Plates.defaultBarKg)) kg bar, \(plates) plates" : "",
+            plates > 0 ? "\(Units.weight(e.barKg ?? Plates.defaultBarKg)) bar, \(plates) plates" : "",
             (e.dumbbells ?? []).isEmpty ? "" : "\((e.dumbbells ?? []).count) dumbbells",
             (e.kettlebells ?? []).isEmpty ? "" : "\((e.kettlebells ?? []).count) kettlebells",
         ].filter { !$0.isEmpty }
         return parts.isEmpty ? "Not set" : parts.joined(separator: " · ")
     }
 
+    /// What a sign-out does, said before it happens; the web says the same (review U10).
+    static let signOutNote = "Your history is saved to your account and removed from this phone."
     static let support = URL(string: "https://tigerworkouts.com/support/")!
     static let privacy = URL(string: "https://tigerworkouts.com/privacy/")!
     static let terms = URL(string: "https://tigerworkouts.com/terms/")!
@@ -275,6 +272,9 @@ struct SettingsView: View {
         guard !draft.trimmingCharacters(in: .whitespaces).isEmpty, draft != store.profileName else { return }
         Task { await store.setName(draft) }
     }
+    @State private var confirmSignOut = false
+    /// Test-build lines (engine state, counts), shown after a long press on Version (review U16).
+    @State private var diagnostics = false
 
     var body: some View {
         Form {
@@ -304,8 +304,9 @@ struct SettingsView: View {
                     if let error = store.syncError {
                         Text(error).font(.footnote).foregroundStyle(.red)
                     }
-                    Button("Sign out", role: .destructive) { Task { signOutHeld = await store.signOut() } }
+                    Button("Sign out", role: .destructive) { confirmSignOut = true }
                         .disabled(store.syncing)
+                        .accessibilityIdentifier("sign-out")
                     if let signOutHeld {
                         Text(signOutHeld).font(.footnote).foregroundStyle(.red)
                         Button("Sign out and lose them", role: .destructive) {
@@ -327,7 +328,7 @@ struct SettingsView: View {
                 Text("Account")
             } footer: {
                 Text(store.signedIn
-                     ? "Signing out keeps what is on this phone."
+                     ? Self.signOutNote
                      : "Same account as tigerworkouts.com. Sessions logged before you sign in go up with it.")
             }
 
@@ -336,9 +337,6 @@ struct SettingsView: View {
                 // The simulator cannot buzz, so this is the two-second check in the gym.
                 Button("Test buzz") { Task { await MeView.testBuzz { Haptics.shared.play($0) } } }
                     .disabled(!haptics)
-                Text("Haptic engine: \(Haptics.shared.status.label)")
-                    .font(.footnote)
-                    .foregroundStyle(Brand.muted)
                 Toggle("Tones", isOn: $sound)
                 Toggle("Lock Screen card", isOn: $liveActivity)
                 Stepper(value: $defaultRest, in: 15...600, step: 15) {
@@ -384,6 +382,15 @@ struct SettingsView: View {
             }
 
             Section {
+                LabeledContent("Weights") {
+                    Picker("Weights", selection: Binding(get: { store.units ?? Units.metric }, set: { v in Task { await store.setUnits(v) } })) {
+                        Text("kg").tag(Units.metric)
+                        Text("lb").tag(Units.imperial)
+                    }
+                    .pickerStyle(.segmented)
+                    .frame(width: 120)
+                    .accessibilityIdentifier("weights-unit")
+                }
                 NavigationLink {
                     EquipmentView()
                 } label: {
@@ -399,7 +406,7 @@ struct SettingsView: View {
             } header: {
                 Text("Loads")
             } footer: {
-                Text("Suggested loads snap to the weights you own, and the plate calculator uses your plates. Training maxes turn a 65% TM set into kilos.")
+                Text("Suggested loads snap to the weights you own, and the plate calculator uses your plates. Training maxes turn a 65% TM set into a weight.")
             }
 
             Section {
@@ -416,9 +423,12 @@ struct SettingsView: View {
                 Text("Workouts count towards your rings, your bodyweight comes from Health, and your heart rate turns the calorie estimate into a measurement. Signed in, the heart rate and bodyweight are kept with your workout history. Health data is never sold or used for advertising.")
             }
 
-            Section {
-                LabeledContent("Workouts bundled", value: "\(store.catalogue.count)")
-                LabeledContent("Sessions logged", value: "\(store.results.count)")
+            if diagnostics {
+                Section {
+                    LabeledContent("Haptic engine", value: Haptics.shared.status.label)
+                    LabeledContent("Workouts bundled", value: "\(store.catalogue.count)")
+                    LabeledContent("Sessions logged", value: "\(store.results.count)")
+                }
             }
 
             Section {
@@ -428,6 +438,9 @@ struct SettingsView: View {
                     .accessibilityIdentifier("privacy-link")
                 Link("Terms of Service", destination: Self.terms)
                 LabeledContent("Version", value: Self.version)
+                    .contentShape(Rectangle())
+                    .onLongPressGesture { diagnostics.toggle() }
+                    .accessibilityIdentifier("version")
             } header: {
                 Text("About")
             } footer: {
@@ -441,6 +454,12 @@ struct SettingsView: View {
         .background(Brand.canvas)
         .sheet(isPresented: $signingIn) {
             SignInView { await store.sync() }
+        }
+        .confirmationDialog("Sign out?", isPresented: $confirmSignOut, titleVisibility: .visible) {
+            Button("Sign out", role: .destructive) { Task { signOutHeld = await store.signOut() } }
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            Text(Self.signOutNote)
         }
         .confirmationDialog("Delete your account?", isPresented: $confirmDelete, titleVisibility: .visible) {
             Button("Delete account, keep this phone’s history", role: .destructive) { deleteAccount(clearPhone: false) }

@@ -88,8 +88,8 @@ enum WeekTable {
         var parts: [String] = []
         let dl = (b.load ?? 0) - (a.load ?? 0)
         let dr = (b.reps ?? 0) - (a.reps ?? 0)
-        let u = unit.isEmpty ? "" : " \(unit)"
-        if abs(dl) > 1e-9 { parts.append(signed(dl, u)) }
+        // A load difference in lb when weights show in lb: +2.5 kg reads +5.5 lb (U11).
+        if abs(dl) > 1e-9 { parts.append("\(dl > 0 ? "+" : "−")\(Units.label(abs(dl), unit: unit))") }
         if abs(dr) > 1e-9, a.reps != nil, b.reps != nil { parts.append(signed(dr, plural(dr, "rep"))) }
         if parts.isEmpty, let x = a.seconds, let y = b.seconds, abs(y - x) >= 1, a.reps == nil, b.reps == nil {
             return (signed(y - x, " s"), y > x)
@@ -110,9 +110,9 @@ enum WeekTable {
             .filter { ids.contains($0.runsheetId) && $0.activity == nil && !$0.steps.isEmpty }
             .sorted { $0.startedAt < $1.startedAt }
         guard let first = sessions.first else { return Table(columns: [], rows: []) }
-        let start = calendar.dateInterval(of: .weekOfYear, for: first.startedDate)?.start ?? first.startedDate
+        let start = calendar.dateInterval(of: .weekOfYear, for: first.wallDate)?.start ?? first.wallDate
         let columns = sessions.enumerated().map { i, s in
-            let days = calendar.dateComponents([.day], from: start, to: s.startedDate).day ?? 0
+            let days = calendar.dateComponents([.day], from: start, to: s.wallDate).day ?? 0
             return Column(id: s.rowId, startedAt: s.startedAt, week: max(0, days) / 7 + 1, latest: i == sessions.count - 1, runsheetId: s.runsheetId)
         }
 
@@ -139,7 +139,7 @@ enum WeekTable {
                     guard sets.indices.contains(n) else { cells.append(nil); continue }
                     let x = sets[n]
                     let d: (text: String?, better: Bool?) = before.map { delta(from: $0, to: x, unit: Measure.of(shown) == nil ? shown : "") } ?? (nil, nil)
-                    cells.append(Cell(set: x, text: Logbook.label(x), delta: d.text, better: d.better))
+                    cells.append(Cell(set: x, text: Logbook.label(x, loads: shown), delta: d.text, better: d.better))
                     before = x
                 }
                 rows.append(Row(exerciseKey: key, name: names[key] ?? name(key), set: n, cells: cells))

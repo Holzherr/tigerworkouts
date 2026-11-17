@@ -25,13 +25,19 @@ struct SignOutTests {
         #expect(s.waitingCount == 2)
     }
 
-    @Test("signing out anyway clears the queues and keeps History on the phone")
-    func discardClearsQueues() async {
+    @Test("signing out clears the queues and the phone, as the web clears the browser (U10)")
+    func discardClearsPhone() async {
         let s = store()
         await s.save(SessionResult(runsheetId: "w", title: "W", startedAt: "2026-11-16T11:00:00.000Z", durationSec: 600, id: "s-d"))
+        s.stage(Edit.newRunsheet(creator: nil))
+        s.trainingMaxes = ["back_squat": 100]
+        s.saved = ["cindy"]
         #expect(await s.signOut(discardUnsent: true) == nil)
         #expect(s.waitingCount == 0)
-        #expect(s.results.contains { $0.rowId == "s-d" })
+        #expect(s.results.isEmpty)
+        #expect(s.myWorkouts.isEmpty)
+        #expect(s.saved.isEmpty)
+        #expect(s.trainingMaxes.isEmpty)
     }
 
     @Test("Me says Synced only when nothing waits and the last sync went through")

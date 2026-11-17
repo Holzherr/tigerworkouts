@@ -397,6 +397,9 @@ struct Block: Codable, Hashable, Sendable, Identifiable {
     /// Rounds for rounds / fortime / emom. Ignored for amrap. `repeat` in the JSON.
     var repeatCount: Int = 1
     var mode: BlockMode?
+    /// A mode a newer app wrote that this one does not know: the block runs as rounds here, and the
+    /// mode goes back as it came when the workout is saved (review A4).
+    var unknownMode: String?
     var timeCapSec: Double?
     var everySec: Double?
     var ladder: [Double]?
@@ -441,7 +444,10 @@ struct Block: Codable, Hashable, Sendable, Identifiable {
         id = try c.decodeIfPresent(String.self, forKey: .id) ?? UUID().uuidString
         name = try c.decodeIfPresent(String.self, forKey: .name) ?? "Block"
         repeatCount = try c.decodeIfPresent(Int.self, forKey: .repeatCount) ?? 1
-        mode = try c.decodeIfPresent(BlockMode.self, forKey: .mode)
+        if let raw = try c.decodeIfPresent(String.self, forKey: .mode) {
+            mode = BlockMode(rawValue: raw)
+            unknownMode = mode == nil ? raw : nil
+        }
         timeCapSec = try c.decodeIfPresent(Double.self, forKey: .timeCapSec)
         everySec = try c.decodeIfPresent(Double.self, forKey: .everySec)
         ladder = try c.decodeIfPresent([Double].self, forKey: .ladder)
@@ -451,6 +457,23 @@ struct Block: Codable, Hashable, Sendable, Identifiable {
         role = try c.decodeIfPresent(ItemRole.self, forKey: .role)
         note = try c.decodeIfPresent(String.self, forKey: .note)
         steps = try c.decodeIfPresent([Step].self, forKey: .steps) ?? []
+    }
+
+    func encode(to encoder: any Encoder) throws {
+        var c = encoder.container(keyedBy: CodingKeys.self)
+        try c.encode(id, forKey: .id)
+        try c.encode(name, forKey: .name)
+        try c.encode(repeatCount, forKey: .repeatCount)
+        if let mode { try c.encode(mode, forKey: .mode) } else { try c.encodeIfPresent(unknownMode, forKey: .mode) }
+        try c.encodeIfPresent(timeCapSec, forKey: .timeCapSec)
+        try c.encodeIfPresent(everySec, forKey: .everySec)
+        try c.encodeIfPresent(ladder, forKey: .ladder)
+        try c.encodeIfPresent(restBetweenSec, forKey: .restBetweenSec)
+        try c.encodeIfPresent(score, forKey: .score)
+        try c.encodeIfPresent(progression, forKey: .progression)
+        try c.encodeIfPresent(role, forKey: .role)
+        try c.encodeIfPresent(note, forKey: .note)
+        try c.encode(steps, forKey: .steps)
     }
 }
 
@@ -534,6 +557,9 @@ struct Runsheet: Codable, Hashable, Sendable, Identifiable {
     var items: [Item] = []
     /// On the creator's public page and in everyone's Discover. New and copied workouts are private.
     var isPublic: Bool?
+    /// Opens for anyone with its link (tigerworkouts.com/#/w/<id>) without being listed: set by Share
+    /// on the website. Kept as it came, so an edit on the phone does not take the link away.
+    var unlisted: Bool?
     /// Set on the copy made when someone else's workout is edited: the id it was copied from. Its
     /// sessions stay this workout's history, so Up next, pace and stalls keep the thread.
     var copyOf: String?
@@ -558,7 +584,7 @@ struct Runsheet: Codable, Hashable, Sendable, Identifiable {
     func owns(_ r: SessionResult) -> Bool { lineage.contains(r.runsheetId) }
 
     private enum CodingKeys: String, CodingKey {
-        case id, title, creator, description, source, tags, level, program, timeCapSec, score, progression, video, items, copyOf, duplicatedFrom, icon, createdAt
+        case id, title, creator, description, source, tags, level, program, timeCapSec, score, progression, video, items, unlisted, copyOf, duplicatedFrom, icon, createdAt
         case isPublic = "public"
     }
 
@@ -587,6 +613,7 @@ struct Runsheet: Codable, Hashable, Sendable, Identifiable {
         video = try c.decodeIfPresent(Video.self, forKey: .video)
         items = try c.decodeIfPresent([Item].self, forKey: .items) ?? []
         isPublic = try c.decodeIfPresent(Bool.self, forKey: .isPublic)
+        unlisted = try c.decodeIfPresent(Bool.self, forKey: .unlisted)
         copyOf = try c.decodeIfPresent(String.self, forKey: .copyOf)
         duplicatedFrom = try c.decodeIfPresent(String.self, forKey: .duplicatedFrom)
         icon = try? c.decodeIfPresent(JSONValue.self, forKey: .icon)

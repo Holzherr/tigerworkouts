@@ -156,8 +156,8 @@ extension ExerciseStep {
         if let f = loadFactor { return "\(Format.number(f))× BW" }
         if let p = targetPct { return "\(Format.number(p))% TM" }
         guard let t = target else { return "" }
-        let unit = exercise.unit.replacingOccurrences(of: " per arm", with: "").replacingOccurrences(of: " per side", with: "")
-        return unit.isEmpty ? Format.number(t) : "\(Format.number(t)) \(unit)"
+        // In lb when weights show in lb (U11).
+        return loadText(t)
     }
 
     /// Whether the step carries a setting you dial in: a weight, or a machine's speed. An exercise

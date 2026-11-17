@@ -1,0 +1,153 @@
+[
+  {
+    "id": "s-fixture-timer",
+    "data": {
+      "format": "v2",
+      "blocks": [],
+      "id": "s-fixture-timer",
+      "runsheetId": "w-fixture",
+      "startedFrom": "up_next",
+      "title": "Fixture strength",
+      "startedAt": "2026-11-16T07:00:00.000Z",
+      "tzOffsetMin": -300,
+      "endedAt": "2026-11-16T07:40:00.000Z",
+      "durationSec": 2400,
+      "completed": true,
+      "device": {
+        "avgHr": 128,
+        "maxHr": 171,
+        "calories": 410,
+        "source": "apple-health"
+      },
+      "score": 3.012,
+      "scoreText": "3 rounds + 12",
+      "steps": [
+        {
+          "stepId": "e1",
+          "exerciseKey": "barbell-back-squat",
+          "target": 80,
+          "reps": [
+            5,
+            5,
+            4
+          ],
+          "success": false,
+          "sets": [
+            {
+              "reps": 5,
+              "load": 60,
+              "type": "warmup",
+              "at": 30
+            },
+            {
+              "reps": 5,
+              "load": 80,
+              "at": 140,
+              "rpe": 8,
+              "futureSetField": "kept"
+            },
+            {
+              "reps": 4,
+              "load": 80,
+              "type": "failure",
+              "at": 260
+            }
+          ],
+          "futureStepField": {
+            "nested": [
+              1,
+              2,
+              3
+            ]
+          }
+        },
+        {
+          "stepId": "e2",
+          "exerciseKey": "rower",
+          "incline": 0,
+          "sets": [
+            {
+              "seconds": 30,
+              "meters": 142,
+              "calories": 9
+            }
+          ]
+        }
+      ],
+      "splits": [
+        {
+          "blockId": "b1",
+          "at": [
+            60.5,
+            121
+          ],
+          "from": 0,
+          "starts": [
+            0,
+            61
+          ]
+        }
+      ],
+      "notes": "Felt strong",
+      "rpe": 7,
+      "version": {
+        "items": [
+          {
+            "kind": "exercise",
+            "id": "e1",
+            "exercise": {
+              "key": "barbell-back-squat",
+              "name": "Back squat"
+            },
+            "forMode": "reps",
+            "forValue": 5
+          }
+        ]
+      },
+      "futureField": {
+        "from": "a newer app",
+        "list": [
+          true,
+          null,
+          "x"
+        ]
+      }
+    }
+  },
+  {
+    "id": "s-fixture-capped",
+    "data": {
+      "format": "v2",
+      "blocks": [],
+      "id": "s-fixture-capped",
+      "runsheetId": "w-fixture-fortime",
+      "title": "Fixture for time",
+      "startedAt": "2026-11-15T18:00:00.000Z",
+      "tzOffsetMin": 60,
+      "durationSec": 600,
+      "completed": false,
+      "score": 600,
+      "capped": true,
+      "capReps": 87,
+      "steps": []
+    }
+  },
+  {
+    "id": "s-fixture-activity",
+    "data": {
+      "format": "v2",
+      "blocks": [],
+      "id": "s-fixture-activity",
+      "runsheetId": "activity:padel",
+      "title": "Padel",
+      "startedAt": "2026-11-14T10:00:00.000Z",
+      "activity": {
+        "name": "Padel",
+        "icon": "racket",
+        "minutes": 60,
+        "intensity": "hard"
+      },
+      "steps": []
+    }
+  }
+]

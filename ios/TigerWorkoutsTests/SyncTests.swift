@@ -361,3 +361,31 @@ struct SyncTests {
 
     private func json2(_ object: [Any]) -> Data { try! JSONSerialization.data(withJSONObject: object) }
 }
+
+@Suite("stale and deleted writes (review A3)")
+struct StaleWriteTests {
+    @Test("the database's 409 and 410 are told apart from any other failure")
+    func refusals() {
+        #expect(Store.refusal(SupabaseError(message: "stale write", status: 409, code: "PT409")) == .stale)
+        #expect(Store.refusal(SupabaseError(message: "deleted", status: 410, code: "PT410")) == .deleted)
+        #expect(Store.refusal(SupabaseError(message: "Request failed (500)", status: 500)) == nil)
+        #expect(Store.refusal(URLError(.notConnectedToInternet)) == nil)
+    }
+}
+
+@Suite("sync-health ping")
+struct HealthPingTests {
+    @Test("once a day while syncs work, hourly while they fail, a kind of error and never its text")
+    func cadence() throws {
+        let d = try #require(UserDefaults(suiteName: "health-ping-\(UUID().uuidString)"))
+        let t = Date(timeIntervalSince1970: 1_800_000_000)
+        let first = try #require(HealthPing.next(error: nil, waiting: 0, build: "1.4+212", now: t, defaults: d))
+        #expect(first["ok"] as? Bool == true && first["app"] as? String == "ios" && first["error"] == nil)
+        #expect(HealthPing.next(error: nil, waiting: 0, build: "b", now: t.addingTimeInterval(3600), defaults: d) == nil)
+        let failed = try #require(HealthPing.next(error: "The Internet connection appears to be offline.", waiting: 2, build: "b", now: t.addingTimeInterval(7200), defaults: d))
+        #expect(failed["error"] as? String == "network" && failed["waiting"] as? Int == 2 && failed["sinceOkMin"] as? Int == 60)
+        #expect(HealthPing.next(error: "x", waiting: 2, build: "b", now: t.addingTimeInterval(9000), defaults: d) == nil)
+        #expect(HealthPing.next(error: "x", waiting: 2, build: "b", now: t.addingTimeInterval(10900), defaults: d) != nil)
+        #expect(HealthPing.kind("Something odd for nick@example.com") == "other")
+    }
+}

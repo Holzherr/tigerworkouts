@@ -251,6 +251,7 @@ const save = async () => {
       workoutId: out.workoutId ?? r.runsheetId,
       title: out.title,
       startedAt: r.startedAt,
+      tzOffsetMin: 0 - new Date(r.startedAt).getTimezoneOffset(),
       endedAt: r.endedAt,
       durationSec: r.durationSec,
       completed: r.completed,

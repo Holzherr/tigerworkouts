@@ -19,10 +19,11 @@ import { CreatorPageSettingsScreen } from '@/features/creators/components/creato
 import { CreditedCreatorScreen } from '@/features/creators/components/credited-creator-screen';
 import { creatorFor, creatorKey, creatorPath } from '@/features/creators/credited';
 import { cn, plural } from '@/shared/utils/ui-utils';
-import { shortDate } from '@/shared/utils/dates';
+import { shortDate, wallDate } from '@/shared/utils/dates';
 import type { LibraryExercise } from '@/features/exercises/library';
 import { SettingsSheet } from '@/features/profile/components/settings-sheet';
 import { MeScreen } from '@/features/profile/components/me-screen';
+import { SignOutButton } from '@/features/profile/components/sign-out-button';
 import { streak, weekLine, workedFrom } from '@/features/results/effort';
 import { muscleLoad } from '@/features/results/muscles';
 import { ImportScreen } from '@/features/share/components/import-screen';
@@ -429,9 +430,20 @@ export default function App() {
           onLogOnly={() => go(`/result/${encodeURIComponent(once ? id : settle(false))}`)}
           onSave={() => act.toggleSaved(id)}
           saved={st.saved.includes(id)}
-          onShare={async () => { const out = await shareLink(base.title, linkFor(base, !!base.public || IMPORTED.some(w => w.runsheet.id === base.id))); told(shareToast(out)); }}
+          onShare={async () => {
+            const listed = !!base.public || IMPORTED.some(w => w.runsheet.id === base.id);
+            // A private workout of yours, on your account: it opens for anyone with its short link
+            // from now on (review round 2, U4). The share sheet opens at once, in the tap.
+            const byLink = !listed && own && !!cloud.user;
+            if (byLink && !base.unlisted) {
+              act.saveWorkout({ ...base, unlisted: true });
+              cloud.syncNow();
+            }
+            const out = await shareLink(base.title, linkFor(base, listed || byLink));
+            told(shareToast(out, byLink));
+          }}
           onCreator={creatorKey(r) ? () => go(creatorPath(creatorKey(r)!)) : r.ownerId || (cloud.user && st.workouts.some(w => w.id === wid(r))) ? () => go(`/c/${r.ownerId ?? cloud.user!.id}`) : undefined}
-          onTogglePublic={cloud.user && st.workouts.some(w => w.id === wid(r)) ? () => { act.saveWorkout({ ...base, public: !base.public }); say(base.public ? 'Private now' : 'On your public page'); } : undefined}
+          onTogglePublic={cloud.user && st.workouts.some(w => w.id === wid(r)) ? () => { act.saveWorkout({ ...base, public: !base.public, ...(base.public ? { unlisted: undefined } : {}) }); say(base.public ? 'Private now' : 'On your public page'); } : undefined}
           appHref={appLink(`w/${encodeURIComponent(wid(r))}`)}
           onDelete={st.workouts.some(w => w.id === wid(r)) ? () => { act.deleteWorkout(wid(r)); if (st.saved.includes(wid(r))) act.toggleSaved(wid(r)); say('Workout deleted'); go('/discover/saved'); } : undefined}
         />
@@ -665,7 +677,7 @@ export default function App() {
                 {r && <WorkoutIcon runsheet={r} size={36} />}
                 <div className="min-w-0 flex-1">
                   <div className="truncate text-[14px] font-bold">{res.title ?? r?.title ?? res.runsheetId}</div>
-                  <div className="text-[12px] text-muted">{shortDate(res.startedAt)}{res.durationSec ? ` · ${Math.round(res.durationSec / 60)} min` : res.activity ? ` · ${res.activity.minutes} min` : ''}{res.completed === false && !res.capped ? ' · stopped early' : ''}{res.rpe ? ` · effort ${res.rpe}` : ''}</div>
+                  <div className="text-[12px] text-muted">{shortDate(wallDate(res))}{res.durationSec ? ` · ${Math.round(res.durationSec / 60)} min` : res.activity ? ` · ${res.activity.minutes} min` : ''}{res.completed === false && !res.capped ? ' · stopped early' : ''}{res.rpe ? ` · effort ${res.rpe}` : ''}</div>
                 </div>
                 <div className="text-[15px] font-extrabold tabular-nums">{r ? fmtScore(scoreType(r), res.score, res.scoreText) : (res.scoreText ?? '')}</div>
               </button>
@@ -682,7 +694,7 @@ export default function App() {
     const since = Date.now() - 28 * 864e5;
     const load = muscleLoad(st.results.filter(r => Date.parse(r.startedAt) >= since).flatMap(r => workedFrom(r, byId.get(r.runsheetId), k => ({ name: library[k]?.name ?? k, group: library[k]?.group }))));
     // Refused (a session not pushed yet): the reason comes back and the account stays signed in.
-    // The Settings sheet shows it inline; the Me tab's own button, as a toast.
+    // Both buttons show it under themselves.
     const out = async () => {
       const held = await signOut();
       if (held) return held;
@@ -733,11 +745,7 @@ export default function App() {
           <Button variant="ghost" block onClick={() => setTmOpen(true)}>
             Training maxes
           </Button>
-          {cloud.user && (
-            <Button variant="quiet" block onClick={() => out().then(held => held && say(held))}>
-              Sign out
-            </Button>
-          )}
+          {cloud.user && <SignOutButton onSignOut={out} />}
         </MeScreen>
         <SettingsSheet open={settingsOpen} onOpenChange={setSettingsOpen} name={st.name} avatar={st.avatar} units={st.units} email={cloud.user?.email ?? undefined} volume={volume} onVolume={v => { setVolume(v); setVol(v); }} defaultRest={defaultRest} onDefaultRest={v => { setDefaultRest(v); setRest(getDefaultRest()); }} intent={intent} onIntent={v => { storeIntent(v); setIntentState(v); }} suggest={st.suggestions} onSuggest={act.setSuggestions} equipment={st.equipment} onEquipment={act.setEquipment} onChange={act.setProfile} onInvite={invite} onSignOut={cloud.user ? out : undefined} onDeleteAccount={cloud.user ? async clear => {
             const done = await deleteAccount();

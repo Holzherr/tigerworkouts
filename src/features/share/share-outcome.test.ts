@@ -20,6 +20,11 @@ describe('sharing a link', () => {
     expect(shareToast(await shareLink('TigerWorkouts', 'https://tigerworkouts.com/'))).toBe('Link copied');
     expect(writeText).toHaveBeenCalledWith('https://tigerworkouts.com/');
   });
+  it('says who can open a private workout shared by its link', () => {
+    expect(shareToast('copied', true)).toBe('Link copied · anyone with the link can open it');
+    expect(shareToast('shared', true)).toBe('Shared · anyone with the link can open it');
+    expect(shareToast('cancelled', true)).toBeNull();
+  });
   it('reports whether text was copied', async () => {
     vi.stubGlobal('navigator', { clipboard: { writeText: () => Promise.resolve() } });
     expect(await copyText('a')).toBe(true);

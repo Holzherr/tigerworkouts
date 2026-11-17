@@ -5,7 +5,7 @@ import App from '@/App';
 import { getState, setState } from '@/app/store';
 import type { SessionResult } from '@/features/runsheet/progression';
 import { signOut } from './client';
-import { clearSnap, fromRow, readSnap, sync, toRow } from './sync';
+import { clearSnap, fromRow, readSeen, readSnap, sync, toRow } from './sync';
 
 // Supabase stand-in: every table call is written down; rows upserted as a list are kept and come
 // back from a select. `fail` makes each upsert fail with that message; `duringSelect` runs once
@@ -19,6 +19,8 @@ const fake = vi.hoisted(() => {
     fail: '',
     /** A session id the server refuses: any upsert carrying it fails whole, as a batch does. */
     refuse: '',
+    /** Ids the database refuses as changed (PT409) or deleted (PT410) since they were read (A3). */
+    codes: {} as Record<string, string>,
     duringSelect: undefined as (() => void) | undefined,
     gate: undefined as Promise<void> | undefined,
     onAuth: (_event: string, _session: unknown) => {},
@@ -27,14 +29,15 @@ const fake = vi.hoisted(() => {
         get: (_, m) => {
           if (m !== 'then')
             return (arg: unknown) => {
-              const refused = m === 'upsert' && !!f.refuse && Array.isArray(arg) && (arg as { id: string }[]).some(r => r.id === f.refuse);
+              const coded = m === 'upsert' && Array.isArray(arg) ? (arg as { id: string }[]).map(r => f.codes[r.id]).find(Boolean) : undefined;
+              const refused = (m === 'upsert' && !!f.refuse && Array.isArray(arg) && (arg as { id: string }[]).some(r => r.id === f.refuse)) || !!coded;
               if (m === 'upsert' && !f.fail && !refused && Array.isArray(arg)) (arg as { id: string }[]).forEach(r => ((rows[name] ??= {})[r.id] = r));
-              return f.table(name, [...ops, `${name}.${String(m)}`, ...(refused ? ['refused'] : [])]);
+              return f.table(name, [...ops, `${name}.${String(m)}`, ...(refused ? ['refused'] : []), ...(coded ? [`code:${coded}`] : [])]);
             };
           return (resolve: (v: unknown) => void) => {
-            f.calls.push(...ops.filter(o => o !== 'refused'));
+            f.calls.push(...ops.filter(o => o !== 'refused' && !o.startsWith('code:')));
             if (ops.includes('sessions.select')) (f.duringSelect?.(), (f.duringSelect = undefined));
-            const answer = () => resolve({ data: ops.includes(`${name}.select`) ? Object.values(rows[name] ?? {}) : [], error: f.fail && ops.some(o => o.endsWith('.upsert')) ? { message: f.fail } : ops.includes('refused') ? { message: 'row refused' } : null });
+            const answer = () => resolve({ data: ops.includes(`${name}.select`) ? Object.values(rows[name] ?? {}) : [], error: f.fail && ops.some(o => o.endsWith('.upsert')) ? { message: f.fail } : ops.includes('refused') ? { message: 'row refused', code: ops.find(o => o.startsWith('code:'))?.slice(5) } : null });
             const gate = ops.includes('sessions.select') ? f.gate : undefined;
             if (!gate) answer();
             else {
@@ -67,6 +70,7 @@ beforeEach(() => {
   fake.calls.length = 0;
   fake.fail = '';
   fake.refuse = '';
+  fake.codes = {};
   fake.gate = undefined;
   for (const t of Object.keys(fake.rows)) delete fake.rows[t];
   fake.onAuth('SIGNED_IN', { user: { id: 'u1', email: 'one@example.com' } });
@@ -103,6 +107,45 @@ describe('a snapshot in the form kept before 17 Nov 2026 (review A2)', () => {
     const out = await sync(getState());
     expect(pushes()).toEqual([]);
     expect(out.patch.results?.[0].notes).toBe('from the phone');
+  });
+});
+
+describe('a row changed or deleted elsewhere since this device read it (review A3)', () => {
+  const sent = () => fake.rows.sessions?.['s-a'] as unknown as { updated_at?: string; data: { notes?: string } } | undefined;
+  const serverHas = (r: SessionResult, at: string) => ((fake.rows.sessions ??= {})[r.id!] = { ...toRow(r, 'u1'), updated_at: at } as { id: string });
+
+  it('a push sends back the updated_at it last read', async () => {
+    serverHas(row('s-a'), '2026-11-17T10:00:00.000001+00:00');
+    await sync(getState());
+    setState(s => ({ results: s.results.map(r => ({ ...r, notes: 'edited here' })) }));
+    await sync(getState());
+    expect(sent()?.data.notes).toBe('edited here');
+    expect(sent()?.updated_at).toBe('2026-11-17T10:00:00.000001+00:00');
+    expect(readSeen(localStorage.getItem('tiger:synced'))['s-a']).toBe('2026-11-17T10:00:00.000001+00:00');
+  });
+
+  it('refused as stale: the server\'s copy wins here too, and it is not an error', async () => {
+    serverHas(row('s-a'), 'T1');
+    await sync(getState());
+    serverHas({ ...row('s-a'), notes: 'from the phone' }, 'T2');
+    setState(s => ({ results: s.results.map(r => ({ ...r, notes: 'stale edit' })) }));
+    fake.codes = { 's-a': 'PT409' };
+    const out = await sync(getState());
+    expect(out.error).toBeUndefined();
+    expect(out.patch.results?.find(r => r.id === 's-a')?.notes).toBe('from the phone');
+    expect(remembered()).not.toContain('s-a');
+  });
+
+  it('refused as deleted: it goes here too', async () => {
+    serverHas(row('s-a'), 'T1');
+    await sync(getState());
+    delete fake.rows.sessions!['s-a'];
+    setState(s => ({ results: s.results.map(r => ({ ...r, notes: 'edited offline' })) }));
+    fake.codes = { 's-a': 'PT410' };
+    const out = await sync(getState());
+    expect(out.error).toBeUndefined();
+    expect(out.patch.results?.map(r => r.id)).toEqual([]);
+    expect(remembered()).toEqual([]);
   });
 });
 
@@ -163,6 +206,9 @@ describe('sign-out', () => {
     location.hash = '#/me';
     render(createElement(App));
     fireEvent.click(await screen.findByRole('button', { name: 'Sign out' }));
+    // It asks first (review U10).
+    expect(fake.calls.includes('auth.signOut')).toBe(false);
+    fireEvent.click(within(screen.getByRole('alertdialog', { name: 'Sign out' })).getByRole('button', { name: 'Sign out' }));
     expect(await screen.findByText(REFUSED)).toBeTruthy();
     expect([getState().signedIn, fake.calls.includes('auth.signOut'), screen.queryByRole('button', { name: 'Sign out' })]).toEqual([true, false, expect.anything()]);
   });
@@ -173,6 +219,7 @@ describe('sign-out', () => {
     fireEvent.click(await screen.findByRole('button', { name: 'Name, avatar and app settings' }));
     const sheet = await screen.findByRole('dialog', { name: 'Settings' });
     fireEvent.click(within(sheet).getByRole('button', { name: 'Sign out' }));
+    fireEvent.click(within(within(sheet).getByRole('alertdialog', { name: 'Sign out' })).getByRole('button', { name: 'Sign out' }));
     expect(await within(sheet).findByText(REFUSED)).toBeTruthy();
     expect([getState().signedIn, fake.calls.includes('auth.signOut'), screen.queryByRole('dialog', { name: 'Settings' })]).toEqual([true, false, sheet]);
   });

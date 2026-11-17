@@ -27,6 +27,7 @@ targets:
     dependencies:
       - target: TigerWorkoutsWidgets
         embed: true
+      - target: TigerWorkoutsWatch
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: dev.brambruesch.tigerworkouts
@@ -55,6 +56,23 @@ targets:
         CODE_SIGN_ENTITLEMENTS: TigerWorkoutsWidgets/TigerWorkoutsWidgets-$(ENTITLEMENTS_KIND).entitlements
         SKIP_INSTALL: YES
         TARGETED_DEVICE_FAMILY: "1"
+
+  # Mirrors the running session on the watch (WatchSync on the phone, WatchLink between them).
+  TigerWorkoutsWatch:
+    type: application
+    platform: watchOS
+    deploymentTarget: "10.0"
+    sources:
+      - path: TigerWorkoutsWatch
+        excludes: ["**/.DS_Store"]
+      - path: TigerWorkouts/Shared/WatchLink.swift
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: dev.brambruesch.tigerworkouts.watchkitapp
+        INFOPLIST_FILE: TigerWorkoutsWatch/Info.plist
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        SKIP_INSTALL: YES
+        TARGETED_DEVICE_FAMILY: "4"
 
   TigerWorkoutsTests:
     type: bundle.unit-test

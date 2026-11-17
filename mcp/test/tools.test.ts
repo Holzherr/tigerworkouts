@@ -489,6 +489,16 @@ describe('plans, timer and logging', () => {
     expect(back.sessions[0]).toMatchObject({ id: 's-abc-run', exercises: [{ exerciseKey: 'bb_back_squat', load: 100, reps: [5, 5, 5] }] });
   });
 
+  it('log_session keeps the zone the session was done in (review A10)', async () => {
+    await T.logSession(db, { id: 's-ny', workoutId: 'u-mine', startedAt: '2026-11-17T07:00:00-05:00' });
+    await T.logSession(db, { id: 's-widget', workoutId: 'u-mine', startedAt: '2026-11-17T07:00:00Z', tzOffsetMin: 60 });
+    await T.logSession(db, { id: 's-unknown', workoutId: 'u-mine', startedAt: '2026-11-17T07:00:00Z' });
+    const data = (id: string) => tables.sessions.find(r => r.id === id)!.data as Record<string, unknown>;
+    expect(data('s-ny')).toMatchObject({ startedAt: '2026-11-17T12:00:00.000Z', tzOffsetMin: -300 });
+    expect(data('s-widget').tzOffsetMin).toBe(60);
+    expect('tzOffsetMin' in data('s-unknown')).toBe(false);
+  });
+
   it('per-set detail goes in through log_session and comes back from list_sessions, only what was recorded', async () => {
     const sets = [{ seconds: 30, meters: 142, at: 40 }, { seconds: 30, meters: 138 }, { type: 'warmup' as const, reps: 10, load: 20 }];
     await T.logSession(db, { id: 's-rower', workoutId: 'u-mine', startedAt: '2026-10-18T07:00:00Z', steps: [{ stepId: 'rw', exerciseKey: 'cardio_rower', sets }] });

@@ -1,13 +1,14 @@
 import { readFileSync } from 'node:fs';
 import { describe, expect, it, vi } from 'vitest';
 import type { SessionResult } from '@/features/runsheet/progression';
-import { eachRow, fetchCreator, fromRow, readSnap, toRow, writeSnap } from './sync';
+import { eachRow, fetchCreator, fetchWorkout, fromRow, readSnap, toRow, writeSnap } from './sync';
 
 // A Supabase client that records each select and answers from `rows`.
-const cloud = vi.hoisted(() => ({ selects: [] as string[], rows: {} as Record<string, unknown> }));
+const cloud = vi.hoisted(() => ({ selects: [] as string[], rows: {} as Record<string, unknown>, rpc: {} as Record<string, { data?: unknown; error?: { message: string } | null; status?: number }> }));
 vi.mock('./client', () => ({
   currentUser: () => null,
   sb: {
+    rpc: async (fn: string) => ({ data: null, error: null, status: 200, ...cloud.rpc[fn] }),
     from: (table: string) => {
       const q = {
         select: (cols: string) => (cloud.selects.push(`${table}:${cols}`), q),
@@ -106,5 +107,29 @@ describe('the sync snapshot holds a hash per row (review A2)', () => {
     expect(readSnap('not json')).toEqual({});
     expect(readSnap('[3, {"a": "b"}]')).toEqual({});
     expect(readSnap('42')).toEqual({});
+  });
+});
+
+describe('a workout shared by link', () => {
+  const items = [{ kind: 'rest', id: 'r-1', seconds: 30 }];
+  it('opens through shared_workout when the table does not list it', async () => {
+    cloud.rows = { workouts: null };
+    cloud.rpc = { shared_workout: { data: [{ id: 'u-x', owner: 'o-1', creator: 'Sam', title: 'Legs', public: false, data: { title: 'Legs', unlisted: true, items } }] } };
+    const r = await fetchWorkout('u-x');
+    expect(r?.title).toBe('Legs');
+    expect(r?.unlisted).toBe(true);
+    expect(r?.ownerId).toBe('o-1');
+  });
+  it('is private when neither answers with it, or the function is not there yet', async () => {
+    cloud.rows = { workouts: null };
+    cloud.rpc = { shared_workout: { data: [] } };
+    expect(await fetchWorkout('u-x')).toBeNull();
+    cloud.rpc = { shared_workout: { data: null, error: { message: 'Could not find the function' }, status: 404 } };
+    expect(await fetchWorkout('u-x')).toBeNull();
+  });
+  it('is not private when there was no answer at all', async () => {
+    cloud.rows = { workouts: null };
+    cloud.rpc = { shared_workout: { data: null, error: { message: 'Failed to fetch' }, status: 0 } };
+    await expect(fetchWorkout('u-x')).rejects.toThrow();
   });
 });

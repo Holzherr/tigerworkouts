@@ -25,6 +25,11 @@ final class Store {
         didSet { SuggestPrefs.store(suggestions) }
     }
     var saved: Set<String> = []
+    /// Weights in kg or lb (U11): `user_state.prefs.units`, "imperial" for lb, nil for the default
+    /// (kg). Mirrored into `Units` for the views.
+    var units: String? {
+        didSet { Units.apply(units) }
+    }
     /// When each synced pref was last changed on this phone (PrefsMerge): the newer side wins a sync.
     private(set) var prefsUpdatedAt: [String: String] = [:]
     /// The account's name (`user_state.prefs.name`, set on the web's Me page), credited as the
@@ -45,6 +50,9 @@ final class Store {
     /// made on, its `data` as it came, and the row's `updated_at`. An upload goes only while the
     /// server's row is still that one (`flushWorkouts`).
     private(set) var syncedWorkouts: [String: Supabase.WorkoutRow] = [:]
+    /// Each session's `updated_at` as this phone last read it, sent with its next upload so the
+    /// server can refuse it when the row changed or was deleted elsewhere since (review A3).
+    private(set) var sessionStamps: [String: String] = [:]
     /// When each queued workout was last edited here: against a newer row on the server, the
     /// newer edit wins.
     private var workoutEditedAt: [String: String] = [:]
@@ -59,6 +67,9 @@ final class Store {
     private var discarded: Set<String> = []
 
     var signedIn: Bool { user != nil }
+    /// Bumped by each sign-out, so a sync whose fetch was out at the time does not fill the
+    /// cleared phone again.
+    private var signOuts = 0
 
     /// Your coach, what they assigned and the notes between you (Store+Coaching.swift).
     var coaching = CoachingState()
@@ -78,10 +89,29 @@ final class Store {
         return mine + catalogue.filter { !mineIds.contains($0.key) }
     }
 
+    /// Someone else's workouts opened from a link this launch (shared by link, or public).
+    private(set) var linked: [Runsheet] = []
+
     /// A workout a coach assigned is found too: it is the coach's row, not in the catalogue or yours.
     func workout(id: String) -> Runsheet? {
-        allWorkouts.first { $0.key == id } ?? coaching.workouts.first { $0.key == id }
+        allWorkouts.first { $0.key == id } ?? coaching.workouts.first { $0.key == id } ?? linked.first { $0.key == id }
     }
+
+    enum LinkedFetch { case found, hidden, offline }
+
+    /// Asks the server for a linked workout that is not on the phone. No answer is not "private".
+    func fetchLinked(id: String) async -> LinkedFetch {
+        do {
+            guard let sheet = try await fetchShared(id) else { return .hidden }
+            linked.removeAll { $0.key == sheet.key }
+            linked.append(sheet)
+            return .found
+        } catch {
+            return .offline
+        }
+    }
+
+    var fetchShared: @MainActor (String) async throws -> Runsheet? = { try await Supabase.shared.sharedWorkout(id: $0) }
 
     /// How many times this account has run a given workout — the "done 5×" chip.
     func doneCount(_ runsheetId: String) -> Int {
@@ -138,6 +168,9 @@ final class Store {
         prefsUpdatedAt["bodyweightKg"] = stamp
     }
 
+    /// The prefs fields this phone holds and stamps; avatar is the web's.
+    nonisolated static let heldPrefs = ["saved", "trainingMaxes", "bodyweightKg", "equipment", "suggestions", "name", "units"]
+
     func sync() async {
         #if DEBUG
         // UI tests are signed out, so a sync returns at once: -slowSync stands in for a signed-in
@@ -152,6 +185,7 @@ final class Store {
         }
         #endif
         guard await Supabase.shared.isSignedIn else { return }
+        let era = signOuts
         syncing = true
         syncError = nil
         defer { syncing = false }
@@ -170,10 +204,17 @@ final class Store {
             async let workouts = Supabase.shared.workouts()
             async let prefs = Supabase.shared.rawPrefs()
             // What the phone changed while the fetch was out wins over the server's older copy.
-            results = Self.merged(remote: try await sessions, pending: pending, deleting: pendingDeletes)
-            takeWorkouts(try await workouts)
+            let (remote, remoteWorkouts, remotePrefs) = try await (sessions, workouts, prefs)
+            // Signed out while the fetch was out: the phone is clear, and stays clear.
+            guard signOuts == era else { return }
+            results = Self.merged(remote: remote, pending: pending, deleting: pendingDeletes)
+            // A session with an upload still queued keeps the stamp its edit was made on.
+            let read = await Supabase.shared.sessionStamps
+            let queued = Set(pending.map(\.rowId))
+            sessionStamps = read.merging(sessionStamps.filter { queued.contains($0.key) }) { _, kept in kept }
+            takeWorkouts(remoteWorkouts)
             let before = results
-            try await syncPrefs(remote: try await prefs)
+            try await syncPrefs(remote: remotePrefs)
             await effortsLearned(before: before)
             user = await Supabase.shared.user
             writeCache()
@@ -184,6 +225,7 @@ final class Store {
             // A sign-in the server ended shows as signed out; what is on the phone stays.
             user = await Supabase.shared.user
         }
+        HealthPing.after(error: syncError, waiting: waitingCount)
         // Its own failures stay quiet: until migration 0008 is live every call here fails.
         await refreshCoaching()
     }
@@ -238,11 +280,12 @@ final class Store {
         return byId.values.sorted { $0.startedAt > $1.startedAt }
     }
 
-    /// Pushes what is queued, then ends the account session. History and your workouts stay on
-    /// the phone; what was queued for this account and what the phone knew of its server rows go,
-    /// so the next account to sign in here is not sent any of it. Nothing changes and a message
-    /// comes back while something is still not on the account (offline, a refused row), unless
-    /// `discardUnsent`: clearing then loses the only copy.
+    /// Pushes what is queued, then ends the account session and clears the phone, as the web's
+    /// sign-out clears the browser (review U10, 2026-11-17): History, your workouts and the
+    /// account's settings are on the account and come back with the next sign-in; the next person
+    /// to sign in here sees and sends none of it. Nothing changes and a message comes back while
+    /// something is still not on the account (offline, a refused row), unless `discardUnsent`:
+    /// clearing then loses the only copy.
     func signOut(discardUnsent: Bool = false) async -> String? {
         if !discardUnsent {
             do { try await flushPending() } catch {}
@@ -252,14 +295,34 @@ final class Store {
             writeCache()
             if let held = Self.signOutRefusal(waiting: waitingCount) { return held }
         }
+        await Push.shared.forget()
         await Supabase.shared.signOut()
+        signOuts += 1
         user = nil
         syncError = nil
         forgetAccountQueues()
-        prefsUpdatedAt = [:]
+        clearPhone()
         writeCache()
         setCoaching(CoachingState())
         return nil
+    }
+
+    /// What the phone holds of an account: its sessions, workouts and synced settings, and a
+    /// session the timer kept after a kill. Device settings (buzz, tones, Health) stay.
+    func clearPhone() {
+        results = []
+        myWorkouts = []
+        saved = []
+        trainingMaxes = [:]
+        equipment = nil
+        suggestions = SuggestPrefs()
+        units = nil
+        bodyweightKg = nil
+        profileName = nil
+        prefsUpdatedAt = [:]
+        customExercises = [:]
+        SessionRunner.clearSaved()
+        shareUpNext()
     }
 
     nonisolated static func signOutRefusal(waiting: Int) -> String? {
@@ -275,6 +338,7 @@ final class Store {
         pendingWorkouts = []
         pendingWorkoutDeletes = []
         syncedWorkouts = [:]
+        sessionStamps = [:]
         workoutEditedAt = [:]
         publicSetHere = []
         pendingDeletes = []
@@ -287,24 +351,14 @@ final class Store {
     }
 
     /// Deletes the account and its data on the server. `clearPhone` also forgets everything here;
-    /// otherwise History and your workouts stay on the phone, as after signing out, but nothing is
+    /// otherwise History and your workouts stay on the phone, not synced, and nothing is
     /// queued to go up to the account that no longer exists. Returns whether the sign-in went too.
     func deleteAccount(clearPhone: Bool) async throws -> Bool {
         let account = try await Supabase.shared.deleteAccount()
         user = nil
         setCoaching(CoachingState())
         forgetAccountQueues()
-        if clearPhone {
-            results = []
-            myWorkouts = []
-            saved = []
-            trainingMaxes = [:]
-            equipment = nil
-            suggestions = SuggestPrefs()
-            bodyweightKg = nil
-            prefsUpdatedAt = [:]
-            customExercises = [:]
-        }
+        if clearPhone { self.clearPhone() }
         writeCache()
         return account
     }
@@ -327,6 +381,11 @@ final class Store {
         if r.id == nil { r.id = "s-\(Int(Date().timeIntervalSince1970 * 1000))-\(UUID().uuidString.prefix(4))" }
         guard !discarded.contains(r.rowId) else { return stored() }
         for change in amendments.removeValue(forKey: r.rowId) ?? [] { change(&r) }
+        // A new session keeps this phone's zone; one saved again keeps the zone it had (review A10).
+        if r.tzOffsetMin == nil {
+            if let prev = results.first(where: { $0.rowId == r.rowId }) { r.tzOffsetMin = prev.tzOffsetMin }
+            else { r.tzOffsetMin = Double(TimeZone.current.secondsFromGMT(for: r.startedDate) / 60) }
+        }
         results.removeAll { $0.rowId == r.rowId }
         results.insert(r, at: 0)
         results.sort { $0.startedAt > $1.startedAt }
@@ -538,6 +597,14 @@ final class Store {
         await writePrefs()
     }
 
+    /// "metric" or "imperial" (Settings → Weights).
+    func setUnits(_ value: String) async {
+        guard value != (units ?? Units.metric) else { return }
+        units = value
+        touched("units")
+        await writePrefs()
+    }
+
     func setSuggestions(_ p: SuggestPrefs) async {
         guard p != suggestions else { return }
         suggestions = p
@@ -575,6 +642,7 @@ final class Store {
             values["equipment"] = json
         }
         if let json = suggestions.json { values["suggestions"] = json }
+        if let units { values["units"] = units }
         return PrefsMerge.Side(values: values, updatedAt: prefsUpdatedAt)
     }
 
@@ -595,8 +663,9 @@ final class Store {
         bodyweightKg = p.bodyweightKg
         equipment = p.equipment
         suggestions = p.suggestions
+        units = p.units
         profileName = (m.values["name"] as? String).map { $0.trimmingCharacters(in: .whitespaces) }.flatMap { $0.isEmpty ? nil : $0 }
-        prefsUpdatedAt = m.updatedAt.filter { ["saved", "trainingMaxes", "bodyweightKg", "equipment", "suggestions", "name"].contains($0.key) }
+        prefsUpdatedAt = m.updatedAt.filter { Self.heldPrefs.contains($0.key) }
     }
 
     /// Set by the workout page as it starts a session, taken by RootView (Versions.swift).
@@ -850,16 +919,31 @@ final class Store {
     private func flushPending() async throws {
         guard await Supabase.shared.isSignedIn, !pending.isEmpty else { return }
         var sent: [SessionResult] = []
+        var gone: [String] = []
         var failure: Error?
         for r in pending {
             do {
-                try await Supabase.shared.save(r)
+                let stamp = try await Supabase.shared.save(r, seen: sessionStamps[r.rowId])
+                sessionStamps[r.rowId] = stamp
                 sent.append(r)
             } catch {
-                failure = error
+                switch Self.refusal(error) {
+                case .stale:
+                    // Changed elsewhere since this phone read it: the server's copy wins, and the
+                    // pull that follows lays it over this one.
+                    sessionStamps[r.rowId] = nil
+                    sent.append(r)
+                case .deleted:
+                    sessionStamps[r.rowId] = nil
+                    sent.append(r)
+                    gone.append(r.rowId)
+                case nil:
+                    failure = error
+                }
             }
         }
         pending.removeAll { sent.contains($0) }
+        results.removeAll { gone.contains($0.rowId) }
         // One discarded while it was on its way up is on the server again: it goes back on the
         // delete queue.
         for r in sent where discarded.contains(r.rowId) && !pendingDeletes.contains(r.rowId) { pendingDeletes.append(r.rowId) }
@@ -879,7 +963,20 @@ final class Store {
             }
         }
         pendingDeletes.removeAll { done.contains($0) }
+        for id in done { sessionStamps[id] = nil }
         if let failure { throw failure }
+    }
+
+    enum Refusal { case stale, deleted }
+
+    /// A write the database refused because the row changed (PT409) or was deleted (PT410) since
+    /// this phone read it; nil for any other failure.
+    nonisolated static func refusal(_ error: Error) -> Refusal? {
+        switch (error as? SupabaseError)?.code {
+        case "PT409": .stale
+        case "PT410": .deleted
+        default: nil
+        }
     }
 
     // MARK: - Cache
@@ -900,30 +997,33 @@ final class Store {
         var trainingMaxes: [String: Double]?
         var equipment: Equipment?
         var suggestions: SuggestPrefs?
+        var units: String?
         var prefsUpdatedAt: [String: String]?
         var publicSetHere: [String]?
         var syncedWorkouts: [String: Supabase.WorkoutRow]?
         var workoutEditedAt: [String: String]?
+        var sessionStamps: [String: String]?
         /// Entries or fields that could not be read and were left out. Not written.
         var dropped = 0
 
         private enum CodingKeys: String, CodingKey {
             case version, results, myWorkouts, pending, bodyweightKg, saved, pendingWorkouts, pendingWorkoutDeletes,
-                 pendingDeletes, customExercises, pendingExercises, trainingMaxes, equipment, suggestions,
-                 prefsUpdatedAt, publicSetHere, syncedWorkouts, workoutEditedAt
+                 pendingDeletes, customExercises, pendingExercises, trainingMaxes, equipment, suggestions, units,
+                 prefsUpdatedAt, publicSetHere, syncedWorkouts, workoutEditedAt, sessionStamps
         }
 
         init(results: [SessionResult], myWorkouts: [Runsheet], pending: [SessionResult], bodyweightKg: Double?, saved: [String],
              pendingWorkouts: [Runsheet]?, pendingWorkoutDeletes: [String]?, pendingDeletes: [String]?,
              customExercises: [LibraryExercise]?, pendingExercises: [LibraryExercise]?, trainingMaxes: [String: Double]?,
              equipment: Equipment?, suggestions: SuggestPrefs?, prefsUpdatedAt: [String: String]?, publicSetHere: [String]?,
-             syncedWorkouts: [String: Supabase.WorkoutRow]?, workoutEditedAt: [String: String]?) {
+             syncedWorkouts: [String: Supabase.WorkoutRow]?, workoutEditedAt: [String: String]?, sessionStamps: [String: String]? = nil) {
             self.results = results; self.myWorkouts = myWorkouts; self.pending = pending; self.bodyweightKg = bodyweightKg
             self.saved = saved; self.pendingWorkouts = pendingWorkouts; self.pendingWorkoutDeletes = pendingWorkoutDeletes
             self.pendingDeletes = pendingDeletes; self.customExercises = customExercises; self.pendingExercises = pendingExercises
             self.trainingMaxes = trainingMaxes; self.equipment = equipment; self.suggestions = suggestions
             self.prefsUpdatedAt = prefsUpdatedAt; self.publicSetHere = publicSetHere; self.syncedWorkouts = syncedWorkouts
             self.workoutEditedAt = workoutEditedAt
+            self.sessionStamps = sessionStamps
         }
 
         /// One entry that cannot be read costs that entry, and one field that cannot be read costs
@@ -957,10 +1057,12 @@ final class Store {
             trainingMaxes = field(.trainingMaxes)
             equipment = field(.equipment)
             suggestions = field(.suggestions)
+            units = field(.units)
             prefsUpdatedAt = field(.prefsUpdatedAt)
             publicSetHere = list(.publicSetHere)
             syncedWorkouts = field(.syncedWorkouts)
             workoutEditedAt = field(.workoutEditedAt)
+            sessionStamps = field(.sessionStamps)
             self.dropped = dropped
         }
     }
@@ -1020,15 +1122,17 @@ final class Store {
         trainingMaxes = c.trainingMaxes ?? [:]
         equipment = c.equipment
         suggestions = c.suggestions ?? SuggestPrefs()
+        units = c.units
         prefsUpdatedAt = c.prefsUpdatedAt ?? [:]
         publicSetHere = Set(c.publicSetHere ?? [])
         syncedWorkouts = c.syncedWorkouts ?? [:]
         workoutEditedAt = c.workoutEditedAt ?? [:]
+        sessionStamps = c.sessionStamps ?? [:]
     }
 
     @discardableResult
     private func writeCache() -> Bool {
-        let c = Cache(
+        var c = Cache(
             results: results, myWorkouts: myWorkouts, pending: pending,
             bodyweightKg: bodyweightKg, saved: Array(saved),
             pendingWorkouts: pendingWorkouts, pendingWorkoutDeletes: pendingWorkoutDeletes,
@@ -1036,8 +1140,9 @@ final class Store {
             customExercises: Array(customExercises.values), pendingExercises: pendingExercises,
             trainingMaxes: trainingMaxes, equipment: equipment, suggestions: suggestions, prefsUpdatedAt: prefsUpdatedAt,
             publicSetHere: publicSetHere.sorted(),
-            syncedWorkouts: syncedWorkouts, workoutEditedAt: workoutEditedAt
+            syncedWorkouts: syncedWorkouts, workoutEditedAt: workoutEditedAt, sessionStamps: sessionStamps
         )
+        c.units = units
         shareUpNext()
         guard !cacheBlocked else { return false }
         do {
@@ -1054,5 +1159,57 @@ final class Store {
         let stamp = Int(Date().timeIntervalSince1970)
         let url = cacheURL.deletingPathExtension().appendingPathExtension("unreadable-\(stamp).json")
         try? data.write(to: url, options: .atomic)
+    }
+}
+
+/// The anonymous sync-health ping (review A6), as the web sends it (health-ping.ts): after a sync,
+/// at most once an hour while syncs fail and once a day while they work. No account and no error
+/// text: the app, its build, ok or not, how many changes wait, a coarse kind of error, and minutes
+/// since the last good sync. Release builds only.
+enum HealthPing {
+    static let endpoint = URL(string: "https://mcp.tigerworkouts.com/health/sync")!
+    private static let key = "healthPing"
+
+    /// A sync error reduced to a kind; the text itself never leaves the phone. `errorKind` in health-ping.ts.
+    nonisolated static func kind(_ message: String) -> String {
+        let m = message.lowercased()
+        func has(_ words: [String]) -> Bool { words.contains { m.contains($0) } }
+        if has(["internet", "network", "offline", "timed out", "connection"]) { return "network" }
+        if has(["jwt", "token", "sign in", "signed in", "not signed"]) { return "auth" }
+        if has(["row-level", "policy", "permission", "refused", "violates", "constraint", "duplicate"]) { return "refused" }
+        if has(["disk", "storage", "space"]) { return "storage" }
+        if has(["server", "unavailable", "gateway"]) { return "server" }
+        return "other"
+    }
+
+    /// The body to send now, or nil when nothing is due. Records what it decides in `defaults`.
+    nonisolated static func next(error: String?, waiting: Int, build: String, now: Date = Date(), defaults: UserDefaults = .standard) -> [String: Any]? {
+        var s = defaults.dictionary(forKey: key) as? [String: Double] ?? [:]
+        let t = now.timeIntervalSince1970
+        let ok = error == nil
+        if ok { s["lastOk"] = t }
+        let due = ok ? t - (s["ok"] ?? 0) >= 86400 : t - (s["fail"] ?? 0) >= 3600
+        if due { s[ok ? "ok" : "fail"] = t }
+        defaults.set(s, forKey: key)
+        guard due else { return nil }
+        var body: [String: Any] = ["app": "ios", "build": build, "ok": ok, "waiting": waiting]
+        if let error { body["error"] = kind(error) }
+        if let last = s["lastOk"] { body["sinceOkMin"] = Int(((t - last) / 60).rounded()) }
+        return body
+    }
+
+    static func after(error: String?, waiting: Int) {
+        #if !DEBUG
+        let info = Bundle.main.infoDictionary ?? [:]
+        let build = "\(info["CFBundleShortVersionString"] ?? "?")+\(info["CFBundleVersion"] ?? "?")"
+        guard let body = next(error: error, waiting: waiting, build: build),
+              let data = try? JSONSerialization.data(withJSONObject: body) else { return }
+        var req = URLRequest(url: endpoint)
+        req.httpMethod = "POST"
+        req.setValue("application/json", forHTTPHeaderField: "content-type")
+        req.httpBody = data
+        req.timeoutInterval = 10
+        URLSession.shared.dataTask(with: req).resume()
+        #endif
     }
 }

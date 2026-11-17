@@ -65,19 +65,24 @@ struct StepEditorView: View {
 
                 if step.hasSetting {
                     Section(step.settingLabel) {
-                        Stepper(value: Binding(get: { step.target ?? 0 }, set: { step.target = $0 }), in: 0...500, step: increment) {
+                        // Stepped and typed in lb when weights show in lb, kept in kg (U11).
+                        Stepper {
                             HStack {
                                 Text(step.settingLabel)
                                 Spacer()
                                 // Typed too: 27.5 kg is five taps of 2.5 from 15.
-                                TextField(unit, value: Binding(get: { step.target }, set: { step.target = $0.map { min(max($0, 0), 500) } }), format: .number)
+                                TextField(step.shownUnit, value: Binding(get: { step.target.map { Units.shown($0, unit: unit) } }, set: { step.target = $0.map { min(max(Units.stored($0, unit: unit), 0), 500) } }), format: .number)
                                     .keyboardType(.decimalPad)
                                     .multilineTextAlignment(.trailing)
                                     .monospacedDigit()
                                     .frame(maxWidth: 80)
                                     .accessibilityIdentifier("target-value")
-                                Text(unit).foregroundStyle(Brand.muted)
+                                Text(step.shownUnit).foregroundStyle(Brand.muted)
                             }
+                        } onIncrement: {
+                            step.target = min(500, Units.stepped(step.target ?? 0, by: 1, step: increment, unit: unit))
+                        } onDecrement: {
+                            step.target = Units.stepped(step.target ?? 0, by: -1, step: increment, unit: unit)
                         }
                     }
                 }

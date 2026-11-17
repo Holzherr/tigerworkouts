@@ -113,12 +113,12 @@ export const myClients = async (now = new Date()): Promise<ClientSummary[]> => {
   const [profiles, invites, sessions] = await Promise.all([
     names(ids),
     listInvites(),
-    sb.from('sessions').select('owner,started_at').in('owner', ids).gte('started_at', new Date(now.getTime() - 90 * 864e5).toISOString()).order('started_at', { ascending: false }).limit(2000).then(ok),
+    sb.from('sessions').select('owner,started_at,tz:data->tzOffsetMin').in('owner', ids).gte('started_at', new Date(now.getTime() - 90 * 864e5).toISOString()).order('started_at', { ascending: false }).limit(2000).then(ok),
   ]);
   const label = (id: string) => invites.find(i => i.acceptedBy === id)?.label;
   return clientRollup(
     links.map(l => ({ id: l.client, name: profiles.get(l.client)?.name || label(l.client) || 'Client', since: l.created_at })),
-    ((sessions ?? []) as { owner: string; started_at: string }[]).map(s => ({ owner: s.owner, startedAt: s.started_at })),
+    ((sessions ?? []) as { owner: string; started_at: string; tz?: unknown }[]).map(s => ({ owner: s.owner, startedAt: s.started_at, ...(typeof s.tz === 'number' ? { tzOffsetMin: s.tz } : {}) })),
     now
   );
 };

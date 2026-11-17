@@ -27,6 +27,11 @@ What you get that the PWA cannot do:
   buttons that work without unlocking: Done on a set, Start at a block, +15 s and Skip rest on a
   rest, and it shows the set's load × reps. They are App Intents (`Shared/SessionIntents.swift`)
   that run in the app's process and reach the running session through `SessionControls.active`.
+- **The session on the watch.** A watchOS app mirrors the running session: the exercise, the
+  clock, the set's load × reps, and the same buttons as the Lock Screen card. The phone stays the
+  only clock: it sends the state on each transition over WatchConnectivity (`Shared/WatchLink.swift`,
+  `Feedback/WatchSync.swift`) and runs the watch's taps through `SessionControls`, token check
+  included. Editing stays on the phone.
 - **Up next on the home screen.** A small and a medium widget with what to do next (the same pick
   as the Up next card on Workouts) and this week's count; a tap opens that workout's page. The app writes what it shows into
   the App Group `group.dev.brambruesch.tigerworkouts` (`Shared/UpNextShare.swift`), which has to be
@@ -48,7 +53,7 @@ TigerWorkouts/
   Results/    Effort (METs, streak, tonnage), Muscles (name-first matcher), Logbook, CSV export
   Cloud/      Supabase (GoTrue + PostgREST over URLSession), Store, Keychain
   Health/     Health (HKWorkout out; bodyweight and heart rate in)
-  Feedback/   Haptics (Core Haptics), Cues (AVAudioEngine), SessionActivityController
+  Feedback/   Haptics (Core Haptics), Cues (AVAudioEngine), SessionActivityController, WatchSync
   Shared/     SessionActivity — the Lock Screen contract, compiled into both targets
   Features/   Discover, WorkoutDetail, WorkoutEditor, StepEditor, ExercisePicker, Timer,
               ExerciseSheet, History, SessionStats, BodyMap, Me, SignIn
@@ -56,6 +61,8 @@ TigerWorkouts/
 TigerWorkoutsWidgets/
               SessionLiveActivity — the Lock Screen and Dynamic Island views
               UpNextWidget — the home-screen widget
+TigerWorkoutsWatch/
+              the watch app: WatchModel (WatchConnectivity) and the one screen, SessionFace
 ```
 
 No third-party dependencies. The Supabase client is four endpoints hand-rolled on URLSession

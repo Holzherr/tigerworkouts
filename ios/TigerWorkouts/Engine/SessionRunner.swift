@@ -259,6 +259,7 @@ final class SessionRunner {
         Cues.shared.begin()
         SessionActivityController.shared.clearStale()
         SessionActivityController.shared.start(title: runsheet.title, state: activityState)
+        WatchSync.shared.push(Self.watchState(state, runsheet: runsheet, now: now))
         SessionControls.active = self
         UIApplication.shared.isIdleTimerDisabled = true
         holding = true
@@ -304,7 +305,11 @@ final class SessionRunner {
         appObservers.forEach(NotificationCenter.default.removeObserver)
         appObservers = []
         SessionActivityController.shared.end(activityState)
-        if SessionControls.active === self { SessionControls.active = nil }
+        // A session started since owns the watch now.
+        if SessionControls.active === self {
+            SessionControls.active = nil
+            WatchSync.shared.push(nil)
+        }
     }
 
     /// When the crash-safe copy was last written, on the session's own clock.
@@ -378,6 +383,7 @@ final class SessionRunner {
         } else {
             SessionActivityController.shared.update(activityState)
         }
+        WatchSync.shared.push(Self.watchState(state, runsheet: runsheet, now: now))
     }
 
     private var activityState: SessionActivityAttributes.ContentState {
@@ -698,7 +704,7 @@ final class SessionRunner {
     /// Nudge the load or speed of whatever is running, by the exercise's own step.
     func nudgeTarget(_ direction: Double) {
         guard let ex = slot?.exercise else { return }
-        let next = max(0, (target ?? ex.target ?? 0) + direction * StepSizes.load(ex.exercise))
+        let next = Units.stepped(target ?? ex.target ?? 0, by: direction, step: StepSizes.load(ex.exercise), unit: ex.shortUnit)
         apply { Runner.adjust($0, now: $1, target: next) }
         Haptics.shared.play(.tick)
     }
@@ -839,7 +845,7 @@ final class SessionRunner {
 
     func nudgeSetLoad(_ slotId: String, _ direction: Double) {
         guard let row = setRows.first(where: { $0.slotId == slotId }), let ex = straightSetStep else { return }
-        setSetLoad(slotId, (row.load ?? 0) + direction * StepSizes.load(ex.exercise))
+        setSetLoad(slotId, Units.stepped(row.load ?? 0, by: direction, step: StepSizes.load(ex.exercise), unit: ex.shortUnit))
         Haptics.shared.play(.tick)
     }
 
@@ -1331,7 +1337,7 @@ extension SessionRunner: SessionControllable {
     nonisolated static func setLine(_ state: RunState, _ idx: Int) -> String? {
         guard let slot = state.slots[safe: idx], let ex = slot.exercise else { return nil }
         let load = ex.hasSetting ? Runner.effectiveTarget(state, idx).map { t in
-            ex.shortUnit.isEmpty ? Format.number(t) : "\(Format.number(t)) \(ex.shortUnit)"
+            ex.loadText(t)
         } : nil
         var count: String?
         switch ex.forMode {

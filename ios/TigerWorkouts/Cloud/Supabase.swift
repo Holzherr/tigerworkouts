@@ -59,6 +59,10 @@ struct AuthSession: Codable, Sendable {
 
 struct SupabaseError: LocalizedError {
     var message: String
+    /// The HTTP status and PostgREST's error code, when the server answered with one. Migration 0018
+    /// refuses a stale write with PT409 and a write to a deleted row with PT410 (review A3).
+    var status: Int? = nil
+    var code: String? = nil
     var errorDescription: String? { message }
 }
 
@@ -150,7 +154,8 @@ actor Supabase {
         let (data, response) = try await URLSession.shared.data(for: req)
         guard let http = response as? HTTPURLResponse else { throw SupabaseError(message: "No response") }
         guard (200..<300).contains(http.statusCode) else {
-            throw SupabaseError(message: Self.message(from: data, status: http.statusCode))
+            let code = (try? JSONSerialization.jsonObject(with: data) as? [String: Any])?["code"] as? String
+            throw SupabaseError(message: Self.message(from: data, status: http.statusCode), status: http.statusCode, code: code)
         }
         if !Self.fromServer(data: data, contentType: http.value(forHTTPHeaderField: "Content-Type")) {
             throw SupabaseError(message: "The network answered instead of the server. Try again on another connection.")
@@ -386,8 +391,9 @@ actor Supabase {
         // Thrown, not an empty list: a sync would take that for an account with no sessions.
         guard let uid = session?.user.id else { throw SupabaseError(message: "Not signed in") }
         let rows = try await Self.allPages { offset, size in
-            try await self.request("rest/v1/sessions?select=id,data&owner=eq.\(uid)&order=started_at.desc,id.asc&limit=\(size)&offset=\(offset)").0
+            try await self.request("rest/v1/sessions?select=id,data,updated_at&owner=eq.\(uid)&order=started_at.desc,id.asc&limit=\(size)&offset=\(offset)").0
         }
+        sessionStamps = Dictionary(rows.compactMap { row in (row["id"] as? String).flatMap { id in (row["updated_at"] as? String).map { (id, $0) } } }, uniquingKeysWith: { a, _ in a })
         return rows.compactMap { row in
             guard let id = row["id"] as? String, let payload = row["data"], JSONSerialization.isValidJSONObject(payload),
                   let body = try? JSONSerialization.data(withJSONObject: payload) else { return nil }
@@ -397,6 +403,9 @@ actor Supabase {
     }
 
     static let pageSize = 1000
+
+    /// Each session's `updated_at` as the last `sessions()` read it, by row id (review A3).
+    private(set) var sessionStamps: [String: String] = [:]
 
     /// Every row of a paged read: pages are asked for until one comes back short. A page that is
     /// not a list of rows throws, so a partial read is never taken for the whole.
@@ -415,19 +424,27 @@ actor Supabase {
     /// Upserts the session, laid over the row's `data` as the server has it: an edit made here must
     /// not drop what the web app keeps on the row and this app does not read. The server sends the
     /// row's id back; without it the session stays queued.
-    func save(_ result: SessionResult) async throws {
+    ///
+    /// `seen` is the row's `updated_at` when this phone last read it. Sent along, the database
+    /// refuses the write when the row changed or was deleted since (migration 0018, review A3).
+    /// Returns the row's new `updated_at`.
+    @discardableResult
+    func save(_ result: SessionResult, seen: String? = nil) async throws -> String? {
         guard let uid = session?.user.id else { throw SupabaseError(message: "Not signed in") }
         let (data, _) = try await request("rest/v1/sessions?select=data&id=eq.\(Self.escape(result.rowId))&owner=eq.\(uid)")
         let existing = (try? JSONSerialization.jsonObject(with: data) as? [[String: Any]])?.first?["data"] as? [String: Any]
+        var row = SessionRow.encode(result, owner: uid, existing: existing)
+        if let seen { row["updated_at"] = seen }
         let (saved, _) = try await request(
-            "rest/v1/sessions?on_conflict=id&select=id",
+            "rest/v1/sessions?on_conflict=id&select=id,updated_at",
             method: "POST",
-            body: [SessionRow.encode(result, owner: uid, existing: existing)],
+            body: [row],
             headers: ["Prefer": "resolution=merge-duplicates,return=representation"]
         )
         guard Self.confirmed(saved, id: result.rowId) else {
             throw SupabaseError(message: "The server did not confirm the save")
         }
+        return ((try? JSONSerialization.jsonObject(with: saved)) as? [[String: Any]])?.first { $0["id"] as? String == result.rowId }?["updated_at"] as? String
     }
 
     /// Whether a `return=representation` answer holds the row with this id.
@@ -474,6 +491,13 @@ actor Supabase {
         guard let uid = session?.user.id else { throw SupabaseError(message: "Not signed in") }
         let (data, _) = try await request("rest/v1/workouts?select=\(Self.workoutColumns)&id=eq.\(Self.escape(id))&owner=eq.\(uid)")
         return Self.decodeWorkoutRows(data).first
+    }
+
+    /// Anyone's workout by id, signed in or not: one that is public, shared by link, assigned to you
+    /// or your own (`shared_workout`, migration 0016). Nil when it is none of those.
+    func sharedWorkout(id: String) async throws -> Runsheet? {
+        let (data, _) = try await request("rest/v1/rpc/shared_workout", method: "POST", body: ["p_id": id])
+        return Self.decodeWorkouts(data).first
     }
 
     /// `workouts` rows into runsheets; a row whose `data` is not a runsheet is skipped.
@@ -606,14 +630,15 @@ actor Supabase {
         )
     }
 
-    /// What the phone keeps on `user_state.prefs`, beside what only the web reads (name, units,
-    /// avatar).
+    /// What the phone keeps on `user_state.prefs`, beside what only the web reads (name, avatar).
     struct Prefs {
         var bodyweightKg: Double?
         var saved: [String] = []
         var trainingMaxes: [String: Double] = [:]
         var equipment: Equipment?
         var suggestions = SuggestPrefs()
+        /// "metric" or "imperial"; nil when never set (kg).
+        var units: String?
     }
 
     /// The whole prefs JSON as the server has it. Throws rather than answering "nothing" when it
@@ -659,6 +684,7 @@ actor Supabase {
             out.equipment = try? JSONDecoder().decode(Equipment.self, from: data)
         }
         out.suggestions = SuggestPrefs.from(json: json["suggestions"])
+        out.units = (json["units"] as? String).flatMap { [Units.metric, Units.imperial].contains($0) ? $0 : nil }
         return out
     }
 }

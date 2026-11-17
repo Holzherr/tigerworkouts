@@ -57,7 +57,7 @@ enum Celebrate {
         func diff(_ a: Double?, _ b: Double?) -> Double? { a.flatMap { a in b.map { a - $0 } } }
         return Celebration(
             ordinal: before.count + 1,
-            streak: EffortModel.streak(others.filter { $0.startedAt <= result.startedAt } + [result], today: today ?? result.startedDate),
+            streak: EffortModel.streak(others.filter { $0.startedAt <= result.startedAt } + [result], today: today ?? result.wallDate),
             prs: Logbook.sessionPRs(result, all: all),
             rounds: Rounds.prs(result, all: all, lineage: lineage, runsheet: runsheet),
             volume: volume,
@@ -68,7 +68,8 @@ enum Celebrate {
     }
 
     /// `fmtScore` in progression.ts: a score in its type's words.
-    static func formatScore(_ type: ScoreType, _ score: Double) -> String {
+    /// A load in lb when `lb`; the text kept on a result is always written in kg.
+    static func formatScore(_ type: ScoreType, _ score: Double, lb: Bool = Units.lb) -> String {
         switch type {
         case .time: return Format.clock(score)
         case .rounds:
@@ -76,16 +77,14 @@ enum Celebrate {
             let rounds = Int(score)
             return "\(rounds) round\(rounds == 1 ? "" : "s")" + (extra > 0 ? " + \(extra) rep\(extra == 1 ? "" : "s")" : "")
         case .reps: return "\(Format.number(score)) reps"
-        case .load: return "\(Format.number(score)) kg"
+        case .load: return Units.weight(score, lb: lb)
         case .distance: return "\(Format.number(score)) m"
         case .none: return Format.number(score)
         }
     }
 
-    static func kg(_ n: Double) -> String {
-        let a = abs(n)
-        return a >= 1000 ? "\(Format.number((a / 100).rounded() / 10)) t" : "\(Int(a.rounded())) kg"
-    }
+    /// Volume: "850 kg", "1.2 t", or "1,874 lb" when weights show in lb (U11).
+    static func kg(_ n: Double) -> String { Units.tonnage(n) }
 
     /// The lines under "vs last time". Time scores are better when lower; every other score and
     /// volume when higher. Duration only says longer or shorter: neither is better by itself.

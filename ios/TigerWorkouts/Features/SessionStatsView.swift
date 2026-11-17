@@ -15,6 +15,12 @@ struct SessionStatsView: View {
     private var load: MuscleShare { Muscles.load(worked) }
     private var streak: Streak { EffortModel.streak(history.contains { $0.rowId == result.rowId } ? history : history + [result]) }
 
+    /// The Moved tile's number: tonnes from 1000 kg, kg below; whole pounds in lb (U11).
+    static func moved(_ kg: Double, lb: Bool = Units.lb) -> String {
+        if lb { return Units.grouped(Format.whole(kg * Units.LB)) }
+        return "\(Int(kg / 1000 >= 1 ? (kg / 1000).rounded() : kg))"
+    }
+
     var body: some View {
         VStack(spacing: 16) {
             HStack(spacing: 10) {
@@ -22,8 +28,8 @@ struct SessionStatsView: View {
                 tile(title: "Burn", value: "\(measuredKcal ?? effort.kcal)", note: measuredKcal != nil ? "kcal measured" : "kcal estimate")
                 tile(
                     title: effort.tonnage > 0 ? "Moved" : "Session",
-                    value: effort.tonnage > 0 ? "\(Int(effort.tonnage / 1000 >= 1 ? (effort.tonnage / 1000).rounded() : effort.tonnage))" : Format.duration(result.durationSec ?? 0),
-                    note: effort.tonnage > 0 ? (effort.tonnage >= 1000 ? "tonnes lifted" : "kg lifted") : "end to end"
+                    value: effort.tonnage > 0 ? Self.moved(effort.tonnage) : Format.duration(result.durationSec ?? 0),
+                    note: effort.tonnage > 0 ? (Units.lb ? "lb lifted" : effort.tonnage >= 1000 ? "tonnes lifted" : "kg lifted") : "end to end"
                 )
             }
 
@@ -39,7 +45,7 @@ struct SessionStatsView: View {
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .cardSurface()
             } else if effort.estimatedWeight {
-                Text("Calories assume \(Int(EffortModel.defaultBodyweightKg)) kg. Set your bodyweight under Me, or turn on Health, for a closer figure.")
+                Text("Calories assume \(Units.wholeWeight(EffortModel.defaultBodyweightKg)). Set your bodyweight under Me, or turn on Health, for a closer figure.")
                     .font(.caption)
                     .foregroundStyle(Brand.muted)
                     .frame(maxWidth: .infinity, alignment: .leading)

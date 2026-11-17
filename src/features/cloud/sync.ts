@@ -90,21 +90,40 @@ export const readSnap = (raw: string | null): Record<string, string> => {
   // The old form: each value is the row's JSON as it was compared, so its hash stands in for it.
   return Object.fromEntries(Object.entries(v).filter((e): e is [string, string] => typeof e[1] === 'string').map(([k, j]) => [k, hash(j)]));
 };
-export const writeSnap = (s: Record<string, string>) => JSON.stringify([SNAP_FORMAT, s]);
+/** The third element: each row's `updated_at` as last read from the server (review A3). */
+export const readSeen = (raw: string | null): Record<string, string> => {
+  try {
+    const v = JSON.parse(raw || '{}');
+    const o = Array.isArray(v) && v[0] === SNAP_FORMAT ? v[2] : undefined;
+    return o && typeof o === 'object' && !Array.isArray(o) ? Object.fromEntries(Object.entries(o).filter((e): e is [string, string] => typeof e[1] === 'string')) : {};
+  } catch {
+    return {};
+  }
+};
+export const writeSnap = (s: Record<string, string>, at: Record<string, string> = {}) => JSON.stringify([SNAP_FORMAT, s, at]);
 
-let snap: Record<string, string> = readSnap(typeof localStorage === 'undefined' ? null : localStorage.getItem(SNAP_KEY));
+const stored = typeof localStorage === 'undefined' ? null : localStorage.getItem(SNAP_KEY);
+let snap: Record<string, string> = readSnap(stored);
+/**
+ * Review A3: the `updated_at` each row had when this device last read it, per snapshot key. A push
+ * of a row sends it back, and the database refuses the write (409) when the row has changed since,
+ * or (410) when it was deleted since (migration 0018). Before that migration the value is simply
+ * written and overwritten by the server's own trigger. A row without one is pushed as before.
+ */
+let seen: Record<string, string> = readSeen(stored);
 // Another tab's sync moved the snapshot on: this tab must reason from the same one, or its next
 // sync reads rows that tab pushed as "seen, and gone from here" and deletes them on the server.
 if (typeof window !== 'undefined')
   window.addEventListener('storage', e => {
     if (e.key !== SNAP_KEY) return;
     snap = readSnap(e.newValue);
+    seen = readSeen(e.newValue);
   });
 const saveSnap = () => {
   try {
     // Never on disk ahead of the store: a snapshot beside an older store reads the rows that
     // store lacks as deleted here (store.ts, forgetSnapshot).
-    if (storePersisted()) localStorage.setItem(SNAP_KEY, writeSnap(snap));
+    if (storePersisted()) localStorage.setItem(SNAP_KEY, writeSnap(snap, seen));
     else localStorage.removeItem(SNAP_KEY);
   } catch {
     /* ignore */
@@ -117,6 +136,7 @@ const resultId = (r: SessionResult) => r.id ?? `${r.runsheetId}@${r.startedAt}`;
  * account's first sync on this device neither pushes nor deletes anything of the last one's. */
 export const clearSnap = () => {
   snap = {};
+  seen = {};
   localStorage.removeItem(SNAP_KEY);
 };
 /** How many results and workouts the server has not seen in this form: what the next sync would push. */
@@ -180,6 +200,49 @@ export const inTurn = <T>(fn: () => Promise<T>): Promise<T> => {
 /** Pull then push. Returns what changed locally so the store can apply it. */
 export const sync = (local: SyncTarget): Promise<SyncResult> => inTurn(() => pullPush(local));
 
+interface Pushed {
+  /** Refused as stale (409): the row changed on the server since this device read it. */
+  stale: string[];
+  /** Refused as deleted (410): the row was deleted on the server since this device read it. */
+  deleted: string[];
+  errors: string[];
+}
+type SentRow = { id: string; updated_at?: string };
+
+/**
+ * Upserts the dirty rows, in one batch, or one by one when the batch is refused, so one row the
+ * server refuses does not keep the rest off the account. Each row carries the `updated_at` this
+ * device last read (`seen`), and the answer's `updated_at` becomes the new one (review A3).
+ */
+const pushRows = async <T>(table: 'sessions' | 'workouts', dirty: T[], key: (x: T) => string, rowOf: (x: T) => SentRow & Record<string, unknown>): Promise<Pushed> => {
+  const out: Pushed = { stale: [], deleted: [], errors: [] };
+  const body = (x: T) => (seen[key(x)] ? { ...rowOf(x), updated_at: seen[key(x)] } : rowOf(x));
+  // Rows without updated_at take the column default, not null, beside rows that send one.
+  const send = (xs: T[]) => sb.from(table).upsert(xs.map(body), { onConflict: 'id', defaultToNull: false }).select('id,updated_at');
+  const took = (x: T, back: unknown) => {
+    snap[key(x)] = H(x);
+    const at = Array.isArray(back) ? (back as SentRow[]).find(b => b.id === rowOf(x).id)?.updated_at : undefined;
+    if (at) seen[key(x)] = at;
+    else delete seen[key(x)];
+  };
+  const answer = (x: T, error: { code?: string; message: string } | null, data: unknown) => {
+    if (!error) took(x, data);
+    else if (error.code === 'PT409') out.stale.push(key(x));
+    else if (error.code === 'PT410') out.deleted.push(key(x));
+    else out.errors.push(error.message);
+  };
+  if (!dirty.length) return out;
+  const { data, error } = await send(dirty);
+  if (!error) dirty.forEach(x => took(x, data));
+  else if (dirty.length === 1) answer(dirty[0], error, null);
+  else
+    for (const x of dirty) {
+      const one = await send([x]);
+      answer(x, one.error, one.data);
+    }
+  return out;
+};
+
 /** The sync itself, for whoever already holds the turn (sign-out). */
 export const pullPush = async (local: SyncTarget): Promise<SyncResult> => {
   const user = currentUser();
@@ -193,28 +256,32 @@ export const pullPush = async (local: SyncTarget): Promise<SyncResult> => {
   let results = local.results.map(ensureId);
   // Paged: the server caps a select (1000 rows by default), and a row missing from the answer is
   // read below as deleted on the server.
-  const rows: { id: string; data: unknown }[] = [];
+  const rows: { id: string; data: unknown; updated_at?: string }[] = [];
   let e1: { message: string } | null = null;
   for (let from = 0; ; from += PAGE) {
-    const { data, error } = await sb.from('sessions').select('id,data').eq('owner', uid).order('id').range(from, from + PAGE - 1);
+    const { data, error } = await sb.from('sessions').select('id,data,updated_at').eq('owner', uid).order('id').range(from, from + PAGE - 1);
     if (error) {
       e1 = error;
       break;
     }
-    rows.push(...((data ?? []) as { id: string; data: unknown }[]));
+    rows.push(...((data ?? []) as { id: string; data: unknown; updated_at?: string }[]));
     if ((data ?? []).length < PAGE) break;
   }
   if (e1) errors.push(e1.message);
   else {
     const remote = new Map(rows.map(r => [r.id, fromRow(r)]));
     const remoteJ = new Map([...remote].map(([id, r]) => [id, H(r)]));
+    const remoteAt = new Map(rows.map(r => [r.id, r.updated_at]));
     remote.forEach((r, id) => {
       const i = results.findIndex(x => resultId(x) === id);
       const rj = remoteJ.get(id)!;
+      // The row as last read is the one the snapshot holds: its updated_at is the one to send back.
+      const read = () => (remoteAt.get(id) ? (seen[id] = remoteAt.get(id)!) : delete seen[id]);
       if (i < 0) {
         if (!(id in snap)) {
           results = [...results, r];
           snap[id] = rj;
+          read();
           changed = true;
         }
         return;
@@ -223,59 +290,62 @@ export const pullPush = async (local: SyncTarget): Promise<SyncResult> => {
       if (!(id in snap) || (rj !== snap[id] && lj === snap[id])) {
         results = results.map((x, k) => (k === i ? r : x));
         snap[id] = rj;
+        read();
         changed = true;
-      }
+      } else if (rj === snap[id]) read();
     });
     const before = results.length;
     results = results.filter(x => {
       const id = resultId(x);
       if (!remote.has(id) && id in snap && H(x) === snap[id]) {
         delete snap[id];
+        delete seen[id];
         return false;
       }
       return true;
     });
     if (results.length !== before) changed = true;
     // push
-    const dirty = results.filter(x => H(x) !== snap[resultId(x)]);
-    if (dirty.length) {
-      const { error } = await sb.from('sessions').upsert(dirty.map(x => toRow(x, uid)), { onConflict: 'id' });
-      if (!error) dirty.forEach(x => (snap[resultId(x)] = H(x)));
-      else if (dirty.length === 1) errors.push(error.message);
-      else {
-        // One row the server refuses fails the whole batch. Sent one by one, the rest still land:
-        // a refused import must not keep every later gym session off the account.
-        for (const x of dirty) {
-          const { error: e } = await sb.from('sessions').upsert([toRow(x, uid)], { onConflict: 'id' });
-          if (e) errors.push(e.message);
-          else snap[resultId(x)] = H(x);
-        }
-      }
+    const pushed = await pushRows('sessions', results.filter(x => H(x) !== snap[resultId(x)]), resultId, x => toRow(x, uid));
+    errors.push(...pushed.errors);
+    // Changed elsewhere since this device read it: the server's copy wins, here too. Left out of
+    // the snapshot, so the next sync compares afresh. Deleted elsewhere: it goes here too.
+    for (const id of pushed.stale) {
+      const r = remote.get(id);
+      if (r) results = results.map(x => (resultId(x) === id ? r : x));
+      delete snap[id];
+      delete seen[id];
     }
+    if (pushed.deleted.length) results = results.filter(x => !pushed.deleted.includes(resultId(x)));
+    pushed.deleted.forEach(id => (delete snap[id], delete seen[id]));
+    if (pushed.stale.length || pushed.deleted.length) changed = true;
     const gone = Object.keys(snap).filter(id => id.startsWith('s-') || /@/.test(id)).filter(id => !results.some(x => resultId(x) === id) && !id.startsWith('w:'));
     if (gone.length) {
       const { error } = await sb.from('sessions').delete().in('id', gone).eq('owner', uid);
       if (error) errors.push(error.message);
-      else gone.forEach(id => delete snap[id]);
+      else gone.forEach(id => (delete snap[id], delete seen[id]));
     }
     results.sort((a, b) => b.startedAt.localeCompare(a.startedAt));
     patch.results = results;
   }
 
   // ── own workouts (key "w:<id>" in the snapshot) ──
-  const { data: wrows, error: e2 } = await sb.from('workouts').select('id,data,creator,title,public').eq('owner', uid);
+  const { data: wrows, error: e2 } = await sb.from('workouts').select('id,data,creator,title,public,updated_at').eq('owner', uid);
   if (e2) errors.push(e2.message);
   else {
     let workouts = [...local.workouts];
     const remote = new Map((wrows ?? []).map(r => [r.id as string, workoutFromRow(r as WorkoutRow)]));
+    const remoteAt = new Map((wrows ?? []).map(r => [r.id as string, (r as { updated_at?: string }).updated_at]));
     remote.forEach((w, id) => {
       const k = `w:${id}`;
       const rj = H(w);
       const i = workouts.findIndex(x => x.id === id);
+      const read = () => (remoteAt.get(id) ? (seen[k] = remoteAt.get(id)!) : delete seen[k]);
       if (i < 0) {
         if (!(k in snap)) {
           workouts = [...workouts, w];
           snap[k] = rj;
+          read();
           changed = true;
         }
         return;
@@ -284,40 +354,40 @@ export const pullPush = async (local: SyncTarget): Promise<SyncResult> => {
       if (!(k in snap) || (rj !== snap[k] && lj === snap[k])) {
         workouts = workouts.map((x, j) => (j === i ? w : x));
         snap[k] = rj;
+        read();
         changed = true;
-      }
+      } else if (rj === snap[k]) read();
     });
     const before = workouts.length;
     workouts = workouts.filter(w => {
       const k = `w:${w.id}`;
       if (!remote.has(w.id!) && k in snap && H(w) === snap[k]) {
         delete snap[k];
+        delete seen[k];
         return false;
       }
       return true;
     });
     if (workouts.length !== before) changed = true;
-    const dirty = workouts.filter(w => w.id && H(w) !== snap[`w:${w.id}`]);
-    if (dirty.length) {
-      const row = (w: Runsheet) => ({ id: w.id!, owner: uid, creator: w.creator ?? local.name, title: w.title, public: w.public ?? remote.get(w.id!)?.public ?? false, data: workoutData(w) });
-      const { error } = await sb.from('workouts').upsert(dirty.map(row), { onConflict: 'id' });
-      if (!error) dirty.forEach(w => (snap[`w:${w.id}`] = H(w)));
-      else if (dirty.length === 1) errors.push(error.message);
-      else {
-        // As for sessions: one workout the server refuses (an id another account holds, a public
-        // one on a temporary account) must not keep the others off the account.
-        for (const w of dirty) {
-          const { error: e } = await sb.from('workouts').upsert([row(w)], { onConflict: 'id' });
-          if (e) errors.push(e.message);
-          else snap[`w:${w.id}`] = H(w);
-        }
-      }
+    const row = (w: Runsheet) => ({ id: w.id!, owner: uid, creator: w.creator ?? local.name, title: w.title, public: w.public ?? remote.get(w.id!)?.public ?? false, data: workoutData(w) });
+    // As for sessions: one workout the server refuses (an id another account holds, a public one on
+    // a temporary account) must not keep the others off the account.
+    const pushed = await pushRows('workouts', workouts.filter(w => w.id && H(w) !== snap[`w:${w.id}`]), w => `w:${w.id}`, row);
+    errors.push(...pushed.errors);
+    for (const k of pushed.stale) {
+      const w = remote.get(k.slice(2));
+      if (w) workouts = workouts.map(x => (`w:${x.id}` === k ? w : x));
+      delete snap[k];
+      delete seen[k];
     }
+    if (pushed.deleted.length) workouts = workouts.filter(w => !pushed.deleted.includes(`w:${w.id}`));
+    pushed.deleted.forEach(k => (delete snap[k], delete seen[k]));
+    if (pushed.stale.length || pushed.deleted.length) changed = true;
     const gone = Object.keys(snap).filter(k => k.startsWith('w:') && !workouts.some(w => `w:${w.id}` === k));
     if (gone.length) {
       const { error } = await sb.from('workouts').delete().in('id', gone.map(k => k.slice(2))).eq('owner', uid);
       if (error) errors.push(error.message);
-      else gone.forEach(k => delete snap[k]);
+      else gone.forEach(k => (delete snap[k], delete seen[k]));
     }
     patch.workouts = workouts;
   }
@@ -383,8 +453,16 @@ export const fetchWorkout = async (id: string): Promise<Runsheet | null> => {
   // No answer is not "no row": the caller tells "could not load" from "private".
   if (error && !data) throw new Error(error.message);
   // Your own row is read as it is; anyone else's has to be a workout the page can draw.
-  if (!data) return null;
-  return data.owner === currentUser()?.id ? workoutFromRow(data as WorkoutRow) : readableWorkout(data as WorkoutRow);
+  if (data) return data.owner === currentUser()?.id ? workoutFromRow(data as WorkoutRow) : readableWorkout(data as WorkoutRow);
+  // Not listed for this caller: a workout shared by link (review round 2, U4) opens through
+  // shared_workout(id) only (migration 0016; until it has run, the call fails and reads as private).
+  const shared = await sb.rpc('shared_workout', { p_id: id });
+  if (shared.error) {
+    if (shared.status === 0) throw new Error(shared.error.message);
+    return null;
+  }
+  const row = (shared.data as WorkoutRow[] | null)?.[0];
+  return row ? readableWorkout(row) : null;
 };
 
 export interface CreatorProfile {
@@ -465,6 +543,7 @@ export const deleteAccount = async (): Promise<DeleteOutcome> => {
   }
   const { error } = await sb.rpc('delete_account');
   snap = {};
+  seen = {};
   saveSnap();
   await sb.auth.signOut();
   return { data: true, account: !error, error: error?.message };

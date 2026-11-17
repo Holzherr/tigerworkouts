@@ -25,7 +25,7 @@ struct ShareCard: Hashable {
         if let d = r.durationSec ?? r.activity.map({ $0.minutes * 60 }), d > 0 { out.append(Stat(label: "Time", value: Format.clock(d))) }
         let sets = r.steps.reduce(0) { $0 + Logbook.sets(of: $1).count }
         if let score = r.score, type != .none {
-            out.append(Stat(label: "Score", value: r.scoreText ?? Celebrate.formatScore(type, score)))
+            out.append(Stat(label: "Score", value: type == .load ? Celebrate.formatScore(type, score) : r.scoreText ?? Celebrate.formatScore(type, score)))
         } else if sets > 0 {
             out.append(Stat(label: "Sets", value: "\(sets)"))
         }
@@ -39,7 +39,7 @@ struct ShareCard: Hashable {
 
     init(_ r: SessionResult, _ c: Celebrate.Celebration, type: ScoreType) {
         title = r.displayTitle
-        date = r.startedDate.formatted(.dateTime.weekday(.abbreviated).day().month(.abbreviated).year())
+        date = r.wallDate.formatted(.dateTime.weekday(.abbreviated).day().month(.abbreviated).year())
         ordinal = Celebrate.ordinalLabel(c.ordinal)
         stats = Self.stats(r, c, type: type)
         prs = c.prs.map { Line(label: Library.shared.name($0.exerciseKey), text: Logbook.label($0.set, unit: Self.unit($0.exerciseKey))) }
