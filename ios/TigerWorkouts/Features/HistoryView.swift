@@ -12,7 +12,7 @@ struct HistoryView: View {
         let f = DateFormatter()
         f.dateFormat = "MMMM yyyy"
         let grouped = Dictionary(grouping: store.results.sorted { $0.startedAt > $1.startedAt }) {
-            f.string(from: $0.startedDate)
+            f.string(from: $0.wallDate)
         }
         return grouped
             .sorted { ($0.value.first?.startedAt ?? "") > ($1.value.first?.startedAt ?? "") }
@@ -189,7 +189,7 @@ struct HistoryView: View {
     }
 
     private func historyLine(_ s: SessionResult) -> String {
-        var parts = [s.startedDate.formatted(date: .abbreviated, time: .shortened)]
+        var parts = [s.wallDate.formatted(date: .abbreviated, time: .shortened)]
         if let d = s.durationSec, d > 0 { parts.append(Format.duration(d)) }
         if s.completed == false, s.capped != true { parts.append("stopped early") }
         if let rpe = s.rpe { parts.append("effort \(Int(rpe))") }

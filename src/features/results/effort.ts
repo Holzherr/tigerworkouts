@@ -1,5 +1,6 @@
 import type { ExerciseGroup } from '@/features/exercises/library';
 import type { SessionResult } from '@/features/runsheet/progression';
+import { wallDate } from '@/shared/utils/dates';
 import type { ExerciseStep, Runsheet, SetType } from '@/features/runsheet/model';
 
 /**
@@ -97,9 +98,11 @@ export const weekLine = (s: Streak) =>
 
 export const streak = (results: SessionResult[], today = new Date()): Streak => {
   const week = startOfWeek(today).getTime();
-  const wk = (iso: string) => startOfWeek(new Date(iso)).getTime();
   const counts = new Map<number, number>();
-  for (const r of results) counts.set(wk(r.startedAt), (counts.get(wk(r.startedAt)) ?? 0) + 1);
+  for (const r of results) {
+    const w = startOfWeek(wallDate(r)).getTime();
+    counts.set(w, (counts.get(w) ?? 0) + 1);
+  }
   // Step back by calendar week, not by 7 × 24 h: the week holding a clock change is 167 or 169
   // hours long, and a fixed step misses the Monday midnight the sessions are keyed by.
   const before = (t: number) => {

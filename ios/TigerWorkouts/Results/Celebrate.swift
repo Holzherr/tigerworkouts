@@ -57,7 +57,7 @@ enum Celebrate {
         func diff(_ a: Double?, _ b: Double?) -> Double? { a.flatMap { a in b.map { a - $0 } } }
         return Celebration(
             ordinal: before.count + 1,
-            streak: EffortModel.streak(others.filter { $0.startedAt <= result.startedAt } + [result], today: today ?? result.startedDate),
+            streak: EffortModel.streak(others.filter { $0.startedAt <= result.startedAt } + [result], today: today ?? result.wallDate),
             prs: Logbook.sessionPRs(result, all: all),
             rounds: Rounds.prs(result, all: all, lineage: lineage, runsheet: runsheet),
             volume: volume,

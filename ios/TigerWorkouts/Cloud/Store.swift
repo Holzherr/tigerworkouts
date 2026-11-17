@@ -371,6 +371,11 @@ final class Store {
         if r.id == nil { r.id = "s-\(Int(Date().timeIntervalSince1970 * 1000))-\(UUID().uuidString.prefix(4))" }
         guard !discarded.contains(r.rowId) else { return stored() }
         for change in amendments.removeValue(forKey: r.rowId) ?? [] { change(&r) }
+        // A new session keeps this phone's zone; one saved again keeps the zone it had (review A10).
+        if r.tzOffsetMin == nil {
+            if let prev = results.first(where: { $0.rowId == r.rowId }) { r.tzOffsetMin = prev.tzOffsetMin }
+            else { r.tzOffsetMin = Double(TimeZone.current.secondsFromGMT(for: r.startedDate) / 60) }
+        }
         results.removeAll { $0.rowId == r.rowId }
         results.insert(r, at: 0)
         results.sort { $0.startedAt > $1.startedAt }

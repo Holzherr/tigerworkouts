@@ -1,0 +1,18 @@
+{
+  "id": "w-fixture-future",
+  "title": "Written by a newer app",
+  "items": [
+    {
+      "kind": "block",
+      "id": "b-future",
+      "name": "Pyramid",
+      "mode": "pyramid",
+      "repeat": 3,
+      "steps": [
+        { "kind": "exercise", "id": "f1", "exercise": { "key": "push-up", "name": "Push-up" }, "forMode": "reps", "forValue": 10 },
+        { "kind": "rest", "id": "f2", "seconds": 30 }
+      ]
+    },
+    { "kind": "exercise", "id": "f3", "exercise": { "key": "plank", "name": "Plank" }, "forMode": "seconds", "forValue": 45 }
+  ]
+}

@@ -101,6 +101,10 @@ export interface SessionResult {
   /** Title at the time, so history reads even if the workout is gone. */
   title?: string;
   startedAt: string;
+  /** Minutes east of UTC where the session was done (London summer 60, New York winter -300), so
+   * days and weeks follow that zone wherever History is read (review A10). Unset on rows from
+   * before it was kept; those use the viewer's zone. */
+  tzOffsetMin?: number;
   endedAt?: string;
   durationSec?: number;
   completed?: boolean;

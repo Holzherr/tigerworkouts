@@ -13,6 +13,7 @@ import { stamp, type PrefField, type PrefStamps } from '@/features/cloud/prefs';
 import { mergeSessions } from '@/features/runsheet/versions';
 import { storedSuggest, type SuggestPrefs } from '@/features/results/suggestions';
 import { setWeightUnit, unitFromPref } from '@/shared/utils/units';
+import { zoneOffsetAt } from '@/shared/utils/dates';
 
 export interface AppState {
   workouts: Runsheet[];
@@ -304,7 +305,10 @@ const ACTIONS = {
    * again, with the score and notes, when its result sheet is saved. */
   addResult: (res: SessionResult) => setState(s => {
     const id = res.id ?? 's-' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
-    return { results: [{ ...res, id }, ...s.results.filter(r => r.id !== id)] };
+    const prev = s.results.find(r => r.id === id);
+    // A new session keeps this device's zone; a replaced one keeps the zone it had.
+    const tzOffsetMin = res.tzOffsetMin ?? (prev ? prev.tzOffsetMin : zoneOffsetAt(res.startedAt));
+    return { results: [{ ...res, id, ...(tzOffsetMin !== undefined ? { tzOffsetMin } : {}) }, ...s.results.filter(r => r.id !== id)] };
   }),
   setTrainingMaxes: (tm: TrainingMaxes) => setPrefs({ trainingMaxes: tm }),
   /** An empty kit clears it: suggested loads go back to the defaults. */
@@ -323,7 +327,7 @@ const ACTIONS = {
   importSessions: (results: SessionResult[], exercises: LibraryExercise[]) =>
     setState(s => ({
       exercises: { ...s.exercises, ...Object.fromEntries(exercises.map(e => [e.key, e])) },
-      results: [...results.filter(r => !s.results.some(x => x.id === r.id)), ...s.results].sort((a, b) => b.startedAt.localeCompare(a.startedAt)),
+      results: [...results.filter(r => !s.results.some(x => x.id === r.id)).map(r => ({ tzOffsetMin: zoneOffsetAt(r.startedAt), ...r })), ...s.results].sort((a, b) => b.startedAt.localeCompare(a.startedAt)),
     })),
   clearDevice,
   toggleSaved: (id: string) => setPrefs({ saved: state.saved.includes(id) ? state.saved.filter(x => x !== id) : [...state.saved, id] }),

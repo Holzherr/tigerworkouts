@@ -38,6 +38,25 @@ struct StoreSaveTests {
         #expect(store.results.first { $0.rowId == "s-save" }?.device?.avgHr == 140)
     }
 
+    @Test("a new session saves the phone's zone; saved again it keeps the zone it had (review A10)")
+    func savesZone() async {
+        let store = Store()
+        store.cacheName = "test-cache-\(UUID().uuidString).json"
+        store.healthOverride = false
+        store.deviceSummary = { _, _ in nil }
+        let at = "2026-09-27T10:00:00.000Z"
+        await store.save(SessionResult(runsheetId: "w", title: "W", startedAt: at, id: "s-zone"))
+        let here = Double(TimeZone.current.secondsFromGMT(for: ISO8601.date(at)!) / 60)
+        #expect(store.results.first { $0.rowId == "s-zone" }?.tzOffsetMin == here)
+        var elsewhere = SessionResult(runsheetId: "w", title: "W", startedAt: at, id: "s-ny")
+        elsewhere.tzOffsetMin = -300
+        await store.save(elsewhere)
+        var again = SessionResult(runsheetId: "w", title: "W", startedAt: at, notes: "edited", id: "s-ny")
+        again.tzOffsetMin = nil
+        await store.save(again)
+        #expect(store.results.first { $0.rowId == "s-ny" }?.tzOffsetMin == -300)
+    }
+
     @Test("an edit made while the summary was out is kept when it lands")
     func editDuringSummary() async throws {
         let store = Store()

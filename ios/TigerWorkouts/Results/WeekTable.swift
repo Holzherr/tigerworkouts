@@ -110,9 +110,9 @@ enum WeekTable {
             .filter { ids.contains($0.runsheetId) && $0.activity == nil && !$0.steps.isEmpty }
             .sorted { $0.startedAt < $1.startedAt }
         guard let first = sessions.first else { return Table(columns: [], rows: []) }
-        let start = calendar.dateInterval(of: .weekOfYear, for: first.startedDate)?.start ?? first.startedDate
+        let start = calendar.dateInterval(of: .weekOfYear, for: first.wallDate)?.start ?? first.wallDate
         let columns = sessions.enumerated().map { i, s in
-            let days = calendar.dateComponents([.day], from: start, to: s.startedDate).day ?? 0
+            let days = calendar.dateComponents([.day], from: start, to: s.wallDate).day ?? 0
             return Column(id: s.rowId, startedAt: s.startedAt, week: max(0, days) / 7 + 1, latest: i == sessions.count - 1, runsheetId: s.runsheetId)
         }
 

@@ -39,7 +39,7 @@ struct ShareCard: Hashable {
 
     init(_ r: SessionResult, _ c: Celebrate.Celebration, type: ScoreType) {
         title = r.displayTitle
-        date = r.startedDate.formatted(.dateTime.weekday(.abbreviated).day().month(.abbreviated).year())
+        date = r.wallDate.formatted(.dateTime.weekday(.abbreviated).day().month(.abbreviated).year())
         ordinal = Celebrate.ordinalLabel(c.ordinal)
         stats = Self.stats(r, c, type: type)
         prs = c.prs.map { Line(label: Library.shared.name($0.exerciseKey), text: Logbook.label($0.set, unit: Self.unit($0.exerciseKey))) }

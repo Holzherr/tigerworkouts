@@ -69,7 +69,7 @@ enum EffortModel {
         let thisWeek = startOfWeek(today, calendar: cal)
         var counts: [Date: Int] = [:]
         for r in results {
-            counts[startOfWeek(r.startedDate, calendar: cal), default: 0] += 1
+            counts[startOfWeek(r.wallDate, calendar: cal), default: 0] += 1
         }
         var weeks = 0
         var w = thisWeek
