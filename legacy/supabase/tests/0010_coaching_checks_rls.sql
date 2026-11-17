@@ -15,11 +15,10 @@ create function pg_temp.as_user(u text) returns void language plpgsql as $$ begi
 set role authenticated; select pg_temp.as_user('00000000-0000-0000-0000-0000000000e1');
 insert into public.coach_invites(coach) values (auth.uid()) returning code \gset
 reset role; set role authenticated; select pg_temp.as_user('00000000-0000-0000-0000-0000000000e2');
-select public.accept_coach_invite(:'code');
+select t.ok(public.accept_coach_invite(:'code') is not null, 'm2 accepts');
 reset role; set role authenticated; select pg_temp.as_user('00000000-0000-0000-0000-0000000000e1');
 insert into public.assignments(coach,client,workout_id) values (auth.uid(),'00000000-0000-0000-0000-0000000000e2','w-m1');
-update public.assignments set workout_id = 'w-victim' where coach = auth.uid();
-\echo ^ expected RLS violation (re-pointing an assignment at a workout the coach does not own)
+select t.blocked($$update public.assignments set workout_id = 'w-victim' where coach = auth.uid()$$, 'cannot re-point an assignment at a workout the coach does not own');
 reset role; set role authenticated; select pg_temp.as_user('00000000-0000-0000-0000-0000000000e2');
 select case when count(*) = 0 then 'ok: client cannot read the victim workout' else 'FAIL: client reads the victim workout' end from public.workouts where id = 'w-victim';
 select case when not public.is_coach_of('00000000-0000-0000-0000-0000000000e4','00000000-0000-0000-0000-0000000000e3') then 'ok: no probing other pairs' else 'FAIL: is_coach_of answers for a third party' end;
@@ -29,8 +28,7 @@ reset role;
 set role authenticated; select pg_temp.as_user('00000000-0000-0000-0000-0000000000e3');
 select case when public.is_coach_of('00000000-0000-0000-0000-0000000000e4', auth.uid()) then 'ok: own link answers' else 'FAIL: own link reads as inactive' end;
 -- Ending a link changes its status and nothing else.
-update public.coach_clients set coach = '00000000-0000-0000-0000-0000000000e1', status = 'ended' where client = auth.uid();
-\echo ^ expected permission denied (rewriting who a link names)
+select t.fails($$update public.coach_clients set coach = '00000000-0000-0000-0000-0000000000e1', status = 'ended' where client = auth.uid()$$, 'permission denied', 'cannot rewrite who a link names');
 update public.coach_clients set status = 'ended' where client = auth.uid();
 reset role;
 select case when coach = '00000000-0000-0000-0000-0000000000e4' and status = 'ended' then 'ok: ended, same coach' else 'FAIL: link rewritten or not ended' end
