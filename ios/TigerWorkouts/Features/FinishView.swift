@@ -173,6 +173,8 @@ struct FinishView: View {
             ShareCardSheet(card: ShareCard(current, celebration, type: runsheet.effectiveScore))
         }
         .onChange(of: notesFocused) { _, focused in if !focused { commitNotes() } }
+        // Notifications are asked here, after the first session, not over its countdown (Nick, U8, 17 Nov 2026).
+        .onAppear { RestNotice.askOnce() }
         .confirmationDialog("Discard this workout?", isPresented: $confirmDiscard, titleVisibility: .visible) {
             Button("Discard workout", role: .destructive) { onDiscard() }
             Button("Keep it", role: .cancel) {}

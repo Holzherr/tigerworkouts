@@ -1349,7 +1349,9 @@ final class WalkthroughUITests: XCTestCase {
         tap(app.buttons["Discard"])
     }
 
-    /// The first session asks once for notifications, for the end of a rest in the background.
+    /// Notifications, for the end of a rest in the background, are asked once on the first finish
+    /// screen, never over the countdown (Nick, U8, 17 Nov 2026). Needs an install that has not been
+    /// asked yet: the other walkthroughs set `UITEST_NO_PROMPTS`, so a fresh simulator is one.
     func testRestNotificationAsked() {
         app.terminate()
         app.launchEnvironment["UITEST_NO_PROMPTS"] = nil
@@ -1358,14 +1360,18 @@ final class WalkthroughUITests: XCTestCase {
         if discard.waitForExistence(timeout: 3) { discard.tap() }
         open("Tabata This")
         tap(app.buttons["Start workout"])
+        XCTAssertTrue(app.staticTexts["Get ready"].waitForExistence(timeout: 5))
         let springboard = XCUIApplication(bundleIdentifier: "com.apple.springboard")
-        let allow = springboard.alerts.buttons["Allow"]
-        if allow.waitForExistence(timeout: 5) {
-            snap("110 Notifications asked at the first session")
-            allow.tap()
-        }
+        XCTAssertFalse(springboard.alerts.firstMatch.waitForExistence(timeout: 3), "no system alert over the countdown")
         tap(app.buttons["End session"])
-        tap(app.buttons["Discard"])
+        tap(app.buttons["Finish and save"])
+        XCTAssertTrue(app.staticTexts["Workout saved"].waitForExistence(timeout: 10))
+        let allow = springboard.alerts.buttons["Allow"]
+        XCTAssertTrue(allow.waitForExistence(timeout: 5), "the first finish screen asks for notifications")
+        snap("110 Notifications asked on the first finish screen")
+        allow.tap()
+        app.swipeUp()
+        tap(app.buttons["Done"])
         app.launchEnvironment["UITEST_NO_PROMPTS"] = "1"
     }
 
