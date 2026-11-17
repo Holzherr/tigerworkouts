@@ -1,8 +1,0 @@
-Target dependency graph (4 targets)
-Target 'TigerWorkoutsUITests' in project 'TigerWorkouts'
-➜ Explicit dependency on target 'TigerWorkouts' in project 'TigerWorkouts'
-Target 'TigerWorkoutsTests' in project 'TigerWorkouts'
-➜ Explicit dependency on target 'TigerWorkouts' in project 'TigerWorkouts'
-Target 'TigerWorkouts' in project 'TigerWorkouts'
-➜ Explicit dependency on target 'TigerWorkoutsWidgets' in project 'TigerWorkouts'
-Target 'TigerWorkoutsWidgets' in project 'TigerWorkouts' (no dependencies)

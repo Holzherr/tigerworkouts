@@ -5,8 +5,8 @@ name: iOS tests
 #   unit   every push and pull request. The unit tests (incl. the runner.ts port). Must pass.
 #   smoke  pull requests. Nine simulator walkthroughs with no Lock Screen and no Health sheet; the
 #          only system dialog is the notification ask, which the last one listed pins to the first
-#          finish screen (U8) on the fresh simulator ios-setup.sh gives. A failed one is run once more before it counts: a busy hosted
-#          runner times a UI query out now and then.
+#          finish screen (U8) on the fresh simulator ios-setup.sh gives. A failed one is run once
+#          more before it counts: a busy hosted runner times a UI query out now and then.
 #   ui     pushes to main, nightly, and by hand. Every walkthrough, split over four runners.
 #
 # The walkthroughs used to be one job with a 40-minute limit. There are 45 of them at about 50 s
