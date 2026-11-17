@@ -2,7 +2,8 @@ import { useEffect, useRef } from 'react';
 import { getState, setState, useAppState } from '@/app/store';
 import { useAuth } from './client';
 import { rebase } from './rebase';
-import { sync, type SyncTarget } from './sync';
+import { dirtyCount, sync, type SyncTarget } from './sync';
+import { healthPing } from './health-ping';
 
 /** What the sync reads from the store. `prefsUpdatedAt` has to ride along, or the server wins
  * every pref field and a change made here undoes itself on the next sync. */
@@ -34,6 +35,7 @@ export const useCloudSync = () => {
       // What the server now holds. Anything written during the sync differs from this, so the
       // debounce below sees it and pushes it on the next run.
       lastLocal.current = JSON.stringify(target({ ...local, ...out.patch }));
+      healthPing({ error: out.error, waiting: dirtyCount(getState()) });
     } finally {
       busy.current = false;
     }

@@ -372,3 +372,20 @@ struct StaleWriteTests {
         #expect(Store.refusal(URLError(.notConnectedToInternet)) == nil)
     }
 }
+
+@Suite("sync-health ping")
+struct HealthPingTests {
+    @Test("once a day while syncs work, hourly while they fail, a kind of error and never its text")
+    func cadence() throws {
+        let d = try #require(UserDefaults(suiteName: "health-ping-\(UUID().uuidString)"))
+        let t = Date(timeIntervalSince1970: 1_800_000_000)
+        let first = try #require(HealthPing.next(error: nil, waiting: 0, build: "1.4+212", now: t, defaults: d))
+        #expect(first["ok"] as? Bool == true && first["app"] as? String == "ios" && first["error"] == nil)
+        #expect(HealthPing.next(error: nil, waiting: 0, build: "b", now: t.addingTimeInterval(3600), defaults: d) == nil)
+        let failed = try #require(HealthPing.next(error: "The Internet connection appears to be offline.", waiting: 2, build: "b", now: t.addingTimeInterval(7200), defaults: d))
+        #expect(failed["error"] as? String == "network" && failed["waiting"] as? Int == 2 && failed["sinceOkMin"] as? Int == 60)
+        #expect(HealthPing.next(error: "x", waiting: 2, build: "b", now: t.addingTimeInterval(9000), defaults: d) == nil)
+        #expect(HealthPing.next(error: "x", waiting: 2, build: "b", now: t.addingTimeInterval(10900), defaults: d) != nil)
+        #expect(HealthPing.kind("Something odd for nick@example.com") == "other")
+    }
+}
