@@ -6,6 +6,12 @@
   <array>
     <string>Default</string>
   </array>
+  <!-- Universal links: tigerworkouts.com/#/w/… and #/join/… open here when the app is installed.
+       The site serves public/.well-known/apple-app-site-association. -->
+  <key>com.apple.developer.associated-domains</key>
+  <array>
+    <string>applinks:tigerworkouts.com</string>
+  </array>
   <key>com.apple.developer.healthkit</key>
   <true/>
   <key>com.apple.developer.healthkit.access</key>

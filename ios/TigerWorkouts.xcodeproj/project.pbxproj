@@ -53,6 +53,7 @@
 		57EE87847B9CB5C0244D25CF /* TimedRecordsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 38D739C137365162C9F1D895 /* TimedRecordsTests.swift */; };
 		59EB619669CDBE47FFE23DA2 /* exercises.json in Resources */ = {isa = PBXBuildFile; fileRef = DCDAF2AE594C1D1C9FF54BED /* exercises.json */; };
 		5A3085976DDC5CE72584054B /* DataFixesTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0F6246280A2E9FD98AB49D6B /* DataFixesTests.swift */; };
+		5BC580978969059D685EEEC6 /* AppLink.swift in Sources */ = {isa = PBXBuildFile; fileRef = 00FFC6B11FCF7B1319A06ABD /* AppLink.swift */; };
 		5E09F66C43A39DAD89039CE3 /* PlayerSetsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 55BBAFBDE238777BC98775C0 /* PlayerSetsTests.swift */; };
 		601B733D86F5A743E7A82AAB /* Switches.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3CB31186DB90FD6BB06CFD04 /* Switches.swift */; };
 		6036E10A81FB41A96C8034D2 /* Coaching.swift in Sources */ = {isa = PBXBuildFile; fileRef = F2AA064A47C47085251E0515 /* Coaching.swift */; };
@@ -86,6 +87,7 @@
 		8FD2EA6E40590A95AF5BABC5 /* SessionIntents.swift in Sources */ = {isa = PBXBuildFile; fileRef = A3B9FAF9851A557E6EF67A33 /* SessionIntents.swift */; };
 		9055327BE02E6855E0F45B2F /* AppStoreScreenshotsUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = EEF72A211EB60F5953B2196B /* AppStoreScreenshotsUITests.swift */; };
 		91DC24981E172C0AF854AA9A /* Stall.swift in Sources */ = {isa = PBXBuildFile; fileRef = 92412812FEBAA08CD322ABA0 /* Stall.swift */; };
+		943B3EE7ACF2737A430BBF12 /* AppLinkTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9FB25F2F08C6332B13C27EB7 /* AppLinkTests.swift */; };
 		9B8A7823988AF5778174C44D /* Effort.swift in Sources */ = {isa = PBXBuildFile; fileRef = 624618DA7F3194F1EB9B1818 /* Effort.swift */; };
 		9BCF69C9560146E675BE5C19 /* Keychain.swift in Sources */ = {isa = PBXBuildFile; fileRef = 781B4703341F053F08AE0613 /* Keychain.swift */; };
 		9CC8D45DAAC037551A54A811 /* NextBlockSettingsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1BE82D4A604D0B70201E1899 /* NextBlockSettingsTests.swift */; };
@@ -193,6 +195,7 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		00FFC6B11FCF7B1319A06ABD /* AppLink.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppLink.swift; sourceTree = "<group>"; };
 		01638E9D3E013E1503E8A675 /* RunsheetMath.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RunsheetMath.swift; sourceTree = "<group>"; };
 		02F2F8BAA6A884612CCFB81F /* Media.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Media.swift; sourceTree = "<group>"; };
 		03B24D2D55EFBC42BB378AFE /* EditingTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EditingTests.swift; sourceTree = "<group>"; };
@@ -278,6 +281,7 @@
 		99F9042C8F1F12DC30940E30 /* RunsheetMathTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RunsheetMathTests.swift; sourceTree = "<group>"; };
 		9DEDC2C77E61EEC2DBC8D7A7 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		9F5AADA27786288575C5751A /* TigerWorkouts.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = TigerWorkouts.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		9FB25F2F08C6332B13C27EB7 /* AppLinkTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppLinkTests.swift; sourceTree = "<group>"; };
 		9FB9C9CD6B4C02371785711D /* Store+Coaching.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Store+Coaching.swift"; sourceTree = "<group>"; };
 		A063D7FDBD9EAB4C94F2CABE /* AlternativesTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AlternativesTests.swift; sourceTree = "<group>"; };
 		A0D0026D79C5AE9AF356306C /* UpNextShare.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UpNextShare.swift; sourceTree = "<group>"; };
@@ -473,6 +477,7 @@
 			children = (
 				D81C44075823C1109E6B45BD /* AfterSessionTests.swift */,
 				A063D7FDBD9EAB4C94F2CABE /* AlternativesTests.swift */,
+				9FB25F2F08C6332B13C27EB7 /* AppLinkTests.swift */,
 				FDF28E18F9E37CEC3D289A43 /* AppStoreTests.swift */,
 				555C0B9105AB9DDA9967731C /* CacheDamageTests.swift */,
 				2333BFB4C8394D4D3D82D69F /* CatalogueTests.swift */,
@@ -535,6 +540,7 @@
 			isa = PBXGroup;
 			children = (
 				3B0EF9CE730C524EA109E8D0 /* Alternatives.swift */,
+				00FFC6B11FCF7B1319A06ABD /* AppLink.swift */,
 				F2AA064A47C47085251E0515 /* Coaching.swift */,
 				0A7C84C7FDDB4BA9A91FFEDD /* Editing.swift */,
 				8122D3D1580C9A49525A0BBD /* Home.swift */,
@@ -791,6 +797,7 @@
 			files = (
 				2500808CB6EC605F0D329C83 /* AfterSessionTests.swift in Sources */,
 				718720872993CC8DF123D1A5 /* AlternativesTests.swift in Sources */,
+				943B3EE7ACF2737A430BBF12 /* AppLinkTests.swift in Sources */,
 				803AE9BCD05107F29333C35D /* AppStoreTests.swift in Sources */,
 				8C7A4283C904D769A973E810 /* CSVTests.swift in Sources */,
 				E4A287FD510ADE70A4A8A4B8 /* CacheDamageTests.swift in Sources */,
@@ -843,6 +850,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				CAC184D9B16B619FDD530E31 /* Alternatives.swift in Sources */,
+				5BC580978969059D685EEEC6 /* AppLink.swift in Sources */,
 				69FF8C0873FFC9CB1AC24874 /* BodyMapView.swift in Sources */,
 				5522EB6A11740D33EA3FFCF3 /* CSV.swift in Sources */,
 				40BF83C08F66E566C53B4D29 /* Celebrate.swift in Sources */,

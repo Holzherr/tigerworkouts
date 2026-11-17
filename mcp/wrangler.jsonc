@@ -40,5 +40,9 @@
     { "name": "SIGNUP_LIMITER", "namespace_id": "1001", "simple": { "limit": 3, "period": 60 } },
     { "name": "CLAIM_LIMITER", "namespace_id": "1002", "simple": { "limit": 3, "period": 60 } }
   ],
-  "routes": [{ "pattern": "mcp.tigerworkouts.com", "custom_domain": true }]
+  "routes": [
+    { "pattern": "mcp.tigerworkouts.com", "custom_domain": true },
+    // The site itself is GitHub Pages; this one file comes from here as application/json (src/links.ts).
+    { "pattern": "tigerworkouts.com/.well-known/apple-app-site-association", "zone_name": "tigerworkouts.com" }
+  ]
 }
