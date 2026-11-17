@@ -370,6 +370,9 @@ struct StaleWriteTests {
         #expect(Store.refusal(SupabaseError(message: "deleted", status: 410, code: "PT410")) == .deleted)
         #expect(Store.refusal(SupabaseError(message: "Request failed (500)", status: 500)) == nil)
         #expect(Store.refusal(URLError(.notConnectedToInternet)) == nil)
+    }
+}
+
 @Suite("sync-health ping")
 struct HealthPingTests {
     @Test("once a day while syncs work, hourly while they fail, a kind of error and never its text")
