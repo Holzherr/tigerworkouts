@@ -803,8 +803,8 @@ final class WalkthroughUITests: XCTestCase {
         XCTAssertTrue(app.navigationBars["Me"].waitForExistence(timeout: 5))
         tap(app.buttons["Settings"])
         XCTAssertTrue(app.navigationBars["Settings"].waitForExistence(timeout: 5))
-        // The simulator has no haptic hardware, and the row says so rather than staying quiet.
-        XCTAssertTrue(app.staticTexts["Haptic engine: not on this device"].waitForExistence(timeout: 5))
+        // Test-build lines stay out of sight until a long press on Version (review U16).
+        XCTAssertFalse(app.descendants(matching: .any).matching(NSPredicate(format: "label BEGINSWITH %@", "Haptic engine")).firstMatch.exists)
         tap(app.buttons["Test buzz"])
         snap("16b Settings")
 
@@ -842,6 +842,10 @@ final class WalkthroughUITests: XCTestCase {
         for _ in 0..<4 where !(privacy.exists && privacy.isHittable) { app.swipeUp() }
         XCTAssertTrue(privacy.exists)
         XCTAssertTrue(app.buttons["support-link"].exists)
+        // The simulator has no haptic hardware, and the row says so rather than staying quiet.
+        app.descendants(matching: .any)["version"].press(forDuration: 1)
+        XCTAssertTrue(app.descendants(matching: .any).matching(NSPredicate(format: "label CONTAINS %@", "not on this device")).firstMatch.waitForExistence(timeout: 5))
+        snap("16c Settings, test-build lines")
     }
 
     func testLockScreen() {
@@ -1349,7 +1353,8 @@ final class WalkthroughUITests: XCTestCase {
         tap(app.buttons["Discard"])
     }
 
-    /// The first session asks once for notifications, for the end of a rest in the background.
+    /// Notifications, for the end of a rest in the background, are asked once on the first finish
+    /// screen, never over the get-ready countdown (review U8).
     func testRestNotificationAsked() {
         app.terminate()
         app.launchEnvironment["UITEST_NO_PROMPTS"] = nil
@@ -1360,13 +1365,43 @@ final class WalkthroughUITests: XCTestCase {
         tap(app.buttons["Start workout"])
         let springboard = XCUIApplication(bundleIdentifier: "com.apple.springboard")
         let allow = springboard.alerts.buttons["Allow"]
-        if allow.waitForExistence(timeout: 5) {
-            snap("110 Notifications asked at the first session")
+        XCTAssertFalse(allow.waitForExistence(timeout: 3), "asked over the countdown")
+        tap(app.buttons["End session"])
+        tap(app.buttons["Finish and save"])
+        if allow.waitForExistence(timeout: 6) {
+            snap("110 Notifications asked on the finish screen")
             allow.tap()
         }
-        tap(app.buttons["End session"])
-        tap(app.buttons["Discard"])
+        let done = app.buttons["Done"]
+        for _ in 0..<4 where !(done.exists && done.isHittable) { app.swipeUp() }
+        tap(done)
         app.launchEnvironment["UITEST_NO_PROMPTS"] = "1"
+    }
+
+    /// A session done without the phone, logged from + on History (review U9): the row then shows
+    /// its score (U13). The session is deleted again so runs do not pile up.
+    func testLogWithoutTimer() {
+        tap(app.tabBars.buttons["History"])
+        tap(app.buttons["history-log"])
+        let search = app.searchFields["Find a workout"]
+        tap(search)
+        search.typeText("Cindy")
+        tap(app.buttons.matching(NSPredicate(format: "label BEGINSWITH 'Cindy'")).firstMatch)
+        XCTAssertTrue(app.navigationBars["Log a session"].waitForExistence(timeout: 5))
+        let rounds = app.buttons["score-rounds-Increment"]
+        XCTAssertTrue(rounds.waitForExistence(timeout: 5))
+        for _ in 0..<3 { rounds.tap() }
+        snap("112 Log without the timer")
+        tap(app.buttons["log-save"])
+        let row = app.descendants(matching: .any)["history-score"].firstMatch
+        XCTAssertTrue(row.waitForExistence(timeout: 8))
+        XCTAssertTrue(app.buttons.matching(NSPredicate(format: "label CONTAINS %@", "3 rounds")).firstMatch.exists, "the row shows the score")
+        snap("113 History row with its score")
+        tap(app.buttons.matching(NSPredicate(format: "label BEGINSWITH 'Cindy'")).firstMatch)
+        let delete = app.buttons["Delete session"]
+        for _ in 0..<4 where !(delete.exists && delete.isHittable) { app.swipeUp() }
+        tap(delete)
+        tap(app.buttons["Delete"].firstMatch)
     }
 
     /// Your versions: a workout done with changes shows them, Edit asks whether a change is for

@@ -59,6 +59,9 @@ final class Store {
     private var discarded: Set<String> = []
 
     var signedIn: Bool { user != nil }
+    /// Bumped by each sign-out, so a sync whose fetch was out at the time does not fill the
+    /// cleared phone again.
+    private var signOuts = 0
 
     /// Your coach, what they assigned and the notes between you (Store+Coaching.swift).
     var coaching = CoachingState()
@@ -152,6 +155,7 @@ final class Store {
         }
         #endif
         guard await Supabase.shared.isSignedIn else { return }
+        let era = signOuts
         syncing = true
         syncError = nil
         defer { syncing = false }
@@ -170,10 +174,13 @@ final class Store {
             async let workouts = Supabase.shared.workouts()
             async let prefs = Supabase.shared.rawPrefs()
             // What the phone changed while the fetch was out wins over the server's older copy.
-            results = Self.merged(remote: try await sessions, pending: pending, deleting: pendingDeletes)
-            takeWorkouts(try await workouts)
+            let (remote, remoteWorkouts, remotePrefs) = try await (sessions, workouts, prefs)
+            // Signed out while the fetch was out: the phone is clear, and stays clear.
+            guard signOuts == era else { return }
+            results = Self.merged(remote: remote, pending: pending, deleting: pendingDeletes)
+            takeWorkouts(remoteWorkouts)
             let before = results
-            try await syncPrefs(remote: try await prefs)
+            try await syncPrefs(remote: remotePrefs)
             await effortsLearned(before: before)
             user = await Supabase.shared.user
             writeCache()
@@ -238,11 +245,12 @@ final class Store {
         return byId.values.sorted { $0.startedAt > $1.startedAt }
     }
 
-    /// Pushes what is queued, then ends the account session. History and your workouts stay on
-    /// the phone; what was queued for this account and what the phone knew of its server rows go,
-    /// so the next account to sign in here is not sent any of it. Nothing changes and a message
-    /// comes back while something is still not on the account (offline, a refused row), unless
-    /// `discardUnsent`: clearing then loses the only copy.
+    /// Pushes what is queued, then ends the account session and clears the phone, as the web's
+    /// sign-out clears the browser (review U10, 2026-11-17): History, your workouts and the
+    /// account's settings are on the account and come back with the next sign-in; the next person
+    /// to sign in here sees and sends none of it. Nothing changes and a message comes back while
+    /// something is still not on the account (offline, a refused row), unless `discardUnsent`:
+    /// clearing then loses the only copy.
     func signOut(discardUnsent: Bool = false) async -> String? {
         if !discardUnsent {
             do { try await flushPending() } catch {}
@@ -253,13 +261,31 @@ final class Store {
             if let held = Self.signOutRefusal(waiting: waitingCount) { return held }
         }
         await Supabase.shared.signOut()
+        signOuts += 1
         user = nil
         syncError = nil
         forgetAccountQueues()
-        prefsUpdatedAt = [:]
+        clearPhone()
         writeCache()
         setCoaching(CoachingState())
         return nil
+    }
+
+    /// What the phone holds of an account: its sessions, workouts and synced settings, and a
+    /// session the timer kept after a kill. Device settings (buzz, tones, Health) stay.
+    func clearPhone() {
+        results = []
+        myWorkouts = []
+        saved = []
+        trainingMaxes = [:]
+        equipment = nil
+        suggestions = SuggestPrefs()
+        bodyweightKg = nil
+        profileName = nil
+        prefsUpdatedAt = [:]
+        customExercises = [:]
+        SessionRunner.clearSaved()
+        shareUpNext()
     }
 
     nonisolated static func signOutRefusal(waiting: Int) -> String? {
@@ -287,24 +313,14 @@ final class Store {
     }
 
     /// Deletes the account and its data on the server. `clearPhone` also forgets everything here;
-    /// otherwise History and your workouts stay on the phone, as after signing out, but nothing is
+    /// otherwise History and your workouts stay on the phone, not synced, and nothing is
     /// queued to go up to the account that no longer exists. Returns whether the sign-in went too.
     func deleteAccount(clearPhone: Bool) async throws -> Bool {
         let account = try await Supabase.shared.deleteAccount()
         user = nil
         setCoaching(CoachingState())
         forgetAccountQueues()
-        if clearPhone {
-            results = []
-            myWorkouts = []
-            saved = []
-            trainingMaxes = [:]
-            equipment = nil
-            suggestions = SuggestPrefs()
-            bodyweightKg = nil
-            prefsUpdatedAt = [:]
-            customExercises = [:]
-        }
+        if clearPhone { self.clearPhone() }
         writeCache()
         return account
     }

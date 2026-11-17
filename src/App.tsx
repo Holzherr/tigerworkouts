@@ -23,6 +23,7 @@ import { shortDate } from '@/shared/utils/dates';
 import type { LibraryExercise } from '@/features/exercises/library';
 import { SettingsSheet } from '@/features/profile/components/settings-sheet';
 import { MeScreen } from '@/features/profile/components/me-screen';
+import { SignOutButton } from '@/features/profile/components/sign-out-button';
 import { streak, weekLine, workedFrom } from '@/features/results/effort';
 import { muscleLoad } from '@/features/results/muscles';
 import { ImportScreen } from '@/features/share/components/import-screen';
@@ -682,7 +683,7 @@ export default function App() {
     const since = Date.now() - 28 * 864e5;
     const load = muscleLoad(st.results.filter(r => Date.parse(r.startedAt) >= since).flatMap(r => workedFrom(r, byId.get(r.runsheetId), k => ({ name: library[k]?.name ?? k, group: library[k]?.group }))));
     // Refused (a session not pushed yet): the reason comes back and the account stays signed in.
-    // The Settings sheet shows it inline; the Me tab's own button, as a toast.
+    // Both buttons show it under themselves.
     const out = async () => {
       const held = await signOut();
       if (held) return held;
@@ -733,11 +734,7 @@ export default function App() {
           <Button variant="ghost" block onClick={() => setTmOpen(true)}>
             Training maxes
           </Button>
-          {cloud.user && (
-            <Button variant="quiet" block onClick={() => out().then(held => held && say(held))}>
-              Sign out
-            </Button>
-          )}
+          {cloud.user && <SignOutButton onSignOut={out} />}
         </MeScreen>
         <SettingsSheet open={settingsOpen} onOpenChange={setSettingsOpen} name={st.name} avatar={st.avatar} units={st.units} email={cloud.user?.email ?? undefined} volume={volume} onVolume={v => { setVolume(v); setVol(v); }} defaultRest={defaultRest} onDefaultRest={v => { setDefaultRest(v); setRest(getDefaultRest()); }} intent={intent} onIntent={v => { storeIntent(v); setIntentState(v); }} suggest={st.suggestions} onSuggest={act.setSuggestions} equipment={st.equipment} onEquipment={act.setEquipment} onChange={act.setProfile} onInvite={invite} onSignOut={cloud.user ? out : undefined} onDeleteAccount={cloud.user ? async clear => {
             const done = await deleteAccount();

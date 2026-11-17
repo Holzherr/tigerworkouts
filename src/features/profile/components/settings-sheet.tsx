@@ -2,6 +2,7 @@ import { Camera, ChevronRight, Share2 } from 'lucide-react';
 import { useRef, useState } from 'react';
 import type { Equipment } from '@/features/runsheet/plates';
 import { EquipmentSheet, equipmentSummary } from './equipment-sheet';
+import { SignOutButton } from './sign-out-button';
 import { Button } from '@/shared/components/ui/button';
 import { Stepper } from '@/shared/components/ui/stepper';
 import { Chip } from '@/shared/components/ui/chip';
@@ -192,11 +193,7 @@ export const SettingsSheet = ({ open, onOpenChange, name, avatar, email, units =
       <Button variant="ghost" block onClick={onInvite}>
           <Share2 /> Invite someone
         </Button>
-        {onSignOut && (
-          <Button variant="quiet" block onClick={async () => setNotice((await onSignOut()) || null)}>
-            Sign out
-          </Button>
-        )}
+        {onSignOut && <SignOutButton onSignOut={onSignOut} />}
         {notice && (
           <p role="status" className="text-center text-[13px] text-muted">
             {notice}

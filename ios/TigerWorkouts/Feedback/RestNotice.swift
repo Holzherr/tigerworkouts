@@ -13,7 +13,8 @@ enum RestNotice {
     /// When the one scheduled now fires, so an unchanged rest is not re-added on every change.
     private static var scheduledFor: Double?
 
-    /// Asked once, at the first session start. UI tests set `UITEST_NO_PROMPTS` so a system alert
+    /// Asked once, on the first finish screen (review U8, 2026-11-17: not over the first get-ready
+    /// countdown, where a person about to lift dismissed it unread). UI tests set `UITEST_NO_PROMPTS` so a system alert
     /// does not sit over every walkthrough; the one test about it clears it.
     static func askOnce() {
         guard ProcessInfo.processInfo.environment["UITEST_NO_PROMPTS"] == nil else { return }

@@ -173,6 +173,12 @@ struct FinishView: View {
             ShareCardSheet(card: ShareCard(current, celebration, type: runsheet.effectiveScore))
         }
         .onChange(of: notesFocused) { _, focused in if !focused { commitNotes() } }
+        // Asked here, once the first session is over, not over a get-ready countdown (review U8).
+        // A beat first, so the screen it sits on is seen.
+        .task {
+            try? await Task.sleep(for: .seconds(1))
+            RestNotice.askOnce()
+        }
         .confirmationDialog("Discard this workout?", isPresented: $confirmDiscard, titleVisibility: .visible) {
             Button("Discard workout", role: .destructive) { onDiscard() }
             Button("Keep it", role: .cancel) {}

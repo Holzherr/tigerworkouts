@@ -163,6 +163,9 @@ describe('sign-out', () => {
     location.hash = '#/me';
     render(createElement(App));
     fireEvent.click(await screen.findByRole('button', { name: 'Sign out' }));
+    // It asks first (review U10).
+    expect(fake.calls.includes('auth.signOut')).toBe(false);
+    fireEvent.click(within(screen.getByRole('alertdialog', { name: 'Sign out' })).getByRole('button', { name: 'Sign out' }));
     expect(await screen.findByText(REFUSED)).toBeTruthy();
     expect([getState().signedIn, fake.calls.includes('auth.signOut'), screen.queryByRole('button', { name: 'Sign out' })]).toEqual([true, false, expect.anything()]);
   });
@@ -173,6 +176,7 @@ describe('sign-out', () => {
     fireEvent.click(await screen.findByRole('button', { name: 'Name, avatar and app settings' }));
     const sheet = await screen.findByRole('dialog', { name: 'Settings' });
     fireEvent.click(within(sheet).getByRole('button', { name: 'Sign out' }));
+    fireEvent.click(within(within(sheet).getByRole('alertdialog', { name: 'Sign out' })).getByRole('button', { name: 'Sign out' }));
     expect(await within(sheet).findByText(REFUSED)).toBeTruthy();
     expect([getState().signedIn, fake.calls.includes('auth.signOut'), screen.queryByRole('dialog', { name: 'Settings' })]).toEqual([true, false, sheet]);
   });

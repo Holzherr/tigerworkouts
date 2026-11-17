@@ -269,7 +269,6 @@ final class SessionRunner {
             MainActor.assumeIsolated { self?.tick() }
         }
         RunLoop.main.add(timer!, forMode: .common)
-        RestNotice.askOnce()
         let center = NotificationCenter.default
         appObservers.forEach(center.removeObserver)
         appObservers = [
