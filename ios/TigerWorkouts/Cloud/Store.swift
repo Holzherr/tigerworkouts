@@ -225,6 +225,7 @@ final class Store {
             // A sign-in the server ended shows as signed out; what is on the phone stays.
             user = await Supabase.shared.user
         }
+        HealthPing.after(error: syncError, waiting: waitingCount)
         // Its own failures stay quiet: until migration 0008 is live every call here fails.
         await refreshCoaching()
     }
@@ -1158,5 +1159,57 @@ final class Store {
         let stamp = Int(Date().timeIntervalSince1970)
         let url = cacheURL.deletingPathExtension().appendingPathExtension("unreadable-\(stamp).json")
         try? data.write(to: url, options: .atomic)
+    }
+}
+
+/// The anonymous sync-health ping (review A6), as the web sends it (health-ping.ts): after a sync,
+/// at most once an hour while syncs fail and once a day while they work. No account and no error
+/// text: the app, its build, ok or not, how many changes wait, a coarse kind of error, and minutes
+/// since the last good sync. Release builds only.
+enum HealthPing {
+    static let endpoint = URL(string: "https://mcp.tigerworkouts.com/health/sync")!
+    private static let key = "healthPing"
+
+    /// A sync error reduced to a kind; the text itself never leaves the phone. `errorKind` in health-ping.ts.
+    nonisolated static func kind(_ message: String) -> String {
+        let m = message.lowercased()
+        func has(_ words: [String]) -> Bool { words.contains { m.contains($0) } }
+        if has(["internet", "network", "offline", "timed out", "connection"]) { return "network" }
+        if has(["jwt", "token", "sign in", "signed in", "not signed"]) { return "auth" }
+        if has(["row-level", "policy", "permission", "refused", "violates", "constraint", "duplicate"]) { return "refused" }
+        if has(["disk", "storage", "space"]) { return "storage" }
+        if has(["server", "unavailable", "gateway"]) { return "server" }
+        return "other"
+    }
+
+    /// The body to send now, or nil when nothing is due. Records what it decides in `defaults`.
+    nonisolated static func next(error: String?, waiting: Int, build: String, now: Date = Date(), defaults: UserDefaults = .standard) -> [String: Any]? {
+        var s = defaults.dictionary(forKey: key) as? [String: Double] ?? [:]
+        let t = now.timeIntervalSince1970
+        let ok = error == nil
+        if ok { s["lastOk"] = t }
+        let due = ok ? t - (s["ok"] ?? 0) >= 86400 : t - (s["fail"] ?? 0) >= 3600
+        if due { s[ok ? "ok" : "fail"] = t }
+        defaults.set(s, forKey: key)
+        guard due else { return nil }
+        var body: [String: Any] = ["app": "ios", "build": build, "ok": ok, "waiting": waiting]
+        if let error { body["error"] = kind(error) }
+        if let last = s["lastOk"] { body["sinceOkMin"] = Int(((t - last) / 60).rounded()) }
+        return body
+    }
+
+    static func after(error: String?, waiting: Int) {
+        #if !DEBUG
+        let info = Bundle.main.infoDictionary ?? [:]
+        let build = "\(info["CFBundleShortVersionString"] ?? "?")+\(info["CFBundleVersion"] ?? "?")"
+        guard let body = next(error: error, waiting: waiting, build: build),
+              let data = try? JSONSerialization.data(withJSONObject: body) else { return }
+        var req = URLRequest(url: endpoint)
+        req.httpMethod = "POST"
+        req.setValue("application/json", forHTTPHeaderField: "content-type")
+        req.httpBody = data
+        req.timeoutInterval = 10
+        URLSession.shared.dataTask(with: req).resume()
+        #endif
     }
 }

@@ -41,7 +41,9 @@
   // Per-key limits on "Start now" and claim emails (src/limits.ts). Periods are 10 or 60 seconds; a day cap sits in KV.
   "ratelimits": [
     { "name": "SIGNUP_LIMITER", "namespace_id": "1001", "simple": { "limit": 3, "period": 60 } },
-    { "name": "CLAIM_LIMITER", "namespace_id": "1002", "simple": { "limit": 3, "period": 60 } }
+    { "name": "CLAIM_LIMITER", "namespace_id": "1002", "simple": { "limit": 3, "period": 60 } },
+    // The apps' sync-health pings (src/health.ts).
+    { "name": "PING_LIMITER", "namespace_id": "1003", "simple": { "limit": 10, "period": 60 } }
   ],
   "routes": [
     { "pattern": "mcp.tigerworkouts.com", "custom_domain": true },
