@@ -14,6 +14,7 @@ import { lastSessionLabel, lastSessionSet, lastSetLabel, lastSets, withLastUsed 
 import { applyCommands, parsePlan } from '@/features/runsheet/parse-text';
 import { isImage, readImport } from '@/features/runsheet/import-file';
 import { appLink, CreatorScreen } from '@/features/creators/components/creator-screen';
+import { musclesWorked, nameFromKey, workoutsWith } from '@/features/exercises/used-in';
 import { CreatorPageSettingsScreen } from '@/features/creators/components/creator-page-settings-screen';
 import { CreditedCreatorScreen } from '@/features/creators/components/credited-creator-screen';
 import { creatorFor, creatorKey, creatorPath } from '@/features/creators/credited';
@@ -543,9 +544,12 @@ export default function App() {
     return full(<WeekTableScreen key={route.id} title={found.title} table={weeksOf(found)} onBack={() => back(`/w/${encodeURIComponent(route.id)}`)} onExercise={k => go(exerciseLink(k))} suggestions={{ on: suggestOn(st.suggestions, found), enabled: suggestEnabled(st.suggestions), onChange: on => act.setSuggestions(withWorkout(st.suggestions, found, on)) }} />);
   }
   if (route.name === 'exercise') {
-    const ex = library[route.id] ?? { key: route.id, name: route.id, unit: '', step: 1 };
+    const ex = library[route.id] ?? { key: route.id, name: nameFromKey(route.id), unit: '', step: 1 };
     const stall = stallOf(route.id);
-    return full(<ExerciseHistoryScreen key={route.id} exercise={ex} group={LIB[route.id]?.group ?? library[route.id]?.group} results={st.results} onBack={() => back('/history/exercises')} onSession={id => go(`/s/${encodeURIComponent(id)}`)} stall={stall} onDismissStall={stall ? () => dismiss(stall) : undefined} onExercise={k => go(exerciseLink(k))} progress={suggestEnabled(st.suggestions) && ex.unit && shortUnit(ex.unit) !== 'kph' && !measureOf(ex.unit) ? { own: st.suggestions?.exercises?.[ex.key], account: st.suggestions?.mode ?? 'reps', onChange: m => act.setSuggestions(withExercise(st.suggestions, ex.key, m)) } : undefined} />);
+    const group = LIB[route.id]?.group ?? library[route.id]?.group;
+    const using = workoutsWith(route.id, all, new Set(st.workouts.map(wid)));
+    const usedIn = { total: using.length, top: using.slice(0, 3).map(r => ({ id: wid(r), title: r.title, meta: [`${runsheetMinutes(r)} min`, r.source?.author ?? r.creator].filter(Boolean).join(' · ') })) };
+    return full(<ExerciseHistoryScreen key={route.id} exercise={ex} group={group} muscles={musclesWorked(ex.name, group)} usedIn={usedIn} onWorkout={id => go(`/w/${encodeURIComponent(id)}`)} results={st.results} onBack={() => back('/history/exercises')} onSession={id => go(`/s/${encodeURIComponent(id)}`)} stall={stall} onDismissStall={stall ? () => dismiss(stall) : undefined} onExercise={k => go(exerciseLink(k))} progress={suggestEnabled(st.suggestions) && ex.unit && shortUnit(ex.unit) !== 'kph' && !measureOf(ex.unit) ? { own: st.suggestions?.exercises?.[ex.key], account: st.suggestions?.mode ?? 'reps', onChange: m => act.setSuggestions(withExercise(st.suggestions, ex.key, m)) } : undefined} />);
   }
   if (route.name === 'result') {
     const r = draftOf(route.id) ?? byId.get(route.id);
