@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { describe, expect, it, vi } from 'vitest';
 import type { SessionResult } from '@/features/runsheet/progression';
-import { eachRow, fetchCreator, fromRow, toRow } from './sync';
+import { eachRow, fetchCreator, fromRow, readSnap, toRow, writeSnap } from './sync';
 
 // A Supabase client that records each select and answers from `rows`.
 const cloud = vi.hoisted(() => ({ selects: [] as string[], rows: {} as Record<string, unknown> }));
@@ -78,5 +78,33 @@ describe('migration 0007: the public key reads nothing private', () => {
     expect(sql).toMatch(/^create or replace function public\.handle_new_user\(\)/m);
     expect(sql).not.toContain('split_part(new.email');
     expect(sql).toMatch(/^update public\.profiles p set name = null\s+from auth\.users u\s+where u\.id = p\.id and p\.name = split_part\(u\.email, '@', 1\);/m);
+  });
+});
+
+describe('the sync snapshot holds a hash per row (review A2)', () => {
+  const row = { id: 's-1', runsheetId: 'w', startedAt: '2026-11-17T07:00:00.000Z', steps: [{ stepId: 'a', exerciseKey: 'k', reps: [5, 5] }] };
+
+  it('reads the old full-JSON form as the hashes of the same rows', () => {
+    const old = JSON.stringify({ 's-1': JSON.stringify(row), 'w:u-1': JSON.stringify({ title: 'x' }) });
+    const fresh = readSnap(writeSnap(readSnap(old)));
+    expect(Object.keys(fresh)).toEqual(['s-1', 'w:u-1']);
+    // The same row hashes to what the old entry converts to; a changed one does not.
+    const now = readSnap(JSON.stringify({ 's-1': JSON.stringify(row) }));
+    expect(fresh['s-1']).toBe(now['s-1']);
+    expect(readSnap(JSON.stringify({ 's-1': JSON.stringify({ ...row, notes: 'x' }) }))['s-1']).not.toBe(fresh['s-1']);
+  });
+
+  it('stores a hash, far smaller than the row', () => {
+    const big = { ...row, steps: Array.from({ length: 40 }, (_, i) => ({ stepId: `s${i}`, exerciseKey: 'k', reps: [5, 5, 5], sets: [{ reps: 5, load: 60 }] })) };
+    const stored = writeSnap(readSnap(JSON.stringify({ 's-1': JSON.stringify(big) })));
+    expect(stored.length).toBeLessThan(60);
+    expect(JSON.parse(stored)[0]).toBe(2);
+  });
+
+  it('reads anything else as empty', () => {
+    expect(readSnap(null)).toEqual({});
+    expect(readSnap('not json')).toEqual({});
+    expect(readSnap('[3, {"a": "b"}]')).toEqual({});
+    expect(readSnap('42')).toEqual({});
   });
 });
