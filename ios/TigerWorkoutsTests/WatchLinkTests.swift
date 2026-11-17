@@ -60,7 +60,7 @@ struct WatchLinkTests {
     func drivesRunner() {
         SessionRunner.$savedName.withValue("test-\(UUID().uuidString).json") {
             let runner = SessionRunner(runsheet: SetPlanTests.pyramid(SetPlanTests.full))
-            let send = { (dict: [String: Any]) in WatchSync.handle(dict) { runner.control($0, token: $1) } }
+            let send = { (dict: [String: Any]) in _ = WatchSync.handle(dict) { runner.control($0, token: $1) } }
             let token = SessionRunner.watchState(runner.state, runsheet: runner.runsheet, now: 1_000).token
             send(WatchMessage.command(.done, token: token).encoded()) // Start, from the lead-in
             #expect(runner.state.phase == .running)
