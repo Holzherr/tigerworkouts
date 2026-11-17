@@ -7,7 +7,7 @@ import { uniqueById } from '@/features/discover/catalogue';
 import { SignInCard } from '@/features/auth/components/sign-in-card';
 import { FULL_LIBRARY } from '@/features/workouts/imported';
 import { EX, withStarter } from '@/features/runsheet/fixtures';
-import { copyIn, copyOnEdit, forLabel, lineage, makeExercise, measureOf, newWorkoutId, ofWorkout, resolveRefs, runsheetMinutes, scoreType, shortUnit, type ExerciseStep, type Runsheet } from '@/features/runsheet/model';
+import { copyIn, copyOnEdit, editedCopy, forLabel, lineage, makeExercise, measureOf, newWorkoutId, ofWorkout, resolveRefs, runsheetMinutes, scoreType, shortUnit, type ExerciseStep, type Runsheet } from '@/features/runsheet/model';
 import { versionOf, versionsOf } from '@/features/runsheet/versions';
 import { dropEmptyBlocks, settleEdit } from '@/features/runsheet/real-change';
 import { lastSessionLabel, lastSessionSet, lastSetLabel, lastSets, withLastUsed } from '@/features/runsheet/last-used';
@@ -241,6 +241,12 @@ export default function App() {
   // An edit of a workout that is not yours, held on its page until a block is closed or the page is
   // left: only then, and only if something real changed, is your copy made (review D18).
   const [held, setHeld] = useState<{ for: string; r: Runsheet } | null>(null);
+  // Review round 2, U6: a coach names themselves before the first invite, a client before Accept.
+  // Synced at once, so the other side reads it from the profile straight away.
+  const setName = async (name: string) => {
+    act.setProfile({ name });
+    await cloud.syncNow();
+  };
   const makeCopy = (next: Runsheet, original: Runsheet) => {
     const copy = copyOnEdit(next, original, newWorkoutId(), st.name);
     act.saveWorkout({ ...copy, icon: copy.icon ?? defaultIcon(copy.id!) });
@@ -330,14 +336,23 @@ export default function App() {
     );
   }
   if (route.name === 'join') {
-    return full(<JoinRoute key={route.id} code={route.id} signedIn={!!cloud.user} signIn={signInCard('Sign in to accept', ['A free account; no password, we email you a 6-digit code', 'Same account as the iPhone app'])} onAccepted={() => setCoachTick(t => t + 1)} onContinue={() => go('/discover')} />);
+    return full(<JoinRoute key={route.id} code={route.id} signedIn={!!cloud.user} myName={st.name} onSetName={setName} signIn={signInCard('Sign in to accept', ['A free account; no password, we email you a 6-digit code', 'Same account as the iPhone app'])} onAccepted={() => setCoachTick(t => t + 1)} onContinue={() => go('/discover')} />);
   }
   if (route.name === 'coach' && route.id && cloud.user) {
     const mine = st.workouts.filter(w => w.id);
-    return full(<ClientRoute key={route.id} clientId={route.id} me={cloud.user.id} workouts={mine} lookup={lookup} exercise={k => ({ name: library[k]?.name ?? k, unit: library[k]?.unit ?? '' })} onBack={() => go('/coach')} onNewWorkout={() => go('/new')} syncNow={cloud.syncNow} say={say} />);
+    // Review round 2, U5: saved and catalogue workouts go as the coach's copy (one per original).
+    const ownCopy = (r: Runsheet) => {
+      const had = copyIn(st.workouts, r);
+      if (had) return had.id!;
+      const copy = editedCopy(r, r, newWorkoutId(), st.name);
+      act.saveWorkout({ ...copy, icon: copy.icon ?? defaultIcon(copy.id!) });
+      return copy.id!;
+    };
+    const savedOthers = st.saved.flatMap(id => (byId.get(id) && !st.workouts.some(w => w.id === id) ? [byId.get(id)!] : []));
+    return full(<ClientRoute key={route.id} clientId={route.id} me={cloud.user.id} workouts={mine} saved={savedOthers} catalogue={IMPORTED.map(w => w.runsheet)} ownCopy={ownCopy} lookup={lookup} exercise={k => ({ name: library[k]?.name ?? k, unit: library[k]?.unit ?? '' })} onBack={() => go('/coach')} onNewWorkout={() => go('/new')} syncNow={cloud.syncNow} say={say} />);
   }
   if (route.name === 'coach') {
-    return full(<CoachRoute signedIn={!!cloud.user} signIn={signInCard('Sign in to coach', ['Your clients link to your account', 'No password: we email you a 6-digit code'])} onOpenClient={id => go(`/coach/${encodeURIComponent(id)}`)} onHowItWorks={() => go('/coaches')} onBack={() => go('/me')} say={say} />);
+    return full(<CoachRoute signedIn={!!cloud.user} myName={st.name} onSetName={setName} signIn={signInCard('Sign in to coach', ['Your clients link to your account', 'No password: we email you a 6-digit code'])} onOpenClient={id => go(`/coach/${encodeURIComponent(id)}`)} onHowItWorks={() => go('/coaches')} onBack={() => go('/me')} say={say} />);
   }
   // The workout week by week, with the workouts it was duplicated from or into (review D9).
   const weeksOf = (w: Runsheet) => weekTable(w, st.results, st.workouts, k => library[k]?.name ?? k, k => library[k]?.unit);
