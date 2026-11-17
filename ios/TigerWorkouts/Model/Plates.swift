@@ -43,7 +43,9 @@ enum Plates {
     static let dumbbellSizes: [Double] = [1, 2, 2.5, 3, 4, 5, 6, 7.5, 8, 10, 12, 12.5, 14, 15, 16, 17.5, 18, 20, 22.5, 25, 27.5, 30, 32.5, 35, 40]
     static let kettlebellSizes: [Double] = [4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 32, 36, 40, 44, 48]
 
-    private static let eps = 1e-6
+    /// 20 g: lb plates kept in kg to 3 places add up a few grams off a load typed in lb (135 lb is
+    /// 61.235 kg, a 45 lb bar and two 45s 61.236), far below any real plate. `EPS` in plates.ts.
+    private static let eps = 0.02
     private static func r3(_ n: Double) -> Double { (n * 1000).rounded() / 1000 }
 
     /// Which kit an exercise is loaded with, from its key (`bb_`, `db_`, `kb_`) or its library group.

@@ -78,6 +78,16 @@ struct UnitsTests {
         #expect(Plates.text(Plates.Load(bar: 20, perSide: [], total: 20, exact: true), lb: false) == "20 kg bar, no plates")
     }
 
+    @Test("a load typed in lb is made exactly by lb plates kept in kg")
+    func lbPlatesExact() {
+        let lbKit = Equipment(barKg: Units.toKg(45), plates: [PlateCount(kg: Units.toKg(45), count: 2)])
+        let p = Plates.plates(for: Units.toKg(135), lbKit)
+        #expect(p.exact)
+        #expect(p.perSide == [Units.toKg(45)])
+        let bar = ExerciseRef(key: "bb_bench", name: "Bench", unit: "kg", step: 2.5)
+        #expect(Plates.snap(Units.toKg(135), bar, lbKit, .up) == p.total)
+    }
+
     @Test("units is a field the phone holds: a newer change here goes up, the server's newer one comes down")
     func prefs() {
         let here = PrefsMerge.Side(values: ["units": "imperial"], updatedAt: ["units": "2026-11-17T10:00:00.000Z"])
