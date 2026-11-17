@@ -90,16 +90,24 @@ struct WorkoutPageTests {
         #expect(LastTime.lastSessionLabel([], for: step, in: sheet) == nil)
     }
 
-    @Test("compact sets", arguments: [
-        ([SetResult(reps: 8, load: 100), SetResult(reps: 8, load: 100), SetResult(reps: 8, load: 100)], "", "100 × 8 (×3)"),
-        ([SetResult(reps: 12, load: nil), SetResult(reps: 12, load: nil), SetResult(reps: 10, load: nil)], "", "12 reps × 2 sets, 10 reps"),
-        (Array(repeating: SetResult(reps: nil, load: 24), count: 7), "kg", "24 kg × 7 sets"),
-        (Array(repeating: SetResult(reps: nil, load: 24), count: 2) + [SetResult(reps: nil, load: 28)], "kg", "24 kg × 2 sets, 28 kg"),
-        ([SetResult(reps: 12, load: nil), SetResult(reps: 12, load: nil), SetResult(reps: 10, load: nil), SetResult(reps: 10, load: 20)], "kg", "12 reps (×2), 10 reps, 20 × 10"),
-        ([SetResult(reps: 12, load: nil), SetResult(reps: 11, load: nil), SetResult(reps: 10, load: nil)], "", "12, 11, 10 reps"),
-        ([SetResult(reps: nil, load: 10), SetResult(reps: nil, load: 12)], "kph", "10, 12 kph"),
-        ((1...6).map { SetResult(reps: 5, load: Double(40 + $0 * 5)) }, "kg", "45 × 5, 50 × 5, 55 × 5, 60 × 5 +2 more"),
-    ])
+    /// Typed, so the compiler does not have to infer the literal: inferred, it passed the Swift
+    /// type-check limit on the x86_64 iMac.
+    private static func sets(_ pairs: [(reps: Double?, load: Double?)]) -> [SetResult] {
+        pairs.map { SetResult(reps: $0.reps, load: $0.load) }
+    }
+
+    static let compactCases: [([SetResult], String, String)] = [
+        (sets([(8, 100), (8, 100), (8, 100)]), "", "100 × 8 (×3)"),
+        (sets([(12, nil), (12, nil), (10, nil)]), "", "12 reps × 2 sets, 10 reps"),
+        (sets(Array(repeating: (nil, 24), count: 7)), "kg", "24 kg × 7 sets"),
+        (sets([(nil, 24), (nil, 24), (nil, 28)]), "kg", "24 kg × 2 sets, 28 kg"),
+        (sets([(12, nil), (12, nil), (10, nil), (10, 20)]), "kg", "12 reps (×2), 10 reps, 20 × 10"),
+        (sets([(12, nil), (11, nil), (10, nil)]), "", "12, 11, 10 reps"),
+        (sets([(nil, 10), (nil, 12)]), "kph", "10, 12 kph"),
+        (sets([(5, 45), (5, 50), (5, 55), (5, 60), (5, 65), (5, 70)]), "kg", "45 × 5, 50 × 5, 55 × 5, 60 × 5 +2 more"),
+    ]
+
+    @Test("compact sets", arguments: compactCases)
     func compact(_ c: ([SetResult], String, String)) {
         #expect(LastTime.compact(c.0, unit: c.1) == c.2)
     }
