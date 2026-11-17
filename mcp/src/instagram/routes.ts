@@ -6,6 +6,7 @@
  * Every secret is optional: without them the webhook logs and answers 200/503, and nothing is sent.
  */
 import { isAdmin } from '../access';
+import { CODE_TRIES } from '../limits';
 import { esc, page } from '../pages';
 import { auth, SupabaseError } from '../supabase';
 import { DEFAULT_MODEL, extractWorkout } from './extract';
@@ -33,6 +34,8 @@ export interface BotEnv {
   INSTAGRAM_APP_SECRET?: string;
   INSTAGRAM_VERIFY_TOKEN?: string;
   ANTHROPIC_API_KEY?: string;
+  /** The import owner's email. /bot/connect sends a code to this address only; unset = connecting is off. */
+  BOT_OWNER_EMAIL?: string;
 }
 
 export const isBotPath = (p: string) => p === '/instagram/webhook' || p.startsWith('/i/') || p === '/bot/connect' || p.startsWith('/bot/connect/');
@@ -96,11 +99,17 @@ const codeForm = (email: string, error?: string) =>
 
 const connect = async (request: Request, env: BotEnv, path: string) => {
   if (!env.INSTAGRAM_IMPORT_OWNER) return connectPage('<p>INSTAGRAM_IMPORT_OWNER is not set in wrangler.jsonc.</p>', 503);
+  const owner = env.BOT_OWNER_EMAIL?.trim().toLowerCase();
+  if (!owner) return connectPage('<p>BOT_OWNER_EMAIL is not set (wrangler secret put BOT_OWNER_EMAIL).</p>', 503);
   if (request.method === 'GET' && path === '/bot/connect') return emailForm();
   if (request.method !== 'POST') return new Response('Not found', { status: 404 });
   const form = await request.formData();
   const email = String(form.get('email') ?? '').trim().toLowerCase();
+  // Codes go to the owner's address only, so the page cannot be used to mail anyone else.
+  if (email !== owner) return path === '/bot/connect' ? emailForm('That is not the admin account\'s email.') : connectPage('<p class="err">Start again.</p>', 400);
+  const triesKey = 'bot:connect-tries';
   if (path === '/bot/connect') {
+    await env.OAUTH_KV.delete(triesKey);
     try {
       await auth().sendCode(email);
     } catch (e) {
@@ -109,12 +118,17 @@ const connect = async (request: Request, env: BotEnv, path: string) => {
     return codeForm(email);
   }
   if (path === '/bot/connect/code') {
+    // The count resets only when a new code is sent, so a used-up code stays refused.
+    const tried = Number((await env.OAUTH_KV.get(triesKey)) ?? 0);
+    if (tried >= CODE_TRIES) return emailForm('Too many wrong codes. Ask for a new one.');
     let s;
     try {
       s = await auth().verifyCode(email, String(form.get('code') ?? ''));
     } catch {
-      return codeForm(email, 'That code did not work.');
+      await env.OAUTH_KV.put(triesKey, String(tried + 1), { expirationTtl: 3600 });
+      return tried + 1 >= CODE_TRIES ? emailForm('Too many wrong codes. Ask for a new one.') : codeForm(email, 'That code did not work.');
     }
+    await env.OAUTH_KV.delete(triesKey);
     if (s.userId !== env.INSTAGRAM_IMPORT_OWNER || !isAdmin(env, s)) {
       log('bot connect refused', { user: s.userId });
       return connectPage('<p class="err">This account cannot run the bot. Nothing was connected.</p>', 403);
