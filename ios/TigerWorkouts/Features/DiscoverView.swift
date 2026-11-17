@@ -322,6 +322,9 @@ struct DiscoverView: View {
                             .lineLimit(2)
                             .multilineTextAlignment(.leading)
                             .accessibilitySortPriority(1)
+                        if let credit = sheet.source?.credit {
+                            Text(credit).font(.footnote).foregroundStyle(Brand.muted).lineLimit(1)
+                        }
                         if let why = card.why {
                             Text(why).font(.footnote).foregroundStyle(Brand.body).lineLimit(1)
                         }

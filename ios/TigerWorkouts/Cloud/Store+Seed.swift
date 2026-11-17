@@ -285,6 +285,24 @@ extension Store {
         setCoaching(next)
     }
 
+    /// `-seedCredited` on launch: "Jump rope ladder", a public workout an admin adapted from a
+    /// fixture creator's Instagram post (@janedoe), so Mine and its page carry the "Adapted from"
+    /// credit. Fixed id: launching with it again replaces it.
+    func seedCreditedIfAsked(_ arguments: [String] = ProcessInfo.processInfo.arguments) {
+        guard arguments.contains("-seedCredited") else { return }
+        let rope = Library.shared.exercise("cardio_jump_rope")?.ref ?? ExerciseRef(key: "cardio_jump_rope", name: "Jump rope", unit: "", step: 10)
+        var sheet = Runsheet(id: "seed-credited", title: "Jump rope ladder", creator: "Jane Doe", items: [
+            .block(Block(id: "seed-cr-b1", name: "Ladder", repeatCount: 3, steps: [
+                .exercise(ExerciseStep(id: "seed-cr-rope", exercise: rope, forMode: .reps, forValue: 100)),
+                .rest(RestStep(id: "seed-cr-r1", seconds: 60)),
+            ])),
+        ])
+        sheet.source = Source(title: "Jump rope ladder", url: "https://www.instagram.com/p/x", author: "Jane Doe", kind: "social",
+                              handle: "janedoe", platform: "instagram")
+        sheet.isPublic = true
+        myWorkouts = [sheet] + myWorkouts.filter { $0.key != "seed-credited" }
+    }
+
     /// `-seedTimed` on launch: a workout of your own, "Row intervals" — three rounds of a 250 m row
     /// and a 30 s plank — done twice before (a week back and two minutes back, so it tops History), with round times, rows timed and a plank
     /// cut short once; so session detail has round splits against last time, the rower's logbook a

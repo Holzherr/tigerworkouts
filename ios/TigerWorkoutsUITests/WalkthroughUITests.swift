@@ -1728,6 +1728,42 @@ final class WalkthroughUITests: XCTestCase {
         snap("97 Me, AI coach")
     }
 
+    /// An influencer's post adapted by an admin, from a seed: its card says "Adapted from @janedoe",
+    /// its page says "… · original post" and opens the post in Safari. An ordinary workout says neither.
+    func testAdaptedFromCredit() {
+        app.terminate()
+        app.launchArguments = ["-seedCredited", "-seedLoads"]
+        app.launch()
+        let discard = app.alerts.buttons["Discard"]
+        if discard.waitForExistence(timeout: 3) { discard.tap() }
+
+        let adapted = NSPredicate(format: "label CONTAINS 'Adapted from'")
+        let credited = app.buttons.matching(NSPredicate(format: "label BEGINSWITH 'Jump rope ladder,'")).firstMatch
+        XCTAssertTrue(credited.waitForExistence(timeout: 5), "the seeded import should be on Mine")
+        XCTAssertTrue(credited.label.contains("Adapted from @janedoe"), "its card credits the creator: \(credited.label)")
+        let plain = app.buttons.matching(NSPredicate(format: "label BEGINSWITH 'Loads check,'")).firstMatch
+        XCTAssertTrue(plain.exists)
+        XCTAssertFalse(plain.label.contains("Adapted from"), "an ordinary card has no credit: \(plain.label)")
+        snap("98 Mine, adapted from a creator")
+
+        open("Jump rope ladder")
+        // A SwiftUI Link reaches XCUI as a button.
+        let post = app.buttons["Adapted from @janedoe · original post"]
+        XCTAssertTrue(post.waitForExistence(timeout: 5), "the page credits the creator with a link to the post")
+        snap("99 Workout page, adapted from a creator")
+        tap(post)
+        // Safari's address bar shows the host only; the full URL is the source's, pinned in SyncTests.
+        let safari = XCUIApplication(bundleIdentifier: "com.apple.mobilesafari")
+        XCTAssertTrue(safari.wait(for: .runningForeground, timeout: 10), "the original post opens in Safari")
+        let address = safari.textFields.matching(NSPredicate(format: "value CONTAINS 'instagram.com'")).firstMatch
+        XCTAssertTrue(address.waitForExistence(timeout: 10), "Safari opens the post on Instagram")
+        app.activate()
+
+        home()
+        open("Loads check")
+        XCTAssertFalse(app.descendants(matching: .any).matching(adapted).firstMatch.exists, "an ordinary workout's page has no credit")
+    }
+
     /// Pause is big on the lead-in, "Round 1 done" on the burpees; Finish is in the ⋯ menu, and
     /// asks first while sets are still to come.
     func testTimerControls() {
