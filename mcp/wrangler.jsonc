@@ -32,7 +32,10 @@
     "APPLE_TEAM_ID": "2JDH6Z4WZ8",
     "APPLE_CLIENT_ID": "dev.brambruesch.tigerworkouts",
     "APPLE_KEY_ID": "6D5W8DU262"
-    // Secrets, never here: INSTAGRAM_ACCESS_TOKEN, INSTAGRAM_APP_SECRET, INSTAGRAM_VERIFY_TOKEN, ANTHROPIC_API_KEY, APPLE_PRIVATE_KEY, BOT_OWNER_EMAIL, SUPABASE_SERVICE_ROLE_KEY (POST /web-session; optional, src/handoff.ts) (wrangler secret put).
+    // Coaching pushes (src/push.ts): off until APNS_KEY_ID, APNS_PRIVATE_KEY and PUSH_HOOK_SECRET are set
+    // (all three as secrets; APNS_TEAM_ID falls back to APPLE_TEAM_ID).
+    // Secrets, never here: INSTAGRAM_ACCESS_TOKEN, INSTAGRAM_APP_SECRET, INSTAGRAM_VERIFY_TOKEN, ANTHROPIC_API_KEY, APPLE_PRIVATE_KEY, BOT_OWNER_EMAIL, SUPABASE_SERVICE_ROLE_KEY (POST /web-session; optional, src/handoff.ts),
+    // APNS_KEY_ID, APNS_PRIVATE_KEY, PUSH_HOOK_SECRET (wrangler secret put).
     // GIT_COMMIT and DEPLOYED_AT are set by `npm run deploy` (scripts/deploy.mjs).
   },
   // Per-key limits on "Start now" and claim emails (src/limits.ts). Periods are 10 or 60 seconds; a day cap sits in KV.

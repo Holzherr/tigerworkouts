@@ -287,6 +287,7 @@ final class Store {
             writeCache()
             if let held = Self.signOutRefusal(waiting: waitingCount) { return held }
         }
+        await Push.shared.forget()
         await Supabase.shared.signOut()
         signOuts += 1
         user = nil

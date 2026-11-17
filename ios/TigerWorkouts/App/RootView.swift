@@ -129,6 +129,14 @@ struct RootView: View {
             }
         }
         .onChange(of: store.loaded) { _, _ in startFromWidget() }
+        // A coach's push: the phone's token follows the account signed in on it, and a tap on
+        // the alert opens its link the way a link from outside the app does.
+        .onChange(of: store.user?.id, initial: true) { _, id in Push.shared.signedIn(id != nil) }
+        .onChange(of: Push.shared.opened, initial: true) { _, url in
+            guard let url else { return }
+            Push.shared.opened = nil
+            UIApplication.shared.open(url)
+        }
         .sheet(item: $joining) { join in
             JoinCoachView(code: join.id)
         }
