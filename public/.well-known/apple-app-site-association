@@ -1,0 +1,13 @@
+{
+  "applinks": {
+    "details": [
+      {
+        "appIDs": ["2JDH6Z4WZ8.dev.brambruesch.tigerworkouts"],
+        "components": [
+          { "/": "/", "#": "/join/*", "comment": "A coach's invite" },
+          { "/": "/", "#": "/w/*", "comment": "A workout" }
+        ]
+      }
+    ]
+  }
+}

@@ -11,6 +11,16 @@
     <link rel="icon" type="image/png" sizes="64x64" href="./icons/favicon-64.png" />
     <link rel="apple-touch-icon" href="./icons/apple-touch-icon.png" />
     <link rel="manifest" href="./manifest.webmanifest" />
+    <!-- Safari's smart app banner: Get when the app is not installed, Open when it is. It shows only
+         once the app is on the App Store, and never in the home-screen app. On an invite or workout
+         link it opens that invite or workout (the script below, before Safari reads the tag). -->
+    <meta id="tw-app-banner" name="apple-itunes-app" content="app-id=6818641702" />
+    <script>
+      (function () {
+        if (/^#\/(join|w)\/./.test(location.hash))
+          document.getElementById('tw-app-banner').content = 'app-id=6818641702, app-argument=' + location.href;
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>

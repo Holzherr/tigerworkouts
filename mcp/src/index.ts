@@ -25,6 +25,7 @@ import { botFetch, isBotPath, type BotEnv } from './instagram/routes';
 import { appleFetch, isApplePath, type AppleEnv } from './apple';
 import { allow, clientIp, CODE_TRIES, type LimitEnv } from './limits';
 import { handoffFetch, isHandoffPath, type HandoffEnv } from './handoff';
+import { aasaResponse, isAasaPath } from './links';
 
 /** BotEnv: the Instagram bot's vars and secrets (instagram/routes.ts, specs/instagram-bot.md). */
 export interface Env extends BotEnv, AppleEnv, LimitEnv, HandoffEnv {
@@ -309,6 +310,8 @@ export default {
     if (isApplePath(new URL(request.url).pathname)) return appleFetch(request, env);
     // The iPhone app opening the web coach dashboard signed in (src/handoff.ts).
     if (isHandoffPath(new URL(request.url).pathname)) return handoffFetch(request, env);
+    // Universal links: tigerworkouts.com routes this one path here (wrangler.jsonc).
+    if (isAasaPath(new URL(request.url).pathname)) return aasaResponse();
     return getProvider(env, new URL(request.url).origin).fetch(request, env, ctx);
   },
 } satisfies ExportedHandler<Env>;
