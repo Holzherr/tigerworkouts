@@ -1,0 +1,30 @@
+{
+  "/Users/nicolasholzherr/projects/agent-work/wt/TW-071/ios/TigerWorkouts/Cloud/PrefsMerge.swift" : {
+    "const-values" : "/Users/nicolasholzherr/projects/agent-work/wt/TW-071/.dd/Build/Intermediates.noindex/TigerWorkouts.build/Debug-iphonesimulator/TigerWorkouts.build/Objects-normal/x86_64/PrefsMerge.swiftconstvalues",
+    "dependencies" : "/Users/nicolasholzherr/projects/agent-work/wt/TW-071/.dd/Build/Intermediates.noindex/TigerWorkouts.build/Debug-iphonesimulator/TigerWorkouts.build/Objects-normal/x86_64/PrefsMerge.d",
+    "diagnostics" : "/Users/nicolasholzherr/projects/agent-work/wt/TW-071/.dd/Build/Intermediates.noindex/TigerWorkouts.build/Debug-iphonesimulator/TigerWorkouts.build/Objects-normal/x86_64/PrefsMerge.dia",
+    "object" : "/Users/nicolasholzherr/projects/agent-work/wt/TW-071/.dd/Build/Intermediates.noindex/TigerWorkouts.build/Debug-iphonesimulator/TigerWorkouts.build/Objects-normal/x86_64/PrefsMerge.o",
+    "swift-dependencies" : "/Users/nicolasholzherr/projects/agent-work/wt/TW-071/.dd/Build/Intermediates.noindex/TigerWorkouts.build/Debug-iphonesimulator/TigerWorkouts.build/Objects-normal/x86_64/PrefsMerge.swiftdeps"
+  },
+  "/Users/nicolasholzherr/projects/agent-work/wt/TW-071/ios/TigerWorkouts/Features/PlatesView.swift" : {
+    "const-values" : "/Users/nicolasholzherr/projects/agent-work/wt/TW-071/.dd/Build/Intermediates.noindex/TigerWorkouts.build/Debug-iphonesimulator/TigerWorkouts.build/Objects-normal/x86_64/PlatesView.swiftconstvalues",
+    "dependencies" : "/Users/nicolasholzherr/projects/agent-work/wt/TW-071/.dd/Build/Intermediates.noindex/TigerWorkouts.build/Debug-iphonesimulator/TigerWorkouts.build/Objects-normal/x86_64/PlatesView.d",
+    "diagnostics" : "/Users/nicolasholzherr/projects/agent-work/wt/TW-071/.dd/Build/Intermediates.noindex/TigerWorkouts.build/Debug-iphonesimulator/TigerWorkouts.build/Objects-normal/x86_64/PlatesView.dia",
+    "object" : "/Users/nicolasholzherr/projects/agent-work/wt/TW-071/.dd/Build/Intermediates.noindex/TigerWorkouts.build/Debug-iphonesimulator/TigerWorkouts.build/Objects-normal/x86_64/PlatesView.o",
+    "swift-dependencies" : "/Users/nicolasholzherr/projects/agent-work/wt/TW-071/.dd/Build/Intermediates.noindex/TigerWorkouts.build/Debug-iphonesimulator/TigerWorkouts.build/Objects-normal/x86_64/PlatesView.swiftdeps"
+  },
+  "/Users/nicolasholzherr/projects/agent-work/wt/TW-071/ios/TigerWorkouts/Features/ProgressTableView.swift" : {
+    "const-values" : "/Users/nicolasholzherr/projects/agent-work/wt/TW-071/.dd/Build/Intermediates.noindex/TigerWorkouts.build/Debug-iphonesimulator/TigerWorkouts.build/Objects-normal/x86_64/ProgressTableView.swiftconstvalues",
+    "dependencies" : "/Users/nicolasholzherr/projects/agent-work/wt/TW-071/.dd/Build/Intermediates.noindex/TigerWorkouts.build/Debug-iphonesimulator/TigerWorkouts.build/Objects-normal/x86_64/ProgressTableView.d",
+    "diagnostics" : "/Users/nicolasholzherr/projects/agent-work/wt/TW-071/.dd/Build/Intermediates.noindex/TigerWorkouts.build/Debug-iphonesimulator/TigerWorkouts.build/Objects-normal/x86_64/ProgressTableView.dia",
+    "object" : "/Users/nicolasholzherr/projects/agent-work/wt/TW-071/.dd/Build/Intermediates.noindex/TigerWorkouts.build/Debug-iphonesimulator/TigerWorkouts.build/Objects-normal/x86_64/ProgressTableView.o",
+    "swift-dependencies" : "/Users/nicolasholzherr/projects/agent-work/wt/TW-071/.dd/Build/Intermediates.noindex/TigerWorkouts.build/Debug-iphonesimulator/TigerWorkouts.build/Objects-normal/x86_64/ProgressTableView.swiftdeps"
+  },
+  "/Users/nicolasholzherr/projects/agent-work/wt/TW-071/ios/TigerWorkouts/Model/ProgressionRules.swift" : {
+    "const-values" : "/Users/nicolasholzherr/projects/agent-work/wt/TW-071/.dd/Build/Intermediates.noindex/TigerWorkouts.build/Debug-iphonesimulator/TigerWorkouts.build/Objects-normal/x86_64/ProgressionRules.swiftconstvalues",
+    "dependencies" : "/Users/nicolasholzherr/projects/agent-work/wt/TW-071/.dd/Build/Intermediates.noindex/TigerWorkouts.build/Debug-iphonesimulator/TigerWorkouts.build/Objects-normal/x86_64/ProgressionRules.d",
+    "diagnostics" : "/Users/nicolasholzherr/projects/agent-work/wt/TW-071/.dd/Build/Intermediates.noindex/TigerWorkouts.build/Debug-iphonesimulator/TigerWorkouts.build/Objects-normal/x86_64/ProgressionRules.dia",
+    "object" : "/Users/nicolasholzherr/projects/agent-work/wt/TW-071/.dd/Build/Intermediates.noindex/TigerWorkouts.build/Debug-iphonesimulator/TigerWorkouts.build/Objects-normal/x86_64/ProgressionRules.o",
+    "swift-dependencies" : "/Users/nicolasholzherr/projects/agent-work/wt/TW-071/.dd/Build/Intermediates.noindex/TigerWorkouts.build/Debug-iphonesimulator/TigerWorkouts.build/Objects-normal/x86_64/ProgressionRules.swiftdeps"
+  }
+}

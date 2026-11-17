@@ -1,0 +1,30 @@
+{
+  "/Users/nicolasholzherr/projects/agent-work/wt/TW-071/ios/TigerWorkouts/App/Theme.swift" : {
+    "const-values" : "/Users/nicolasholzherr/projects/agent-work/wt/TW-071/.dd/Build/Intermediates.noindex/TigerWorkouts.build/Debug-iphonesimulator/TigerWorkouts.build/Objects-normal/x86_64/Theme.swiftconstvalues",
+    "dependencies" : "/Users/nicolasholzherr/projects/agent-work/wt/TW-071/.dd/Build/Intermediates.noindex/TigerWorkouts.build/Debug-iphonesimulator/TigerWorkouts.build/Objects-normal/x86_64/Theme.d",
+    "diagnostics" : "/Users/nicolasholzherr/projects/agent-work/wt/TW-071/.dd/Build/Intermediates.noindex/TigerWorkouts.build/Debug-iphonesimulator/TigerWorkouts.build/Objects-normal/x86_64/Theme.dia",
+    "object" : "/Users/nicolasholzherr/projects/agent-work/wt/TW-071/.dd/Build/Intermediates.noindex/TigerWorkouts.build/Debug-iphonesimulator/TigerWorkouts.build/Objects-normal/x86_64/Theme.o",
+    "swift-dependencies" : "/Users/nicolasholzherr/projects/agent-work/wt/TW-071/.dd/Build/Intermediates.noindex/TigerWorkouts.build/Debug-iphonesimulator/TigerWorkouts.build/Objects-normal/x86_64/Theme.swiftdeps"
+  },
+  "/Users/nicolasholzherr/projects/agent-work/wt/TW-071/ios/TigerWorkouts/App/TigerWorkoutsApp.swift" : {
+    "const-values" : "/Users/nicolasholzherr/projects/agent-work/wt/TW-071/.dd/Build/Intermediates.noindex/TigerWorkouts.build/Debug-iphonesimulator/TigerWorkouts.build/Objects-normal/x86_64/TigerWorkoutsApp.swiftconstvalues",
+    "dependencies" : "/Users/nicolasholzherr/projects/agent-work/wt/TW-071/.dd/Build/Intermediates.noindex/TigerWorkouts.build/Debug-iphonesimulator/TigerWorkouts.build/Objects-normal/x86_64/TigerWorkoutsApp.d",
+    "diagnostics" : "/Users/nicolasholzherr/projects/agent-work/wt/TW-071/.dd/Build/Intermediates.noindex/TigerWorkouts.build/Debug-iphonesimulator/TigerWorkouts.build/Objects-normal/x86_64/TigerWorkoutsApp.dia",
+    "object" : "/Users/nicolasholzherr/projects/agent-work/wt/TW-071/.dd/Build/Intermediates.noindex/TigerWorkouts.build/Debug-iphonesimulator/TigerWorkouts.build/Objects-normal/x86_64/TigerWorkoutsApp.o",
+    "swift-dependencies" : "/Users/nicolasholzherr/projects/agent-work/wt/TW-071/.dd/Build/Intermediates.noindex/TigerWorkouts.build/Debug-iphonesimulator/TigerWorkouts.build/Objects-normal/x86_64/TigerWorkoutsApp.swiftdeps"
+  },
+  "/Users/nicolasholzherr/projects/agent-work/wt/TW-071/ios/TigerWorkouts/Features/TimerView.swift" : {
+    "const-values" : "/Users/nicolasholzherr/projects/agent-work/wt/TW-071/.dd/Build/Intermediates.noindex/TigerWorkouts.build/Debug-iphonesimulator/TigerWorkouts.build/Objects-normal/x86_64/TimerView.swiftconstvalues",
+    "dependencies" : "/Users/nicolasholzherr/projects/agent-work/wt/TW-071/.dd/Build/Intermediates.noindex/TigerWorkouts.build/Debug-iphonesimulator/TigerWorkouts.build/Objects-normal/x86_64/TimerView.d",
+    "diagnostics" : "/Users/nicolasholzherr/projects/agent-work/wt/TW-071/.dd/Build/Intermediates.noindex/TigerWorkouts.build/Debug-iphonesimulator/TigerWorkouts.build/Objects-normal/x86_64/TimerView.dia",
+    "object" : "/Users/nicolasholzherr/projects/agent-work/wt/TW-071/.dd/Build/Intermediates.noindex/TigerWorkouts.build/Debug-iphonesimulator/TigerWorkouts.build/Objects-normal/x86_64/TimerView.o",
+    "swift-dependencies" : "/Users/nicolasholzherr/projects/agent-work/wt/TW-071/.dd/Build/Intermediates.noindex/TigerWorkouts.build/Debug-iphonesimulator/TigerWorkouts.build/Objects-normal/x86_64/TimerView.swiftdeps"
+  },
+  "/Users/nicolasholzherr/projects/agent-work/wt/TW-071/ios/TigerWorkouts/Features/Toasts.swift" : {
+    "const-values" : "/Users/nicolasholzherr/projects/agent-work/wt/TW-071/.dd/Build/Intermediates.noindex/TigerWorkouts.build/Debug-iphonesimulator/TigerWorkouts.build/Objects-normal/x86_64/Toasts.swiftconstvalues",
+    "dependencies" : "/Users/nicolasholzherr/projects/agent-work/wt/TW-071/.dd/Build/Intermediates.noindex/TigerWorkouts.build/Debug-iphonesimulator/TigerWorkouts.build/Objects-normal/x86_64/Toasts.d",
+    "diagnostics" : "/Users/nicolasholzherr/projects/agent-work/wt/TW-071/.dd/Build/Intermediates.noindex/TigerWorkouts.build/Debug-iphonesimulator/TigerWorkouts.build/Objects-normal/x86_64/Toasts.dia",
+    "object" : "/Users/nicolasholzherr/projects/agent-work/wt/TW-071/.dd/Build/Intermediates.noindex/TigerWorkouts.build/Debug-iphonesimulator/TigerWorkouts.build/Objects-normal/x86_64/Toasts.o",
+    "swift-dependencies" : "/Users/nicolasholzherr/projects/agent-work/wt/TW-071/.dd/Build/Intermediates.noindex/TigerWorkouts.build/Debug-iphonesimulator/TigerWorkouts.build/Objects-normal/x86_64/Toasts.swiftdeps"
+  }
+}
