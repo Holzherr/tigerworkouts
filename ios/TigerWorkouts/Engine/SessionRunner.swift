@@ -259,6 +259,7 @@ final class SessionRunner {
         Cues.shared.begin()
         SessionActivityController.shared.clearStale()
         SessionActivityController.shared.start(title: runsheet.title, state: activityState)
+        WatchSync.shared.push(Self.watchState(state, runsheet: runsheet, now: now))
         SessionControls.active = self
         UIApplication.shared.isIdleTimerDisabled = true
         holding = true
@@ -303,7 +304,11 @@ final class SessionRunner {
         appObservers.forEach(NotificationCenter.default.removeObserver)
         appObservers = []
         SessionActivityController.shared.end(activityState)
-        if SessionControls.active === self { SessionControls.active = nil }
+        // A session started since owns the watch now.
+        if SessionControls.active === self {
+            SessionControls.active = nil
+            WatchSync.shared.push(nil)
+        }
     }
 
     /// When the crash-safe copy was last written, on the session's own clock.
@@ -377,6 +382,7 @@ final class SessionRunner {
         } else {
             SessionActivityController.shared.update(activityState)
         }
+        WatchSync.shared.push(Self.watchState(state, runsheet: runsheet, now: now))
     }
 
     private var activityState: SessionActivityAttributes.ContentState {
