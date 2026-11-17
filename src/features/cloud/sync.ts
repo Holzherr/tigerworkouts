@@ -1,5 +1,5 @@
 /**
- * Three-way sync between the local store and Supabase. `snap` remembers each row's JSON as last
+ * Three-way sync between the local store and Supabase. `snap` remembers a hash of each row as last
  * seen on the server, so local edits, server edits and deletes on either side are told apart:
  *   local changed, server same   → push
  *   server changed, local same   → pull (server wins)
@@ -48,28 +48,63 @@ export type Avatar = { emoji?: string; color?: string; photo?: string };
 
 const SNAP_KEY = 'tiger:synced';
 const PAGE = 1000;
-let snap: Record<string, string> = {};
-try {
-  snap = JSON.parse(localStorage.getItem(SNAP_KEY) || '{}') || {};
-} catch {
-  /* fresh */
-}
+
+/**
+ * The snapshot keeps a hash of each row as last seen on the server, not the row (review A2): it only
+ * ever answers "is this the same as then", and a full copy of every session beside the store filled
+ * localStorage at around a thousand sessions. A hash is the row's JSON length and a 53-bit hash of
+ * it (cyrb53).
+ *
+ * Stored as `[2, {id: hash}]`. Before 17 Nov 2026 it was `{id: rowJSON}`, which is read once and
+ * hashed value by value, so nothing is pushed or pulled that would not have been. The new form is
+ * a list on purpose: an older build still open in another tab reads it as an empty snapshot (as on
+ * a fresh device: take the server's rows, push only what the server lacks) and its own writes of a
+ * list drop what it added, so it can neither overwrite newer work nor clobber this snapshot.
+ */
+const hash = (s: string) => {
+  let h1 = 0xdeadbeef;
+  let h2 = 0x41c6ce57;
+  for (let i = 0; i < s.length; i++) {
+    const c = s.charCodeAt(i);
+    h1 = Math.imul(h1 ^ c, 2654435761);
+    h2 = Math.imul(h2 ^ c, 1597334677);
+  }
+  h1 = Math.imul(h1 ^ (h1 >>> 16), 2246822507) ^ Math.imul(h2 ^ (h2 >>> 13), 3266489909);
+  h2 = Math.imul(h2 ^ (h2 >>> 16), 2246822507) ^ Math.imul(h1 ^ (h1 >>> 13), 3266489909);
+  return `${s.length.toString(36)}.${(4294967296 * (2097151 & h2) + (h1 >>> 0)).toString(36)}`;
+};
+const H = (o: unknown) => hash(JSON.stringify(o));
+const SNAP_FORMAT = 2;
+
+/** The snapshot as stored, either form; anything else reads as empty. */
+export const readSnap = (raw: string | null): Record<string, string> => {
+  let v: unknown;
+  try {
+    v = JSON.parse(raw || '{}');
+  } catch {
+    return {};
+  }
+  const isObj = (o: unknown): o is Record<string, unknown> => typeof o === 'object' && o !== null && !Array.isArray(o);
+  if (Array.isArray(v)) return v[0] === SNAP_FORMAT && isObj(v[1]) ? Object.fromEntries(Object.entries(v[1]).filter((e): e is [string, string] => typeof e[1] === 'string')) : {};
+  if (!isObj(v)) return {};
+  // The old form: each value is the row's JSON as it was compared, so its hash stands in for it.
+  return Object.fromEntries(Object.entries(v).filter((e): e is [string, string] => typeof e[1] === 'string').map(([k, j]) => [k, hash(j)]));
+};
+export const writeSnap = (s: Record<string, string>) => JSON.stringify([SNAP_FORMAT, s]);
+
+let snap: Record<string, string> = readSnap(typeof localStorage === 'undefined' ? null : localStorage.getItem(SNAP_KEY));
 // Another tab's sync moved the snapshot on: this tab must reason from the same one, or its next
 // sync reads rows that tab pushed as "seen, and gone from here" and deletes them on the server.
 if (typeof window !== 'undefined')
   window.addEventListener('storage', e => {
     if (e.key !== SNAP_KEY) return;
-    try {
-      snap = JSON.parse(e.newValue || '{}') || {};
-    } catch {
-      /* keep what we have */
-    }
+    snap = readSnap(e.newValue);
   });
 const saveSnap = () => {
   try {
     // Never on disk ahead of the store: a snapshot beside an older store reads the rows that
     // store lacks as deleted here (store.ts, forgetSnapshot).
-    if (storePersisted()) localStorage.setItem(SNAP_KEY, JSON.stringify(snap));
+    if (storePersisted()) localStorage.setItem(SNAP_KEY, writeSnap(snap));
     else localStorage.removeItem(SNAP_KEY);
   } catch {
     /* ignore */
@@ -85,7 +120,7 @@ export const clearSnap = () => {
   localStorage.removeItem(SNAP_KEY);
 };
 /** How many results and workouts the server has not seen in this form: what the next sync would push. */
-export const dirtyCount = (local: Pick<SyncTarget, 'results' | 'workouts'>) => local.results.filter(x => J(x) !== snap[resultId(x)]).length + local.workouts.filter(w => w.id && J(w) !== snap[`w:${w.id}`]).length;
+export const dirtyCount = (local: Pick<SyncTarget, 'results' | 'workouts'>) => local.results.filter(x => H(x) !== snap[resultId(x)]).length + local.workouts.filter(w => w.id && H(w) !== snap[`w:${w.id}`]).length;
 const ensureId = (r: SessionResult): SessionResult => (r.id ? r : { ...r, id: 's-' + Date.parse(r.startedAt).toString(36) + Math.random().toString(36).slice(2, 6) });
 
 /** Session row payload. Legacy sessions go back in their own shape (plus edits); new ones as v2 with an empty blocks[] so the old app doesn't choke. */
@@ -172,7 +207,7 @@ export const pullPush = async (local: SyncTarget): Promise<SyncResult> => {
   if (e1) errors.push(e1.message);
   else {
     const remote = new Map(rows.map(r => [r.id, fromRow(r)]));
-    const remoteJ = new Map([...remote].map(([id, r]) => [id, J(r)]));
+    const remoteJ = new Map([...remote].map(([id, r]) => [id, H(r)]));
     remote.forEach((r, id) => {
       const i = results.findIndex(x => resultId(x) === id);
       const rj = remoteJ.get(id)!;
@@ -184,7 +219,7 @@ export const pullPush = async (local: SyncTarget): Promise<SyncResult> => {
         }
         return;
       }
-      const lj = J(results[i]);
+      const lj = H(results[i]);
       if (!(id in snap) || (rj !== snap[id] && lj === snap[id])) {
         results = results.map((x, k) => (k === i ? r : x));
         snap[id] = rj;
@@ -194,7 +229,7 @@ export const pullPush = async (local: SyncTarget): Promise<SyncResult> => {
     const before = results.length;
     results = results.filter(x => {
       const id = resultId(x);
-      if (!remote.has(id) && id in snap && J(x) === snap[id]) {
+      if (!remote.has(id) && id in snap && H(x) === snap[id]) {
         delete snap[id];
         return false;
       }
@@ -202,10 +237,10 @@ export const pullPush = async (local: SyncTarget): Promise<SyncResult> => {
     });
     if (results.length !== before) changed = true;
     // push
-    const dirty = results.filter(x => J(x) !== snap[resultId(x)]);
+    const dirty = results.filter(x => H(x) !== snap[resultId(x)]);
     if (dirty.length) {
       const { error } = await sb.from('sessions').upsert(dirty.map(x => toRow(x, uid)), { onConflict: 'id' });
-      if (!error) dirty.forEach(x => (snap[resultId(x)] = J(x)));
+      if (!error) dirty.forEach(x => (snap[resultId(x)] = H(x)));
       else if (dirty.length === 1) errors.push(error.message);
       else {
         // One row the server refuses fails the whole batch. Sent one by one, the rest still land:
@@ -213,7 +248,7 @@ export const pullPush = async (local: SyncTarget): Promise<SyncResult> => {
         for (const x of dirty) {
           const { error: e } = await sb.from('sessions').upsert([toRow(x, uid)], { onConflict: 'id' });
           if (e) errors.push(e.message);
-          else snap[resultId(x)] = J(x);
+          else snap[resultId(x)] = H(x);
         }
       }
     }
@@ -235,7 +270,7 @@ export const pullPush = async (local: SyncTarget): Promise<SyncResult> => {
     const remote = new Map((wrows ?? []).map(r => [r.id as string, workoutFromRow(r as WorkoutRow)]));
     remote.forEach((w, id) => {
       const k = `w:${id}`;
-      const rj = J(w);
+      const rj = H(w);
       const i = workouts.findIndex(x => x.id === id);
       if (i < 0) {
         if (!(k in snap)) {
@@ -245,7 +280,7 @@ export const pullPush = async (local: SyncTarget): Promise<SyncResult> => {
         }
         return;
       }
-      const lj = J(workouts[i]);
+      const lj = H(workouts[i]);
       if (!(k in snap) || (rj !== snap[k] && lj === snap[k])) {
         workouts = workouts.map((x, j) => (j === i ? w : x));
         snap[k] = rj;
@@ -255,18 +290,18 @@ export const pullPush = async (local: SyncTarget): Promise<SyncResult> => {
     const before = workouts.length;
     workouts = workouts.filter(w => {
       const k = `w:${w.id}`;
-      if (!remote.has(w.id!) && k in snap && J(w) === snap[k]) {
+      if (!remote.has(w.id!) && k in snap && H(w) === snap[k]) {
         delete snap[k];
         return false;
       }
       return true;
     });
     if (workouts.length !== before) changed = true;
-    const dirty = workouts.filter(w => w.id && J(w) !== snap[`w:${w.id}`]);
+    const dirty = workouts.filter(w => w.id && H(w) !== snap[`w:${w.id}`]);
     if (dirty.length) {
       const row = (w: Runsheet) => ({ id: w.id!, owner: uid, creator: w.creator ?? local.name, title: w.title, public: w.public ?? remote.get(w.id!)?.public ?? false, data: workoutData(w) });
       const { error } = await sb.from('workouts').upsert(dirty.map(row), { onConflict: 'id' });
-      if (!error) dirty.forEach(w => (snap[`w:${w.id}`] = J(w)));
+      if (!error) dirty.forEach(w => (snap[`w:${w.id}`] = H(w)));
       else if (dirty.length === 1) errors.push(error.message);
       else {
         // As for sessions: one workout the server refuses (an id another account holds, a public
@@ -274,7 +309,7 @@ export const pullPush = async (local: SyncTarget): Promise<SyncResult> => {
         for (const w of dirty) {
           const { error: e } = await sb.from('workouts').upsert([row(w)], { onConflict: 'id' });
           if (e) errors.push(e.message);
-          else snap[`w:${w.id}`] = J(w);
+          else snap[`w:${w.id}`] = H(w);
         }
       }
     }

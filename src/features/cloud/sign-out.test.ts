@@ -5,7 +5,7 @@ import App from '@/App';
 import { getState, setState } from '@/app/store';
 import type { SessionResult } from '@/features/runsheet/progression';
 import { signOut } from './client';
-import { clearSnap, sync } from './sync';
+import { clearSnap, fromRow, readSnap, sync, toRow } from './sync';
 
 // Supabase stand-in: every table call is written down; rows upserted as a list are kept and come
 // back from a select. `fail` makes each upsert fail with that message; `duringSelect` runs once
@@ -56,7 +56,7 @@ vi.mock('@/features/cloud/supabase', () => ({
 
 const row = (id: string): SessionResult => ({ id, runsheetId: 'mine', title: 'Mine', startedAt: '2026-09-27T10:00:00.000Z', steps: [] });
 const ids = () => getState().results.map(r => r.id).sort();
-const remembered = () => Object.keys(JSON.parse(localStorage.getItem('tiger:synced') ?? 'null') ?? {});
+const remembered = () => Object.keys(readSnap(localStorage.getItem('tiger:synced')));
 const pushes = () => fake.calls.filter(c => /^(sessions|workouts)\.(upsert|delete)$/.test(c));
 const REFUSED = /not saved to your account yet/;
 
@@ -81,6 +81,28 @@ describe('a session the server refuses', () => {
     expect(out.error).toMatch(/row refused/);
     expect(Object.keys(fake.rows.sessions ?? {}).sort()).toEqual(['s-a', 's-gym']);
     expect(remembered().sort()).toEqual(['s-a', 's-gym']);
+  });
+});
+
+describe('a snapshot in the form kept before 17 Nov 2026 (review A2)', () => {
+  const oldForm = (rows: SessionResult[]) => JSON.stringify(Object.fromEntries(rows.map(r => [r.id!, JSON.stringify(fromRow(toRow(r, 'u1')))])));
+  const takeSnap = (v: string) => window.dispatchEvent(new StorageEvent('storage', { key: 'tiger:synced', newValue: v }));
+
+  it('pushes and deletes nothing when nothing changed, and is written back in the new form', async () => {
+    (fake.rows.sessions ??= {})['s-a'] = toRow(row('s-a'), 'u1');
+    takeSnap(oldForm([row('s-a')]));
+    await sync(getState());
+    expect(pushes()).toEqual([]);
+    expect(JSON.parse(localStorage.getItem('tiger:synced')!)[0]).toBe(2);
+    expect(remembered()).toEqual(['s-a']);
+  });
+
+  it('still tells a change on the server from one made here', async () => {
+    (fake.rows.sessions ??= {})['s-a'] = toRow({ ...row('s-a'), notes: 'from the phone' }, 'u1');
+    takeSnap(oldForm([row('s-a')]));
+    const out = await sync(getState());
+    expect(pushes()).toEqual([]);
+    expect(out.patch.results?.[0].notes).toBe('from the phone');
   });
 });
 
