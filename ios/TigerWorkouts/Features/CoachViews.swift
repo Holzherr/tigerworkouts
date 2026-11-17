@@ -225,7 +225,7 @@ struct JoinCoachView: View {
             try await store.acceptCoachInvite(code: code)
             accepted = true
         } catch {
-            self.error = error.localizedDescription
+            self.error = Coaching.inviteError(error.localizedDescription)
         }
     }
 }

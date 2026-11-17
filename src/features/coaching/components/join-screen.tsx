@@ -82,7 +82,7 @@ export const JoinScreen = ({ info, notice, onRetry, signedIn, signIn, onAccept, 
                 <li>· They see the sessions you log, and you can swap notes</li>
                 <li>· You can stop coaching any time in Me</li>
               </ul>
-              {info.accepted && <p className="text-[13px] text-warn">This invite has been used. If it was you, accept again to rejoin.</p>}
+              {info.accepted && <p className="text-[13px] text-warn">This invite has been used. To start again after coaching ended, ask your coach for a new one.</p>}
               {signedIn && (
                 <Button block onClick={accept} disabled={busy}>
                   {busy ? 'Accepting…' : 'Accept'}

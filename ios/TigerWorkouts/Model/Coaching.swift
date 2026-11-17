@@ -143,6 +143,16 @@ enum Coaching {
         return n.isEmpty ? "Your coach" : n
     }
 
+    /// The server's words for a refused invite, as the web puts them (coaching.ts `friendly`).
+    static func inviteError(_ message: String) -> String {
+        let m = message.lowercased()
+        if m.contains("invite not found") { return "That invite link does not work. Ask your coach for a new one." }
+        if m.contains("already used") { return "Someone has already used this invite. Ask your coach for a new one." }
+        if m.contains("coaching ended") { return "Coaching on this invite has ended. Ask your coach for a new one." }
+        if m.contains("your own invite") { return "This is your own invite. Send it to your client." }
+        return message
+    }
+
     /// Notes on an assignment, oldest first, as a conversation reads.
     static func notes(for a: Assignment, in s: CoachingState) -> [CoachNote] {
         s.notes.filter { $0.assignmentId == a.id }.sorted { $0.createdDate < $1.createdDate }
