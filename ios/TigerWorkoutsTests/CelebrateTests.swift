@@ -87,3 +87,57 @@ struct CelebrateTests {
         #expect(Celebrate.streakLabel(Streak(weeks: 3, thisWeek: 1, lastWeek: 2, total: 9)) == "3 weeks running · 1 this week")
     }
 }
+
+/// iPhone History rows: the score at the trailing edge and a medal for a record (review U13).
+@Suite("history rows")
+@MainActor
+struct HistoryRowTests {
+    private func bench(_ load: Double) -> StepResult {
+        StepResult(stepId: "b", exerciseKey: "bench", target: nil, incline: nil, reps: nil, success: nil, sets: [SetResult(reps: 5, load: load)])
+    }
+
+    @Test("the score reads as the web writes it, saved text first")
+    func score() {
+        let amrap = SessionResult(runsheetId: "cindy", title: "Cindy", startedAt: "2026-11-03T10:00:00Z", score: 18.005)
+        #expect(HistoryView.scoreLabel(amrap, type: .rounds) == "18 rounds + 5 reps")
+        #expect(HistoryView.scoreLabel(amrap, type: nil) == nil)
+        var capped = amrap
+        capped.scoreText = "Capped · 40 reps"
+        #expect(HistoryView.scoreLabel(capped, type: .time) == "Capped · 40 reps")
+        #expect(HistoryView.scoreLabel(SessionResult(runsheetId: "w", title: "W", startedAt: "2026-11-03T10:00:00Z"), type: .time) == nil)
+    }
+
+    @Test("a medal on the session that set a record, kept after a later one beats it")
+    func record() {
+        let a = SessionResult(runsheetId: "push", title: "Push", startedAt: "2026-11-01T10:00:00Z", steps: [bench(60)], id: "a")
+        let b = SessionResult(runsheetId: "push", title: "Push", startedAt: "2026-11-08T10:00:00Z", steps: [bench(65)], id: "b")
+        let c = SessionResult(runsheetId: "push", title: "Push", startedAt: "2026-11-15T10:00:00Z", steps: [bench(62.5)], id: "c")
+        let all = [a, b, c]
+        #expect(!HistoryView.setRecord(a, all: all, runsheet: nil))
+        #expect(HistoryView.setRecord(b, all: all, runsheet: nil))
+        #expect(!HistoryView.setRecord(c, all: all, runsheet: nil))
+    }
+}
+
+/// A session done without the phone, logged by hand (review U9).
+@Suite("log without the timer")
+struct ManualLogTests {
+    @Test("every planned set is there, as planned, at the date and length given, with no score")
+    func planned() {
+        let start = ISO8601.date("2026-11-10T07:30:00.000Z")!
+        let r = ManualLog.result(HonestLoggingTests.press(), startedAt: start, minutes: 25)
+        #expect(r.runsheetId == "p")
+        #expect(r.startedAt == "2026-11-10T07:30:00.000Z")
+        #expect(r.endedAt == "2026-11-10T07:55:00.000Z")
+        #expect(r.durationSec == 1500)
+        #expect(r.completed == true)
+        #expect(r.score == nil)
+        #expect(r.steps.count == 1)
+        #expect(r.steps[0].sets == Array(repeating: SetResult(reps: 8, load: 20), count: 3))
+        #expect(r.steps[0].reps == [8, 8, 8])
+        let later = ManualLog.moved(r, startedAt: start.addingTimeInterval(3600), minutes: 40)
+        #expect(later.startedAt == "2026-11-10T08:30:00.000Z")
+        #expect(later.endedAt == "2026-11-10T09:10:00.000Z")
+        #expect(later.durationSec == 2400)
+    }
+}

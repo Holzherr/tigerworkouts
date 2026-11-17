@@ -17,6 +17,8 @@ struct WorkoutDetailView: View {
     @State private var editing: ExerciseStep?
     @State private var changingAmount: ExerciseStep?
     @State private var naming = false
+    /// ⋯ → Log without the timer (review U9).
+    @State private var logging = false
     @State private var confirmDelete = false
     @State private var seeded = false
     @State private var pendingSave: Task<Void, Never>?
@@ -176,6 +178,11 @@ struct WorkoutDetailView: View {
                     Button { duplicate() } label: {
                         Label("Duplicate", systemImage: "plus.square.on.square")
                     }
+                    if runnable && !isNew {
+                        Button { logging = true } label: {
+                            Label("Log without the timer", systemImage: "square.and.pencil")
+                        }
+                    }
                     if let url = runsheet.source?.url.flatMap(URL.init(string:)) {
                         Link(destination: url) {
                             Label("Open the original", systemImage: "arrow.up.right.square")
@@ -243,6 +250,9 @@ struct WorkoutDetailView: View {
                     remove(step)
                 }
             }
+        }
+        .sheet(isPresented: $logging) {
+            NavigationStack { LogSessionView(runsheet: runsheet, seed: false) }
         }
         .sheet(isPresented: $naming) {
             NameSheet(title: runsheet.title, creator: runsheet.creator ?? "") { title, creator in

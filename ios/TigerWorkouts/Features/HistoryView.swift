@@ -3,6 +3,8 @@ import SwiftUI
 struct HistoryView: View {
     @Environment(Store.self) private var store
     @State private var signingIn = false
+    /// ＋: a session done without the phone (review U9).
+    @State private var logging = false
     /// Starts a workout again from one of its past sessions ("Do it again").
     var onStart: (Runsheet, SessionOrigin?) -> Void = { _, _ in }
 
@@ -102,9 +104,17 @@ struct HistoryView: View {
                         NavigationLink("Exercises") { ExerciseListView() }
                     }
                 }
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button { logging = true } label: { Image(systemName: "plus") }
+                        .accessibilityLabel("Log a session")
+                        .accessibilityIdentifier("history-log")
+                }
             }
             .sheet(isPresented: $signingIn) {
                 SignInView { await store.sync() }
+            }
+            .sheet(isPresented: $logging) {
+                LogPickerView()
             }
             .refreshable { await store.sync() }
             .overlay(alignment: .bottom) {
@@ -120,9 +130,12 @@ struct HistoryView: View {
     }
 
     private func row(_ s: SessionResult) -> some View {
-        HStack(spacing: 14) {
+        let workout = store.workout(id: s.runsheetId)
+        let score = Self.scoreLabel(s, type: workout?.effectiveScore)
+        let record = Self.setRecord(s, all: store.results, runsheet: workout)
+        return HStack(spacing: 14) {
             // A session whose workout is gone still gets its own colours, from its title.
-            WorkoutIcon(runsheet: store.workout(id: s.runsheetId) ?? Runsheet(id: s.runsheetId, title: s.displayTitle), size: 44)
+            WorkoutIcon(runsheet: workout ?? Runsheet(id: s.runsheetId, title: s.displayTitle), size: 44)
             VStack(alignment: .leading, spacing: 4) {
                 Text(s.displayTitle).font(.headline).foregroundStyle(Brand.ink)
                 // One line of text, so on a narrow phone it wraps as a sentence; separate Texts in
@@ -131,8 +144,48 @@ struct HistoryView: View {
                     .font(.footnote)
                 .foregroundStyle(Brand.muted)
             }
+            Spacer(minLength: 0)
+            // The result at the trailing edge, as on the web, and a medal for a session that set a
+            // record (review U13).
+            if score != nil || record {
+                VStack(alignment: .trailing, spacing: 4) {
+                    if let score {
+                        Text(score)
+                            .font(.subheadline.weight(.heavy))
+                            .monospacedDigit()
+                            .foregroundStyle(Brand.ink)
+                            .multilineTextAlignment(.trailing)
+                    }
+                    if record {
+                        Image(systemName: "medal.fill")
+                            .font(.footnote)
+                            .foregroundStyle(Brand.coral)
+                            .accessibilityLabel("New record")
+                    }
+                }
+                .fixedSize(horizontal: false, vertical: true)
+                .frame(maxWidth: 120, alignment: .trailing)
+                .accessibilityElement(children: .combine)
+                .accessibilityIdentifier("history-score")
+            }
         }
         .padding(.vertical, 4)
+    }
+
+    /// The row's score, as the web's History row writes it (`fmtScore`): the text the session was
+    /// saved with, else its number in the workout's score words. Nil when there is nothing to show.
+    static func scoreLabel(_ s: SessionResult, type: ScoreType?) -> String? {
+        if let text = s.scoreText, !text.isEmpty { return text }
+        guard let score = s.score, let type else { return nil }
+        return Celebrate.formatScore(type, score)
+    }
+
+    /// Whether the session set a record when it was done: a set or a round the finish screen
+    /// marked with a medal. Later sessions do not take it away.
+    static func setRecord(_ s: SessionResult, all: [SessionResult], runsheet: Runsheet?) -> Bool {
+        guard s.activity == nil else { return false }
+        return !Logbook.sessionPRs(s, all: all).isEmpty
+            || !Rounds.prs(s, all: all, lineage: runsheet?.lineage, runsheet: runsheet).isEmpty
     }
 
     private func historyLine(_ s: SessionResult) -> String {
