@@ -118,7 +118,14 @@ Connect:
 - Anything else that speaks MCP over HTTP with OAuth: point it at ${origin}/mcp.
 `;
 
-export const landingPage = (origin: string, anonymous = false) =>
+const commitLink = (c: string) => {
+  const m = c.match(/^([0-9a-f]{7,40})(-dirty)?$/);
+  return m ? `<a href="https://github.com/Holzherr/tigerworkouts/commit/${m[1]}">${m[1].slice(0, 7)}</a>${m[2] ? ' (with uncommitted changes)' : ''}` : esc(c);
+};
+const versionLine = (v?: { commit: string; deployedAt: string | null }) =>
+  v ? `<p class="muted">Version ${commitLink(v.commit)}${v.deployedAt ? `, deployed ${esc(v.deployedAt.slice(0, 16).replace('T', ' '))} UTC` : ''}.</p>` : '';
+
+export const landingPage = (origin: string, anonymous = false, version?: { commit: string; deployedAt: string | null }) =>
   page(
     'TigerWorkouts for AI assistants',
     `<h1>TigerWorkouts for AI assistants</h1>
@@ -132,5 +139,5 @@ export const landingPage = (origin: string, anonymous = false) =>
 <h2>ChatGPT</h2><p>Settings → Apps &amp; Connectors → Advanced settings → turn on <b>Developer mode</b> → <b>Create</b>. Paste the URL, choose OAuth, and sign in.</p>
 <h2>What it can do</h2><ul>${TOOLS.map(([n, d]) => `<li><code>${n}</code> ${esc(d)}</li>`).join('')}</ul>
 <h2>Try asking</h2><ul><li>"Look at my last month in TigerWorkouts and tell me what to change."</li><li>"Write me a 30-minute upper-body session for tomorrow using my last loads."</li><li>"Find a 20-minute kettlebell workout and send me the link."</li></ul>
-<h2>Privacy</h2><p>The assistant acts as you: it sees your own workouts and history plus public workouts, nothing of anyone else's. New workouts are private unless you ask for them to be public. Disconnect any time from the assistant's connector settings.</p>`,
+<h2>Privacy</h2><p>The assistant acts as you: it sees your own workouts and history plus public workouts, nothing of anyone else's. New workouts are private unless you ask for them to be public. Disconnect any time from the assistant's connector settings.</p>${versionLine(version)}`,
   );

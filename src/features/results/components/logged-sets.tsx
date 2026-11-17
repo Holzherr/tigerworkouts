@@ -6,6 +6,7 @@ import { SetMark } from '@/features/runsheet/components/set-grid';
 import { cn, fmtClock } from '@/shared/utils/ui-utils';
 import type { SetPatch } from '../edit-sets';
 import { setLabel, setsOf } from '../logbook';
+import { loadIsKg, shownWeight, toKg, unitText, weightUnit } from '@/shared/utils/units';
 
 type Field = 'load' | 'reps' | 'seconds' | 'meters' | 'calories';
 
@@ -24,7 +25,7 @@ export const fieldsFor = (sets: SetResult[], unit: string, step?: ExerciseStep):
   return out;
 };
 
-const HEAD: Record<Field, (unit: string) => string> = { load: u => shortUnit(u) || 'kg', reps: () => 'Reps', seconds: () => 'Sec', meters: () => 'm', calories: () => 'Cal' };
+const HEAD: Record<Field, (unit: string) => string> = { load: u => unitText(shortUnit(u)) || weightUnit(), reps: () => 'Reps', seconds: () => 'Sec', meters: () => 'm', calories: () => 'Cal' };
 
 export interface LoggedSetsProps {
   row: StepResult;
@@ -56,7 +57,7 @@ export const LoggedSets = ({ row, exercise, step, editing, onEdit, onAdd, onRemo
       <div className="flex flex-wrap gap-1.5 pl-[46px]">
         {sets.map((x, i) => (
           <span key={i} className="inline-flex items-center gap-1 rounded-pill bg-line-soft px-2 py-0.5 text-[12px] tabular-nums">
-            <span className={cn('font-extrabold', x.type === 'warmup' ? 'text-warn' : x.type === 'drop' ? 'text-rest' : x.type === 'failure' ? 'text-danger' : 'text-muted')}>{marks[i]}</span>
+            <span className={cn('font-extrabold', x.type === 'warmup' ? 'text-warn' : x.type === 'drop' ? 'text-rest-ink' : x.type === 'failure' ? 'text-danger' : 'text-muted')}>{marks[i]}</span>
             <span className="font-semibold">{setLabel(x, measureOf(exercise.unit) ? '' : unit) || '–'}</span>
             {x.at !== undefined && <span className="text-[10px] text-faint">{fmtClock(x.at)}</span>}
           </span>
@@ -73,6 +74,10 @@ const SetsEditor = ({ sets, marks, exercise, step, onEdit, onAdd, onRemove }: { 
     const n = Number(v.replace(',', '.'));
     return v.trim() === '' || !Number.isFinite(n) ? undefined : n;
   };
+  // A weight is typed and shown in the chosen unit and kept in kg (U11); a speed stays as it is.
+  const kg = loadIsKg(exercise.unit);
+  const shown = (f: Field, v: number | undefined) => (v !== undefined && f === 'load' && kg ? shownWeight(v) : v);
+  const kept = (f: Field, v: number | undefined) => (v !== undefined && f === 'load' && kg ? toKg(v) : v);
   return (
     <div className="pl-[46px]" aria-label={`${exercise.name} sets`}>
       <div className="flex items-center gap-1.5 pb-1 text-[10px] font-bold tracking-widest text-muted uppercase">
@@ -95,8 +100,8 @@ const SetsEditor = ({ sets, marks, exercise, step, onEdit, onAdd, onRemove }: { 
               min={0}
               step="any"
               aria-label={`Set ${i + 1} ${HEAD[f](exercise.unit)}`}
-              value={x[f] ?? ''}
-              onChange={e => onEdit?.(i, { [f]: num(e.target.value) })}
+              value={shown(f, x[f]) ?? ''}
+              onChange={e => onEdit?.(i, { [f]: kept(f, num(e.target.value)) })}
               className="h-11 w-0 min-w-0 flex-1 rounded-control border border-line bg-surface px-2 text-[15px] font-semibold tabular-nums outline-none focus:border-hint"
             />
           ))}

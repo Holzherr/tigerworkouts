@@ -8,6 +8,8 @@
  */
 import { forLabel, loadLabel, type Runsheet } from '@/features/runsheet/model';
 import * as R from '@/features/timer/runner';
+import { adjustable, nudge } from './adjust';
+import { loadText, setWeightUnit, unitFromPref, unitText } from '@/shared/utils/units';
 
 interface StartOutput {
   title: string;
@@ -18,6 +20,8 @@ interface StartOutput {
   previewUrl?: string;
   appUrl?: string;
   appDownloadUrl?: string;
+  /** 'imperial': loads show in lb (U11). The runsheet is kg either way. */
+  units?: string;
 }
 
 // ── host bridge ──
@@ -86,6 +90,7 @@ const take = (sc: unknown) => {
   const v = sc as StartOutput | undefined;
   if (!v?.runsheet?.items || out) return;
   out = v;
+  setWeightUnit(unitFromPref(v.units));
   render();
 };
 
@@ -117,13 +122,19 @@ const mmss = (sec: number) => {
 const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? '' : 's'}`;
 
 const slotTitle = (sl: R.Slot) => (sl.kind === 'rest' || sl.step.kind === 'rest' ? 'Rest' : sl.step.exercise.name);
-const slotDetail = (s: R.RunState, sl: R.Slot) => {
+/** The set's plan in words; `steppers` leaves out what the steppers under it already show. */
+const slotDetail = (s: R.RunState, sl: R.Slot, steppers: { load?: unknown; reps?: unknown } = {}) => {
   if (sl.step.kind !== 'exercise') return sl.blockName ? `${sl.blockName}` : '';
   const load = R.targetOf(s, sl);
   const step = load !== undefined ? { ...sl.step, target: load } : sl.step;
   const round = sl.rounds > 1 ? `Round ${sl.round + 1} of ${sl.rounds}` : '';
-  return [forLabel(step), loadLabel(step), round].filter(Boolean).join(' · ');
+  return [steppers.reps !== undefined ? '' : forLabel(step), steppers.load ? '' : loadLabel(step), round].filter(Boolean).join(' · ');
 };
+/** − value + for load and reps on the set in progress (review round 2 U15). */
+const steppersHtml = (a: ReturnType<typeof adjustable>) =>
+  !a
+    ? ''
+    : `<div class="adj">${a.load ? `<div class="st"><span class="v">${loadText(a.load.value, a.load.unit)}${a.load.unit ? ` ${esc(unitText(a.load.unit))}` : ''}</span><button id="load-dn" aria-label="Less weight">−</button><button id="load-up" aria-label="More weight">+</button></div>` : ''}${a.reps !== undefined ? `<div class="st"><span class="v">${plural(a.reps, 'rep')}</span><button id="reps-dn" aria-label="One rep fewer">−</button><button id="reps-up" aria-label="One rep more">+</button></div>` : ''}</div>`;
 
 // The view is drawn again only when something other than the clocks changes. Replacing the
 // buttons four times a second dropped any tap that was down across a redraw: about half of them.
@@ -172,13 +183,14 @@ ${logged === 'failed' ? '<button id="retry" class="ghost">Try saving again</butt
   const lead = s.phase === 'lead' || (s.phase === 'paused' && s.pausedFrom === 'lead');
   const big = lead ? mmss(cl.left ?? 0) : cl.left !== undefined ? mmss(cl.left) : mmss(cl.spent);
   const name = lead ? 'Get ready' : s.phase === 'ready' ? `Next: ${cur?.blockName ?? (cur ? slotTitle(cur) : '')}` : cur ? slotTitle(cur) : '';
-  const detail = lead && cur ? `First: ${slotTitle(cur)}` : cur ? slotDetail(s, cur) : '';
+  const adj = adjustable(s);
+  const detail = lead && cur ? `First: ${slotTitle(cur)}` : cur ? slotDetail(s, cur, adj) : '';
   const userPaced = !lead && s.phase !== 'ready' && cl.left === undefined;
   const primary = s.phase === 'ready' ? ['start', 'Start block'] : s.phase === 'paused' ? ['resume', 'Resume'] : userPaced ? ['done', 'Done'] : ['pause', 'Pause'];
   if (endArmedAt && now - endArmedAt > END_ARMED_MS) endArmedAt = 0;
   paint(
     `${head}<div class="bar"><i id="bar"></i></div>
-<div class="now ${cur?.kind === 'rest' && !lead ? 'rest' : ''}"><div class="clock" id="clock" role="timer"></div><div class="name" aria-live="polite">${esc(name)}</div><div class="muted">${esc(detail)}${cap !== undefined ? ` · cap <span id="cap"></span>` : ''}</div></div>
+<div class="now ${cur?.kind === 'rest' && !lead ? 'rest' : ''}"><div class="clock" id="clock" role="timer"></div><div class="name" aria-live="polite">${esc(name)}</div><div class="muted">${esc(detail)}${cap !== undefined ? ` · cap <span id="cap"></span>` : ''}</div>${steppersHtml(adj)}</div>
 <button id="primary" class="big">${primary[1]}</button>
 <div class="row"><button id="back" class="ghost">Back</button><button id="skip" class="ghost">${userPaced || s.phase === 'ready' ? 'Skip' : 'Next'}</button><button id="end" class="ghost${endArmedAt ? ' armed' : ''}">${endArmedAt ? 'End now?' : 'End'}</button></div>
 ${nx && !lead && s.phase !== 'ready' ? `<p class="muted">Up next: ${esc(slotTitle(nx))}${nx.step.kind === 'exercise' ? ` · ${esc(slotDetail(s, nx))}` : nx.seconds ? ` · ${Math.round(Number(nx.seconds)) || 0}s` : ''}</p>` : ''}`,
@@ -187,6 +199,10 @@ ${nx && !lead && s.phase !== 'ready' ? `<p class="muted">Up next: ${esc(slotTitl
       $('back').onclick = () => act('back');
       $('skip').onclick = () => act('skip');
       $('end').onclick = () => act('end');
+      for (const [id, what, dir] of [['load-dn', 'load', -1], ['load-up', 'load', 1], ['reps-dn', 'reps', -1], ['reps-up', 'reps', 1]] as const) {
+        const b = document.getElementById(id);
+        if (b) b.onclick = () => state && ((state = nudge(state, Date.now(), what, dir)), render());
+      }
     },
   );
   put('elapsed', mmss(R.elapsed(s, now)));

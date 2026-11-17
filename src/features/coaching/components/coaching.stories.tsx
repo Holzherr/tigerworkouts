@@ -31,6 +31,8 @@ type Story = StoryObj<typeof meta>;
 /** Four clients: one quiet, one new, two trained this week; two invites waiting. */
 export const Dashboard: Story = {};
 export const DashboardEmpty: Story = { args: { clients: [], invites: [] } };
+/** A coach with no name yet gives one before the first invite (review round 2, U6). */
+export const DashboardAsksName: Story = { args: { clients: [], invites: [], myName: '', onSetName: noop } };
 /** Migration 0008 not applied yet: one line, no lists. */
 export const DashboardNotSwitchedOn: Story = { args: { clients: [], invites: [], notice: 'Coaching is not switched on yet.', onInvite: undefined } };
 
@@ -44,6 +46,8 @@ export const ClientDetail: Story = {
       client={{ id: CLIENT_ID, name: 'Sam Patel', since: clientSummaries()[0].since }}
       me={COACH_ID}
       workouts={coachWorkouts()}
+      saved={[{ id: 'pub-upper', title: 'Upper body pump', creator: 'Priyanka', items: [] }]}
+      catalogue={[{ id: 'cindy', title: 'Cindy', creator: 'CrossFit', items: [] }, { id: 'sl-a', title: 'StrongLifts A', creator: 'StrongLifts', items: [] }]}
       assignments={assignmentsFixture()}
       sessions={clientSessionsFixture()}
       notes={notesFixture()}
@@ -62,6 +66,8 @@ const info = { coach: COACH_ID, name: 'Nick Holzherr', accepted: false };
 const signIn = <SignInCard title="Sign in to accept" reasons={['A free account; no password, we email you a 6-digit code']} onSendCode={async () => {}} onVerify={async () => {}} />;
 /** Signed out: who invited you, the one line on accounts, the sign-in card. */
 export const Join: Story = { render: () => <JoinScreen info={info} signedIn={false} signIn={signIn} onAccept={ok} onContinue={noop} appHref="tigerworkouts://join/k3x9q2m7v1" /> };
+/** A client with no name gives one before Accept (U6). */
+export const JoinAsksName: Story = { render: () => <JoinScreen info={info} signedIn askName onAccept={ok} onContinue={noop} /> };
 export const JoinSignedIn: Story = { render: () => <JoinScreen info={info} signedIn onAccept={ok} onContinue={noop} appHref="tigerworkouts://join/k3x9q2m7v1" /> };
 export const JoinBadLink: Story = { render: () => <JoinScreen info={null} signedIn onAccept={ok} onContinue={noop} /> };
 

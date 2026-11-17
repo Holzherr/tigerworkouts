@@ -1,6 +1,7 @@
 import { workingLoad, type SessionResult, type SetResult, type StepResult } from './progression';
 import { measureOf, ofWorkout, plannedSet, plannedType, shortUnit, type ExerciseStep, type Item, type Runsheet, type SetPlan, type SetType } from './model';
 import { measured } from '@/features/results/logbook';
+import { loadText, unitText } from '@/shared/utils/units';
 
 export interface LastUsed {
   target?: number;
@@ -160,8 +161,8 @@ const num = (n: number) => (Number.isInteger(n) ? `${n}` : `${Math.round(n * 10)
 export const lastTimeLabel = (set: SetResult | undefined, step: ExerciseStep): string | undefined => {
   if (!set) return undefined;
   const unit = shortUnit(step.exercise.unit);
-  if (set.load !== undefined && set.reps !== undefined) return `last time ${num(set.load)} × ${num(set.reps)}`;
-  if (set.load !== undefined) return `last time ${num(set.load)}${unit ? ` ${unit}` : ''}`;
+  if (set.load !== undefined && set.reps !== undefined) return `last time ${loadText(set.load, unit)} × ${num(set.reps)}`;
+  if (set.load !== undefined) return `last time ${loadText(set.load, unit)}${unit ? ` ${unitText(unit)}` : ''}`;
   if (set.reps !== undefined) return `last time ${num(set.reps)} reps`;
   return undefined;
 };
@@ -187,9 +188,9 @@ export const lastSets = (results: SessionResult[], step: ExerciseStep, workout?:
 };
 
 /** "last 57.5 × 8" under a set row. */
-export const lastSetLabel = (set: SetResult | undefined): string | undefined => {
+export const lastSetLabel = (set: SetResult | undefined, unit = ''): string | undefined => {
   if (!set || (set.load === undefined && set.reps === undefined)) return undefined;
-  return `last ${[set.load, set.reps].filter((n): n is number => n !== undefined).map(num).join(' × ')}`;
+  return `last ${[set.load !== undefined ? loadText(set.load, unit) : undefined, set.reps !== undefined ? num(set.reps) : undefined].filter(Boolean).join(' × ')}`;
 };
 
 // ── last session, set by set ──
@@ -229,14 +230,14 @@ export const compactSets = (sets: SetResult[], unit = '', limit = 4): string | u
   const reps = sets.some(x => x.reps !== undefined);
   const one = ({ set, count }: { set: SetResult; count: number }) => {
     const times = count > 1 ? ` (×${count})` : '';
-    if (set.load !== undefined && set.reps !== undefined) return `${num(set.load)} × ${num(set.reps)}${times}`;
-    if (set.load !== undefined) return `${num(set.load)}${times}`;
+    if (set.load !== undefined && set.reps !== undefined) return `${loadText(set.load, unit)} × ${num(set.reps)}${times}`;
+    if (set.load !== undefined) return `${loadText(set.load, unit)}${times}`;
     if (set.reps !== undefined) return loads ? `${num(set.reps)} reps${times}` : `${num(set.reps)}${times}`;
     return '';
   };
   let text = groups.slice(0, limit).map(one).filter(Boolean).join(', ');
   if (!loads && reps) text += ' reps';
-  if (loads && !reps && unit) text += ` ${unit}`;
+  if (loads && !reps && unit) text += ` ${unitText(unit)}`;
   const rest = groups.slice(limit).reduce((n, g) => n + g.count, 0);
   if (rest > 0) text += ` +${rest} more`;
   return text || undefined;

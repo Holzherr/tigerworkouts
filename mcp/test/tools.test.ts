@@ -48,6 +48,16 @@ beforeEach(() => {
 });
 
 describe('reads', () => {
+  it('outlines show lb beside kg for someone who reads pounds, the runsheet stays kg (U11)', async () => {
+    tables.user_state[0].prefs = { ...(tables.user_state[0].prefs as object), units: 'imperial' };
+    const w = await T.getWorkout(db, 'u-mine');
+    expect(w.units).toBe('imperial');
+    expect(w.outline).toContain('100 kg (220.5 lb)');
+    expect(JSON.stringify(w.runsheet)).not.toContain('lb');
+    const started = await T.startWorkout(db, { id: 'u-mine' });
+    expect(started).toMatchObject({ units: 'imperial' });
+  });
+
   it('every call goes to Supabase with the user’s own token', async () => {
     await T.getProfile(db, 'nick@example.com');
     expect(fake.calls.length).toBeGreaterThan(0);

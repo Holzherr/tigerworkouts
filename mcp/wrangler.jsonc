@@ -32,7 +32,17 @@
     "APPLE_TEAM_ID": "2JDH6Z4WZ8",
     "APPLE_CLIENT_ID": "dev.brambruesch.tigerworkouts",
     "APPLE_KEY_ID": "6D5W8DU262"
-    // Secrets, never here: INSTAGRAM_ACCESS_TOKEN, INSTAGRAM_APP_SECRET, INSTAGRAM_VERIFY_TOKEN, ANTHROPIC_API_KEY, APPLE_PRIVATE_KEY (wrangler secret put).
+    // Secrets, never here: INSTAGRAM_ACCESS_TOKEN, INSTAGRAM_APP_SECRET, INSTAGRAM_VERIFY_TOKEN, ANTHROPIC_API_KEY, APPLE_PRIVATE_KEY, BOT_OWNER_EMAIL, SUPABASE_SERVICE_ROLE_KEY (POST /web-session; optional, src/handoff.ts) (wrangler secret put).
+    // GIT_COMMIT and DEPLOYED_AT are set by `npm run deploy` (scripts/deploy.mjs).
   },
-  "routes": [{ "pattern": "mcp.tigerworkouts.com", "custom_domain": true }]
+  // Per-key limits on "Start now" and claim emails (src/limits.ts). Periods are 10 or 60 seconds; a day cap sits in KV.
+  "ratelimits": [
+    { "name": "SIGNUP_LIMITER", "namespace_id": "1001", "simple": { "limit": 3, "period": 60 } },
+    { "name": "CLAIM_LIMITER", "namespace_id": "1002", "simple": { "limit": 3, "period": 60 } }
+  ],
+  "routes": [
+    { "pattern": "mcp.tigerworkouts.com", "custom_domain": true },
+    // The site itself is GitHub Pages; this one file comes from here as application/json (src/links.ts).
+    { "pattern": "tigerworkouts.com/.well-known/apple-app-site-association", "zone_name": "tigerworkouts.com" }
+  ]
 }

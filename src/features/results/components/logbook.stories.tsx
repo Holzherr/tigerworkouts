@@ -31,7 +31,9 @@ type Story = StoryObj<typeof meta>;
 
 export const Lift: Story = {};
 export const TimedWork: Story = { args: { exercise: EX.sprint } };
-export const NotLoggedYet: Story = { args: { results: [] } };
+const USED_IN = { total: 12, top: [{ id: 'a', title: 'Push day', meta: '45 min' }, { id: 'b', title: '5x5 Stronglifts A', meta: '50 min · Stronglifts' }, { id: 'c', title: 'Upper body', meta: '40 min' }] };
+/** Never logged: the clip, the muscles it works and the workouts that use it (review round 2 U14). */
+export const NotLoggedYet: Story = { args: { exercise: EX.kb_swing, results: [], muscles: { main: ['glutes', 'hamstrings'], also: ['back', 'core'] }, usedIn: USED_IN, onWorkout: () => {} } };
 export const ExerciseList: Story = {
   render: () => <ExerciseListScreen results={results} exercise={k => EX[k] ?? { key: k, name: k, unit: '', step: 1 }} onBack={() => {}} onOpen={() => {}} />,
 };

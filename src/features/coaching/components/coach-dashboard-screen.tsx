@@ -17,6 +17,9 @@ export interface CoachDashboardScreenProps {
   notice?: string;
   /** Creates an invite (with an optional name for it) and shares its link. Resolves to an error line or null. */
   onInvite?: (label: string) => Promise<string | null>;
+  /** The coach's own name. Empty: it is asked for before the first invite, so clients see who invited them (U6). */
+  myName?: string;
+  onSetName?: (name: string) => Promise<void> | void;
   onShareInvite: (code: string) => void;
   onDeleteInvite?: (code: string) => void;
   onOpenClient: (id: string) => void;
@@ -35,14 +38,17 @@ const initials = (name: string) => name.split(/\s+/).map(w => w[0]).join('').sli
  * accepted, then each client with sessions this week, last active and a Quiet flag after seven
  * days without a session.
  */
-export const CoachDashboardScreen = ({ clients, invites, notice, onInvite, onShareInvite, onDeleteInvite, onOpenClient, onHowItWorks, onBack, signIn, now = new Date() }: CoachDashboardScreenProps) => {
+export const CoachDashboardScreen = ({ clients, invites, notice, onInvite, myName, onSetName, onShareInvite, onDeleteInvite, onOpenClient, onHowItWorks, onBack, signIn, now = new Date() }: CoachDashboardScreenProps) => {
   const [label, setLabel] = useState('');
+  const askName = !!onSetName && !myName?.trim();
+  const [name, setName] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const week = clients && weekSummary(clients);
   const invite = async () => {
-    if (!onInvite) return;
+    if (!onInvite || (askName && !name.trim())) return;
     setBusy(true);
+    if (askName) await onSetName?.(name.trim());
     const err = await onInvite(label);
     setBusy(false);
     setError(err);
@@ -73,8 +79,9 @@ export const CoachDashboardScreen = ({ clients, invites, notice, onInvite, onSha
           <div className="space-y-2 rounded-card border border-line bg-surface p-3">
             <div className="text-[14px] font-bold">Invite a client</div>
             <div className="text-[12px] text-muted">One link per client. They open it, sign in and accept.</div>
+            {askName && <input value={name} onChange={e => setName(e.target.value)} maxLength={60} placeholder="Your name (your clients see it)" aria-label="Your name" autoComplete="name" className="h-11 w-full rounded-tile border border-line bg-canvas px-3 text-[15px] outline-none focus:border-hint" />}
             <input value={label} onChange={e => setLabel(e.target.value)} maxLength={80} placeholder="Their name (only you see it)" aria-label="Client's name" className="h-11 w-full rounded-tile border border-line bg-canvas px-3 text-[15px] outline-none focus:border-hint" />
-            <Button block onClick={invite} disabled={busy}>
+            <Button block onClick={invite} disabled={busy || (askName && !name.trim())}>
               <UserPlus /> {busy ? 'Making a link…' : 'Invite a client'}
             </Button>
             {error && <div className="text-[13px] text-danger">{error}</div>}

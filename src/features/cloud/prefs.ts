@@ -5,8 +5,9 @@
  * max stays gone instead of coming back from the other device. A field neither side has stamped
  * (written before stamps existed) takes the server's value, else this device's.
  *
- * Name, avatar and units are the web's; the iPhone app writes them back untouched. `suggestions`
- * (off / reps / weight / effort, `SuggestPrefs`) is written by both. Swift port:
+ * Name and avatar are the web's; the iPhone app writes them back untouched. `units` (kg or lb
+ * shown, U11) and `suggestions`
+ * (off / reps / weight / effort, `SuggestPrefs`) are written by both. Swift port:
  * `ios/TigerWorkouts/Cloud/PrefsMerge.swift`.
  */
 export const PREF_FIELDS = ['saved', 'trainingMaxes', 'bodyweightKg', 'equipment', 'name', 'avatar', 'units', 'suggestions'] as const;

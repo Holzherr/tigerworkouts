@@ -124,9 +124,10 @@ struct DiscoverView: View {
                 }
             }
             .onOpenURL { url in
-                // tigerworkouts://w/<id>: "Open in the app" on a workout page of the website. The
-                // Up next widget's tigerworkouts://do/<id> starts the session (RootView).
-                guard url.host == "w", let id = url.pathComponents.dropFirst().first?.removingPercentEncoding else { return }
+                // A workout link: https://tigerworkouts.com/#/w/<id> (a universal link) or
+                // tigerworkouts://w/<id> ("Open in the app" on the website). The Up next widget's
+                // tigerworkouts://do/<id> starts the session (RootView).
+                guard case .workout(let id) = AppLink.parse(url) else { return }
                 if store.loaded { openLink(id) } else { pendingLink = id }
             }
             .onChange(of: store.loaded) { _, loaded in

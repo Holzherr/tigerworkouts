@@ -6,8 +6,8 @@ import Foundation
 /// stays gone instead of coming back from the other. A field neither side stamped (written before
 /// stamps) takes the server's value, else this device's. The port of `src/features/cloud/prefs.ts`.
 ///
-/// Name, avatar and units are the web's. This app never stamps or holds them, so the server's
-/// always win and are written back untouched.
+/// Avatar and units are the web's. This app never stamps or holds them, so the server's always win
+/// and are written back untouched. Name is the web's too, but Settings → Name changes it here.
 enum PrefsMerge {
     static let fields = ["saved", "trainingMaxes", "bodyweightKg", "equipment", "suggestions", "name", "avatar", "units"]
 

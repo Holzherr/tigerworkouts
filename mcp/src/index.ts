@@ -23,9 +23,12 @@ import { ToolError } from './tools';
 import { auth, b64url, db, pkce, SupabaseError, type SupabaseSession } from './supabase';
 import { botFetch, isBotPath, type BotEnv } from './instagram/routes';
 import { appleFetch, isApplePath, type AppleEnv } from './apple';
+import { allow, clientIp, CODE_TRIES, type LimitEnv } from './limits';
+import { handoffFetch, isHandoffPath, type HandoffEnv } from './handoff';
+import { aasaResponse, isAasaPath } from './links';
 
 /** BotEnv: the Instagram bot's vars and secrets (instagram/routes.ts, specs/instagram-bot.md). */
-export interface Env extends BotEnv, AppleEnv {
+export interface Env extends BotEnv, AppleEnv, LimitEnv, HandoffEnv {
   OAUTH_KV: KVNamespace;
   OAUTH_PROVIDER: OAuthHelpers;
   /** Comma-separated Supabase user ids allowed to connect. Empty = open to every account. */
@@ -38,7 +41,13 @@ export interface Env extends BotEnv, AppleEnv {
   ANONYMOUS_SIGNUP?: string;
   /** Token the OpenAI dashboard asks to see at /.well-known/openai-apps-challenge (domain check). */
   OPENAI_APPS_CHALLENGE?: string;
+  /** Git commit and time of the deploy, set by scripts/deploy.mjs (`npm run deploy`). */
+  GIT_COMMIT?: string;
+  DEPLOYED_AT?: string;
 }
+
+/** Which build is live: GET /version, and the foot of the landing page. */
+export const versionOf = (env: Pick<Env, 'GIT_COMMIT' | 'DEPLOYED_AT'>) => ({ commit: env.GIT_COMMIT || 'unknown', deployedAt: env.DEPLOYED_AT || null });
 
 // ── the protected API: /mcp ──
 const api = {
@@ -48,7 +57,12 @@ const api = {
     if (props.expiresAt <= Date.now() / 1000)
       return Response.json({ error: 'invalid_token', error_description: 'expired' }, { status: 401, headers: { 'www-authenticate': 'Bearer error="invalid_token", error_description="expired"' } });
     const origin = new URL(request.url).origin;
-    return handleMcp(request, db(props), { email: props.email, anonymous: props.anonymous, admin: isAdmin(env, props), claim: a => claimAccount({ session: props, origin, kv: env.OAUTH_KV }, a), status: () => accountStatus(props.accessToken) });
+    // claim_account arrives from the assistant's servers, so its limit is per account, not per IP.
+    const claim = async (a: { email?: string }) => {
+      if (a.email && props.anonymous && !(await allow(env, 'claim', `user:${props.userId}`))) throw new ToolError('Too many emails asked for today. Try again tomorrow, or ask for the claim link.');
+      return claimAccount({ session: props, origin, kv: env.OAUTH_KV }, a);
+    };
+    return handleMcp(request, db(props), { email: props.email, anonymous: props.anonymous, admin: isAdmin(env, props), claim, status: () => accountStatus(props.accessToken) });
   },
 };
 
@@ -58,6 +72,8 @@ interface Pending {
   client: string;
   email?: string;
   verifier?: string;
+  /** Wrong codes entered for the code last sent. */
+  tries?: number;
 }
 const PENDING_TTL = 900;
 const putPending = (env: Env, rid: string, p: Pending) => env.OAUTH_KV.put(`signin:${rid}`, JSON.stringify(p), { expirationTtl: PENDING_TTL });
@@ -92,7 +108,8 @@ const signIn = {
     const url = new URL(request.url);
     const google = env.GOOGLE_SIGNIN === 'true';
 
-    if (request.method === 'GET' && url.pathname === '/') return landingPage(url.origin, anonymousOn(env));
+    if (request.method === 'GET' && url.pathname === '/') return landingPage(url.origin, anonymousOn(env), versionOf(env));
+    if (request.method === 'GET' && url.pathname === '/version') return Response.json(versionOf(env), { headers: { 'cache-control': 'no-store', 'access-control-allow-origin': '*' } });
     if (request.method === 'GET' && url.pathname === '/llms.txt') return new Response(landingText(url.origin, google, anonymousOn(env)), { headers: { 'content-type': 'text/plain; charset=utf-8' } });
 
     if (request.method === 'GET' && url.pathname === '/.well-known/openai-apps-challenge')
@@ -127,11 +144,13 @@ const signIn = {
       const p = await boundPending(request, env, rid);
       if (!p) return errorPage(EXPIRED);
       if (!anonymousOn(env)) return errorPage('Starting without an account is not open yet. Sign in with your email instead.');
+      const busy = 'Too many new accounts from here just now. Try again later, or sign in with your email.';
+      if (!(await allow(env, 'signup', clientIp(request)))) return signInPage({ rid, client: p.client, redirect: p.req.redirectUri, google, anonymous: true, error: busy });
       let s: SupabaseSession;
       try {
         s = await auth().signInAnonymously();
       } catch (e) {
-        const msg = e instanceof SupabaseError && e.status === 429 ? 'Too many new accounts from here just now. Try again in a few minutes, or sign in with your email.' : 'Could not start without an account. Sign in with your email instead.';
+        const msg = e instanceof SupabaseError && e.status === 429 ? busy : 'Could not start without an account. Sign in with your email instead.';
         return signInPage({ rid, client: p.client, redirect: p.req.redirectUri, google, anonymous: true, error: msg });
       }
       return finish(env, rid, p, { ...s, viaAnonymous: true });
@@ -144,6 +163,7 @@ const signIn = {
       if (!c) return errorPage('This link has expired. Ask your assistant for a new one ("keep my TigerWorkouts account").', 410);
       if (request.method === 'GET') return claimPage({ id: claimId });
       const email = String((await request.formData()).get('email') ?? '');
+      if (!(await allow(env, 'claim', clientIp(request)))) return claimPage({ id: claimId, error: 'Too many emails asked for from here today. Try again tomorrow.' });
       try {
         const r = await sendClaim(c.accessToken, email);
         await dropClaim(env.OAUTH_KV, claimId);
@@ -168,7 +188,7 @@ const signIn = {
         const msg = e instanceof SupabaseError && e.status === 429 ? 'Too many codes asked for. Wait a minute and try again.' : 'Could not send the code. Try again.';
         return signInPage({ rid, client: p.client, redirect: p.req.redirectUri, google, anonymous: anonymousOn(env), error: msg });
       }
-      await putPending(env, rid, { ...p, email });
+      await putPending(env, rid, { ...p, email, tries: 0 });
       return codePage({ rid, email });
     }
 
@@ -198,6 +218,12 @@ const signIn = {
       try {
         s = await auth().verifyCode(p.email, code);
       } catch {
+        const tries = (p.tries ?? 0) + 1;
+        if (tries >= CODE_TRIES) {
+          await env.OAUTH_KV.delete(`signin:${rid}`);
+          return errorPage('Too many wrong codes. Start again from your assistant.');
+        }
+        await putPending(env, rid, { ...p, tries });
         return codePage({ rid, email: p.email, error: 'That code did not work. Check it, or wait a minute and ask for a new one.' });
       }
       return finish(env, rid, p, s);
@@ -282,6 +308,10 @@ export default {
     if (isBotPath(new URL(request.url).pathname)) return botFetch(request, env, ctx);
     // Revoking Sign in with Apple at account deletion: the app's own Supabase token, no OAuth grant.
     if (isApplePath(new URL(request.url).pathname)) return appleFetch(request, env);
+    // The iPhone app opening the web coach dashboard signed in (src/handoff.ts).
+    if (isHandoffPath(new URL(request.url).pathname)) return handoffFetch(request, env);
+    // Universal links: tigerworkouts.com routes this one path here (wrangler.jsonc).
+    if (isAasaPath(new URL(request.url).pathname)) return aasaResponse();
     return getProvider(env, new URL(request.url).origin).fetch(request, env, ctx);
   },
 } satisfies ExportedHandler<Env>;

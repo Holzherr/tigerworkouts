@@ -16,6 +16,8 @@ export interface StepperProps {
   typeable?: boolean;
   /** Fill the column it is in and shrink with it, for a row of steppers on a narrow phone. */
   fluid?: boolean;
+  /** Where one press lands, instead of value ± step (a load in lb snaps to the step's multiples). */
+  stepBy?: (value: number, step: number, dir: 1 | -1) => number;
   'aria-label'?: string;
   className?: string;
 }
@@ -58,19 +60,19 @@ const useHold = (fire: () => boolean) => {
  * belongs in the row label next to it. `sm` is narrower, not shorter. Hold a button to repeat;
  * tap the number to type it (`NumberEntry`).
  */
-export const Stepper = ({ value, onChange, step = 1, min = 0, max = 999, format = fmtNum, size = 'md', typeable = true, fluid, className, 'aria-label': ariaLabel }: StepperProps) => {
+export const Stepper = ({ value, onChange, step = 1, min = 0, max = 999, format = fmtNum, size = 'md', typeable = true, fluid, stepBy, className, 'aria-label': ariaLabel }: StepperProps) => {
   // The value as last sent: a held button steps from it before the parent's re-render lands.
   const cur = useRef(value);
   cur.current = value;
-  const by = (d: number) => () => {
-    const next = clamp(cur.current + d, min, max);
+  const by = (dir: 1 | -1) => () => {
+    const next = clamp(stepBy ? stepBy(cur.current, step, dir) : cur.current + dir * step, min, max);
     if (next === cur.current) return false;
     cur.current = next;
     onChange(next);
     return true;
   };
-  const down = useHold(by(-step));
-  const up = useHold(by(step));
+  const down = useHold(by(-1));
+  const up = useHold(by(1));
   const w = size === 'sm' ? cn('w-9', fluid && 'shrink-0 max-[359px]:w-8') : 'w-11';
   const btn = cn('h-11 touch-manipulation select-none', w, 'grid place-items-center bg-canvas text-ink active:bg-line disabled:opacity-30 [&_svg]:size-4', size === 'md' && '[&_svg]:size-5');
   return (

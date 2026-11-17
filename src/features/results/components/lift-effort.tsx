@@ -54,7 +54,7 @@ export const LiftEffortCard = ({ lifts, rows, onRate }: { lifts: { key: string; 
             </div>
             <div className="mt-1.5 grid grid-cols-10 gap-1">
               {Array.from({ length: 10 }, (_, i) => i + 1).map(n => (
-                <button key={n} type="button" aria-label={`${lift.name} RPE ${n}`} aria-pressed={value === n} onClick={() => onRate(lift.key, value === n ? undefined : n)} className={cn('h-11 rounded-control text-[15px] font-bold tabular-nums transition-colors', value === n ? 'bg-ink text-white' : 'bg-line-soft text-ink active:bg-line')}>
+                <button key={n} type="button" aria-label={`${lift.name} RPE ${n}`} aria-pressed={value === n} onClick={() => onRate(lift.key, value === n ? undefined : n)} className={cn('h-11 rounded-control text-[15px] font-bold tabular-nums transition-colors', value === n ? 'bg-ink text-surface' : 'bg-line-soft text-ink active:bg-line')}>
                   {n}
                 </button>
               ))}

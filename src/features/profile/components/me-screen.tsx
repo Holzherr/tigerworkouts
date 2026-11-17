@@ -1,4 +1,4 @@
-import { ChevronRight, Download, Dumbbell, Settings, Upload, Users } from 'lucide-react';
+import { ChevronRight, Download, Dumbbell, Globe, Settings, Upload, Users } from 'lucide-react';
 import { Button } from '@/shared/components/ui/button';
 import { StatTiles } from '@/shared/components/ui/stat-tiles';
 import { Stepper } from '@/shared/components/ui/stepper';
@@ -10,6 +10,7 @@ import { BodyMap } from '@/features/results/components/body-map';
 import { StreakLine } from '@/features/results/components/session-stats';
 import { fmtMinutes, totalMinutes } from '@/features/discover/next-up';
 import { AvatarView } from './settings-sheet';
+import { fmtWeight, shownMax, weightStepper, weightUnit } from '@/shared/utils/units';
 
 export interface MeScreenProps {
   name: string;
@@ -32,6 +33,10 @@ export interface MeScreenProps {
   onImport?: () => void;
   /** Opens the coach dashboard (#/coach). */
   onCoach?: () => void;
+  /** Opens the creator page settings (#/me/creator): page name and bio. */
+  onCreatorPage?: () => void;
+  /** Workouts on your public page, for the Creator page row. */
+  publicCount?: number;
   /** Shown first, above the numbers: the sign-in card while signed out. */
   lead?: React.ReactNode;
   /** Account and app settings, rendered under a "Settings" heading at the bottom. */
@@ -45,7 +50,7 @@ const heading = 'px-1 pt-2 text-[11px] font-bold tracking-widest text-muted uppe
  * Then four tiles two by two (sessions, this week, weeks running, time trained), the streak row, the body map
  * for the last four weeks, the Exercises row, bodyweight, and the settings passed as children last.
  */
-export const MeScreen = ({ name, avatar, status, results, load, bodyweightKg, onBodyweight, onSettings, onOpenHistory, onOpenWeek, onOpenExercises, onExport, onImport, onCoach, lead, children }: MeScreenProps) => {
+export const MeScreen = ({ name, avatar, status, results, load, bodyweightKg, onBodyweight, onSettings, onOpenHistory, onOpenWeek, onOpenExercises, onExport, onImport, onCoach, onCreatorPage, publicCount = 0, lead, children }: MeScreenProps) => {
   const s = streak(results);
   return (
     <div className="flex h-full flex-col bg-canvas">
@@ -90,14 +95,15 @@ export const MeScreen = ({ name, avatar, status, results, load, bodyweightKg, on
         <div className={heading}>You</div>
         {onOpenExercises && <Row icon={<Dumbbell className="size-5 text-brand-ink" />} title="Exercises" hint="Every exercise you have logged, and how it is going" onClick={onOpenExercises} />}
         {onExport && <Row icon={<Download className="size-5 text-brand-ink" />} title="Export history" hint="Every set you have logged, as a CSV file" onClick={onExport} />}
+        {onCreatorPage && <Row icon={<Globe className="size-5 text-brand-ink" />} title="Creator page" hint={publicCount ? `${publicCount} public ${publicCount === 1 ? 'workout' : 'workouts'}` : 'Your public page: its name and a short bio'} onClick={onCreatorPage} />}
         {onCoach && <Row icon={<Users className="size-5 text-brand-ink" />} title="Coach clients" hint="Invite clients, send them workouts, see what they did" onClick={onCoach} />}
         {onImport && <Row icon={<Upload className="size-5 text-brand-ink" />} title="Import from Hevy or Strong" hint="Their CSV export, checked before anything is added" onClick={onImport} />}
         <div className="flex items-center justify-between gap-3 rounded-card border border-line bg-surface px-3 py-2">
           <div className="min-w-0">
-            <div className="text-[14px] font-semibold">Bodyweight (kg)</div>
-            <div className="text-[12px] text-muted">{bodyweightKg === undefined ? 'Not set · calories assume 80 kg' : 'For the calorie estimate'}</div>
+            <div className="text-[14px] font-semibold">Bodyweight ({weightUnit()})</div>
+            <div className="text-[12px] text-muted">{bodyweightKg === undefined ? `Not set · calories assume ${fmtWeight(80)}` : 'For the calorie estimate'}</div>
           </div>
-          <Stepper size="sm" aria-label="Bodyweight" value={bodyweightKg ?? 80} min={30} max={250} step={0.5} onChange={onBodyweight} />
+          <Stepper size="sm" aria-label="Bodyweight" {...weightStepper(bodyweightKg ?? 80, 0.5, onBodyweight)} min={shownMax(30)} max={shownMax(250)} />
         </div>
 
         {children && (

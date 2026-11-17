@@ -6,9 +6,10 @@ import { ClipThumb } from '@/shared/components/ui/clip-thumb';
 import { Dropdown } from '@/shared/components/ui/dropdown';
 import { Stepper } from '@/shared/components/ui/stepper';
 import { restLabel, cn } from '@/shared/utils/ui-utils';
-import { loadStep, metersStep, useStepSizes } from '@/shared/utils/step-sizes';
+import { loadStepper, metersStep, useStepSizes } from '@/shared/utils/step-sizes';
 import { StepSizes } from './step-sizes';
 import { extraLogs, forLabel, hasSetting, loadLabel, logChoices, settingLabel, STEP_LOG_LABEL, stepLogs, withLogs, type ExerciseStep, type ForMode, type RestStep, type Step } from '../model';
+import { fmtWeight, unitText } from '@/shared/utils/units';
 
 const FOR_OPTIONS = [
   { value: 'seconds', label: 'seconds' },
@@ -80,7 +81,7 @@ export const StepRow = forwardRef<HTMLDivElement, StepRowProps>(({ step, expande
           <div className={cn('line-clamp-2 text-[14.5px] leading-tight font-semibold', isRest && 'text-body')}>{isRest ? 'Rest' : step.exercise.name}</div>
           <div className="text-[12px] text-muted">{groupTarget ? <span className="font-bold text-brand-ink">Release to make a block</span> : isRest ? 'step' : (hint ?? `${forLabel(step)}${resolvedTarget !== undefined && step.targetPct !== undefined ? ` · ${step.targetPct}% TM` : resolvedTarget !== undefined && step.loadFactor !== undefined ? ` · ${step.loadFactor}× BW` : ''}${step.perSide ? '' : ''}`)}</div>
         </div>
-        <Chip variant="value">{isRest ? restLabel(step.seconds) : resolvedTarget !== undefined && (step.targetPct !== undefined || step.loadFactor !== undefined) ? `${resolvedTarget} kg` : loadLabel(step) || forLabel(step)}</Chip>
+        <Chip variant="value">{isRest ? restLabel(step.seconds) : resolvedTarget !== undefined && (step.targetPct !== undefined || step.loadFactor !== undefined) ? fmtWeight(resolvedTarget) : loadLabel(step) || forLabel(step)}</Chip>
         {removeBtn}
       </div>
     );
@@ -138,9 +139,9 @@ const ExerciseBody = ({ step, onChange }: { step: ExerciseStep; onChange: (s: St
     {hasSetting(step) && (
       <div className="flex items-center justify-between gap-3">
         <Label>
-          {settingLabel(step)} <span className="text-muted">({step.exercise.unit})</span>
+          {settingLabel(step)} <span className="text-muted">({unitText(step.exercise.unit)})</span>
         </Label>
-        <Stepper aria-label={`${settingLabel(step)} (${step.exercise.unit})`} value={step.target ?? 0} step={loadStep(step.exercise)} max={1000} onChange={target => onChange({ ...step, target })} />
+        <Stepper aria-label={`${settingLabel(step)} (${unitText(step.exercise.unit)})`} {...loadStepper(step.exercise, step.target ?? 0, target => onChange({ ...step, target }))} />
       </div>
     )}
     {step.exercise.unit === 'kph' && (

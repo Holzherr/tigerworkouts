@@ -12,8 +12,10 @@ export interface JoinScreenProps {
   signedIn: boolean;
   /** The sign-in card, shown when signed out. */
   signIn?: React.ReactNode;
-  /** Resolves to an error line, or null once linked. */
-  onAccept: () => Promise<string | null>;
+  /** Resolves to an error line, or null once linked. Given the name typed when one was asked for. */
+  onAccept: (name?: string) => Promise<string | null>;
+  /** The account has no name yet: ask for it before Accept, so the coach sees who joined (U6). */
+  askName?: boolean;
   /** Given with a notice that another try may clear (no connection): a Try again button. */
   onRetry?: () => void;
   /** After accepting: on to the workouts. */
@@ -26,13 +28,15 @@ export interface JoinScreenProps {
  * Where an invite link lands: who invited you, what accepting means, sign-in when needed (a coach
  * link needs an account; guests can still run shared workouts), then Accept.
  */
-export const JoinScreen = ({ info, notice, onRetry, signedIn, signIn, onAccept, onContinue, appHref }: JoinScreenProps) => {
+export const JoinScreen = ({ info, notice, onRetry, signedIn, signIn, onAccept, askName, onContinue, appHref }: JoinScreenProps) => {
+  const [name, setName] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [done, setDone] = useState(false);
   const accept = async () => {
+    if (askName && !name.trim()) return;
     setBusy(true);
-    const err = await onAccept();
+    const err = await onAccept(askName ? name.trim() : undefined);
     setBusy(false);
     setError(err);
     if (!err) setDone(true);
@@ -82,9 +86,10 @@ export const JoinScreen = ({ info, notice, onRetry, signedIn, signIn, onAccept, 
                 <li>· They see the sessions you log, and you can swap notes</li>
                 <li>· You can stop coaching any time in Me</li>
               </ul>
-              {info.accepted && <p className="text-[13px] text-warn">This invite has been used. If it was you, accept again to rejoin.</p>}
+              {info.accepted && <p className="text-[13px] text-warn">This invite has been used. To start again after coaching ended, ask your coach for a new one.</p>}
+              {signedIn && askName && <input value={name} onChange={e => setName(e.target.value)} maxLength={60} placeholder={`Your name (${info.name === 'Your coach' ? 'your coach' : info.name.split(' ')[0]} sees it)`} aria-label="Your name" autoComplete="name" className="h-11 w-full rounded-tile border border-line bg-canvas px-3 text-[15px] outline-none focus:border-hint" />}
               {signedIn && (
-                <Button block onClick={accept} disabled={busy}>
+                <Button block onClick={accept} disabled={busy || (askName && !name.trim())}>
                   {busy ? 'Accepting…' : 'Accept'}
                 </Button>
               )}

@@ -33,7 +33,7 @@ export const UpdatePrompt = () => {
   if (!ready) return null;
   return (
     <div className="fixed inset-x-0 bottom-20 z-50 flex justify-center px-4">
-      <div className="flex items-center gap-3 rounded-full bg-ink py-1.5 pr-1.5 pl-4 text-[13px] font-semibold text-white shadow-lift">
+      <div className="flex items-center gap-3 rounded-full bg-night py-1.5 pr-1.5 pl-4 text-[13px] font-semibold text-white shadow-lift">
         New version ready
         <Button size="sm" onClick={() => location.reload()}>
           Reload

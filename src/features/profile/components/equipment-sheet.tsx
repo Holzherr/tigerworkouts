@@ -2,8 +2,9 @@ import { Button } from '@/shared/components/ui/button';
 import { Chip } from '@/shared/components/ui/chip';
 import { Sheet } from '@/shared/components/ui/sheet';
 import { Stepper } from '@/shared/components/ui/stepper';
-import { fmtNum } from '@/shared/utils/ui-utils';
-import { DEFAULT_BAR_KG, DEFAULT_KETTLEBELLS, PLATE_SIZES, type Equipment } from '@/features/runsheet/plates';
+import { defaultBarKg, defaultKettlebells, LB_DUMBBELL_SIZES, LB_KETTLEBELLS, LB_PLATE_SIZES, PLATE_SIZES, type Equipment } from '@/features/runsheet/plates';
+import { fmtWeight, shownMax, toKg, weightStepper, weightText } from '@/shared/utils/units';
+import { useWeightUnit } from '@/shared/utils/use-weight-unit';
 
 /** Dumbbell and kettlebell weights offered as chips. */
 export const DUMBBELL_SIZES = [1, 2, 2.5, 3, 4, 5, 6, 7.5, 8, 10, 12, 12.5, 14, 15, 16, 17.5, 18, 20, 22.5, 25, 27.5, 30, 32.5, 35, 40];
@@ -30,50 +31,56 @@ const toggle = (list: number[], kg: number) => (list.includes(kg) ? list.filter(
  * Settings → My equipment: the bar's weight, a count stepper per plate size (counted singly — a
  * pair puts one on each side), and chips for the dumbbells and kettlebells you own. Suggested loads
  * snap to what these make; a section left empty is no constraint, except kettlebells, which fall
- * back to 4 kg steps.
+ * back to 4 kg steps. While loads show in lb (U11) the sizes offered are a pound gym's; each is
+ * kept in kg.
  */
 export const EquipmentSheet = ({ open, onOpenChange, equipment = {}, onChange }: EquipmentSheetProps) => {
   const plates = equipment.plates ?? [];
   const count = (kg: number) => plates.find(p => p.kg === kg)?.count ?? 0;
   const setCount = (kg: number, n: number) => onChange({ ...equipment, plates: [...plates.filter(p => p.kg !== kg), ...(n > 0 ? [{ kg, count: n }] : [])].sort((a, b) => b.kg - a.kg) });
   const dumbbells = equipment.dumbbells ?? [];
-  const bells = equipment.kettlebells ?? DEFAULT_KETTLEBELLS;
+  const bells = equipment.kettlebells ?? defaultKettlebells();
+  const u = useWeightUnit();
+  const lbs = (list: number[]) => list.map(lb => toKg(lb, 'lb'));
+  const plateSizes = u === 'lb' ? lbs(LB_PLATE_SIZES) : PLATE_SIZES;
+  const dumbbellSizes = u === 'lb' ? lbs(LB_DUMBBELL_SIZES) : DUMBBELL_SIZES;
+  const bellSizes = u === 'lb' ? lbs(LB_KETTLEBELLS) : KETTLEBELL_SIZES;
   return (
     <Sheet open={open} onOpenChange={onOpenChange} title="My equipment" height="86dvh">
       <div className="space-y-5 pb-4">
         <section aria-label="Barbell">
-          <Head title="Barbell" note={plates.length ? 'Bar loads snap to what these plates make.' : 'No plates set: bar loads round to 2.5 kg.'} />
+          <Head title="Barbell" note={plates.length ? 'Bar loads snap to what these plates make.' : `No plates set: bar loads round to ${fmtWeight(2.5)}.`} />
           <div className="flex items-center justify-between gap-3 py-1">
             <span className="text-[14px]">
-              Bar <span className="text-muted">(kg)</span>
+              Bar <span className="text-muted">({u})</span>
             </span>
-            <Stepper aria-label="Bar weight" value={equipment.barKg ?? DEFAULT_BAR_KG} step={2.5} min={0} max={50} onChange={barKg => onChange({ ...equipment, barKg })} />
+            <Stepper aria-label="Bar weight" {...weightStepper(equipment.barKg ?? defaultBarKg(), 2.5, barKg => onChange({ ...equipment, barKg }))} min={0} max={shownMax(50)} />
           </div>
-          {PLATE_SIZES.map(kg => (
+          {plateSizes.map(kg => (
             <div key={kg} className="flex items-center justify-between gap-3 border-t border-line-soft py-1">
               <span className="text-[14px]">
-                {fmtNum(kg)} kg plates <span className="text-muted">(how many)</span>
+                {weightText(kg)} {u} plates <span className="text-muted">(how many)</span>
               </span>
-              <Stepper size="sm" aria-label={`${fmtNum(kg)} kg plates`} value={count(kg)} step={2} min={0} max={20} onChange={n => setCount(kg, n)} />
+              <Stepper size="sm" aria-label={`${weightText(kg)} ${u} plates`} value={count(kg)} step={2} min={0} max={20} onChange={n => setCount(kg, n)} />
             </div>
           ))}
         </section>
         <section aria-label="Dumbbells">
           <Head title="Dumbbells" note={dumbbells.length ? 'Tap the weights you have (one of a pair).' : 'None set: dumbbell loads round to the exercise’s step.'} />
           <div className="flex flex-wrap gap-1.5">
-            {DUMBBELL_SIZES.map(kg => (
+            {dumbbellSizes.map(kg => (
               <Chip key={kg} role="checkbox" aria-checked={dumbbells.includes(kg)} variant={dumbbells.includes(kg) ? 'on' : 'outline'} onClick={() => onChange({ ...equipment, dumbbells: toggle(dumbbells, kg) })}>
-                {fmtNum(kg)}
+                {weightText(kg)}
               </Chip>
             ))}
           </div>
         </section>
         <section aria-label="Kettlebells">
-          <Head title="Kettlebells" note={equipment.kettlebells?.length ? 'Tap the bells you have.' : 'Not set: 4 to 48 kg in 4 kg steps.'} />
+          <Head title="Kettlebells" note={equipment.kettlebells?.length ? 'Tap the bells you have.' : u === 'lb' ? 'Not set: the usual pound bells, 10 to 106 lb.' : 'Not set: 4 to 48 kg in 4 kg steps.'} />
           <div className="flex flex-wrap gap-1.5">
-            {KETTLEBELL_SIZES.map(kg => (
+            {bellSizes.map(kg => (
               <Chip key={kg} role="checkbox" aria-checked={bells.includes(kg)} variant={bells.includes(kg) ? 'on' : 'outline'} onClick={() => onChange({ ...equipment, kettlebells: toggle(bells, kg) })}>
-                {fmtNum(kg)}
+                {weightText(kg)}
               </Chip>
             ))}
           </div>
@@ -88,10 +95,10 @@ export const EquipmentSheet = ({ open, onOpenChange, equipment = {}, onChange }:
   );
 };
 
-/** One line for the Settings row: "20 kg bar, 12 plates · 4 dumbbells · 6 kettlebells". */
+/** One line for the Settings row: "20 kg bar, 12 plates · 4 dumbbells · 6 kettlebells" ("45 lb bar" in lb). */
 export const equipmentSummary = (e: Equipment | undefined): string => {
   if (!e) return 'Not set';
   const plates = (e.plates ?? []).reduce((n, p) => n + p.count, 0);
-  const parts = [plates ? `${fmtNum(e.barKg ?? DEFAULT_BAR_KG)} kg bar, ${plates} plates` : '', e.dumbbells?.length ? `${e.dumbbells.length} dumbbells` : '', e.kettlebells?.length ? `${e.kettlebells.length} kettlebells` : ''].filter(Boolean);
+  const parts = [plates ? `${fmtWeight(e.barKg ?? defaultBarKg())} bar, ${plates} plates` : '', e.dumbbells?.length ? `${e.dumbbells.length} dumbbells` : '', e.kettlebells?.length ? `${e.kettlebells.length} kettlebells` : ''].filter(Boolean);
   return parts.join(' · ') || 'Not set';
 };

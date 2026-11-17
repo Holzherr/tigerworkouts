@@ -17,4 +17,14 @@ describe('an invite link', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Accept' }));
     expect(await screen.findByText('Workouts they send you show first in Mine, marked New · made for you.')).toBeTruthy();
   });
+  it('asks a nameless client for their name before Accept, and passes it on', async () => {
+    const onAccept = vi.fn(async () => null);
+    render(<JoinScreen info={{ name: 'Sam Fixture', accepted: false } as never} signedIn askName onAccept={onAccept} onContinue={() => {}} />);
+    const accept = screen.getByRole('button', { name: 'Accept' }) as HTMLButtonElement;
+    expect(accept.disabled).toBe(true);
+    fireEvent.change(screen.getByLabelText('Your name'), { target: { value: ' Alex ' } });
+    fireEvent.click(accept);
+    await screen.findByText(/You’re training with Sam Fixture/);
+    expect(onAccept).toHaveBeenCalledWith('Alex');
+  });
 });

@@ -269,3 +269,96 @@ describe('how long a sign-in lasts', () => {
     expect(await json(res)).toMatchObject({ error: 'invalid_grant' });
   });
 });
+
+describe('limits on the sign-in endpoints (review A5)', () => {
+  const ip = (addr: string, init: RequestInit) => ({ ...init, headers: { ...(init.headers as Record<string, string>), 'cf-connecting-ip': addr } });
+
+  it('five wrong codes end the sign-in, so a code cannot be guessed', async () => {
+    const a = await openAuthorize();
+    await call('/authorize/email', form({ rid: a.rid, email: 'nick@example.com' }));
+    for (let i = 0; i < 4; i++) expect(await (await call('/authorize/code', form({ rid: a.rid, code: '000000' }))).text()).toContain('That code did not work');
+    expect(await (await call('/authorize/code', form({ rid: a.rid, code: '000001' }))).text()).toContain('Too many wrong codes');
+    expect(await (await call('/authorize/code', form({ rid: a.rid, code: '123456' }))).text()).toContain('expired');
+  });
+
+  it('a new code gives five fresh tries', async () => {
+    const a = await openAuthorize();
+    await call('/authorize/email', form({ rid: a.rid, email: 'nick@example.com' }));
+    for (let i = 0; i < 4; i++) await call('/authorize/code', form({ rid: a.rid, code: '000000' }));
+    await call('/authorize/email', form({ rid: a.rid, email: 'nick@example.com' }));
+    for (let i = 0; i < 4; i++) await call('/authorize/code', form({ rid: a.rid, code: '000000' }));
+    expect((await call('/authorize/code', form({ rid: a.rid, code: '123456' }))).status).toBe(302);
+  });
+
+  it('"Start now" is limited per IP: the rate-limit binding first, then a day cap', async () => {
+    let allowed = 1;
+    env.SIGNUP_LIMITER = { limit: async () => ({ success: allowed-- > 0 }) };
+    const a = await openAuthorize();
+    expect((await call('/authorize/anonymous', ip('203.0.113.7', form({ rid: a.rid })))).status).toBe(302);
+    const b = await openAuthorize();
+    expect(await (await call('/authorize/anonymous', ip('203.0.113.7', form({ rid: b.rid })))).text()).toContain('Too many new accounts from here');
+
+    delete env.SIGNUP_LIMITER;
+    for (let i = 0; i < 10; i++) {
+      const c = await openAuthorize();
+      expect((await call('/authorize/anonymous', ip('203.0.113.8', form({ rid: c.rid })))).status).toBe(302);
+    }
+    const d = await openAuthorize();
+    expect(await (await call('/authorize/anonymous', ip('203.0.113.8', form({ rid: d.rid })))).text()).toContain('Too many new accounts from here');
+    const e = await openAuthorize();
+    expect((await call('/authorize/anonymous', ip('198.51.100.1', form({ rid: e.rid })))).status).toBe(302);
+  });
+
+  it('claim emails are limited per account in the chat and per IP on the claim page', async () => {
+    const a = await openAuthorize();
+    const tok = await tokensFor(await call('/authorize/anonymous', form({ rid: a.rid })), a);
+    const claim = (email?: string) => rpc(tok.access_token, 'tools/call', { name: 'claim_account', arguments: email ? { email } : {} });
+    for (let i = 0; i < 5; i++) expect((await claim(`me${i}@example.com`)).result.isError).toBeFalsy();
+    const sixth = await claim('me5@example.com');
+    expect(sixth.result.isError).toBe(true);
+    expect(sixth.result.content[0].text).toContain('Too many emails');
+    expect(emailChanges).toHaveLength(5);
+
+    const path = new URL(JSON.parse((await claim()).result.content[0].text).claimUrl).pathname;
+    for (let i = 0; i < 5; i++) await call(path, ip('203.0.113.9', form({ email: 'taken@example.com' })));
+    expect(await (await call(path, ip('203.0.113.9', form({ email: 'x@example.com' })))).text()).toContain('Too many emails');
+  });
+
+  it('GET /version and the landing page name the deployed commit', async () => {
+    expect(await json(call('/version'))).toEqual({ commit: 'unknown', deployedAt: null });
+    env.GIT_COMMIT = '0123456789abcdef0123456789abcdef01234567';
+    env.DEPLOYED_AT = '2026-11-17T10:00:00.000Z';
+    expect(await json(call('/version'))).toEqual({ commit: env.GIT_COMMIT, deployedAt: env.DEPLOYED_AT });
+    const html = await (await call('/')).text();
+    expect(html).toContain('commit/0123456789abcdef0123456789abcdef01234567">0123456</a>, deployed 2026-11-17 10:00 UTC');
+  });
+});
+
+describe('/bot/connect (review A5)', () => {
+  const post = (path: string, o: Record<string, string>) => call(path, form(o));
+  beforeEach(() => {
+    env.INSTAGRAM_IMPORT_OWNER = NICK;
+    env.ADMIN_USER_IDS = NICK;
+  });
+
+  it('is off without BOT_OWNER_EMAIL', async () => {
+    expect((await call('/bot/connect')).status).toBe(503);
+  });
+
+  it('sends a code to the owner email only, and five wrong codes use it up', async () => {
+    env.BOT_OWNER_EMAIL = 'Owner@Example.com';
+    let sent = 0;
+    const live = globalThis.fetch;
+    vi.stubGlobal('fetch', async (input: RequestInfo | URL, init?: RequestInit) => (String(input) === `${SB_URL}/auth/v1/otp` ? (sent++, Response.json({})) : live(input, init)));
+    expect(await (await post('/bot/connect', { email: 'someone@example.com' })).text()).toContain('not the admin account');
+    expect((await post('/bot/connect/code', { email: 'someone@example.com', code: '123456' })).status).toBe(400);
+    expect(sent).toBe(0);
+    expect(await (await post('/bot/connect', { email: 'owner@example.com' })).text()).toContain('We sent a code');
+    expect(sent).toBe(1);
+    for (let i = 0; i < 4; i++) expect(await (await post('/bot/connect/code', { email: 'owner@example.com', code: '000000' })).text()).toContain('did not work');
+    expect(await (await post('/bot/connect/code', { email: 'owner@example.com', code: '000000' })).text()).toContain('Too many wrong codes');
+    expect(await (await post('/bot/connect/code', { email: 'owner@example.com', code: '123456' })).text()).toContain('Too many wrong codes');
+    await post('/bot/connect', { email: 'owner@example.com' });
+    expect(await (await post('/bot/connect/code', { email: 'owner@example.com', code: '123456' })).text()).toContain('Connected');
+  });
+});

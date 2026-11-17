@@ -5,6 +5,7 @@
  * kg on a kettlebell or 43 kg on a bar loaded with 2.5s. Pure; ported one for one to
  * `ios/TigerWorkouts/Model/Plates.swift`.
  */
+import { toKg, weightText, weightUnit } from '@/shared/utils/units';
 
 export type Kit = 'barbell' | 'dumbbell' | 'kettlebell';
 
@@ -35,7 +36,21 @@ export const PLATE_SIZES = [25, 20, 15, 10, 5, 2.5, 2, 1.25, 1, 0.5];
 /** 4 to 48 kg in 4 kg steps: the usual run of bells. */
 export const DEFAULT_KETTLEBELLS = Array.from({ length: 12 }, (_, i) => (i + 1) * 4);
 
-const EPS = 1e-6;
+// Pound kit (U11), offered and assumed while loads show in lb. Stored as kg like everything else.
+const lbs = (list: number[]) => list.map(lb => toKg(lb, 'lb'));
+export const LB_BAR = 45;
+export const LB_PLATE_SIZES = [55, 45, 35, 25, 15, 10, 5, 2.5, 1.25];
+export const LB_DUMBBELL_SIZES = [2.5, 5, 7.5, 10, 12.5, ...Array.from({ length: 22 }, (_, i) => 15 + i * 5)];
+export const LB_KETTLEBELLS = [10, 15, 20, 25, 30, 35, 40, 45, 50, 53, 60, 70, 80, 88, 97, 106];
+const LB_DEFAULT_PLATES: PlateCount[] = [[45, 8], [35, 4], [25, 4], [10, 8], [5, 4], [2.5, 4]].map(([lb, count]) => ({ kg: toKg(lb, 'lb'), count }));
+/** The bar, plates and bells assumed when none are set: a kg gym, or a pound gym while loads show in lb. */
+export const defaultBarKg = () => (weightUnit() === 'lb' ? toKg(LB_BAR, 'lb') : DEFAULT_BAR_KG);
+const defaultPlates = () => (weightUnit() === 'lb' ? LB_DEFAULT_PLATES : DEFAULT_PLATES);
+export const defaultKettlebells = () => (weightUnit() === 'lb' ? lbs(LB_KETTLEBELLS) : DEFAULT_KETTLEBELLS);
+
+// 20 g: pound plates kept in kg (to the gram) add up a few grams off the load typed in lb (U11);
+// far under the lightest real plate, so it never merges two loads.
+const EPS = 0.02;
 const r2 = (n: number) => Math.round(n * 1000) / 1000;
 
 /** Which kit an exercise is loaded with, from its key (`bb_`, `db_`, `kb_`) or its library group. */
@@ -69,11 +84,11 @@ const sideCombos = (plates: PlateCount[]): Map<number, number[]> => {
 export const kitLoads = (kit: Kit | undefined, eq: Equipment | undefined): number[] | undefined => {
   if (kit === 'barbell') {
     if (!eq?.plates?.length) return undefined;
-    const bar = eq.barKg ?? DEFAULT_BAR_KG;
+    const bar = eq.barKg ?? defaultBarKg();
     return [...sideCombos(eq.plates).keys()].map(s => r2(bar + 2 * s)).sort((a, b) => a - b);
   }
   if (kit === 'dumbbell') return eq?.dumbbells?.length ? [...new Set(eq.dumbbells)].sort((a, b) => a - b) : undefined;
-  if (kit === 'kettlebell') return [...new Set(eq?.kettlebells?.length ? eq.kettlebells : DEFAULT_KETTLEBELLS)].sort((a, b) => a - b);
+  if (kit === 'kettlebell') return [...new Set(eq?.kettlebells?.length ? eq.kettlebells : defaultKettlebells())].sort((a, b) => a - b);
   return undefined;
 };
 
@@ -114,8 +129,8 @@ export interface PlateLoad {
 
 /** The plates for a barbell load, per side. Closest possible (a tie goes lighter) when it cannot be made exactly. */
 export const platesFor = (kg: number, eq?: Equipment): PlateLoad => {
-  const bar = eq?.barKg ?? DEFAULT_BAR_KG;
-  const combos = sideCombos(eq?.plates?.length ? eq.plates : DEFAULT_PLATES);
+  const bar = eq?.barKg ?? defaultBarKg();
+  const combos = sideCombos(eq?.plates?.length ? eq.plates : defaultPlates());
   const want = (kg - bar) / 2;
   let best = 0;
   for (const s of combos.keys()) if (Math.abs(s - want) < Math.abs(best - want) - EPS) best = s;
@@ -123,16 +138,15 @@ export const platesFor = (kg: number, eq?: Equipment): PlateLoad => {
   return { bar, perSide: combos.get(best) ?? [], total, exact: Math.abs(total - kg) < EPS };
 };
 
-const num = (n: number) => (Number.isInteger(n) ? `${n}` : `${Math.round(n * 100) / 100}`);
-
 /** "20 kg bar + 2×20 + 2.5 per side", "20 kg bar, no plates". */
 export const plateText = (p: PlateLoad): string => {
-  if (!p.perSide.length) return `${num(p.bar)} kg bar, no plates`;
+  const w = (kg: number) => weightText(kg);
+  if (!p.perSide.length) return `${w(p.bar)} ${weightUnit()} bar, no plates`;
   const groups: [number, number][] = [];
   for (const kg of p.perSide) {
     const g = groups.find(x => x[0] === kg);
     if (g) g[1]++;
     else groups.push([kg, 1]);
   }
-  return `${num(p.bar)} kg bar + ${groups.map(([kg, n]) => (n > 1 ? `${n}×${num(kg)}` : num(kg))).join(' + ')} per side`;
+  return `${w(p.bar)} ${weightUnit()} bar + ${groups.map(([kg, n]) => (n > 1 ? `${n}×${w(kg)}` : w(kg))).join(' + ')} per side`;
 };

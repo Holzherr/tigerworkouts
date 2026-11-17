@@ -3,6 +3,8 @@ import { Dropdown } from '@/shared/components/ui/dropdown';
 import { NumberEntry } from '@/shared/components/ui/number-entry';
 import { numberText } from '@/shared/utils/number-entry';
 import { customStep, LOAD_STEP_CHOICES, loadStep, METER_STEP_CHOICES, metersStep, setStepSize, useStepSizes, type StepKind } from '@/shared/utils/step-sizes';
+import { lbStep, LB_STEP_CHOICES, loadIsKg, toKg, unitText } from '@/shared/utils/units';
+import { useWeightUnit } from '@/shared/utils/use-weight-unit';
 import { extraLogs, hasSetting, settingLabel, shortUnit, type ExerciseStep } from '../model';
 
 /** The step counts metres: it is done for a distance, or logs one. */
@@ -40,13 +42,21 @@ const Row = ({ title, unit, value, custom, choices, onSet }: { title: string; un
  */
 export const StepSizes = ({ step }: { step: ExerciseStep }) => {
   useStepSizes();
+  const unit = useWeightUnit();
   const key = step.exercise.key;
   const meters = countsMeters(step);
   if (!hasSetting(step) && !meters) return null;
   const set = (kind: StepKind) => (v: number | undefined) => setStepSize(key, kind, v);
+  // A weight's steps in lb while loads show in lb (U11); kept in kg, so `lbStep` gives the choice back.
+  const lb = unit === 'lb' && loadIsKg(step.exercise.unit) && !!step.exercise.unit;
   return (
     <div className="divide-y divide-line-soft rounded-card border border-line bg-surface" aria-label="Step sizes">
-      {hasSetting(step) && <Row title={`${settingLabel(step)} steps`} unit={shortUnit(step.exercise.unit)} value={loadStep(step.exercise)} custom={customStep(key, 'load') !== undefined} choices={LOAD_STEP_CHOICES} onSet={set('load')} />}
+      {hasSetting(step) &&
+        (lb ? (
+          <Row title={`${settingLabel(step)} steps`} unit={unitText(shortUnit(step.exercise.unit))} value={lbStep(loadStep(step.exercise))} custom={customStep(key, 'load') !== undefined} choices={LB_STEP_CHOICES} onSet={v => setStepSize(key, 'load', v === undefined ? undefined : toKg(v, 'lb'))} />
+        ) : (
+          <Row title={`${settingLabel(step)} steps`} unit={shortUnit(step.exercise.unit)} value={loadStep(step.exercise)} custom={customStep(key, 'load') !== undefined} choices={LOAD_STEP_CHOICES} onSet={set('load')} />
+        ))}
       {meters && <Row title="Distance steps" unit="m" value={metersStep(step.exercise, metersFallback(step))} custom={customStep(key, 'meters') !== undefined} choices={METER_STEP_CHOICES} onSet={set('meters')} />}
     </div>
   );

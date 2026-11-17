@@ -42,7 +42,7 @@ export const NotesThread = ({ notes, me, them, about, attach, onSend, placeholde
         const mine = n.author === me;
         const on = about?.(n);
         return (
-          <div key={n.id} className={cn('max-w-[85%] rounded-card px-3 py-2', mine ? 'ml-auto bg-ink text-white' : 'border border-line bg-surface')}>
+          <div key={n.id} className={cn('max-w-[85%] rounded-card px-3 py-2', mine ? 'ml-auto bg-ink text-surface' : 'border border-line bg-surface')}>
             <div className={cn('text-[11px]', mine ? 'text-white/60' : 'text-muted')}>
               {mine ? 'You' : them} · {daysAgo(n.createdAt)}
               {on ? ` · ${on}` : ''}

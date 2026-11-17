@@ -67,7 +67,7 @@ export const FollowAlongScreen = ({ runsheet, onBack, onFinish }: FollowAlongScr
   if (!runsheet.video) return <div className="p-6 text-center text-muted">No video on this workout.</div>;
   return (
     <div className="flex h-full min-h-0 flex-col bg-canvas">
-      <header className="safe-top shrink-0 bg-ink text-white">
+      <header className="safe-top shrink-0 bg-night text-white">
         <div className="flex items-center justify-between px-3 py-1.5">
           <Button variant="quiet" size="inline" onClick={onBack} className="text-white/80">
             <ChevronLeft /> Back

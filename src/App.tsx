@@ -7,14 +7,15 @@ import { uniqueById } from '@/features/discover/catalogue';
 import { SignInCard } from '@/features/auth/components/sign-in-card';
 import { FULL_LIBRARY } from '@/features/workouts/imported';
 import { EX, withStarter } from '@/features/runsheet/fixtures';
-import { copyIn, copyOnEdit, forLabel, lineage, makeExercise, measureOf, newWorkoutId, ofWorkout, resolveRefs, runsheetMinutes, scoreType, shortUnit, type ExerciseStep, type Runsheet } from '@/features/runsheet/model';
+import { copyIn, copyOnEdit, editedCopy, forLabel, lineage, makeExercise, measureOf, newWorkoutId, ofWorkout, resolveRefs, runsheetMinutes, scoreType, shortUnit, type ExerciseStep, type Runsheet } from '@/features/runsheet/model';
 import { versionOf, versionsOf } from '@/features/runsheet/versions';
 import { dropEmptyBlocks, settleEdit } from '@/features/runsheet/real-change';
 import { lastSessionLabel, lastSessionSet, lastSetLabel, lastSets, withLastUsed } from '@/features/runsheet/last-used';
 import { applyCommands, parsePlan } from '@/features/runsheet/parse-text';
 import { isImage, readImport } from '@/features/runsheet/import-file';
 import { appLink, CreatorScreen } from '@/features/creators/components/creator-screen';
-import { CreatorPageCard } from '@/features/creators/components/creator-page-card';
+import { musclesWorked, nameFromKey, workoutsWith } from '@/features/exercises/used-in';
+import { CreatorPageSettingsScreen } from '@/features/creators/components/creator-page-settings-screen';
 import { CreditedCreatorScreen } from '@/features/creators/components/credited-creator-screen';
 import { creatorFor, creatorKey, creatorPath } from '@/features/creators/credited';
 import { cn, plural } from '@/shared/utils/ui-utils';
@@ -178,7 +179,7 @@ export default function App() {
   const resolve = (s: ExerciseStep) => resolveTarget(s, st.trainingMaxes, st.bodyweightKg, st.equipment);
   // Step ids are per workout, so "last time" on a row is read against the workout it is in.
   const lastTime = (r: Runsheet) => (s: ExerciseStep) => lastSessionLabel(st.results, s, r);
-  const lastSetHint = (r: Runsheet) => (s: ExerciseStep, round: number) => lastSetLabel(lastSessionSet(st.results, s, round, r));
+  const lastSetHint = (r: Runsheet) => (s: ExerciseStep, round: number) => lastSetLabel(lastSessionSet(st.results, s, round, r), s.exercise.unit);
 
   // exercise picker as a promise so the editor can await a pick
   const [pickerOpen, setPickerOpen] = useState(false);
@@ -240,6 +241,12 @@ export default function App() {
   // An edit of a workout that is not yours, held on its page until a block is closed or the page is
   // left: only then, and only if something real changed, is your copy made (review D18).
   const [held, setHeld] = useState<{ for: string; r: Runsheet } | null>(null);
+  // Review round 2, U6: a coach names themselves before the first invite, a client before Accept.
+  // Synced at once, so the other side reads it from the profile straight away.
+  const setName = async (name: string) => {
+    act.setProfile({ name });
+    await cloud.syncNow();
+  };
   const makeCopy = (next: Runsheet, original: Runsheet) => {
     const copy = copyOnEdit(next, original, newWorkoutId(), st.name);
     act.saveWorkout({ ...copy, icon: copy.icon ?? defaultIcon(copy.id!) });
@@ -292,7 +299,7 @@ export default function App() {
   const overlay = (
     <>
       {picker}
-      {toast && <div role="status" className="pointer-events-none fixed inset-x-0 bottom-20 z-50 flex justify-center"><div className="rounded-full bg-ink px-4 py-2 text-[13px] font-semibold text-white shadow-lift">{toast}</div></div>}
+      {toast && <div role="status" className="pointer-events-none fixed inset-x-0 bottom-20 z-50 flex justify-center"><div className="rounded-full bg-night px-4 py-2 text-[13px] font-semibold text-white shadow-lift">{toast}</div></div>}
     </>
   );
   // phone-first screens sit in a centred 480px column on larger screens
@@ -329,14 +336,23 @@ export default function App() {
     );
   }
   if (route.name === 'join') {
-    return full(<JoinRoute key={route.id} code={route.id} signedIn={!!cloud.user} signIn={signInCard('Sign in to accept', ['A free account; no password, we email you a 6-digit code', 'Same account as the iPhone app'])} onAccepted={() => setCoachTick(t => t + 1)} onContinue={() => go('/discover')} />);
+    return full(<JoinRoute key={route.id} code={route.id} signedIn={!!cloud.user} myName={st.name} onSetName={setName} signIn={signInCard('Sign in to accept', ['A free account; no password, we email you a 6-digit code', 'Same account as the iPhone app'])} onAccepted={() => setCoachTick(t => t + 1)} onContinue={() => go('/discover')} />);
   }
   if (route.name === 'coach' && route.id && cloud.user) {
     const mine = st.workouts.filter(w => w.id);
-    return full(<ClientRoute key={route.id} clientId={route.id} me={cloud.user.id} workouts={mine} lookup={lookup} exercise={k => ({ name: library[k]?.name ?? k, unit: library[k]?.unit ?? '' })} onBack={() => go('/coach')} onNewWorkout={() => go('/new')} syncNow={cloud.syncNow} say={say} />);
+    // Review round 2, U5: saved and catalogue workouts go as the coach's copy (one per original).
+    const ownCopy = (r: Runsheet) => {
+      const had = copyIn(st.workouts, r);
+      if (had) return had.id!;
+      const copy = editedCopy(r, r, newWorkoutId(), st.name);
+      act.saveWorkout({ ...copy, icon: copy.icon ?? defaultIcon(copy.id!) });
+      return copy.id!;
+    };
+    const savedOthers = st.saved.flatMap(id => (byId.get(id) && !st.workouts.some(w => w.id === id) ? [byId.get(id)!] : []));
+    return full(<ClientRoute key={route.id} clientId={route.id} me={cloud.user.id} workouts={mine} saved={savedOthers} catalogue={IMPORTED.map(w => w.runsheet)} ownCopy={ownCopy} lookup={lookup} exercise={k => ({ name: library[k]?.name ?? k, unit: library[k]?.unit ?? '' })} onBack={() => go('/coach')} onNewWorkout={() => go('/new')} syncNow={cloud.syncNow} say={say} />);
   }
   if (route.name === 'coach') {
-    return full(<CoachRoute signedIn={!!cloud.user} signIn={signInCard('Sign in to coach', ['Your clients link to your account', 'No password: we email you a 6-digit code'])} onOpenClient={id => go(`/coach/${encodeURIComponent(id)}`)} onHowItWorks={() => go('/coaches')} onBack={() => go('/me')} say={say} />);
+    return full(<CoachRoute signedIn={!!cloud.user} myName={st.name} onSetName={setName} signIn={signInCard('Sign in to coach', ['Your clients link to your account', 'No password: we email you a 6-digit code'])} onOpenClient={id => go(`/coach/${encodeURIComponent(id)}`)} onHowItWorks={() => go('/coaches')} onBack={() => go('/me')} say={say} />);
   }
   // The workout week by week, with the workouts it was duplicated from or into (review D9).
   const weeksOf = (w: Runsheet) => weekTable(w, st.results, st.workouts, k => library[k]?.name ?? k, k => library[k]?.unit);
@@ -543,9 +559,12 @@ export default function App() {
     return full(<WeekTableScreen key={route.id} title={found.title} table={weeksOf(found)} onBack={() => back(`/w/${encodeURIComponent(route.id)}`)} onExercise={k => go(exerciseLink(k))} suggestions={{ on: suggestOn(st.suggestions, found), enabled: suggestEnabled(st.suggestions), onChange: on => act.setSuggestions(withWorkout(st.suggestions, found, on)) }} />);
   }
   if (route.name === 'exercise') {
-    const ex = library[route.id] ?? { key: route.id, name: route.id, unit: '', step: 1 };
+    const ex = library[route.id] ?? { key: route.id, name: nameFromKey(route.id), unit: '', step: 1 };
     const stall = stallOf(route.id);
-    return full(<ExerciseHistoryScreen key={route.id} exercise={ex} group={LIB[route.id]?.group ?? library[route.id]?.group} results={st.results} onBack={() => back('/history/exercises')} onSession={id => go(`/s/${encodeURIComponent(id)}`)} stall={stall} onDismissStall={stall ? () => dismiss(stall) : undefined} onExercise={k => go(exerciseLink(k))} progress={suggestEnabled(st.suggestions) && ex.unit && shortUnit(ex.unit) !== 'kph' && !measureOf(ex.unit) ? { own: st.suggestions?.exercises?.[ex.key], account: st.suggestions?.mode ?? 'reps', onChange: m => act.setSuggestions(withExercise(st.suggestions, ex.key, m)) } : undefined} />);
+    const group = LIB[route.id]?.group ?? library[route.id]?.group;
+    const using = workoutsWith(route.id, all, new Set(st.workouts.map(wid)));
+    const usedIn = { total: using.length, top: using.slice(0, 3).map(r => ({ id: wid(r), title: r.title, meta: [`${runsheetMinutes(r)} min`, r.source?.author ?? r.creator].filter(Boolean).join(' · ') })) };
+    return full(<ExerciseHistoryScreen key={route.id} exercise={ex} group={group} muscles={musclesWorked(ex.name, group)} usedIn={usedIn} onWorkout={id => go(`/w/${encodeURIComponent(id)}`)} results={st.results} onBack={() => back('/history/exercises')} onSession={id => go(`/s/${encodeURIComponent(id)}`)} stall={stall} onDismissStall={stall ? () => dismiss(stall) : undefined} onExercise={k => go(exerciseLink(k))} progress={suggestEnabled(st.suggestions) && ex.unit && shortUnit(ex.unit) !== 'kph' && !measureOf(ex.unit) ? { own: st.suggestions?.exercises?.[ex.key], account: st.suggestions?.mode ?? 'reps', onChange: m => act.setSuggestions(withExercise(st.suggestions, ex.key, m)) } : undefined} />);
   }
   if (route.name === 'result') {
     const r = draftOf(route.id) ?? byId.get(route.id);
@@ -656,6 +675,9 @@ export default function App() {
       </div>
     );
   }
+  if (tab === 'me' && sub === 'creator' && cloud.user) {
+    return shell('me', <CreatorPageSettingsScreen publicCount={st.workouts.filter(w => w.public).length} onOpenPage={key => go(`/c/${encodeURIComponent(key)}`)} onBack={() => go('/me')} />);
+  }
   if (tab === 'me') {
     const since = Date.now() - 28 * 864e5;
     const load = muscleLoad(st.results.filter(r => Date.parse(r.startedAt) >= since).flatMap(r => workedFrom(r, byId.get(r.runsheetId), k => ({ name: library[k]?.name ?? k, group: library[k]?.group }))));
@@ -691,6 +713,8 @@ export default function App() {
           }}
           onImport={() => setImportOpen(true)}
           onCoach={() => go('/coach')}
+          onCreatorPage={cloud.user ? () => go('/me/creator') : undefined}
+          publicCount={st.workouts.filter(w => w.public).length}
           lead={!cloud.user && <SignInCard title="Sign in to sync" reasons={['Sessions logged here are kept on this device until you do', 'Same account as the iPhone app: one history on both', 'No password: we email you a 6-digit code']} onSendCode={sendCode} onVerify={async (e, c) => { await verifyCode(e, c); act.setSignedIn(true); }} onGoogle={google ? signInGoogle : undefined} />}
         >
           {cloud.user && (
@@ -703,7 +727,6 @@ export default function App() {
           )}
           {cloud.user && <MyAiCoach onChanged={() => setCoachTick(t => t + 1)} say={say} />}
           {cloud.user && <MyCoaches me={cloud.user.id} about={n => (n.assignmentId ? assigned.find(a => a.id === n.assignmentId)?.workout?.title : undefined)} onLeft={() => (setCoachTick(t => t + 1), say('Coaching ended'))} say={say} />}
-          {cloud.user && <CreatorPageCard publicCount={st.workouts.filter(w => w.public).length} onOpenPage={key => go(`/c/${encodeURIComponent(key)}`)} onCoach={() => go('/coach')} />}
           <Button variant="ghost" block onClick={() => setSettingsOpen(true)}>
             Name, avatar and app settings
           </Button>
@@ -716,7 +739,7 @@ export default function App() {
             </Button>
           )}
         </MeScreen>
-        <SettingsSheet open={settingsOpen} onOpenChange={setSettingsOpen} name={st.name} avatar={st.avatar} email={cloud.user?.email ?? undefined} volume={volume} onVolume={v => { setVolume(v); setVol(v); }} defaultRest={defaultRest} onDefaultRest={v => { setDefaultRest(v); setRest(getDefaultRest()); }} intent={intent} onIntent={v => { storeIntent(v); setIntentState(v); }} suggest={st.suggestions} onSuggest={act.setSuggestions} equipment={st.equipment} onEquipment={act.setEquipment} onChange={act.setProfile} onInvite={invite} onSignOut={cloud.user ? out : undefined} onDeleteAccount={cloud.user ? async clear => {
+        <SettingsSheet open={settingsOpen} onOpenChange={setSettingsOpen} name={st.name} avatar={st.avatar} units={st.units} email={cloud.user?.email ?? undefined} volume={volume} onVolume={v => { setVolume(v); setVol(v); }} defaultRest={defaultRest} onDefaultRest={v => { setDefaultRest(v); setRest(getDefaultRest()); }} intent={intent} onIntent={v => { storeIntent(v); setIntentState(v); }} suggest={st.suggestions} onSuggest={act.setSuggestions} equipment={st.equipment} onEquipment={act.setEquipment} onChange={act.setProfile} onInvite={invite} onSignOut={cloud.user ? out : undefined} onDeleteAccount={cloud.user ? async clear => {
             const done = await deleteAccount();
             if (!done.data) return `Could not delete: ${done.error ?? 'try again'}`;
             if (clear) act.clearDevice();
@@ -848,7 +871,7 @@ const RunRoute = ({ resume, lookup, onLogKept, onResumeKept, onKeptSheet, versio
   };
   const where = `left at step ${Math.min(kept.state.i + 1, kept.state.slots.length)} of ${kept.state.slots.length}, ${ago(Date.now() - kept.savedAt)}`;
   return (
-    <div className="flex h-dvh flex-col items-center justify-center gap-3 bg-ink px-6 text-center text-white">
+    <div className="flex h-dvh flex-col items-center justify-center gap-3 bg-night px-6 text-center text-white">
       <div className="text-[22px] font-extrabold">{own ? 'Pick up where you left off?' : `${kept.state.title} is not finished`}</div>
       <div className="text-[14px] text-white/70">{own ? `${props.runsheet.title} was ${where}.` : `It was ${where}. Starting ${props.runsheet.title} would lose it.`}</div>
       <div className="mt-2 flex w-full max-w-xs flex-col gap-2">
@@ -863,11 +886,11 @@ const RunRoute = ({ resume, lookup, onLogKept, onResumeKept, onKeptSheet, versio
           </Button>
         )}
         {canSave && (
-          <Button block variant="dark" className="bg-white/10" onClick={saveWhatWasDone}>
+          <Button block variant="dark" className="bg-white/10 text-white" onClick={saveWhatWasDone}>
             {own ? 'Save what I did' : `Save it, then start ${props.runsheet.title}`}
           </Button>
         )}
-        <Button block variant="dark" className="bg-white/10" onClick={() => (unlockAudio(), Runner.clearPersisted(), setFrom('fresh'))}>
+        <Button block variant="dark" className="bg-white/10 text-white" onClick={() => (unlockAudio(), Runner.clearPersisted(), setFrom('fresh'))}>
           {own ? 'Start over' : `Discard it and start ${props.runsheet.title}`}
         </Button>
       </div>
@@ -979,7 +1002,7 @@ const RunSession = ({ runsheet, results, intent, equipment, library, origin: sta
   };
   return (
     // A phone-wide column on a larger screen, as every other screen is.
-    <div className="h-dvh bg-ink">
+    <div className="h-dvh bg-night">
     <div className="relative mx-auto h-full w-full max-w-[480px]">
       {!over && undo.toast}
       {prSay && (

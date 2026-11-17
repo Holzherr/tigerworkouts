@@ -7,6 +7,9 @@ import SwiftUI
 struct MeView: View {
     @Environment(Store.self) private var store
     @State private var signingIn = false
+    /// The web coach dashboard, open in the in-app browser (U7).
+    @State private var dashboard: WebPage?
+    @State private var openingDashboard = false
 
     private var streak: Streak { EffortModel.streak(store.results) }
 
@@ -90,6 +93,24 @@ struct MeView: View {
                                 .foregroundStyle(Brand.muted)
                         }
                     }
+
+                    if store.signedIn {
+                        Button {
+                            Task { await openCoachDashboard() }
+                        } label: {
+                            HStack(spacing: 12) {
+                                Image(systemName: "person.2").foregroundStyle(Brand.coral)
+                                VStack(alignment: .leading, spacing: 2) {
+                                    Text("Coach clients").foregroundStyle(Brand.ink)
+                                    Text("Invite clients, send them workouts, see what they did").font(.footnote).foregroundStyle(Brand.muted)
+                                }
+                                Spacer()
+                                if openingDashboard { ProgressView() }
+                            }
+                        }
+                        .disabled(openingDashboard)
+                        .accessibilityIdentifier("coach-clients")
+                    }
                 }
 
                 AICoachSection()
@@ -111,7 +132,16 @@ struct MeView: View {
             .sheet(isPresented: $signingIn) {
                 SignInView { await store.sync() }
             }
+            .sheet(item: $dashboard) { page in
+                SafariView(url: page.url).ignoresSafeArea()
+            }
         }
+    }
+
+    private func openCoachDashboard() async {
+        openingDashboard = true
+        defer { openingDashboard = false }
+        dashboard = WebPage(url: await Supabase.shared.coachDashboardURL())
     }
 
     private var identity: some View {
@@ -119,7 +149,7 @@ struct MeView: View {
             HStack(spacing: 14) {
                 Group {
                     if let user = store.user {
-                        Text(Self.initials(user.email))
+                        Text(Self.initials(store.profileName ?? user.email))
                             .font(.system(size: 22, weight: .heavy, design: .rounded))
                             .foregroundStyle(.white)
                     } else {
@@ -132,7 +162,11 @@ struct MeView: View {
                 .background(store.user == nil ? Brand.coralSoft : Brand.coral, in: Circle())
 
                 VStack(alignment: .leading, spacing: 2) {
-                    Text(store.user?.email ?? "You").font(.headline).foregroundStyle(Brand.ink)
+                    // Your name leads once you have one (U6); the email sits under it.
+                    Text(store.profileName ?? store.user?.email ?? "You").font(.headline).foregroundStyle(Brand.ink)
+                    if store.profileName != nil, let email = store.user?.email {
+                        Text(email).font(.footnote).foregroundStyle(Brand.muted)
+                    }
                     Text(status).font(.footnote).foregroundStyle(Brand.muted)
                 }
             }
@@ -232,9 +266,36 @@ struct SettingsView: View {
     @State private var deleteMessage: String?
     /// Why the last sign-out did not happen: something is not on the account yet.
     @State private var signOutHeld: String?
+    /// Settings → Name (U6), saved when the field is left.
+    @State private var nameDraft = ""
+    @FocusState private var nameFocused: Bool
+
+    private func saveName() {
+        let draft = nameDraft
+        guard !draft.trimmingCharacters(in: .whitespaces).isEmpty, draft != store.profileName else { return }
+        Task { await store.setName(draft) }
+    }
 
     var body: some View {
         Form {
+            if store.signedIn {
+                Section {
+                    TextField("Your name", text: $nameDraft)
+                        .textContentType(.name)
+                        .submitLabel(.done)
+                        .focused($nameFocused)
+                        .onSubmit(saveName)
+                        .accessibilityIdentifier("profile-name")
+                } header: {
+                    Text("Name")
+                } footer: {
+                    Text("Your coach or your clients see it.")
+                }
+                .onAppear { nameDraft = store.profileName ?? "" }
+                .onChange(of: nameFocused) { _, focused in if !focused { saveName() } }
+                .onDisappear(perform: saveName)
+            }
+
             Section {
                 if let user = store.user {
                     LabeledContent("Signed in as", value: user.email ?? "your account")

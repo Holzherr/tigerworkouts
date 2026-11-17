@@ -8,14 +8,19 @@ import { Chip } from '@/shared/components/ui/chip';
 import { WorkoutIcon } from '@/shared/components/ui/workout-icon';
 import { cn } from '@/shared/utils/ui-utils';
 import { daysAgo, doneBy, prescribedVsDone, type PlanRow } from '../rollup';
+import { sendChoices } from '../send-choices';
 import { NotesThread } from './notes-thread';
 
 export interface ClientDetailScreenProps {
   client: { id: string; name: string; since?: string };
   /** The coach's user id. */
   me: string;
-  /** The coach's own workouts: what can be assigned. */
+  /** The coach's own workouts, listed first. */
   workouts: Runsheet[];
+  /** Workouts the coach saved from others, listed after their own. */
+  saved?: Runsheet[];
+  /** The catalogue, searched once the coach types (review round 2, U5). */
+  catalogue?: Runsheet[];
   /** Null while loading. */
   assignments: Assignment[] | null;
   /** The client's recent sessions, newest first; null while loading. */
@@ -26,7 +31,8 @@ export interface ClientDetailScreenProps {
   /** A workout by id, to set each session against what it prescribed. */
   lookup: (id: string) => Runsheet | undefined;
   exercise: (key: string) => { name: string; unit: string };
-  onAssign: (workoutId: string, note: string) => Promise<string | null>;
+  /** Sends a workout; one the coach does not own goes as their copy. Resolves to an error line, or null. */
+  onAssign: (workout: Runsheet, note: string) => Promise<string | null>;
   onUnassign: (id: string) => void;
   onAddNote: (body: string, sessionId?: string) => Promise<string | null>;
   onEnd: () => void;
@@ -44,7 +50,7 @@ const dateLabel = (iso: string) => new Date(iso).toLocaleDateString('en-GB', { w
  * whether it was done, their sessions with each exercise's sets against what the workout set,
  * the notes between you, and End coaching.
  */
-export const ClientDetailScreen = ({ client, me, workouts, assignments, sessions, notes, notice, lookup, exercise, onAssign, onUnassign, onAddNote, onEnd, onBack, onNewWorkout, now = new Date() }: ClientDetailScreenProps) => {
+export const ClientDetailScreen = ({ client, me, workouts, saved = [], catalogue = [], assignments, sessions, notes, notice, lookup, exercise, onAssign, onUnassign, onAddNote, onEnd, onBack, onNewWorkout, now = new Date() }: ClientDetailScreenProps) => {
   const [pick, setPick] = useState<string | null>(null);
   const [note, setNote] = useState('');
   const [query, setQuery] = useState('');
@@ -52,7 +58,8 @@ export const ClientDetailScreen = ({ client, me, workouts, assignments, sessions
   const [error, setError] = useState<string | null>(null);
   const [open, setOpen] = useState<string | null>(null);
   const [about, setAbout] = useState<string | undefined>();
-  const shown = useMemo(() => workouts.filter(w => !query.trim() || w.title.toLowerCase().includes(query.trim().toLowerCase())), [workouts, query]);
+  const choices = useMemo(() => sendChoices(workouts, saved, catalogue, query), [workouts, saved, catalogue, query]);
+  const picked = [...choices.own, ...choices.saved, ...choices.catalogue].find(w => w.id === pick);
   const title = (id: string) => lookup(id)?.title ?? 'A workout';
   const sessionTitle = (id: string) => {
     const s = sessions?.find(x => x.id === id);
@@ -63,9 +70,9 @@ export const ClientDetailScreen = ({ client, me, workouts, assignments, sessions
     return a && title(a.workoutId);
   };
   const send = async () => {
-    if (!pick) return;
+    if (!picked) return;
     setBusy(true);
-    const err = await onAssign(pick, note);
+    const err = await onAssign(picked, note);
     setBusy(false);
     setError(err);
     if (!err) {
@@ -88,39 +95,35 @@ export const ClientDetailScreen = ({ client, me, workouts, assignments, sessions
 
         <section aria-label="Assign a workout" className="space-y-2 rounded-card border border-line bg-surface p-3">
           <div className="text-[14px] font-bold">Send a workout</div>
-          {workouts.length === 0 ? (
-            <>
-              <div className="text-[13px] text-muted">You send workouts you have made. Make one, then come back here to send it.</div>
-              {onNewWorkout && (
-                <Button block variant="ghost" onClick={onNewWorkout}>
-                  New workout
-                </Button>
-              )}
-            </>
-          ) : (
-            <>
-              {workouts.length > 6 && (
-                <label className="flex h-10 items-center gap-2 rounded-tile border border-line bg-canvas px-3">
-                  <Search className="size-4 text-faint" />
-                  <input value={query} onChange={e => setQuery(e.target.value)} placeholder="Find one of your workouts" aria-label="Find a workout" className="min-w-0 flex-1 bg-transparent text-[15px] outline-none" />
-                </label>
-              )}
-              <div role="radiogroup" aria-label="Your workouts" className="max-h-64 space-y-1 overflow-y-auto">
-                {shown.map(w => (
-                  <button key={w.id} type="button" role="radio" aria-checked={pick === w.id} onClick={() => setPick(w.id ?? null)} className={cn('flex w-full items-center gap-2.5 rounded-tile border px-2 py-1.5 text-left', pick === w.id ? 'border-brand-line bg-brand-soft' : 'border-transparent active:bg-line-soft')}>
-                    <WorkoutIcon runsheet={w} size={36} />
-                    <span className="min-w-0 flex-1 truncate text-[14px] font-semibold">{w.title}</span>
-                    {pick === w.id && <Check className="size-4 text-brand-ink" />}
-                  </button>
-                ))}
+          <label className="flex h-10 items-center gap-2 rounded-tile border border-line bg-canvas px-3">
+            <Search className="size-4 text-faint" />
+            <input value={query} onChange={e => setQuery(e.target.value)} placeholder="Find a workout" aria-label="Find a workout" className="min-w-0 flex-1 bg-transparent text-[15px] outline-none" />
+          </label>
+          <div role="radiogroup" aria-label="Workouts to send" className="max-h-72 space-y-1 overflow-y-auto">
+            {workouts.length === 0 && !query.trim() && (
+              <div className="space-y-2 px-1 py-1">
+                <div className="text-[13px] text-muted">Search the catalogue above, or make a workout of your own.</div>
+                {onNewWorkout && (
+                  <Button block variant="ghost" onClick={onNewWorkout}>
+                    New workout
+                  </Button>
+                )}
               </div>
+            )}
+            <PickGroup label="Yours" list={choices.own} pick={pick} onPick={setPick} />
+            <PickGroup label="Saved" list={choices.saved} pick={pick} onPick={setPick} />
+            <PickGroup label="From the catalogue" list={choices.catalogue} pick={pick} onPick={setPick} />
+            {query.trim() && !choices.own.length && !choices.saved.length && !choices.catalogue.length && <div className="px-1 py-1 text-[13px] text-muted">Nothing matches “{query.trim()}”.</div>}
+          </div>
+          {picked && (
+            <>
               <textarea value={note} onChange={e => setNote(e.target.value)} rows={2} maxLength={1000} placeholder="A note with it (optional)" aria-label="Note with the workout" className="w-full rounded-tile border border-line bg-canvas p-3 text-[15px] outline-none focus:border-hint" />
-              <Button block onClick={send} disabled={!pick || busy}>
-                {busy ? 'Sending…' : `Send to ${client.name.split(' ')[0]}`}
+              <Button block onClick={send} disabled={busy}>
+                {busy ? 'Sending…' : `Send ${picked.title} to ${client.name.split(' ')[0]}`}
               </Button>
-              {error && <div className="text-[13px] text-danger">{error}</div>}
             </>
           )}
+          {error && <div className="text-[13px] text-danger">{error}</div>}
         </section>
 
         <div className={heading}>Sent</div>
@@ -219,6 +222,24 @@ export const ClientDetailScreen = ({ client, me, workouts, assignments, sessions
     </div>
   );
 };
+
+/** One group of the send list, under its small heading; nothing when empty. */
+const PickGroup = ({ label, list, pick, onPick }: { label: string; list: Runsheet[]; pick: string | null; onPick: (id: string | null) => void }) =>
+  list.length === 0 ? null : (
+    <div role="group" aria-label={label} className="space-y-1">
+      <div className="px-1 pt-1 text-[11px] font-bold tracking-widest text-muted uppercase">{label}</div>
+      {list.map(w => (
+        <button key={w.id} type="button" role="radio" aria-checked={pick === w.id} onClick={() => onPick(w.id ?? null)} className={cn('flex w-full items-center gap-2.5 rounded-tile border px-2 py-1.5 text-left', pick === w.id ? 'border-brand-line bg-brand-soft' : 'border-transparent active:bg-line-soft')}>
+          <WorkoutIcon runsheet={w} size={36} />
+          <span className="min-w-0 flex-1">
+            <span className="block truncate text-[14px] font-semibold">{w.title}</span>
+            {w.creator && <span className="block truncate text-[12px] text-muted">{w.creator}</span>}
+          </span>
+          {pick === w.id && <Check className="size-4 text-brand-ink" />}
+        </button>
+      ))}
+    </div>
+  );
 
 const VERDICT: Record<NonNullable<PlanRow['verdict']>, { label: string; variant: 'brand' | 'warn' | 'value' | 'outline' }> = {
   hit: { label: 'Hit', variant: 'brand' },

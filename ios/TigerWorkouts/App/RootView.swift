@@ -114,14 +114,18 @@ struct RootView: View {
                 }
             }
         }
-        // A workout link lands on the Workouts tab, whichever tab was open.
+        // A workout link lands on the Workouts tab, whichever tab was open. Universal links
+        // (https://tigerworkouts.com/#/w/…, #/join/…) arrive here as well as the app's own scheme.
         .onOpenURL { url in
-            if url.host == "w" { tab = .workouts }
-            if let code = JoinLink.code(from: url) { joining = JoinCode(id: code) }
+            switch AppLink.parse(url) {
+            case .workout: tab = .workouts
+            case .join(let code): joining = JoinCode(id: code)
             // The Up next widget: tigerworkouts://do/<id> starts the session, as home's Start does.
-            if url.host == "do", let id = UpNextSnapshot.workoutId(fromStart: url) {
+            case .start(let id):
                 widgetStart = id
                 startFromWidget()
+            case .coach: tab = .me
+            case nil: break
             }
         }
         .onChange(of: store.loaded) { _, _ in startFromWidget() }

@@ -1,5 +1,5 @@
 import { shortDate } from '@/shared/utils/dates';
-import { ChevronLeft } from 'lucide-react';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { ClipThumb } from '@/shared/components/ui/clip-thumb';
 import { Button } from '@/shared/components/ui/button';
 import { shortUnit, type ExerciseRef } from '@/features/runsheet/model';
@@ -13,6 +13,10 @@ import type { Stall } from '../stall';
 import { Dropdown } from '@/shared/components/ui/dropdown';
 import type { ProgressMode } from '@/features/runsheet/targets';
 import { PROGRESS_MODES } from '../suggestions';
+import { MUSCLE_LABEL, type Muscle } from '../muscles';
+import { loadIsKg, loadText, shownWeight, unitText } from '@/shared/utils/units';
+
+const WEIGHT_METRICS: ChartMetric[] = ['strength', 'load', 'volume'];
 
 export interface ExerciseHistoryScreenProps {
   exercise: ExerciseRef;
@@ -31,6 +35,11 @@ export interface ExerciseHistoryScreenProps {
   onDismissStall?: () => void;
   /** Opens another exercise's logbook, from a swap option. */
   onExercise?: (key: string) => void;
+  /** The muscles it works, main ones first; shown before anything is logged (review round 2 U14). */
+  muscles?: { main: Muscle[]; also: Muscle[] };
+  /** The workouts that use it: how many, and the first few to open. */
+  usedIn?: { total: number; top: { id: string; title: string; meta?: string }[] };
+  onWorkout?: (id: string) => void;
 }
 
 const date = shortDate;
@@ -40,11 +49,11 @@ export const paceOver = (group?: string) => (group === 'rower' ? 500 : 1000);
 
 const chartLabel = (kind: LogKind, unit: string, per: number) =>
   kind === 'strength'
-    ? `Estimated 1RM${unit ? ` · ${unit}` : ''}`
+    ? `Estimated 1RM${unit ? ` · ${unitText(unit)}` : ''}`
     : kind === 'load'
       ? unit === 'kph'
         ? 'Top speed · kph'
-        : `Top load${unit ? ` · ${unit}` : ''}`
+        : `Top load${unit ? ` · ${unitText(unit)}` : ''}`
       : kind === 'reps'
         ? 'Most reps in a set'
         : kind === 'pace'
@@ -57,14 +66,14 @@ const chartLabel = (kind: LogKind, unit: string, per: number) =>
                 ? 'Longest set'
                 : 'Rounds per session';
 
-const metricLabel = (m: ChartMetric, unit: string, per: number) => (m === 'volume' ? `Volume per session${unit ? ` · ${unit}` : ''}` : m === 'totalReps' ? 'Total reps per session' : chartLabel(m, unit, per));
+const metricLabel = (m: ChartMetric, unit: string, per: number) => (m === 'volume' ? `Volume per session${unit ? ` · ${unitText(unit)}` : ''}` : m === 'totalReps' ? 'Total reps per session' : chartLabel(m, unit, per));
 
 /** A row of small toggle pills, each a 44px-tall tap. */
 const Pills = <T extends string>({ label, options, value, onChange }: { label: string; options: [T, string][]; value: T; onChange: (v: T) => void }) => (
   <div role="radiogroup" aria-label={label} className="flex flex-wrap gap-1">
     {options.map(([v, text]) => (
       <button key={v} type="button" role="radio" aria-checked={v === value} onClick={() => onChange(v)} className="flex min-h-11 items-center">
-        <span className={cn('rounded-pill px-2.5 py-1 text-[12px] font-bold', v === value ? 'bg-ink text-white' : 'bg-line-soft text-body')}>{text}</span>
+        <span className={cn('rounded-pill px-2.5 py-1 text-[12px] font-bold', v === value ? 'bg-ink text-surface' : 'bg-line-soft text-body')}>{text}</span>
       </button>
     ))}
   </div>
@@ -85,13 +94,14 @@ const fastestTiles = (r: Records, done: Map<string, number>): Tile[] =>
 
 /** What records mean for this kind of work. Timed work gets what exists rather than blanks. */
 const tiles = (r: Records, unit: string, last?: string, done = new Map<string, number>()): Tile[] => {
-  const u = unit ? ` ${unit}` : '';
+  const u = unit ? ` ${unitText(unit)}` : '';
+  const lt = (n: number) => loadText(n, unit);
   const t = (label: string, rec: Rec | undefined, value: (n: number) => string, withSet = false): Tile[] =>
     rec ? [{ label, value: value(rec.value), sub: [withSet && rec.set ? setLabel(rec.set) : '', date(rec.at)].filter(Boolean).join(' · ') }] : [];
   const sessions: Tile = { label: 'Sessions', value: `${r.sessions}`, ...(last ? { sub: `last ${date(last)}` } : {}) };
   if (r.kind === 'strength')
-    return [...t('Heaviest', r.heaviest, n => `${fmtNum(n)}${u}`, true), ...t('Best est. 1RM', r.e1rm, n => `${fmtNum(n)}${u}`, true), ...t('Most reps', r.reps, n => fmtNum(n), true), ...t('Best volume', r.volume, n => `${fmtNum(Math.round(n))}${u}`)];
-  if (r.kind === 'load') return [...t(unit === 'kph' ? 'Top speed' : 'Heaviest', r.heaviest, n => `${fmtNum(n)}${u}`), sessions];
+    return [...t('Heaviest', r.heaviest, n => `${lt(n)}${u}`, true), ...t('Best est. 1RM', r.e1rm, n => `${lt(n)}${u}`, true), ...t('Most reps', r.reps, n => fmtNum(n), true), ...t('Best volume', r.volume, n => `${Math.round(Number(lt(n)))}${u}`)];
+  if (r.kind === 'load') return [...t(unit === 'kph' ? 'Top speed' : 'Heaviest', r.heaviest, n => `${lt(n)}${u}`), sessions];
   if (r.kind === 'reps') return [...t('Most reps', r.reps, n => fmtNum(n)), sessions];
   if (r.kind === 'pace') return [...fastestTiles(r, done), ...t('Furthest', r.distance, n => `${fmtNum(n)} m`, true), sessions].slice(0, 4);
   if (r.kind === 'distance') return [...t('Furthest', r.distance, n => `${fmtNum(n)} m`), sessions];
@@ -106,7 +116,7 @@ const tiles = (r: Records, unit: string, last?: string, done = new Map<string, n
  * the sessions newest first with their sets. A set that beat a record standing at the time carries
  * a small PR marker.
  */
-export const ExerciseHistoryScreen = ({ exercise: ex, group, results, onBack, onSession, backLabel = 'Back', stall, onDismissStall, onExercise, progress }: ExerciseHistoryScreenProps) => {
+export const ExerciseHistoryScreen = ({ exercise: ex, group, results, onBack, onSession, backLabel = 'Back', stall, onDismissStall, onExercise, progress, muscles, usedIn, onWorkout }: ExerciseHistoryScreenProps) => {
   const history = exerciseHistory(results, ex.key, ex.unit);
   const rec = records(results, ex.key, ex.unit);
   const unit = shortUnit(ex.unit);
@@ -115,12 +125,14 @@ export const ExerciseHistoryScreen = ({ exercise: ex, group, results, onBack, on
   const [picked, setMetric] = useState<ChartMetric>(metrics[0]);
   const metric = metrics.includes(picked) ? picked : metrics[0];
   const [range, setRange] = useState<ChartRange>('all');
-  const all = pointsFor(history, metric, per);
+  // Weights on the chart in the unit loads show in (U11); a speed, a time or a count stays.
+  const all = pointsFor(history, metric, per).map(p => (WEIGHT_METRICS.includes(metric) && loadIsKg(unit) ? { ...p, value: shownWeight(p.value) } : p));
   const points = inRange(all, range, Date.now());
   // How often each distance was done, so the fastest-time tiles show the ones that matter.
   const done = new Map<string, number>();
   for (const x of history.flatMap(s => s.sets)) if (x.meters !== undefined && x.seconds !== undefined) done.set(String(Math.round(x.meters)), (done.get(String(Math.round(x.meters))) ?? 0) + 1);
   const timeAxis = metric === 'pace' || metric === 'time';
+  const media = !!(ex.clip || ex.poster);
   return (
     <div className="flex h-full min-h-0 flex-col bg-canvas">
       <header className="safe-top shrink-0 bg-surface px-4 pt-2 pb-3">
@@ -128,12 +140,55 @@ export const ExerciseHistoryScreen = ({ exercise: ex, group, results, onBack, on
           <ChevronLeft /> {backLabel}
         </Button>
         <div className="mt-1 flex items-center gap-3">
-          <ClipThumb size="sm" clip={ex.clip} poster={ex.poster} icon={ex.icon ?? '🏋️'} />
+          {!media && <ClipThumb size="sm" icon={ex.icon ?? '🏋️'} />}
           <h1 className="min-w-0 flex-1 text-[20px] leading-tight font-extrabold">{ex.name}</h1>
         </div>
       </header>
       <div className="min-h-0 flex-1 space-y-3 overflow-y-auto px-3 py-3">
-        {history.length === 0 && <div className="py-10 text-center text-[13px] text-muted">Not logged yet. Finish a workout with it and it shows up here.</div>}
+        {media && (
+          <div className="mx-auto aspect-square w-full max-w-72 overflow-hidden rounded-card border border-line bg-surface">
+            {ex.clip ? (
+              <>
+                <video src={ex.clip} poster={ex.poster} autoPlay muted loop playsInline preload="metadata" className="size-full object-cover motion-reduce:hidden" aria-label={`${ex.name}, demo`} />
+                {ex.poster && <img src={ex.poster} alt="" className="hidden size-full object-cover motion-reduce:block" />}
+              </>
+            ) : (
+              <img src={ex.poster} alt={ex.name} className="size-full object-cover object-top" />
+            )}
+          </div>
+        )}
+        {muscles && muscles.main.length + muscles.also.length > 0 && (
+          <div aria-label="Muscles worked" className="flex flex-wrap items-center gap-1.5 px-1">
+            {muscles.main.map(m => (
+              <span key={m} className="rounded-pill bg-brand-soft px-2.5 py-1 text-[12px] font-bold text-brand-ink">
+                {MUSCLE_LABEL[m]}
+              </span>
+            ))}
+            {muscles.also.length > 0 && <span className="pl-1 text-[12px] text-muted">also</span>}
+            {muscles.also.map(m => (
+              <span key={m} className="rounded-pill bg-line-soft px-2.5 py-1 text-[12px] font-semibold text-body">
+                {MUSCLE_LABEL[m]}
+              </span>
+            ))}
+          </div>
+        )}
+        {usedIn && usedIn.total > 0 && (
+          <section aria-label="Workouts with it" className="space-y-1.5">
+            <div className="px-1 pt-1 text-[11px] font-bold tracking-widest text-muted uppercase">In {usedIn.total === 1 ? '1 workout' : `${usedIn.total} workouts`}</div>
+            <div className="overflow-hidden rounded-card border border-line bg-surface [&>*+*]:border-t [&>*+*]:border-line-soft">
+              {usedIn.top.map(w => (
+                <button key={w.id} type="button" onClick={() => onWorkout?.(w.id)} className="flex min-h-11 w-full items-center gap-2 px-3 py-2 text-left active:bg-line-soft">
+                  <span className="min-w-0 flex-1">
+                    <span className="block truncate text-[14px] font-semibold">{w.title}</span>
+                    {w.meta && <span className="block truncate text-[12px] text-muted">{w.meta}</span>}
+                  </span>
+                  <ChevronRight className="size-4 shrink-0 text-faint" />
+                </button>
+              ))}
+            </div>
+          </section>
+        )}
+        {history.length === 0 && <div className="py-6 text-center text-[13px] text-muted">Not logged yet. Finish a workout with it and it shows up here.</div>}
         {all.length > 0 && (
           <div className="flex flex-wrap items-center justify-between gap-x-2">
             {metrics.length > 1 ? <Pills label="Chart shows" options={metrics.map(m => [m, METRIC_LABEL[m] ?? m])} value={metric} onChange={setMetric} /> : <span />}
