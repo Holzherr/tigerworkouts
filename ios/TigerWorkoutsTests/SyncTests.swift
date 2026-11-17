@@ -361,3 +361,14 @@ struct SyncTests {
 
     private func json2(_ object: [Any]) -> Data { try! JSONSerialization.data(withJSONObject: object) }
 }
+
+@Suite("stale and deleted writes (review A3)")
+struct StaleWriteTests {
+    @Test("the database's 409 and 410 are told apart from any other failure")
+    func refusals() {
+        #expect(Store.refusal(SupabaseError(message: "stale write", status: 409, code: "PT409")) == .stale)
+        #expect(Store.refusal(SupabaseError(message: "deleted", status: 410, code: "PT410")) == .deleted)
+        #expect(Store.refusal(SupabaseError(message: "Request failed (500)", status: 500)) == nil)
+        #expect(Store.refusal(URLError(.notConnectedToInternet)) == nil)
+    }
+}

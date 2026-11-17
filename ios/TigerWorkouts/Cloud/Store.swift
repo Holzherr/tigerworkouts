@@ -50,6 +50,9 @@ final class Store {
     /// made on, its `data` as it came, and the row's `updated_at`. An upload goes only while the
     /// server's row is still that one (`flushWorkouts`).
     private(set) var syncedWorkouts: [String: Supabase.WorkoutRow] = [:]
+    /// Each session's `updated_at` as this phone last read it, sent with its next upload so the
+    /// server can refuse it when the row changed or was deleted elsewhere since (review A3).
+    private(set) var sessionStamps: [String: String] = [:]
     /// When each queued workout was last edited here: against a newer row on the server, the
     /// newer edit wins.
     private var workoutEditedAt: [String: String] = [:]
@@ -205,6 +208,10 @@ final class Store {
             // Signed out while the fetch was out: the phone is clear, and stays clear.
             guard signOuts == era else { return }
             results = Self.merged(remote: remote, pending: pending, deleting: pendingDeletes)
+            // A session with an upload still queued keeps the stamp its edit was made on.
+            let read = await Supabase.shared.sessionStamps
+            let queued = Set(pending.map(\.rowId))
+            sessionStamps = read.merging(sessionStamps.filter { queued.contains($0.key) }) { _, kept in kept }
             takeWorkouts(remoteWorkouts)
             let before = results
             try await syncPrefs(remote: remotePrefs)
@@ -329,6 +336,7 @@ final class Store {
         pendingWorkouts = []
         pendingWorkoutDeletes = []
         syncedWorkouts = [:]
+        sessionStamps = [:]
         workoutEditedAt = [:]
         publicSetHere = []
         pendingDeletes = []
@@ -909,16 +917,31 @@ final class Store {
     private func flushPending() async throws {
         guard await Supabase.shared.isSignedIn, !pending.isEmpty else { return }
         var sent: [SessionResult] = []
+        var gone: [String] = []
         var failure: Error?
         for r in pending {
             do {
-                try await Supabase.shared.save(r)
+                let stamp = try await Supabase.shared.save(r, seen: sessionStamps[r.rowId])
+                sessionStamps[r.rowId] = stamp
                 sent.append(r)
             } catch {
-                failure = error
+                switch Self.refusal(error) {
+                case .stale:
+                    // Changed elsewhere since this phone read it: the server's copy wins, and the
+                    // pull that follows lays it over this one.
+                    sessionStamps[r.rowId] = nil
+                    sent.append(r)
+                case .deleted:
+                    sessionStamps[r.rowId] = nil
+                    sent.append(r)
+                    gone.append(r.rowId)
+                case nil:
+                    failure = error
+                }
             }
         }
         pending.removeAll { sent.contains($0) }
+        results.removeAll { gone.contains($0.rowId) }
         // One discarded while it was on its way up is on the server again: it goes back on the
         // delete queue.
         for r in sent where discarded.contains(r.rowId) && !pendingDeletes.contains(r.rowId) { pendingDeletes.append(r.rowId) }
@@ -938,7 +961,20 @@ final class Store {
             }
         }
         pendingDeletes.removeAll { done.contains($0) }
+        for id in done { sessionStamps[id] = nil }
         if let failure { throw failure }
+    }
+
+    enum Refusal { case stale, deleted }
+
+    /// A write the database refused because the row changed (PT409) or was deleted (PT410) since
+    /// this phone read it; nil for any other failure.
+    nonisolated static func refusal(_ error: Error) -> Refusal? {
+        switch (error as? SupabaseError)?.code {
+        case "PT409": .stale
+        case "PT410": .deleted
+        default: nil
+        }
     }
 
     // MARK: - Cache
@@ -964,26 +1000,28 @@ final class Store {
         var publicSetHere: [String]?
         var syncedWorkouts: [String: Supabase.WorkoutRow]?
         var workoutEditedAt: [String: String]?
+        var sessionStamps: [String: String]?
         /// Entries or fields that could not be read and were left out. Not written.
         var dropped = 0
 
         private enum CodingKeys: String, CodingKey {
             case version, results, myWorkouts, pending, bodyweightKg, saved, pendingWorkouts, pendingWorkoutDeletes,
                  pendingDeletes, customExercises, pendingExercises, trainingMaxes, equipment, suggestions, units,
-                 prefsUpdatedAt, publicSetHere, syncedWorkouts, workoutEditedAt
+                 prefsUpdatedAt, publicSetHere, syncedWorkouts, workoutEditedAt, sessionStamps
         }
 
         init(results: [SessionResult], myWorkouts: [Runsheet], pending: [SessionResult], bodyweightKg: Double?, saved: [String],
              pendingWorkouts: [Runsheet]?, pendingWorkoutDeletes: [String]?, pendingDeletes: [String]?,
              customExercises: [LibraryExercise]?, pendingExercises: [LibraryExercise]?, trainingMaxes: [String: Double]?,
              equipment: Equipment?, suggestions: SuggestPrefs?, prefsUpdatedAt: [String: String]?, publicSetHere: [String]?,
-             syncedWorkouts: [String: Supabase.WorkoutRow]?, workoutEditedAt: [String: String]?) {
+             syncedWorkouts: [String: Supabase.WorkoutRow]?, workoutEditedAt: [String: String]?, sessionStamps: [String: String]? = nil) {
             self.results = results; self.myWorkouts = myWorkouts; self.pending = pending; self.bodyweightKg = bodyweightKg
             self.saved = saved; self.pendingWorkouts = pendingWorkouts; self.pendingWorkoutDeletes = pendingWorkoutDeletes
             self.pendingDeletes = pendingDeletes; self.customExercises = customExercises; self.pendingExercises = pendingExercises
             self.trainingMaxes = trainingMaxes; self.equipment = equipment; self.suggestions = suggestions
             self.prefsUpdatedAt = prefsUpdatedAt; self.publicSetHere = publicSetHere; self.syncedWorkouts = syncedWorkouts
             self.workoutEditedAt = workoutEditedAt
+            self.sessionStamps = sessionStamps
         }
 
         /// One entry that cannot be read costs that entry, and one field that cannot be read costs
@@ -1022,6 +1060,7 @@ final class Store {
             publicSetHere = list(.publicSetHere)
             syncedWorkouts = field(.syncedWorkouts)
             workoutEditedAt = field(.workoutEditedAt)
+            sessionStamps = field(.sessionStamps)
             self.dropped = dropped
         }
     }
@@ -1086,6 +1125,7 @@ final class Store {
         publicSetHere = Set(c.publicSetHere ?? [])
         syncedWorkouts = c.syncedWorkouts ?? [:]
         workoutEditedAt = c.workoutEditedAt ?? [:]
+        sessionStamps = c.sessionStamps ?? [:]
     }
 
     @discardableResult
@@ -1098,7 +1138,7 @@ final class Store {
             customExercises: Array(customExercises.values), pendingExercises: pendingExercises,
             trainingMaxes: trainingMaxes, equipment: equipment, suggestions: suggestions, prefsUpdatedAt: prefsUpdatedAt,
             publicSetHere: publicSetHere.sorted(),
-            syncedWorkouts: syncedWorkouts, workoutEditedAt: workoutEditedAt
+            syncedWorkouts: syncedWorkouts, workoutEditedAt: workoutEditedAt, sessionStamps: sessionStamps
         )
         c.units = units
         shareUpNext()
