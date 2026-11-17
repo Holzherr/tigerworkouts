@@ -38,6 +38,13 @@ struct CoachingTests {
         #expect(invite.name == "Sam" && invite.handle == nil && !invite.accepted)
     }
 
+    @Test("a refused invite reads as the web says it, an ended link included")
+    func inviteErrors() {
+        #expect(Coaching.inviteError("coaching ended: ask for a new invite") == "Coaching on this invite has ended. Ask your coach for a new one.")
+        #expect(Coaching.inviteError("invite already used").hasPrefix("Someone has already used"))
+        #expect(Coaching.inviteError("Something else") == "Something else")
+    }
+
     @Test("an assigned workout in the coach's workouts row decodes and keeps its row id")
     func assignedWorkoutRow() throws {
         Library.shared.load()

@@ -37,6 +37,7 @@ const fail = (e: NonNullable<PgError>): never => {
 const friendly = (m: string) =>
   /invite not found/i.test(m) ? 'That invite link does not work. Ask your coach for a new one.'
   : /already used/i.test(m) ? 'Someone has already used this invite. Ask your coach for a new one.'
+  : /coaching ended/i.test(m) ? 'Coaching on this invite has ended. Ask your coach for a new one.'
   : /your own invite/i.test(m) ? 'This is your own invite. Send it to your client.'
   : /sign in first/i.test(m) ? 'Sign in first.'
   : /row-level security/i.test(m) ? 'Not allowed. The coaching link may have ended.'
