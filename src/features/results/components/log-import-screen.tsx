@@ -2,6 +2,7 @@ import { Button } from '@/shared/components/ui/button';
 import { fmtClock } from '@/shared/utils/ui-utils';
 import type { ExerciseRef } from '@/features/runsheet/model';
 import type { SessionResult } from '@/features/runsheet/progression';
+import { fmtInUnit } from '@/shared/utils/units';
 
 export interface LogImportScreenProps {
   result: SessionResult | null;
@@ -44,7 +45,7 @@ export const LogImportScreen = ({ result: r, exercise, onSave, onDiscard }: LogI
               <li key={`${s.stepId}-${i}`} className="flex items-baseline justify-between gap-3 rounded-card bg-surface px-4 py-3">
                 <span className="text-[15px] font-semibold">{ex.name}</span>
                 <span className="shrink-0 text-[13px] text-muted">
-                  {s.target !== undefined ? `${s.target} ${ex.unit ?? 'kg'}` : '—'}
+                  {s.target !== undefined ? fmtInUnit(s.target, ex.unit ?? 'kg') : '—'}
                   {s.incline !== undefined ? `, incline ${s.incline}` : ''}
                 </span>
               </li>

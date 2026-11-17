@@ -28,9 +28,16 @@ describe('SettingsSheet', () => {
     await waitFor(() => expect(del).toHaveBeenCalledWith(false));
   });
 
-  it('no longer offers units or an editor drag style', () => {
+  it('no longer offers an editor drag style', () => {
     sheet();
-    expect(screen.queryByText('Units')).toBeNull();
     expect(screen.queryByText('Editor drag style')).toBeNull();
+  });
+
+  it('switches weights between kg and lb', () => {
+    const onChange = vi.fn();
+    render(<SettingsSheet open onOpenChange={() => {}} name="Nick" units="metric" onChange={onChange} onInvite={() => {}} />);
+    expect(screen.getByRole('radio', { name: 'kg' }).getAttribute('aria-checked')).toBe('true');
+    fireEvent.click(screen.getByRole('radio', { name: 'lb' }));
+    expect(onChange).toHaveBeenCalledWith({ units: 'imperial' });
   });
 });

@@ -31,7 +31,7 @@ export interface Account {
 
 export const INSTRUCTIONS = `TigerWorkouts (tigerworkouts.com) is a workout app with a guided timer. You are connected as one signed-in user and see what they see: their own workouts, their training history, and the public catalogue (about 480 workouts: CrossFit benchmarks, NHS, lifting programmes, follow-along videos, coach programmes).
 
-A workout is a "runsheet": an ordered list of items. Each item is a step (an exercise or a rest) or a block (a named group of steps repeated N times, or run as AMRAP / EMOM / for time / a rep ladder). Items have a role (warmup, main, cooldown). Loads are kilograms ("kg" or "kg per arm"), treadmill speed is kph, incline is %, rests and caps are seconds.
+A workout is a "runsheet": an ordered list of items. Each item is a step (an exercise or a rest) or a block (a named group of steps repeated N times, or run as AMRAP / EMOM / for time / a rep ladder). Items have a role (warmup, main, cooldown). Loads are kilograms ("kg" or "kg per arm") in everything you read and write; a person whose get_profile units is "imperial" sees their loads in pounds in the apps, so talk to them in lb and convert to kg before saving. Treadmill speed is kph, incline is %, rests and caps are seconds.
 
 Coaching flow that works: get_profile → list_sessions (what they did, with loads and reps actually used) → list_workouts / get_workout for ideas → search_exercises for keys → create_workout (private by default) → give the user appUrl, and anyone else shareUrl.
 

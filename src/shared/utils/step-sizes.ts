@@ -1,4 +1,5 @@
 import { useSyncExternalStore } from 'react';
+import { loadIsKg, shownMax, weightStepper } from './units';
 
 /**
  * What − and + move a number by, per exercise: the library's own step (2.5 kg on a barbell) until
@@ -67,3 +68,10 @@ export const resetStepSizes = () => {
   all = read();
   listeners.forEach(l => l());
 };
+
+/**
+ * Props for the stepper on a step's load or speed: the step size above, and for a weight the
+ * shown unit (U11: stepped in lb when loads show in lb, handed back as kg). A speed stays as it is.
+ */
+export const loadStepper = (ex: { key: string; step?: number; unit?: string }, value: number, onChange: (v: number) => void, max = 1000) =>
+  loadIsKg(ex.unit) ? { ...weightStepper(value, loadStep(ex), onChange), max: shownMax(max) } : { value, step: loadStep(ex), onChange, max };

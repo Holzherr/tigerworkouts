@@ -1,10 +1,11 @@
 import { Button } from '@/shared/components/ui/button';
 import { Stepper } from '@/shared/components/ui/stepper';
 import { cn } from '@/shared/utils/ui-utils';
-import { loadStep, useStepSizes } from '@/shared/utils/step-sizes';
+import { loadStepper, useStepSizes } from '@/shared/utils/step-sizes';
 import { countLabel, editSet, nextSetType, plannedSet, plannedType, SET_TYPE_LABEL, setMarks, shortUnit, showsLoad, straightSetStep, withSetCount, type Block, type SetType } from '../model';
 import { kitOf, type Equipment } from '../plates';
 import { PlatesButton } from './plate-sheet';
+import { unitText } from '@/shared/utils/units';
 
 export interface SetGridProps {
   block: Block;
@@ -57,7 +58,7 @@ export const SetGrid = ({ block, onChange, hintFor, equipment }: SetGridProps) =
     <div className="bg-surface px-3 py-2" aria-label="Sets">
       <div className="flex items-center gap-2 pb-1 text-[11px] font-bold tracking-widest text-muted uppercase">
         <span className="w-10">Set</span>
-        {hasLoad && <span className="flex-1 text-center">{shortUnit(step.exercise.unit)}</span>}
+        {hasLoad && <span className="flex-1 text-center">{unitText(shortUnit(step.exercise.unit))}</span>}
         {count && <span className="flex-1 text-center">{count}</span>}
       </div>
       {Array.from({ length: block.repeat }, (_, i) => {
@@ -71,7 +72,7 @@ export const SetGrid = ({ block, onChange, hintFor, equipment }: SetGridProps) =
               </div>
               {hasLoad && (
                 <div className="flex flex-1 items-center justify-center">
-                  <Stepper size="sm" aria-label={`Set ${i + 1} load`} value={p.load ?? 0} step={loadStep(step.exercise)} max={1000} onChange={load => onChange(editSet(block, i, { load }))} />
+                  <Stepper size="sm" aria-label={`Set ${i + 1} load`} {...loadStepper(step.exercise, p.load ?? 0, load => onChange(editSet(block, i, { load })))} />
                   {barbell && <PlatesButton load={p.load} equipment={equipment} className="-mr-2" />}
                 </div>
               )}

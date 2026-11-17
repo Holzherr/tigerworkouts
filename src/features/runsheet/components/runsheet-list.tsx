@@ -25,10 +25,11 @@ import { BlockBracket, BlockHeader } from './block-bracket';
 import { BlockReorder } from './block-reorder';
 import { PlatesButton } from './plate-sheet';
 import { SetCount, SetGrid, SetMark, type SetGridProps } from './set-grid';
-import { loadStep, useStepSizes } from '@/shared/utils/step-sizes';
+import { loadStepper, useStepSizes } from '@/shared/utils/step-sizes';
 import { kitOf, type Equipment } from '../plates';
 import { StepRow } from './step-row';
 import { SwipeToRemove } from './swipe-to-remove';
+import { unitText } from '@/shared/utils/units';
 
 export interface RunsheetListProps {
   items: Item[];
@@ -89,7 +90,7 @@ export const SetRuns = ({ block, onChange, onVary, hintFor, equipment }: SetGrid
     <div className="bg-surface px-3 py-2" aria-label="Sets">
       <div className="flex items-center gap-2 pb-1 text-[11px] font-bold tracking-widest text-muted uppercase">
         <span className="w-10">Sets</span>
-        {hasLoad && <span className="flex-1 text-center">{shortUnit(step.exercise.unit)}</span>}
+        {hasLoad && <span className="flex-1 text-center">{unitText(shortUnit(step.exercise.unit))}</span>}
         {count && <span className="flex-1 text-center">{count}</span>}
       </div>
       {setRuns(block).map(run => {
@@ -103,7 +104,7 @@ export const SetRuns = ({ block, onChange, onVary, hintFor, equipment }: SetGrid
               </div>
               {hasLoad && (
                 <div className="flex flex-1 items-center justify-center">
-                  <Stepper size="sm" aria-label={`${label} load`} value={run.load ?? 0} step={loadStep(step.exercise)} max={1000} onChange={load => onChange(editRun(block, run, { load }))} />
+                  <Stepper size="sm" aria-label={`${label} load`} {...loadStepper(step.exercise, run.load ?? 0, load => onChange(editRun(block, run, { load })))} />
                   {kitOf(step.exercise) === 'barbell' && <PlatesButton load={run.load} equipment={equipment} className="-mr-2" />}
                 </div>
               )}

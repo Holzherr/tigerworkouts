@@ -24,6 +24,7 @@ import { BlockSheet } from '@/features/runsheet/components/block-sheet';
 import { useUndo } from '@/shared/components/ui/undo-toast';
 import type { VersionRow } from '@/features/runsheet/versions';
 import { EditScopeSheet, MergeSheet, VariantBanner, VersionsCard } from './workout-versions';
+import { fmtInUnit } from '@/shared/utils/units';
 
 /** One block open for editing in place (a tap on its header): the editor's list over just that
  * block, its settings in a sheet, Done to read again. A step dragged out lands beside it. */
@@ -126,7 +127,7 @@ const SetList = ({ block, step }: { block: Block; step: ExerciseStep }) => {
       {runs.map(run => (
         <div key={run.from} className="flex items-center gap-3 py-0.5 text-[13px] tabular-nums">
           <span className="w-16 font-bold text-muted">{run.count > 1 ? `Sets ${run.from + 1}–${run.from + run.count}` : `Set ${run.from + 1}`}</span>
-          <span className="flex-1 font-semibold">{[run.load !== undefined && unit ? `${fmtNum(run.load)} ${unit}` : '', count ? `${fmtNum(run.reps)} ${count}` : forLabel(step)].filter(Boolean).join(' × ')}</span>
+          <span className="flex-1 font-semibold">{[run.load !== undefined && unit ? fmtInUnit(run.load, step.exercise.unit) : '', count ? `${fmtNum(run.reps)} ${count}` : forLabel(step)].filter(Boolean).join(' × ')}</span>
         </div>
       ))}
     </div>

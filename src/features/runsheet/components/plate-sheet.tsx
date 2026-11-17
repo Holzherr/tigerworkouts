@@ -1,7 +1,8 @@
 import { Disc3 } from 'lucide-react';
 import { useState } from 'react';
 import { Sheet } from '@/shared/components/ui/sheet';
-import { cn, fmtNum } from '@/shared/utils/ui-utils';
+import { cn } from '@/shared/utils/ui-utils';
+import { fmtWeight, weightText } from '@/shared/utils/units';
 import { platesFor, plateText, type Equipment } from '../plates';
 
 export interface PlateSheetProps {
@@ -24,20 +25,20 @@ const plateHeight = (kg: number) => Math.round(28 + Math.min(1, kg / 25) * 72);
 export const PlateSheet = ({ open, onOpenChange, load, equipment }: PlateSheetProps) => {
   const p = platesFor(load, equipment);
   return (
-    <Sheet open={open} onOpenChange={onOpenChange} title={`${fmtNum(load)} kg on the bar`} height="auto">
+    <Sheet open={open} onOpenChange={onOpenChange} title={`${fmtWeight(load)} on the bar`} height="auto">
       <div className="pb-3" aria-label="Plates per side">
         <div className="flex h-[112px] items-center gap-[3px] overflow-x-auto rounded-card bg-well px-3">
           <div className="h-3 w-10 shrink-0 rounded-l-full bg-faint" aria-hidden />
           <div className="h-7 w-2 shrink-0 rounded-sm bg-muted" aria-hidden />
           {p.perSide.map((kg, i) => (
             <div key={i} className="grid w-7 shrink-0 place-items-center rounded-md bg-night text-[11px] font-extrabold text-white tabular-nums" style={{ height: plateHeight(kg) }}>
-              {fmtNum(kg)}
+              {weightText(kg)}
             </div>
           ))}
           <div className="h-3 min-w-6 flex-1 rounded-r-full bg-faint" aria-hidden />
         </div>
         <p className="mt-3 text-[16px] font-bold">{plateText(p)}</p>
-        {!p.exact && <p className="mt-1 text-[13px] text-warn">Your plates cannot make {fmtNum(load)} kg. Closest: {fmtNum(p.total)} kg.</p>}
+        {!p.exact && <p className="mt-1 text-[13px] text-warn">Your plates cannot make {fmtWeight(load)}. Closest: {fmtWeight(p.total)}.</p>}
         {!equipment?.plates?.length && <p className="mt-1 text-[12px] text-muted">A gym’s plates. Set yours in Settings → My equipment.</p>}
       </div>
     </Sheet>
@@ -52,7 +53,7 @@ export const PlatesButton = ({ load, equipment, className }: { load: number | un
     <>
       <button
         type="button"
-        aria-label={`Plates for ${fmtNum(load)} kg`}
+        aria-label={`Plates for ${fmtWeight(load)}`}
         onClick={e => {
           e.stopPropagation();
           setOpen(true);

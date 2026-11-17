@@ -6,6 +6,7 @@
  */
 import { measureOf } from '@/features/runsheet/model';
 import { isWorking, type SessionResult, type SetResult, type StepResult } from '@/features/runsheet/progression';
+import { loadText, unitText } from '@/shared/utils/units';
 
 /** One session of one exercise: every set of it in that session, in order. */
 export interface LogSession {
@@ -338,8 +339,9 @@ export const setLabel = (x: SetResult, unit = ''): string => {
   if (x.meters !== undefined) return `${num(x.meters)} m${time ? ` in ${time}` : ''}`;
   if (x.calories !== undefined) return `${num(x.calories)} cal${time ? ` in ${time}` : ''}`;
   let base = '';
-  if (x.load !== undefined && x.reps !== undefined) base = `${num(x.load)} × ${num(x.reps)}`;
-  else if (x.load !== undefined) base = `${num(x.load)}${unit ? ` ${unit}` : ''}`;
+  // Loads show in the chosen unit (U11); `unit` "" or "kg…" is a weight, a speed stays as it is.
+  if (x.load !== undefined && x.reps !== undefined) base = `${loadText(x.load, unit)} × ${num(x.reps)}`;
+  else if (x.load !== undefined) base = `${loadText(x.load, unit)}${unit ? ` ${unitText(unit)}` : ''}`;
   else if (x.reps !== undefined) base = `${num(x.reps)} reps`;
   return base && time ? `${base} · ${time}` : base || time;
 };

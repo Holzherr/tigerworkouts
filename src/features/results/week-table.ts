@@ -8,6 +8,7 @@
 import { lineage, measureOf, type ExerciseStep, type Runsheet } from '@/features/runsheet/model';
 import { isWorking, type SessionResult, type SetResult } from '@/features/runsheet/progression';
 import { fmtNum, setLabel, setsOf } from './logbook';
+import { loadDelta } from '@/shared/utils/units';
 
 export interface WeekColumn {
   /** The session's id (its start when it has none yet). */
@@ -93,7 +94,7 @@ export const weekDelta = (a: SetResult, b: SetResult, unit = 'kg'): { text?: str
   const parts: string[] = [];
   const dl = (b.load ?? 0) - (a.load ?? 0);
   const dr = (b.reps ?? 0) - (a.reps ?? 0);
-  if (Math.abs(dl) > 1e-9) parts.push(signed(dl, unit ? ` ${unit}` : ''));
+  if (Math.abs(dl) > 1e-9) parts.push(loadDelta(dl, unit));
   if (Math.abs(dr) > 1e-9 && a.reps !== undefined && b.reps !== undefined) parts.push(signed(dr, Math.abs(dr) === 1 ? ' rep' : ' reps'));
   if (!parts.length && a.seconds !== undefined && b.seconds !== undefined && Math.abs(b.seconds - a.seconds) >= 1 && a.reps === undefined && b.reps === undefined)
     return { text: signed(b.seconds - a.seconds, ' s'), better: b.seconds > a.seconds };

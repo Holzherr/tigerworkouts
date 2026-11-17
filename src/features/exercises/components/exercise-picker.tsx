@@ -8,6 +8,7 @@ import { customKey } from '@/features/results/csv';
 import { GROUP_LABEL, type ExerciseGroup, type LibraryExercise } from '../library';
 import { uniqueExercises } from '../unique';
 import { plural } from '@/shared/utils/ui-utils';
+import { unitText } from '@/shared/utils/units';
 
 export interface ExercisePickerProps {
   open: boolean;
@@ -74,7 +75,7 @@ export const ExercisePicker = ({ open, onOpenChange, library, onPick, onCreate, 
           <div className="text-[14px] font-bold">New exercise</div>
           <input value={creating.name} onChange={e => setCreating({ ...creating, name: e.target.value })} required className="h-11 w-full rounded-control border border-line bg-surface px-3 text-[16px] outline-none" placeholder="Name" />
           <div className="flex gap-2">
-            <Dropdown aria-label="Unit" value={creating.unit} options={UNITS} onValueChange={unit => setCreating({ ...creating, unit })} />
+            <Dropdown aria-label="Unit" value={creating.unit} options={UNITS.map(o => ({ ...o, label: unitText(o.label) }))} onValueChange={unit => setCreating({ ...creating, unit })} />
             <Dropdown aria-label="Group" value={creating.group} options={GROUPS} onValueChange={group => setCreating({ ...creating, group })} />
           </div>
           <div className="flex gap-2">

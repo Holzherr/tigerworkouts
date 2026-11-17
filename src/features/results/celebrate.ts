@@ -4,11 +4,12 @@
  * `SessionResult[]`; ported one for one to `ios/TigerWorkouts/Results/Celebrate.swift`.
  */
 import { fmtClock } from '@/shared/utils/ui-utils';
+import { fmtMass } from '@/shared/utils/units';
 import type { Runsheet, ScoreType } from '@/features/runsheet/model';
 import { fmtScore, type SessionResult } from '@/features/runsheet/progression';
 import { streak, type Streak } from './effort';
 import { roundPRs, type RoundPR } from './rounds';
-import { fmtNum, sessionPRs, sessionVolume, setsOf, type SessionPR } from './logbook';
+import { sessionPRs, sessionVolume, setsOf, type SessionPR } from './logbook';
 
 export interface Celebration {
   /** 42 for the 42nd session ever logged, this one included. */
@@ -69,7 +70,8 @@ export interface DeltaLine {
   better?: boolean;
 }
 
-const kg = (n: number) => (Math.abs(n) >= 1000 ? `${fmtNum(Math.round(Math.abs(n) / 100) / 10)} t` : `${fmtNum(Math.round(Math.abs(n)))} kg`);
+/** "850 kg", "1.2 t", "2,646 lb": volume in the unit loads show in (U11). */
+const kg = (n: number) => fmtMass(n);
 
 /**
  * The comparison lines under "vs last time". Time scores are better when lower; every other score

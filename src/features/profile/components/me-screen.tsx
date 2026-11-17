@@ -10,6 +10,7 @@ import { BodyMap } from '@/features/results/components/body-map';
 import { StreakLine } from '@/features/results/components/session-stats';
 import { fmtMinutes, totalMinutes } from '@/features/discover/next-up';
 import { AvatarView } from './settings-sheet';
+import { fmtWeight, shownMax, weightStepper, weightUnit } from '@/shared/utils/units';
 
 export interface MeScreenProps {
   name: string;
@@ -99,10 +100,10 @@ export const MeScreen = ({ name, avatar, status, results, load, bodyweightKg, on
         {onImport && <Row icon={<Upload className="size-5 text-brand-ink" />} title="Import from Hevy or Strong" hint="Their CSV export, checked before anything is added" onClick={onImport} />}
         <div className="flex items-center justify-between gap-3 rounded-card border border-line bg-surface px-3 py-2">
           <div className="min-w-0">
-            <div className="text-[14px] font-semibold">Bodyweight (kg)</div>
-            <div className="text-[12px] text-muted">{bodyweightKg === undefined ? 'Not set · calories assume 80 kg' : 'For the calorie estimate'}</div>
+            <div className="text-[14px] font-semibold">Bodyweight ({weightUnit()})</div>
+            <div className="text-[12px] text-muted">{bodyweightKg === undefined ? `Not set · calories assume ${fmtWeight(80)}` : 'For the calorie estimate'}</div>
           </div>
-          <Stepper size="sm" aria-label="Bodyweight" value={bodyweightKg ?? 80} min={30} max={250} step={0.5} onChange={onBodyweight} />
+          <Stepper size="sm" aria-label="Bodyweight" {...weightStepper(bodyweightKg ?? 80, 0.5, onBodyweight)} min={shownMax(30)} max={shownMax(250)} />
         </div>
 
         {children && (
