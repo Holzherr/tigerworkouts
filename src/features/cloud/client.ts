@@ -68,6 +68,31 @@ const adoptLinkSession = async () => {
 };
 if (typeof location !== 'undefined') void adoptLinkSession();
 
+/** Pages the iPhone app may open signed in (mcp/src/handoff.ts). */
+const HANDOFF_PAGES = ['/coach'];
+/** The one-time sign-in the iPhone app opens the web with (`#handoff=<token hash>&to=/coach`), or null. */
+export const handoffLink = (hash: string) => {
+  const h = new URLSearchParams(hash.replace(/^#/, ''));
+  const tokenHash = h.get('handoff');
+  if (!tokenHash) return null;
+  const to = h.get('to') ?? '';
+  return { tokenHash, to: HANDOFF_PAGES.includes(to) ? to : '/coach' };
+};
+
+/**
+ * The iPhone app's Coach clients row (review round 2, U7) opens the web signed in to the same
+ * account, with a one-time sign-in of its own, not the phone's session. Signed out, it is used;
+ * signed in already, that session stays. The hash goes first, before the router reads it.
+ */
+const adoptHandoff = async () => {
+  const link = handoffLink(location.hash);
+  if (!link) return;
+  history.replaceState(null, '', `${location.pathname}${location.search}#${link.to}`);
+  const { data } = await sb.auth.getSession();
+  if (!data.session) await sb.auth.verifyOtp({ token_hash: link.tokenHash, type: 'magiclink' });
+};
+if (typeof location !== 'undefined') void adoptHandoff();
+
 export const useAuth = () => useSyncExternalStore(cb => (listeners.add(cb), () => listeners.delete(cb)), () => auth);
 export const currentUser = () => auth.user;
 

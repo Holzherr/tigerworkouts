@@ -200,6 +200,8 @@ struct SessionDetailView: View {
                     .padding(14)
                     .cardSurface()
 
+                SessionCoachNotes(sessionId: session.rowId)
+
                 HStack(spacing: 10) {
                     if let runsheet {
                         // Last time's loads carried over, as the workout page would show them.

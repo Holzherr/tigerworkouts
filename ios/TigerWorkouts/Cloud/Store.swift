@@ -545,6 +545,21 @@ final class Store {
         await writePrefs()
     }
 
+    /// Your name, as your coach or clients and your public page show it (review round 2, U6): the
+    /// web's `prefs.name`, and `profiles.name`, which the other side of a coaching link reads.
+    /// 1 to 60 characters; false when it is not that.
+    @discardableResult
+    func setName(_ raw: String) async -> Bool {
+        let name = raw.split(whereSeparator: \.isWhitespace).joined(separator: " ")
+        guard (1...60).contains(name.count) else { return false }
+        guard name != profileName else { return true }
+        profileName = name
+        touched("name")
+        await writePrefs()
+        try? await Supabase.shared.setProfileName(name)
+        return true
+    }
+
     private func touched(_ field: String) {
         prefsUpdatedAt[field] = PrefsMerge.stamp()
     }
@@ -553,6 +568,8 @@ final class Store {
     /// the same every time.
     var localPrefs: PrefsMerge.Side {
         var values: [String: Any] = ["saved": saved.sorted(), "trainingMaxes": trainingMaxes]
+        // Held since the name field (U6); unstamped until changed here, so the web's keeps winning.
+        if let profileName { values["name"] = profileName }
         if let bodyweightKg { values["bodyweightKg"] = bodyweightKg }
         if let equipment, let data = try? JSONEncoder().encode(equipment), let json = try? JSONSerialization.jsonObject(with: data) {
             values["equipment"] = json
@@ -579,7 +596,7 @@ final class Store {
         equipment = p.equipment
         suggestions = p.suggestions
         profileName = (m.values["name"] as? String).map { $0.trimmingCharacters(in: .whitespaces) }.flatMap { $0.isEmpty ? nil : $0 }
-        prefsUpdatedAt = m.updatedAt.filter { ["saved", "trainingMaxes", "bodyweightKg", "equipment", "suggestions"].contains($0.key) }
+        prefsUpdatedAt = m.updatedAt.filter { ["saved", "trainingMaxes", "bodyweightKg", "equipment", "suggestions", "name"].contains($0.key) }
     }
 
     /// Set by the workout page as it starts a session, taken by RootView (Versions.swift).

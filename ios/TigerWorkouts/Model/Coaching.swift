@@ -153,6 +153,16 @@ enum Coaching {
         return message
     }
 
+    /// Every note between you and this coach, oldest first: the thread under Me → Coach (U1).
+    static func thread(with coach: String, in s: CoachingState) -> [CoachNote] {
+        s.notes.filter { $0.coach == coach }.sorted { $0.createdDate < $1.createdDate }
+    }
+
+    /// Notes on one of your sessions, oldest first, for that session in History (U1).
+    static func notes(forSession id: String, in s: CoachingState) -> [CoachNote] {
+        s.notes.filter { $0.sessionId == id }.sorted { $0.createdDate < $1.createdDate }
+    }
+
     /// Notes on an assignment, oldest first, as a conversation reads.
     static func notes(for a: Assignment, in s: CoachingState) -> [CoachNote] {
         s.notes.filter { $0.assignmentId == a.id }.sorted { $0.createdDate < $1.createdDate }

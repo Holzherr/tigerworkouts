@@ -45,6 +45,27 @@ struct CoachingTests {
         #expect(Coaching.inviteError("Something else") == "Something else")
     }
 
+    @Test("Me → Coach shows the whole thread with that coach; a session shows the notes on it (U1)")
+    func threadAndSessionNotes() throws {
+        var s = CoachingState()
+        s.notes = try JSONDecoder().decode([CoachNote].self, from: data("""
+        [{"id":"n3","coach":"c","client":"u","author":"c","session_id":"s-1","assignment_id":null,"body":"Good depth","created_at":"2026-10-05T09:00:00+00:00"},
+         {"id":"n1","coach":"c","client":"u","author":"c","session_id":null,"assignment_id":null,"body":"New block starts Monday","created_at":"2026-10-01T09:00:00+00:00"},
+         {"id":"n2","coach":"c","client":"u","author":"u","session_id":null,"assignment_id":"a1","body":"Done","created_at":"2026-10-03T09:00:00+00:00"},
+         {"id":"x","coach":"d","client":"u","author":"d","session_id":"s-1","assignment_id":null,"body":"Other coach","created_at":"2026-10-02T09:00:00+00:00"}]
+        """))
+        #expect(Coaching.thread(with: "c", in: s).map(\.id) == ["n1", "n2", "n3"])
+        #expect(Coaching.notes(forSession: "s-1", in: s).map(\.id) == ["x", "n3"])
+        #expect(Coaching.notes(forSession: "s-2", in: s).isEmpty)
+    }
+
+    @Test("the coach dashboard opens only a tigerworkouts.com link from the worker (U7)")
+    func dashboardLink() {
+        #expect(Supabase.handoffURL(from: data(#"{"url":"https://tigerworkouts.com/#handoff=h&to=%2Fcoach"}"#))?.fragment == "handoff=h&to=%2Fcoach")
+        #expect(Supabase.handoffURL(from: data(#"{"url":"https://evil.test/#handoff=h"}"#)) == nil)
+        #expect(Supabase.handoffURL(from: data(#"{"error":"not_configured"}"#)) == nil)
+    }
+
     @Test("an assigned workout in the coach's workouts row decodes and keeps its row id")
     func assignedWorkoutRow() throws {
         Library.shared.load()

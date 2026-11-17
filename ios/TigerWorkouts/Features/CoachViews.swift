@@ -1,3 +1,4 @@
+import SafariServices
 import SwiftUI
 
 /// The coach's notes on an assignment, on its workout page, with one field to reply.
@@ -289,14 +290,115 @@ struct AICoachSection: View {
     }
 }
 
-/// Me → Coach: who coaches you, and the way out.
+/// Notes between you and your coach as a conversation: who wrote it, when, and what it is about.
+struct CoachNoteRows: View {
+    @Environment(Store.self) private var store
+    let notes: [CoachNote]
+    let coachName: String
+    /// "On Legs day" for a note on a workout or a session; nil to leave it off.
+    var about: ((CoachNote) -> String?)?
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            ForEach(notes) { n in
+                let mine = n.author == store.user?.id
+                VStack(alignment: .leading, spacing: 2) {
+                    Text([mine ? "You" : coachName, Home.daysAgo(n.createdDate), about?(n)].compactMap { $0 }.joined(separator: " · "))
+                        .font(.caption.weight(.bold))
+                        .foregroundStyle(Brand.muted)
+                    Text(n.body).font(.subheadline).foregroundStyle(Brand.ink)
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .accessibilityElement(children: .combine)
+            }
+        }
+    }
+}
+
+/// One field to write to your coach, on a session or in general. Sent notes land in the thread.
+struct CoachReplyField: View {
+    @Environment(Store.self) private var store
+    let coachName: String
+    var sessionId: String?
+    var prompt: String?
+    @State private var text = ""
+    @State private var sending = false
+    @State private var failed = false
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            HStack(spacing: 8) {
+                TextField(prompt ?? "Reply to \(coachName)", text: $text, axis: .vertical)
+                    .lineLimit(1...4)
+                    .textFieldStyle(.roundedBorder)
+                    .accessibilityIdentifier("coach-thread-reply")
+                Button {
+                    Task {
+                        sending = true
+                        failed = !(await store.postCoachNote(text, assignment: nil, sessionId: sessionId))
+                        sending = false
+                        if !failed { text = "" }
+                    }
+                } label: {
+                    Image(systemName: "paperplane.fill")
+                }
+                .disabled(sending || text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                .accessibilityLabel("Send to \(coachName)")
+            }
+            if failed {
+                Text("Not sent. Try again in a moment.").font(.caption).foregroundStyle(Brand.muted)
+            }
+        }
+    }
+}
+
+/// A session in History: your coach's notes on it, and yours, with a field to add one (U1).
+/// Nothing when there are none and no coach to write to.
+struct SessionCoachNotes: View {
+    @Environment(Store.self) private var store
+    let sessionId: String
+
+    var body: some View {
+        let notes = Coaching.notes(forSession: sessionId, in: store.coaching)
+        if !notes.isEmpty, let name = notes.last.map({ Coaching.name(of: $0.coach, in: store.coaching) }) {
+            VStack(alignment: .leading, spacing: 10) {
+                Label("Notes with \(name)", systemImage: "person.badge.clock")
+                    .font(.footnote.weight(.bold))
+                    .foregroundStyle(Brand.coralInk)
+                CoachNoteRows(notes: notes, coachName: name)
+                if store.coach?.coach == notes.last?.coach {
+                    CoachReplyField(coachName: name, sessionId: sessionId)
+                }
+            }
+            .padding(14)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .cardSurface()
+            .accessibilityIdentifier("session-coach-notes")
+        }
+    }
+}
+
+/// Me → Coach: who coaches you, every note between you with a reply field (U1), and the way out.
 struct CoachSection: View {
     @Environment(Store.self) private var store
     @State private var confirmStop = false
     @State private var failed = false
+    @State private var showAll = false
+
+    /// What a note is about: the workout it came with, or the session it is on.
+    private func about(_ n: CoachNote) -> String? {
+        if let a = n.assignmentId, let w = store.coaching.assignments.first(where: { $0.id == a }) {
+            return "on " + (store.coaching.workouts.first { $0.key == w.workoutId }?.title ?? "a workout")
+        }
+        if let id = n.sessionId, let r = store.results.first(where: { $0.rowId == id }) {
+            return "on " + r.displayTitle
+        }
+        return nil
+    }
 
     var body: some View {
-        if let name = store.coachName {
+        if let link = store.coach, let name = store.coachName {
+            let thread = Coaching.thread(with: link.coach, in: store.coaching)
             Section("Coach") {
                 HStack(spacing: 12) {
                     Image(systemName: "person.badge.clock").foregroundStyle(Brand.coral)
@@ -305,6 +407,16 @@ struct CoachSection: View {
                         Text("Sees the sessions you log and sends you workouts").font(.footnote).foregroundStyle(Brand.muted)
                     }
                 }
+                if thread.count > 6 && !showAll {
+                    Button("Earlier notes (\(thread.count - 6))") { showAll = true }
+                        .font(.footnote)
+                }
+                if !thread.isEmpty {
+                    CoachNoteRows(notes: showAll ? thread : Array(thread.suffix(6)), coachName: name, about: about)
+                        .padding(.vertical, 4)
+                        .accessibilityIdentifier("coach-thread")
+                }
+                CoachReplyField(coachName: name, prompt: thread.isEmpty ? "A note to \(name)" : nil)
                 Button("Stop training with \(name)", role: .destructive) { confirmStop = true }
                     .accessibilityIdentifier("stop-coaching")
                 if failed {
@@ -321,4 +433,25 @@ struct CoachSection: View {
             }
         }
     }
+}
+
+/// A web page to show in the in-app browser.
+struct WebPage: Identifiable {
+    let url: URL
+    var id: String { url.absoluteString }
+}
+
+/// The in-app browser (Safari's own view): tigerworkouts.com pages the app does not have, such as
+/// the coach dashboard (U7).
+struct SafariView: UIViewControllerRepresentable {
+    let url: URL
+
+    func makeUIViewController(context: Context) -> SFSafariViewController {
+        let vc = SFSafariViewController(url: url)
+        vc.preferredControlTintColor = UIColor(Brand.coral)
+        vc.dismissButtonStyle = .done
+        return vc
+    }
+
+    func updateUIViewController(_ vc: SFSafariViewController, context: Context) {}
 }

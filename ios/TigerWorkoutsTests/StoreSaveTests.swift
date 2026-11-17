@@ -350,6 +350,25 @@ struct WorkoutQueueTests {
         #expect(store.saved == ["cf-girls-fran"])
     }
 
+    @Test("a name typed in Settings wins over the web's older one; one never changed here leaves the web's alone (U6)")
+    func nameFromSettings() async {
+        let store = store()
+        let older = PrefsMerge.stamp(Date(timeIntervalSinceNow: -3600))
+        store.applyPrefs(PrefsMerge.merge(local: store.localPrefs, remote: PrefsMerge.remote(["name": "Sam", "updatedAt": ["name": older]])))
+        #expect(store.profileName == "Sam")
+        #expect(await store.setName("  Sam   Fixture ") == true)
+        #expect(store.profileName == "Sam Fixture")
+        #expect(await store.setName("   ") == false)
+        let m = PrefsMerge.merge(local: store.localPrefs, remote: PrefsMerge.remote(["name": "Sam", "updatedAt": ["name": older]]))
+        #expect(m.values["name"] as? String == "Sam Fixture" && m.push)
+        // Unchanged here: the web's newer name comes in.
+        let fresh = Store()
+        fresh.cacheName = "test-cache-\(UUID().uuidString).json"
+        fresh.applyPrefs(PrefsMerge.merge(local: fresh.localPrefs, remote: PrefsMerge.remote(["name": "Web name"])))
+        fresh.applyPrefs(PrefsMerge.merge(local: fresh.localPrefs, remote: PrefsMerge.remote(["name": "Newer", "updatedAt": ["name": older]])))
+        #expect(fresh.profileName == "Newer")
+    }
+
     @Test("a Health weighing older than one typed on the web does not win the sync, nor come back")
     func healthBodyweight() {
         let store = store()
