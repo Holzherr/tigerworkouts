@@ -10,40 +10,32 @@ create function pg_temp.as_user(u text) returns void language plpgsql as $$ begi
 
 set role authenticated; select pg_temp.as_user('00000000-0000-0000-0000-0000000000f1');
 -- No AI coach yet: nothing can be assigned as one.
-insert into public.assignments(coach,client,workout_id) values (auth.uid(),auth.uid(),'w-ai1');
-\echo ^ expected RLS violation (no AI coach on)
+select t.blocked($$insert into public.assignments(coach,client,workout_id) values (auth.uid(),auth.uid(),'w-ai1')$$, 'no AI coach on: nothing assigned as one');
 insert into public.ai_coaches(client) values (auth.uid());
 select case when name = 'AI Coach' and status = 'active' then 'ok: AI coach on, default name' else 'FAIL: default AI coach row' end from public.ai_coaches;
 insert into public.assignments(coach,client,workout_id,note) values (auth.uid(),auth.uid(),'w-ai1','Squats moved up 2.5 kg');
 select case when count(*) = 1 then 'ok: AI coach assigns your own workout' else 'FAIL: AI assignment missing' end from public.assignments where coach = auth.uid() and client = auth.uid();
-insert into public.assignments(coach,client,workout_id) values (auth.uid(),auth.uid(),'w-ai2');
-\echo ^ expected RLS violation (AI coach assigning a workout you do not own)
-insert into public.assignments(coach,client,workout_id) values (auth.uid(),'00000000-0000-0000-0000-0000000000f2','w-ai1');
-\echo ^ expected RLS violation (AI coach assigning to someone else)
+select t.blocked($$insert into public.assignments(coach,client,workout_id) values (auth.uid(),auth.uid(),'w-ai2')$$, 'AI coach cannot assign a workout you do not own');
+select t.blocked($$insert into public.assignments(coach,client,workout_id) values (auth.uid(),'00000000-0000-0000-0000-0000000000f2','w-ai1')$$, 'AI coach cannot assign to someone else');
 -- Rename: 1 to 40 characters.
 update public.ai_coaches set name = 'Tiger' where client = auth.uid();
 select case when name = 'Tiger' then 'ok: renamed' else 'FAIL: rename' end from public.ai_coaches;
-update public.ai_coaches set name = '  ' where client = auth.uid();
-\echo ^ expected check violation (blank name)
-update public.ai_coaches set name = repeat('x', 41) where client = auth.uid();
-\echo ^ expected check violation (name over 40)
-update public.ai_coaches set client = '00000000-0000-0000-0000-0000000000f2' where client = auth.uid();
-\echo ^ expected permission denied (re-pointing the AI coach row)
+select t.fails($$update public.ai_coaches set name = '  ' where client = auth.uid()$$, 'ai_coaches_name_check', 'blank name refused');
+select t.fails($$update public.ai_coaches set name = repeat('x', 41) where client = auth.uid()$$, 'ai_coaches_name_check', 'name over 40 refused');
+select t.fails($$update public.ai_coaches set client = '00000000-0000-0000-0000-0000000000f2' where client = auth.uid()$$, 'permission denied', 'cannot re-point the AI coach row');
 reset role;
 
 -- Someone else sees none of it and cannot switch it on for you.
 set role authenticated; select pg_temp.as_user('00000000-0000-0000-0000-0000000000f2');
 select case when count(*) = 0 then 'ok: AI coach row is private' else 'FAIL: reads another person''s AI coach' end from public.ai_coaches;
 select case when count(*) = 0 then 'ok: AI assignments are private' else 'FAIL: reads another person''s AI assignments' end from public.assignments where client = '00000000-0000-0000-0000-0000000000f1';
-insert into public.ai_coaches(client) values ('00000000-0000-0000-0000-0000000000f1');
-\echo ^ expected RLS violation (adding an AI coach for someone else)
+select t.blocked($$insert into public.ai_coaches(client) values ('00000000-0000-0000-0000-0000000000f1')$$, 'cannot add an AI coach for someone else');
 reset role;
 
 -- Removed: it can no longer assign; what it sent stays readable and removable by you.
 set role authenticated; select pg_temp.as_user('00000000-0000-0000-0000-0000000000f1');
 update public.ai_coaches set status = 'ended' where client = auth.uid();
-insert into public.assignments(coach,client,workout_id) values (auth.uid(),auth.uid(),'w-ai1');
-\echo ^ expected RLS violation (AI coach removed)
+select t.blocked($$insert into public.assignments(coach,client,workout_id) values (auth.uid(),auth.uid(),'w-ai1')$$, 'AI coach removed: cannot assign');
 select case when count(*) = 1 then 'ok: earlier AI assignment still yours' else 'FAIL: AI assignment gone after removal' end from public.assignments where client = auth.uid();
 delete from public.assignments where client = auth.uid() and coach = auth.uid();
 select case when count(*) = 0 then 'ok: you can delete it' else 'FAIL: AI assignment not deletable' end from public.assignments where client = auth.uid();

@@ -17,22 +17,21 @@ insert into public.workouts(id,owner,title,public,data) values ('w-anon',auth.ui
 update public.workouts set public = true where id = 'w-anon';
 insert into public.exercises(key,owner,public,data) values ('x-anon',auth.uid(),true,'{}');
 reset role;
-select public as anon_workout_public_expect_f from public.workouts where id = 'w-anon';
-select public as anon_exercise_public_expect_f from public.exercises where key = 'x-anon';
+select t.ok(not public, 'anonymous workout stored private') from public.workouts where id = 'w-anon';
+select t.ok(not public, 'anonymous exercise stored private') from public.exercises where key = 'x-anon';
 
 -- a claimed (non-anonymous) caller can publish
 set role authenticated; select pg_temp.as_user('00000000-0000-0000-0000-0000000000a3', false);
 insert into public.workouts(id,owner,title,public,data) values ('w-claimed',auth.uid(),'Claimed',true,'{}');
 reset role;
-select public as claimed_public_expect_t from public.workouts where id = 'w-claimed';
+select t.ok(public, 'a claimed account can publish') from public.workouts where id = 'w-claimed';
 
 -- signed-in users can't run the cleanup
 set role authenticated;
-select public.delete_abandoned_anonymous_users();
-\echo ^ expected permission denied
+select t.fails($$select public.delete_abandoned_anonymous_users()$$, 'permission denied', 'signed-in users cannot run the cleanup');
 reset role;
 
 -- cleanup removes only the 8-day-old anonymous user, and its workout with it
-select public.delete_abandoned_anonymous_users() as deleted_expect_1;
-select string_agg(right(id::text,2), ',' order by id) as users_left_expect_a1_a3 from auth.users where id::text like '%0000000000a_';
-select count(*) as old_anon_workouts_expect_0 from public.workouts where id = 'w-old-anon';
+select t.ok(public.delete_abandoned_anonymous_users() = 1, 'cleanup deletes one account');
+select t.ok(string_agg(right(id::text,2), ',' order by id) = 'a1,a3', 'only the 8-day-old anonymous account went') from auth.users where id::text like '%0000000000a_';
+select t.ok(count(*) = 0, 'its workout went with it') from public.workouts where id = 'w-old-anon';
