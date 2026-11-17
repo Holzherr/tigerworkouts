@@ -179,7 +179,7 @@ export default function App() {
   const resolve = (s: ExerciseStep) => resolveTarget(s, st.trainingMaxes, st.bodyweightKg, st.equipment);
   // Step ids are per workout, so "last time" on a row is read against the workout it is in.
   const lastTime = (r: Runsheet) => (s: ExerciseStep) => lastSessionLabel(st.results, s, r);
-  const lastSetHint = (r: Runsheet) => (s: ExerciseStep, round: number) => lastSetLabel(lastSessionSet(st.results, s, round, r));
+  const lastSetHint = (r: Runsheet) => (s: ExerciseStep, round: number) => lastSetLabel(lastSessionSet(st.results, s, round, r), s.exercise.unit);
 
   // exercise picker as a promise so the editor can await a pick
   const [pickerOpen, setPickerOpen] = useState(false);
@@ -739,7 +739,7 @@ export default function App() {
             </Button>
           )}
         </MeScreen>
-        <SettingsSheet open={settingsOpen} onOpenChange={setSettingsOpen} name={st.name} avatar={st.avatar} email={cloud.user?.email ?? undefined} volume={volume} onVolume={v => { setVolume(v); setVol(v); }} defaultRest={defaultRest} onDefaultRest={v => { setDefaultRest(v); setRest(getDefaultRest()); }} intent={intent} onIntent={v => { storeIntent(v); setIntentState(v); }} suggest={st.suggestions} onSuggest={act.setSuggestions} equipment={st.equipment} onEquipment={act.setEquipment} onChange={act.setProfile} onInvite={invite} onSignOut={cloud.user ? out : undefined} onDeleteAccount={cloud.user ? async clear => {
+        <SettingsSheet open={settingsOpen} onOpenChange={setSettingsOpen} name={st.name} avatar={st.avatar} units={st.units} email={cloud.user?.email ?? undefined} volume={volume} onVolume={v => { setVolume(v); setVol(v); }} defaultRest={defaultRest} onDefaultRest={v => { setDefaultRest(v); setRest(getDefaultRest()); }} intent={intent} onIntent={v => { storeIntent(v); setIntentState(v); }} suggest={st.suggestions} onSuggest={act.setSuggestions} equipment={st.equipment} onEquipment={act.setEquipment} onChange={act.setProfile} onInvite={invite} onSignOut={cloud.user ? out : undefined} onDeleteAccount={cloud.user ? async clear => {
             const done = await deleteAccount();
             if (!done.data) return `Could not delete: ${done.error ?? 'try again'}`;
             if (clear) act.clearDevice();

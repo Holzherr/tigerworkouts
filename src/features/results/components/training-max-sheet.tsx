@@ -3,6 +3,7 @@ import { ClipThumb } from '@/shared/components/ui/clip-thumb';
 import type { ExerciseRef, ExerciseStep, Runsheet } from '@/features/runsheet/model';
 import { resolveTarget, type TrainingMaxes } from '@/features/runsheet/progression';
 import { setMax } from '../training-maxes';
+import { fmtWeight, shownMax, weightStepper, weightUnit } from '@/shared/utils/units';
 
 export interface TrainingMaxSheetProps {
   /** Exercises to show; defaults to every % TM exercise in `runsheet`. */
@@ -30,8 +31,8 @@ export const TrainingMaxSheet = ({ exercises, runsheet, values, onChange, bodywe
       <p className="text-[13px] text-muted">Training max is the number the program's percentages are taken from, usually 90% of your best single.</p>
       {needsBw && (
         <div className="flex items-center justify-between gap-3 rounded-card border border-line bg-surface px-3 py-2">
-          <span className="text-[14px] font-semibold">Bodyweight <span className="font-normal text-muted">(kg)</span></span>
-          <Stepper aria-label="Bodyweight" value={bodyweightKg ?? 0} step={0.5} min={0} max={250} onChange={v => onBodyweightChange?.(v)} />
+          <span className="text-[14px] font-semibold">Bodyweight <span className="font-normal text-muted">({weightUnit()})</span></span>
+          <Stepper aria-label="Bodyweight" {...weightStepper(bodyweightKg ?? 0, 0.5, v => onBodyweightChange?.(v))} min={0} max={shownMax(250)} />
         </div>
       )}
       {list.map(ex => {
@@ -42,13 +43,13 @@ export const TrainingMaxSheet = ({ exercises, runsheet, values, onChange, bodywe
             <div className="flex items-center gap-2.5">
               <ClipThumb size="sm" clip={ex.clip} poster={ex.poster} icon={ex.icon} />
               <div className="min-w-0 flex-1 truncate text-[14px] font-semibold">{ex.name}</div>
-              <Stepper aria-label={`${ex.name} training max`} value={values[ex.key] ?? 0} step={ex.step || 2.5} min={0} max={500} onChange={v => onChange(setMax(values, ex.key, v))} />
+              <Stepper aria-label={`${ex.name} training max`} {...weightStepper(values[ex.key] ?? 0, ex.step || 2.5, v => onChange(setMax(values, ex.key, v)))} min={0} max={shownMax(500)} />
             </div>
             {pcts.length > 0 && values[ex.key] !== undefined && (
               <div className="mt-1.5 flex flex-wrap gap-x-3 text-[12px] text-muted">
                 {pcts.map(p => (
                   <span key={p}>
-                    {p}% → <b className="text-ink">{resolveTarget({ ...mine[0], targetPct: p }, values, bodyweightKg)} kg</b>
+                    {p}% → <b className="text-ink">{fmtWeight(resolveTarget({ ...mine[0], targetPct: p }, values, bodyweightKg) ?? 0)}</b>
                   </span>
                 ))}
               </div>

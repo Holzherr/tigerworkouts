@@ -11,6 +11,7 @@ import { ofWorkout, scoreType, shortUnit, type Block, type Runsheet } from '@/fe
 import { isWorking, type SessionResult, type SetResult } from '@/features/runsheet/progression';
 import { clock } from '@/features/runsheet/targets';
 import { exerciseHistory, fmtNum, kindOf, liftKind } from './logbook';
+import { fmtInUnit, loadText, unitText } from '@/shared/utils/units';
 
 /** A stall needs the record session and at least three after it that did not beat it… */
 export const STALL_SESSIONS = 4;
@@ -118,12 +119,13 @@ export const exerciseStall = (results: SessionResult[], exercise: { key: string;
   if (kind === 'reps' && window.every(r => r === window[0])) return undefined;
   const set = bests[p.index].best.set;
   const unit = shortUnit(exercise.unit);
-  const u = unit ? ` ${unit}` : '';
+  const u = unit ? ` ${unitText(unit)}` : '';
+  const lt = (n: number) => loadText(n, unit);
   const step = exercise.step || 2.5;
-  const best = kind === 'strength' ? `${fmtNum(set.load!)}${u} × ${fmtNum(set.reps!)}` : kind === 'load' ? `${fmtNum(set.load!)}${u}` : `${fmtNum(set.reps!)} reps`;
+  const best = kind === 'strength' ? `${lt(set.load!)}${u} × ${fmtNum(set.reps!)}` : kind === 'load' ? `${lt(set.load!)}${u}` : `${fmtNum(set.reps!)} reps`;
   const swap = swapFor?.(set.load);
   const swapOption = (then: string): StallOption | undefined =>
-    swap ? { title: `Swap to ${swap.name} for three weeks`, detail: `${swap.target !== undefined ? `Start around ${fmtNum(swap.target)}${swap.unit ? ` ${swap.unit}` : ''}. ` : ''}${then}`, exerciseKey: swap.key } : undefined;
+    swap ? { title: `Swap to ${swap.name} for three weeks`, detail: `${swap.target !== undefined ? `Start around ${fmtInUnit(swap.target, swap.unit)}. ` : ''}${then}`, exerciseKey: swap.key } : undefined;
   let options: [StallOption, StallOption];
   if (kind === 'reps') {
     const r = set.reps!;
@@ -139,13 +141,13 @@ export const exerciseStall = (results: SessionResult[], exercise: { key: string;
     if (kind === 'strength') {
       const r = set.reps!;
       options = [
-        { title: `Drop to ${fmtNum(lighter)}${u} and build to ${fmtNum(r + 4)} reps`, detail: `A rep a session, then back to ${fmtNum(load)}${u}.` },
-        swapOption(`Then come back to ${exercise.name}.`) ?? { title: `Go heavier for three weeks: ${fmtNum(heavier)}${u} × ${fmtNum(Math.max(3, r - 3))}`, detail: `Fewer reps at the next load up, then back to ${fmtNum(r)}.` },
+        { title: `Drop to ${lt(lighter)}${u} and build to ${fmtNum(r + 4)} reps`, detail: `A rep a session, then back to ${lt(load)}${u}.` },
+        swapOption(`Then come back to ${exercise.name}.`) ?? { title: `Go heavier for three weeks: ${lt(heavier)}${u} × ${fmtNum(Math.max(3, r - 3))}`, detail: `Fewer reps at the next load up, then back to ${fmtNum(r)}.` },
       ];
     } else {
       options = [
-        { title: `Drop to ${fmtNum(lighter)}${u} and add a set`, detail: `Build the sets back, then return to ${fmtNum(load)}${u}.` },
-        swapOption(`Then come back to ${exercise.name}.`) ?? { title: `Hold ${fmtNum(load)}${u} and add a round each week`, detail: 'Three weeks of more work at the same number.' },
+        { title: `Drop to ${lt(lighter)}${u} and add a set`, detail: `Build the sets back, then return to ${lt(load)}${u}.` },
+        swapOption(`Then come back to ${exercise.name}.`) ?? { title: `Hold ${lt(load)}${u} and add a round each week`, detail: 'Three weeks of more work at the same number.' },
       ];
     }
   }

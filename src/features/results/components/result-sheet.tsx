@@ -21,9 +21,10 @@ import { EffortRow } from './effort-row';
 import { ShareCardSheet } from './share-card-sheet';
 import { SplitsCard } from './splits-card';
 import { withRowLoad } from '../edit-sets';
-import { loadStep } from '@/shared/utils/step-sizes';
+import { loadStepper } from '@/shared/utils/step-sizes';
 import { suggestOn, type SuggestPrefs } from '../suggestions';
 import { effortLifts, LiftEffortCard, ratedRows } from './lift-effort';
+import { weightText, weightUnit } from '@/shared/utils/units';
 
 export interface ResultSheetProps {
   runsheet: Runsheet;
@@ -167,7 +168,7 @@ export const ResultSheet = ({ runsheet, history = [], allResults = history, trai
                     {s.targetPct ? ` · ${s.targetPct}% TM` : ''}
                   </div>
                 </div>
-                {s.exercise.unit && s.exercise.unit !== 'reps' && !measureOf(s.exercise.unit) && <Stepper size="sm" aria-label="Load used" value={row.target ?? 0} step={loadStep(s.exercise)} onChange={t => setRows(r => ({ ...r, [s.id]: withRowLoad(r[s.id], t) }))} />}
+                {s.exercise.unit && s.exercise.unit !== 'reps' && !measureOf(s.exercise.unit) && <Stepper size="sm" aria-label="Load used" {...loadStepper(s.exercise, row.target ?? 0, t => setRows(r => ({ ...r, [s.id]: withRowLoad(r[s.id], t) })), 999)} />}
               </div>
               {(hasRule(s) || logsReps) && (
                 <div className="mt-2 flex items-center justify-between gap-2">
@@ -202,7 +203,7 @@ export const ResultSheet = ({ runsheet, history = [], allResults = history, trai
                 <div className="flex items-center gap-2">
                   <span className="min-w-0 flex-1 truncate font-semibold">{n.name}</span>
                   <span className={cn('flex shrink-0 items-center gap-1 tabular-nums whitespace-nowrap', n.to !== n.from && 'font-bold')}>
-                    {n.from ?? '?'} <ArrowRight className="size-3.5 text-faint" /> {n.to ?? '?'} kg
+                    {n.from !== undefined ? weightText(n.from) : '?'} <ArrowRight className="size-3.5 text-faint" /> {n.to !== undefined ? weightText(n.to) : '?'} {weightUnit()}
                   </span>
                 </div>
                 <div className="text-[11px] text-muted">{n.reason}</div>

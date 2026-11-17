@@ -6,8 +6,9 @@ import { ClipThumb } from '@/shared/components/ui/clip-thumb';
 import { Sheet } from '@/shared/components/ui/sheet';
 import { Stepper } from '@/shared/components/ui/stepper';
 import { cn, fmtClock, fmtNum } from '@/shared/utils/ui-utils';
-import { loadStep, metersStep } from '@/shared/utils/step-sizes';
+import { loadStepper, metersStep } from '@/shared/utils/step-sizes';
 import { countLabel, extraLogs, forLabel, hasLoad, roundsLabel, nextSetType, setMarks, shortUnit, showsLoad, straightSetStep, type Block, type ExerciseRef, type ExerciseStep, type Item, type Runsheet, type SetType, type StepLog } from '@/features/runsheet/model';
+import { fmtInUnit, loadText, unitText } from '@/shared/utils/units';
 import { kitOf, type Equipment } from '@/features/runsheet/plates';
 import { PlatesButton } from '@/features/runsheet/components/plate-sheet';
 import { SetMark } from '@/features/runsheet/components/set-grid';
@@ -110,7 +111,8 @@ const TimerSetGrid = ({ state, step, blockId, actions, equipment, prs = [], onHo
   const types = rows.map(x => R.typeAt(state, x.idx));
   const marks = setMarks(types);
   const count = countLabel(step.forMode);
-  const unit = shortUnit(step.exercise.unit);
+  const unit = unitText(shortUnit(step.exercise.unit));
+  const lt = (n: number) => loadText(n, step.exercise.unit);
   // A distance or calorie set counts its metres or calories; a timed one shows the time it ran once done.
   const amount = step.forMode === 'meters' || step.forMode === 'calories';
   const clocked = step.forMode === 'seconds' || step.forMode === 'minutes';
@@ -128,7 +130,7 @@ const TimerSetGrid = ({ state, step, blockId, actions, equipment, prs = [], onHo
     const reps = amount ? (R.amountAt(state, sl) ?? 0) : clocked ? (done && a?.seconds !== undefined ? (step.forMode === 'minutes' ? a.seconds / 60 : a.seconds) : plan) : (a?.reps ?? plan);
     const n10 = fmtNum(Math.round(reps * 10) / 10);
     const extra = logged.map(l => (l === 'reps' ? a?.reps : R.amountAt(state, sl, l)));
-    const base = loadCol && count ? `${load !== undefined ? fmtNum(load) : '—'} ${unit} × ${n10}`.replace(/ {2}/, ' ') : loadCol ? `${load !== undefined ? fmtNum(load) : '—'} ${unit}`.trim() : count ? `${n10} ${count.toLowerCase()}` : '';
+    const base = loadCol && count ? `${load !== undefined ? lt(load) : '—'} ${unit} × ${n10}`.replace(/ {2}/, ' ') : loadCol ? `${load !== undefined ? lt(load) : '—'} ${unit}`.trim() : count ? `${n10} ${count.toLowerCase()}` : '';
     const what = [base, ...logged.flatMap((l, k) => (extra[k] !== undefined ? [`${fmtNum(extra[k]!)} ${loggedUnit(l)}`] : []))].filter(Boolean).join(' · ');
     const canTick = done || idx < state.i || (live && (idx === state.i || (sl.id === on && state.slots.slice(state.i, idx).every(x => x.kind === 'rest'))));
     return { sl, idx, n, done, load, reps, extra, what, canTick, edit: !done, name: /^\d+$/.test(marks[n]) ? `Set ${marks[n]}` : `Set ${n + 1} (${marks[n]})` };
@@ -176,7 +178,7 @@ const TimerSetGrid = ({ state, step, blockId, actions, equipment, prs = [], onHo
         // shown last week's working weight.
         const prior = actions.lastFor?.(step, v.n);
         const last = prior && (prior.type ?? 'normal') === types[v.n] ? prior : undefined;
-        const hint = last ? lastSetLabel(last)?.replace(/^last /, 'last time ') : actions.hintFor?.(step, v.n);
+        const hint = last ? lastSetLabel(last, step.exercise.unit)?.replace(/^last /, 'last time ') : actions.hintFor?.(step, v.n);
         const copy = last && actions.fill ? { ...(loadCol && last.load !== undefined ? { load: last.load } : {}), ...((count || logged.includes('reps')) && last.reps !== undefined ? { reps: last.reps } : {}), ...(logged.includes('meters') && last.meters !== undefined ? { meters: last.meters } : {}), ...(logged.includes('calories') && last.calories !== undefined ? { calories: last.calories } : {}) } : undefined;
         const when = v.sl.id === on ? (v.idx === state.i && live ? 'now' : 'next') : undefined;
         return (
@@ -198,7 +200,7 @@ const TimerSetGrid = ({ state, step, blockId, actions, equipment, prs = [], onHo
             <div className="mt-1 flex items-center gap-2 max-[359px]:gap-1">
               {loadCol && (
                 <div className="flex min-w-0 flex-1 flex-col items-center">
-                  <Stepper size="sm" fluid aria-label={`Set ${v.n + 1} load`} value={v.load ?? 0} step={loadStep(step.exercise)} max={1000} onChange={t => actions.adjust(v.sl.id, t)} />
+                  <Stepper size="sm" fluid aria-label={`Set ${v.n + 1} load`} {...loadStepper(step.exercise, v.load ?? 0, t => actions.adjust(v.sl.id, t))} />
                   <span className="text-[11px] text-muted">{unit}</span>
                 </div>
               )}
@@ -243,7 +245,7 @@ const isTreadmill = (s: ExerciseStep) => s.exercise.unit === 'kph' || s.incline 
 const partItems = (r: Runsheet): Item[] => r.items.filter(i => i.kind !== 'ref');
 const stepsOf = (it: Item): ExerciseStep[] => (it.kind === 'block' ? it.steps : [it]).filter((s): s is ExerciseStep => s.kind === 'exercise');
 const partTitle = (it: Item) => (it.kind === 'block' ? it.name || 'Block' : it.kind === 'exercise' ? it.exercise.name : 'Rest');
-const stepLine = (s: ExerciseStep) => [forLabel(s), s.target !== undefined ? `${fmtNum(s.target)} ${shortUnit(s.exercise.unit ?? '')}`.trim() : '', s.incline !== undefined ? `incline ${s.incline}` : ''].filter(Boolean).join(' · ');
+const stepLine = (s: ExerciseStep) => [forLabel(s), s.target !== undefined ? fmtInUnit(s.target, s.exercise.unit ?? '') : '', s.incline !== undefined ? `incline ${s.incline}` : ''].filter(Boolean).join(' · ');
 
 /**
  * The gym screen. Header: block name, "Block 2 of 7 · Round 3 of 8", a progress bar whose
@@ -340,7 +342,7 @@ export const TimerScreen = ({ runsheet, state, now, onDone, onSkip, onBack, onPa
   ];
   const changeOpen = !!slot && changing === slot.id;
   const summary = stepOf?.kind !== 'exercise' ? '' : [
-    [dials.includes('load') ? `${target !== undefined ? fmtNum(target) : '—'} ${shortUnit(stepOf.exercise.unit)}` : '', dials.includes('reps') ? `${fmtNum(reps)} reps` : '', ...amountFields.map(f => `${fmtNum(amountOf(f) ?? 0)} ${f === 'meters' ? 'm' : 'cal'}`)].filter(Boolean).join(' × '),
+    [dials.includes('load') ? `${target !== undefined ? loadText(target, stepOf.exercise.unit) : '—'} ${unitText(shortUnit(stepOf.exercise.unit))}` : '', dials.includes('reps') ? `${fmtNum(reps)} reps` : '', ...amountFields.map(f => `${fmtNum(amountOf(f) ?? 0)} ${f === 'meters' ? 'm' : 'cal'}`)].filter(Boolean).join(' × '),
     dials.includes('incline') ? `${fmtNum(incline ?? 0)}% incline` : '',
   ].filter(Boolean).join(' · ');
   const partLabel = slot ? `${slot.parts > 1 ? `Block ${slot.part + 1} of ${slot.parts}` : ''}${slot.mode !== 'loose' ? `${slot.parts > 1 ? ' · ' : ''}${modeLabelOf(slot)} ${slot.round + 1}${slot.mode === 'amrap' ? '' : ` of ${slot.rounds}`}` : ''}` : runsheet.title;
@@ -411,8 +413,8 @@ export const TimerScreen = ({ runsheet, state, now, onDone, onSkip, onBack, onPa
                   {/* The load can be set here before the block starts, also when the plan gives none. */}
                   {onAdjustStep && hasLoad(s.exercise) && (
                     <div className="flex shrink-0 flex-col items-center">
-                      <Stepper size="sm" aria-label={`${s.exercise.name} ${s.exercise.unit === 'kph' ? 'speed' : 'weight'}`} value={R.plannedTarget(state, s.id) ?? 0} step={loadStep(s.exercise)} max={1000} onChange={t => onAdjustStep(s.id, { target: t })} className="text-ink" />
-                      <span className="text-[11px] text-white/60">{shortUnit(s.exercise.unit)}</span>
+                      <Stepper size="sm" aria-label={`${s.exercise.name} ${s.exercise.unit === 'kph' ? 'speed' : 'weight'}`} {...loadStepper(s.exercise, R.plannedTarget(state, s.id) ?? 0, t => onAdjustStep(s.id, { target: t }))} className="text-ink" />
+                      <span className="text-[11px] text-white/60">{unitText(shortUnit(s.exercise.unit))}</span>
                     </div>
                   )}
                 </div>
@@ -516,11 +518,11 @@ export const TimerScreen = ({ runsheet, state, now, onDone, onSkip, onBack, onPa
                           {dials.includes('load') && (
                             <div className="flex items-center justify-between gap-3">
                               <span className="text-[14px]">
-                                {stepOf.exercise.unit === 'kph' ? 'Speed' : 'Weight'} <span className="text-muted">({shortUnit(stepOf.exercise.unit)})</span>
+                                {stepOf.exercise.unit === 'kph' ? 'Speed' : 'Weight'} <span className="text-muted">({unitText(shortUnit(stepOf.exercise.unit))})</span>
                               </span>
                               <div className="flex items-center">
                                 {kitOf(stepOf.exercise) === 'barbell' && <PlatesButton load={target} equipment={equipment} />}
-                                <Stepper aria-label="Target" value={target ?? 0} step={loadStep(stepOf.exercise)} max={1000} onChange={onAdjust} />
+                                <Stepper aria-label="Target" {...loadStepper(stepOf.exercise, target ?? 0, onAdjust)} />
                               </div>
                             </div>
                           )}
@@ -677,7 +679,7 @@ export const TimerScreen = ({ runsheet, state, now, onDone, onSkip, onBack, onPa
               <ClipThumb size="sm" clip={o.exercise.clip} poster={o.exercise.poster} icon={o.exercise.icon} />
               <div className="min-w-0 flex-1">
                 <div className="truncate text-[14px] font-semibold">{o.exercise.name}</div>
-                <div className="text-[12px] text-muted">{[o.why, o.target !== undefined ? `${fmtNum(o.target)} ${shortUnit(o.exercise.unit)}`.trim() : ''].filter(Boolean).join(' · ')}</div>
+                <div className="text-[12px] text-muted">{[o.why, o.target !== undefined ? fmtInUnit(o.target, o.exercise.unit) : ''].filter(Boolean).join(' · ')}</div>
               </div>
               <ChevronRight className="size-4 shrink-0 text-faint" />
             </button>

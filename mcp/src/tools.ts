@@ -5,6 +5,7 @@
  */
 import { fromRow, readableWorkout, workoutFromRow } from '@/features/cloud/rows';
 import type { LibraryExercise } from '@/features/exercises/library';
+import { fmtWeight, isKgUnit, unitFromPref, type WeightUnit } from '@/shared/utils/units';
 import { exerciseLogs, forLabel, loadLabel, modeLabel, ROLE_LABEL, runsheetMinutes, stepLogs, type ExerciseStep, type Item, type Runsheet, type Step } from '@/features/runsheet/model';
 import { parsePlan } from '@/features/runsheet/parse-text';
 import type { ExerciseRef, Source } from '@/features/runsheet/model';
@@ -50,9 +51,15 @@ const SESSION_COLS = 'id,workout_id,type,title,started_at,ended_at,duration_min,
 
 // ── readable forms ──
 const exerciseName = (key: string, own: Record<string, LibraryExercise> = {}) => own[key]?.name ?? FULL_LIBRARY[key]?.name ?? key;
-const stepLine = (s: Step) => (s.kind === 'rest' ? `Rest ${s.seconds}s` : [s.exercise.name, forLabel(s), loadLabel(s), s.incline ? `${s.incline}% incline` : '', stepLogs(s).length ? `log ${stepLogs(s).join(' + ')}` : ''].filter(Boolean).join(' · '));
-/** One line per step, blocks indented, parts headed — what a person would read off the screen. */
-export const outline = (r: Runsheet): string => {
+/** A load in kg, and in lb beside it for someone who reads pounds (U11): "60 kg (132.3 lb)". */
+const loadIn = (s: ExerciseStep, u: WeightUnit) => {
+  const kg = loadLabel(s);
+  return kg && u === 'lb' && s.target !== undefined && s.loadFactor === undefined && s.targetPct === undefined && isKgUnit(s.exercise.unit) ? `${kg} (${fmtWeight(s.target, 'lb')})` : kg;
+};
+const stepLine = (s: Step, u: WeightUnit = 'kg') => (s.kind === 'rest' ? `Rest ${s.seconds}s` : [s.exercise.name, forLabel(s), loadIn(s, u), s.incline ? `${s.incline}% incline` : '', stepLogs(s).length ? `log ${stepLogs(s).join(' + ')}` : ''].filter(Boolean).join(' · '));
+/** One line per step, blocks indented, parts headed — what a person would read off the screen.
+ * Loads are kg, with lb beside them when the user reads pounds (`u`). */
+export const outline = (r: Runsheet, u: WeightUnit = 'kg'): string => {
   const lines: string[] = [];
   let part: string | undefined;
   const head = (it: Item) => {
@@ -64,8 +71,8 @@ export const outline = (r: Runsheet): string => {
     if (it.kind === 'ref') lines.push(`  (shared section ${it.runsheetId})`);
     else if (it.kind === 'block') {
       lines.push(`  ${it.name} — ${modeLabel(it)}${it.restBetweenSec ? `, ${it.restBetweenSec}s between` : ''}`);
-      for (const s of it.steps) lines.push(`    ${stepLine(s)}`);
-    } else lines.push(`  ${stepLine(it)}`);
+      for (const s of it.steps) lines.push(`    ${stepLine(s, u)}`);
+    } else lines.push(`  ${stepLine(it, u)}`);
   }
   return lines.join('\n');
 };
@@ -145,7 +152,7 @@ export const getProfile = async (db: Db, email?: string) => {
     sessionsLast30Days: recent?.length ?? 0,
     ownWorkouts: own?.length ?? 0,
     ...(coach !== undefined ? { aiCoach: coach } : {}),
-    note: 'Loads are kg unless units is imperial (display only; stored values are still kg). trainingMaxes are kg, keyed by exercise key.',
+    note: 'Every load, bodyweight and training max you read or write is kg. units imperial means the person reads pounds: the apps show their loads in lb, so say loads to them in lb (1 kg = 2.2046 lb) and convert what they tell you in lb to kg before saving.',
   };
 };
 
@@ -235,15 +242,23 @@ const sessionsOf = async (db: Db, workoutId: string) => {
   return (rows ?? []).map(fromRow);
 };
 
+/** The unit the user reads loads in: their synced `units` pref, else the profile's. */
+const unitOf = async (db: Db): Promise<'metric' | 'imperial'> => {
+  const [states, profiles] = await Promise.all([db.get<{ prefs: Record<string, unknown> | null }[]>(`user_state?owner=eq.${db.userId}&select=prefs`), db.get<{ units: string | null }[]>(`profiles?id=eq.${db.userId}&select=units`)]);
+  return (states?.[0]?.prefs?.units ?? profiles?.[0]?.units) === 'imperial' ? 'imperial' : 'metric';
+};
+
 export const getWorkout = async (db: Db, id: string) => {
-  const w = await findWorkout(db, id);
+  const [w, units] = await Promise.all([findWorkout(db, id), unitOf(db)]);
+  const u = unitFromPref(units);
   if (!w) throw new ToolError(`No workout ${id} that you can see. list_workouts shows the ids.`);
-  const versions = versionsOf(await sessionsOf(db, id), w.runsheet).map(v => ({ sessionId: v.sessionId, changes: v.changes, sessions: v.sessions, lastDone: v.lastDone, outline: outline({ title: '', items: v.items }) }));
+  const versions = versionsOf(await sessionsOf(db, id), w.runsheet).map(v => ({ sessionId: v.sessionId, changes: v.changes, sessions: v.sessions, lastDone: v.lastDone, outline: outline({ title: '', items: v.items }, u) }));
   return {
     ...summary(w.runsheet, w.owner, { public: w.row?.public, source: w.source }),
     canEdit: w.owner === 'me',
     description: w.runsheet.description,
-    outline: outline(w.runsheet),
+    outline: outline(w.runsheet, u),
+    units,
     appUrl: appUrl(id),
     shareUrl: shareUrl(w.runsheet, w.owner === 'catalogue' || !!w.row?.public),
     runsheet: w.runsheet,
@@ -608,10 +623,13 @@ export const startWorkout = async (db: Db, a: DraftArgs & { id?: string; session
     saved = true;
     open = w.owner === 'catalogue' || !!w.row?.public;
   } else ({ runsheet, assumptions } = await draftToRunsheet(db, a));
+  const units = await unitOf(db);
   return {
     title: runsheet.title,
     minutes: runsheetMinutes(runsheet),
-    outline: outline(runsheet),
+    outline: outline(runsheet, unitFromPref(units)),
+    /** The timer view shows loads in lb when this is imperial; the runsheet stays kg. */
+    units,
     saved,
     workoutId: saved ? runsheet.id : undefined,
     appUrl: saved && runsheet.id ? appUrl(runsheet.id) : undefined,

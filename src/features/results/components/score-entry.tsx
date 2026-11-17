@@ -2,6 +2,7 @@ import { Chip } from '@/shared/components/ui/chip';
 import { Stepper } from '@/shared/components/ui/stepper';
 import { cn } from '@/shared/utils/ui-utils';
 import type { ScoreType } from '@/features/runsheet/model';
+import { weightStepper, weightUnit } from '@/shared/utils/units';
 
 export interface ScoreEntryProps {
   type: ScoreType;
@@ -62,14 +63,14 @@ export const ScoreEntry = ({ type, value, onChange, className }: ScoreEntryProps
       </div>
     );
   }
-  const label = type === 'reps' ? 'Total reps' : type === 'load' ? 'Load (kg)' : 'Distance (m)';
+  const label = type === 'reps' ? 'Total reps' : type === 'load' ? `Load (${weightUnit()})` : 'Distance (m)';
   const step = type === 'load' ? 2.5 : type === 'distance' ? 50 : 1;
   const quick = type === 'distance' ? [1000, 1600, 2000, 2400, 3000] : [];
   return (
     <div className={cn('space-y-2', className)}>
       <div className="flex items-center justify-between gap-3">
         <span className="text-[14px]">{label}</span>
-        <Stepper aria-label={label} value={value ?? 0} step={step} min={0} max={99999} onChange={onChange} />
+        <Stepper aria-label={label} {...(type === 'load' ? weightStepper(value ?? 0, step, onChange) : { value: value ?? 0, step, onChange })} min={0} max={99999} />
       </div>
       {quick.length > 0 && (
         <div className="flex flex-wrap gap-1.5">

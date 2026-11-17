@@ -1,5 +1,6 @@
 import type { WorkoutIcon } from '@/features/workouts/icon';
 import { plural } from '@/shared/utils/ui-utils';
+import { fmtInUnit, isKgUnit } from '@/shared/utils/units';
 /**
  * Runsheet model: a workout is an ordered list of items. An item is a step (exercise or rest) or
  * a block (a named list of steps that repeats N times). Everything here is pure; components call
@@ -513,8 +514,9 @@ export const forLabel = (s: ExerciseStep) => {
   return s.perSide ? `${base} each side` : base;
 };
 const fmtClockLocal = (sec: number) => `${Math.floor(sec / 60)}:${String(Math.round(sec % 60)).padStart(2, '0')}`;
-/** "43 kg", "1.5× BW", "65% TM" or empty for bodyweight. */
-export const loadLabel = (s: ExerciseStep) => (s.loadFactor ? `${s.loadFactor}× BW` : s.targetPct ? `${s.targetPct}% TM` : s.target !== undefined ? `${s.target % 1 ? s.target.toFixed(1) : s.target} ${shortUnit(s.exercise.unit)}` : '');
+/** "43 kg" (or "95 lb" when loads show in lb), "1.5× BW", "65% TM" or empty for bodyweight. */
+export const loadLabel = (s: ExerciseStep) =>
+  s.loadFactor ? `${s.loadFactor}× BW` : s.targetPct ? `${s.targetPct}% TM` : s.target !== undefined ? (isKgUnit(s.exercise.unit) ? fmtInUnit(s.target, s.exercise.unit) : `${s.target % 1 ? s.target.toFixed(1) : s.target} ${shortUnit(s.exercise.unit)}`) : '';
 /** "×8", "AMRAP 20:00", "EMOM 10", "5 rounds for time" */
 export const modeLabel = (b: Block) => {
   const mode = b.mode ?? 'rounds';

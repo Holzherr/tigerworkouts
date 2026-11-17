@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Button } from '@/shared/components/ui/button';
 import { Stepper } from '@/shared/components/ui/stepper';
 import { cn } from '@/shared/utils/ui-utils';
+import { fmtWeight, shownMax, weightStepper, weightUnit } from '@/shared/utils/units';
 
 export interface BodyweightPromptProps {
   onSave: (kg: number) => void;
@@ -20,10 +21,10 @@ export const BodyweightPrompt = ({ onSave, onSkip, className }: BodyweightPrompt
     <div className={cn('rounded-card border border-line bg-surface px-3 py-2', className)}>
       <div className="flex items-center justify-between gap-3">
         <div className="min-w-0">
-          <div className="text-[14px] font-semibold">Your bodyweight (kg)</div>
-          <div className="text-[12px] text-muted">Calories assume 80 kg until you say.</div>
+          <div className="text-[14px] font-semibold">Your bodyweight ({weightUnit()})</div>
+          <div className="text-[12px] text-muted">Calories assume {fmtWeight(80)} until you say.</div>
         </div>
-        <Stepper size="sm" aria-label="Bodyweight" value={kg} min={30} max={250} step={0.5} onChange={setKg} />
+        <Stepper size="sm" aria-label="Bodyweight" {...weightStepper(kg, 0.5, setKg)} min={shownMax(30)} max={shownMax(250)} />
       </div>
       <div className="mt-1 flex justify-end gap-1">
         <Button variant="quiet" size="sm" onClick={onSkip}>

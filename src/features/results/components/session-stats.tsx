@@ -1,5 +1,6 @@
 import { Flame, Repeat2, Timer, TrendingUp } from 'lucide-react';
 import { cn, fmtClock } from '@/shared/utils/ui-utils';
+import { fmtMass } from '@/shared/utils/units';
 import type { ExerciseGroup } from '@/features/exercises/library';
 import type { SessionResult } from '@/features/runsheet/progression';
 import { effort, streak, type Effort, type Streak } from '../effort';
@@ -27,7 +28,7 @@ const Tile = ({ icon, label, value, sub }: { icon: React.ReactNode; label: strin
   </div>
 );
 
-const tonnageLine = (e: Effort) => (e.tonnage >= 1000 ? `${(e.tonnage / 1000).toFixed(1)} t moved` : e.tonnage ? `${Math.round(e.tonnage)} kg moved` : undefined);
+const tonnageLine = (e: Effort) => (e.tonnage ? `${fmtMass(e.tonnage)} moved` : undefined);
 
 /**
  * The part of a finished session that is worth looking at: what you worked, how hard, and

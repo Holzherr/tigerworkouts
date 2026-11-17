@@ -10,6 +10,7 @@ import type { Avatar } from '@/features/cloud/sync';
 import { INTENTS, type Intent } from '@/features/runsheet/targets';
 import { PROGRESS_MODES, suggestEnabled, type SuggestPrefs } from '@/features/results/suggestions';
 import { Switch } from '@/shared/components/ui/switch';
+import { fmtWeight } from '@/shared/utils/units';
 
 const EMOJIS = ['', '💪', '🏋️', '🏃', '🚴', '🧘', '🥊', '🎾', '⚽', '🏊', '🔥', '⚡', '🦁', '🐯', '🦊', '🐻'];
 const COLORS = ['#ff4d2e', '#f59e0b', '#a78bfa', '#38bdf8', '#34d399', '#fb7185', '#4ade80', '#e879f9'];
@@ -21,6 +22,8 @@ export interface SettingsSheetProps {
   name: string;
   avatar?: Avatar;
   email?: string;
+  /** Loads shown in kg ('metric') or lb ('imperial'); stored in kg either way. */
+  units?: 'metric' | 'imperial';
   onChange: (p: { name?: string; avatar?: Avatar; units?: 'metric' | 'imperial' }) => void;
   onInvite: () => void;
   /** Sign out. Resolves with a message when the sign-out was refused (a session not saved to the
@@ -58,10 +61,10 @@ export const AvatarView = ({ name, avatar, size = 56 }: { name: string; avatar?:
 
 /**
  * Settings sheet: avatar preview with name field, emoji and colour chips, photo upload (resized
- * to 256px and stored as a data URL), Invite someone, Sign out. Loads are in kg everywhere; the
- * Units setting did nothing and went on 27 Sep 2026.
+ * to 256px and stored as a data URL), Weights in kg or lb (U11: shown in the unit, stored in kg),
+ * Invite someone, Sign out.
  */
-export const SettingsSheet = ({ open, onOpenChange, name, avatar, email, onChange, onInvite, onSignOut, onDeleteAccount, volume, onVolume, defaultRest, onDefaultRest, intent = 'maintain', onIntent, suggest, onSuggest, equipment, onEquipment }: SettingsSheetProps) => {
+export const SettingsSheet = ({ open, onOpenChange, name, avatar, email, units = 'metric', onChange, onInvite, onSignOut, onDeleteAccount, volume, onVolume, defaultRest, onDefaultRest, intent = 'maintain', onIntent, suggest, onSuggest, equipment, onEquipment }: SettingsSheetProps) => {
   const suggesting = suggestEnabled(suggest);
   const progressBy = suggest?.mode ?? 'reps';
   const file = useRef<HTMLInputElement>(null);
@@ -110,6 +113,16 @@ export const SettingsSheet = ({ open, onOpenChange, name, avatar, email, onChang
             ))}
           </div>
         </div>
+      <div className="flex items-center justify-between gap-3">
+        <span className="text-[14px]">Weights</span>
+        <div className="flex gap-1" role="radiogroup" aria-label="Weights">
+          {(['metric', 'imperial'] as const).map(u => (
+            <Chip key={u} role="radio" aria-checked={units === u} variant={units === u ? 'on' : 'outline'} onClick={() => onChange({ units: u })}>
+              {u === 'metric' ? 'kg' : 'lb'}
+            </Chip>
+          ))}
+        </div>
+      </div>
       {onVolume && (
         <div className="flex items-center justify-between gap-3">
           <span className="text-[14px]">Timer volume</span>
@@ -142,7 +155,7 @@ export const SettingsSheet = ({ open, onOpenChange, name, avatar, email, onChang
                   ))}
                 </div>
               </div>
-              <div className="mt-1 text-[12px] text-muted">{PROGRESS_MODES.find(m => m.id === progressBy)?.note} An exercise's own page can progress it another way, a workout's ⋯ menu can turn suggestions off for it.</div>
+              <div className="mt-1 text-[12px] text-muted">{PROGRESS_MODES.find(m => m.id === progressBy)?.note.replace('+2.5 kg', `+${fmtWeight(2.5)}`)} An exercise's own page can progress it another way, a workout's ⋯ menu can turn suggestions off for it.</div>
             </>
           ) : (
             <div className="text-[12px] text-muted">No Today targets, no target on the timer, no Next time and no stall cards.</div>

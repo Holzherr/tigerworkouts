@@ -2,9 +2,10 @@ import { ChevronRight } from 'lucide-react';
 import { ClipThumb } from '@/shared/components/ui/clip-thumb';
 import { Sheet } from '@/shared/components/ui/sheet';
 import { Stepper } from '@/shared/components/ui/stepper';
-import { loadStep, useStepSizes } from '@/shared/utils/step-sizes';
+import { loadStepper, useStepSizes } from '@/shared/utils/step-sizes';
 import { forLabel, hasSetting, shortUnit, type ExerciseStep } from '@/features/runsheet/model';
 import { StepSizes } from './step-sizes';
+import { unitText } from '@/shared/utils/units';
 
 export interface ExerciseSheetProps {
   step: ExerciseStep | null;
@@ -47,10 +48,10 @@ export const ExerciseSheet = ({ step: s, onOpenChange, onTarget, onIncline, targ
         {hasSetting(s) && (
           <div className="flex items-center justify-between gap-3 rounded-card border border-line bg-surface px-3 py-2.5">
             <span className="text-[15px] font-semibold">
-              {s.exercise.unit === 'kph' ? 'Speed' : 'Weight'} <span className="font-normal text-muted">({shortUnit(s.exercise.unit)})</span>
+              {s.exercise.unit === 'kph' ? 'Speed' : 'Weight'} <span className="font-normal text-muted">({unitText(shortUnit(s.exercise.unit))})</span>
             </span>
             {onTarget ? (
-              <Stepper aria-label="Target" value={target ?? s.target ?? 0} step={loadStep(s.exercise)} max={1000} onChange={onTarget} />
+              <Stepper aria-label="Target" {...loadStepper(s.exercise, target ?? s.target ?? 0, onTarget)} />
             ) : (
               <span className="text-[17px] font-extrabold tabular-nums">{target ?? s.target ?? '—'}</span>
             )}

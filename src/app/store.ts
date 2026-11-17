@@ -12,6 +12,7 @@ import { fromLegacySession, legacyWorkoutToRunsheet, readLegacyLocal } from '@/f
 import { stamp, type PrefField, type PrefStamps } from '@/features/cloud/prefs';
 import { mergeSessions } from '@/features/runsheet/versions';
 import { storedSuggest, type SuggestPrefs } from '@/features/results/suggestions';
+import { setWeightUnit, unitFromPref } from '@/shared/utils/units';
 
 export interface AppState {
   workouts: Runsheet[];
@@ -189,7 +190,13 @@ if (!state.migratedLegacy) {
   } else state = { ...state, migratedLegacy: true };
 }
 const listeners = new Set<() => void>();
-const emit = () => listeners.forEach(l => l());
+// Loads are shown in the unit the synced `units` pref says (U11); kept beside the store for the
+// formatting helpers, which run outside React.
+setWeightUnit(unitFromPref(state.units));
+const emit = () => {
+  setWeightUnit(unitFromPref(state.units));
+  listeners.forEach(l => l());
+};
 
 export const setState = (patch: Partial<AppState> | ((s: AppState) => Partial<AppState>)) => {
   const next = typeof patch === 'function' ? patch(state) : patch;

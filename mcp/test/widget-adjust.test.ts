@@ -35,3 +35,17 @@ describe('chat timer steppers (review round 2 U15)', () => {
     expect(adjustable(s)?.reps).toBe(0);
   });
 });
+
+describe('chat timer in lb (U11)', () => {
+  it('steps the load in lb and keeps it in kg', async () => {
+    const { setWeightUnit } = await import('@/shared/utils/units');
+    setWeightUnit('lb');
+    try {
+      const s = nudge(running(), Date.now(), 'load', 1);
+      // 60 kg is 132.3 lb; one press goes to 135 lb, kept as 61.235 kg.
+      expect(adjustable(s)?.load?.value).toBe(61.235);
+    } finally {
+      setWeightUnit('kg');
+    }
+  });
+});

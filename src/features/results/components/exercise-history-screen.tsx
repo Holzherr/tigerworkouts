@@ -14,6 +14,9 @@ import { Dropdown } from '@/shared/components/ui/dropdown';
 import type { ProgressMode } from '@/features/runsheet/targets';
 import { PROGRESS_MODES } from '../suggestions';
 import { MUSCLE_LABEL, type Muscle } from '../muscles';
+import { loadIsKg, loadText, shownWeight, unitText } from '@/shared/utils/units';
+
+const WEIGHT_METRICS: ChartMetric[] = ['strength', 'load', 'volume'];
 
 export interface ExerciseHistoryScreenProps {
   exercise: ExerciseRef;
@@ -46,11 +49,11 @@ export const paceOver = (group?: string) => (group === 'rower' ? 500 : 1000);
 
 const chartLabel = (kind: LogKind, unit: string, per: number) =>
   kind === 'strength'
-    ? `Estimated 1RM${unit ? ` · ${unit}` : ''}`
+    ? `Estimated 1RM${unit ? ` · ${unitText(unit)}` : ''}`
     : kind === 'load'
       ? unit === 'kph'
         ? 'Top speed · kph'
-        : `Top load${unit ? ` · ${unit}` : ''}`
+        : `Top load${unit ? ` · ${unitText(unit)}` : ''}`
       : kind === 'reps'
         ? 'Most reps in a set'
         : kind === 'pace'
@@ -63,7 +66,7 @@ const chartLabel = (kind: LogKind, unit: string, per: number) =>
                 ? 'Longest set'
                 : 'Rounds per session';
 
-const metricLabel = (m: ChartMetric, unit: string, per: number) => (m === 'volume' ? `Volume per session${unit ? ` · ${unit}` : ''}` : m === 'totalReps' ? 'Total reps per session' : chartLabel(m, unit, per));
+const metricLabel = (m: ChartMetric, unit: string, per: number) => (m === 'volume' ? `Volume per session${unit ? ` · ${unitText(unit)}` : ''}` : m === 'totalReps' ? 'Total reps per session' : chartLabel(m, unit, per));
 
 /** A row of small toggle pills, each a 44px-tall tap. */
 const Pills = <T extends string>({ label, options, value, onChange }: { label: string; options: [T, string][]; value: T; onChange: (v: T) => void }) => (
@@ -91,13 +94,14 @@ const fastestTiles = (r: Records, done: Map<string, number>): Tile[] =>
 
 /** What records mean for this kind of work. Timed work gets what exists rather than blanks. */
 const tiles = (r: Records, unit: string, last?: string, done = new Map<string, number>()): Tile[] => {
-  const u = unit ? ` ${unit}` : '';
+  const u = unit ? ` ${unitText(unit)}` : '';
+  const lt = (n: number) => loadText(n, unit);
   const t = (label: string, rec: Rec | undefined, value: (n: number) => string, withSet = false): Tile[] =>
     rec ? [{ label, value: value(rec.value), sub: [withSet && rec.set ? setLabel(rec.set) : '', date(rec.at)].filter(Boolean).join(' · ') }] : [];
   const sessions: Tile = { label: 'Sessions', value: `${r.sessions}`, ...(last ? { sub: `last ${date(last)}` } : {}) };
   if (r.kind === 'strength')
-    return [...t('Heaviest', r.heaviest, n => `${fmtNum(n)}${u}`, true), ...t('Best est. 1RM', r.e1rm, n => `${fmtNum(n)}${u}`, true), ...t('Most reps', r.reps, n => fmtNum(n), true), ...t('Best volume', r.volume, n => `${fmtNum(Math.round(n))}${u}`)];
-  if (r.kind === 'load') return [...t(unit === 'kph' ? 'Top speed' : 'Heaviest', r.heaviest, n => `${fmtNum(n)}${u}`), sessions];
+    return [...t('Heaviest', r.heaviest, n => `${lt(n)}${u}`, true), ...t('Best est. 1RM', r.e1rm, n => `${lt(n)}${u}`, true), ...t('Most reps', r.reps, n => fmtNum(n), true), ...t('Best volume', r.volume, n => `${Math.round(Number(lt(n)))}${u}`)];
+  if (r.kind === 'load') return [...t(unit === 'kph' ? 'Top speed' : 'Heaviest', r.heaviest, n => `${lt(n)}${u}`), sessions];
   if (r.kind === 'reps') return [...t('Most reps', r.reps, n => fmtNum(n)), sessions];
   if (r.kind === 'pace') return [...fastestTiles(r, done), ...t('Furthest', r.distance, n => `${fmtNum(n)} m`, true), sessions].slice(0, 4);
   if (r.kind === 'distance') return [...t('Furthest', r.distance, n => `${fmtNum(n)} m`), sessions];
@@ -121,7 +125,8 @@ export const ExerciseHistoryScreen = ({ exercise: ex, group, results, onBack, on
   const [picked, setMetric] = useState<ChartMetric>(metrics[0]);
   const metric = metrics.includes(picked) ? picked : metrics[0];
   const [range, setRange] = useState<ChartRange>('all');
-  const all = pointsFor(history, metric, per);
+  // Weights on the chart in the unit loads show in (U11); a speed, a time or a count stays.
+  const all = pointsFor(history, metric, per).map(p => (WEIGHT_METRICS.includes(metric) && loadIsKg(unit) ? { ...p, value: shownWeight(p.value) } : p));
   const points = inRange(all, range, Date.now());
   // How often each distance was done, so the fastest-time tiles show the ones that matter.
   const done = new Map<string, number>();

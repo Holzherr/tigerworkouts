@@ -9,6 +9,7 @@
 import { forLabel, loadLabel, type Runsheet } from '@/features/runsheet/model';
 import * as R from '@/features/timer/runner';
 import { adjustable, nudge } from './adjust';
+import { loadText, setWeightUnit, unitFromPref, unitText } from '@/shared/utils/units';
 
 interface StartOutput {
   title: string;
@@ -19,6 +20,8 @@ interface StartOutput {
   previewUrl?: string;
   appUrl?: string;
   appDownloadUrl?: string;
+  /** 'imperial': loads show in lb (U11). The runsheet is kg either way. */
+  units?: string;
 }
 
 // ── host bridge ──
@@ -87,6 +90,7 @@ const take = (sc: unknown) => {
   const v = sc as StartOutput | undefined;
   if (!v?.runsheet?.items || out) return;
   out = v;
+  setWeightUnit(unitFromPref(v.units));
   render();
 };
 
@@ -126,12 +130,11 @@ const slotDetail = (s: R.RunState, sl: R.Slot, steppers: { load?: unknown; reps?
   const round = sl.rounds > 1 ? `Round ${sl.round + 1} of ${sl.rounds}` : '';
   return [steppers.reps !== undefined ? '' : forLabel(step), steppers.load ? '' : loadLabel(step), round].filter(Boolean).join(' · ');
 };
-const num = (n: number) => String(Math.round(n * 100) / 100);
 /** − value + for load and reps on the set in progress (review round 2 U15). */
 const steppersHtml = (a: ReturnType<typeof adjustable>) =>
   !a
     ? ''
-    : `<div class="adj">${a.load ? `<div class="st"><span class="v">${num(a.load.value)}${a.load.unit ? ` ${esc(a.load.unit)}` : ''}</span><button id="load-dn" aria-label="Less weight">−</button><button id="load-up" aria-label="More weight">+</button></div>` : ''}${a.reps !== undefined ? `<div class="st"><span class="v">${plural(a.reps, 'rep')}</span><button id="reps-dn" aria-label="One rep fewer">−</button><button id="reps-up" aria-label="One rep more">+</button></div>` : ''}</div>`;
+    : `<div class="adj">${a.load ? `<div class="st"><span class="v">${loadText(a.load.value, a.load.unit)}${a.load.unit ? ` ${esc(unitText(a.load.unit))}` : ''}</span><button id="load-dn" aria-label="Less weight">−</button><button id="load-up" aria-label="More weight">+</button></div>` : ''}${a.reps !== undefined ? `<div class="st"><span class="v">${plural(a.reps, 'rep')}</span><button id="reps-dn" aria-label="One rep fewer">−</button><button id="reps-up" aria-label="One rep more">+</button></div>` : ''}</div>`;
 
 // The view is drawn again only when something other than the clocks changes. Replacing the
 // buttons four times a second dropped any tap that was down across a redraw: about half of them.

@@ -17,6 +17,7 @@ import { ofWorkout, plannedSet, scoreType, shortUnit, type Block, type ExerciseS
 import { ruleNext, type SessionResult, type SetResult } from './progression';
 import { nextLoadUp, type Equipment } from './plates';
 import { lastSets } from './last-used';
+import { fmtWeight, loadDelta, loadText, unitText } from '@/shared/utils/units';
 import { modeFor, suggestOn, type SuggestPrefs } from '@/features/results/suggestions';
 
 export type Intent = 'restore' | 'maintain' | 'overreach';
@@ -187,37 +188,38 @@ export const setTarget = (s: ExerciseStep, lastAll: SetResult[] | undefined, int
   const bottom = s.forValue;
   const ceiling = s.forMax ?? (up !== undefined ? bankTop(top, up - top, bottom) : bottom * 2);
   const next = up !== undefined ? Math.round(up * 100) / 100 : top;
-  const u = unit ? ` ${unit}` : '';
+  const u = unit ? ` ${unitText(unit)}` : '';
+  const w = (n: number) => loadText(n, unit);
   if (mode === 'weight') {
     const want = s.forValue;
     const reps = working.map(() => want);
     if (up !== undefined && intent !== 'restore' && working.every(n => n >= want)) {
       const to = intent === 'overreach' ? nextLoadUp(up, s.exercise, kit) ?? up : up;
       const n = Math.round(to * 100) / 100;
-      return { ...base, load: n, reps, jump: true, text: `${num(n)}${u} × ${repsText(reps)}`, reason: `${num(want)} reps at ${num(top)}${u} on every set: up to ${num(n)}${u}` };
+      return { ...base, load: n, reps, jump: true, text: `${w(n)}${u} × ${repsText(reps)}`, reason: `${num(want)} reps at ${w(top)}${u} on every set: up to ${w(n)}${u}` };
     }
-    const reason = intent === 'restore' ? 'same weight as last time' : up === undefined ? `${num(top)}${u} is the heaviest you own: hold it` : `hold ${num(top)}${u} until every set makes ${num(want)}`;
-    return { ...base, load: top, reps, jump: false, text: `${num(top)}${u} × ${repsText(reps)}`, reason };
+    const reason = intent === 'restore' ? 'same weight as last time' : up === undefined ? `${w(top)}${u} is the heaviest you own: hold it` : `hold ${w(top)}${u} until every set makes ${num(want)}`;
+    return { ...base, load: top, reps, jump: false, text: `${w(top)}${u} × ${repsText(reps)}`, reason };
   }
   if (mode === 'effort') {
     const rpe = maxRpe(last.filter(x => x.load === top));
     const easy = easyRpe(intent);
     if (rpe !== undefined && up !== undefined && intent !== 'restore' && rpe <= easy) {
-      return { ...base, load: next, reps: working, jump: true, text: `${num(next)}${u} × ${repsText(working)}`, reason: `RPE ${num(rpe)} at ${num(top)}${u}: up to ${num(next)}${u}, same reps` };
+      return { ...base, load: next, reps: working, jump: true, text: `${w(next)}${u} × ${repsText(working)}`, reason: `RPE ${num(rpe)} at ${w(top)}${u}: up to ${w(next)}${u}, same reps` };
     }
     const reason = rpe === undefined ? 'same as last time · rate how hard it was at the finish'
-      : up === undefined ? `RPE ${num(rpe)} · ${num(top)}${u} is the heaviest you own`
+      : up === undefined ? `RPE ${num(rpe)} · ${w(top)}${u} is the heaviest you own`
       : intent === 'restore' ? 'same as last time' : `RPE ${num(rpe)} last time: more weight once it is ${num(easy)} or less`;
-    return { ...base, load: top, reps: working, jump: false, text: `${num(top)}${u} × ${repsText(working)}`, reason };
+    return { ...base, load: top, reps: working, jump: false, text: `${w(top)}${u} × ${repsText(working)}`, reason };
   }
   if (up !== undefined && intent !== 'restore' && working.every(n => n >= ceiling)) {
     const reps = working.map(() => bottom);
-    return { ...base, load: next, reps, jump: true, text: `${num(next)}${u} × ${repsText(reps)}`, reason: `${num(ceiling)} reps at ${num(top)}${u} on every set: up to ${num(next)}${u}` };
+    return { ...base, load: next, reps, jump: true, text: `${w(next)}${u} × ${repsText(reps)}`, reason: `${num(ceiling)} reps at ${w(top)}${u} on every set: up to ${w(next)}${u}` };
   }
   // A rep or two more a set, never past the ceiling, never fewer than was done.
   const reps = working.map(n => Math.max(n, Math.min(ceiling, n + add)));
-  const why = up === undefined ? `bank reps: ${num(top)}${u} is the heaviest you own` : `bank reps: ${num(next)}${u} once every set reaches ${num(ceiling)}`;
-  return { ...base, load: top, reps, jump: false, text: `${num(top)}${u} × ${repsText(reps)}`, reason: add ? why : 'what you did last time' };
+  const why = up === undefined ? `bank reps: ${w(top)}${u} is the heaviest you own` : `bank reps: ${w(next)}${u} once every set reaches ${num(ceiling)}`;
+  return { ...base, load: top, reps, jump: false, text: `${w(top)}${u} × ${repsText(reps)}`, reason: add ? why : 'what you did last time' };
 };
 
 /**
@@ -232,8 +234,7 @@ export const targetDelta = (t: Pick<SetTarget, 'load' | 'reps'>, last: SetResult
   const top = loads.length ? Math.max(...loads) : undefined;
   const sign = (d: number) => (d > 0 ? '+' : '−');
   if (t.load !== undefined && top !== undefined && top > 0 && t.load !== top) {
-    const d = t.load - top;
-    return `${sign(d)}${num(Math.abs(d))}${unit ? ` ${unit}` : ''}`;
+    return loadDelta(t.load - top, unit);
   }
   const before = work.filter(x => top === undefined || x.load === top).map(x => x.reps).filter((n): n is number => n !== undefined);
   if (!before.length || before.length !== t.reps.length) return undefined;
@@ -283,7 +284,7 @@ export const ruleTargets = (r: Runsheet, results: SessionResult[], kit?: Equipme
     const next = ruleNext(r, s, results, {}, kit);
     if (!next) continue;
     const unit = shortUnit(s.exercise.unit);
-    const u = unit ? ` ${unit}` : '';
+    const u = unit ? ` ${unitText(unit)}` : '';
     const block = r.items.find((i): i is Block => i.kind === 'block' && i.steps.some(x => x.id === s.id));
     const d = Math.round((next.to - next.from) * 100) / 100;
     out.push({
@@ -293,9 +294,9 @@ export const ruleTargets = (r: Runsheet, results: SessionResult[], kit?: Equipme
       load: next.to,
       reps: Array.from({ length: Math.max(1, block?.repeat ?? 1) }, () => s.forValue),
       jump: d > 0,
-      text: `${num(next.to)}${u} × ${num(s.forValue)}`,
+      text: `${loadText(next.to, unit)}${u} × ${num(s.forValue)}`,
       reason: next.reason,
-      ...(d !== 0 ? { delta: `${d > 0 ? '+' : '−'}${num(Math.abs(d))}${u}` } : {}),
+      ...(d !== 0 ? { delta: loadDelta(d, unit) } : {}),
     });
   }
   return out;
@@ -317,8 +318,8 @@ export const ruleText = (r: Runsheet): string | undefined => {
   if (!steps.length) return undefined;
   const count = (kg: number) => steps.filter(x => x.kg === kg).length;
   const usual = [...steps].sort((a, b) => count(b.kg) - count(a.kg))[0].kg;
-  const others = steps.filter(x => x.kg !== usual).map(x => `${x.name.toLowerCase()} ${num(x.kg)} kg`);
-  return `every set made, add ${num(usual)} kg${others.length ? ` (${others.join(', ')})` : ''}`;
+  const others = steps.filter(x => x.kg !== usual).map(x => `${x.name.toLowerCase()} ${fmtWeight(x.kg)}`);
+  return `every set made, add ${fmtWeight(usual)}${others.length ? ` (${others.join(', ')})` : ''}`;
 };
 
 export interface Today {

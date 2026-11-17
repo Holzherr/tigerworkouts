@@ -5,6 +5,7 @@
 import type { Block, ExerciseStep, Item, Progression, Runsheet, SetType } from './model';
 import { nextLoadUp, snapToKit, type Equipment } from './plates';
 import type { SessionVersion } from './versions';
+import { fmtWeight } from '@/shared/utils/units';
 
 /** kg per exercise key: a training max (5/3/1, nSuns) or last working weight (StrongLifts). */
 export type TrainingMaxes = Record<string, number>;
@@ -246,7 +247,7 @@ export const nextLoads = (r: Runsheet, last: SessionResult, history: SessionResu
       const reps = res.reps?.at(-1);
       if (reps !== undefined && reps >= rule.amrapBumpAt) {
         const tm = tms[key];
-        out.push({ exerciseKey: key, name: s.exercise.name, from: tm, to: tm !== undefined ? tm + rule.tmBumpKg : undefined, reason: `${reps} reps on the ${s.forValue}+ set: training max +${rule.tmBumpKg} kg` });
+        out.push({ exerciseKey: key, name: s.exercise.name, from: tm, to: tm !== undefined ? tm + rule.tmBumpKg : undefined, reason: `${reps} reps on the ${s.forValue}+ set: training max +${fmtWeight(rule.tmBumpKg)}` });
         continue;
       }
     }
@@ -256,7 +257,7 @@ export const nextLoads = (r: Runsheet, last: SessionResult, history: SessionResu
       // The next load you can make at or above the rule's step: a 24 kg bell +2.5 is the 28.
       const up = snapToKit(from + rule.onSuccessKg, s.exercise, kit, 'up');
       const to = up > from ? up : (nextLoadUp(from, s.exercise, kit) ?? from);
-      out.push({ exerciseKey: key, name: s.exercise.name, from, to, reason: to === from ? `all sets done: already the heaviest you own` : `all sets done: +${rule.onSuccessKg} kg${Math.abs(to - from - rule.onSuccessKg) > 1e-6 ? `, ${fmtKg(to)} kg is the next you can load` : ''}` });
+      out.push({ exerciseKey: key, name: s.exercise.name, from, to, reason: to === from ? `all sets done: already the heaviest you own` : `all sets done: +${fmtWeight(rule.onSuccessKg)}${Math.abs(to - from - rule.onSuccessKg) > 1e-6 ? `, ${fmtWeight(to)} is the next you can load` : ''}` });
     } else if (!made && rule.deloadPct && rule.failAfter) {
       // `last` is the result sheet's copy of a row already in `history`: match it by id, not identity.
       const streak = failStreak([last, ...history.filter(h => !sameSession(h, last))], key);
@@ -296,8 +297,6 @@ export const progressed = (r: Runsheet, results: SessionResult[], tms: TrainingM
   return { ...r, items: r.items.map(it => (it.kind === 'block' ? { ...it, steps: it.steps.map(x => (x.kind === 'exercise' ? step(x) : x)) } : it.kind === 'exercise' ? step(it) : it)) };
 };
 
-const fmtKg = (n: number) => (Number.isInteger(n) ? `${n}` : `${Math.round(n * 100) / 100}`);
-
 /** Format a score for display given the runsheet's score type. */
 export const fmtScore = (type: string, score?: number, text?: string) => {
   if (text) return text;
@@ -308,7 +307,7 @@ export const fmtScore = (type: string, score?: number, text?: string) => {
     return `${whole} ${whole === 1 ? 'round' : 'rounds'}${reps ? ` + ${reps} ${reps === 1 ? 'rep' : 'reps'}` : ''}`;
   }
   if (type === 'reps') return `${score} reps`;
-  if (type === 'load') return `${score} kg`;
+  if (type === 'load') return fmtWeight(score);
   if (type === 'distance') return `${score} m`;
   return String(score);
 };
