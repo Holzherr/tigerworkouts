@@ -182,27 +182,27 @@ struct ExerciseSheet: View {
             Text(title).font(.subheadline.weight(.semibold)).foregroundStyle(Brand.body)
             HStack(spacing: 14) {
                 nudge("minus", enabled: (value.wrappedValue ?? 0) > 0) {
-                    value.wrappedValue = max(0, (value.wrappedValue ?? amount) - amount)
+                    value.wrappedValue = Units.stepped(value.wrappedValue ?? amount, by: -1, step: amount, unit: unit)
                 }
                 Button {
                     entry = NumberEntryRequest(title: title, unit: unit, current: value.wrappedValue) { value.wrappedValue = $0 }
                 } label: {
                     VStack(spacing: 0) {
-                        Text(value.wrappedValue.map(Format.number) ?? "—")
+                        Text(value.wrappedValue.map { Units.number($0, unit: unit) } ?? "—")
                             .font(.system(size: 34, weight: .semibold, design: .rounded))
                             .monospacedDigit()
                             .foregroundStyle(Brand.ink)
-                        Text(unit).font(.caption).foregroundStyle(Brand.muted)
+                        Text(Units.unit(unit)).font(.caption).foregroundStyle(Brand.muted)
                     }
                     .frame(maxWidth: .infinity, minHeight: Tap.big)
                     .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
                 .accessibilityLabel(title)
-                .accessibilityValue(value.wrappedValue.map(Format.number) ?? "none")
+                .accessibilityValue(value.wrappedValue.map { Units.number($0, unit: unit) } ?? "none")
                 .accessibilityHint("Type a number")
                 nudge("plus", enabled: true) {
-                    value.wrappedValue = (value.wrappedValue ?? 0) + amount
+                    value.wrappedValue = Units.stepped(value.wrappedValue ?? 0, by: 1, step: amount, unit: unit)
                 }
             }
         }
@@ -244,14 +244,17 @@ struct ExerciseSheet: View {
         default: count
         }
         guard let load = line.load, step.hasSetLoad else { return step.forMode == .reps ? "\(count) reps" : what }
-        return "\(Format.number(load)) \(step.shortUnit) × \(what)".replacingOccurrences(of: "  ", with: " ")
+        return "\(step.loadText(load)) × \(what)".replacingOccurrences(of: "  ", with: " ")
     }
 
     /// What − and + move by on this exercise, everywhere: the load step and, on a distance, metres.
     private var stepSizes: some View {
         VStack(alignment: .leading, spacing: 0) {
             if step.hasSetting {
-                stepMenu(title: "\(step.settingLabel) steps", unit: unit, value: increment, custom: loadStep != nil, choices: StepSizes.loadChoices) { v in
+                // In lb the lb steps are offered, each kept as kg; only these come back as picked (U11).
+                let lb = Units.lb && Units.isWeight(unit)
+                stepMenu(title: "\(step.settingLabel) steps", unit: unit, value: increment, custom: loadStep != nil,
+                         choices: lb ? Units.lbStepChoices.map(Units.toKg) : StepSizes.loadChoices, typed: !lb) { v in
                     StepSizes.set(v, for: step.exercise.key, .load)
                     loadStep = StepSizes.custom(step.exercise.key, .load)
                 }
@@ -269,15 +272,19 @@ struct ExerciseSheet: View {
         .accessibilityIdentifier("step-sizes")
     }
 
-    private func stepMenu(title: String, unit: String, value: Double, custom: Bool, choices: [Double], set: @escaping (Double?) -> Void) -> some View {
-        Menu {
+    /// `value` and `choices` as stored; a load step shows as its lb step when weights show in lb.
+    private func stepMenu(title: String, unit: String, value: Double, custom: Bool, choices: [Double], typed: Bool = true, set: @escaping (Double?) -> Void) -> some View {
+        func text(_ v: Double) -> String { "\(StepSizes.text(Units.step(v, unit: unit))) \(Units.unit(unit))" }
+        return Menu {
             ForEach(choices, id: \.self) { c in
                 Button { set(c) } label: {
-                    if c == value { Label("\(StepSizes.text(c)) \(unit)", systemImage: "checkmark") } else { Text("\(StepSizes.text(c)) \(unit)") }
+                    if text(c) == text(value) { Label(text(c), systemImage: "checkmark") } else { Text(text(c)) }
                 }
             }
-            Button("Other…") {
-                entry = NumberEntryRequest(title: title, unit: unit, current: value) { set($0) }
+            if typed {
+                Button("Other…") {
+                    entry = NumberEntryRequest(title: title, unit: unit, current: value) { set($0) }
+                }
             }
             if custom {
                 Button("The exercise's own") { set(nil) }
@@ -286,7 +293,7 @@ struct ExerciseSheet: View {
             HStack {
                 Text(title).foregroundStyle(Brand.body)
                 Spacer()
-                Text("\(StepSizes.text(value)) \(unit)").font(.body.weight(.semibold)).monospacedDigit().foregroundStyle(Brand.ink)
+                Text(text(value)).font(.body.weight(.semibold)).monospacedDigit().foregroundStyle(Brand.ink)
                 Image(systemName: "chevron.up.chevron.down").font(.footnote.weight(.semibold)).foregroundStyle(Brand.faint)
             }
             .padding(16)
@@ -354,6 +361,6 @@ private struct SwapList: View {
     /// "45 kg · Machine" — the load in the new exercise's own terms, and where to find it.
     private func subtitle(_ option: Alternatives.Option) -> String {
         guard let target = option.target else { return option.why }
-        return "\(Format.number(target)) \(option.exercise.unit) · \(option.why)"
+        return "\(Units.label(target, unit: option.exercise.unit)) · \(option.why)"
     }
 }

@@ -78,17 +78,12 @@ struct MeView: View {
                     .disabled(store.results.isEmpty)
                     .accessibilityIdentifier("export-history")
 
-                    Stepper(
-                        value: Binding(
-                            get: { store.bodyweightKg ?? EffortModel.defaultBodyweightKg },
-                            set: { kg in Task { await store.setBodyweight(kg) } }
-                        ),
-                        in: 35...200,
-                        step: 0.5
-                    ) {
+                    BodyweightStepper(kg: store.bodyweightKg ?? EffortModel.defaultBodyweightKg, range: 35...200) { kg in
+                        Task { await store.setBodyweight(kg) }
+                    } label: {
                         VStack(alignment: .leading, spacing: 2) {
                             Text("Bodyweight").foregroundStyle(Brand.ink)
-                            Text(store.bodyweightKg.map { "\(Format.number($0)) kg" } ?? "Not set · calories assume \(Int(EffortModel.defaultBodyweightKg)) kg")
+                            Text(store.bodyweightKg.map { Units.weight($0) } ?? "Not set · calories assume \(Units.wholeWeight(EffortModel.defaultBodyweightKg))")
                                 .font(.footnote)
                                 .foregroundStyle(Brand.muted)
                         }

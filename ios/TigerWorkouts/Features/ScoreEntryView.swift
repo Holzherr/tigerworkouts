@@ -49,10 +49,16 @@ struct ScoreEntryView: View {
                 .accessibilityIdentifier("score-reps")
             }
         case .reps, .load, .distance:
-            let label = type == .reps ? "Total reps" : type == .load ? "Load (kg)" : "Distance (m)"
+            let label = type == .reps ? "Total reps" : type == .load ? "Load (\(Units.word()))" : "Distance (m)"
             let step: Double = type == .load ? 2.5 : type == .distance ? 50 : 1
-            Stepper(value: Binding(get: { value ?? 0 }, set: { onChange(max(0, $0)) }), in: 0...99_999, step: step) {
-                row(label, Format.number(value ?? 0))
+            // A load is stepped and shown in lb when weights show in lb, kept in kg (U11).
+            let unit = type == .load ? "kg" : ""
+            Stepper {
+                row(label, Units.number(value ?? 0, unit: unit))
+            } onIncrement: {
+                onChange(min(99_999, Units.stepped(value ?? 0, by: 1, step: step, unit: unit)))
+            } onDecrement: {
+                onChange(Units.stepped(value ?? 0, by: -1, step: step, unit: unit))
             }
             .accessibilityIdentifier("score-total")
         }
@@ -90,7 +96,7 @@ struct ScoreEntryView: View {
         if r.capped == true, score == r.score { return r }
         var out = r
         out.score = score
-        out.scoreText = score.map { Celebrate.formatScore(type, $0) }
+        out.scoreText = score.map { Celebrate.formatScore(type, $0, lb: false) }
         out.capped = nil
         out.capReps = nil
         return out

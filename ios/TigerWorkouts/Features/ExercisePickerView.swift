@@ -55,7 +55,7 @@ struct ExercisePickerView: View {
                             } label: {
                                 VStack(alignment: .leading, spacing: 2) {
                                     Text(exercise.name).foregroundStyle(Brand.ink)
-                                    let detail = [exercise.isCustom ? "yours" : nil, exercise.unit.isEmpty ? nil : exercise.unit].compactMap { $0 }
+                                    let detail = [exercise.isCustom ? "yours" : nil, exercise.unit.isEmpty ? nil : Units.unit(exercise.unit)].compactMap { $0 }
                                     if !detail.isEmpty {
                                         Text(detail.joined(separator: " · ")).font(.caption).foregroundStyle(Brand.muted)
                                     }

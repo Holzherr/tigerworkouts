@@ -221,8 +221,8 @@ enum LastTime {
     static func label(_ set: SetResult?, for step: ExerciseStep) -> String? {
         guard let set else { return nil }
         switch (set.load, set.reps) {
-        case let (load?, reps?): return "last time \(Format.number(load)) × \(Format.number(reps))"
-        case let (load?, nil): return step.shortUnit.isEmpty ? "last time \(Format.number(load))" : "last time \(Format.number(load)) \(step.shortUnit)"
+        case let (load?, reps?): return "last time \(step.loadNumber(load)) × \(Format.number(reps))"
+        case let (load?, nil): return "last time \(step.loadText(load))"
         case let (nil, reps?): return "last time \(Format.number(reps)) reps"
         default: return nil
         }
@@ -249,10 +249,10 @@ enum LastTime {
         return nil
     }
 
-    /// "last 57.5 × 8" under a set row.
-    static func setLabel(_ set: SetResult?) -> String? {
+    /// "last 57.5 × 8" under a set row; the load in lb when weights show in lb (`unit` as stored).
+    static func setLabel(_ set: SetResult?, unit: String = "") -> String? {
         guard let set else { return nil }
-        let parts = [set.load, set.reps].compactMap { $0 }.map(Format.number)
+        let parts = [set.load.map { Units.number($0, unit: unit) }, set.reps.map(Format.number)].compactMap { $0 }
         return parts.isEmpty ? nil : "last " + parts.joined(separator: " × ")
     }
 
@@ -282,7 +282,10 @@ enum LastTime {
     /// load, "10 kph" without reps. A run of sets with one number each reads "24 kg × 7 sets",
     /// the unit beside its number ("24 (×7) kg" read as a typo, review D8). At most `limit`
     /// groups, then "+N more".
-    static func compact(_ sets: [SetResult], unit: String = "", limit: Int = 4) -> String? {
+    static func compact(_ sets: [SetResult], unit stored: String = "", limit: Int = 4) -> String? {
+        // A weight shows in lb when weights do (U11); `stored` is the exercise's unit.
+        let unit = Units.unit(stored)
+        func load(_ v: Double) -> String { Units.number(v, unit: stored) }
         var groups: [(set: SetResult, count: Int)] = []
         for s in sets {
             if let last = groups.last, last.set.load == s.load, last.set.reps == s.reps {
@@ -300,10 +303,12 @@ enum LastTime {
         func one(_ g: (set: SetResult, count: Int)) -> String {
             let times = g.count > 1 ? " (×\(g.count))" : ""
             switch (g.set.load, g.set.reps) {
-            case let (load?, reps?): return "\(Format.number(load)) × \(Format.number(reps))\(times)"
-            case let (value?, nil) where spelled, let (nil, value?) where spelled:
+            case let (kg?, reps?): return "\(load(kg)) × \(Format.number(reps))\(times)"
+            case let (kg?, nil) where spelled:
+                return "\(load(kg))\(own)" + (g.count > 1 ? " × \(g.count) sets" : "")
+            case let (nil, value?) where spelled:
                 return "\(Format.number(value))\(own)" + (g.count > 1 ? " × \(g.count) sets" : "")
-            case let (load?, nil): return "\(Format.number(load))\(times)"
+            case let (kg?, nil): return "\(load(kg))\(times)"
             case let (nil, reps?): return loads ? "\(Format.number(reps)) reps\(times)" : "\(Format.number(reps))\(times)"
             default: return ""
             }

@@ -296,14 +296,18 @@ enum Logbook {
 
     /// "100 × 5", "14.5 kph", "12 reps", "500 m in 1:41", "20 cal", "1:00", or "" for a round with
     /// nothing counted. A load or reps with a time adds it: "24 kg · 40 s".
-    static func label(_ x: SetResult, unit: String = "") -> String {
+    /// `unit` is the exercise's stored one: a weight shows in lb when weights do (U11). `loads`
+    /// converts the load without writing a unit beside it; `unit` does both.
+    static func label(_ x: SetResult, unit: String = "", loads: String? = nil) -> String {
+        let shownUnit = Units.unit(unit)
+        func load(_ v: Double) -> String { Units.number(v, unit: loads ?? unit) }
         let time = (x.seconds ?? 0) > 0 ? duration(x.seconds!) : ""
         if let m = x.meters { return "\(Format.number(m)) m" + (time.isEmpty ? "" : " in \(time)") }
         if let c = x.calories { return "\(Format.number(c)) cal" + (time.isEmpty ? "" : " in \(time)") }
         let base: String
         switch (x.load, x.reps) {
-        case let (load?, reps?): base = "\(Format.number(load)) × \(Format.number(reps))"
-        case let (load?, nil): base = unit.isEmpty ? Format.number(load) : "\(Format.number(load)) \(unit)"
+        case let (kg?, reps?): base = "\(load(kg)) × \(Format.number(reps))"
+        case let (kg?, nil): base = shownUnit.isEmpty ? load(kg) : "\(load(kg)) \(shownUnit)"
         case let (nil, reps?): base = "\(Format.number(reps)) reps"
         default: base = ""
         }

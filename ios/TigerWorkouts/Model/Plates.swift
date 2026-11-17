@@ -36,6 +36,8 @@ enum Plates {
             ? Units.lbDefaultPlates.map { PlateCount(kg: Units.toKg($0.lb), count: $0.count) }
             : [25, 20, 15, 10, 5, 2.5, 1.25].map { PlateCount(kg: $0, count: $0 >= 10 ? 8 : 4) }
     }
+    /// The heaviest plate drawn full height in the plate calculator.
+    static var biggestPlate: Double { Units.lb ? Units.toKg(45) : 25 }
     /// Plate weights offered in the equipment editor.
     static let plateSizes: [Double] = [25, 20, 15, 10, 5, 2.5, 2, 1.25, 1, 0.5]
     /// 4 to 48 kg in 4 kg steps: the usual run of bells. In lb, the lb run (U11).

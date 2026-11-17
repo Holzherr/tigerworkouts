@@ -67,7 +67,7 @@ struct SetPlanGrid: View {
             }
             HStack(spacing: 8) {
                 Text("Set").frame(width: 36, alignment: .leading)
-                if step.hasSetLoad { Text(step.shortUnit).frame(maxWidth: .infinity) }
+                if step.hasSetLoad { Text(step.shownUnit).frame(maxWidth: .infinity) }
                 if let count = step.countLabel { Text(count).frame(maxWidth: .infinity) }
             }
             .font(.caption.weight(.bold))
@@ -88,7 +88,7 @@ struct SetPlanGrid: View {
                         .frame(width: 36, alignment: .leading)
                         if step.hasSetLoad {
                             if Plates.kit(step.exercise) == .barbell { PlatesButton(load: run.load) }
-                            MiniStepper(value: run.load ?? 0, label: "\(label) load", disabled: locked, neutral: true, onTapValue: locked ? nil : {
+                            MiniStepper(value: run.load ?? 0, label: "\(label) load", unit: step.shortUnit, disabled: locked, neutral: true, onTapValue: locked ? nil : {
                                 entry = NumberEntryRequest(title: "\(label) \(step.settingLabel.lowercased())", unit: step.shortUnit, current: run.load) { v in
                                     apply { Edit.editRun($0, block: block.id, run: run, load: v) }
                                 }
@@ -97,7 +97,7 @@ struct SetPlanGrid: View {
                                 // before this view is drawn again.
                                 apply { r in
                                     let now = r.exerciseSteps.first { $0.id == step.id }?.plannedSet(round).load ?? run.load
-                                    let next = max(0, (now ?? 0) + direction * StepSizes.load(step.exercise))
+                                    let next = Units.stepped(now ?? 0, by: direction, step: StepSizes.load(step.exercise), unit: step.shortUnit)
                                     return Edit.editRun(r, block: block.id, run: run, load: next)
                                 }
                             }
@@ -162,8 +162,11 @@ struct SetPlanGrid: View {
 /// shrinks before it pushes the row wider. Narrower still (a 375 pt phone), the targets stay 44 pt
 /// and reach 6 pt over the number between them, rather than drop to 38 pt or overflow the screen.
 struct MiniStepper: View {
+    /// As stored; a weight shows in lb when weights do (U11).
     var value: Double
     var label: String
+    /// The stored unit of `value` ("kg", "kph"); empty for a count.
+    var unit = ""
     var disabled = false
     /// On a coral-tinted row the buttons go white, or they vanish into it.
     var onTint = false
@@ -192,7 +195,7 @@ struct MiniStepper: View {
 
     @ViewBuilder
     private var number: some View {
-        let text = Text(Format.number(value))
+        let text = Text(shownValue)
             .scaledFont(18, weight: .bold, design: .rounded, relativeTo: .body)
             .monospacedDigit()
             .foregroundStyle(Brand.ink)
@@ -207,14 +210,16 @@ struct MiniStepper: View {
             }
             .buttonStyle(.plain)
             .accessibilityLabel(label)
-            .accessibilityValue(Format.number(value))
+            .accessibilityValue(shownValue)
             .accessibilityHint("Type a number")
         } else {
             text
                 .accessibilityLabel(label)
-                .accessibilityValue(Format.number(value))
+                .accessibilityValue(shownValue)
         }
     }
+
+    private var shownValue: String { Units.number(value, unit: unit) }
 
     /// Held, it repeats and the steps grow; `action` gets 1, 2 or 5.
     private func button(_ symbol: String, _ label: String, edge: Alignment, action: @escaping (Double) -> Void) -> some View {

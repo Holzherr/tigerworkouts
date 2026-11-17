@@ -552,7 +552,7 @@ struct TimerView: View {
         let last: Double?
 
         var lastLabel: String? {
-            last.map { "last time \(Format.number($0))\(unit == "%" ? "" : " ")\(unit)" }
+            last.map { "last time \(Units.number($0, unit: unit))\(unit == "%" ? "" : " ")\(Units.unit(unit))" }
         }
     }
 
@@ -734,7 +734,7 @@ struct TimerView: View {
     private func amountsLine(_ ex: ExerciseStep, live: Bool, hasLoad: Bool, settings: [BlockSetting]) -> String {
         var parts: [String] = []
         if hasLoad, let load = live ? runner.target : runner.plannedTarget(ex.id) ?? ex.target {
-            parts.append([Format.number(load), ex.shortUnit].filter { !$0.isEmpty }.joined(separator: " "))
+            parts.append([ex.loadNumber(load), ex.shownUnit].filter { !$0.isEmpty }.joined(separator: " "))
         }
         if live {
             for field in runner.amountFields {
@@ -774,11 +774,11 @@ struct TimerView: View {
                     let load = runner.slot?.exercise?.id == ex.id ? runner.target : runner.plannedTarget(ex.id) ?? ex.target
                     typed(load, title: ex.settingLabel, unit: ex.shortUnit) { runner.setStepTarget(ex.id, $0) } label: {
                         VStack(spacing: 0) {
-                            Text(load.map(Format.number) ?? "—")
+                            Text(load.map(ex.loadNumber) ?? "—")
                                 .scaledFont(26, weight: .bold, design: .rounded, relativeTo: .title2)
                                 .monospacedDigit()
                                 .foregroundStyle(Brand.ink)
-                            Text(ex.shortUnit).font(.caption2).foregroundStyle(Brand.muted)
+                            Text(ex.shownUnit).font(.caption2).foregroundStyle(Brand.muted)
                         }
                         .frame(minWidth: 64)
                     }
@@ -923,7 +923,7 @@ struct TimerView: View {
     private func setSummary(_ row: SessionRunner.SetRow, _ ex: ExerciseStep) -> String {
         var parts: [String] = []
         if ex.hasSetLoad, Measure.of(ex.exercise.unit) == nil {
-            parts.append([row.load.map(Format.number) ?? "—", ex.shortUnit].filter { !$0.isEmpty }.joined(separator: " "))
+            parts.append([row.load.map(ex.loadNumber) ?? "—", ex.shownUnit].filter { !$0.isEmpty }.joined(separator: " "))
         }
         if let count = ex.countLabel {
             let n = Format.number((Self.countShown(row, ex) * 10).rounded() / 10)
@@ -1009,7 +1009,7 @@ struct TimerView: View {
         let treadmill = Library.shared.group(step.exercise.key).map { [.treadmill, .walk, .run].contains($0) } ?? false
         let incline = treadmill || inclines.contains { $0 != nil }
         let extra = step.extraLogs.map { $0 == .reps ? "Reps" : $0 == .meters ? "m" : "Cal" }
-        return ((step.hasSetLoad ? [step.shortUnit] : []) + (incline ? ["Incl"] : []) + (step.countLabel.map { [$0] } ?? []) + extra)
+        return ((step.hasSetLoad ? [step.shownUnit] : []) + (incline ? ["Incl"] : []) + (step.countLabel.map { [$0] } ?? []) + extra)
             .map { $0.uppercased() }
     }
 
@@ -1025,7 +1025,7 @@ struct TimerView: View {
     }
 
     private func setRow(_ row: SessionRunner.SetRow, _ ex: ExerciseStep, incline: Bool, last: SetResult?) -> some View {
-        let hint = LastTime.setLabel(last)
+        let hint = LastTime.setLabel(last, unit: ex.shortUnit)
         // A done set is drawn as a row only while it is open for correction.
         let editable = !row.done || openSet == row.slotId
         let tinted = row.current || row.done
@@ -1042,18 +1042,18 @@ struct TimerView: View {
                 if ex.hasSetLoad, Measure.of(ex.exercise.unit) == nil {
                     Group {
                         if editable {
-                            MiniStepper(value: row.load ?? 0, label: "Set \(row.number) load", onTint: tinted, onTapValue: {
+                            MiniStepper(value: row.load ?? 0, label: "Set \(row.number) load", unit: ex.shortUnit, onTint: tinted, onTapValue: {
                                 entry = NumberEntryRequest(title: "Set \(row.number) \(ex.settingLabel.lowercased())", unit: ex.shortUnit, current: row.load) { runner.setSetLoad(row.slotId, $0) }
                             }) { runner.nudgeSetLoad(row.slotId, $0) }
                         } else {
                             HStack(spacing: 2) {
-                                Text(row.load.map(Format.number) ?? "—").scaledFont(18, weight: .bold, design: .rounded, relativeTo: .body).lineLimit(1).minimumScaleFactor(0.6)
+                                Text(row.load.map(ex.loadNumber) ?? "—").scaledFont(18, weight: .bold, design: .rounded, relativeTo: .body).lineLimit(1).minimumScaleFactor(0.6)
                                 if Plates.kit(ex.exercise) == .barbell { PlatesButton(load: row.load) }
                             }
                         }
                     }
                     .frame(maxWidth: .infinity)
-                    .overlay(alignment: .bottom) { if editable { unitCaption(ex.shortUnit) } }
+                    .overlay(alignment: .bottom) { if editable { unitCaption(ex.shownUnit) } }
                 }
                 if incline, !wraps { inclineCell.frame(width: SetInclineCell.width(ex)).overlay(alignment: .bottom) { if editable { unitCaption("incl %") } } }
                 if let count = ex.countLabel {
@@ -1427,7 +1427,7 @@ struct TimerView: View {
 
     private func planned(_ e: ExerciseStep) -> String {
         var parts = [e.forLabel]
-        if let t = runner.plannedTarget(e.id), !e.shortUnit.isEmpty { parts.append("\(Format.number(t)) \(e.shortUnit)") }
+        if let t = runner.plannedTarget(e.id), !e.shortUnit.isEmpty { parts.append(e.loadText(t)) }
         if let i = runner.plannedIncline(e.id) { parts.append("\(Format.number(i))% incline") }
         return parts.joined(separator: " · ")
     }

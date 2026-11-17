@@ -88,8 +88,8 @@ enum WeekTable {
         var parts: [String] = []
         let dl = (b.load ?? 0) - (a.load ?? 0)
         let dr = (b.reps ?? 0) - (a.reps ?? 0)
-        let u = unit.isEmpty ? "" : " \(unit)"
-        if abs(dl) > 1e-9 { parts.append(signed(dl, u)) }
+        // A load difference in lb when weights show in lb: +2.5 kg reads +5.5 lb (U11).
+        if abs(dl) > 1e-9 { parts.append("\(dl > 0 ? "+" : "−")\(Units.label(abs(dl), unit: unit))") }
         if abs(dr) > 1e-9, a.reps != nil, b.reps != nil { parts.append(signed(dr, plural(dr, "rep"))) }
         if parts.isEmpty, let x = a.seconds, let y = b.seconds, abs(y - x) >= 1, a.reps == nil, b.reps == nil {
             return (signed(y - x, " s"), y > x)
@@ -139,7 +139,7 @@ enum WeekTable {
                     guard sets.indices.contains(n) else { cells.append(nil); continue }
                     let x = sets[n]
                     let d: (text: String?, better: Bool?) = before.map { delta(from: $0, to: x, unit: Measure.of(shown) == nil ? shown : "") } ?? (nil, nil)
-                    cells.append(Cell(set: x, text: Logbook.label(x), delta: d.text, better: d.better))
+                    cells.append(Cell(set: x, text: Logbook.label(x, loads: shown), delta: d.text, better: d.better))
                     before = x
                 }
                 rows.append(Row(exerciseKey: key, name: names[key] ?? name(key), set: n, cells: cells))

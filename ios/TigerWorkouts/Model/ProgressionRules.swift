@@ -74,7 +74,7 @@ enum ProgressionRules {
                let reps = res.reps?.last, reps >= Double(at) {
                 let tm = maxes[key]
                 out.append(NextLoad(exerciseKey: key, name: s.exercise.name, from: tm, to: tm.map { $0 + bump },
-                                    reason: "\(Format.number(reps)) reps on the \(Format.number(s.forValue))+ set: training max +\(Format.number(bump)) kg", tmBump: true))
+                                    reason: "\(Format.number(reps)) reps on the \(Format.number(s.forValue))+ set: training max +\(Units.weight(bump))", tmBump: true))
                 continue
             }
             guard let ok = res.success, let from else { continue }
@@ -83,7 +83,7 @@ enum ProgressionRules {
                 let to = up > from ? up : (Plates.nextUp(from, s.exercise, kit) ?? from)
                 let reason = to == from
                     ? "all sets done: already the heaviest you own"
-                    : "all sets done: +\(Format.number(add)) kg" + (abs(to - from - add) > 1e-6 ? ", \(Format.number(to)) kg is the next you can load" : "")
+                    : "all sets done: +\(Units.weight(add))" + (abs(to - from - add) > 1e-6 ? ", \(Units.weight(to)) is the next you can load" : "")
                 out.append(NextLoad(exerciseKey: key, name: s.exercise.name, from: from, to: to, reason: reason))
             } else if !ok, let pct = rule.deloadPct, pct != 0, let after = rule.failAfter, after > 0 {
                 let streak = failStreak([last] + history.filter { !Celebrate.same($0, last) }, exerciseKey: key)

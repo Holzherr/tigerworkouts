@@ -71,6 +71,8 @@ enum Units {
     /// A kg weight as shown: "95 lb" or "43 kg".
     static func weight(_ kg: Double, lb: Bool = Units.lb) -> String { "\(weightNumber(kg, lb: lb)) \(word(lb: lb))" }
     static func weightNumber(_ kg: Double, lb: Bool = Units.lb) -> String { Format.number(lb ? toLb(kg) : kg) }
+    /// To the whole kg or lb: "80 kg", "176 lb".
+    static func wholeWeight(_ kg: Double, lb: Bool = Units.lb) -> String { "\(Format.whole(lb ? kg * LB : kg)) \(word(lb: lb))" }
 
     // MARK: - Steps
 
@@ -137,4 +139,13 @@ enum Units {
         }
         return (n < 0 ? "-" : "") + out
     }
+}
+
+extension ExerciseStep {
+    /// The unit as shown: "lb" for a weight in lb.
+    var shownUnit: String { Units.unit(shortUnit) }
+    /// A stored target or load as shown with its unit: "95 lb", "43 kg", "10 kph", "12".
+    func loadText(_ v: Double) -> String { Units.label(v, unit: shortUnit) }
+    /// A stored target or load as a shown number.
+    func loadNumber(_ v: Double) -> String { Units.number(v, unit: shortUnit) }
 }

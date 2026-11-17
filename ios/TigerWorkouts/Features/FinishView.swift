@@ -262,11 +262,11 @@ struct FinishView: View {
     private var bodyweightAsk: some View {
         VStack(alignment: .leading, spacing: 10) {
             Text("What do you weigh?").font(.headline).foregroundStyle(Brand.ink)
-            Text("The calorie estimate assumes \(Int(EffortModel.defaultBodyweightKg)) kg until you say. Change it any time under Me.")
+            Text("The calorie estimate assumes \(Units.wholeWeight(EffortModel.defaultBodyweightKg)) until you say. Change it any time under Me.")
                 .font(.footnote)
                 .foregroundStyle(Brand.muted)
-            Stepper(value: $bodyweightDraft, in: 35...200, step: 0.5) {
-                Text("\(Format.number(bodyweightDraft)) kg").font(.title3.weight(.bold)).monospacedDigit()
+            BodyweightStepper(kg: bodyweightDraft, range: 35...200) { bodyweightDraft = $0 } label: {
+                Text(Units.weight(bodyweightDraft)).font(.title3.weight(.bold)).monospacedDigit()
             }
             .accessibilityIdentifier("bodyweight-stepper")
             HStack {

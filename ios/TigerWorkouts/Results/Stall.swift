@@ -108,17 +108,19 @@ enum Stall {
         if kind == .reps, window.allSatisfy({ $0 == window.first ?? nil }) { return nil }
         let set = bests[p.index].best.set
         let unit = exercise.unit.replacingOccurrences(of: " per arm", with: "").replacingOccurrences(of: " per side", with: "").trimmingCharacters(in: .whitespaces)
-        let u = unit.isEmpty ? "" : " \(unit)"
+        // Loads in lb when weights show in lb (U11).
+        let u = unit.isEmpty ? "" : " \(Units.unit(unit))"
         let step = exercise.step > 0 ? exercise.step : 2.5
         let n = Format.number
+        let w = { (v: Double) in Units.number(v, unit: unit) }
         let best: String = switch kind {
-        case .strength: "\(n(set.load ?? 0))\(u) × \(n(set.reps ?? 0))"
-        case .load: "\(n(set.load ?? 0))\(u)"
+        case .strength: "\(w(set.load ?? 0))\(u) × \(n(set.reps ?? 0))"
+        case .load: "\(w(set.load ?? 0))\(u)"
         default: "\(n(set.reps ?? 0)) reps"
         }
         let back = "Then come back to \(exercise.name)."
         let swapOption: Option? = swap.map { s in
-            let start = s.target.map { "Start around \(n($0))\(s.unit.map { " \($0)" } ?? ""). " } ?? ""
+            let start = s.target.map { "Start around \(Units.number($0, unit: s.unit))\(s.unit.map { " \(Units.unit($0))" } ?? ""). " } ?? ""
             return Option(title: "Swap to \(s.name) for three weeks", detail: "\(start)\(back)", exerciseKey: s.key)
         }
         var options: [Option]
@@ -136,13 +138,13 @@ enum Stall {
             if kind == .strength {
                 let r = set.reps ?? 0
                 options = [
-                    Option(title: "Drop to \(n(lighter))\(u) and build to \(n(r + 4)) reps", detail: "A rep a session, then back to \(n(load))\(u)."),
-                    swapOption ?? Option(title: "Go heavier for three weeks: \(n(heavier))\(u) × \(n(max(3, r - 3)))", detail: "Fewer reps at the next load up, then back to \(n(r))."),
+                    Option(title: "Drop to \(w(lighter))\(u) and build to \(n(r + 4)) reps", detail: "A rep a session, then back to \(w(load))\(u)."),
+                    swapOption ?? Option(title: "Go heavier for three weeks: \(w(heavier))\(u) × \(n(max(3, r - 3)))", detail: "Fewer reps at the next load up, then back to \(n(r))."),
                 ]
             } else {
                 options = [
-                    Option(title: "Drop to \(n(lighter))\(u) and add a set", detail: "Build the sets back, then return to \(n(load))\(u)."),
-                    swapOption ?? Option(title: "Hold \(n(load))\(u) and add a round each week", detail: "Three weeks of more work at the same number."),
+                    Option(title: "Drop to \(w(lighter))\(u) and add a set", detail: "Build the sets back, then return to \(w(load))\(u)."),
+                    swapOption ?? Option(title: "Hold \(w(load))\(u) and add a round each week", detail: "Three weeks of more work at the same number."),
                 ]
             }
         }
