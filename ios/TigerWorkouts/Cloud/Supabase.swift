@@ -606,14 +606,15 @@ actor Supabase {
         )
     }
 
-    /// What the phone keeps on `user_state.prefs`, beside what only the web reads (name, units,
-    /// avatar).
+    /// What the phone keeps on `user_state.prefs`, beside what only the web reads (name, avatar).
     struct Prefs {
         var bodyweightKg: Double?
         var saved: [String] = []
         var trainingMaxes: [String: Double] = [:]
         var equipment: Equipment?
         var suggestions = SuggestPrefs()
+        /// "metric" or "imperial"; nil when never set (kg).
+        var units: String?
     }
 
     /// The whole prefs JSON as the server has it. Throws rather than answering "nothing" when it
@@ -659,6 +660,7 @@ actor Supabase {
             out.equipment = try? JSONDecoder().decode(Equipment.self, from: data)
         }
         out.suggestions = SuggestPrefs.from(json: json["suggestions"])
+        out.units = (json["units"] as? String).flatMap { [Units.metric, Units.imperial].contains($0) ? $0 : nil }
         return out
     }
 }

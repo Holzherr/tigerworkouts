@@ -702,7 +702,7 @@ final class SessionRunner {
     /// Nudge the load or speed of whatever is running, by the exercise's own step.
     func nudgeTarget(_ direction: Double) {
         guard let ex = slot?.exercise else { return }
-        let next = max(0, (target ?? ex.target ?? 0) + direction * StepSizes.load(ex.exercise))
+        let next = Units.stepped(target ?? ex.target ?? 0, by: direction, step: StepSizes.load(ex.exercise), unit: ex.shortUnit)
         apply { Runner.adjust($0, now: $1, target: next) }
         Haptics.shared.play(.tick)
     }
@@ -843,7 +843,7 @@ final class SessionRunner {
 
     func nudgeSetLoad(_ slotId: String, _ direction: Double) {
         guard let row = setRows.first(where: { $0.slotId == slotId }), let ex = straightSetStep else { return }
-        setSetLoad(slotId, (row.load ?? 0) + direction * StepSizes.load(ex.exercise))
+        setSetLoad(slotId, Units.stepped(row.load ?? 0, by: direction, step: StepSizes.load(ex.exercise), unit: ex.shortUnit))
         Haptics.shared.play(.tick)
     }
 
@@ -1335,7 +1335,7 @@ extension SessionRunner: SessionControllable {
     nonisolated static func setLine(_ state: RunState, _ idx: Int) -> String? {
         guard let slot = state.slots[safe: idx], let ex = slot.exercise else { return nil }
         let load = ex.hasSetting ? Runner.effectiveTarget(state, idx).map { t in
-            ex.shortUnit.isEmpty ? Format.number(t) : "\(Format.number(t)) \(ex.shortUnit)"
+            ex.loadText(t)
         } : nil
         var count: String?
         switch ex.forMode {

@@ -189,7 +189,8 @@ enum Targets {
         let bottom = s.forValue
         let ceiling = s.forMax ?? (up.map { bankTop(load: top, step: $0 - top, reps: bottom) } ?? bottom * 2)
         let next = up.map { ($0 * 100).rounded() / 100 } ?? top
-        let u = unit.isEmpty ? "" : " \(unit)"
+        // Loads in lb when weights show in lb (U11).
+        let u = unit.isEmpty ? "" : " \(Units.unit(unit))"
         switch mode {
         case .weight:
             return byWeight(s, top: top, working: working, up: up, intent: intent, kit: kit, unit: u)
@@ -200,13 +201,13 @@ enum Targets {
         }
         if up != nil && intent != .restore && working.allSatisfy({ $0 >= ceiling }) {
             let reps = working.map { _ in bottom }
-            return make(load: next, reps: reps, jump: true, text: "\(Format.number(next))\(u) × \(repsText(reps))",
-                        reason: "\(Format.number(ceiling)) reps at \(Format.number(top))\(u) on every set: up to \(Format.number(next))\(u)")
+            return make(load: next, reps: reps, jump: true, text: "\(s.loadNumber(next))\(u) × \(repsText(reps))",
+                        reason: "\(Format.number(ceiling)) reps at \(s.loadNumber(top))\(u) on every set: up to \(s.loadNumber(next))\(u)")
         }
         // A rep or two more a set, never past the ceiling, never fewer than was done.
         let reps = working.map { max($0, min(ceiling, $0 + add)) }
-        return make(load: top, reps: reps, jump: false, text: "\(Format.number(top))\(u) × \(repsText(reps))",
-                    reason: add == 0 ? "what you did last time" : up == nil ? "bank reps: \(Format.number(top))\(u) is the heaviest you own" : "bank reps: \(Format.number(next))\(u) once every set reaches \(Format.number(ceiling))")
+        return make(load: top, reps: reps, jump: false, text: "\(s.loadNumber(top))\(u) × \(repsText(reps))",
+                    reason: add == 0 ? "what you did last time" : up == nil ? "bank reps: \(s.loadNumber(top))\(u) is the heaviest you own" : "bank reps: \(s.loadNumber(next))\(u) once every set reaches \(Format.number(ceiling))")
     }
 
     private static func target(_ s: ExerciseStep, load: Double?, reps: [Double], jump: Bool, text: String, reason: String) -> SetTarget {
@@ -221,13 +222,13 @@ enum Targets {
         if let up, intent != .restore, working.allSatisfy({ $0 >= want }) {
             let to = intent == .overreach ? (Plates.nextUp(up, s.exercise, kit) ?? up) : up
             let next = (to * 100).rounded() / 100
-            return target(s, load: next, reps: reps, jump: true, text: "\(Format.number(next))\(u) × \(repsText(reps))",
-                          reason: "\(Format.number(want)) reps at \(Format.number(top))\(u) on every set: up to \(Format.number(next))\(u)")
+            return target(s, load: next, reps: reps, jump: true, text: "\(s.loadNumber(next))\(u) × \(repsText(reps))",
+                          reason: "\(Format.number(want)) reps at \(s.loadNumber(top))\(u) on every set: up to \(s.loadNumber(next))\(u)")
         }
         let reason = intent == .restore ? "same weight as last time"
-            : up == nil ? "\(Format.number(top))\(u) is the heaviest you own: hold it"
-            : "hold \(Format.number(top))\(u) until every set makes \(Format.number(want))"
-        return target(s, load: top, reps: reps, jump: false, text: "\(Format.number(top))\(u) × \(repsText(reps))", reason: reason)
+            : up == nil ? "\(s.loadNumber(top))\(u) is the heaviest you own: hold it"
+            : "hold \(s.loadNumber(top))\(u) until every set makes \(Format.number(want))"
+        return target(s, load: top, reps: reps, jump: false, text: "\(s.loadNumber(top))\(u) × \(repsText(reps))", reason: reason)
     }
 
     /// The RPE a set has to come down to before the weight goes up: 7 (three reps left), 8 on overreach.
@@ -239,15 +240,15 @@ enum Targets {
         let rpe = last.filter { $0.load == top }.compactMap(\.rpe).max()
         let easy = easyRPE(intent)
         if let rpe, let next, intent != .restore, rpe <= easy {
-            return target(s, load: next, reps: working, jump: true, text: "\(Format.number(next))\(u) × \(repsText(working))",
-                          reason: "RPE \(Format.number(rpe)) at \(Format.number(top))\(u): up to \(Format.number(next))\(u), same reps")
+            return target(s, load: next, reps: working, jump: true, text: "\(s.loadNumber(next))\(u) × \(repsText(working))",
+                          reason: "RPE \(Format.number(rpe)) at \(s.loadNumber(top))\(u): up to \(s.loadNumber(next))\(u), same reps")
         }
         let reason = switch (rpe, next) {
         case (nil, _): "same as last time · rate how hard it was at the finish"
-        case (let r?, nil): "RPE \(Format.number(r)) · \(Format.number(top))\(u) is the heaviest you own"
+        case (let r?, nil): "RPE \(Format.number(r)) · \(s.loadNumber(top))\(u) is the heaviest you own"
         case (let r?, _): intent == .restore ? "same as last time" : "RPE \(Format.number(r)) last time: more weight once it is \(Format.number(easy)) or less"
         }
-        return target(s, load: top, reps: working, jump: false, text: "\(Format.number(top))\(u) × \(repsText(working))", reason: reason)
+        return target(s, load: top, reps: working, jump: false, text: "\(s.loadNumber(top))\(u) × \(repsText(working))", reason: reason)
     }
 
     /// Effort without a load: the same reps, a rep more a set once it felt easy.
@@ -314,7 +315,10 @@ enum Targets {
         }
         guard let set = t.sets.first(where: { $0.stepId == stepId }), type != .warmup, type != .drop else { return nil }
         let reps = set.reps[min(setNo ?? round, set.reps.count - 1)]
-        if let load = set.load { return "Target \(Format.number(load)) × \(Format.number(reps))" }
+        if let load = set.load {
+            let unit = r.exerciseSteps.first { $0.id == stepId }?.shortUnit ?? ""
+            return "Target \(Units.number(load, unit: unit)) × \(Format.number(reps))"
+        }
         return "Target \(Format.number(reps)) reps"
     }
 

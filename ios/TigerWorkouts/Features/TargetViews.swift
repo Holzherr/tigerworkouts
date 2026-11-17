@@ -61,7 +61,7 @@ struct TodayLine: View {
         let top = work.compactMap(\.load).max()
         if let load = t.load, let top, top > 0, load != top {
             let d = load - top
-            return "\(d > 0 ? "+" : "−")\(Format.number(abs(d)))\(unit.isEmpty ? "" : " \(unit)")"
+            return "\(d > 0 ? "+" : "−")\(Units.label(abs(d), unit: unit))"
         }
         let before = work.filter { top == nil || $0.load == top }.compactMap(\.reps)
         guard !before.isEmpty, before.count == t.reps.count else { return nil }
@@ -148,9 +148,9 @@ struct NextTimeView: View {
                             Text(n.name).font(.subheadline.weight(.semibold)).foregroundStyle(Brand.ink).lineLimit(1)
                             Spacer(minLength: 8)
                             HStack(spacing: 4) {
-                                Text(n.from.map(Format.number) ?? "?")
+                                Text(n.from.map { Units.weightNumber($0) } ?? "?")
                                 Image(systemName: "arrow.right").font(.caption2.weight(.bold)).foregroundStyle(Brand.faint)
-                                Text("\(n.to.map(Format.number) ?? "?") kg")
+                                Text("\(n.to.map { Units.weightNumber($0) } ?? "?") \(Units.word())")
                             }
                             .font(.subheadline.weight(n.to != n.from ? .bold : .regular))
                             .foregroundStyle(Brand.ink)
@@ -228,7 +228,7 @@ struct MadeItCard: View {
                 Text(s.exercise.name).font(.subheadline.weight(.semibold)).foregroundStyle(Brand.ink).lineLimit(1)
                 Spacer(minLength: 8)
                 if let load = r.target, s.exercise.unit != "reps", Measure.of(s.exercise.unit) == nil {
-                    Text("\(Format.number(load)) \(s.exercise.unit)").font(.footnote).foregroundStyle(Brand.muted).monospacedDigit()
+                    Text(Units.label(load, unit: s.exercise.unit)).font(.footnote).foregroundStyle(Brand.muted).monospacedDigit()
                 }
             }
             HStack {

@@ -22,7 +22,7 @@ enum ProgressMode: String, Codable, CaseIterable, Identifiable, Sendable {
     var note: String {
         switch self {
         case .reps: "Add reps up to the top of the range, then add weight and start again."
-        case .weight: "Keep the reps, add a step of weight (+2.5 kg) once every set makes them."
+        case .weight: "Keep the reps, add a step of weight (+\(Units.lb ? "5 lb" : "2.5 kg")) once every set makes them."
         case .effort: "Keep weight and reps, rate how hard it was (RPE), add weight once it feels easier."
         }
     }

@@ -166,7 +166,7 @@ struct LoggedSetsCard: View {
 
     private static func head(_ f: Field, unit: String) -> String {
         switch f {
-        case .load: unit.isEmpty ? "kg" : unit
+        case .load: Units.unit(unit.isEmpty ? "kg" : unit)
         case .reps: "Reps"
         case .meters: "m"
         case .calories: "Cal"
@@ -254,6 +254,7 @@ struct LoggedSetsCard: View {
         let marks = SetType.marks(sets.map(\.type))
         let fields = frozen[step.id] ?? Self.fields(sets, unit: Library.shared.exercise(step.exerciseKey)?.unit ?? "", step: planned(step))
         let u = unit(step.exerciseKey)
+        let lu = u.isEmpty ? "kg" : u
         return VStack(alignment: .leading, spacing: 4) {
             HStack(spacing: 6) {
                 Text("Set").frame(width: 34, alignment: .leading)
@@ -273,8 +274,12 @@ struct LoggedSetsCard: View {
                         TextField(
                             "–",
                             value: Binding(
-                                get: { Self.value(x, f) },
-                                set: { v in onEdit(EditSets.edit(session, row: step.id, index: i, plan: EditSets.plannedFor(runsheet, stepId: step.stepId)) { Self.set(&$0, f, v) }) }
+                                // A load is typed in lb when weights show in lb, kept in kg (U11).
+                                get: { Self.value(x, f).map { f == .load ? Units.shown($0, unit: lu) : $0 } },
+                                set: { v in
+                                    let kept = v.map { f == .load ? Units.stored($0, unit: lu) : $0 }
+                                    onEdit(EditSets.edit(session, row: step.id, index: i, plan: EditSets.plannedFor(runsheet, stepId: step.stepId)) { Self.set(&$0, f, kept) })
+                                }
                             ),
                             format: .number
                         )

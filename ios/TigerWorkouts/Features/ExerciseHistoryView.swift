@@ -16,6 +16,8 @@ struct ExerciseHistoryView: View {
     private var unit: String {
         ref.unit.replacingOccurrences(of: " per arm", with: "").replacingOccurrences(of: " per side", with: "").trimmingCharacters(in: .whitespaces)
     }
+    /// The unit as shown: lb when weights show in lb (U11).
+    private var shownUnit: String { Units.unit(unit) }
 
     var body: some View {
         let history = Logbook.history(store.results, exerciseKey: exerciseKey)
@@ -23,7 +25,9 @@ struct ExerciseHistoryView: View {
         let metrics = Logbook.chartMetrics(records.kind)
         let shown = metric.flatMap { metrics.contains($0) ? $0 : nil }
         let all = shown.map { Logbook.pointsFor(history, metric: $0, per: paceOver) } ?? Logbook.points(history, kind: records.kind, per: paceOver)
-        let points = Logbook.inRange(all, range)
+        // A weight is charted in lb when weights show in lb (U11).
+        let weight = (shown.map { [.e1rm, .topLoad, .volume].contains($0) } ?? [.strength, .load].contains(records.kind)) && Units.isWeight(unit)
+        let points = Logbook.inRange(all, range).map { weight ? Logbook.Point(at: $0.at, value: Units.shown($0.value, unit: unit)) : $0 }
         ScrollView {
             VStack(alignment: .leading, spacing: 16) {
                 HStack(spacing: 12) {
@@ -99,7 +103,7 @@ struct ExerciseHistoryView: View {
     private var paceOver: Double { Library.shared.exercise(exerciseKey)?.group == .rower ? 500 : 1000 }
 
     private func chartLabel(_ kind: Logbook.Kind) -> String {
-        let u = unit.isEmpty ? "" : " · \(unit)"
+        let u = unit.isEmpty ? "" : " · \(shownUnit)"
         switch kind {
         case .strength: return "Estimated 1RM\(u)"
         case .load: return unit == "kph" ? "Top speed · kph" : "Top load\(u)"
@@ -113,7 +117,7 @@ struct ExerciseHistoryView: View {
     }
 
     private func metricLabel(_ m: Logbook.Metric) -> String {
-        let u = unit.isEmpty ? "" : " · \(unit)"
+        let u = unit.isEmpty ? "" : " · \(shownUnit)"
         switch m {
         case .e1rm: return "Estimated 1RM\(u)"
         case .topLoad: return "Top load\(u)"
@@ -215,21 +219,22 @@ struct ExerciseHistoryView: View {
 
     /// What records mean for this kind of work. Timed work gets what exists rather than blanks.
     private func tiles(_ r: Logbook.Records, last: String?, history: [Logbook.Session] = []) -> [Tile] {
-        let u = unit.isEmpty ? "" : " \(unit)"
+        let u = unit.isEmpty ? "" : " \(shownUnit)"
+        let w = { (v: Double) in Units.number(v, unit: unit) }
         func t(_ label: String, _ rec: Logbook.Rec?, _ value: (Double) -> String, withSet: Bool = false) -> [Tile] {
             guard let rec else { return [] }
-            let sub = [withSet ? rec.set.map { Logbook.label($0) } : nil, date(rec.at)].compactMap { $0 }.filter { !$0.isEmpty }
+            let sub = [withSet ? rec.set.map { Logbook.label($0, loads: unit) } : nil, date(rec.at)].compactMap { $0 }.filter { !$0.isEmpty }
             return [Tile(label: label, value: value(rec.value), sub: sub.joined(separator: " · "))]
         }
         let sessions = Tile(label: "Sessions", value: "\(r.sessions)", sub: last.map { "last \(date($0))" })
         switch r.kind {
         case .strength:
-            return t("Heaviest", r.heaviest, { "\(Format.number($0))\(u)" }, withSet: true)
-                + t("Best est. 1RM", r.e1rm, { "\(Format.number($0))\(u)" }, withSet: true)
+            return t("Heaviest", r.heaviest, { "\(w($0))\(u)" }, withSet: true)
+                + t("Best est. 1RM", r.e1rm, { "\(w($0))\(u)" }, withSet: true)
                 + t("Most reps", r.reps, { Format.number($0) }, withSet: true)
-                + t("Best volume", r.volume, { "\(Format.number($0.rounded()))\(u)" })
+                + t("Best volume", r.volume, { "\(Format.number(Units.shown($0, unit: unit).rounded()))\(u)" })
         case .load:
-            return t(unit == "kph" ? "Top speed" : "Heaviest", r.heaviest, { "\(Format.number($0))\(u)" }) + [sessions]
+            return t(unit == "kph" ? "Top speed" : "Heaviest", r.heaviest, { "\(w($0))\(u)" }) + [sessions]
         case .reps:
             return t("Most reps", r.reps, { Format.number($0) }) + [sessions]
         case .pace:
