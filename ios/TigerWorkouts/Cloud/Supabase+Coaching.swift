@@ -71,6 +71,39 @@ extension Supabase {
         return row
     }
 
+    /// Your own `profiles.name`, which a coach or client reads (the web sets it on sync).
+    func setProfileName(_ name: String) async throws {
+        guard let uid = user?.id else { throw SupabaseError(message: "Not signed in") }
+        _ = try await request("rest/v1/profiles?id=eq.\(uid)", method: "PATCH", body: ["name": name], headers: ["Prefer": "return=minimal"])
+    }
+
+    /// The worker route that mints a one-time web sign-in (`mcp/src/handoff.ts`).
+    static let webSession = URL(string: "https://mcp.tigerworkouts.com/web-session")!
+    static let coachDashboard = URL(string: "https://tigerworkouts.com/#/coach")!
+
+    /// The web coach dashboard (review round 2, U7), signed in to this account when the worker can
+    /// make a one-time sign-in for it; otherwise the page itself, which asks to sign in.
+    func coachDashboardURL() async -> URL {
+        guard let token = try? await validAccessToken() else { return Self.coachDashboard }
+        var req = URLRequest(url: Self.webSession)
+        req.httpMethod = "POST"
+        req.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        req.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        req.httpBody = try? JSONSerialization.data(withJSONObject: ["to": "/coach"])
+        req.timeoutInterval = 10
+        guard let (data, response) = try? await URLSession.shared.data(for: req),
+              (response as? HTTPURLResponse)?.statusCode == 200 else { return Self.coachDashboard }
+        return Self.handoffURL(from: data) ?? Self.coachDashboard
+    }
+
+    /// The worker's answer, only when it points at tigerworkouts.com.
+    nonisolated static func handoffURL(from data: Data) -> URL? {
+        guard let obj = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+              let s = obj["url"] as? String, let url = URL(string: s),
+              url.scheme == "https", url.host == "tigerworkouts.com" else { return nil }
+        return url
+    }
+
     /// Anyone with the link may ask, signed in or not. Nil for a code that does not exist.
     func coachInviteInfo(code: String) async throws -> CoachInvite? {
         let (data, _) = try await request("rest/v1/rpc/coach_invite_info", method: "POST", body: ["p_code": code])

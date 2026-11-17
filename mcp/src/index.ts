@@ -24,9 +24,10 @@ import { auth, b64url, db, pkce, SupabaseError, type SupabaseSession } from './s
 import { botFetch, isBotPath, type BotEnv } from './instagram/routes';
 import { appleFetch, isApplePath, type AppleEnv } from './apple';
 import { allow, clientIp, CODE_TRIES, type LimitEnv } from './limits';
+import { handoffFetch, isHandoffPath, type HandoffEnv } from './handoff';
 
 /** BotEnv: the Instagram bot's vars and secrets (instagram/routes.ts, specs/instagram-bot.md). */
-export interface Env extends BotEnv, AppleEnv, LimitEnv {
+export interface Env extends BotEnv, AppleEnv, LimitEnv, HandoffEnv {
   OAUTH_KV: KVNamespace;
   OAUTH_PROVIDER: OAuthHelpers;
   /** Comma-separated Supabase user ids allowed to connect. Empty = open to every account. */
@@ -306,6 +307,8 @@ export default {
     if (isBotPath(new URL(request.url).pathname)) return botFetch(request, env, ctx);
     // Revoking Sign in with Apple at account deletion: the app's own Supabase token, no OAuth grant.
     if (isApplePath(new URL(request.url).pathname)) return appleFetch(request, env);
+    // The iPhone app opening the web coach dashboard signed in (src/handoff.ts).
+    if (isHandoffPath(new URL(request.url).pathname)) return handoffFetch(request, env);
     return getProvider(env, new URL(request.url).origin).fetch(request, env, ctx);
   },
 } satisfies ExportedHandler<Env>;
