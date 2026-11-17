@@ -56,13 +56,13 @@ describe('where a session was started from', () => {
     await endAndSave();
     expect(stored().map(r => r.startedFrom)).toEqual(['up_next']);
   });
-  it('is saved for a Mine card that is not Up next', async () => {
+  it('is mine for your own Mine card that is not Up next', async () => {
     await startSaved('Two blocks');
     click('More');
     click(/End workout/);
     click(/Finish and save/);
     await screen.findByPlaceholderText(/^Notes/);
-    expect(stored().map(r => r.startedFrom)).toEqual(['saved']);
+    expect(stored().map(r => r.startedFrom)).toEqual(['mine']);
   });
   it('survives a reload and a resume', async () => {
     await startSaved();

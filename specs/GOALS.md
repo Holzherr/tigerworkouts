@@ -5,7 +5,7 @@ Analyst can read. Items that serve no active goal are parked by the gate. The ag
 
 ## G-06 · tigerworkouts · active
 Goal: Nick trusts it in the gym, then it launches on the iOS App Store.
-Metric: home_reco_used — share of Nick's gym sessions started from a home-screen recommendation, from session logs
+Metric: home_reco_used — share of Nick's gym sessions started from a home-screen recommendation, from session logs: a session counts when its startedFrom is up_next, home, coach or recommended (Nick, 2026-11-17)
 Now: ~0 (recommendations "totally uninteresting") · Target: ≥ 50% over 3 consecutive weeks, then App Store submission · By: 2026-11-15
 Weight: high
 Constraints: iOS is the gym surface; Nick and Priyanka are the only users until launch; TestFlight/App Store steps are Nick's.

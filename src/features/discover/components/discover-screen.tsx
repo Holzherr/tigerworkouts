@@ -13,7 +13,7 @@ import { pickUpNext, upNextBadge, usualLine } from '../next-up';
 
 export type DiscoverTab = 'mine' | 'discover';
 /** The list a workout was tapped in, recorded on the session it starts. */
-export type DiscoverOrigin = 'saved' | 'recommended' | 'search' | 'coach' | 'up_next';
+export type DiscoverOrigin = 'mine' | 'saved' | 'recommended' | 'search' | 'coach' | 'up_next';
 export type { DiscoverFilter };
 
 const TABS: { id: DiscoverTab; label: string }[] = [
@@ -166,12 +166,12 @@ export const DiscoverScreen = ({ workouts: given, results = [], savedIds = [], c
 
   const { programs, singles } = useMemo(() => catalogueList(workouts, q, filter), [workouts, q, filter]);
 
-  /** A Mine card; the Up next card, played or opened, records `up_next`, so its starts read apart from the rest. */
+  /** A Mine card; the Up next card, played or opened, records `up_next`, so its starts read apart from the rest; else `mine` for your own and `saved` for a saved one, as on iOS (`Home.origin`). */
   const mineRow = (r: Runsheet) => {
     const done = lastDoneOf(r, last);
     const fresh = !done && own.has(wid(r));
     const next = wid(r) === upNext;
-    const origin = next ? 'up_next' : 'saved';
+    const origin = next ? 'up_next' : own.has(wid(r)) ? 'mine' : 'saved';
     return <Row key={wid(r)} runsheet={r} badge={fresh ? newBadge(r) : undefined} why={fresh ? whyLine(r) : undefined} contents={contentsLine(r)} upNext={next} upNextLabel={upNextBadge(pick)} meta={[mineLine(r, done), next ? usualLine(pick) : undefined].filter(Boolean).join(' · ')} onOpen={() => onOpen(r, origin)} onStart={onStart && (() => onStart(r, origin))} />;
   };
 

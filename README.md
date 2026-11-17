@@ -139,11 +139,11 @@ The web timer announces each step to a screen reader through one hidden polite l
 or phase change, never on a tick. The landing page's looping hero demo renders the same screen with
 `announce={false}`, so it stays silent.
 Each session records where it was started (`startedFrom`: the home list it was in, the Me tab, Repeat, a
-share link) so the share started from a home recommendation can be measured. The iOS app writes the
-same field from its Workouts tab (Mine: own → mine, saved → saved, a coach's → coach; For you →
+share link) so the share started from a home recommendation can be measured. Both apps write it from
+the Workouts tab (Mine: own → mine, saved → saved, a coach's → coach; For you →
 recommended; the catalogue or a search result → search) and from a `tigerworkouts://w/` link (link). Mine's Up next
 card sits first on both apps and records `up_next`, from its play button or from Start on its page. It is
-the home screen's recommendation since #84, so home_reco_used counts `up_next` with `recommended` and `home`. The origin
+the home screen's recommendation since #84. home_reco_used (G-06) counts `up_next`, `home`, `coach` and `recommended` (Nick, 2026-11-17). The origin
 rides in the crash-safe copy on both, so a resumed or recovered session keeps it.
 Sign out pushes first, then empties the device for the next account (sessions, workouts, favourites,
 saved, exercises, training maxes and the `tiger:synced` snapshot); while the push fails or a session

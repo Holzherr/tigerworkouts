@@ -77,7 +77,7 @@ describe('DiscoverScreen Mine', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Start u-a' }));
     expect(onStart).toHaveBeenLastCalledWith(expect.objectContaining({ id: 'u-a' }), 'up_next');
     fireEvent.click(screen.getByRole('button', { name: 'Start u-d' }));
-    expect(onStart).toHaveBeenLastCalledWith(expect.objectContaining({ id: 'u-d' }), 'saved');
+    expect(onStart).toHaveBeenLastCalledWith(expect.objectContaining({ id: 'u-d' }), 'mine');
   });
   it('makes the workout started most the Up next card, as your usual, with how many of the last five', () => {
     const own = ['u-a', 'u-b'];
