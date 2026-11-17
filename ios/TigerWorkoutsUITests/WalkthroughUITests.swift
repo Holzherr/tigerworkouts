@@ -821,6 +821,14 @@ final class WalkthroughUITests: XCTestCase {
         // the switch goes back off and the row under it has to say why.
         sleep(4)
         snap("17 Health permission")
+        // A simulator that has not been asked before keeps the sheet up over Settings until it is
+        // answered, and the rows below stay out of reach. Don't Allow is followed by a note to OK.
+        let deny = app.buttons["UIA.Health.DoNotAllow.Button"]
+        if deny.exists {
+            deny.tap()
+            tap(app.alerts["Health Access"].buttons["OK"])
+            sleep(1)
+        }
         if (health.value as? String) == "0" {
             XCTAssertTrue(app.descendants(matching: .any)["health-error"].exists, "Health turned itself off without saying why")
         }
@@ -1238,12 +1246,15 @@ final class WalkthroughUITests: XCTestCase {
         centre([rower])
         rower.swipeLeft()
         tap(app.buttons["Delete"])
-        updateIfAsked()
+        // The toast lasts five seconds. On a workout not done yet there is no question, and
+        // updateIfAsked's wait for one used most of them: whichever comes first is answered.
         let undo = app.buttons["undo"]
+        let base = app.buttons["scope-base"].firstMatch
+        waitFor("a removed step should offer Undo or ask what the change is for") { undo.exists || base.exists }
+        if base.exists { base.tap() }
         XCTAssertTrue(undo.waitForExistence(timeout: 3), "a removed step should offer Undo")
-        usleep(600_000) // let the toast finish sliding in
-        snap("105 Removed, Undo")
         undo.tap()
+        snap("105 Removed, then Undo")
         XCTAssertTrue(rower.waitForExistence(timeout: 5), "Undo should put the step back")
 
         // The removal made a copy of the catalogue workout; take it away again.
@@ -1682,7 +1693,8 @@ final class WalkthroughUITests: XCTestCase {
         // The first block starts after the lead-in, with no gate.
         XCTAssertTrue(app.buttons["Change"].waitForExistence(timeout: 12), "the metres should sit folded under Change")
         tap(app.buttons["Change"])
-        XCTAssertTrue(app.staticTexts["amount-done"].waitForExistence(timeout: 12), "a distance should have its metres to change")
+        // The metres are typed in as well as nudged, so the number is a button.
+        XCTAssertTrue(app.buttons["amount-done"].waitForExistence(timeout: 12), "a distance should have its metres to change")
         tap(app.buttons["More metres"])
         snap("94 Timer, metres done")
         tap(app.buttons["Done"])
