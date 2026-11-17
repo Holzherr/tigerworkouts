@@ -1,0 +1,78 @@
+{
+  "buildCommand" : {
+    "command" : "build",
+    "skipDependencies" : false,
+    "style" : "buildAndRun"
+  },
+  "configuredTargets" : [
+    {
+      "guid" : "1762c82478b41957b0844e3220fd6bd29a55d992b4a5b44821325934817f4dfd"
+    },
+    {
+      "guid" : "1762c82478b41957b0844e3220fd6bd2682b4c5a8b93ddad9298ba65ce70c1be"
+    },
+    {
+      "guid" : "1762c82478b41957b0844e3220fd6bd2e1f67e6f68cd06973b132f52e7e4b8f6"
+    },
+    {
+      "guid" : "1762c82478b41957b0844e3220fd6bd2a52b0896546f91dfbeeedcaf6d20a682"
+    }
+  ],
+  "containerPath" : "/Users/nicolasholzherr/projects/agent-work/wt/TW-071/ios/TigerWorkouts.xcodeproj",
+  "continueBuildingAfterErrors" : false,
+  "dependencyScope" : "workspace",
+  "enableIndexBuildArena" : false,
+  "hideShellScriptEnvironment" : false,
+  "parameters" : {
+    "action" : "build",
+    "activeArchitecture" : "x86_64",
+    "activeRunDestination" : {
+      "disableOnlyActiveArch" : false,
+      "hostTargetedPlatform" : null,
+      "platform" : "iphonesimulator",
+      "sdk" : "iphonesimulator26.5",
+      "sdkVariant" : "iphonesimulator",
+      "supportedArchitectures" : [
+        "x86_64"
+      ],
+      "targetArchitecture" : "x86_64"
+    },
+    "arenaInfo" : {
+      "buildIntermediatesPath" : "/Users/nicolasholzherr/projects/agent-work/wt/TW-071/.dd/Build/Intermediates.noindex",
+      "buildProductsPath" : "/Users/nicolasholzherr/projects/agent-work/wt/TW-071/.dd/Build/Products",
+      "derivedDataPath" : "/Users/nicolasholzherr/projects/agent-work/wt/TW-071/.dd",
+      "indexDataStoreFolderPath" : "/Users/nicolasholzherr/projects/agent-work/wt/TW-071/.dd/Index.noindex/DataStore",
+      "indexEnableDataStore" : true,
+      "indexPCHPath" : "/Users/nicolasholzherr/projects/agent-work/wt/TW-071/.dd/Index.noindex/PrecompiledHeaders",
+      "pchPath" : "/Users/nicolasholzherr/projects/agent-work/wt/TW-071/.dd/Build/Intermediates.noindex/PrecompiledHeaders"
+    },
+    "configurationName" : "Debug",
+    "overrides" : {
+      "commandLine" : {
+        "table" : {
+          "OTHER_SWIFT_FLAGS" : "-Xfrontend -solver-scope-threshold=100000000 -Xfrontend -solver-memory-threshold=4000000000"
+        }
+      },
+      "synthesized" : {
+        "table" : {
+          "ASSETCATALOG_FILTER_FOR_DEVICE_MODEL" : "iPhone18,1",
+          "ASSETCATALOG_FILTER_FOR_DEVICE_OS_VERSION" : "26.5",
+          "ASSETCATALOG_FILTER_FOR_THINNING_DEVICE_CONFIGURATION" : "iPhone18,1",
+          "BUILD_ACTIVE_RESOURCES_ONLY" : "YES",
+          "ENABLE_PREVIEWS" : "NO",
+          "ENABLE_XOJIT_PREVIEWS" : "YES",
+          "TARGET_DEVICE_IDENTIFIER" : "C44D5A45-79D6-464B-87B3-DEDCB2A9C7C7",
+          "TARGET_DEVICE_MODEL" : "iPhone18,1",
+          "TARGET_DEVICE_OS_VERSION" : "26.5",
+          "TARGET_DEVICE_PLATFORM_NAME" : "iphonesimulator"
+        }
+      }
+    }
+  },
+  "schemeCommand" : "test",
+  "showNonLoggedProgress" : true,
+  "useDryRun" : false,
+  "useImplicitDependencies" : true,
+  "useLegacyBuildLocations" : false,
+  "useParallelTargets" : true
+}
