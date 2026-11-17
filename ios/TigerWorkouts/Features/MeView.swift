@@ -238,7 +238,7 @@ struct SettingsView: View {
         guard let e else { return "Not set" }
         let plates = (e.plates ?? []).reduce(0) { $0 + $1.count }
         let parts = [
-            plates > 0 ? "\(Format.number(e.barKg ?? Plates.defaultBarKg)) kg bar, \(plates) plates" : "",
+            plates > 0 ? "\(Units.weight(e.barKg ?? Plates.defaultBarKg)) bar, \(plates) plates" : "",
             (e.dumbbells ?? []).isEmpty ? "" : "\((e.dumbbells ?? []).count) dumbbells",
             (e.kettlebells ?? []).isEmpty ? "" : "\((e.kettlebells ?? []).count) kettlebells",
         ].filter { !$0.isEmpty }
@@ -387,6 +387,15 @@ struct SettingsView: View {
             }
 
             Section {
+                LabeledContent("Weights") {
+                    Picker("Weights", selection: Binding(get: { store.units ?? Units.metric }, set: { v in Task { await store.setUnits(v) } })) {
+                        Text("kg").tag(Units.metric)
+                        Text("lb").tag(Units.imperial)
+                    }
+                    .pickerStyle(.segmented)
+                    .frame(width: 120)
+                    .accessibilityIdentifier("weights-unit")
+                }
                 NavigationLink {
                     EquipmentView()
                 } label: {
@@ -402,7 +411,7 @@ struct SettingsView: View {
             } header: {
                 Text("Loads")
             } footer: {
-                Text("Suggested loads snap to the weights you own, and the plate calculator uses your plates. Training maxes turn a 65% TM set into kilos.")
+                Text("Suggested loads snap to the weights you own, and the plate calculator uses your plates. Training maxes turn a 65% TM set into a weight.")
             }
 
             Section {

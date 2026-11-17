@@ -28,13 +28,18 @@ struct Equipment: Codable, Hashable, Sendable {
 }
 
 enum Plates {
-    static let defaultBarKg = 20.0
-    /// What a gym has, for the plate calculator before any plates are set.
-    static let defaultPlates: [PlateCount] = [25, 20, 15, 10, 5, 2.5, 1.25].map { PlateCount(kg: $0, count: $0 >= 10 ? 8 : 4) }
+    /// 20 kg, or a 45 lb bar when weights are in lb (U11).
+    static var defaultBarKg: Double { Units.lb ? Units.toKg(Units.lbBar) : 20 }
+    /// What a gym has, for the plate calculator before any plates are set; a lb gym's in lb.
+    static var defaultPlates: [PlateCount] {
+        Units.lb
+            ? Units.lbDefaultPlates.map { PlateCount(kg: Units.toKg($0.lb), count: $0.count) }
+            : [25, 20, 15, 10, 5, 2.5, 1.25].map { PlateCount(kg: $0, count: $0 >= 10 ? 8 : 4) }
+    }
     /// Plate weights offered in the equipment editor.
     static let plateSizes: [Double] = [25, 20, 15, 10, 5, 2.5, 2, 1.25, 1, 0.5]
-    /// 4 to 48 kg in 4 kg steps: the usual run of bells.
-    static let defaultKettlebells: [Double] = (1...12).map { Double($0 * 4) }
+    /// 4 to 48 kg in 4 kg steps: the usual run of bells. In lb, the lb run (U11).
+    static var defaultKettlebells: [Double] { Units.lb ? Units.lbKettlebellSizes.map(Units.toKg) : (1...12).map { Double($0 * 4) } }
     static let dumbbellSizes: [Double] = [1, 2, 2.5, 3, 4, 5, 6, 7.5, 8, 10, 12, 12.5, 14, 15, 16, 17.5, 18, 20, 22.5, 25, 27.5, 30, 32.5, 35, 40]
     static let kettlebellSizes: [Double] = [4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 32, 36, 40, 44, 48]
 
@@ -142,14 +147,16 @@ enum Plates {
         n == n.rounded() ? String(Int(n)) : String((n * 100).rounded() / 100)
     }
 
-    /// "20 kg bar + 2×20 + 2.5 per side", "20 kg bar, no plates".
-    static func text(_ p: Load) -> String {
-        if p.perSide.isEmpty { return "\(num(p.bar)) kg bar, no plates" }
+    /// "20 kg bar + 2×20 + 2.5 per side", "20 kg bar, no plates"; "45 lb bar + 2×45 + 10 per side" in lb.
+    static func text(_ p: Load, lb: Bool = Units.lb) -> String {
+        func num(_ kg: Double) -> String { Units.kitNumber(kg, lb: lb) }
+        let bar = "\(num(p.bar)) \(Units.word(lb: lb)) bar"
+        if p.perSide.isEmpty { return "\(bar), no plates" }
         var groups: [(kg: Double, n: Int)] = []
         for kg in p.perSide {
             if let i = groups.firstIndex(where: { $0.kg == kg }) { groups[i].n += 1 } else { groups.append((kg, 1)) }
         }
-        return "\(num(p.bar)) kg bar + " + groups.map { $0.n > 1 ? "\($0.n)×\(num($0.kg))" : num($0.kg) }.joined(separator: " + ") + " per side"
+        return "\(bar) + " + groups.map { $0.n > 1 ? "\($0.n)×\(num($0.kg))" : num($0.kg) }.joined(separator: " + ") + " per side"
     }
 }
 

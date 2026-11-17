@@ -25,6 +25,11 @@ final class Store {
         didSet { SuggestPrefs.store(suggestions) }
     }
     var saved: Set<String> = []
+    /// Weights in kg or lb (U11): `user_state.prefs.units`, "imperial" for lb, nil for the default
+    /// (kg). Mirrored into `Units` for the views.
+    var units: String? {
+        didSet { Units.apply(units) }
+    }
     /// When each synced pref was last changed on this phone (PrefsMerge): the newer side wins a sync.
     private(set) var prefsUpdatedAt: [String: String] = [:]
     /// The account's name (`user_state.prefs.name`, set on the web's Me page), credited as the
@@ -140,6 +145,9 @@ final class Store {
         bodyweightKg = kg
         prefsUpdatedAt["bodyweightKg"] = stamp
     }
+
+    /// The prefs fields this phone holds and stamps; avatar is the web's.
+    nonisolated static let heldPrefs = ["saved", "trainingMaxes", "bodyweightKg", "equipment", "suggestions", "name", "units"]
 
     func sync() async {
         #if DEBUG
@@ -280,6 +288,7 @@ final class Store {
         trainingMaxes = [:]
         equipment = nil
         suggestions = SuggestPrefs()
+        units = nil
         bodyweightKg = nil
         profileName = nil
         prefsUpdatedAt = [:]
@@ -554,6 +563,14 @@ final class Store {
         await writePrefs()
     }
 
+    /// "metric" or "imperial" (Settings → Weights).
+    func setUnits(_ value: String) async {
+        guard value != (units ?? Units.metric) else { return }
+        units = value
+        touched("units")
+        await writePrefs()
+    }
+
     func setSuggestions(_ p: SuggestPrefs) async {
         guard p != suggestions else { return }
         suggestions = p
@@ -591,6 +608,7 @@ final class Store {
             values["equipment"] = json
         }
         if let json = suggestions.json { values["suggestions"] = json }
+        if let units { values["units"] = units }
         return PrefsMerge.Side(values: values, updatedAt: prefsUpdatedAt)
     }
 
@@ -611,8 +629,9 @@ final class Store {
         bodyweightKg = p.bodyweightKg
         equipment = p.equipment
         suggestions = p.suggestions
+        units = p.units
         profileName = (m.values["name"] as? String).map { $0.trimmingCharacters(in: .whitespaces) }.flatMap { $0.isEmpty ? nil : $0 }
-        prefsUpdatedAt = m.updatedAt.filter { ["saved", "trainingMaxes", "bodyweightKg", "equipment", "suggestions", "name"].contains($0.key) }
+        prefsUpdatedAt = m.updatedAt.filter { Self.heldPrefs.contains($0.key) }
     }
 
     /// Set by the workout page as it starts a session, taken by RootView (Versions.swift).
@@ -916,6 +935,7 @@ final class Store {
         var trainingMaxes: [String: Double]?
         var equipment: Equipment?
         var suggestions: SuggestPrefs?
+        var units: String?
         var prefsUpdatedAt: [String: String]?
         var publicSetHere: [String]?
         var syncedWorkouts: [String: Supabase.WorkoutRow]?
@@ -925,7 +945,7 @@ final class Store {
 
         private enum CodingKeys: String, CodingKey {
             case version, results, myWorkouts, pending, bodyweightKg, saved, pendingWorkouts, pendingWorkoutDeletes,
-                 pendingDeletes, customExercises, pendingExercises, trainingMaxes, equipment, suggestions,
+                 pendingDeletes, customExercises, pendingExercises, trainingMaxes, equipment, suggestions, units,
                  prefsUpdatedAt, publicSetHere, syncedWorkouts, workoutEditedAt
         }
 
@@ -973,6 +993,7 @@ final class Store {
             trainingMaxes = field(.trainingMaxes)
             equipment = field(.equipment)
             suggestions = field(.suggestions)
+            units = field(.units)
             prefsUpdatedAt = field(.prefsUpdatedAt)
             publicSetHere = list(.publicSetHere)
             syncedWorkouts = field(.syncedWorkouts)
@@ -1036,6 +1057,7 @@ final class Store {
         trainingMaxes = c.trainingMaxes ?? [:]
         equipment = c.equipment
         suggestions = c.suggestions ?? SuggestPrefs()
+        units = c.units
         prefsUpdatedAt = c.prefsUpdatedAt ?? [:]
         publicSetHere = Set(c.publicSetHere ?? [])
         syncedWorkouts = c.syncedWorkouts ?? [:]
@@ -1044,7 +1066,7 @@ final class Store {
 
     @discardableResult
     private func writeCache() -> Bool {
-        let c = Cache(
+        var c = Cache(
             results: results, myWorkouts: myWorkouts, pending: pending,
             bodyweightKg: bodyweightKg, saved: Array(saved),
             pendingWorkouts: pendingWorkouts, pendingWorkoutDeletes: pendingWorkoutDeletes,
@@ -1054,6 +1076,7 @@ final class Store {
             publicSetHere: publicSetHere.sorted(),
             syncedWorkouts: syncedWorkouts, workoutEditedAt: workoutEditedAt
         )
+        c.units = units
         shareUpNext()
         guard !cacheBlocked else { return false }
         do {
