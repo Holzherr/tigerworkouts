@@ -14,7 +14,7 @@ import { lastSessionLabel, lastSessionSet, lastSetLabel, lastSets, withLastUsed 
 import { applyCommands, parsePlan } from '@/features/runsheet/parse-text';
 import { isImage, readImport } from '@/features/runsheet/import-file';
 import { appLink, CreatorScreen } from '@/features/creators/components/creator-screen';
-import { CreatorPageCard } from '@/features/creators/components/creator-page-card';
+import { CreatorPageSettingsScreen } from '@/features/creators/components/creator-page-settings-screen';
 import { CreditedCreatorScreen } from '@/features/creators/components/credited-creator-screen';
 import { creatorFor, creatorKey, creatorPath } from '@/features/creators/credited';
 import { cn, plural } from '@/shared/utils/ui-utils';
@@ -656,6 +656,9 @@ export default function App() {
       </div>
     );
   }
+  if (tab === 'me' && sub === 'creator' && cloud.user) {
+    return shell('me', <CreatorPageSettingsScreen publicCount={st.workouts.filter(w => w.public).length} onOpenPage={key => go(`/c/${encodeURIComponent(key)}`)} onBack={() => go('/me')} />);
+  }
   if (tab === 'me') {
     const since = Date.now() - 28 * 864e5;
     const load = muscleLoad(st.results.filter(r => Date.parse(r.startedAt) >= since).flatMap(r => workedFrom(r, byId.get(r.runsheetId), k => ({ name: library[k]?.name ?? k, group: library[k]?.group }))));
@@ -691,6 +694,8 @@ export default function App() {
           }}
           onImport={() => setImportOpen(true)}
           onCoach={() => go('/coach')}
+          onCreatorPage={cloud.user ? () => go('/me/creator') : undefined}
+          publicCount={st.workouts.filter(w => w.public).length}
           lead={!cloud.user && <SignInCard title="Sign in to sync" reasons={['Sessions logged here are kept on this device until you do', 'Same account as the iPhone app: one history on both', 'No password: we email you a 6-digit code']} onSendCode={sendCode} onVerify={async (e, c) => { await verifyCode(e, c); act.setSignedIn(true); }} onGoogle={google ? signInGoogle : undefined} />}
         >
           {cloud.user && (
@@ -703,7 +708,6 @@ export default function App() {
           )}
           {cloud.user && <MyAiCoach onChanged={() => setCoachTick(t => t + 1)} say={say} />}
           {cloud.user && <MyCoaches me={cloud.user.id} about={n => (n.assignmentId ? assigned.find(a => a.id === n.assignmentId)?.workout?.title : undefined)} onLeft={() => (setCoachTick(t => t + 1), say('Coaching ended'))} say={say} />}
-          {cloud.user && <CreatorPageCard publicCount={st.workouts.filter(w => w.public).length} onOpenPage={key => go(`/c/${encodeURIComponent(key)}`)} onCoach={() => go('/coach')} />}
           <Button variant="ghost" block onClick={() => setSettingsOpen(true)}>
             Name, avatar and app settings
           </Button>
