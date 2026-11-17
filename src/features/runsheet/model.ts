@@ -208,6 +208,9 @@ export interface Runsheet {
   icon?: WorkoutIcon;
   /** On the creator's public page and in everyone's Discover. New workouts are private. */
   public?: boolean;
+  /** Opens for anyone with its link (#/w/<id>) without being listed anywhere: set by Share on a
+   * private workout (review round 2, U4). The server reads it from the stored workout. */
+  unlisted?: boolean;
   /** Who owns it, filled in when read from the cloud; never saved into the workout itself. */
   ownerId?: string;
   /** Set on the silent copy made when someone else's workout is edited: the id it was copied from.
@@ -232,6 +235,7 @@ export const editedCopy = (edited: Runsheet, original: Runsheet, id: string, cre
   program: original.program,
   copyOf: original.copyOf ?? original.id ?? original.title,
   public: false,
+  unlisted: undefined,
   ownerId: undefined,
 });
 

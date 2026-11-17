@@ -8,8 +8,9 @@ export { decodeShared } from './link';
 export const shareUrl = (r: Runsheet, base = location.origin + location.pathname) => shareUrlAt(r, base);
 
 /**
- * The link Share sends. A catalogue workout and a public one open for anyone by id, so their link
- * is the short `#/w/<id>`; only a private workout needs the whole thing packed into the link
+ * The link Share sends. A catalogue workout, a public one and one shared by link (a private workout
+ * of yours on your account, review round 2 U4) open for anyone by id, so their link is the short
+ * `#/w/<id>`; only a workout not on an account needs the whole thing packed into the link
  * (a StrongLifts day was 2,871 characters, the longest catalogue workout 15,710).
  */
 export const linkFor = (r: Runsheet, opensById: boolean, base = location.origin + location.pathname) => (r.id && opensById ? `${base}#/w/${encodeURIComponent(r.id)}` : shareUrl(r, base));
@@ -31,8 +32,12 @@ export const shareLink = async (title: string, url: string): Promise<ShareOutcom
   }
 };
 
-/** The toast for a share: nothing when the sheet was closed. */
-export const shareToast = (out: ShareOutcome): string | null => (out === 'copied' ? 'Link copied' : out === 'shared' ? 'Shared' : out === 'cancelled' ? null : 'Could not share');
+/** The toast for a share: nothing when the sheet was closed. A private workout shared by its link
+ * says who can open it now. */
+export const shareToast = (out: ShareOutcome, byLink = false): string | null => {
+  const who = byLink ? ' · anyone with the link can open it' : '';
+  return out === 'copied' ? `Link copied${who}` : out === 'shared' ? `Shared${who}` : out === 'cancelled' ? null : 'Could not share';
+};
 
 /** Copies text; false when the browser refuses (no permission, not a secure page). */
 export const copyText = async (text: string): Promise<boolean> => {

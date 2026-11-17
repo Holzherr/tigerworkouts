@@ -10,7 +10,7 @@ import { blockInput, exerciseStepInput, restStepInput, runsheetInput } from '../
  */
 const APP_ONLY = {
   // Set by the apps or by the server side of a tool, never by the agent's runsheet input.
-  runsheet: ['id', 'source', 'createdAt', 'program', 'video', 'icon', 'public', 'copyOf', 'duplicatedFrom'],
+  runsheet: ['id', 'source', 'createdAt', 'program', 'video', 'icon', 'public', 'unlisted', 'copyOf', 'duplicatedFrom'],
   // The library's media for an exercise; an agent passes a key, or a bare {key,name,unit,step,cue}.
   exercise: ['clip', 'poster', 'icon'],
 };

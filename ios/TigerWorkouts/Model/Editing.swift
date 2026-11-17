@@ -45,6 +45,7 @@ enum Edit {
         sheet.creator = creator
         sheet.source = Source(title: r.title, author: creator, kind: "user")
         sheet.isPublic = nil
+        sheet.unlisted = nil
         sheet.copyOf = r.copyOf ?? r.key
         return sheet
     }
@@ -60,6 +61,7 @@ enum Edit {
         sheet.creator = creator ?? r.creator
         sheet.source = Source(title: r.title, author: creator, kind: "user")
         sheet.isPublic = nil
+        sheet.unlisted = nil
         sheet.copyOf = nil
         sheet.program = nil
         sheet.duplicatedFrom = r.key

@@ -383,8 +383,16 @@ export const fetchWorkout = async (id: string): Promise<Runsheet | null> => {
   // No answer is not "no row": the caller tells "could not load" from "private".
   if (error && !data) throw new Error(error.message);
   // Your own row is read as it is; anyone else's has to be a workout the page can draw.
-  if (!data) return null;
-  return data.owner === currentUser()?.id ? workoutFromRow(data as WorkoutRow) : readableWorkout(data as WorkoutRow);
+  if (data) return data.owner === currentUser()?.id ? workoutFromRow(data as WorkoutRow) : readableWorkout(data as WorkoutRow);
+  // Not listed for this caller: a workout shared by link (review round 2, U4) opens through
+  // shared_workout(id) only (migration 0016; until it has run, the call fails and reads as private).
+  const shared = await sb.rpc('shared_workout', { p_id: id });
+  if (shared.error) {
+    if (shared.status === 0) throw new Error(shared.error.message);
+    return null;
+  }
+  const row = (shared.data as WorkoutRow[] | null)?.[0];
+  return row ? readableWorkout(row) : null;
 };
 
 export interface CreatorProfile {
