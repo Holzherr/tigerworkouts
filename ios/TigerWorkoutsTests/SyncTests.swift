@@ -260,6 +260,20 @@ struct SyncTests {
         #expect(bare["later"] == nil)
     }
 
+    @Test("an adapted post's credit decodes, re-encodes with all five keys and reads 'Adapted from @handle'")
+    func adaptedCredit() throws {
+        let post: [String: Any] = ["kind": "social", "author": "Jane Doe", "handle": "janedoe", "platform": "instagram", "url": "https://www.instagram.com/p/x"]
+        let sheet = try JSONDecoder().decode(Runsheet.self, from: json(["title": "Jump rope ladder", "source": post]))
+        #expect(sheet.source?.credit == "Adapted from @janedoe")
+        let back = try #require(JSONSerialization.jsonObject(with: JSONEncoder().encode(sheet)) as? [String: Any])
+        let source = try #require(back["source"] as? [String: Any])
+        for (key, value) in post { #expect(source[key] as? String == value as? String, "\(key)") }
+        // As on the web: "@" typed into the handle is not doubled; no handle, or not a post, no credit.
+        #expect(Source(kind: "social", handle: " @janedoe").credit == "Adapted from @janedoe")
+        #expect(Source(author: "Jane Doe", kind: "social").credit == nil)
+        #expect(Source(kind: "user", handle: "janedoe").credit == nil)
+    }
+
     @Test("a field removed here stays removed, and a step given another exercise takes nothing from the old one")
     func removedStaysRemoved() throws {
         let raw = try JSONDecoder().decode(JSONValue.self, from: json(imported))

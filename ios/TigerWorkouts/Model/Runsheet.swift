@@ -73,6 +73,29 @@ struct Source: Codable, Hashable, Sendable {
     var handle: String?
     var platform: String?
     var review: String?
+
+    /// "Adapted from @janedoe" on an adapted post's card and page, as on the web (`adaptedLine` in
+    /// credited.ts), so it never reads as the creator's own or as affiliated. Nil without a handle.
+    var credit: String? {
+        let h = String((handle ?? "").trimmingCharacters(in: .whitespaces).drop { $0 == "@" })
+        return kind == "social" && !h.isEmpty ? "Adapted from @\(h)" : nil
+    }
+}
+
+extension Source {
+    /// `title` and `kind` may be missing: the MCP's `source.title` is optional on an import.
+    init(from decoder: any Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        title = try c.decodeIfPresent(String.self, forKey: .title) ?? ""
+        url = try c.decodeIfPresent(String.self, forKey: .url)
+        author = try c.decodeIfPresent(String.self, forKey: .author)
+        kind = try c.decodeIfPresent(String.self, forKey: .kind) ?? "user"
+        license = try c.decodeIfPresent(String.self, forKey: .license)
+        importedAt = try c.decodeIfPresent(String.self, forKey: .importedAt)
+        handle = try c.decodeIfPresent(String.self, forKey: .handle)
+        platform = try c.decodeIfPresent(String.self, forKey: .platform)
+        review = try c.decodeIfPresent(String.self, forKey: .review)
+    }
 }
 
 struct Video: Codable, Hashable, Sendable {
