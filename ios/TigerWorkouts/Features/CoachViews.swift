@@ -134,6 +134,9 @@ struct JoinCoachView: View {
     @State private var accepting = false
     @State private var accepted = false
     @State private var error: String?
+    /// Asked for before Accept when the account has no name yet, so the coach sees who joined (U6).
+    @State private var name = ""
+    private var askName: Bool { store.user != nil && store.profileName == nil }
 
     var body: some View {
         NavigationStack {
@@ -166,9 +169,15 @@ struct JoinCoachView: View {
                         Button("Sign in to accept") { signingIn = true }
                             .buttonStyle(BigButtonStyle())
                     } else {
+                        if askName {
+                            TextField("Your name (\(invite.name == "Your coach" ? "your coach" : invite.name.split(separator: " ").first.map(String.init) ?? invite.name) sees it)", text: $name)
+                                .textContentType(.name)
+                                .textFieldStyle(.roundedBorder)
+                                .accessibilityIdentifier("join-name")
+                        }
                         Button(accepting ? "Accepting…" : "Accept") { Task { await accept() } }
                             .buttonStyle(BigButtonStyle())
-                            .disabled(accepting)
+                            .disabled(accepting || (askName && name.trimmingCharacters(in: .whitespaces).isEmpty))
                             .accessibilityIdentifier("accept-invite")
                     }
                 } else if unreachable {
@@ -222,6 +231,7 @@ struct JoinCoachView: View {
         accepting = true
         error = nil
         defer { accepting = false }
+        if askName { await store.setName(name) }
         do {
             try await store.acceptCoachInvite(code: code)
             accepted = true
