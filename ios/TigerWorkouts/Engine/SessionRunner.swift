@@ -268,7 +268,8 @@ final class SessionRunner {
             MainActor.assumeIsolated { self?.tick() }
         }
         RunLoop.main.add(timer!, forMode: .common)
-        RestNotice.askOnce()
+        // No notification ask here: it moved to the first finish screen (Nick, U8, 17 Nov 2026), so a
+        // first session gets no Lock Screen "Rest over"; its tones and vibration still mark rest ends.
         let center = NotificationCenter.default
         appObservers.forEach(center.removeObserver)
         appObservers = [
