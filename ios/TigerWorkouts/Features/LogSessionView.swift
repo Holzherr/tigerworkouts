@@ -11,7 +11,9 @@ enum ManualLog {
         let t0 = startedAt.timeIntervalSince1970 * 1000
         let t1 = t0 + Double(minutes) * 60_000
         var s = Runner.start(r, now: t0)
-        for slot in s.slots where slot.kind == .work {
+        // An AMRAP's rounds are a guess the timer grows as it goes: its sets are not pre-filled,
+        // the score (rounds + reps) says what was done.
+        for slot in s.slots where slot.kind == .work && slot.mode != .amrap {
             s.actuals[slot.id, default: Actual()].doneAt = t0
         }
         s.phase = .done

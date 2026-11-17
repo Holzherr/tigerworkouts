@@ -140,4 +140,11 @@ struct ManualLogTests {
         #expect(later.endedAt == "2026-11-10T09:10:00.000Z")
         #expect(later.durationSec == 2400)
     }
+
+    @Test("an AMRAP's guessed rounds are not logged as sets: its score says what was done")
+    func amrap() {
+        let r = ManualLog.result(Fixtures.cindy(), startedAt: Date(timeIntervalSince1970: 0), minutes: 20)
+        #expect(r.steps.isEmpty)
+        #expect(r.score == nil)
+    }
 }
