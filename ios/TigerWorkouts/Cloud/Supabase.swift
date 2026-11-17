@@ -476,6 +476,13 @@ actor Supabase {
         return Self.decodeWorkoutRows(data).first
     }
 
+    /// Anyone's workout by id, signed in or not: one that is public, shared by link, assigned to you
+    /// or your own (`shared_workout`, migration 0016). Nil when it is none of those.
+    func sharedWorkout(id: String) async throws -> Runsheet? {
+        let (data, _) = try await request("rest/v1/rpc/shared_workout", method: "POST", body: ["p_id": id])
+        return Self.decodeWorkouts(data).first
+    }
+
     /// `workouts` rows into runsheets; a row whose `data` is not a runsheet is skipped.
     static func decodeWorkouts(_ data: Data) -> [Runsheet] { decodeWorkoutRows(data).map(\.sheet) }
 

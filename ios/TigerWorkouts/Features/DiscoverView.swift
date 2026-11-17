@@ -17,6 +17,8 @@ struct DiscoverView: View {
     /// A link that arrived before the catalogue was in — a cold launch from the Up next widget —
     /// opened once it is.
     @State private var pendingLink: String?
+    /// Why a linked workout did not open: private, or no answer from the server.
+    @State private var linkProblem: String?
 
     /// A workout on the stack, with the list it was tapped in: the session it starts records that.
     struct Opened: Hashable {
@@ -135,6 +137,9 @@ struct DiscoverView: View {
                 pendingLink = nil
                 openLink(id)
             }
+            .alert(linkProblem ?? "", isPresented: Binding(get: { linkProblem != nil }, set: { if !$0 { linkProblem = nil } })) {
+                Button("OK", role: .cancel) {}
+            }
             // New workout opens an empty one on the workout screen: the one editor.
             .navigationDestination(item: $writing) { sheet in
                 WorkoutDetailView(runsheet: sheet, isNew: true, onStart: onStart)
@@ -143,7 +148,18 @@ struct DiscoverView: View {
     }
 
     private func openLink(_ id: String) {
-        guard store.workout(id: id) != nil else { return }
+        guard store.workout(id: id) == nil else { return show(id) }
+        // Someone else's workout, shared by link or public: asked for once.
+        Task {
+            switch await store.fetchLinked(id: id) {
+            case .found: show(id)
+            case .hidden: linkProblem = "This workout is private. Only its owner can open it."
+            case .offline: linkProblem = "Could not load this workout. Check your connection."
+            }
+        }
+    }
+
+    private func show(_ id: String) {
         query = ""
         path = [Opened(key: id, from: .link)]
     }

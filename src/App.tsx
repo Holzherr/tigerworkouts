@@ -429,9 +429,20 @@ export default function App() {
           onLogOnly={() => go(`/result/${encodeURIComponent(once ? id : settle(false))}`)}
           onSave={() => act.toggleSaved(id)}
           saved={st.saved.includes(id)}
-          onShare={async () => { const out = await shareLink(base.title, linkFor(base, !!base.public || IMPORTED.some(w => w.runsheet.id === base.id))); told(shareToast(out)); }}
+          onShare={async () => {
+            const listed = !!base.public || IMPORTED.some(w => w.runsheet.id === base.id);
+            // A private workout of yours, on your account: it opens for anyone with its short link
+            // from now on (review round 2, U4). The share sheet opens at once, in the tap.
+            const byLink = !listed && own && !!cloud.user;
+            if (byLink && !base.unlisted) {
+              act.saveWorkout({ ...base, unlisted: true });
+              cloud.syncNow();
+            }
+            const out = await shareLink(base.title, linkFor(base, listed || byLink));
+            told(shareToast(out, byLink));
+          }}
           onCreator={creatorKey(r) ? () => go(creatorPath(creatorKey(r)!)) : r.ownerId || (cloud.user && st.workouts.some(w => w.id === wid(r))) ? () => go(`/c/${r.ownerId ?? cloud.user!.id}`) : undefined}
-          onTogglePublic={cloud.user && st.workouts.some(w => w.id === wid(r)) ? () => { act.saveWorkout({ ...base, public: !base.public }); say(base.public ? 'Private now' : 'On your public page'); } : undefined}
+          onTogglePublic={cloud.user && st.workouts.some(w => w.id === wid(r)) ? () => { act.saveWorkout({ ...base, public: !base.public, ...(base.public ? { unlisted: undefined } : {}) }); say(base.public ? 'Private now' : 'On your public page'); } : undefined}
           appHref={appLink(`w/${encodeURIComponent(wid(r))}`)}
           onDelete={st.workouts.some(w => w.id === wid(r)) ? () => { act.deleteWorkout(wid(r)); if (st.saved.includes(wid(r))) act.toggleSaved(wid(r)); say('Workout deleted'); go('/discover/saved'); } : undefined}
         />

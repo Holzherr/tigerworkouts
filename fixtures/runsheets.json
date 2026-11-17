@@ -15,6 +15,7 @@
     "video": { "provider": "youtube", "id": "dQw4w9WgXcQ", "url": "https://www.youtube.com/watch?v=dQw4w9WgXcQ" },
     "icon": { "kind": "image", "src": "data:image/png;base64,AAAA" },
     "public": false,
+    "unlisted": true,
     "copyOf": "cf-girls-fran",
     "duplicatedFrom": "u-week-1",
     "items": [

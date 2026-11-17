@@ -78,10 +78,29 @@ final class Store {
         return mine + catalogue.filter { !mineIds.contains($0.key) }
     }
 
+    /// Someone else's workouts opened from a link this launch (shared by link, or public).
+    private(set) var linked: [Runsheet] = []
+
     /// A workout a coach assigned is found too: it is the coach's row, not in the catalogue or yours.
     func workout(id: String) -> Runsheet? {
-        allWorkouts.first { $0.key == id } ?? coaching.workouts.first { $0.key == id }
+        allWorkouts.first { $0.key == id } ?? coaching.workouts.first { $0.key == id } ?? linked.first { $0.key == id }
     }
+
+    enum LinkedFetch { case found, hidden, offline }
+
+    /// Asks the server for a linked workout that is not on the phone. No answer is not "private".
+    func fetchLinked(id: String) async -> LinkedFetch {
+        do {
+            guard let sheet = try await fetchShared(id) else { return .hidden }
+            linked.removeAll { $0.key == sheet.key }
+            linked.append(sheet)
+            return .found
+        } catch {
+            return .offline
+        }
+    }
+
+    var fetchShared: @MainActor (String) async throws -> Runsheet? = { try await Supabase.shared.sharedWorkout(id: $0) }
 
     /// How many times this account has run a given workout — the "done 5×" chip.
     func doneCount(_ runsheetId: String) -> Int {

@@ -23,6 +23,6 @@ const fresh = (s: Step): Step => ({ ...s, id: uid(s.kind === 'rest' ? 'r' : 'e')
 export const duplicateForNextWeek = (r: Runsheet, id: string, creator?: string): Runsheet => {
   const items: Item[] = r.items.map(it => (it.kind === 'block' ? { ...it, id: uid('b'), steps: it.steps.map(fresh) } : it.kind === 'ref' ? { ...it, id: uid('i') } : (fresh(it) as Item)));
   const title = nextTitle(r.title);
-  const { copyOf: _c, program: _p, public: _pub, ownerId: _o, ...rest } = r;
+  const { copyOf: _c, program: _p, public: _pub, unlisted: _u, ownerId: _o, ...rest } = r;
   return { ...rest, id, title, creator: creator ?? r.creator, source: { title: r.title, author: creator, kind: 'user' }, duplicatedFrom: r.id ?? r.title, createdAt: new Date().toISOString(), items };
 };

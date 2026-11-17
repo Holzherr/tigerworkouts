@@ -534,6 +534,9 @@ struct Runsheet: Codable, Hashable, Sendable, Identifiable {
     var items: [Item] = []
     /// On the creator's public page and in everyone's Discover. New and copied workouts are private.
     var isPublic: Bool?
+    /// Opens for anyone with its link (tigerworkouts.com/#/w/<id>) without being listed: set by Share
+    /// on the website. Kept as it came, so an edit on the phone does not take the link away.
+    var unlisted: Bool?
     /// Set on the copy made when someone else's workout is edited: the id it was copied from. Its
     /// sessions stay this workout's history, so Up next, pace and stalls keep the thread.
     var copyOf: String?
@@ -558,7 +561,7 @@ struct Runsheet: Codable, Hashable, Sendable, Identifiable {
     func owns(_ r: SessionResult) -> Bool { lineage.contains(r.runsheetId) }
 
     private enum CodingKeys: String, CodingKey {
-        case id, title, creator, description, source, tags, level, program, timeCapSec, score, progression, video, items, copyOf, duplicatedFrom, icon, createdAt
+        case id, title, creator, description, source, tags, level, program, timeCapSec, score, progression, video, items, unlisted, copyOf, duplicatedFrom, icon, createdAt
         case isPublic = "public"
     }
 
@@ -587,6 +590,7 @@ struct Runsheet: Codable, Hashable, Sendable, Identifiable {
         video = try c.decodeIfPresent(Video.self, forKey: .video)
         items = try c.decodeIfPresent([Item].self, forKey: .items) ?? []
         isPublic = try c.decodeIfPresent(Bool.self, forKey: .isPublic)
+        unlisted = try c.decodeIfPresent(Bool.self, forKey: .unlisted)
         copyOf = try c.decodeIfPresent(String.self, forKey: .copyOf)
         duplicatedFrom = try c.decodeIfPresent(String.self, forKey: .duplicatedFrom)
         icon = try? c.decodeIfPresent(JSONValue.self, forKey: .icon)

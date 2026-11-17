@@ -1,4 +1,4 @@
-import { ChevronLeft, ChevronRight, Copy, ExternalLink, GitMerge, Globe, Layers, Lock, Menu, MoreHorizontal, Pencil, Play, Plus, Share2, Smartphone, Trash2, Video } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Copy, ExternalLink, GitMerge, Globe, Layers, Link2, Lock, Menu, MoreHorizontal, Pencil, Play, Plus, Share2, Smartphone, Trash2, Video } from 'lucide-react';
 import { shortDate } from '@/shared/utils/dates';
 import { Fragment, useState } from 'react';
 import { Button } from '@/shared/components/ui/button';
@@ -248,8 +248,8 @@ export const WorkoutPreviewScreen = ({ runsheet: r, history = [], lastTime, onBa
           {score !== 'none' && <Chip variant="brand">{SCORE_TEXT[score]}</Chip>}
           {r.level && <Chip variant="outline">{r.level}</Chip>}
           {onTogglePublic && (
-            <Chip variant={r.public ? 'brand' : 'outline'} onClick={onTogglePublic} aria-label={r.public ? 'Public — tap to make private' : 'Private — tap to make public'}>
-              {r.public ? <Globe className="size-3.5" /> : <Lock className="size-3.5" />} {r.public ? 'Public' : 'Private'}
+            <Chip variant={r.public ? 'brand' : 'outline'} onClick={onTogglePublic} aria-label={r.public ? 'Public — tap to make private' : r.unlisted ? 'Anyone with the link — tap to make public' : 'Private — tap to make public'}>
+              {r.public ? <Globe className="size-3.5" /> : r.unlisted ? <Link2 className="size-3.5" /> : <Lock className="size-3.5" />} {r.public ? 'Public' : r.unlisted ? 'Anyone with the link' : 'Private'}
             </Chip>
           )}
         </div>
