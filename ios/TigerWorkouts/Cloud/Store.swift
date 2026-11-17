@@ -112,6 +112,7 @@ final class Store {
         seedVersionsIfAsked()
         seedAICoachIfAsked()
         seedWeekOneIfAsked()
+        seedCreditedIfAsked()
         #endif
         loaded = true
         shareUpNext()

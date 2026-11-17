@@ -621,6 +621,19 @@ struct WorkoutDetailView: View {
                     .font(.system(size: 26, weight: .heavy))
                     .foregroundStyle(Brand.ink)
                     .fixedSize(horizontal: false, vertical: true)
+                if let credit = runsheet.source?.credit {
+                    // The whole line opens the post in Safari: there is no creator page on the phone yet.
+                    if let url = runsheet.source?.url.flatMap(URL.init(string:)) {
+                        Link(destination: url) {
+                            Text("\(credit) · original post \(Image(systemName: "arrow.up.right"))")
+                        }
+                        .font(.footnote.weight(.semibold))
+                        .foregroundStyle(Brand.coralInk)
+                        .accessibilityLabel("\(credit) · original post")
+                    } else {
+                        Text(credit).font(.footnote).foregroundStyle(Brand.muted)
+                    }
+                }
                 if !meta.isEmpty {
                     Text(meta).font(.subheadline).foregroundStyle(Brand.muted)
                 }

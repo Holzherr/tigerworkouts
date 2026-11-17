@@ -101,6 +101,11 @@ attribution, plus 277 exercises they needed. Format in `imports/SCHEMA.md`, find
 list in `imports/LEARNINGS.md`. Validate with `node tools/validate-imports.mjs`; browse them in
 Storybook under Workouts → Imported. Verbatim originals live in the private assistant repo.
 
+A creator's post an admin adapts through the MCP server (`source.kind: "social"`) is credited on
+both apps: cards read "Adapted from @handle", the workout page "Adapted from @handle · original
+post ↗" (`credited.ts` on web, `Source.credit` on iOS, where the line opens the post in Safari).
+Credited creator pages (`#/by/<key>`) are web only.
+
 `imports/exercise-details.json` gives all 399 catalogue exercises a movement pattern, equipment,
 muscles, difficulty, cues, mistakes, easier/harder swaps and default sets, reps and rest;
 `imports/catalogue/new-exercises.json` adds 50 staples (they show in the web picker; iOS after
