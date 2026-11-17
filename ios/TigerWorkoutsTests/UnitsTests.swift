@@ -18,6 +18,14 @@ struct UnitsTests {
         #expect(Units.weight(70, lb: false) == "70 kg")
     }
 
+    @Test("a logged load with no unit counts as kg; a speed does not")
+    func loadUnit() {
+        #expect(Units.loadUnit("") == "kg")
+        #expect(Units.loadUnit(nil) == "kg")
+        #expect(Units.loadUnit("kph") == "kph")
+        #expect(Units.number(20, unit: Units.loadUnit(""), lb: true) == "44.1")
+    }
+
     @Test("unit words: kg… becomes lb…, nothing else changes")
     func unitText() {
         #expect(Units.unit("kg", lb: true) == "lb")

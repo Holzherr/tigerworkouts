@@ -42,6 +42,10 @@ enum Units {
         lb && isWeight(unit) ? "lb" + unit.dropFirst(2) : unit
     }
 
+    /// A logged set's load is a weight unless its unit says otherwise: "" (left off) counts as kg,
+    /// as `loadIsKg` on the web.
+    static func loadUnit(_ unit: String?) -> String { (unit ?? "").isEmpty ? "kg" : unit! }
+
     /// A stored value of this unit as shown: kg → lb, rounded to 0.1. Anything not a weight as it is.
     static func shown(_ value: Double, unit: String?, lb: Bool = Units.lb) -> Double {
         lb && isWeight(unit) ? toLb(value) : value

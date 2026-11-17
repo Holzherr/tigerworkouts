@@ -300,7 +300,7 @@ enum Logbook {
     /// converts the load without writing a unit beside it; `unit` does both.
     static func label(_ x: SetResult, unit: String = "", loads: String? = nil) -> String {
         let shownUnit = Units.unit(unit)
-        func load(_ v: Double) -> String { Units.number(v, unit: loads ?? unit) }
+        func load(_ v: Double) -> String { Units.number(v, unit: Units.loadUnit(loads ?? unit)) }
         let time = (x.seconds ?? 0) > 0 ? duration(x.seconds!) : ""
         if let m = x.meters { return "\(Format.number(m)) m" + (time.isEmpty ? "" : " in \(time)") }
         if let c = x.calories { return "\(Format.number(c)) cal" + (time.isEmpty ? "" : " in \(time)") }

@@ -221,7 +221,7 @@ enum LastTime {
     static func label(_ set: SetResult?, for step: ExerciseStep) -> String? {
         guard let set else { return nil }
         switch (set.load, set.reps) {
-        case let (load?, reps?): return "last time \(step.loadNumber(load)) × \(Format.number(reps))"
+        case let (load?, reps?): return "last time \(Units.number(load, unit: Units.loadUnit(step.shortUnit))) × \(Format.number(reps))"
         case let (load?, nil): return "last time \(step.loadText(load))"
         case let (nil, reps?): return "last time \(Format.number(reps)) reps"
         default: return nil
@@ -252,7 +252,7 @@ enum LastTime {
     /// "last 57.5 × 8" under a set row; the load in lb when weights show in lb (`unit` as stored).
     static func setLabel(_ set: SetResult?, unit: String = "") -> String? {
         guard let set else { return nil }
-        let parts = [set.load.map { Units.number($0, unit: unit) }, set.reps.map(Format.number)].compactMap { $0 }
+        let parts = [set.load.map { Units.number($0, unit: Units.loadUnit(unit)) }, set.reps.map(Format.number)].compactMap { $0 }
         return parts.isEmpty ? nil : "last " + parts.joined(separator: " × ")
     }
 
@@ -285,7 +285,7 @@ enum LastTime {
     static func compact(_ sets: [SetResult], unit stored: String = "", limit: Int = 4) -> String? {
         // A weight shows in lb when weights do (U11); `stored` is the exercise's unit.
         let unit = Units.unit(stored)
-        func load(_ v: Double) -> String { Units.number(v, unit: stored) }
+        func load(_ v: Double) -> String { Units.number(v, unit: Units.loadUnit(stored)) }
         var groups: [(set: SetResult, count: Int)] = []
         for s in sets {
             if let last = groups.last, last.set.load == s.load, last.set.reps == s.reps {
