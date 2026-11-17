@@ -141,3 +141,76 @@ struct CatalogueTests {
         }
     }
 }
+
+/// `fixtures/sessions.json` and `fixtures/runsheet-unknown-mode.json`, which the web
+/// (src/features/cloud/fixtures.test.ts) and the MCP worker (mcp/test/fixtures.test.ts) read too
+/// (review A4).
+@Suite("shared session fixtures")
+struct SessionFixturesTests {
+    private static let fixtures = URL(fileURLWithPath: #filePath).deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent().appendingPathComponent("fixtures")
+
+    /// Read from the server, kept in the phone's cache, written back as a row: every key the row
+    /// had comes back, those this app does not know included.
+    @Test("a session row survives the cache and an upload without losing a key")
+    func sessionsRoundTrip() throws {
+        let data = try Data(contentsOf: Self.fixtures.appendingPathComponent("sessions.json"))
+        let rows = try #require(try JSONSerialization.jsonObject(with: data) as? [[String: Any]])
+        #expect(rows.count >= 3)
+        for row in rows {
+            let id = try #require(row["id"] as? String)
+            let want = try #require(row["data"] as? NSDictionary)
+            let read = try #require(SessionRow.decode(id: id, data: try JSONSerialization.data(withJSONObject: want)))
+            let cached = try JSONDecoder().decode(SessionResult.self, from: JSONEncoder().encode(read))
+            #expect(cached == read, "\(id): changed in the cache")
+            let back = try #require(SessionRow.encode(cached, owner: "o", existing: nil)["data"] as? NSDictionary)
+            let lost = Self.missing(from: back, of: want, at: id)
+            #expect(lost.isEmpty, "lost or changed: \(lost.joined(separator: ", "))")
+        }
+    }
+
+    @Test("the zone a session was done in is read")
+    func zoneRead() throws {
+        let data = try Data(contentsOf: Self.fixtures.appendingPathComponent("sessions.json"))
+        let rows = try #require(try JSONSerialization.jsonObject(with: data) as? [[String: Any]])
+        let first = try #require(rows.first?["data"])
+        let r = try #require(SessionRow.decode(id: "s", data: try JSONSerialization.data(withJSONObject: first)))
+        #expect(r.tzOffsetMin == -300)
+    }
+
+    @Test("a block mode no app knows yet reads, runs as rounds, and is saved back as it came")
+    func unknownMode() throws {
+        let data = try Data(contentsOf: Self.fixtures.appendingPathComponent("runsheet-unknown-mode.json"))
+        let sheet = try JSONDecoder().decode(Runsheet.self, from: data)
+        let block = try #require(sheet.items.first?.asBlock)
+        #expect(block.mode == nil && block.unknownMode == "pyramid" && block.runMode == .rounds)
+        #expect(!Runner.expand(sheet).isEmpty)
+        let back = try #require(try JSONSerialization.jsonObject(with: JSONEncoder().encode(sheet)) as? [String: Any])
+        let items = try #require(back["items"] as? [[String: Any]])
+        #expect(items.first?["mode"] as? String == "pyramid")
+    }
+
+    @Test("a session done in New York reads as New York's date on a phone in London")
+    func wallDate() throws {
+        let london = try #require(TimeZone(identifier: "Europe/London"))
+        let at = try #require(ISO8601.date("2026-11-09T04:30:00Z"))
+        var cal = Calendar(identifier: .gregorian)
+        cal.timeZone = london
+        let wall = cal.dateComponents([.day, .hour, .minute], from: SessionResult.wallDate(at, tzOffsetMin: -300, zone: london))
+        #expect(wall.day == 8 && wall.hour == 23 && wall.minute == 30)
+        #expect(SessionResult.wallDate(at, tzOffsetMin: nil, zone: london) == at)
+        #expect(SessionResult.wallDate(at, tzOffsetMin: 9999, zone: london) == at)
+    }
+
+    private static func missing(from got: Any?, of want: Any, at path: String) -> [String] {
+        if let w = want as? NSDictionary {
+            guard let g = got as? NSDictionary else { return [path] }
+            return w.flatMap { k, v in missing(from: g[k], of: v, at: "\(path).\(k)") }
+        }
+        if let w = want as? [Any] {
+            guard let g = got as? [Any], g.count == w.count else { return [path] }
+            return zip(g, w).enumerated().flatMap { i, pair in missing(from: pair.0, of: pair.1, at: "\(path)[\(i)]") }
+        }
+        if want is NSNull { return got is NSNull ? [] : [path] }
+        return (got as? NSObject) == (want as? NSObject) ? [] : [path]
+    }
+}

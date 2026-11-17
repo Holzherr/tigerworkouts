@@ -2,6 +2,10 @@ import Foundation
 
 /// One set as it was done: the reps counted and the load in hand.
 struct SetResult: Codable, Hashable, Sendable {
+    enum CodingKeys: String, CodingKey, CaseIterable {
+        case reps, load, at, type, seconds, meters, calories, rpe
+    }
+
     var reps: Double?
     var load: Double?
     /// When the set was ticked, in seconds of session time (pauses excluded). Nil on rows from
@@ -19,9 +23,48 @@ struct SetResult: Codable, Hashable, Sendable {
     /// How hard the set was, RPE 1–10 (10 = nothing left). Logged for lifts progressed by effort
     /// (`ProgressMode.effort`); nil everywhere else and on rows from before it was kept.
     var rpe: Double? = nil
+    /// Keys a newer app wrote that this one does not know, carried through unchanged.
+    var extra: [String: JSONValue] = [:]
 
     /// Anything but a warm-up counts as work.
     var isWorking: Bool { type != .warmup }
+
+    init(reps: Double? = nil, load: Double? = nil, at: Double? = nil, type: SetType? = nil, seconds: Double? = nil, meters: Double? = nil, calories: Double? = nil, rpe: Double? = nil) {
+        self.reps = reps
+        self.load = load
+        self.at = at
+        self.type = type
+        self.seconds = seconds
+        self.meters = meters
+        self.calories = calories
+        self.rpe = rpe
+    }
+
+    init(from decoder: any Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        reps = try c.decodeIfPresent(Double.self, forKey: .reps)
+        load = try c.decodeIfPresent(Double.self, forKey: .load)
+        at = try c.decodeIfPresent(Double.self, forKey: .at)
+        type = try c.decodeIfPresent(SetType.self, forKey: .type)
+        seconds = try c.decodeIfPresent(Double.self, forKey: .seconds)
+        meters = try c.decodeIfPresent(Double.self, forKey: .meters)
+        calories = try c.decodeIfPresent(Double.self, forKey: .calories)
+        rpe = try c.decodeIfPresent(Double.self, forKey: .rpe)
+        extra = UnknownKeys.decode(decoder, known: CodingKeys.self)
+    }
+
+    func encode(to encoder: any Encoder) throws {
+        try UnknownKeys.encode(extra, to: encoder)
+        var c = encoder.container(keyedBy: CodingKeys.self)
+        try c.encodeIfPresent(reps, forKey: .reps)
+        try c.encodeIfPresent(load, forKey: .load)
+        try c.encodeIfPresent(at, forKey: .at)
+        try c.encodeIfPresent(type, forKey: .type)
+        try c.encodeIfPresent(seconds, forKey: .seconds)
+        try c.encodeIfPresent(meters, forKey: .meters)
+        try c.encodeIfPresent(calories, forKey: .calories)
+        try c.encodeIfPresent(rpe, forKey: .rpe)
+    }
 }
 
 /// When each round of a circuit or AMRAP block finished, in seconds of session time. `at[0]` is
@@ -38,6 +81,9 @@ struct RoundSplit: Codable, Hashable, Sendable {
 
 /// What was logged for one exercise step in a session.
 struct StepResult: Codable, Hashable, Sendable, Identifiable {
+    enum CodingKeys: String, CodingKey, CaseIterable {
+        case stepId, exerciseKey, target, incline, reps, success, sets
+    }
     var stepId: String
     var exerciseKey: String
     /// Load actually used, in the exercise's unit.
@@ -49,9 +95,45 @@ struct StepResult: Codable, Hashable, Sendable, Identifiable {
     var success: Bool?
     /// Each set in order, with its own reps and load. `target` and `reps` stay for older readers.
     var sets: [SetResult]?
+    /// Keys a newer app wrote that this one does not know, carried through unchanged.
+    var extra: [String: JSONValue] = [:]
 
     /// A step swapped mid-session has a row per exercise, so the step id alone is not unique.
     var id: String { "\(stepId)|\(exerciseKey)" }
+
+    init(stepId: String, exerciseKey: String, target: Double? = nil, incline: Double? = nil, reps: [Double]? = nil, success: Bool? = nil, sets: [SetResult]? = nil) {
+        self.stepId = stepId
+        self.exerciseKey = exerciseKey
+        self.target = target
+        self.incline = incline
+        self.reps = reps
+        self.success = success
+        self.sets = sets
+    }
+
+    init(from decoder: any Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        stepId = try c.decode(String.self, forKey: .stepId)
+        exerciseKey = try c.decode(String.self, forKey: .exerciseKey)
+        target = try c.decodeIfPresent(Double.self, forKey: .target)
+        incline = try c.decodeIfPresent(Double.self, forKey: .incline)
+        reps = try c.decodeIfPresent([Double].self, forKey: .reps)
+        success = try c.decodeIfPresent(Bool.self, forKey: .success)
+        sets = try c.decodeIfPresent([SetResult].self, forKey: .sets)
+        extra = UnknownKeys.decode(decoder, known: CodingKeys.self)
+    }
+
+    func encode(to encoder: any Encoder) throws {
+        try UnknownKeys.encode(extra, to: encoder)
+        var c = encoder.container(keyedBy: CodingKeys.self)
+        try c.encode(stepId, forKey: .stepId)
+        try c.encode(exerciseKey, forKey: .exerciseKey)
+        try c.encodeIfPresent(target, forKey: .target)
+        try c.encodeIfPresent(incline, forKey: .incline)
+        try c.encodeIfPresent(reps, forKey: .reps)
+        try c.encodeIfPresent(success, forKey: .success)
+        try c.encodeIfPresent(sets, forKey: .sets)
+    }
 }
 
 /// Heart-rate summary attached after a workout, from Apple Health or another device. The web app
@@ -82,7 +164,7 @@ enum SessionOrigin: String, CaseIterable, Codable, Sendable {
 /// apps read each other's history without a migration.
 struct SessionResult: Codable, Hashable, Sendable, Identifiable {
     enum CodingKeys: String, CodingKey, CaseIterable {
-        case id, runsheetId, startedFrom, title, startedAt, endedAt, durationSec, completed, activity, device, score, scoreText, capped, capReps, steps, splits, notes, rpe, version
+        case id, runsheetId, startedFrom, title, startedAt, tzOffsetMin, endedAt, durationSec, completed, activity, device, score, scoreText, capped, capReps, steps, splits, notes, rpe, version
     }
 
     var id: String?
@@ -92,6 +174,9 @@ struct SessionResult: Codable, Hashable, Sendable, Identifiable {
     var startedFrom: String?
     var title: String?
     var startedAt: String
+    /// Minutes east of UTC where the session was done, so its day and week follow that zone
+    /// wherever History is read (review A10). Nil on rows from before it was kept.
+    var tzOffsetMin: Double?
     var endedAt: String?
     var durationSec: Double?
     var completed: Bool?
@@ -113,9 +198,21 @@ struct SessionResult: Codable, Hashable, Sendable, Identifiable {
     /// What this session ran when it was not the workout as saved ("Just this time", a change mid-
     /// session): its items. Nil when it ran the workout as it is (Versions.swift).
     var version: SessionVersion?
+    /// Keys a newer app wrote that this one does not know, carried through the cache and back to
+    /// the server unchanged (review A4).
+    var extra: [String: JSONValue] = [:]
 
     var rowId: String { id ?? "\(runsheetId)@\(startedAt)" }
     var startedDate: Date { ISO8601.date(startedAt) ?? .distantPast }
+    /// The start as a Date whose wall time in this phone's zone reads the session's own wall
+    /// clock: days and weeks are grouped and shown by it. `wallDate` in dates.ts.
+    var wallDate: Date { SessionResult.wallDate(startedDate, tzOffsetMin: tzOffsetMin) }
+
+    static func wallDate(_ at: Date, tzOffsetMin: Double?, zone: TimeZone = .current) -> Date {
+        guard let tz = tzOffsetMin, tz.isFinite, abs(tz) <= 14 * 60 else { return at }
+        // Shift by the difference between the session's offset and this zone's at that instant.
+        return at.addingTimeInterval(tz * 60 - Double(zone.secondsFromGMT(for: at)))
+    }
     var displayTitle: String { title ?? activity?.name ?? runsheetId }
 
     init(runsheetId: String, title: String?, startedAt: String, endedAt: String? = nil, durationSec: Double? = nil, completed: Bool? = nil, score: Double? = nil, steps: [StepResult] = [], notes: String? = nil, id: String? = nil, startedFrom: String? = nil) {
@@ -139,6 +236,7 @@ struct SessionResult: Codable, Hashable, Sendable, Identifiable {
         startedFrom = try c.decodeIfPresent(String.self, forKey: .startedFrom)
         title = try c.decodeIfPresent(String.self, forKey: .title)
         startedAt = try c.decodeIfPresent(String.self, forKey: .startedAt) ?? ISO8601.string(Date())
+        tzOffsetMin = try? c.decodeIfPresent(Double.self, forKey: .tzOffsetMin)
         endedAt = try c.decodeIfPresent(String.self, forKey: .endedAt)
         durationSec = try c.decodeIfPresent(Double.self, forKey: .durationSec)
         completed = try c.decodeIfPresent(Bool.self, forKey: .completed)
@@ -153,6 +251,68 @@ struct SessionResult: Codable, Hashable, Sendable, Identifiable {
         notes = try c.decodeIfPresent(String.self, forKey: .notes)
         rpe = try c.decodeIfPresent(Double.self, forKey: .rpe)
         version = try? c.decodeIfPresent(SessionVersion.self, forKey: .version)
+        extra = UnknownKeys.decode(decoder, known: CodingKeys.self)
+        // A version this app cannot read is kept as it came, so an edit here does not drop it.
+        if version == nil, let raw = UnknownKeys.raw(decoder, key: CodingKeys.version.stringValue) { extra[CodingKeys.version.stringValue] = raw }
+    }
+
+    func encode(to encoder: any Encoder) throws {
+        try UnknownKeys.encode(extra, to: encoder)
+        var c = encoder.container(keyedBy: CodingKeys.self)
+        try c.encodeIfPresent(id, forKey: .id)
+        try c.encode(runsheetId, forKey: .runsheetId)
+        try c.encodeIfPresent(startedFrom, forKey: .startedFrom)
+        try c.encodeIfPresent(title, forKey: .title)
+        try c.encode(startedAt, forKey: .startedAt)
+        try c.encodeIfPresent(tzOffsetMin, forKey: .tzOffsetMin)
+        try c.encodeIfPresent(endedAt, forKey: .endedAt)
+        try c.encodeIfPresent(durationSec, forKey: .durationSec)
+        try c.encodeIfPresent(completed, forKey: .completed)
+        try c.encodeIfPresent(activity, forKey: .activity)
+        try c.encodeIfPresent(device, forKey: .device)
+        try c.encodeIfPresent(score, forKey: .score)
+        try c.encodeIfPresent(scoreText, forKey: .scoreText)
+        try c.encodeIfPresent(capped, forKey: .capped)
+        try c.encodeIfPresent(capReps, forKey: .capReps)
+        try c.encode(steps, forKey: .steps)
+        try c.encodeIfPresent(splits, forKey: .splits)
+        try c.encodeIfPresent(notes, forKey: .notes)
+        try c.encodeIfPresent(rpe, forKey: .rpe)
+        if let version { try c.encode(version, forKey: .version) }
+    }
+}
+
+/// Keys a type does not know, read and written as they came: a newer app's fields survive the
+/// phone's cache and an edit made here (review A4).
+enum UnknownKeys {
+    struct Key: CodingKey {
+        var stringValue: String
+        var intValue: Int? { nil }
+        init(_ s: String) { stringValue = s }
+        init?(stringValue: String) { self.stringValue = stringValue }
+        init?(intValue: Int) { nil }
+    }
+
+    static func decode<K: CodingKey & CaseIterable>(_ decoder: any Decoder, known: K.Type) -> [String: JSONValue] {
+        guard let c = try? decoder.container(keyedBy: Key.self) else { return [:] }
+        let names = Set(K.allCases.map(\.stringValue))
+        var out: [String: JSONValue] = [:]
+        for k in c.allKeys where !names.contains(k.stringValue) {
+            if let v = try? c.decode(JSONValue.self, forKey: k) { out[k.stringValue] = v }
+        }
+        return out
+    }
+
+    /// One key's value as raw JSON, whatever its shape.
+    static func raw(_ decoder: any Decoder, key: String) -> JSONValue? {
+        guard let c = try? decoder.container(keyedBy: Key.self) else { return nil }
+        return try? c.decodeIfPresent(JSONValue.self, forKey: Key(key))
+    }
+
+    static func encode(_ extra: [String: JSONValue], to encoder: any Encoder) throws {
+        guard !extra.isEmpty else { return }
+        var c = encoder.container(keyedBy: Key.self)
+        for (k, v) in extra { try c.encode(v, forKey: Key(k)) }
     }
 }
 

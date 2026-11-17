@@ -270,7 +270,7 @@ struct ExerciseHistoryView: View {
             HStack(alignment: .firstTextBaseline) {
                 Text(s.title).font(.subheadline.weight(.bold)).foregroundStyle(Brand.ink).lineLimit(1)
                 Spacer(minLength: 8)
-                Text(s.startedDate.formatted(date: .abbreviated, time: .omitted)).font(.caption).foregroundStyle(Brand.muted)
+                Text(s.wallDate.formatted(date: .abbreviated, time: .omitted)).font(.caption).foregroundStyle(Brand.muted)
             }
             FlowRow(spacing: 6) {
                 if counted.isEmpty {

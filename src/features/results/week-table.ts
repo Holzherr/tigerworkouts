@@ -9,6 +9,7 @@ import { lineage, measureOf, type ExerciseStep, type Runsheet } from '@/features
 import { isWorking, type SessionResult, type SetResult } from '@/features/runsheet/progression';
 import { fmtNum, setLabel, setsOf } from './logbook';
 import { loadDelta } from '@/shared/utils/units';
+import { wallDate } from '@/shared/utils/dates';
 
 export interface WeekColumn {
   /** The session's id (its start when it has none yet). */
@@ -121,9 +122,9 @@ export const weekTable = (r: Runsheet, results: SessionResult[], workouts: Runsh
   const ids = weekFamily(r, workouts);
   const sessions = results.filter(s => ids.has(s.runsheetId) && !s.activity && s.steps.length > 0).sort((a, b) => (a.startedAt < b.startedAt ? -1 : a.startedAt > b.startedAt ? 1 : 0));
   if (!sessions.length) return { columns: [], rows: [] };
-  const start = weekStart(new Date(sessions[0].startedAt));
+  const start = weekStart(wallDate(sessions[0]));
   const columns: WeekColumn[] = sessions.map((s, i) => {
-    const week = Math.floor(Math.max(0, daysBetween(start, new Date(s.startedAt))) / 7) + 1;
+    const week = Math.floor(Math.max(0, daysBetween(start, wallDate(s))) / 7) + 1;
     return { id: s.id ?? s.startedAt, startedAt: s.startedAt, week, latest: i === sessions.length - 1, runsheetId: s.runsheetId, label: `Wk ${week}` };
   });
 

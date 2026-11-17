@@ -7,6 +7,7 @@ import { startOfWeek } from '@/features/results/effort';
 import { setLabel, setsOf } from '@/features/results/logbook';
 import { forLabel, loadLabel, shortUnit, type ExerciseStep, type Runsheet } from '@/features/runsheet/model';
 import type { SessionResult, SetResult } from '@/features/runsheet/progression';
+import { wallDate } from '@/shared/utils/dates';
 
 const DAY = 864e5;
 /** Days without a session after which a client reads as quiet. */
@@ -28,14 +29,15 @@ export interface ClientSummary extends ClientLink {
 }
 
 /** One row per client: sessions since Monday, last active, quiet. Quiet clients first, then the most recently active. */
-export const clientRollup = (clients: ClientLink[], sessions: { owner: string; startedAt: string }[], now = new Date()): ClientSummary[] => {
+/** A client's week is the client's own: a session counts by the date where it was done (`tzOffsetMin`). */
+export const clientRollup = (clients: ClientLink[], sessions: { owner: string; startedAt: string; tzOffsetMin?: number }[], now = new Date()): ClientSummary[] => {
   const week = startOfWeek(now).getTime();
   return clients
     .map(c => {
       const mine = sessions.filter(s => s.owner === c.id);
       const lastActive = mine.reduce<string | undefined>((a, s) => (!a || s.startedAt > a ? s.startedAt : a), undefined);
       const ref = Date.parse(lastActive ?? c.since);
-      return { ...c, sessionsThisWeek: mine.filter(s => Date.parse(s.startedAt) >= week).length, lastActive, quiet: now.getTime() - ref >= QUIET_DAYS * DAY };
+      return { ...c, sessionsThisWeek: mine.filter(s => wallDate(s).getTime() >= week).length, lastActive, quiet: now.getTime() - ref >= QUIET_DAYS * DAY };
     })
     .sort((a, b) => Number(b.quiet) - Number(a.quiet) || (b.lastActive ?? '').localeCompare(a.lastActive ?? '') || a.name.localeCompare(b.name));
 };

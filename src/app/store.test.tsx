@@ -39,6 +39,18 @@ describe('store', () => {
     expect(logged).toHaveLength(1);
     expect(logged[0].score).toBe(7);
   });
+
+  it('a new result saves the zone it was done in; replacing it keeps that zone (review A10)', () => {
+    setState({ results: [{ id: 's-old', runsheetId: 'w', startedAt: '2026-01-01T10:00:00Z', steps: [] }] });
+    const act = useActions();
+    act.addResult({ id: 's-new', runsheetId: 'w', startedAt: '2026-09-27T10:00:00Z', steps: [] });
+    expect(getState().results.find(r => r.id === 's-new')!.tzOffsetMin).toBe(0 - new Date('2026-09-27T10:00:00Z').getTimezoneOffset());
+    act.addResult({ id: 's-new', runsheetId: 'w', startedAt: '2026-09-27T10:00:00Z', steps: [], tzOffsetMin: undefined, score: 3 });
+    expect(getState().results.find(r => r.id === 's-new')!.tzOffsetMin).toBe(0 - new Date('2026-09-27T10:00:00Z').getTimezoneOffset());
+    // An older session re-saved is not given this device's zone: it may have been done elsewhere.
+    act.addResult({ id: 's-old', runsheetId: 'w', startedAt: '2026-01-01T10:00:00Z', steps: [], score: 1 });
+    expect('tzOffsetMin' in getState().results.find(r => r.id === 's-old')!).toBe(false);
+  });
 });
 
 describe('the signed-in effect', () => {

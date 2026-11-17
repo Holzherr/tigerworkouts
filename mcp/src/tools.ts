@@ -647,6 +647,8 @@ export interface LogSessionArgs {
   workoutId: string;
   title?: string;
   startedAt: string;
+  /** Minutes east of UTC where the session was done; else read from startedAt's own offset. */
+  tzOffsetMin?: number;
   endedAt?: string;
   durationSec?: number;
   completed?: boolean;
@@ -673,6 +675,12 @@ const isItem = (x: unknown): boolean => {
   return (o?.kind === 'ref' && typeof o.runsheetId === 'string') || isStep(x);
 };
 
+/** "…-05:00" → -300, "…+01:00" → 60; undefined for "…Z" or no offset (the zone is not known). */
+export const offsetIn = (iso: string) => {
+  const m = iso.match(/([+-])(\d{2}):?(\d{2})$/);
+  return m && /T/.test(iso) ? (m[1] === '-' ? -1 : 1) * (Number(m[2]) * 60 + Number(m[3])) : undefined;
+};
+
 /** One finished session into the sessions table, in the row shape the web app's sync writes for v2
  * results (toRow in src/features/cloud/sync.ts), so it shows in the app's history. */
 export const logSession = async (db: Db, a: LogSessionArgs) => {
@@ -680,11 +688,13 @@ export const logSession = async (db: Db, a: LogSessionArgs) => {
   if (Number.isNaN(started)) throw new ToolError('startedAt must be an ISO date/time.');
   if (a.version && !a.version.items.every(isItem)) throw new ToolError('version.items must be runsheet items as start_workout returned them (runsheet.items, or version.items).');
   const id = a.id ?? `s-${started.toString(36)}${Math.random().toString(36).slice(2, 6)}`;
+  const tzOffsetMin = a.tzOffsetMin ?? offsetIn(a.startedAt);
   const result: SessionResult = {
     id,
     runsheetId: a.workoutId,
     title: a.title,
     startedAt: new Date(started).toISOString(),
+    ...(tzOffsetMin !== undefined ? { tzOffsetMin } : {}),
     endedAt: a.endedAt,
     durationSec: a.durationSec,
     completed: a.completed ?? true,
