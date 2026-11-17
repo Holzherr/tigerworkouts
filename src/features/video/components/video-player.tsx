@@ -95,7 +95,7 @@ export const VideoPlayer = forwardRef<VideoPlayerHandle, VideoPlayerProps>(({ yo
   }, [youtubeId, start]);
 
   return (
-    <div className={cn('relative aspect-video w-full overflow-hidden bg-ink', className)}>
+    <div className={cn('relative aspect-video w-full overflow-hidden bg-night', className)}>
       <div ref={host} className="absolute inset-0 [&>iframe]:size-full" />
       {failed && (
         <a href={`https://www.youtube.com/watch?v=${youtubeId}`} target="_blank" rel="noreferrer" className="absolute inset-0 grid place-items-center text-[14px] font-bold text-white underline">

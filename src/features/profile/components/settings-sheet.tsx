@@ -105,7 +105,7 @@ export const SettingsSheet = ({ open, onOpenChange, name, avatar, email, onChang
           <div className="mt-1 flex flex-wrap">
             {COLORS.map((c, i) => (
               <button key={c} type="button" aria-label={`Colour ${COLOR_NAMES[i]}`} aria-pressed={(avatar?.color ?? '#ff4d2e') === c} onClick={() => onChange({ avatar: { ...avatar, color: c } })} className="grid size-11 place-items-center">
-                <span className="size-7 rounded-full" style={{ background: c, outline: (avatar?.color ?? '#ff4d2e') === c ? '2px solid #0f172a' : 'none', outlineOffset: 2 }} />
+                <span className="size-7 rounded-full" style={{ background: c, outline: (avatar?.color ?? '#ff4d2e') === c ? '2px solid var(--color-ink)' : 'none', outlineOffset: 2 }} />
               </button>
             ))}
           </div>

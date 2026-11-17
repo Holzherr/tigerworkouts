@@ -165,7 +165,7 @@ export const LandingScreen = ({ onGetStarted, onBrowse, onSignIn, onCoaches, wor
         </div>
       </section>
 
-      <section className="bg-ink text-white">
+      <section className="bg-night text-white">
         <div className="mx-auto max-w-6xl px-5 py-8 lg:px-8 lg:py-16">
           <div className="text-[11px] font-bold tracking-widest text-white/60 uppercase lg:text-[13px]">How it works</div>
           <ol className="mt-3 grid gap-3 lg:mt-8 lg:grid-cols-4 lg:gap-8">
@@ -179,7 +179,7 @@ export const LandingScreen = ({ onGetStarted, onBrowse, onSignIn, onCoaches, wor
             ))}
           </ol>
           <div className="mt-6 flex flex-wrap items-center gap-3 lg:mt-12">
-            <Button size="lg" className="bg-white text-ink active:bg-line" onClick={onGetStarted}>
+            <Button size="lg" className="bg-white text-night active:bg-line" onClick={onGetStarted}>
               Get started, it’s free
             </Button>
             <span className="text-[12px] text-white/60">No password. We email you a 6-digit code.</span>
@@ -216,10 +216,10 @@ export const LandingScreen = ({ onGetStarted, onBrowse, onSignIn, onCoaches, wor
 
 /** Fallback hero screen when no live demo is passed (Storybook, tests). */
 const StaticDemo = () => (
-  <div className="flex h-full flex-col bg-ink p-4 text-white">
+  <div className="flex h-full flex-col bg-night p-4 text-white">
     <div className="text-[12px] text-white/60">Swings + incline press · Round 3 of 8</div>
     <div className="py-8 text-center text-[64px] leading-none font-black tabular-nums">0:21</div>
-    <div className="rounded-card bg-white p-3 text-ink">
+    <div className="rounded-card bg-surface p-3 text-ink">
       <div className="text-[16px] font-extrabold">Kettlebell swings</div>
       <div className="text-[12px] text-muted">30s · 28 kg</div>
     </div>

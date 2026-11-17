@@ -26,7 +26,7 @@ export const EffortRow = ({ value, onChange, className }: EffortRowProps) => (
           aria-label={`Effort ${n}`}
           aria-pressed={value === n}
           onClick={() => onChange(value === n ? undefined : n)}
-          className={cn('h-11 rounded-control text-[15px] font-bold tabular-nums transition-colors', value === n ? 'bg-ink text-white' : 'bg-line-soft text-ink active:bg-line')}
+          className={cn('h-11 rounded-control text-[15px] font-bold tabular-nums transition-colors', value === n ? 'bg-ink text-surface' : 'bg-line-soft text-ink active:bg-line')}
         >
           {n}
         </button>

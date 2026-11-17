@@ -7,7 +7,7 @@ const tileVariants = cva('relative grid shrink-0 place-items-center overflow-hid
     tone: {
       stripes: 'bg-stripes text-ink-pure',
       coral: 'bg-brand text-ink-pure',
-      white: 'bg-surface text-ink-pure ring-1 ring-line ring-inset',
+      white: 'bg-white text-ink-pure ring-1 ring-line ring-inset',
       ink: 'bg-ink-pure text-brand',
     },
   },

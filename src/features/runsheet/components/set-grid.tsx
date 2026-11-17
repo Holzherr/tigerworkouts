@@ -29,7 +29,7 @@ export const SetMark = ({ mark, type, label, onCycle, className }: { mark: strin
       // Drawn at 32px; the tap reaches 44px (DESIGN.md).
       "relative grid h-8 min-w-8 shrink-0 place-items-center rounded-md text-[15px] font-extrabold tabular-nums after:absolute after:-inset-1.5 after:content-['']",
       type === 'warmup' && 'bg-warn-soft text-warn',
-      type === 'drop' && 'bg-well text-rest',
+      type === 'drop' && 'bg-well text-rest-ink',
       type === 'failure' && 'bg-danger-soft text-danger',
       className
     )}

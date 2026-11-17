@@ -21,7 +21,7 @@ export const Holding = ({ label = 'Loading' }: { label?: string }) => (
 /** The chunk did not arrive (no signal before the service worker had it, or a deploy replaced it): say so in place, with a way to try again, rather than taking the whole app down. */
 const Unloaded = ({ onRetry, floating }: { onRetry: () => void; floating?: boolean }) => (
   <div role="alert" className={floating ? 'fixed inset-x-0 bottom-20 z-50 flex justify-center px-4' : 'p-6 text-center'}>
-    <div className={floating ? 'flex items-center gap-3 rounded-full bg-ink py-1.5 pr-1.5 pl-4 text-[13px] font-semibold text-white shadow-lift' : 'text-[13px] text-muted'}>
+    <div className={floating ? 'flex items-center gap-3 rounded-full bg-night py-1.5 pr-1.5 pl-4 text-[13px] font-semibold text-white shadow-lift' : 'text-[13px] text-muted'}>
       Could not load this. Check your connection.{' '}
       <button type="button" onClick={onRetry} className={floating ? 'h-9 rounded-full bg-white/10 px-3 font-bold' : 'min-h-11 font-bold text-brand-ink'}>
         Try again

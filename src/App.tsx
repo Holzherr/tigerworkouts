@@ -299,7 +299,7 @@ export default function App() {
   const overlay = (
     <>
       {picker}
-      {toast && <div role="status" className="pointer-events-none fixed inset-x-0 bottom-20 z-50 flex justify-center"><div className="rounded-full bg-ink px-4 py-2 text-[13px] font-semibold text-white shadow-lift">{toast}</div></div>}
+      {toast && <div role="status" className="pointer-events-none fixed inset-x-0 bottom-20 z-50 flex justify-center"><div className="rounded-full bg-night px-4 py-2 text-[13px] font-semibold text-white shadow-lift">{toast}</div></div>}
     </>
   );
   // phone-first screens sit in a centred 480px column on larger screens
@@ -871,7 +871,7 @@ const RunRoute = ({ resume, lookup, onLogKept, onResumeKept, onKeptSheet, versio
   };
   const where = `left at step ${Math.min(kept.state.i + 1, kept.state.slots.length)} of ${kept.state.slots.length}, ${ago(Date.now() - kept.savedAt)}`;
   return (
-    <div className="flex h-dvh flex-col items-center justify-center gap-3 bg-ink px-6 text-center text-white">
+    <div className="flex h-dvh flex-col items-center justify-center gap-3 bg-night px-6 text-center text-white">
       <div className="text-[22px] font-extrabold">{own ? 'Pick up where you left off?' : `${kept.state.title} is not finished`}</div>
       <div className="text-[14px] text-white/70">{own ? `${props.runsheet.title} was ${where}.` : `It was ${where}. Starting ${props.runsheet.title} would lose it.`}</div>
       <div className="mt-2 flex w-full max-w-xs flex-col gap-2">
@@ -886,11 +886,11 @@ const RunRoute = ({ resume, lookup, onLogKept, onResumeKept, onKeptSheet, versio
           </Button>
         )}
         {canSave && (
-          <Button block variant="dark" className="bg-white/10" onClick={saveWhatWasDone}>
+          <Button block variant="dark" className="bg-white/10 text-white" onClick={saveWhatWasDone}>
             {own ? 'Save what I did' : `Save it, then start ${props.runsheet.title}`}
           </Button>
         )}
-        <Button block variant="dark" className="bg-white/10" onClick={() => (unlockAudio(), Runner.clearPersisted(), setFrom('fresh'))}>
+        <Button block variant="dark" className="bg-white/10 text-white" onClick={() => (unlockAudio(), Runner.clearPersisted(), setFrom('fresh'))}>
           {own ? 'Start over' : `Discard it and start ${props.runsheet.title}`}
         </Button>
       </div>
@@ -1002,7 +1002,7 @@ const RunSession = ({ runsheet, results, intent, equipment, library, origin: sta
   };
   return (
     // A phone-wide column on a larger screen, as every other screen is.
-    <div className="h-dvh bg-ink">
+    <div className="h-dvh bg-night">
     <div className="relative mx-auto h-full w-full max-w-[480px]">
       {!over && undo.toast}
       {prSay && (
