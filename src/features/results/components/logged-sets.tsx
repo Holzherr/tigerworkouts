@@ -56,7 +56,7 @@ export const LoggedSets = ({ row, exercise, step, editing, onEdit, onAdd, onRemo
       <div className="flex flex-wrap gap-1.5 pl-[46px]">
         {sets.map((x, i) => (
           <span key={i} className="inline-flex items-center gap-1 rounded-pill bg-line-soft px-2 py-0.5 text-[12px] tabular-nums">
-            <span className={cn('font-extrabold', x.type === 'warmup' ? 'text-warn' : x.type === 'drop' ? 'text-rest' : x.type === 'failure' ? 'text-danger' : 'text-muted')}>{marks[i]}</span>
+            <span className={cn('font-extrabold', x.type === 'warmup' ? 'text-warn' : x.type === 'drop' ? 'text-rest-ink' : x.type === 'failure' ? 'text-danger' : 'text-muted')}>{marks[i]}</span>
             <span className="font-semibold">{setLabel(x, measureOf(exercise.unit) ? '' : unit) || '–'}</span>
             {x.at !== undefined && <span className="text-[10px] text-faint">{fmtClock(x.at)}</span>}
           </span>

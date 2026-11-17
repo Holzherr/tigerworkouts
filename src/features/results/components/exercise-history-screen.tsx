@@ -70,7 +70,7 @@ const Pills = <T extends string>({ label, options, value, onChange }: { label: s
   <div role="radiogroup" aria-label={label} className="flex flex-wrap gap-1">
     {options.map(([v, text]) => (
       <button key={v} type="button" role="radio" aria-checked={v === value} onClick={() => onChange(v)} className="flex min-h-11 items-center">
-        <span className={cn('rounded-pill px-2.5 py-1 text-[12px] font-bold', v === value ? 'bg-ink text-white' : 'bg-line-soft text-body')}>{text}</span>
+        <span className={cn('rounded-pill px-2.5 py-1 text-[12px] font-bold', v === value ? 'bg-ink text-surface' : 'bg-line-soft text-body')}>{text}</span>
       </button>
     ))}
   </div>

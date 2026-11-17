@@ -30,7 +30,7 @@ export const PlateSheet = ({ open, onOpenChange, load, equipment }: PlateSheetPr
           <div className="h-3 w-10 shrink-0 rounded-l-full bg-faint" aria-hidden />
           <div className="h-7 w-2 shrink-0 rounded-sm bg-muted" aria-hidden />
           {p.perSide.map((kg, i) => (
-            <div key={i} className="grid w-7 shrink-0 place-items-center rounded-md bg-ink text-[11px] font-extrabold text-white tabular-nums" style={{ height: plateHeight(kg) }}>
+            <div key={i} className="grid w-7 shrink-0 place-items-center rounded-md bg-night text-[11px] font-extrabold text-white tabular-nums" style={{ height: plateHeight(kg) }}>
               {fmtNum(kg)}
             </div>
           ))}

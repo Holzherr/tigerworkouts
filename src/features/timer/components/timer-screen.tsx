@@ -152,7 +152,7 @@ const TimerSetGrid = ({ state, step, blockId, actions, equipment, prs = [], onHo
     </button>
   );
   return (
-    <div className="rounded-card bg-white px-3 py-1.5 text-ink max-[359px]:px-2" aria-label="Sets">
+    <div className="rounded-card bg-surface px-3 py-1.5 text-ink max-[359px]:px-2" aria-label="Sets">
       <button type="button" onClick={onHowTo} disabled={!onHowTo} aria-label={`How to do ${step.exercise.name}`} className="flex w-full items-center gap-3 border-b border-line-soft py-2 text-left">
         <ClipThumb size="md" clip={step.exercise.clip} poster={step.exercise.poster} icon={step.exercise.icon} />
         <span className="min-w-0 flex-1 text-[20px] leading-tight font-extrabold">{step.exercise.name}</span>
@@ -350,7 +350,7 @@ export const TimerScreen = ({ runsheet, state, now, onDone, onSkip, onBack, onPa
   const announcement = done ? 'Workout finished' : paused ? 'Paused' : ready && slot ? `Next block: ${partTitle(partOf(slot.part))}, set up then start` : lead ? `Get ready, ${state.leadSec} seconds` : !slot ? '' : isRest ? `Rest, ${Math.round(slot.seconds ?? 0)} seconds` : stepOf?.kind !== 'exercise' ? '' : round ? `${slot.blockName || 'Round'}, round ${slot.round + 1}` : straight ? `${stepOf.exercise.name}, set ${slot.round + 1} of ${slot.rounds}` : `${stepOf.exercise.name}, ${forLabel(stepOf)}${slot.rounds > 1 ? `, round ${slot.round + 1}${slot.mode === 'amrap' ? '' : ` of ${slot.rounds}`}` : ''}`;
 
   return (
-    <div inert={confirmExit} className={cn('flex h-full min-h-0 flex-col text-white transition-colors duration-300', isRest && !ready ? 'bg-rest' : 'bg-ink')}>
+    <div inert={confirmExit} className={cn('flex h-full min-h-0 flex-col text-white transition-colors duration-300', isRest && !ready ? 'bg-rest' : 'bg-night')}>
       {announce && (
         <div aria-live="polite" role="status" className="sr-only">
           {announcement}
@@ -392,7 +392,7 @@ export const TimerScreen = ({ runsheet, state, now, onDone, onSkip, onBack, onPa
         {ready && slot ? (
           <div className="py-4">
             {cut && (
-              <div className="mb-4 flex items-center justify-between gap-3 rounded-card bg-white px-3.5 py-2.5 text-ink">
+              <div className="mb-4 flex items-center justify-between gap-3 rounded-card bg-surface px-3.5 py-2.5 text-ink">
                 <span className="text-[15px] font-semibold">Time. Reps into round {cut.round + 1}</span>
                 <Stepper aria-label={`Reps into round ${cut.round + 1}`} value={cut.extra} min={0} max={Math.max(0, cut.reps - 1)} onChange={v => onExtraReps!(cut.blockId, v)} />
               </div>
@@ -425,11 +425,11 @@ export const TimerScreen = ({ runsheet, state, now, onDone, onSkip, onBack, onPa
             {restAdjustable ? (
               // −15 s and +15 s either side of the rest clock, one row.
               <div className="flex items-center justify-center gap-3 pt-4">
-                <Button variant="dark" onClick={() => onAdjustRest!(-15)} aria-label="15 seconds less rest" className="h-11 min-w-16 shrink-0 rounded-full bg-white/10 px-3 tabular-nums">
+                <Button variant="dark" onClick={() => onAdjustRest!(-15)} aria-label="15 seconds less rest" className="h-11 min-w-16 shrink-0 rounded-full bg-white/10 px-3 text-white tabular-nums">
                   −15s
                 </Button>
                 <div className="text-center text-[72px] leading-none font-black tracking-tight tabular-nums">{bigNumber}</div>
-                <Button variant="dark" onClick={() => onAdjustRest!(15)} aria-label="15 seconds more rest" className="h-11 min-w-16 shrink-0 rounded-full bg-white/10 px-3 tabular-nums">
+                <Button variant="dark" onClick={() => onAdjustRest!(15)} aria-label="15 seconds more rest" className="h-11 min-w-16 shrink-0 rounded-full bg-white/10 px-3 text-white tabular-nums">
                   +15s
                 </Button>
               </div>
@@ -462,7 +462,7 @@ export const TimerScreen = ({ runsheet, state, now, onDone, onSkip, onBack, onPa
             {straight && slot?.blockId && !done && !lead && <TimerSetGrid key={slot.blockId} state={state} step={straight} blockId={slot.blockId} actions={sets!} equipment={equipment} prs={prs} onHowTo={() => setLook(straight)} />}
 
             {round && slot && (
-              <div className="rounded-card bg-white px-3 py-1.5 text-ink" aria-label={`Round ${slot.round + 1}`}>
+              <div className="rounded-card bg-surface px-3 py-1.5 text-ink" aria-label={`Round ${slot.round + 1}`}>
                 {round.map(j => {
                   const sl = state.slots[j];
                   if (sl.step.kind !== 'exercise') return null;
@@ -482,7 +482,7 @@ export const TimerScreen = ({ runsheet, state, now, onDone, onSkip, onBack, onPa
 
             {slot && !done && !round && !(straight && !lead) && (
               <SwipeToRemove onRemove={() => onDrop(slot.step.id)} disabled={isRest || paused} className="rounded-card">
-                <div className={cn('rounded-card p-4', isRest ? 'bg-white/10' : 'bg-white text-ink')}>
+                <div className={cn('rounded-card p-4', isRest ? 'bg-white/10' : 'bg-surface text-ink')}>
                   <div className="flex items-center gap-3.5">
                     {stepOf?.kind === 'exercise' ? (
                       <button type="button" onClick={() => setLook(stepOf)} aria-label={`How to do ${stepOf.exercise.name}`} className="shrink-0 rounded-card">
@@ -556,7 +556,7 @@ export const TimerScreen = ({ runsheet, state, now, onDone, onSkip, onBack, onPa
             )}
 
             {nxt && !done && !round && (
-              <button type="button" onClick={() => setPeek(nxt.part)} className={cn('sticky bottom-0 mt-3 flex min-h-11 w-full items-center gap-2.5 px-1.5 text-left text-[16px] transition-colors duration-300', isRest ? 'bg-rest' : 'bg-ink')}>
+              <button type="button" onClick={() => setPeek(nxt.part)} className={cn('sticky bottom-0 mt-3 flex min-h-11 w-full items-center gap-2.5 px-1.5 text-left text-[16px] transition-colors duration-300', isRest ? 'bg-rest' : 'bg-night')}>
                 <span className={cn('shrink-0 text-[13px] font-semibold tracking-wider uppercase', nextIsNewPart ? (isRest ? 'text-brand-line' : 'text-brand') : 'text-white/60')}>{nextIsNewPart ? 'Next block' : 'Next'}</span>
                 <span className="min-w-0 flex-1 truncate">{nextIsNewPart ? partTitle(partOf(nxt.part)) : nxt.step.kind === 'exercise' ? nxt.step.exercise.name : 'Rest'}</span>
                 <span className="shrink-0 text-white/60 tabular-nums">{nxt.step.kind === 'exercise' ? forLabel(nxt.step) : fmtClock(nxt.seconds ?? 0)}</span>
@@ -586,26 +586,26 @@ export const TimerScreen = ({ runsheet, state, now, onDone, onSkip, onBack, onPa
         ) : (
           <>
             <div className="flex gap-2 pb-2">
-              <Button variant="dark" size="lg" onClick={onBack} disabled={idx === 0 || lead} aria-label="Previous step" className="shrink-0 bg-white/10 max-[359px]:px-3">
+              <Button variant="dark" size="lg" onClick={onBack} disabled={idx === 0 || lead} aria-label="Previous step" className="shrink-0 bg-white/10 text-white max-[359px]:px-3">
                 <ChevronLeft />
               </Button>
               {!countdown ? (
-                <Button block size="lg" variant="dark" onClick={paused ? onResume : onPause} className={cn('bg-white/10 max-[359px]:gap-1.5 max-[359px]:px-2', paused && 'bg-white text-ink')}>
+                <Button block size="lg" variant="dark" onClick={paused ? onResume : onPause} className={cn('bg-white/10 text-white max-[359px]:gap-1.5 max-[359px]:px-2', paused && 'bg-white text-night')}>
                   {paused ? <Play /> : <Pause />} {paused ? 'Resume' : 'Pause'}
                 </Button>
               ) : (
                 timedWork && (
-                  <Button block size="lg" variant="dark" onClick={onDone} className="bg-white/10 max-[359px]:gap-1.5 max-[359px]:px-2">
+                  <Button block size="lg" variant="dark" onClick={onDone} className="bg-white/10 text-white max-[359px]:gap-1.5 max-[359px]:px-2">
                     <Check /> Done early
                   </Button>
                 )
               )}
-              <Button block size="lg" variant="dark" onClick={skip} aria-label={lead || isRest ? undefined : 'Skip this step'} className="bg-white/10 max-[359px]:gap-1.5 max-[359px]:px-2">
+              <Button block size="lg" variant="dark" onClick={skip} aria-label={lead || isRest ? undefined : 'Skip this step'} className="bg-white/10 text-white max-[359px]:gap-1.5 max-[359px]:px-2">
                 <SkipForward /> Skip{isRest ? ' rest' : ''}
               </Button>
             </div>
             {countdown ? (
-              <Button block size="xl" variant="brand" onClick={paused ? onResume : onPause} className={cn(paused && 'bg-white text-ink')}>
+              <Button block size="xl" variant="brand" onClick={paused ? onResume : onPause} className={cn(paused && 'bg-white text-night')}>
                 {paused ? <Play /> : <Pause />} {paused ? 'Resume' : 'Pause'}
               </Button>
             ) : (
@@ -746,7 +746,7 @@ export const TimerScreen = ({ runsheet, state, now, onDone, onSkip, onBack, onPa
 
       <Dialog.Root open={confirmExit} onOpenChange={o => (setConfirmExit(o), !o && setConfirmDiscard(false))}>
         <Dialog.Portal>
-          <Dialog.Overlay className="fixed inset-0 z-40 bg-ink/70" />
+          <Dialog.Overlay className="fixed inset-0 z-40 bg-night/70" />
           <Dialog.Content aria-modal="true" className="fixed inset-x-0 bottom-0 z-50 mx-auto w-full max-w-[480px] p-4 outline-none">
             {confirmDiscard ? (
               <div className="w-full space-y-2 rounded-card bg-surface p-4 text-ink">

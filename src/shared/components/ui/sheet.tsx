@@ -27,7 +27,7 @@ const MAX_HEIGHT = '88dvh';
 export const Sheet = ({ open, onOpenChange, title, action, height, hideClose, children, className }: SheetProps) => (
   <Dialog.Root open={open} onOpenChange={onOpenChange}>
     <Dialog.Portal>
-      <Dialog.Overlay className="fixed inset-0 z-40 bg-ink/45" />
+      <Dialog.Overlay className="fixed inset-0 z-40 bg-night/45" />
       <Dialog.Content
         style={height && height !== 'auto' ? { height } : { maxHeight: MAX_HEIGHT }}
         className={cn('safe-bottom fixed inset-x-0 bottom-0 z-50 mx-auto flex w-full max-w-[430px] flex-col rounded-t-sheet bg-surface shadow-lift outline-none', className)}

@@ -98,7 +98,7 @@ export const CoachesPage = ({ onBack, onStart, shots }: CoachesPageProps) => (
         </section>
       )}
 
-      <section className="bg-ink text-white">
+      <section className="bg-night text-white">
         <div className="mx-auto max-w-5xl px-5 py-8">
           <h2 className="text-[13px] font-bold tracking-widest text-white/60 uppercase">For your client</h2>
           <ol className="mt-3 grid gap-3 lg:grid-cols-3">

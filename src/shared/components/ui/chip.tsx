@@ -7,7 +7,7 @@ export const chipVariants = cva('inline-flex items-center gap-1 rounded-full fon
     variant: {
       outline: 'border border-line bg-surface text-ink',
       value: 'bg-line-soft text-ink font-bold',
-      on: 'bg-ink text-white',
+      on: 'bg-ink text-surface',
       brand: 'bg-brand-soft text-brand-ink',
       'brand-solid': 'bg-brand text-white font-extrabold',
       danger: 'bg-danger-soft text-danger',

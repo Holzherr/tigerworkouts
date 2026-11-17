@@ -11,6 +11,10 @@
   --color-brand-ink: #c42a12;
   --color-ink-pure: #000000;
   --color-rest: #1e3a8a;
+  /* Rest blue as text on a surface: the rest ground's colour is too dark for that in dark mode. */
+  --color-rest-ink: #1e3a8a;
+  /* The timer's ground, toasts and dark heroes: dark in both modes, where ink turns light. */
+  --color-night: #0f172a;
 
   --color-ink: #0f172a;
   --color-body: #475569;
@@ -35,9 +39,38 @@
   --shadow-lift: 0 16px 30px -10px rgb(15 23 42 / 0.4);
 }
 
+/* Dark mode follows the system setting (review round 2 U18): the same tokens, dark values. The
+   timer was dark already; it sits on night, which does not change. */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-brand-soft: #3b1e18;
+    --color-brand-line: #7a3325;
+    --color-brand-ink: #ff8a73;
+    --color-rest-ink: #93a8ff;
+
+    --color-ink: #f1f5f9;
+    --color-body: #cbd5e1;
+    --color-muted: #94a3b8;
+    --color-faint: #64748b;
+    --color-hint: #475569;
+    --color-line: #263041;
+    --color-line-soft: #1c2431;
+    --color-surface: #151c27;
+    --color-canvas: #0b1019;
+    --color-well: #1e2733;
+    --color-danger: #f87171;
+    --color-danger-soft: #3a1717;
+    --color-warn: #fbbf24;
+    --color-warn-soft: #33270c;
+
+    --shadow-lift: 0 16px 30px -10px rgb(0 0 0 / 0.6);
+  }
+}
+
 @layer base {
   html {
     -webkit-text-size-adjust: 100%;
+    color-scheme: light dark;
   }
   body {
     @apply bg-canvas text-ink font-sans antialiased;

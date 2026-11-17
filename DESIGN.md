@@ -9,6 +9,7 @@ colors:
   brand-ink: '#c42a12'
   ink-pure: '#000000'
   rest: '#1e3a8a'
+  night: '#0f172a'
   ink: '#0f172a'
   body: '#475569'
   muted: '#64748b'
@@ -90,4 +91,5 @@ rules:
   - Sets alike in a row show as one row (`8×`); Vary sets gives each set its own.
   - Rests are steps. Blocks are brackets around steps with a repeat count; they form by dropping one step onto another.
   - Demo clips autoplay muted and loop; without a clip, show an icon, never a placeholder box.
+  - Dark mode follows the system setting (Nick, 2026-11-17): the same tokens with dark values (`src/styles/tailwind.css`). The timer, toasts, sheet overlays and dark heroes sit on `night`, which stays dark in both. Text on an `ink` fill is `surface`, not white, so a selected chip inverts.
 ---
