@@ -66,3 +66,24 @@ Append-only. One line per decision: `- <date> <who>: <decision>`. Builders appen
 - 2026-11-15 Nick, review D18 (approved): any workout with a session is in Mine and eligible for Up next; a catalogue workout is copied only when a block is closed with a real change, and empty blocks are dropped; the sample workout's duplicate listings are fixed.
 - 2026-11-15 Nick, review D19 (approved all): the seventeen web fixes listed in the review (timer, workout page, new workout, finish, Discover, catalogue, picker, History, errors, sheets).
 - 2026-11-15 Nick, review D20 (approved all): the bottom tab is named Workouts; the swipe-to-drop hint goes and Drop moves to the ⋯ menu; after a reload the first Resume is labelled "Open session"; on the workout page only Back and the title stay pinned.
+- 2026-11-17 Nick, review round 2 U1: a coach's notes show on the iPhone as a thread under Me → Coach, and notes on a session show on that session in History.
+- 2026-11-17 Nick, review round 2 U2 ("I want to launch it in app store - so ensure it's working now"): universal links and the Safari smart banner for invite and workout links, built and working now so they are live at App Store launch.
+- 2026-11-17 Nick, review round 2 U3: a client is told of a new workout or note from their coach by push notification, with the App Store build.
+- 2026-11-17 Nick, review round 2 U4: a private workout is shared by an unlisted link (#/w/<id>) with the full preview and Start, instead of the workout packed into the link.
+- 2026-11-17 Nick, review round 2 U5 ("Own, Saved and Catalogue search"): a coach can send their own workouts, saved workouts, and workouts found by searching the catalogue.
+- 2026-11-17 Nick, review round 2 U6: coach and client always see each other's name (all three proposals), including a name field in the iPhone app.
+- 2026-11-17 Nick, review round 2 U7: iOS Me has a row that opens the web coach dashboard.
+- 2026-11-17 Nick, review round 2 U8: the notification permission question is asked on the first finish screen, not over a countdown.
+- 2026-11-17 Nick, review round 2 U9: a session done without the phone can be logged on the iPhone, including from a + on History.
+- 2026-11-17 Nick, review round 2 U10: signing out clears the device on iOS as it does on the web, and both apps confirm first.
+- 2026-11-17 Nick, review round 2 U11: pounds as a display unit, before launch.
+- 2026-11-17 Nick, review round 2 U12: Me on the web shows rows (Creator page, Coach clients) that open their own screens; the creator form moves to its screen.
+- 2026-11-17 Nick, review round 2 U13: iPhone History rows show the score and a record mark.
+- 2026-11-17 Nick, review round 2 U14: an exercise's web page shows its clip, muscles and the workouts that use it before it has been logged.
+- 2026-11-17 Nick, review round 2 U15: the chat timer has load and reps steppers on the set, so it logs what was done.
+- 2026-11-17 Nick, review round 2 U16: test-build lines in iPhone Settings are hidden behind a long press.
+- 2026-11-17 Nick, review round 2 U17: G-06 counts starts from up_next, home, coach and recommended.
+- 2026-11-17 Nick, review round 2 U18: the web follows the system dark / light setting.
+- 2026-11-17 Nick, review round 2 A1–A11 (approved all): the architecture findings of 16 Nov are fixed as proposed (credit guard and size limits already applied in 0013).
+- 2026-11-17 Nick, feedback 16 Nov: build a watchOS companion that mirrors the running timer (clock, set done, rest); editing stays on the phone.
+- 2026-11-17 Nick, feedback 16 Nov: the feedback pipeline emails him what it understood (with a screenshot and mock-up) when a note is filed, builds without waiting, changes course only if he replies, and emails again with the PR when fixed.
